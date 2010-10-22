@@ -1,0 +1,36 @@
+= Reposurgeon Designer's Notes =
+Eric S. Raymond <esr@thyrsus.com>
+
+The purpose of reposurgeon is to enable risky operations that version-control
+systems don't want to let you do, such as (a) editing past comments and 
+metadata, (b) excising commits, and (c) coalescing commits. The motivation
+for reposurgeon was to help with artifacts and sca r tisue created by 
+repository conversions.
+
+The reposurgeon tool depends on being able to map all the version-control
+systems it knows about into a common data model.  Here are the components 
+of the model:
+
+1. A sequence of commit objects.  The primary key for these objects is
+the date of the commit. Each commit represents an ebtire state of
+some file tree.
+
+2. A map of the is-a-parent-of relationship. A commit may have multiplre 
+parents; the map implies a DAG (directed acyclic graph) of commits.
+
+3. A list of branch heads.  This is a mapping from names to tip 
+revisions in the DAG.
+
+4. A list of tags (name-to-commit mappings).
+
+This model is intended to capture the common semantics of distributed
+version-control systems: the three specific tarhets are git, hg, and
+Subversion (more may be added in future).
+
+It is a design constraint that all reposurgeon operations either prserve
+all VCS-specific metadata thety are not told to modify or warn you when
+they cannot.
+
+
+
+
