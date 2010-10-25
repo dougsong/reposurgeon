@@ -2,7 +2,50 @@
 #
 # rs - a repository surgeon.
 #
-import sys, os, getopt, commands, cStringIO
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
 
 class Action:
     "Represents an instance of a person acting on the repo."
@@ -60,29 +103,24 @@ class RepoSurgeonException:
 class Repository:
     "Generic repository object."
     def __init__(self):
+        self.repotype = None
         self.commits = []   # A list of commit objects
         self.branches = []  # A list of branchname-to-commit mappings
         self.tags = []      # List of tag-to-commit
         self.nmarks = 0
         self.import_line = 0
+        self.subdir = ".rs"
     def error(self, msg, atline=True):
         if atline:
             raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
         else:
             raise RepoSurgeonException(msg)
-    def fast_import(self, argv):
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
         "Initialize repo object from fast-import stream."
-        verbose = False
-        (options, arguments) = getopt.getopt(argv[1:], "v")
-        for (opt, arg) in options:
-            if opt == '-v':
-                verbose = True
-        if not arguments:
-            fp = sys.stdin
-        else:
-            error("load subcommand does not take arguments", atline=False)
         try:
-            os.mkdir(".rs")     # May throw OSError
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
         except OSError:
             self.error("can't create operating directory", atline=False)
         refs_to_marks = {}
@@ -139,7 +177,7 @@ class Repository:
                 line = readline()
                 if line.startswith("mark"):
                     mark = line[5:].strip()
-                    read_data(open(".rs/blob-" + mark, "w")).close()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
                     self.nmarks += 1
                 else:
                     self.error("missing mark after blob")
@@ -182,7 +220,7 @@ class Repository:
                         if ref[0] == ':':
                             commit.fileops.append((op, mode, ref, path))
                         elif ref[0] == 'inline':
-                            copyname = ".rs/inline-" + `inline_count`
+                            copyname = self.subdir + "/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
                             inline_count += 1
                             commit.fileops.append((op, mode, ref, path, copyname))
@@ -221,6 +259,41 @@ class Repository:
             else:
                 raise self.error("unexpected line in import stream")
 
+def load_repo(source):
+    "Load a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist"
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
     if err:
@@ -232,34 +305,30 @@ def fatal(msg):
     print >>sys.stderr, "rs:", msg
     raise SystemExit, 1
 
-def usage():
-    print >>sys.stderr,"""\
-usage: rs command [option..]
-
-Commands are as follows
-
-    help       -- emit this help message             
-    load       -- prepare a repo for surgery
-    clear      -- clear the operating theater
-"""
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.page = 1
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_load(self, line):
+        if not line:
+            line = '.';
+        self.repo = load_repo(line)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
 
 if __name__ == '__main__':
-    sys.argv.pop(0)
-    if not sys.argv:
-        usage()
-        raise SystemExit, 0
-    command = sys.argv[0]
-    if command in ("help", "usage"):
-        usage()
-    elif command == "clear":
-        os.system("rm -fr .rs")
-    elif command == "load":
-        try:
-            repo = Repository()
-            repo.fast_import(sys.argv)
-        except RepoSurgeonException, e:
-            fatal(e.msg)
-    else:
-        print >>sys.stderr,"rs: unknown command"
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
 
 # end
