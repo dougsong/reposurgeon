@@ -29,10 +29,11 @@ import sys, os, getopt, commands, cStringIO, cmd, tempfile
 vcstypes = [
      ("git",
       ".git",
-      "git fast-export -M -C >%s",
+      "git fast-export -M -C --all >%s",
       "git init",
       "git fast-import <%s",
       "git checkout"),
+     # FIXME: hg and bzr methods are untested
      ("hg",
       ".hg",
       "hg-fast-export.sh %s",   # Not part of stock hg
@@ -108,6 +109,7 @@ class Repository:
         self.branches = []  # A list of branchname-to-commit mappings
         self.tags = []      # List of tag-to-commit
         self.nmarks = 0
+        self.nblobs = 0
         self.import_line = 0
         self.subdir = ".rs"
     def error(self, msg, atline=True):
@@ -179,6 +181,7 @@ class Repository:
                     mark = line[5:].strip()
                     read_data(open(self.subdir + "/blob-" + mark, "w")).close()
                     self.nmarks += 1
+                    self.nblobs += 1
                 else:
                     self.error("missing mark after blob")
             elif line.startswith("data"):
@@ -319,6 +322,11 @@ class RepoSurgeon(cmd.Cmd):
         if not line:
             line = '.';
         self.repo = load_repo(line)
+        print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+              (len(self.repo.commits),
+               self.repo.nblobs,
+               self.repo.nmarks,
+               len(self.repo.tags))
     def do_EOF(self, line):
         "Terminate the browser."
         return True
