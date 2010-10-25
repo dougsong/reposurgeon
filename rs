@@ -65,7 +65,7 @@ class Tag:
         self.comment = content
     def __repr__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
-             % (self.name, self.committish, self.tagger, self.content)
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
         
 class Commit:
     "Generic commit object."
@@ -85,16 +85,16 @@ class Commit:
             st += "author %s\n" % self.author
         if self.committer:
             st += "committer %s\n" % self.committer
-        st += "data %d\n%s\n"
+        st += "data %d\n%s\n" % (len(self.comment), self.comment) 
         if self.parents:
             st += "from %s\n" % self.parents[0]
-        for ancestor in parents[1:]:
+        for ancestor in self.parents[1:]:
             st += "merge %s\n" % self.parents[0]
-        for op in fileops:
+        for op in self.fileops:
             if type(op) == type(""):
                 st += op + "\n"
             else:
-                str += " ".join(op) + "\n"
+                st += " ".join(op) + "\n"
         return st + "\n"
 
 class RepoSurgeonException:
@@ -261,11 +261,17 @@ class Repository:
 
             else:
                 raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            fp.write(repr(commit))
+        for tag in self.tags:
+            fp.write(repr(tag))
 
-def load_repo(source):
-    "Load a repository using fast-import."
+def read_repo(source):
+    "Read a repository using fast-import."
     if not os.path.exists(source):
-        print "rs: %s does not exist"
+        print "rs: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
         repo = Repository()
@@ -297,6 +303,10 @@ def load_repo(source):
                                                                    checkout)
     return repo
 
+def write_repo(target):
+    "Write a repository using fast-export."
+    pass
+
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
     if err:
@@ -312,21 +322,32 @@ class RepoSurgeon(cmd.Cmd):
     "Repository surgeon command interpreter."
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.page = 1
+        self.verbose = 0
         self.prompt = "rs# "
         self.repo = None
     def postcmd(self, stop, line):
         if line == "EOF":
             return True
-    def do_load(self, line):
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
         if not line:
             line = '.';
-        self.repo = load_repo(line)
-        print "rs: %d commits, %d blobs, %d marks, %d tags" % \
-              (len(self.repo.commits),
-               self.repo.nblobs,
-               self.repo.nmarks,
-               len(self.repo.tags))
+        self.repo = read_repo(line)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        self.repo.fast_export(sys.stdout)
     def do_EOF(self, line):
         "Terminate the browser."
         return True
