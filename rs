@@ -41,7 +41,7 @@ vcstypes = [
       "hg checkout"),
      ("bzr",
       ".bzr",
-      "bzr-fast-export %s",
+      "bzr-fast-export --plain %s",
       "bzr init",
       "bzr fast-import %s",
       "bzr checkout"),
