@@ -7,7 +7,7 @@ import sys, os, getopt, commands, cStringIO
 class Action:
     "Represents an instance pof a person acting on the repo."
     def __init__(self, name, email, when):
-        self,name = name
+        self.name = name
         self.email = email
         self.when = when
     def __repr__(self):
@@ -20,7 +20,7 @@ class Commit:
         self.author = None           # Author of commit
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
-        self.parents = None          # List of parent nodes
+        self.parents = []            # List of parent nodes
         self.branch = None           # branch name (deduced optimization hack)
         self.fileops = []            # blob and file operation list
 
@@ -42,8 +42,18 @@ class GenericRepo:
             raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
         else:
             raise RepoSurgeonException(msg)
-    def fast_import(self, fp):
+    def fast_import(self, argv):
         "Initialize repo object from fast-import stream."
+        verbose = False
+        (options, arguments) = getopt.getopt(argv[1:], "v")
+        for (opt, arg) in options:
+            if opt == '-v':
+                verbose = True
+        if not arguments:
+            fp = sys.stdin
+        else:
+            error("load subcommand does not take arguments", atline=False)
+        print "Foo!", argv, options, verbose
         try:
             os.mkdir(".rs")     # May throw OSError
         except OSError:
@@ -71,16 +81,19 @@ class GenericRepo:
                 except ValueSelf.Error:
                     raise self.error("bad count in data")
             else:
-                raise self.error("malformed data header")
-            return
+                raise self.error("malformed data header %s" % `line`)
+            return dp
         def readline():
             if linebuffers:
-                return linebuffers.pop()
+                line = linebuffers.pop()
             else:
                 self.import_line += 1
-                return fp.readline()
+                line = fp.readline()
+            if verbose:
+                print line.rstrip()
+            return line
         def pushback(line):
-            self.linebuffers.append(line)
+            linebuffers.append(line)
         while True:
             line = readline()
             if not line:
@@ -96,9 +109,9 @@ class GenericRepo:
             elif line.startswith("options"):
                 continue     # Might need real code here someday
             elif line.startswith("blob"):
-                nextline = readline()
+                line = readline()
                 if line.startswith("mark"):
-                    mark = nextline[5:].strip()
+                    mark = line[5:].strip()
                     read_data(open(".rs/blob-" + mark, "w")).close()
                     self.nmarks += 1
                 else:
@@ -107,34 +120,36 @@ class GenericRepo:
                 self.error("unexpected data object")
             elif line.startswith("commit"):
                 commit = Commit()
-                commit.branch = currentbranch
+                commit.branch = line.split()[1]
                 ncommits += 1
                 inlinecount = 0
                 while True:
-                    nextline = readline()
+                    line = readline()
                     if not line:
                         self.error("EOF after commit")
                     elif line.startswith("mark"):
-                        self.mark = nextline[5:].strip()
+                        self.mark = line[5:].strip()
                         self.nmarks += 1
                     elif line.startswith("author"):
                         try:
-                            (name, email, when) = line.split()
+                            line = line.replace(" <", "|").replace("> ", "|")
+                            (name, email, when) = line[7:].strip().split("|")
                             commit.author = Action(name, email, when)
-                        except ValueSelf.Error:
+                        except ValueError:
                             self.error("malformed author line")
                     elif line.startswith("committer"):
                         try:
-                            (name, email, when) = line.split()
+                            line = line.replace(" <", "|").replace("> ", "|")
+                            (name, email, when) = line[10:].strip().split("|")
                             commit.committer = Action(name, email, when)
-                        except ValueSelf.Error:
+                        except ValueError:
                             self.error("malformed committer line")
                     elif line.startswith("data"):
-                        dp = self.read_data(cStringIO.StringIO(), line)
+                        dp = read_data(cStringIO.StringIO(), line)
                         commit.comment = dp.getvalue()
                         dp.close()
                     elif line.startswith("from") or line.startswith("merge"):
-                        commit.ancestors.append(line.split()[1])
+                        commit.parents.append(line.split()[1])
                     elif line[0] in ("C", "D", "R"):
                         commit.filemap.append(line.strip().split())
                     elif line == "filedeletall\n":
@@ -142,12 +157,12 @@ class GenericRepo:
                     elif line[0] == "M":
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
-                            fileop.append((op, mode, ref, path))
+                            commit.fileops.append((op, mode, ref, path))
                         elif ref[0] == 'inline':
                             copyname = ".rs/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
                             inline_count += 1
-                            fileop.append((op, mode, ref, path, copyname))
+                            commit.fileops.append((op, mode, ref, path, copyname))
                         else:
                             self.error("unknown content type in filemodify")
                     else:
@@ -156,19 +171,19 @@ class GenericRepo:
                 self.commits.append(commit)
             elif line.startswith("reset"):
                 currentbranch = line[4:].strip()
-                nextline = readline()
-                if nextline.startswith("from"):
-                    refs_to_marks[currentbranch] = nextline[5:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
                 else:
-                    self.error("missing from after reset")
+                    pushback(line)
             elif line.startswith("tag"):
                 tagname = line[4:].strip()
-                nextline = readline()
-                if nextline.startswith("from"):
-                    refs_to_marks[tagname] = nextline[5:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[tagname] = line[5:].strip()
                 else:
                     self.error("missing from after tag")
-                self.read_data(open(".rs/tag-" + tagname, "w")).close()
+                read_data(open(".rs/tag-" + tagname, "w")).close()
             else:
                 raise self.error("unexpected line in import stream")
 
@@ -199,19 +214,15 @@ if __name__ == '__main__':
     if not sys.argv:
         usage()
         raise SystemExit, 0
-    command = sys.argv.pop(0)
-    (options, arguments) = getopt.getopt(sys.argv[2:], "")
+    command = sys.argv[0]
     if command in ("help", "usage"):
         usage()
     elif command == "clear":
         os.system("rm -fr .rs")
     elif command == "load":
-        repo = GenericRepo()
         try:
-            if not arguments:
-                repo.fast_import(sys.stdin)
-            else:
-                fatal("rs: unsupported load mode")
+            repo = GenericRepo()
+            repo.fast_import(sys.argv)
         except RepoSurgeonException, e:
             fatal(e.msg)
     else:
