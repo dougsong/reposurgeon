@@ -94,7 +94,12 @@ class Commit:
             if type(op) == type(""):
                 st += op + "\n"
             else:
-                st += " ".join(op) + "\n"
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
         return st + "\n"
 
 class RepoSurgeonException:
@@ -221,7 +226,8 @@ class Repository:
                     elif line[0] == "M":
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
-                            commit.fileops.append((op, mode, ref, path))
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
                         elif ref[0] == 'inline':
                             copyname = self.subdir + "/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
@@ -264,6 +270,14 @@ class Repository:
     def fast_export(self, fp):
         "Dump the repo object in fast-export format."
         for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob %s\ndata %d\n%s\n" % (ref, len(content), content))
             fp.write(repr(commit))
         for tag in self.tags:
             fp.write(repr(tag))
