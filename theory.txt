@@ -1,35 +1,30 @@
-= Reposurgeon Designer's Notes =
+= Reposurgeon Theory of Operation =
 Eric S. Raymond <esr@thyrsus.com>
 
-The purpose of reposurgeon is to enable risky operations that version-control
-systems don't want to let you do, such as (a) editing past comments and 
-metadata, (b) excising commits, and (c) coalescing commits. The motivation
-for reposurgeon was to help with artifacts and scar tisue created by 
-repository conversions.
+The purpose of reposurgeon is to enable risky operations that
+version-control systems don't want to let you do, such as (a) editing
+past comments and metadata, (b) excising commits, (c) coalescing
+commits, and (d) removing files and subtrees from repo history. The
+original motivation for reposurgeon was to clean up artifacts
+created by repository conversions.
 
-The reposurgeon tool depends on being able to map all the version-control
-systems it knows about into a common data model.  Here are the components 
-of the model:
+To keep reposurgeon simple and flexible, it does not do its own
+repository reading and writing.  Instead, it relies on being able to
+parse and emit the dump format created by git-fast-export and read by
+git-fast-import.  This means that it can be used on any
+version-control system that that has both fast-export and fast-import
+utilities.  This set includes git itself, hg, bzr, and Subversion. As
+version-control systems add support for the fast-import format, their
+reppositories will automatically become editable by repoosurgeon see 
+the https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools[Git 
+Wiki tools page] for a large collection of such tools.
 
-1. A sequence of commit objects.  The primary key for these objects is
-the date of the commit. Each commit represents an ebtire state of
-some file tree.
-
-2. A map of the is-a-parent-of relationship. A commit may have multiplre 
-parents; the map implies a DAG (directed acyclic graph) of commits.
-
-3. A list of branch heads.  This is a mapping from names to tip 
-revisions in the DAG.
-
-4. A list of tags (name-to-commit mappings).
-
-This model is intended to capture the common semantics of distributed
-version-control systems: the three specific tarhets are git, hg, and
-Subversion (more may be added in future).
-
-It is a design constraint that all reposurgeon operations either preserve
-all VCS-specific metadata thety are not told to modify or warn you when
-they cannot.
+It is a design constraint that all reposurgeon operations either
+preserve all repository state they are not explicitly told to modify
+or warn you when they cannot do so.  Users should, however, be aware
+of limitations in the ability of the fast-import format to capture 
+repository state. Presently the most significant such limitation is
+that the dumps do not capture git lightweight tags.
 
 
 
