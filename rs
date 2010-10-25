@@ -6,13 +6,23 @@ import sys, os, getopt, commands, cStringIO
 
 class Action:
     "Represents an instance pof a person acting on the repo."
-    def __init__(self, name, email, when):
-        self.name = name
-        self.email = email
-        self.when = when
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
     def __repr__(self):
-        return self.name + " " + self.email + " " + self.when
+        return self.name + " <" + self.email + "> " + self.when
 
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
 class Commit:
     "Generic commit object."
     def __init__(self):
@@ -23,6 +33,25 @@ class Commit:
         self.parents = []            # List of parent nodes
         self.branch = None           # branch name (deduced optimization hack)
         self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
 
 class RepoSurgeonException:
     def __init__(self, msg):
@@ -34,7 +63,6 @@ class GenericRepo:
         self.commits = []   # A list of commit objects
         self.branches = []  # A list of branchname-to-commit mappings
         self.tags = []      # List of tag-to-commit
-        self.map = []       # List of commit-to-parent mappings
         self.nmarks = 0
         self.import_line = 0
     def error(self, msg, atline=True):
@@ -53,7 +81,6 @@ class GenericRepo:
             fp = sys.stdin
         else:
             error("load subcommand does not take arguments", atline=False)
-        print "Foo!", argv, options, verbose
         try:
             os.mkdir(".rs")     # May throw OSError
         except OSError:
@@ -89,8 +116,8 @@ class GenericRepo:
             else:
                 self.import_line += 1
                 line = fp.readline()
-            if verbose:
-                print line.rstrip()
+                if verbose:
+                    print line.rstrip()
             return line
         def pushback(line):
             linebuffers.append(line)
@@ -132,16 +159,12 @@ class GenericRepo:
                         self.nmarks += 1
                     elif line.startswith("author"):
                         try:
-                            line = line.replace(" <", "|").replace("> ", "|")
-                            (name, email, when) = line[7:].strip().split("|")
-                            commit.author = Action(name, email, when)
+                            commit.author = Action(line[7:])
                         except ValueError:
                             self.error("malformed author line")
                     elif line.startswith("committer"):
                         try:
-                            line = line.replace(" <", "|").replace("> ", "|")
-                            (name, email, when) = line[10:].strip().split("|")
-                            commit.committer = Action(name, email, when)
+                            commit.committer = Action(line[10:])
                         except ValueError:
                             self.error("malformed committer line")
                     elif line.startswith("data"):
@@ -151,9 +174,9 @@ class GenericRepo:
                     elif line.startswith("from") or line.startswith("merge"):
                         commit.parents.append(line.split()[1])
                     elif line[0] in ("C", "D", "R"):
-                        commit.filemap.append(line.strip().split())
+                        commit.fileops.append(line.strip().split())
                     elif line == "filedeletall\n":
-                        commit.filemap.append("filedeleteall")
+                        commit.fileops.append("filedeleteall")
                     elif line[0] == "M":
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
@@ -180,10 +203,21 @@ class GenericRepo:
                 tagname = line[4:].strip()
                 line = readline()
                 if line.startswith("from"):
-                    refs_to_marks[tagname] = line[5:].strip()
+                    referent = line[5:].strip()
                 else:
                     self.error("missing from after tag")
-                read_data(open(".rs/tag-" + tagname, "w")).close()
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
             else:
                 raise self.error("unexpected line in import stream")
 
