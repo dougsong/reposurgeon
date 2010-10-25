@@ -5,7 +5,7 @@
 import sys, os, getopt, commands, cStringIO
 
 class Action:
-    "Represents an instance pof a person acting on the repo."
+    "Represents an instance of a person acting on the repo."
     def __init__(self, person):
         person = person.replace(" <", "|").replace("> ", "|")
         (self.name, self.email, self.when) = person.strip().split("|")
@@ -57,7 +57,7 @@ class RepoSurgeonException:
     def __init__(self, msg):
         self.msg = msg
 
-class GenericRepo:
+class Repository:
     "Generic repository object."
     def __init__(self):
         self.commits = []   # A list of commit objects
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         os.system("rm -fr .rs")
     elif command == "load":
         try:
-            repo = GenericRepo()
+            repo = Repository()
             repo.fast_import(sys.argv)
         except RepoSurgeonException, e:
             fatal(e.msg)
