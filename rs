@@ -334,10 +334,10 @@ def read_repo(source, verbose):
             tp.close()
         finally:
             os.remove(tfname)
-    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
-                                                                   initializer,
-                                                                   importer,
-                                                                   checkout)
+        (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                       initializer,
+                                                                       importer,
+                                                                       checkout)
     return repo
 
 def write_repo(repo, target, verbose):

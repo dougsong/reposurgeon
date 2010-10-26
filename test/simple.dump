@@ -1,0 +1,4971 @@
+blob
+mark :1
+data 53
+#!/ysr/bin/env python
+#
+# rs - a repository surgeon.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+data 22
+The adventure begins.
+M 100644 :1 rs
+
+blob
+mark :3
+data 621
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands
+
+class GenericCommit:
+    "Generic commit object."
+    def __init__(self, timestamp, cid, comment, branch, parents):
+        self.timestamp = timestamp
+        self.id = cid
+        self.comment = comment
+        self.branch = branch
+        self.parents = parents
+
+class GitSlicer:
+    "Repo-slicing methods for the Git version-control system"
+    def __init__(repo):
+        pass
+
+if __name__ == '__main__':
+    #subcommand = sys.argv[1]
+    #(options, arguments) = getopt.getopt(sys.argv[2:], "")
+    print "No mainline code yet"
+
+commit refs/heads/master
+mark :4
+author Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
+data 28
+Beginnings of core classes.
+from :2
+M 100755 :3 rs
+
+blob
+mark :5
+data 1329
+= Reposurgeon Designer's Notes =
+Eric S. Raymond <esr@thyrsus.com>
+
+The purpose of reposurgeon is to enable risky operations that version-control
+systems don't want to let you do, such as (a) editing past comments and 
+metadata, (b) excising commits, and (c) coalescing commits. The motivation
+for reposurgeon was to help with artifacts and sca r tisue created by 
+repository conversions.
+
+The reposurgeon tool depends on being able to map all the version-control
+systems it knows about into a common data model.  Here are the components 
+of the model:
+
+1. A sequence of commit objects.  The primary key for these objects is
+the date of the commit. Each commit represents an ebtire state of
+some file tree.
+
+2. A map of the is-a-parent-of relationship. A commit may have multiplre 
+parents; the map implies a DAG (directed acyclic graph) of commits.
+
+3. A list of branch heads.  This is a mapping from names to tip 
+revisions in the DAG.
+
+4. A list of tags (name-to-commit mappings).
+
+This model is intended to capture the common semantics of distributed
+version-control systems: the three specific tarhets are git, hg, and
+Subversion (more may be added in future).
+
+It is a design constraint that all reposurgeon operations either prserve
+all VCS-specific metadata thety are not told to modify or warn you when
+they cannot.
+
+
+
+
+
+commit refs/heads/master
+mark :6
+author Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
+data 27
+Beginning of design notes.
+from :4
+M 100644 :5 theory.txt
+
+blob
+mark :7
+data 1022
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands
+
+class GenericCommit:
+    "Generic commit object."
+    def __init__(self, timestamp, comment, parents):
+        self.timestamp = timestamp   # Primary key
+        self.comment = comment       # Commit comment
+        self.parents = parents       # List of parent nodes
+        self.branch = branch         # branch name (deduced optimization hack)
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.map = []       # List of commit-to-parent mappings
+
+class GitSlicer:
+    "Repo-slicing methods for the Git version-control system"
+    def __init__(repo):
+        pass
+
+if __name__ == '__main__':
+    #subcommand = sys.argv[1]
+    #(options, arguments) = getopt.getopt(sys.argv[2:], "")
+    print "No mainline code yet"
+
+blob
+mark :8
+data 1329
+= Reposurgeon Designer's Notes =
+Eric S. Raymond <esr@thyrsus.com>
+
+The purpose of reposurgeon is to enable risky operations that version-control
+systems don't want to let you do, such as (a) editing past comments and 
+metadata, (b) excising commits, and (c) coalescing commits. The motivation
+for reposurgeon was to help with artifacts and scar tisue created by 
+repository conversions.
+
+The reposurgeon tool depends on being able to map all the version-control
+systems it knows about into a common data model.  Here are the components 
+of the model:
+
+1. A sequence of commit objects.  The primary key for these objects is
+the date of the commit. Each commit represents an ebtire state of
+some file tree.
+
+2. A map of the is-a-parent-of relationship. A commit may have multiplre 
+parents; the map implies a DAG (directed acyclic graph) of commits.
+
+3. A list of branch heads.  This is a mapping from names to tip 
+revisions in the DAG.
+
+4. A list of tags (name-to-commit mappings).
+
+This model is intended to capture the common semantics of distributed
+version-control systems: the three specific tarhets are git, hg, and
+Subversion (more may be added in future).
+
+It is a design constraint that all reposurgeon operations either preserve
+all VCS-specific metadata thety are not told to modify or warn you when
+they cannot.
+
+
+
+
+
+commit refs/heads/master
+mark :9
+author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
+data 40
+Sync data structures with design notes.
+from :6
+M 100755 :7 rs
+M 100644 :8 theory.txt
+
+blob
+mark :10
+data 2339
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands
+
+class GenericCommit:
+    "Generic commit object."
+    def __init__(self, timestamp, author, committer, comment, parents):
+        self.timestamp = timestamp   # Primary key
+        self.author = author         # Aujtor of commit
+        self.committer = committer   # Person responsible for committing it.
+        self.comment = comment       # Commit comment
+        self.parents = parents       # List of parent nodes
+        self.branch = branch         # branch name (deduced optimization hack)
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.map = []       # List of commit-to-parent mappings
+        self.__marks = []
+    def fast_import(fp):
+        "Initialize repo object from fast import."
+        os.mkdir(".rs")     # May throw os.error
+        os.mkdir(".rs/history")
+        mark = None
+        for line in fp:
+            if line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line)
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                continue     # FIXME
+            elif line.startswith("commit"):
+                continue     # FIXME
+            elif line.startswith("reset"):
+                continue     # FIXME
+            elif line.startswith("tag"):
+                continue     # FIXME
+            else:
+                raise RepoSurgeonException("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+if __name__ == '__main__':
+    #subcommand = sys.argv[1]
+    #(options, arguments) = getopt.getopt(sys.argv[2:], "")
+    print "No mainline code yet"
+
+commit refs/heads/master
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
+data 31
+Skeleton of fast-import logic.
+from :9
+M 100755 :10 rs
+
+blob
+mark :12
+data 4234
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands
+
+class GenericCommit:
+    "Generic commit object."
+    def __init__(self, timestamp, author, committer, comment, parents):
+        self.timestamp = timestamp   # Primary key
+        self.author = author         # Aujtor of commit
+        self.committer = committer   # Person responsible for committing it.
+        self.comment = comment       # Commit comment
+        self.parents = parents       # List of parent nodes
+        self.branch = branch         # branch name (deduced optimization hack)
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.map = []       # List of commit-to-parent mappings
+        self.nmarks = 0
+    def fast_import(fp):
+        "Initialize repo object from fast-import stream."
+        os.mkdir(".rs")     # May throw OSError
+        os.mkdir(".rs/history")
+        tags_to_marks = {}
+        import_line = 0
+        def error(msg):
+            raise RepoSurgeonException(msg + (" at line " + `import_line`)
+        def read_data(dp):
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            else:
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueError:
+                    raise error("bad count in data")
+            else:
+                    raise error("malformed data header")
+            return
+        for line in fp:
+            import_line += 1
+            if line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                nextline = fp.readline()
+                import_line += 1
+                if readline.startwith("mark"):
+                    mark = nextline[5:].strip()
+                    read_data(open(".rs/blob" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    error("missing mark after blob")
+            elif line.startswith("data"):
+                error("unexpected data object")
+            elif line.startswith("commit"):
+                continue     # FIXME
+            elif line.startswith("reset"):
+                tagname = line[4:].strip()
+                nextline = fp.readline()
+                import_line += 1
+                if nextline.startswith("from"):
+                    tags_to_marks[tagname] = nextline[5:].strip()
+                else:
+                    error("missing from after reset")
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                nextline = fp.readline()
+                import_line += 1
+                if nextline.startswith("from"):
+                    tags_to_marks[tagname] = nextline[5:].strip()
+                else:
+                    error("missing from after tag")
+                self.read_data(open(".rs/tag" + tagname, "w")).close()
+            else:
+                raise error("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+if __name__ == '__main__':
+    #subcommand = sys.argv[1]
+    #(options, arguments) = getopt.getopt(sys.argv[2:], "")
+    print "No mainline code yet"
+
+commit refs/heads/master
+mark :13
+author Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
+data 47
+Fast-import reading except for commit objects.
+from :11
+M 100755 :12 rs
+
+blob
+mark :14
+data 8457
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO
+
+class Action:
+    "Represents an instance pof a person acting on the repo."
+    def __init__(self, name, email, when):
+        self,name = name
+        self.email = email
+        self.when = when
+    def __repr__(self):
+        return self.name + " " + self.email + " " + self.when
+
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = None          # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.map = []       # List of commit-to-parent mappings
+        self.nmarks = 0
+        self.import_line = 0
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def fast_import(self, fp):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.mkdir(".rs")     # May throw OSError
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header")
+            return
+        def readline():
+            if linebuffers:
+                return linebuffers.pop()
+            else:
+                self.import_line += 1
+                return fp.readline()
+        def pushback(line):
+            self.linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                nextline = readline()
+                if line.startswith("mark"):
+                    mark = nextline[5:].strip()
+                    read_data(open(".rs/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = currentbranch
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    nextline = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = nextline[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            (name, email, when) = line.split()
+                            commit.author = Action(name, email, when)
+                        except ValueSelf.Error:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            (name, email, when) = line.split()
+                            commit.committer = Action(name, email, when)
+                        except ValueSelf.Error:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = self.read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.ancestors.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.filemap.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.filemap.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            fileop.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = ".rs/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            fileop.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                nextline = readline()
+                if nextline.startswith("from"):
+                    refs_to_marks[currentbranch] = nextline[5:].strip()
+                else:
+                    self.error("missing from after reset")
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                nextline = readline()
+                if nextline.startswith("from"):
+                    refs_to_marks[tagname] = nextline[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                self.read_data(open(".rs/tag-" + tagname, "w")).close()
+            else:
+                raise self.error("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+def usage():
+    print >>sys.stderr,"""\
+usage: rs command [option..]
+
+Commands are as follows
+
+    help       -- emit this help message             
+    load       -- prepare a repo for surgery
+    clear      -- clear the operating theater
+"""
+
+if __name__ == '__main__':
+    sys.argv.pop(0)
+    if not sys.argv:
+        usage()
+        raise SystemExit, 0
+    command = sys.argv.pop(0)
+    (options, arguments) = getopt.getopt(sys.argv[2:], "")
+    if command in ("help", "usage"):
+        usage()
+    elif command == "clear":
+        os.system("rm -fr .rs")
+    elif command == "load":
+        repo = GenericRepo()
+        try:
+            if not arguments:
+                repo.fast_import(sys.stdin)
+            else:
+                fatal("rs: unsupported load mode")
+        except RepoSurgeonException, e:
+            fatal(e.msg)
+    else:
+        print >>sys.stderr,"rs: unknown command"
+
+# end
+
+commit refs/heads/master
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
+data 30
+First commands are executing.
+from :13
+M 100755 :14 rs
+
+blob
+mark :16
+data 8874
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO
+
+class Action:
+    "Represents an instance pof a person acting on the repo."
+    def __init__(self, name, email, when):
+        self.name = name
+        self.email = email
+        self.when = when
+    def __repr__(self):
+        return self.name + " " + self.email + " " + self.when
+
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.map = []       # List of commit-to-parent mappings
+        self.nmarks = 0
+        self.import_line = 0
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def fast_import(self, argv):
+        "Initialize repo object from fast-import stream."
+        verbose = False
+        (options, arguments) = getopt.getopt(argv[1:], "v")
+        for (opt, arg) in options:
+            if opt == '-v':
+                verbose = True
+        if not arguments:
+            fp = sys.stdin
+        else:
+            error("load subcommand does not take arguments", atline=False)
+        print "Foo!", argv, options, verbose
+        try:
+            os.mkdir(".rs")     # May throw OSError
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+            if verbose:
+                print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(".rs/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            line = line.replace(" <", "|").replace("> ", "|")
+                            (name, email, when) = line[7:].strip().split("|")
+                            commit.author = Action(name, email, when)
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            line = line.replace(" <", "|").replace("> ", "|")
+                            (name, email, when) = line[10:].strip().split("|")
+                            commit.committer = Action(name, email, when)
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.filemap.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.filemap.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = ".rs/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[tagname] = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                read_data(open(".rs/tag-" + tagname, "w")).close()
+            else:
+                raise self.error("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+def usage():
+    print >>sys.stderr,"""\
+usage: rs command [option..]
+
+Commands are as follows
+
+    help       -- emit this help message             
+    load       -- prepare a repo for surgery
+    clear      -- clear the operating theater
+"""
+
+if __name__ == '__main__':
+    sys.argv.pop(0)
+    if not sys.argv:
+        usage()
+        raise SystemExit, 0
+    command = sys.argv[0]
+    if command in ("help", "usage"):
+        usage()
+    elif command == "clear":
+        os.system("rm -fr .rs")
+    elif command == "load":
+        try:
+            repo = GenericRepo()
+            repo.fast_import(sys.argv)
+        except RepoSurgeonException, e:
+            fatal(e.msg)
+    else:
+        print >>sys.stderr,"rs: unknown command"
+
+# end
+
+commit refs/heads/master
+mark :17
+author Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
+data 36
+Options processing for subcommands.
+from :15
+M 100755 :16 rs
+
+blob
+mark :18
+data 9978
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO
+
+class Action:
+    "Represents an instance pof a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class GenericRepo:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.import_line = 0
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def fast_import(self, argv):
+        "Initialize repo object from fast-import stream."
+        verbose = False
+        (options, arguments) = getopt.getopt(argv[1:], "v")
+        for (opt, arg) in options:
+            if opt == '-v':
+                verbose = True
+        if not arguments:
+            fp = sys.stdin
+        else:
+            error("load subcommand does not take arguments", atline=False)
+        try:
+            os.mkdir(".rs")     # May throw OSError
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(".rs/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = ".rs/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+def usage():
+    print >>sys.stderr,"""\
+usage: rs command [option..]
+
+Commands are as follows
+
+    help       -- emit this help message             
+    load       -- prepare a repo for surgery
+    clear      -- clear the operating theater
+"""
+
+if __name__ == '__main__':
+    sys.argv.pop(0)
+    if not sys.argv:
+        usage()
+        raise SystemExit, 0
+    command = sys.argv[0]
+    if command in ("help", "usage"):
+        usage()
+    elif command == "clear":
+        os.system("rm -fr .rs")
+    elif command == "load":
+        try:
+            repo = GenericRepo()
+            repo.fast_import(sys.argv)
+        except RepoSurgeonException, e:
+            fatal(e.msg)
+    else:
+        print >>sys.stderr,"rs: unknown command"
+
+# end
+
+commit refs/heads/master
+mark :19
+author Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
+data 31
+First parse of an entire dump.
+from :17
+M 100755 :18 rs
+
+blob
+mark :20
+data 9975
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.import_line = 0
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def fast_import(self, argv):
+        "Initialize repo object from fast-import stream."
+        verbose = False
+        (options, arguments) = getopt.getopt(argv[1:], "v")
+        for (opt, arg) in options:
+            if opt == '-v':
+                verbose = True
+        if not arguments:
+            fp = sys.stdin
+        else:
+            error("load subcommand does not take arguments", atline=False)
+        try:
+            os.mkdir(".rs")     # May throw OSError
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(".rs/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = ".rs/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+def usage():
+    print >>sys.stderr,"""\
+usage: rs command [option..]
+
+Commands are as follows
+
+    help       -- emit this help message             
+    load       -- prepare a repo for surgery
+    clear      -- clear the operating theater
+"""
+
+if __name__ == '__main__':
+    sys.argv.pop(0)
+    if not sys.argv:
+        usage()
+        raise SystemExit, 0
+    command = sys.argv[0]
+    if command in ("help", "usage"):
+        usage()
+    elif command == "clear":
+        os.system("rm -fr .rs")
+    elif command == "load":
+        try:
+            repo = Repository()
+            repo.fast_import(sys.argv)
+        except RepoSurgeonException, e:
+            fatal(e.msg)
+    else:
+        print >>sys.stderr,"rs: unknown command"
+
+# end
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
+data 26
+Typo fix and name change.
+from :19
+M 100755 :20 rs
+
+blob
+mark :22
+data 1499
+= Reposurgeon Theory of Operation =
+Eric S. Raymond <esr@thyrsus.com>
+
+The purpose of reposurgeon is to enable risky operations that
+version-control systems don't want to let you do, such as (a) editing
+past comments and metadata, (b) excising commits, (c) coalescing
+commits, and (d) removing files and subtrees from repo history. The
+original motivation for reposurgeon was to clean up artifacts
+created by repository conversions.
+
+To keep reposurgeon simple and flexible, it does not do its own
+repository reading and writing.  Instead, it relies on being able to
+parse and emit the dump format created by git-fast-export and read by
+git-fast-import.  This means that it can be used on any
+version-control system that that has both fast-export and fast-import
+utilities.  This set includes git itself, hg, bzr, and Subversion. As
+version-control systems add support for the fast-import format, their
+reppositories will automatically become editable by repoosurgeon see 
+the https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools[Git 
+Wiki tools page] for a large collection of such tools.
+
+It is a design constraint that all reposurgeon operations either
+preserve all repository state they are not explicitly told to modify
+or warn you when they cannot do so.  Users should, however, be aware
+of limitations in the ability of the fast-import format to capture 
+repository state. Presently the most significant such limitation is
+that the dumps do not capture git lightweight tags.
+
+
+
+
+
+commit refs/heads/master
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
+data 27
+Upate theory of operation.
+from :21
+M 100644 :22 theory.txt
+
+blob
+mark :24
+data 12567
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+
+def load_repo(source):
+    "Load a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist"
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.page = 1
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_load(self, line):
+        if not line:
+            line = '.';
+        self.repo = load_repo(line)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
+data 38
+First successful interpreted command.
+from :23
+M 100755 :24 rs
+
+blob
+mark :26
+data 12575
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+
+def load_repo(source):
+    "Load a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist"
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.page = 1
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_load(self, line):
+        if not line:
+            line = '.';
+        self.repo = load_repo(line)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+blob
+mark :27
+data 2028
+= Reposurgeon Theory of Operation =
+Eric S. Raymond <esr@thyrsus.com>
+
+The purpose of reposurgeon is to enable risky operations that
+version-control systems don't want to let you do, such as (a) editing
+past comments and metadata, (b) excising commits, (c) coalescing
+commits, and (d) removing files and subtrees from repo history. The
+original motivation for reposurgeon was to clean up artifacts
+created by repository conversions.
+
+To keep reposurgeon simple and flexible, it does not do its own
+repository reading and writing.  Instead, it relies on being able to
+parse and emit the dump format created by git-fast-export and read by
+git-fast-import.  This means that it can be used on any
+version-control system that that has both fast-export and fast-import
+utilities.  This set includes git itself, hg, and bzr. 
+
+Subversion/RCS/CVS aren't directly supported because exporting from
+them requires fixups of usernames in the committer information to full
+email addresses.  Trying to handle that entirely inside this tool
+would be excessively messy, so we don't. Instead we let the user
+transform dump files and cope with the export/import himself.
+
+As version-control systems add support for the fast-import format,
+their reppositories will automatically become editable by repoosurgeon
+see the
+https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools[Git
+Wiki tools page] for a large collection of such tools.
+
+It is a design constraint that all reposurgeon operations either
+preserve all repository state they are not explicitly told to modify
+or warn you when they cannot do so.  Users should, however, be aware
+of limitations in the ability of the fast-import format to capture 
+repository state. Presently the most significant such known 
+limitations are:
+
+* Under git, dumps do not capture git lightweight tags.
+
+* Under bzr, dumps do not capture information about (a) multiple-author 
+commits, (b) bzr custom commit properties (e.g. branch-nick and bugs 
+fixed by this change), or (c) empty directories.
+
+
+
+
+
+commit refs/heads/master
+mark :28
+author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
+data 22
+Document limitations.
+from :25
+M 100755 :26 rs
+M 100644 :27 theory.txt
+
+blob
+mark :29
+data 12893
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, self.content)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n"
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                str += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+
+def load_repo(source):
+    "Load a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist"
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.page = 1
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_load(self, line):
+        if not line:
+            line = '.';
+        self.repo = load_repo(line)
+        print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+              (len(self.repo.commits),
+               self.repo.nblobs,
+               self.repo.nmarks,
+               len(self.repo.tags))
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :30
+author Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
+data 32
+Fix a bug, add instrumentation.
+from :28
+M 100755 :29 rs
+
+blob
+mark :31
+data 13693
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op) + "\n"
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            commit.fileops.append((op, mode, ref, path))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            fp.write(repr(commit))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source):
+    "Read a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(target):
+    "Write a repository using fast-export."
+    pass
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        self.repo.fast_export(sys.stdout)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :32
+author Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
+data 43
+Partial fast-export (everything but blobs.
+from :30
+M 100755 :31 rs
+
+blob
+mark :33
+data 14364
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob %s\ndata %d\n%s\n" % (ref, len(content), content))
+            fp.write(repr(commit))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source):
+    "Read a repository using fast-import."
+    if not os.path.exists(source):
+        print "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(target):
+    "Write a repository using fast-export."
+    pass
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        self.repo.fast_export(sys.stdout)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        RepoSurgeon().cmdloop()
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :34
+author Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
+data 30
+Blob dumping appears to work.
+from :32
+M 100755 :33 rs
+
+blob
+mark :35
+data 14865
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = tagger
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s\n" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob %s\ndata %d\n%s\n" % (ref, len(content), content))
+            fp.write(repr(commit))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source):
+    "Read a repository using fast-import."
+    if source == '-':
+        repo = Repository()
+        repo.fast_import(sys.stdin)
+    elif not os.path.exists(source):
+        print "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print "rs: could not find a repository under %s" % source
+            return None
+        print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(repo, target):
+    "Write a repository using fast-export."
+    if target == '-':
+        repo.fast_export(sys.stdout)
+    # FIXME: Have to decide a policy here
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        if not line:
+            line = '-'
+        write_repo(self.repo, line)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        interpreter = RepoSurgeon()
+        if not sys.argv[1:]:
+            sys.argv.append("-")
+        for arg in sys.argv[1:]:
+            for cmd in arg.split(";"):
+                if cmd == '-':
+                    interpreter.cmdloop()
+                else:
+                    interpreter.onecmd(cmd)
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :36
+author Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
+data 40
+We interpret command-ine arguments now.
+from :34
+M 100755 :35 rs
+
+blob
+mark :37
+data 15019
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = committish
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        refs_to_marks = {}
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    refs_to_marks[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
+            fp.write(repr(commit))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source, verbose):
+    "Read a repository using fast-import."
+    if source == '-':
+        repo = Repository()
+        repo.fast_import(sys.stdin)
+    elif not os.path.exists(source):
+        print >>sys.stderr, "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print >>sys.stderr,"rs: could not find a repository under %s" % source
+            return None
+        if verbose:
+            print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(repo, target, verbose):
+    "Write a repository using fast-export."
+    if target == '-':
+        repo.fast_export(sys.stdout)
+    # FIXME: Have to decide a policy here
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line, self.verbose)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        if not line:
+            line = '-'
+        write_repo(self.repo, line, self.verbose)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        interpreter = RepoSurgeon()
+        if not sys.argv[1:]:
+            sys.argv.append("-")
+        for arg in sys.argv[1:]:
+            for cmd in arg.split(";"):
+                if cmd == '-':
+                    interpreter.oncmd("verbose 1")
+                    interpreter.cmdloop()
+                else:
+                    interpreter.onecmd(cmd)
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :38
+author Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
+data 53
+We're pretty close to round-tripping a git dump now.
+from :36
+M 100755 :37 rs
+
+blob
+mark :39
+data 15203
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = committish
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.refs_to_branches = {}
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        self.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[7:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    self.refs_to_branches[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
+            fp.write(repr(commit))
+        branches = self.refs_to_branches.keys()
+        for branch in branches:
+            fp.write("reset %s\nmark %s\n\n" % (branch, self.refs_to_branches[branch]))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source, verbose):
+    "Read a repository using fast-import."
+    if source == '-':
+        repo = Repository()
+        repo.fast_import(sys.stdin)
+    elif not os.path.exists(source):
+        print >>sys.stderr, "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print >>sys.stderr,"rs: could not find a repository under %s" % source
+            return None
+        if verbose:
+            print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(repo, target, verbose):
+    "Write a repository using fast-export."
+    if target == '-':
+        repo.fast_export(sys.stdout)
+    # FIXME: Have to decide a policy here
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line, self.verbose)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        if not line:
+            line = '-'
+        write_repo(self.repo, line, self.verbose)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        interpreter = RepoSurgeon()
+        if not sys.argv[1:]:
+            sys.argv.append("-")
+        for arg in sys.argv[1:]:
+            for cmd in arg.split(";"):
+                if cmd == '-':
+                    interpreter.oncmd("verbose 1")
+                    interpreter.cmdloop()
+                else:
+                    interpreter.onecmd(cmd)
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :40
+author Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
+data 53
+Checkpoint before tring to write only requred marks.
+from :38
+M 100755 :39 rs
+
+blob
+mark :41
+data 15448
+#!/usr/bin/env python
+#
+# rs - a repository surgeon.
+#
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+
+#
+# All knowledge about specific version-control systems lives in the
+# following dictionary. The key is the subdirectory name that tells us
+# we have a given VCS active.  The values in the tuple are,
+# respectively:
+#
+# * Name of the SCM for diagnostic messages
+# * Command to export from the SCM to the interchange format
+# * Command to initialize a new repo
+# * Command to import from the interchange format
+# * Command to check out working copies of the repo files.
+#
+# Note that some of the commands used here are plugins or extenstions
+# that are not part of the basic VCS. Thus these may fail when called;
+# we need to be prepared to cope with that.
+#
+# Subversion/RCS/CVS aren't in this table because exporting from them
+# requires fixups of usernames in the committer information to full
+# email addresses.  Trying to handle that entirely inside this tool
+# would be excessively messy, so we don't. Instead we let the user
+# transform dump files and cope with the export/import himself.
+#
+vcstypes = [
+     ("git",
+      ".git",
+      "git fast-export -M -C --all >%s",
+      "git init",
+      "git fast-import <%s",
+      "git checkout"),
+     # FIXME: hg and bzr methods are untested
+     ("hg",
+      ".hg",
+      "hg-fast-export.sh %s",   # Not part of stock hg
+      "hg init",
+      "hg fast-import %s",      # Not part of stock hg
+      "hg checkout"),
+     ("bzr",
+      ".bzr",
+      "bzr-fast-export --plain %s",
+      "bzr init",
+      "bzr fast-import %s",
+      "bzr checkout"),
+    ]
+
+class Action:
+    "Represents an instance of a person acting on the repo."
+    def __init__(self, person):
+        person = person.replace(" <", "|").replace("> ", "|")
+        (self.name, self.email, self.when) = person.strip().split("|")
+    def __repr__(self):
+        return self.name + " <" + self.email + "> " + self.when
+
+class Tag:
+    "Represents an annotated tag."
+    def __init__(self, name, committish, tagger, content):
+        self.name = name
+        self.committish = committish
+        self.tagger = tagger
+        self.comment = content
+    def __repr__(self):
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
+             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        
+class Commit:
+    "Generic commit object."
+    def __init__(self):
+        self.mark = None             # Mark name of commit (may be None)
+        self.author = None           # Author of commit
+        self.committer = None        # Person responsible for committing it.
+        self.comment = None          # Commit comment
+        self.parents = []            # List of parent nodes
+        self.branch = None           # branch name (deduced optimization hack)
+        self.fileops = []            # blob and file operation list
+    def __repr__(self):
+        st = "commit %s\n" % self.branch
+        if self.mark:
+            st += "mark %s\n" % self.mark
+        if self.author:
+            st += "author %s\n" % self.author
+        if self.committer:
+            st += "committer %s\n" % self.committer
+        st += "data %d\n%s" % (len(self.comment), self.comment) 
+        if self.parents:
+            st += "from %s\n" % self.parents[0]
+        for ancestor in self.parents[1:]:
+            st += "merge %s\n" % self.parents[0]
+        for op in self.fileops:
+            if type(op) == type(""):
+                st += op + "\n"
+            else:
+                st += " ".join(op[:4]) + "\n"
+                if op[2] == 'inline':
+                    fp = open(op[4])
+                    content = fp.read()
+                    fp.close()
+                    st += "data %d\n%s\n" % (len(content), content)
+        return st + "\n"
+
+class RepoSurgeonException:
+    def __init__(self, msg):
+        self.msg = msg
+
+class Repository:
+    "Generic repository object."
+    def __init__(self):
+        self.repotype = None
+        self.commits = []   # A list of commit objects
+        self.branches = []  # A list of branchname-to-commit mappings
+        self.tags = []      # List of tag-to-commit
+        self.nmarks = 0
+        self.refs_to_branches = {}
+        self.nblobs = 0
+        self.import_line = 0
+        self.subdir = ".rs"
+    def error(self, msg, atline=True):
+        if atline:
+            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+        else:
+            raise RepoSurgeonException(msg)
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir,))
+    def fast_import(self, fp, verbose=False):
+        "Initialize repo object from fast-import stream."
+        try:
+            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+        self.import_line = 0
+        linebuffers = []
+        currentbranch = "master"
+        ncommits = 0
+        def read_data(dp, line=None):
+            if not line:
+                line = readline()
+            if line.startswith("data <<"):
+                delim = line[7:]
+                while True:
+                    dataline = fp.readline()
+                    if dataline == delim:
+                        break
+                    elif not dataline:
+                        raise RepoSurgeonException("EOF while reading blob")
+            elif line.startswith("data"):
+                try:
+                    count = int(line[5:])
+                    dp.write(fp.read(count))
+                except ValueSelf.Error:
+                    raise self.error("bad count in data")
+            else:
+                raise self.error("malformed data header %s" % `line`)
+            return dp
+        def readline():
+            if linebuffers:
+                line = linebuffers.pop()
+            else:
+                self.import_line += 1
+                line = fp.readline()
+                if verbose:
+                    print line.rstrip()
+            return line
+        def pushback(line):
+            linebuffers.append(line)
+        while True:
+            line = readline()
+            if not line:
+                break
+            elif line.startswith("#") or line.startswith("checkpoint"):
+                continue
+            elif not line.strip():
+                continue
+            elif line.startswith("progress"):
+                sys.stdout.write(line[9:])
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("options"):
+                continue     # Might need real code here someday
+            elif line.startswith("blob"):
+                line = readline()
+                if line.startswith("mark"):
+                    mark = line[5:].strip()
+                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    self.nmarks += 1
+                    self.nblobs += 1
+                else:
+                    self.error("missing mark after blob")
+            elif line.startswith("data"):
+                self.error("unexpected data object")
+            elif line.startswith("commit"):
+                commitbegin = self.import_line
+                commit = Commit()
+                commit.branch = line.split()[1]
+                ncommits += 1
+                inlinecount = 0
+                while True:
+                    line = readline()
+                    if not line:
+                        self.error("EOF after commit")
+                    elif line.startswith("mark"):
+                        commit.mark = line[5:].strip()
+                        self.nmarks += 1
+                    elif line.startswith("author"):
+                        try:
+                            commit.author = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed author line")
+                    elif line.startswith("committer"):
+                        try:
+                            commit.committer = Action(line[10:])
+                        except ValueError:
+                            self.error("malformed committer line")
+                    elif line.startswith("data"):
+                        dp = read_data(cStringIO.StringIO(), line)
+                        commit.comment = dp.getvalue()
+                        dp.close()
+                    elif line.startswith("from") or line.startswith("merge"):
+                        commit.parents.append(line.split()[1])
+                    elif line[0] in ("C", "D", "R"):
+                        commit.fileops.append(line.strip().split())
+                    elif line == "filedeletall\n":
+                        commit.fileops.append("filedeleteall")
+                    elif line[0] == "M":
+                        (op, mode, ref, path) = line.split()
+                        if ref[0] == ':':
+                            copyname = self.subdir + "/blob-" + ref
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        elif ref[0] == 'inline':
+                            copyname = self.subdir + "/inline-" + `inline_count`
+                            self.read_data(open(copyname, "w")).close()
+                            inline_count += 1
+                            commit.fileops.append((op, mode, ref, path, copyname))
+                        else:
+                            self.error("unknown content type in filemodify")
+                    else:
+                        pushback(line)
+                        break
+                if not (commit.mark and commit.author and commit.committer):
+                    self.import_line = commitbegin
+                    self.error("missing required fields in commit")
+                self.commits.append(commit)
+            elif line.startswith("reset"):
+                currentbranch = line[6:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    self.refs_to_branches[currentbranch] = line[5:].strip()
+                else:
+                    pushback(line)
+            elif line.startswith("tag"):
+                tagname = line[4:].strip()
+                line = readline()
+                if line.startswith("from"):
+                    referent = line[5:].strip()
+                else:
+                    self.error("missing from after tag")
+                line = readline()
+                if line.startswith("tagger"):
+                        try:
+                            tagger = Action(line[7:])
+                        except ValueError:
+                            self.error("malformed tagger line")
+                else:
+                    self.error("missing tagger after from in tag")
+                dp = read_data(cStringIO.StringIO())
+                self.tags.append(Tag(tagname,
+                                     referent, tagger, dp.getvalue()))
+
+            else:
+                raise self.error("unexpected line in import stream")
+    def fast_export(self, fp):
+        "Dump the repo object in fast-export format."
+        for commit in self.commits:
+            for fileop in commit.fileops:
+                if type(fileop) == type(()):
+                    ref = fileop[2]
+                    if ref[0] == ':':
+                        dp = open(fileop[4])
+                        content = dp.read()
+                        dp.close()
+                        fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
+            fp.write(repr(commit))
+        branches = self.refs_to_branches.keys()
+        for branch in branches:
+            fp.write("reset %s\nfrom %s\n\n" % (branch, self.refs_to_branches[branch]))
+        for tag in self.tags:
+            fp.write(repr(tag))
+
+def read_repo(source, verbose):
+    "Read a repository using fast-import."
+    if source == '-':
+        repo = Repository()
+        repo.fast_import(sys.stdin)
+    elif not os.path.exists(source):
+        print >>sys.stderr, "rs: %s does not exist" % source
+        return None
+    elif not os.path.isdir(source):
+        repo = Repository()
+        repo.fast_import(open(source))
+    else:
+        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+            subdir = os.path.join(source, dirname)
+            
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                break
+        else:
+            print >>sys.stderr,"rs: could not find a repository under %s" % source
+            return None
+        if verbose:
+            print "rs: recognized %s repository under %s" % (name, source)
+        try:
+            repo = Repository()
+            (tfdesc, tfname) = tempfile.mkstemp()
+            cmd = "cd %s >/dev/null;" % source
+            cmd += exporter % tfname
+            act(cmd)
+            tp = open(tfname)
+            repo.fast_import(tp);
+            tp.close()
+        finally:
+            os.remove(tfname)
+    (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
+                                                                   initializer,
+                                                                   importer,
+                                                                   checkout)
+    return repo
+
+def write_repo(repo, target, verbose):
+    "Write a repository using fast-export."
+    if target == '-':
+        repo.fast_export(sys.stdout)
+    # FIXME: Have to decide a policy here
+
+def act(cmd):
+    (err, out) = commands.getstatusoutput(cmd)
+    if err:
+        raise RepoSurgeonException("'%s' failed" % cmd)
+    else:
+        return out
+
+def fatal(msg):
+    print >>sys.stderr, "rs:", msg
+    raise SystemExit, 1
+
+class RepoSurgeon(cmd.Cmd):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.verbose = 0
+        self.prompt = "rs# "
+        self.repo = None
+    def postcmd(self, stop, line):
+        if line == "EOF":
+            return True
+    def do_verbose(self, line):
+        "Set the interpreter's verbosity level."
+        try:
+            self.verbose = int(line)
+        except ValueError:
+            print "rs: verbosity value must be an integer"
+    def do_read(self, line):
+        "Read in a repository for surgery."
+        if not line:
+            line = '.';
+        self.repo = read_repo(line, self.verbose)
+        if self.verbose:
+            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
+                  (len(self.repo.commits),
+                   self.repo.nblobs,
+                   self.repo.nmarks,
+                   len(self.repo.tags))
+    def do_write(self, line):
+        "Write out the results of repo surgery."
+        if not line:
+            line = '-'
+        write_repo(self.repo, line, self.verbose)
+    def do_EOF(self, line):
+        "Terminate the browser."
+        return True
+
+if __name__ == '__main__':
+    try:
+        interpreter = RepoSurgeon()
+        if not sys.argv[1:]:
+            sys.argv.append("-")
+        for arg in sys.argv[1:]:
+            for cmd in arg.split(";"):
+                if cmd == '-':
+                    interpreter.oncmd("verbose 1")
+                    interpreter.cmdloop()
+                else:
+                    interpreter.onecmd(cmd)
+    except RepoSurgeonException, e:
+        fatal(e.msg)
+    except KeyboardInterrupt:
+        print ""
+
+# end
+
+commit refs/heads/master
+mark :42
+author Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
+data 62
+This round-trips everything except the lightweight tag stuff.
+from :40
+M 100755 :41 rs
+
+reset refs/heads/master
+from :42
+
+reset refs/tags/foo
+from :42
+
