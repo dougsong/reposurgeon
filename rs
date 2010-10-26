@@ -114,6 +114,7 @@ class Repository:
         self.branches = []  # A list of branchname-to-commit mappings
         self.tags = []      # List of tag-to-commit
         self.nmarks = 0
+        self.refs_to_branches = {}
         self.nblobs = 0
         self.import_line = 0
         self.subdir = ".rs"
@@ -130,7 +131,6 @@ class Repository:
             os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
         except OSError:
             self.error("can't create operating directory", atline=False)
-        refs_to_marks = {}
         self.import_line = 0
         linebuffers = []
         currentbranch = "master"
@@ -240,10 +240,10 @@ class Repository:
                         break
                 self.commits.append(commit)
             elif line.startswith("reset"):
-                currentbranch = line[4:].strip()
+                currentbranch = line[7:].strip()
                 line = readline()
                 if line.startswith("from"):
-                    refs_to_marks[currentbranch] = line[5:].strip()
+                    self.refs_to_branches[currentbranch] = line[5:].strip()
                 else:
                     pushback(line)
             elif line.startswith("tag"):
@@ -279,6 +279,9 @@ class Repository:
                         dp.close()
                         fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
             fp.write(repr(commit))
+        branches = self.refs_to_branches.keys()
+        for branch in branches:
+            fp.write("reset %s\nmark %s\n\n" % (branch, self.refs_to_branches[branch]))
         for tag in self.tags:
             fp.write(repr(tag))
 
