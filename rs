@@ -2,7 +2,7 @@
 #
 # rs - a repository surgeon.
 #
-import sys, os, getopt, commands, cStringIO, cmd, tempfile
+import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline
 
 #
 # All knowledge about specific version-control systems lives in the
@@ -352,12 +352,17 @@ class RepoSurgeon(cmd.Cmd):
     "Repository surgeon command interpreter."
     def __init__(self):
         cmd.Cmd.__init__(self)
+        self.use_rawinput = True
         self.verbose = 0
         self.prompt = "rs# "
         self.repo = None
     def postcmd(self, stop, line):
         if line == "EOF":
             return True
+    def emptyline(self):
+        pass
+    def help_help(self):
+        print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
         "Set the interpreter's verbosity level."
         try:
@@ -376,11 +381,30 @@ class RepoSurgeon(cmd.Cmd):
                    len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),
                    self.repo.nmarks,
                    len(filter(lambda x: isinstance(x,Tag),self.repo.commands)))
+    def help_read(self):
+        print """
+A read command with no arguments is treated as 'read .', operating on the
+current directory.
+        
+With a directory-name argument, this command attempts to read in the
+contents of a repository in any supported version-control system under
+that directory.
+
+If the argument is the name of a plain file, it will be read in as a
+fast-import stream.
+
+With an argument of <quote>-</quote>, this command reads a fast-import
+stream from standard input (this will be useful in filters constructed
+with command-line arguments).
+"""
     def do_write(self, line):
         "Write out the results of repo surgery."
         if not line:
             line = '-'
         write_repo(self.repo, line, self.verbose)
+    def do_shell(self, line):
+        "Execute a shell command."
+        os.system(line)
     def do_EOF(self, line):
         "Terminate the browser."
         return True
