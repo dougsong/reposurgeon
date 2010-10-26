@@ -103,6 +103,25 @@ an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para></listitem>
 </varlistentry>
+<varlistentry>
+<term>write</term>
+<listitem><para>
+Dump a fast-import stream representing the edited repostory to standard output
+(if argument is empty or '-') or a file.  Fails if the argument exists
+and is a directory or anything other than a plain file.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>rebuild</term>
+<listitem><para>
+Rebuild a repository from the state held by
+<application>reposurgeon</application>.  The argument specifies the
+target directory in which to do the rebuild; if the repository read
+was from a repo directory (and not a git-import stream), it defaults
+to that directory.  If the target directory is nonempty its contents
+are backed up to a save directory.
+</para></listitem>
+</varlistentry>
 </variablelist>
 </refsect1>
 

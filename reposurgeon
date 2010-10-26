@@ -133,6 +133,7 @@ class Repository:
     "Generic repository object."
     def __init__(self):
         self.type = None
+        self.sourcedir = None
         self.commands = []    # A list of the commands encountered, in order
         self.nmarks = 0
         self.refs_to_branches = {}
@@ -326,9 +327,12 @@ def read_repo(source, preferred, verbose):
             print "reposurgeon: recognized %s repository under %s" % (foundname, source)
         try:
             repo = Repository()
-            repo.type = foundname 
+            repo.type = foundname
+            repo.sourcedir = source
             (tfdesc, tfname) = tempfile.mkstemp()
-            cmd = "cd %s >/dev/null;" % source
+            cmd = ""
+            if source != '.':
+                cmd += "cd %s >/dev/null;" % source
             cmd += foundexporter % tfname
             act(cmd)
             tp = open(tfname)
@@ -338,22 +342,77 @@ def read_repo(source, preferred, verbose):
             os.remove(tfname)
     return repo
 
-def write_repo(repo, target, preferred, verbose):
-    "Write a repository using fast-export."
-    if target == '-':
-        repo.fast_export(sys.stdout)
-    elif os.path.isdir(source):
-        # FIXME
-        print >>sys.stderr, "reposurgeon: directory writes are not yet supported."
-    elif os.path.exists(source):
-        print >>sys.stderr, "reposurgeon: file %s already exists" % source
+def rebuild_repo(repo, target, preferred, verbose):
+    "Rebuild a repository from the captured state."
+    if not target and repo.sourcedir:
+        target = repo.sourcedir
+    if target:
+        target = os.path.abspath(target)
     else:
-        repo.fast_export(open(source, "w"))
+        print >>sys.stderr, "reposurgeon: no default destination for rebuild."
+        return
+    if not preferred:
+        print >>sys.stderr, "reposurgeon: please prefer a repo type first."
+        return
+    # Create a new empty directory to do the rebuild in
+    staging = target + "-stage" + os.getpid()
+    assert(isabspath(target) and isabspath(staging))
+    try:
+        os.mkdir(staging)
+    except OSError:
+        print >>sys.stderr, "reposurgeon: staging directory creation failed."
+        return
+    # Try the rebuild in the empty staging directory 
+    (dirname,exporter,initializer,importer,checkout) = vcstypes[self.preferred]
+    here = os.getcwd()
+    try:
+        os.chdir(staging)
+        if os.system(initializer):
+            print >>sys.stderr, "reposurgeon: repo initialization failed."
+            return
+        (tfdesc, tfname) = tempfile.mkstemp()
+        tp = open(tfname, "w")
+        repo.fast_export(tp)
+        tp.close()
+        if os.system(importer % tfname):
+            print >>sys.stderr, "reposurgeon: repo import failed."
+            return
+        if os.system(checkout):
+            print >>sys.stderr, "reposurgeon: repo checkout failed"
+            return
+        os.chdir(here)
+        # Rebuild succeeded - make an empty backup directory
+        backupcount = 1
+        while True:
+            savedir = target + ".~%d%~" % backupcount
+            if os.path.exists(savedir):
+                backupcount += 1
+            else:
+                break
+        os.mkdir(savedir)
+        assert(os.path.abspath(savedir))
+        # Move the unmodified repo contents in target to the backup directory.
+        # Then move the staging contents to the target directory.
+        for sub in os.listdir(target):
+            os.rename(os.path.join(target, sub),
+                      os.path.join(savedir, sub))
+        if verbose:
+            print >>sys.stderr, "reposurgeon: repo backed up to %s" % savedir
+        for sub in os.listdir(staging):
+            os.rename(os.path.join(staging, sub),
+                      os.path.join(target, sub))
+    finally:
+        os.chdir(here)
+        os.remove(tfname)
+        os.system("rm -fr " + staging)
 
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
     if err:
         print >>sys.stderr,"'%s' failed" % cmd
+        return False
+    else:
+        return True
 
 def fatal(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -412,10 +471,11 @@ to the type of that repository.
 """
     def do_read(self, line):
         "Read in a repository for surgery."
-        if not line:
-            line = '.';
+        self.preferred = None 
+        if not line or line == '.':
+            line = os.getcwd();
         if self.repo and self.verbose:
-            print "reposurgeon: previously data discarded."
+            print "reposurgeon: previous data discarded."
         self.repo = read_repo(line, self.preferred, self.verbose)
         if self.repo and self.repo.type:
             self.preferred = self.repo.type
@@ -443,13 +503,35 @@ stream from standard input (this will be useful in filters constructed
 with command-line arguments).
 """
     def do_write(self, line):
-        "Write out the results of repo surgery."
+        "Stream out the results of repo surgery."
         if not line:
-            if self.preferred:
-                line = "."
-            else:
-                line = '-'
-        write_repo(self.repo, line, self.preferred, self.verbose)
+            line = '-'
+        if line == '-':
+            self.repo.fast_export(sys.stdin)
+        else:
+            try:
+                out = open(line, "w")
+                self.repo.fast_export(out)
+                out.close()
+            except OSError:
+                print "reposurgeon: open of %s for write failed.\n" % line
+    def help_write(self):
+        print """
+Dump a fast-import stream representing the repostory to standard output
+(if argument is empty or '-') or a file.  Fails if the argument exists
+and is a directory or anything other than a plain file.
+"""
+    def do_rebuild(self, line):
+        "Rebuild a repository from the edited state."
+        rebuild_repo(self.repo, line, self.prepared, self.verbose)
+    def help_rebuild(self):
+        print """
+Rebuild a repository from the state held by reposurgeon.  The argument
+specifies the target directory in which to do the rebuild; if the
+repository read was from a repo directory (and not a git-import stream), it
+defaults to that directory.  If the target directory is nonempty
+its contents are backed up to a save directory.
+"""
     def do_shell(self, line):
         "Execute a shell command."
         os.system(line)
