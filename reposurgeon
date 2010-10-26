@@ -300,7 +300,7 @@ def read_repo(source, verbose):
         repo = Repository()
         repo.fast_import(sys.stdin)
     elif not os.path.exists(source):
-        print >>sys.stderr, "rs: %s does not exist" % source
+        print >>sys.stderr, "reposurgeon: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
         repo = Repository()
@@ -312,10 +312,10 @@ def read_repo(source, verbose):
             if os.path.exists(subdir) and os.path.isdir(subdir):
                 break
         else:
-            print >>sys.stderr,"rs: could not find a repository under %s" % source
+            print >>sys.stderr,"reposurgeon: could not find a repository under %s" % source
             return None
         if verbose:
-            print "rs: recognized %s repository under %s" % (name, source)
+            print "reposurgeon: recognized %s repository under %s" % (name, source)
         try:
             repo = Repository()
             (tfdesc, tfname) = tempfile.mkstemp()
@@ -347,7 +347,7 @@ def act(cmd):
         return out
 
 def fatal(msg):
-    print >>sys.stderr, "rs:", msg
+    print >>sys.stderr, "reposurgeon:", msg
     raise SystemExit, 1
 
 class RepoSurgeon(cmd.Cmd):
@@ -356,7 +356,7 @@ class RepoSurgeon(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
         self.verbose = 0
-        self.prompt = "rs# "
+        self.prompt = "reposurgon% "
         self.repo = None
     def postcmd(self, stop, line):
         if line == "EOF":
@@ -370,7 +370,7 @@ class RepoSurgeon(cmd.Cmd):
         try:
             self.verbose = int(line)
         except ValueError:
-            print "rs: verbosity value must be an integer"
+            print "reposurgeon: verbosity value must be an integer"
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes))
@@ -380,7 +380,7 @@ class RepoSurgeon(cmd.Cmd):
             line = '.';
         self.repo = read_repo(line, self.verbose)
         if self.verbose:
-            print "rs: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
+            print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
                   (len(self.repo.commands),
                    len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
                    len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),

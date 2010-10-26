@@ -18,7 +18,7 @@
 <refsynopsisdiv id='synopsis'>
 
 <cmdsynopsis>
-  <command>rs</command>
+  <command>reposurgeon</command>
   <arg choice='opt' rep='repeat'><replaceable>command</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

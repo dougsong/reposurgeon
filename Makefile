@@ -1,5 +1,5 @@
 #
-# makefile for reposugeon
+# makefile for reposurgeon
 #
 VERS=VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
