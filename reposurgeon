@@ -340,15 +340,15 @@ def read_repo(source, preferred, verbose):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
-        repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: importing from stdin"))
+        repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: from stdin"))
     elif not os.path.exists(source):
         print >>sys.stderr, "reposurgeon: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
         repo = Repository()
-        repo.fast_import(open(source), verbose and Baton("reposurgeon: importing from %s" % source))
+        repo.fast_import(open(source), verbose and Baton("reposurgeon: from %s" % os.path.relpath(source)))
     else:
-        if verbose:
+        if verbose > 1:
             if preferred:
                 print "reposurgeon: looking for a %s repo..." % preferred
             else:
@@ -362,13 +362,11 @@ def read_repo(source, preferred, verbose):
                 (foundname, foundexporter) = (name, exporter)
                 hitcount += 1
         if hitcount == 0:
-            print >>sys.stderr,"reposurgeon: couldn't find a repo under %s" % source
+            print >>sys.stderr,"reposurgeon: couldn't find a repo under %s" % os.path.relpath(source)
             return None
         elif hitcount > 1:
-            print >>sys.stderr,"reposurgeon: too many repos under %s" % source
+            print >>sys.stderr,"reposurgeon: too many repos under %s" % os.path.relpath(source)
             return None
-        elif verbose:
-            print "reposurgeon: recognized %s repository under %s" % (foundname, source)
         try:
             repo = Repository()
             repo.type = foundname
@@ -380,7 +378,7 @@ def read_repo(source, preferred, verbose):
             cmd += foundexporter % tfname
             act(cmd)
             tp = open(tfname)
-            repo.fast_import(tp, verbose and Baton("reposurgeon: importing from repo"));
+            repo.fast_import(tp, verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source))));
             tp.close()
         finally:
             os.remove(tfname)
@@ -422,7 +420,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             print >>sys.stderr, "reposurgeon: repo import failed."
             return
         if os.system(checkout):
-            print >>sys.stderr, "reposurgeon: repo checkout failed"
+            print >>sys.stderr, "reposurgeon: repo checkout failed."
             return
         os.chdir(here)
         # Rebuild succeeded - make an empty backup directory
@@ -441,7 +439,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             os.rename(os.path.join(target, sub),
                       os.path.join(savedir, sub))
         if verbose:
-            print >>sys.stderr, "reposurgeon: repo backed up to %s" % savedir
+            print >>sys.stderr, "reposurgeon: repo backed up to %s" % os.path.relpath(savedir)
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
@@ -468,7 +466,7 @@ class RepoSurgeon(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
         self.verbose = 0
-        self.prompt = "reposurgon% "
+        self.prompt = "reposurgeon% "
         self.repo = None
         self.preferred = None
     def postcmd(self, stop, line):
@@ -479,11 +477,15 @@ class RepoSurgeon(cmd.Cmd):
     def help_help(self):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
-        "'verbose 1' enables progress and statistics messages, 'verbose 0' disables them."
         try:
             self.verbose = int(line)
         except ValueError:
             print "reposurgeon: verbosity value must be an integer"
+    def help_verbose(self):
+        print """
+'verbose 1' enables progress messages, 'verbose 0' disables them. Higher levels
+of verbosity are available but intended for developers only.
+"""
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
@@ -542,14 +544,22 @@ with command-line arguments).
     def do_stats(self, line):
         "Report on the loaded repository infrmation"
         if self.repo:
-            print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
+            def count(otype):
+                return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
+            print "%d commands, %d blobs, %d commits, %d tags, %d branches, %d marks." % \
                   (len(self.repo.commands),
-                   len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
-                   len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),
-                   self.repo.nmarks,
-                   len(filter(lambda x: isinstance(x,Tag),self.repo.commands)))
+                   count(Blob), count(Commit), count(Tag), count(Branch),
+                   self.repo.nmarks)
+            if self.repo.type:
+                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:"), vcstypes[self.repo.type]):
+                    print "%14s %s" % (legend, command)
         else:
             print "reposurgeon: no repository loaded."
+    def help_stats(self):
+        print """
+Report size statistics and import/export method information after reading
+a repo or stream.
+"""
     def do_write(self, line):
         "Stream out the results of repo surgery."
         if not line:

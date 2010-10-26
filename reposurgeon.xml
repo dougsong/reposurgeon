@@ -47,7 +47,7 @@ itself, hg, and bzr.</para>
 command interpreter or to execute commands given as arguments on the
 <application>reposurgeon</application> command line. The only difference
 between these modes is that the interactive one begins by turning on the
-'verbose' option.</para>
+'verbose 1' option.</para>
 
 <para>Here are the available commands:</para>
 
@@ -67,9 +67,9 @@ and the list of version-control systems it directly supports.
 </varlistentry>
 <varlistentry>
 <term>verbose</term>
-<listitem><para>'verbose 1' enables progress and statistics messages,
-'verbose 0' disables them. 
-</para></listitem>
+<listitem><para>'verbose 1' enables progress and messages,
+'verbose 0' disables them. Higher levels of verbosity are available
+but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>shell</term>
@@ -102,6 +102,13 @@ name of a plain file, it will be read in as a fast-import stream. With
 an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>stats</term>
+<listitem><para>
+Report size statistics and import/export method information after reading
+a repo or stream.
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>write</term>
