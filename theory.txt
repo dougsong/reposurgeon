@@ -22,7 +22,7 @@ would be excessively messy, so we don't. Instead we let the user
 transform dump files and cope with the export/import himself.
 
 As version-control systems add support for the fast-import format,
-their reppositories will automatically become editable by repoosurgeon
+their repositories will automatically become editable by reposurgeon
 see the
 https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools[Git
 Wiki tools page] for a large collection of such tools.
@@ -33,8 +33,6 @@ or warn you when they cannot do so.  Users should, however, be aware
 of limitations in the ability of the fast-import format to capture 
 repository state. Presently the most significant such known 
 limitations are:
-
-* Under git, dumps do not capture git lightweight tags.
 
 * Under bzr, dumps do not capture information about (a) multiple-author 
 commits, (b) bzr custom commit properties (e.g. branch-nick and bugs 
