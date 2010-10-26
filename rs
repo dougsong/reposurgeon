@@ -56,6 +56,19 @@ class Action:
     def __repr__(self):
         return self.name + " <" + self.email + "> " + self.when
 
+class Blob:
+    "Represent a detached blob of data referenced by a mark."
+    def __init__(self, subdir):
+        self.mark = None
+        self.subdir = subdir
+    def blobfile(self):
+        return self.subdir + "/blob-" + self.mark
+    def __repr__(self):
+        dp = open(self.blobfile())
+        content = dp.read()
+        dp.close()
+        return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
+
 class Tag:
     "Represents an annotated tag."
     def __init__(self, name, committish, tagger, content):
@@ -66,7 +79,18 @@ class Tag:
     def __repr__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
-        
+
+class Branch:
+    "Represents a branch creation."
+    def __init__(self):
+        self.ref = None
+        self.committish = None
+    def __repr__(self):
+        st = "reset %s\n" % self.ref
+        if self.committish:
+            st += "from %s\n\n" % self.committish
+        return st
+
 class Commit:
     "Generic commit object."
     def __init__(self):
@@ -110,9 +134,7 @@ class Repository:
     "Generic repository object."
     def __init__(self):
         self.repotype = None
-        self.commits = []   # A list of commit objects
-        self.branches = []  # A list of branchname-to-commit mappings
-        self.tags = []      # List of tag-to-commit
+        self.commands = []    # A list of the commands encountered, in order
         self.nmarks = 0
         self.refs_to_branches = {}
         self.nblobs = 0
@@ -133,7 +155,6 @@ class Repository:
             self.error("can't create operating directory", atline=False)
         self.import_line = 0
         linebuffers = []
-        currentbranch = "master"
         ncommits = 0
         def read_data(dp, line=None):
             if not line:
@@ -181,14 +202,16 @@ class Repository:
             elif line.startswith("options"):
                 continue     # Might need real code here someday
             elif line.startswith("blob"):
+                blob = Blob(self.subdir)
                 line = readline()
                 if line.startswith("mark"):
-                    mark = line[5:].strip()
-                    read_data(open(self.subdir + "/blob-" + mark, "w")).close()
+                    blob.mark = line[5:].strip()
+                    read_data(open(blob.blobfile(), "w")).close()
                     self.nmarks += 1
                     self.nblobs += 1
                 else:
                     self.error("missing mark after blob")
+                self.commands.append(blob)
             elif line.startswith("data"):
                 self.error("unexpected data object")
             elif line.startswith("commit"):
@@ -242,14 +265,16 @@ class Repository:
                 if not (commit.mark and commit.author and commit.committer):
                     self.import_line = commitbegin
                     self.error("missing required fields in commit")
-                self.commits.append(commit)
+                self.commands.append(commit)
             elif line.startswith("reset"):
-                currentbranch = line[6:].strip()
+                branch = Branch()
+                branch.ref = line[6:].strip()
                 line = readline()
                 if line.startswith("from"):
-                    self.refs_to_branches[currentbranch] = line[5:].strip()
+                    branch.committish = line[5:].strip()
                 else:
                     pushback(line)
+                self.commands.append(branch)
             elif line.startswith("tag"):
                 tagname = line[4:].strip()
                 line = readline()
@@ -266,28 +291,15 @@ class Repository:
                 else:
                     self.error("missing tagger after from in tag")
                 dp = read_data(cStringIO.StringIO())
-                self.tags.append(Tag(tagname,
-                                     referent, tagger, dp.getvalue()))
+                self.commands.append(Tag(tagname,
+                                       referent, tagger, dp.getvalue()))
 
             else:
                 raise self.error("unexpected line in import stream")
     def fast_export(self, fp):
         "Dump the repo object in fast-export format."
-        for commit in self.commits:
-            for fileop in commit.fileops:
-                if type(fileop) == type(()):
-                    ref = fileop[2]
-                    if ref[0] == ':':
-                        dp = open(fileop[4])
-                        content = dp.read()
-                        dp.close()
-                        fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
-            fp.write(repr(commit))
-        branches = self.refs_to_branches.keys()
-        for branch in branches:
-            fp.write("reset %s\nfrom %s\n\n" % (branch, self.refs_to_branches[branch]))
-        for tag in self.tags:
-            fp.write(repr(tag))
+        for command in self.commands:
+            fp.write(repr(command))
 
 def read_repo(source, verbose):
     "Read a repository using fast-import."
