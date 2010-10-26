@@ -326,6 +326,7 @@ def read_repo(source, preferred, verbose):
             print "reposurgeon: recognized %s repository under %s" % (foundname, source)
         try:
             repo = Repository()
+            repo.type = foundname 
             (tfdesc, tfname) = tempfile.mkstemp()
             cmd = "cd %s >/dev/null;" % source
             cmd += foundexporter % tfname
@@ -335,10 +336,6 @@ def read_repo(source, preferred, verbose):
             tp.close()
         finally:
             os.remove(tfname)
-        (repo.type, repo.initializer, repo.importer, repo.checkout) = (name,
-                                                                       initializer,
-                                                                       importer,
-                                                                       checkout)
     return repo
 
 def write_repo(repo, target, preferred, verbose):
@@ -417,7 +414,11 @@ to the type of that repository.
         "Read in a repository for surgery."
         if not line:
             line = '.';
+        if self.repo and self.verbose:
+            print "reposurgeon: previously data discarded."
         self.repo = read_repo(line, self.preferred, self.verbose)
+        if self.repo and self.repo.type:
+            self.preferred = self.repo.type
         if self.repo and self.verbose:
             print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
                   (len(self.repo.commands),
@@ -443,9 +444,11 @@ with command-line arguments).
 """
     def do_write(self, line):
         "Write out the results of repo surgery."
-        # FIXME: Default to . if we read from a directory
         if not line:
-            line = '-'
+            if self.preferred:
+                line = "."
+            else:
+                line = '-'
         write_repo(self.repo, line, self.preferred, self.verbose)
     def do_shell(self, line):
         "Execute a shell command."
