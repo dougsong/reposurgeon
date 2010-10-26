@@ -192,6 +192,7 @@ class Repository:
             elif line.startswith("data"):
                 self.error("unexpected data object")
             elif line.startswith("commit"):
+                commitbegin = self.import_line
                 commit = Commit()
                 commit.branch = line.split()[1]
                 ncommits += 1
@@ -201,7 +202,7 @@ class Repository:
                     if not line:
                         self.error("EOF after commit")
                     elif line.startswith("mark"):
-                        self.mark = line[5:].strip()
+                        commit.mark = line[5:].strip()
                         self.nmarks += 1
                     elif line.startswith("author"):
                         try:
@@ -238,9 +239,12 @@ class Repository:
                     else:
                         pushback(line)
                         break
+                if not (commit.mark and commit.author and commit.committer):
+                    self.import_line = commitbegin
+                    self.error("missing required fields in commit")
                 self.commits.append(commit)
             elif line.startswith("reset"):
-                currentbranch = line[7:].strip()
+                currentbranch = line[6:].strip()
                 line = readline()
                 if line.startswith("from"):
                     self.refs_to_branches[currentbranch] = line[5:].strip()
@@ -281,7 +285,7 @@ class Repository:
             fp.write(repr(commit))
         branches = self.refs_to_branches.keys()
         for branch in branches:
-            fp.write("reset %s\nmark %s\n\n" % (branch, self.refs_to_branches[branch]))
+            fp.write("reset %s\nfrom %s\n\n" % (branch, self.refs_to_branches[branch]))
         for tag in self.tags:
             fp.write(repr(tag))
 
