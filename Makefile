@@ -25,7 +25,7 @@ reposurgeon-$(VERS).tar.gz: $(SOURCES)
 version:
 	@echo $(VERS)
 
-test:
+check:
 	cd test; make
 
 dist: reposurgeon-$(VERS).tar.gz
