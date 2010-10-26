@@ -2,7 +2,7 @@
 #
 # rs - a repository surgeon.
 #
-import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline
+import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline, time
 
 #
 # All knowledge about specific version-control systems lives in the
@@ -46,6 +46,39 @@ vcstypes = {
       "bzr fast-import %s",
       "bzr checkout"),
     }
+
+class Baton:
+    "Ship progress indications to stderr."
+    def __init__(self, prompt, endmsg='done'):
+        self.stream = sys.stderr
+        self.stream.write(prompt + "...")
+        if os.isatty(self.stream.fileno()):
+            self.stream.write(" \010")
+        self.stream.flush()
+        self.count = 0
+        self.endmsg = endmsg
+        self.time = time.time()
+        return
+
+    def twirl(self, ch=None):
+        if self.stream is None:
+            return
+        if os.isatty(self.stream.fileno()):
+            if ch:
+                self.stream.write(ch)
+            else:
+                self.stream.write("-/|\\"[self.count % 4])
+                self.stream.write("\010")
+            self.stream.flush()
+        self.count = self.count + 1
+        return
+
+    def end(self, msg=None):
+        if msg == None:
+            msg = self.endmsg
+        if self.stream:
+            self.stream.write("...(%2.2f sec) %s.\n" % (time.time() - self.time, msg))
+        return
 
 class Action:
     "Represents an instance of a person acting on the repo."
@@ -146,7 +179,7 @@ class Repository:
             raise RepoSurgeonException(msg)
     def __del__(self):
         os.system("rm -fr %s" % (self.subdir,))
-    def fast_import(self, fp, verbose=False):
+    def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
             os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
@@ -181,8 +214,6 @@ class Repository:
             else:
                 self.import_line += 1
                 line = fp.readline()
-                if verbose:
-                    print line.rstrip()
             return line
         def pushback(line):
             linebuffers.append(line)
@@ -202,6 +233,8 @@ class Repository:
                 else:
                     self.error("missing mark after blob")
                 self.commands.append(blob)
+                if baton:
+                    baton.twirl()
             elif line.startswith("data"):
                 self.error("unexpected data object")
             elif line.startswith("commit"):
@@ -256,6 +289,8 @@ class Repository:
                     self.import_line = commitbegin
                     self.error("missing required fields in commit")
                 self.commands.append(commit)
+                if baton:
+                    baton.twirl()
             elif line.startswith("reset"):
                 branch = Branch()
                 branch.ref = line[6:].strip()
@@ -265,6 +300,8 @@ class Repository:
                 else:
                     pushback(line)
                 self.commands.append(branch)
+                if baton:
+                    baton.twirl()
             elif line.startswith("tag"):
                 tagname = line[4:].strip()
                 line = readline()
@@ -283,26 +320,33 @@ class Repository:
                 dp = read_data(cStringIO.StringIO())
                 self.commands.append(Tag(tagname,
                                        referent, tagger, dp.getvalue()))
-
+                if baton:
+                    baton.twirl()
             else:
                 # Simply pass through any line we don't understand.
                 commands.append(line)
-    def fast_export(self, fp):
+        if baton:
+            baton.end()
+    def fast_export(self, fp, baton=None):
         "Dump the repo object in fast-export format."
         for command in self.commands:
+            if baton:
+                baton.twirl()
             fp.write(str(command))
+        if baton:
+            baton.end()
 
 def read_repo(source, preferred, verbose):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
-        repo.fast_import(sys.stdin)
+        repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: importing from stdin"))
     elif not os.path.exists(source):
         print >>sys.stderr, "reposurgeon: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
         repo = Repository()
-        repo.fast_import(open(source))
+        repo.fast_import(open(source), verbose and Baton("reposurgeon: importing from %s" % source))
     else:
         if verbose:
             if preferred:
@@ -336,7 +380,7 @@ def read_repo(source, preferred, verbose):
             cmd += foundexporter % tfname
             act(cmd)
             tp = open(tfname)
-            repo.fast_import(tp);
+            repo.fast_import(tp, verbose and Baton("reposurgeon: importing from repo"));
             tp.close()
         finally:
             os.remove(tfname)
@@ -372,7 +416,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             return
         (tfdesc, tfname) = tempfile.mkstemp()
         tp = open(tfname, "w")
-        repo.fast_export(tp)
+        repo.fast_export(tp, verbose and Baton("reposurgeon: exporting"))
         tp.close()
         if os.system(importer % tfname):
             print >>sys.stderr, "reposurgeon: repo import failed."
@@ -479,13 +523,6 @@ to the type of that repository.
         self.repo = read_repo(line, self.preferred, self.verbose)
         if self.repo and self.repo.type:
             self.preferred = self.repo.type
-        if self.repo and self.verbose:
-            print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
-                  (len(self.repo.commands),
-                   len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
-                   len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),
-                   self.repo.nmarks,
-                   len(filter(lambda x: isinstance(x,Tag),self.repo.commands)))
     def help_read(self):
         print """
 A read command with no arguments is treated as 'read .', operating on the
@@ -502,6 +539,17 @@ With an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).
 """
+    def do_stats(self, line):
+        "Report on the loaded repository infrmation"
+        if self.repo:
+            print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
+                  (len(self.repo.commands),
+                   len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
+                   len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),
+                   self.repo.nmarks,
+                   len(filter(lambda x: isinstance(x,Tag),self.repo.commands)))
+        else:
+            print "reposurgeon: no repository loaded."
     def do_write(self, line):
         "Stream out the results of repo surgery."
         if not line:
