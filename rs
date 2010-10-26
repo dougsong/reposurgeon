@@ -137,7 +137,6 @@ class Repository:
         self.commands = []    # A list of the commands encountered, in order
         self.nmarks = 0
         self.refs_to_branches = {}
-        self.nblobs = 0
         self.import_line = 0
         self.subdir = ".rs"
     def error(self, msg, atline=True):
@@ -208,7 +207,6 @@ class Repository:
                     blob.mark = line[5:].strip()
                     read_data(open(blob.blobfile(), "w")).close()
                     self.nmarks += 1
-                    self.nblobs += 1
                 else:
                     self.error("missing mark after blob")
                 self.commands.append(blob)
@@ -379,11 +377,12 @@ class RepoSurgeon(cmd.Cmd):
             line = '.';
         self.repo = read_repo(line, self.verbose)
         if self.verbose:
-            print "rs: %d commits, %d blobs, %d marks, %d tags" % \
-                  (len(self.repo.commits),
-                   self.repo.nblobs,
+            print "rs: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
+                  (len(self.repo.commands),
+                   len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
+                   len(filter(lambda x: isinstance(x,Commit),self.repo.commands)),
                    self.repo.nmarks,
-                   len(self.repo.tags))
+                   len(filter(lambda x: isinstance(x,Tag),self.repo.commands)))
     def do_write(self, line):
         "Write out the results of repo surgery."
         if not line:
@@ -401,7 +400,7 @@ if __name__ == '__main__':
         for arg in sys.argv[1:]:
             for cmd in arg.split(";"):
                 if cmd == '-':
-                    interpreter.oncmd("verbose 1")
+                    interpreter.onecmd("verbose 1")
                     interpreter.cmdloop()
                 else:
                     interpreter.onecmd(cmd)
