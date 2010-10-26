@@ -28,27 +28,24 @@ import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline
 #
 version="1.0"
 
-vcstypes = [
-     ("git",
-      ".git",
+vcstypes = {
+    "git" : (".git",
       "git fast-export -M -C --all >%s",
       "git init",
       "git fast-import <%s",
       "git checkout"),
      # FIXME: hg and bzr methods are untested
-     ("hg",
-      ".hg",
+    "hg" : (".hg",
       "hg-fast-export.sh %s",   # Not part of stock hg
       "hg init",
       "hg fast-import %s",      # Not part of stock hg
       "hg checkout"),
-     ("bzr",
-      ".bzr",
+    "bzr" : (".bzr",
       "bzr-fast-export --plain %s",
       "bzr init",
       "bzr fast-import %s",
       "bzr checkout"),
-    ]
+    }
 
 class Action:
     "Represents an instance of a person acting on the repo."
@@ -308,13 +305,14 @@ def read_repo(source, preferred, verbose):
     else:
         if verbose:
             if preferred:
-                print "reposurgeon: looking for a %s repo..."
+                print "reposurgeon: looking for a %s repo..." % preferred
             else:
                 print "reposurgeon: looking for any repo..."
         hitcount = 0
-        for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
+        for (name, (dirname, exporter, initializer, importer, checkout)) in vcstypes.items():
+            if preferred and name != preferred:
+                continue
             subdir = os.path.join(source, dirname)
-            # FIXME: preference is not implemented
             if os.path.exists(subdir) and os.path.isdir(subdir):
                 (foundname, foundexporter) = (name, exporter)
                 hitcount += 1
@@ -388,12 +386,12 @@ class RepoSurgeon(cmd.Cmd):
             print "reposurgeon: verbosity value must be an integer"
     def do_version(self, line):
         "Report the program version and supported version-control systems."
-        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes))
-    def do_prefer(self):
+        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
+    def do_prefer(self, line):
         "Report or select the preferred repository type."
         if line:
-            known = " ".join(map(lambda x: x[0], vcstypes))
-            if line.lower() in map(lambda x: x.lower(), known):
+            known = " ".join(vcstypes.keys())
+            if line.lower() in map(lambda x: x.lower(), vcstypes.keys()):
                 self.preferred = line
             else:
                 print >>sys.stderr,"reposurgeon: known types are %s." % known
@@ -420,7 +418,7 @@ to the type of that repository.
         if not line:
             line = '.';
         self.repo = read_repo(line, self.preferred, self.verbose)
-        if self.verbose:
+        if self.repo and self.verbose:
             print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
                   (len(self.repo.commands),
                    len(filter(lambda x: isinstance(x,Blob),self.repo.commands)),
