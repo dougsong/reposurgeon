@@ -284,7 +284,10 @@ class Repository:
 
 def read_repo(source):
     "Read a repository using fast-import."
-    if not os.path.exists(source):
+    if source == '-':
+        repo = Repository()
+        repo.fast_import(sys.stdin)
+    elif not os.path.exists(source):
         print "rs: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
@@ -317,9 +320,11 @@ def read_repo(source):
                                                                    checkout)
     return repo
 
-def write_repo(target):
+def write_repo(repo, target):
     "Write a repository using fast-export."
-    pass
+    if target == '-':
+        repo.fast_export(sys.stdout)
+    # FIXME: Have to decide a policy here
 
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
@@ -361,14 +366,24 @@ class RepoSurgeon(cmd.Cmd):
                    len(self.repo.tags))
     def do_write(self, line):
         "Write out the results of repo surgery."
-        self.repo.fast_export(sys.stdout)
+        if not line:
+            line = '-'
+        write_repo(self.repo, line)
     def do_EOF(self, line):
         "Terminate the browser."
         return True
 
 if __name__ == '__main__':
     try:
-        RepoSurgeon().cmdloop()
+        interpreter = RepoSurgeon()
+        if not sys.argv[1:]:
+            sys.argv.append("-")
+        for arg in sys.argv[1:]:
+            for cmd in arg.split(";"):
+                if cmd == '-':
+                    interpreter.cmdloop()
+                else:
+                    interpreter.onecmd(cmd)
     except RepoSurgeonException, e:
         fatal(e.msg)
     except KeyboardInterrupt:
