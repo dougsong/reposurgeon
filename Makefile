@@ -3,7 +3,7 @@
 #
 VERS=VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README COPYING reposurgeon reposurgeon.xml reposurgeon.6 Makefile reposurgeon.spec
+SOURCES = README COPYING reposurgeon reposurgeon.xml reposurgeon.1 Makefile
 
 all: reposurgeon.1
 
