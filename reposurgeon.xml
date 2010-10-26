@@ -52,28 +52,48 @@ between these modes is that the interactive one begins by turning on the
 <para>Here are the available commands:</para>
 
 <variablelist>
-<varlistentry><term>help</term>
+<varlistentry>
+<term>help</term>
 <listitem><para>Get help on the interpreter commands. Optionally follow with
 whitespace and a command name; with no argument, lists all commands. '?'
 also invokes this.
 </para></listitem>
 </varlistentry>
-<varlistentry><term>version</term>
+<varlistentry>
+<term>version</term>
 <listitem><para>Report the version of <application>reposurgeon</application>
 and the list of version-control systems it directly supports.
 </para></listitem>
 </varlistentry>
-<varlistentry><term>verbose</term>
+<varlistentry>
+<term>verbose</term>
 <listitem><para>'verbose 1' enables progress and statistics messages,
 'verbose 0' disables them. 
 </para></listitem>
 </varlistentry>
-<varlistentry><term>shell</term>
+<varlistentry>
+<term>shell</term>
 <listitem><para>Execute the shell command given in the remainder of the line.
 '!' also invokes this.  
 </para></listitem>
 </varlistentry>
-<varlistentry><term>read</term>
+<varlistentry>
+<term>prefer</term>
+<listitem>
+<para>Report or set (with argument) the preferred type of repository. This
+will have two effects.  First, if there are multiple repositories in a
+directory you do a read on, reposurgeon will read the preferred one
+(otherwise it will complain that it can't choose among them).
+Secondly, if you do a write to a directory, it will build a repo of
+the preferred type.</para>
+
+<para>If no preferred type has been explicitly selected, reading in a
+repository (but not a fast-import stream) will implicitly set it
+to the type of that repository.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>read</term>
 <listitem><para>With a directory-name argument, this command attempts
 to read in the contents of a repository in any supported
 version-control system under that directory; read with no

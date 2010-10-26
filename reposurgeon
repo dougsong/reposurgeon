@@ -135,7 +135,7 @@ class RepoSurgeonException:
 class Repository:
     "Generic repository object."
     def __init__(self):
-        self.repotype = None
+        self.type = None
         self.commands = []    # A list of the commands encountered, in order
         self.nmarks = 0
         self.refs_to_branches = {}
@@ -294,7 +294,7 @@ class Repository:
         for command in self.commands:
             fp.write(str(command))
 
-def read_repo(source, verbose):
+def read_repo(source, preferred, verbose):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
@@ -306,21 +306,31 @@ def read_repo(source, verbose):
         repo = Repository()
         repo.fast_import(open(source))
     else:
+        if verbose:
+            if preferred:
+                print "reposurgeon: looking for a %s repo..."
+            else:
+                print "reposurgeon: looking for any repo..."
+        hitcount = 0
         for (name, dirname, exporter, initializer, importer, checkout) in vcstypes:
             subdir = os.path.join(source, dirname)
-            
+            # FIXME: preference is not implemented
             if os.path.exists(subdir) and os.path.isdir(subdir):
-                break
-        else:
-            print >>sys.stderr,"reposurgeon: could not find a repository under %s" % source
+                (foundname, foundexporter) = (name, exporter)
+                hitcount += 1
+        if hitcount == 0:
+            print >>sys.stderr,"reposurgeon: couldn't find a repo under %s" % source
             return None
-        if verbose:
-            print "reposurgeon: recognized %s repository under %s" % (name, source)
+        elif hitcount > 1:
+            print >>sys.stderr,"reposurgeon: too many repos under %s" % source
+            return None
+        elif verbose:
+            print "reposurgeon: recognized %s repository under %s" % (foundname, source)
         try:
             repo = Repository()
             (tfdesc, tfname) = tempfile.mkstemp()
             cmd = "cd %s >/dev/null;" % source
-            cmd += exporter % tfname
+            cmd += foundexporter % tfname
             act(cmd)
             tp = open(tfname)
             repo.fast_import(tp);
@@ -333,18 +343,22 @@ def read_repo(source, verbose):
                                                                        checkout)
     return repo
 
-def write_repo(repo, target, verbose):
+def write_repo(repo, target, preferred, verbose):
     "Write a repository using fast-export."
     if target == '-':
         repo.fast_export(sys.stdout)
-    # FIXME: Have to decide a policy here
+    elif os.path.isdir(source):
+        # FIXME
+        print >>sys.stderr, "reposurgeon: directory writes are not yet supported."
+    elif os.path.exists(source):
+        print >>sys.stderr, "reposurgeon: file %s already exists" % source
+    else:
+        repo.fast_export(open(source, "w"))
 
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
     if err:
-        raise RepoSurgeonException("'%s' failed" % cmd)
-    else:
-        return out
+        print >>sys.stderr,"'%s' failed" % cmd
 
 def fatal(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -358,6 +372,7 @@ class RepoSurgeon(cmd.Cmd):
         self.verbose = 0
         self.prompt = "reposurgon% "
         self.repo = None
+        self.preferred = None
     def postcmd(self, stop, line):
         if line == "EOF":
             return True
@@ -374,11 +389,37 @@ class RepoSurgeon(cmd.Cmd):
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes))
+    def do_prefer(self):
+        "Report or select the preferred repository type."
+        if line:
+            known = " ".join(map(lambda x: x[0], vcstypes))
+            if line.lower() in map(lambda x: x.lower(), known):
+                self.preferred = line
+            else:
+                print >>sys.stderr,"reposurgeon: known types are %s." % known
+        if self.verbose:
+            if not self.preferred:
+                print "reposurgeon: no preferred type has been set."
+            else:
+                print "reposurgeon: %s is the preferred type." % self.preferred
+    def help_prefer(self):
+        print """
+Report or set (with argument) the preferred type of repository. This
+will have two effects.  First, if there are multiple repositories in a
+directory you do a read on, reposurgeon will read the preferred one
+(otherwise it will complain that it can't choose among them).
+Secondly, if you do a write to a directory, it will build a repo of
+the preferred type.
+
+If no preferred type has been explicitly selected, reading in a
+repository (but not a fast-import stream) will implicitly set it
+to the type of that repository.
+"""
     def do_read(self, line):
         "Read in a repository for surgery."
         if not line:
             line = '.';
-        self.repo = read_repo(line, self.verbose)
+        self.repo = read_repo(line, self.preferred, self.verbose)
         if self.verbose:
             print "reposurgeon: %d commands, %d blobs, %d commits, %d marks, %d tags" % \
                   (len(self.repo.commands),
@@ -404,14 +445,15 @@ with command-line arguments).
 """
     def do_write(self, line):
         "Write out the results of repo surgery."
+        # FIXME: Default to . if we read from a directory
         if not line:
             line = '-'
-        write_repo(self.repo, line, self.verbose)
+        write_repo(self.repo, line, self.preferred, self.verbose)
     def do_shell(self, line):
         "Execute a shell command."
         os.system(line)
     def do_EOF(self, line):
-        "Terminate the browser."
+        "Terminate reposurgeon."
         return True
 
 if __name__ == '__main__':
