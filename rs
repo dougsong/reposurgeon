@@ -190,16 +190,8 @@ class Repository:
             line = readline()
             if not line:
                 break
-            elif line.startswith("#") or line.startswith("checkpoint"):
-                continue
             elif not line.strip():
                 continue
-            elif line.startswith("progress"):
-                sys.stdout.write(line[9:])
-            elif line.startswith("options"):
-                continue     # Might need real code here someday
-            elif line.startswith("options"):
-                continue     # Might need real code here someday
             elif line.startswith("blob"):
                 blob = Blob(self.subdir)
                 line = readline()
@@ -293,7 +285,8 @@ class Repository:
                                        referent, tagger, dp.getvalue()))
 
             else:
-                raise self.error("unexpected line in import stream")
+                # Simply pass through any line we don't understand.
+                commands.append(line)
     def fast_export(self, fp):
         "Dump the repo object in fast-export format."
         for command in self.commands:
