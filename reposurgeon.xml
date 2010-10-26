@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC 
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "docbook/docbookx.dtd">
+<refentry id='reposurgeon.1'>
+<refmeta>
+<refentrytitle>reposurgeon</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>Aug 24 1994</refmiscinfo>
+<refmiscinfo class='productname'>reposurgeon</refmiscinfo>
+<refmiscinfo class='source'>reposurgeon</refmiscinfo>
+<refmiscinfo class='manual'>Development Tools</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>reposurgeon</refname>
+<refpurpose>surgical operations on repositories</refpurpose>
+</refnamediv>
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>rs</command>
+  <arg choice='opt' rep='repeat'><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+<para>The purpose of <application>reposurgeon</application> is to
+enable risky operations that version-control systems don't want to let
+you do, such as (a) editing past comments and metadata, (b) excising
+commits, (c) coalescing commits, and (d) removing files and subtrees
+from repo history. The original motivation for
+<application>reposurgeon</application> was to clean up artifacts
+created by repository conversions.</para>
+
+<para>To keep <application>reposurgeon</application> simple and
+flexible, it does not do its own repository reading and writing.
+Instead, it relies on being able to parse and emit the repo-command
+streams created by git-fast-export and read by git-fast-import.  This
+means that it can be used on any version-control system that that has
+both fast-export and fast-import utilities.  This set includes git
+itself, hg, and bzr.</para>
+</refsect1>
+
+<refsect1 id='options'><title>OPERATION</title>
+<para>The program can be run in one of two modes, either as an interactive
+command interpreter or to execute commands given as arguments on the
+<application>reposurgeon</application> command line. The only difference
+between these modes is that the interactive one begins by turning on the
+'verbose' option.</para>
+
+<para>Here are the available commands:</para>
+
+<variablelist>
+<varlistentry><term>help</term>
+<listitem><para>Get help on the interpreter commands. Optionally follow with
+whitespace and a command name; with no argument, lists all commands. '?'
+also invokes this.
+</para></listitem>
+</varlistentry>
+<varlistentry><term>version</term>
+<listitem><para>Report the version of <application>reposurgeon</application>
+and the list of version-control systems it directly supports.
+</para></listitem>
+</varlistentry>
+<varlistentry><term>verbose</term>
+<listitem><para>'verbose 1' enables progress and statistics messages,
+'verbose 0' disables them. 
+</para></listitem>
+</varlistentry>
+<varlistentry><term>shell</term>
+<listitem><para>Execute the shell command given in the remainder of the line.
+'!' also invokes this.  
+</para></listitem>
+</varlistentry>
+<varlistentry><term>read</term>
+<listitem><para>With a directory-name argument, this command attempts
+to read in the contents of a repository in any supported
+version-control system under that directory; read with no
+arguments does this in the current directory. If the argument is the
+name of a plain file, it will be read in as a fast-import stream. With
+an argument of <quote>-</quote>, this command reads a fast-import
+stream from standard input (this will be useful in filters constructed
+with command-line arguments).</para></listitem>
+</varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
+
+<para>Guarantee: <application>reposurgeon</application> never modifies
+the contents of a repository it reads or deletes any repository. The
+results of surgery are always expressed in a new repository </para>
+
+<para>Guarantee: Any line in a fast-import stream that is not a part
+of a command <application>reposurgeon</application> parses and
+understands will be passed through unaltered.  At present the set of
+potential passthroughs is known to include the
+<command>progress</command>, the <command>options</command>, and
+<command>checkpoint</command> commands as well as comments led by
+#.</para>
+
+<para>Guarantee: All <application>reposurgeon</application> operations either
+preserve all repository state they are not explicitly told to modify
+or warn you when they cannot do so.</para>
+
+<para>Limitation: Because <application>reposurgeon</application>
+relies on other programs to generate and imterpret the fast-import command
+stream, it is subject to bugs in those prograns.</para>
+
+<para>Limitation: Under version-control systems other than git,
+fast-import format may not capture the entire repository
+state. Presently the only known limitations are:</para>
+
+<itemizedlist>
+<listitem>
+<para>Under bzr, dumps do not capture information about (a) multiple-author 
+commits, (b) bzr custom commit properties (e.g. branch-nick and bugs 
+fixed by this change), or (c) empty directories.</para>
+</listitem>
+</itemizedlist>
+
+<para>Limitation: Subversion/RCS/CVS aren't directly supported because exporting
+from them requires fixups of usernames in the committer information to
+full email addresses.  Trying to handle that entirely inside this tool
+would be excessively messy, so we don't. Instead we let the user
+transform repo-command streams and cope with the export/import
+separately.</para>
+
+<para>Guarantee: As version-control systems add support for the
+fast-import format, their repositories will become editable by
+<application>reposurgeon</application>. See the <ulink
+url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
+Wiki tools page</ulink> for a large collection of such tools.</para>
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+
+<para>Eric S. Raymond <email>esr@snark.thyrsus.com</email>; project
+page at <ulink
+url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>).</para>
+</refsect1>
+</refentry>
+

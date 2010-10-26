@@ -26,6 +26,8 @@ import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline
 # would be excessively messy, so we don't. Instead we let the user
 # transform dump files and cope with the export/import himself.
 #
+version="1.0"
+
 vcstypes = [
      ("git",
       ".git",
@@ -364,11 +366,14 @@ class RepoSurgeon(cmd.Cmd):
     def help_help(self):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
-        "Set the interpreter's verbosity level."
+        "'verbose 1' enables progress and statistics messages, 'verbose 0' disables them."
         try:
             self.verbose = int(line)
         except ValueError:
             print "rs: verbosity value must be an integer"
+    def do_version(self, line):
+        "Report the program version and supported version-control systems."
+        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes))
     def do_read(self, line):
         "Read in a repository for surgery."
         if not line:
