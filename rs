@@ -60,11 +60,11 @@ class Tag:
     "Represents an annotated tag."
     def __init__(self, name, committish, tagger, content):
         self.name = name
-        self.committish = tagger
+        self.committish = committish
         self.tagger = tagger
         self.comment = content
     def __repr__(self):
-        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n\n" \
+        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
         
 class Commit:
@@ -85,7 +85,7 @@ class Commit:
             st += "author %s\n" % self.author
         if self.committer:
             st += "committer %s\n" % self.committer
-        st += "data %d\n%s\n" % (len(self.comment), self.comment) 
+        st += "data %d\n%s" % (len(self.comment), self.comment) 
         if self.parents:
             st += "from %s\n" % self.parents[0]
         for ancestor in self.parents[1:]:
@@ -277,18 +277,18 @@ class Repository:
                         dp = open(fileop[4])
                         content = dp.read()
                         dp.close()
-                        fp.write("blob %s\ndata %d\n%s\n" % (ref, len(content), content))
+                        fp.write("blob\nmark %s\ndata %d\n%s\n" % (ref, len(content), content))
             fp.write(repr(commit))
         for tag in self.tags:
             fp.write(repr(tag))
 
-def read_repo(source):
+def read_repo(source, verbose):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
         repo.fast_import(sys.stdin)
     elif not os.path.exists(source):
-        print "rs: %s does not exist" % source
+        print >>sys.stderr, "rs: %s does not exist" % source
         return None
     elif not os.path.isdir(source):
         repo = Repository()
@@ -300,9 +300,10 @@ def read_repo(source):
             if os.path.exists(subdir) and os.path.isdir(subdir):
                 break
         else:
-            print "rs: could not find a repository under %s" % source
+            print >>sys.stderr,"rs: could not find a repository under %s" % source
             return None
-        print "rs: recognized %s repository under %s" % (name, source)
+        if verbose:
+            print "rs: recognized %s repository under %s" % (name, source)
         try:
             repo = Repository()
             (tfdesc, tfname) = tempfile.mkstemp()
@@ -320,7 +321,7 @@ def read_repo(source):
                                                                    checkout)
     return repo
 
-def write_repo(repo, target):
+def write_repo(repo, target, verbose):
     "Write a repository using fast-export."
     if target == '-':
         repo.fast_export(sys.stdout)
@@ -357,7 +358,7 @@ class RepoSurgeon(cmd.Cmd):
         "Read in a repository for surgery."
         if not line:
             line = '.';
-        self.repo = read_repo(line)
+        self.repo = read_repo(line, self.verbose)
         if self.verbose:
             print "rs: %d commits, %d blobs, %d marks, %d tags" % \
                   (len(self.repo.commits),
@@ -368,7 +369,7 @@ class RepoSurgeon(cmd.Cmd):
         "Write out the results of repo surgery."
         if not line:
             line = '-'
-        write_repo(self.repo, line)
+        write_repo(self.repo, line, self.verbose)
     def do_EOF(self, line):
         "Terminate the browser."
         return True
@@ -381,6 +382,7 @@ if __name__ == '__main__':
         for arg in sys.argv[1:]:
             for cmd in arg.split(";"):
                 if cmd == '-':
+                    interpreter.oncmd("verbose 1")
                     interpreter.cmdloop()
                 else:
                     interpreter.onecmd(cmd)
