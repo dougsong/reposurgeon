@@ -53,7 +53,7 @@ class Action:
     def __init__(self, person):
         person = person.replace(" <", "|").replace("> ", "|")
         (self.name, self.email, self.when) = person.strip().split("|")
-    def __repr__(self):
+    def __str__(self):
         return self.name + " <" + self.email + "> " + self.when
 
 class Blob:
@@ -63,7 +63,7 @@ class Blob:
         self.subdir = subdir
     def blobfile(self):
         return self.subdir + "/blob-" + self.mark
-    def __repr__(self):
+    def __str__(self):
         dp = open(self.blobfile())
         content = dp.read()
         dp.close()
@@ -76,7 +76,7 @@ class Tag:
         self.committish = committish
         self.tagger = tagger
         self.comment = content
-    def __repr__(self):
+    def __str__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
 
@@ -85,7 +85,7 @@ class Branch:
     def __init__(self):
         self.ref = None
         self.committish = None
-    def __repr__(self):
+    def __str__(self):
         st = "reset %s\n" % self.ref
         if self.committish:
             st += "from %s\n\n" % self.committish
@@ -101,7 +101,7 @@ class Commit:
         self.parents = []            # List of parent nodes
         self.branch = None           # branch name (deduced optimization hack)
         self.fileops = []            # blob and file operation list
-    def __repr__(self):
+    def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
             st += "mark %s\n" % self.mark
@@ -297,7 +297,7 @@ class Repository:
     def fast_export(self, fp):
         "Dump the repo object in fast-export format."
         for command in self.commands:
-            fp.write(repr(command))
+            fp.write(str(command))
 
 def read_repo(source, verbose):
     "Read a repository using fast-import."
