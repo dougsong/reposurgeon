@@ -487,8 +487,6 @@ class RepoSurgeon(cmd.Cmd):
         self.selection = None
         if not self.repo:
             return line
-        if self.verbose >= 2:
-            print "reposurgeon: precmd() sees %s" % `line`
         # First, parse a visibility spec
         Unknown = type("")
         visible = set([Commit, Tag, Branch, Unknown])
@@ -543,9 +541,7 @@ class RepoSurgeon(cmd.Cmd):
             print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), `line`)
         # Now compute a selection
         selection = []
-        seenspanner = False
         while line and not line[0].isspace() and not line[0].isalpha():
-            seenspanner = False 
             # First, literal command numbers (1-origin)
             match = re.match("[0-9]+", line)
             if match:
@@ -583,8 +579,8 @@ class RepoSurgeon(cmd.Cmd):
                 continue
             # Following ".." means a span
             if line.startswith(".."):
-                seenspanner = True
                 if selection:
+                    selection.append("..")
                     line = line[2:]
                     continue
                 else:
@@ -593,15 +589,33 @@ class RepoSurgeon(cmd.Cmd):
             # Anything else is an error
             print >>sys.stderr,"reposurgeon: can't parse selection at %s." % `line`
             return line
+        if self.verbose >= 2:
+            print "reposurgeon: location list is %s with %s left" % (selection, `line`)
+        # Resolve spans
+        resolved = []
+        spanning = last = 0
+        for elt in selection:
+            if elt == '..':
+                spanning = True
+            else:
+                if spanning:
+                    resolved += range(last+1, elt+1)
+                    spanning = False
+                else:
+                    resolved.append(elt)
+                last = elt
+        selection = resolved
+        if self.verbose >= 2:
+            print "reposurgeon: resolved list is %s with %s left" % (selection, `line`)
         # Sanity checks
-        if seenspanner:
-            print >>sys.stderr,"reposurgeon: incomplete selection."
-            return line
         if len(selection) == 0:
             selection = [0, len(self.repo.commands)-1]
-        for number in selection:
-            if number < 0 or number > len(self.repo.commands)-1:
-                print >>sys.stderr,"reposurgeon: command number out of range."
+        elif selection and selection[-1] == '..':
+            print >>sys.stderr,"reposurgeon: incomplete selection."
+            return line
+        for elt in selection:
+            if elt < 0 or elt > len(self.repo.commands)-1:
+                print >>sys.stderr,"reposurgeon: command number %s out of range." % elt
                 return line
         # Now compose the actual selection
         self.selection = []
@@ -803,7 +817,7 @@ if __name__ == '__main__':
         for arg in sys.argv[1:]:
             for cmd in arg.split(";"):
                 if cmd == '-':
-                    interpreter.verbose = 2
+                    interpreter.verbose = 1
                     interpreter.cmdloop()
                 else:
                     interpreter.onecmd(cmd)
