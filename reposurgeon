@@ -372,10 +372,10 @@ def read_repo(source, preferred, verbose):
                 (foundname, foundexporter) = (name, exporter)
                 hitcount += 1
         if hitcount == 0:
-            complain("couldn't find a repo under %s") % os.path.relpath(source)
+            complain("couldn't find a repo under %s" % os.path.relpath(source))
             return None
         elif hitcount > 1:
-            complain("too many repos under %s") % os.path.relpath(source)
+            complain("too many repos under %s" % os.path.relpath(source))
             return None
         try:
             repo = Repository()
@@ -874,7 +874,7 @@ doing a quick eyeball check ofter a rebuild command.
                 print "%6d commit %6s    %s" % (i, command.mark or '-', command.branch) 
                 continue
             if isinstance(command, Tag):
-                print "%6d tag    -          %4s   %s" % (i, command.name,) 
+                print "%6d tag      -       %4s" % (i, command.name,) 
                 continue
             if isinstance(command, Reset):
                 print "%6d branch %6s    %s" % (i, command.committish or '-', command.ref) 
