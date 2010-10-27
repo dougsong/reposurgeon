@@ -810,7 +810,7 @@ a repo or stream.
         if not line:
             line = '-'
         if line == '-':
-            self.repo.fast_export(sys.stdin)
+            self.repo.fast_export(sys.stdout)
         else:
             try:
                 out = open(line, "w")
