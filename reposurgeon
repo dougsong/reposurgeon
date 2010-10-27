@@ -96,6 +96,7 @@ class Blob:
     def __init__(self, subdir):
         self.mark = None
         self.subdir = subdir
+        self.path = None      # First in-repo path associated with this blob
     def blobfile(self):
         return self.subdir + "/blob-" + self.mark
     def __str__(self):
@@ -278,6 +279,9 @@ class Repository:
                         if ref[0] == ':':
                             copyname = self.subdir + "/blob-" + ref
                             commit.fileops.append((op, mode, ref, path, copyname))
+                            for obj in self.commands:
+                                if isinstance(obj, Blob) and obj.mark == ref:
+                                    obj.path = path
                         elif ref[0] == 'inline':
                             copyname = self.subdir + "/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
@@ -612,6 +616,44 @@ doing a quick eyeball check ofter a rebuild command.
     def do_shell(self, line):
         "Execute a shell command."
         os.system(line)
+    def do_index(self, line):
+        "Search for comments containing a specified string."
+        if not self.repo:
+            print >>sys.stderr,"reposurgeon: no repo is loaded."
+            return
+        line = line.lstrip()
+        if line.startswith("+b"):
+            seeblobs = True
+            line = line[3:]
+        else:
+            seeblobs = False
+        for (i, command) in enumerate(self.repo.commands):
+            if isinstance(command, Blob):
+                if seeblobs:
+                    print "%6d blob   %6s    %s" % (i, command.mark,command.path)
+                continue
+            if isinstance(command, Commit):
+                print "%6d commit %6s    %s" % (i, command.mark or '-', command.branch) 
+                continue
+            if isinstance(command, Tag):
+                print "%6d tag    -          %4s   %s" % (i, command.name,) 
+                continue
+            if isinstance(command, Branch):
+                print "%6d branch %6s    %s" % (i, command.committish or '-', command.ref) 
+                continue
+            else:
+                print "?      -      %s" % (command,) 
+    def help_index(self):
+        print """
+Display four columns of info on objects: their number, their type,
+the associate mark (or '-' if no mark) and a summary field varying by type.
+For a branch or tag it's the reference; for a commit it's the commit branch;
+for a blob it's the repository path of the fiile in the blob. 
+
+Normally, listing of blobs in the index is suppressed, as it is not very
+useful to list them independently of the commits that reference them. The
++b option enables display of blobs.
+"""
     def do_EOF(self, line):
         "Terminate reposurgeon."
         return True
