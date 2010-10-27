@@ -488,6 +488,7 @@ class RepoSurgeon(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
         self.verbose = 0
+        self.echo = 0
         self.prompt = "reposurgeon% "
         self.repo = None
         self.preferred = None
@@ -497,6 +498,11 @@ class RepoSurgeon(cmd.Cmd):
             return True
     def emptyline(self):
         pass
+    def precmd(self, line):
+        "Pre-command hook."
+        if self.echo:
+            print line
+        return line
     def set_selection_set(self, line, default=None):
         "Implement object-selection syntax."
         self.selection = []
@@ -646,9 +652,7 @@ class RepoSurgeon(cmd.Cmd):
                     markref = match.group()
                     self.line = self.line[len(markref):]
                     for (i, cmd) in enumerate(self.repo.commands):
-                        if type(cmd) == Unknown:
-                            continue
-                        elif hasattr(cmd, "mark") and cmd.mark == markref:
+                        if hasattr(cmd, "mark") and cmd.mark == markref:
                             selection.append(i)
                             break
                         elif hasattr(cmd, "committish") and cmd.committish == markref:
@@ -717,6 +721,14 @@ class RepoSurgeon(cmd.Cmd):
 'verbose 1' enables progress messages, 'verbose 0' disables them. Higher levels
 of verbosity are available but intended for developers only.
 """
+    def do_echo(self, line):
+        "Set or clear echoing commands before processing (for regression tests)"
+        try:
+            self.echo = int(line)
+        except ValueError:
+            print "reposurgeon: verbosity value must be an integer"
+        if self.verbose:
+            print "reposurgeon: echo %d" % self.echo
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))

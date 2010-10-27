@@ -347,7 +347,7 @@ preserve all repository state they are not explicitly told to modify
 or warn you when they cannot do so.</para>
 
 <para>Limitation: Because <application>reposurgeon</application>
-relies on other programs to generate and imterpret the fast-import command
+relies on other programs to generate and interpret the fast-import command
 stream, it is subject to bugs in those prograns.</para>
 
 <para>Limitation: Under version-control systems other than git,
