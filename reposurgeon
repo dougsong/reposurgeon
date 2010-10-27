@@ -677,7 +677,6 @@ class RepoSurgeon(cmd.Cmd):
                     continue
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
-                    print "I see dollar"
                     selection.append(len(self.repo.commands)-1)
                     self.pop()
                     continue
@@ -903,13 +902,16 @@ useful to list them independently of the commits that reference them. The
 if __name__ == '__main__':
     try:
         interpreter = RepoSurgeon()
+        interpreter.use_rawinput = False
         if not sys.argv[1:]:
             sys.argv.append("-")
         for arg in sys.argv[1:]:
             for cmd in arg.split(";"):
                 if cmd == '-':
+                    interpreter.use_rawinput = True
                     interpreter.verbose = 1
                     interpreter.cmdloop()
+                    interpreter.use_rawinput = False
                 else:
                     interpreter.onecmd(cmd)
     except RepoSurgeonException, e:
