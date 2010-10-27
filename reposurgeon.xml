@@ -149,8 +149,8 @@ letters. These are the type letters:</para>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
-        <entry align='center'>U</entry>
-        <entry align='center'>Unknown</entry>
+        <entry align='center'>P</entry>
+        <entry align='center'>Passthrough</entry>
 	<entry><para>All event types types simply passed through,
 	including comments, <command>progress</command> commands, 
         and <command>checkpoint</command> commands.</para></entry>
