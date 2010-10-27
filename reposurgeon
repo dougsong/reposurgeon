@@ -343,13 +343,16 @@ class Repository:
         if baton:
             baton.end()
 
+def complain(msg):
+    print >>sys.stderr, "reposurgeon:", msg
+
 def read_repo(source, preferred, verbose):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
         repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: from stdin"))
     elif not os.path.exists(source):
-        print >>sys.stderr, "reposurgeon: %s does not exist" % source
+        complain("%s does not exist" % source)
         return None
     elif not os.path.isdir(source):
         repo = Repository()
@@ -369,10 +372,10 @@ def read_repo(source, preferred, verbose):
                 (foundname, foundexporter) = (name, exporter)
                 hitcount += 1
         if hitcount == 0:
-            print >>sys.stderr,"reposurgeon: couldn't find a repo under %s" % os.path.relpath(source)
+            complain("couldn't find a repo under %s") % os.path.relpath(source)
             return None
         elif hitcount > 1:
-            print >>sys.stderr,"reposurgeon: too many repos under %s" % os.path.relpath(source)
+            complain("too many repos under %s") % os.path.relpath(source)
             return None
         try:
             repo = Repository()
@@ -398,10 +401,10 @@ def rebuild_repo(repo, target, preferred, verbose):
     if target:
         target = os.path.abspath(target)
     else:
-        print >>sys.stderr, "reposurgeon: no default destination for rebuild."
+        complain("no default destination for rebuild")
         return
     if not preferred:
-        print >>sys.stderr, "reposurgeon: please prefer a repo type first."
+        complain("please prefer a repo type first")
         return
     # Create a new empty directory to do the rebuild in
     staging = target + "-stage" + os.getpid()
@@ -409,7 +412,7 @@ def rebuild_repo(repo, target, preferred, verbose):
     try:
         os.mkdir(staging)
     except OSError:
-        print >>sys.stderr, "reposurgeon: staging directory creation failed."
+        complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
     (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[self.preferred]
@@ -417,17 +420,17 @@ def rebuild_repo(repo, target, preferred, verbose):
     try:
         os.chdir(staging)
         if os.system(initializer):
-            print >>sys.stderr, "reposurgeon: repo initialization failed."
+            complain("repo initialization failed")
             return
         (tfdesc, tfname) = tempfile.mkstemp()
         tp = open(tfname, "w")
         repo.fast_export(tp, verbose and Baton("reposurgeon: exporting"))
         tp.close()
         if os.system(importer % tfname):
-            print >>sys.stderr, "reposurgeon: repo import failed."
+            complain("repo import failed")
             return
         if os.system(checkout):
-            print >>sys.stderr, "reposurgeon: repo checkout failed."
+            complain("repo checkout failed")
             return
         os.chdir(here)
         # Rebuild succeeded - make an empty backup directory
@@ -446,7 +449,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             os.rename(os.path.join(target, sub),
                       os.path.join(savedir, sub))
         if verbose:
-            print >>sys.stderr, "reposurgeon: repo backed up to %s" % os.path.relpath(savedir)
+            complain("repo backed up to %s" % os.path.relpath(savedir))
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
@@ -458,7 +461,7 @@ def rebuild_repo(repo, target, preferred, verbose):
 def act(cmd):
     (err, out) = commands.getstatusoutput(cmd)
     if err:
-        print >>sys.stderr,"'%s' failed" % cmd
+        complain("'%s' failed" % cmd)
         return False
     else:
         return True
@@ -491,7 +494,7 @@ class RepoSurgeon(cmd.Cmd):
         try:
             self.selection = list(self.eval_expression())
             if self.line == line:
-                self.selection = [0, len(self.repo.commands)-1]
+                self.selection = None
             else:
                 self.selection.sort()
         except RepoSurgeonException, e:
@@ -738,7 +741,7 @@ of verbosity are available but intended for developers only.
             if line.lower() in map(lambda x: x.lower(), vcstypes.keys()):
                 self.preferred = line
             else:
-                print >>sys.stderr,"reposurgeon: known types are %s." % known
+                complain("known types are %s.") % known
         if self.verbose:
             if not self.preferred:
                 print "reposurgeon: no preferred type has been set."
@@ -835,11 +838,11 @@ its contents are backed up to a save directory.
     def do_view(self, line):
         "View a repo through its GUI."
         if not self.preferred:
-            print >>sys.stderr,"reposurgeon: prefer a repo type first."
+            complain("prefer a repo type first.")
             return
         gui = vcstypes[self.preferred][5]
         if not gui:
-            print >>sys.stderr,"reposurgeon: no GUI is available."
+            complain("no GUI is available.")
             return
         os.system(gui)
     def help_rebuild(self):
@@ -852,17 +855,13 @@ doing a quick eyeball check ofter a rebuild command.
         "Execute a shell command."
         os.system(line)
     def do_index(self, line):
-        "Search for comments containing a specified string."
+        "Generate a summary listing of objects."
         if not self.repo:
-            print >>sys.stderr,"reposurgeon: no repo is loaded."
+            complain("no repo is loaded.")
             return
-        line = line.lstrip()
-        if line.startswith("+b"):
-            seeblobs = True
-            line = line[3:]
-        else:
-            seeblobs = False
-        for (i, command) in enumerate(self.repo.commands):
+        elif self.selection is None:
+            self.selection = range(len(self.repo.commands))
+        for (i, command) in enumerate(self.selection):
             if isinstance(command, Blob):
                 if seeblobs:
                     print "%6d blob   %6s    %s" % (i, command.mark,command.path)
@@ -904,7 +903,7 @@ if __name__ == '__main__':
         for arg in sys.argv[1:]:
             for cmd in arg.split(";"):
                 if cmd == '-':
-                    interpreter.verbose = 2
+                    interpreter.verbose = 1
                     interpreter.cmdloop()
                 else:
                     interpreter.onecmd(cmd)
