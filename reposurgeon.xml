@@ -59,21 +59,20 @@ require specifying a selection of event sequence numbers so
 modify or delete.</para>
 
 <para>When a command takes a selection-set argument, it will
-<emphasis>precede</emphasis> the command keyword; other arguments will
+immediately follow the command keyword; other arguments will
 follow. It is often possible to omit the selection-set argument and
-have it default to something reasonable, usuaally the entire event 
-sequence.</para>
+have it default to something reasonable.</para>
 
 <para>Here are some motivating examples.  The commands will be
 explained in more detail after the description of selection
 syntax.</para>
 
 <programlisting>
-:15 edit                     ;; edit the object associated with mark :15
+edit :15                     ;; edit the object associated with mark :15
 
-29..71 index                 ;; list summary index of events 20..71
+index 29..71                 ;; list summary index of events 20..71
 
-=t &amp; 1..:97 delete            ;; delete tags from event 1 to mark 15
+delete =t &amp; 1..:97           ;; delete tags from event 1 to mark 15
 </programlisting>
 
 <para>The selection-set specification syntax is an expression-oriented 
@@ -243,6 +242,13 @@ which take a selection set:</para>
 whitespace and a command name; with no argument, lists all commands. '?'
 also invokes this.
 </para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>resolve</command></cmdsynopsis></term>
+<listitem><para>Does nothing but resolve a selection-set expression
+and echo the resulting event-number set to standard
+output. Implemented mainly for recression testing, but may be useful
+for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>version</command></cmdsynopsis></term>
