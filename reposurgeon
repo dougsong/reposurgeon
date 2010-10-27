@@ -116,7 +116,7 @@ class Tag:
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
 
-class Branch:
+class Reset:
     "Represents a branch creation."
     def __init__(self):
         self.ref = None
@@ -135,7 +135,7 @@ class Commit:
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
         self.parents = []            # List of parent nodes
-        self.branch = None           # branch name (deduced optimization hack)
+        self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
     def __str__(self):
         st = "commit %s\n" % self.branch
@@ -299,14 +299,14 @@ class Repository:
                 if baton:
                     baton.twirl()
             elif line.startswith("reset"):
-                branch = Branch()
-                branch.ref = line[6:].strip()
+                reset = Reset()
+                reset.ref = line[6:].strip()
                 line = readline()
                 if line.startswith("from"):
-                    branch.committish = line[5:].strip()
+                    reset.committish = line[5:].strip()
                 else:
                     pushback(line)
-                self.commands.append(branch)
+                self.commands.append(reset)
                 if baton:
                     baton.twirl()
             elif line.startswith("tag"):
@@ -579,7 +579,7 @@ class RepoSurgeon(cmd.Cmd):
             visibility = None
         else:
             Unknown = type("")
-            visible = set([Commit, Tag, Branch, Unknown])
+            visible = set([Commit, Tag, Reset, Unknown])
             modmode = None
             while self.peek() in ("+", "-", "=", "B", "c", "t", "b", "u"):
                 c = self.pop()
@@ -595,22 +595,22 @@ class RepoSurgeon(cmd.Cmd):
                         visible.add(Blob)
                     elif modmode == '-' and Blob in visible:
                         visible.remove(Blob)
-                elif c == 'c':
+                elif c == 'C':
                     if modmode == '+':
                         visible.add(Commit)
                     elif modmode == '-' and Commit in visible:
                         visible.remove(Commit)
-                elif c == 't':
+                elif c == 'T':
                     if modmode == '+':
                         visible.add(Tag)
                     elif modmode == '-' and Tag in visible:
                         visible.remove(Tag)
-                elif c == 'b':
+                elif c == 'R':
                     if modmode == '+':
-                        visible.add(Branch)
-                    elif modmode == '-' and Branch in visible:
-                        visible.remove(Branch)
-                elif c == 'u':
+                        visible.add(Reset)
+                    elif modmode == '-' and Reset in visible:
+                        visible.remove(Reset)
+                elif c == 'U':
                     if modmode == '+':
                         visible.add(Unknown)
                     elif modmode == '-' and Unknown in visible:
@@ -788,9 +788,9 @@ with command-line arguments).
         if self.repo:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
-            print "%d commands, %d blobs, %d commits, %d tags, %d branches, %d marks." % \
+            print "%d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
                   (len(self.repo.commands),
-                   count(Blob), count(Commit), count(Tag), count(Branch),
+                   count(Blob), count(Commit), count(Tag), count(Reset),
                    self.repo.nmarks)
             if self.repo.type:
                 for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:", "Viewer:"), vcstypes[self.repo.type]):
@@ -873,7 +873,7 @@ doing a quick eyeball check ofter a rebuild command.
             if isinstance(command, Tag):
                 print "%6d tag    -          %4s   %s" % (i, command.name,) 
                 continue
-            if isinstance(command, Branch):
+            if isinstance(command, Reset):
                 print "%6d branch %6s    %s" % (i, command.committish or '-', command.ref) 
                 continue
             else:

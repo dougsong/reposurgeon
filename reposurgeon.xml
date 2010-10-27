@@ -45,17 +45,153 @@ itself, hg, and bzr.</para>
 <refsect1 id='options'><title>OPERATION</title>
 <para>The program can be run in one of two modes, either as an interactive
 command interpreter or to execute commands given as arguments on the
-<application>reposurgeon</application> command line. The only difference
+<application>reposurgeon</application> invocation line. The only difference
 between these modes is that the interactive one begins by turning on the
 'verbose 1' option.</para>
+
+<para>A git-fast-import stream consists of a sequence of commands
+which must be executed in the specified sequence to build the repo;
+to avoiid confusion with <application>reposurgeon</application> commands
+we will refer to the stream commands here as <emphasis>events</emphasis>.
+These events are implicitly numbered from 1 upwards.  Most commands
+require specifying a selection of event sequence numbers so
+<application>reposurgeon</application> will know which events to
+modify or delete.</para>
+
+<para>When a command takes a selection-set argument, it will
+<emphasis>precede</emphasis> the command keyword; other arguments will
+follow. It is often possible to omit the selection-set argument and
+have it default to something reasonable, usuaally the entire event 
+sequence.</para>
+
+<para>Here are some motivating examples.  The commands will be
+explained in more detail after the description of selection
+syntax.</para>
+
+<programlisting>
+:15 edit                     ;; edit the object associated with mark :15
+
+29..71 index                 ;; list summary index of events 20..71
+
+=t &amp; 1..:97 delete            ;; delete tags from event 1 to mark 15
+</programlisting>
+
+<para>The selection-set specification syntax is an expression-oriented 
+minilanguage.  The most basic term in this language is a 
+<firstterm>location</firstterm>. The following sorts of primitive locations
+are supported:</para>
+
+<variablelist>
+<varlistentry>
+<term><firstterm>event numbers</firstterm></term>
+<listitem><para>A plain numeric literal is interpreted as a 1-origin
+event-sequence number.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>marks</firstterm></term>
+<listitem><para>A numeric literal preceded by a colon is interpreted
+as a mark; see the format documentation for explanation of the 
+semantics of marks.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>These may be grouped into sets in the following ways:</para>
+
+<variablelist>
+<varlistentry>
+<term><firstterm>ranges</firstterm></term>
+<listitem><para>A range is two locations separated by "..", and is
+the set of events begining at the left-hand location and ending at the
+right-hand location (inclusive).</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>lists</firstterm></term>
+<listitem><para>Comma-separated lists of locations and ranges are 
+accepted, with the obvious meaning.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>There are some other ways to construct event sets:</para>
+
+<variablelist>
+<varlistentry>
+<term><firstterm>visibility sets</firstterm></term>
+<listitem>
+<para>A visibility set is an expression specifying a set of event
+types. It will consist of a leading plus, minus, or equal sign,
+followed by type letters. These are the type letters:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='7' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <tbody>
+      <row>
+        <entry align='center'>B</entry>
+        <entry align='center'>blobs</entry>
+	<entry><para>Most default selection sets exclude blobs; they
+	have to be manipulated through the commits they are attached
+	to.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C</entry>
+        <entry align='center'>commits</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>T</entry>
+        <entry align='center'>tags</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R</entry>
+        <entry align='center'>resets</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>U</entry>
+        <entry align='center'>Unknown</entry>
+	<entry><para>All event types types simply passed through,
+	including comments, <command>progress</command> commands, 
+        and <command>checkpoint</command> commands.</para></entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+<para>The = prefix specifies exactly the set of types following; the +
+prefix adds to the default set for the command; and the - prefix
+subtracts from that set.</para>
+
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>Set expressions bay be combined with the operators | and &amp;;
+these are, respectively, set uniomn and intersection.</para>
 
 <para>Here are the available and planned surgical commands:</para>
 
 <variablelist>
 <varlistentry>
+<term><cmdsynopsis><command>index</command> <arg choice="opt">+b</arg></cmdsynopsis></term>
+<listitem>
+<para>Display four columns of info on objects in the selection set:
+their number, their type, the associate mark (or '-' if no mark) and a
+summary field varying by type.  For a branch or tag it's the
+reference; for a commit it's the commit branch; for a blob it's the
+repository path of the file in the blob.</para>
+
+<para>The default selection set for this command is =ctbu, all objects
+except blobs.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
 <listitem>
-<para>Delete a span of commits.  Requires a commit-range argument.</para>
+<para>Delete a selection set of commits.  The default selection set
+for this command is empty.</para>
 <!-- document handling of tags, branches, renames, deletes, copies. --> 
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
@@ -63,7 +199,8 @@ between these modes is that the interactive one begins by turning on the
 <varlistentry>
 <term><cmdsynopsis><command>expunge</command></cmdsynopsis></term>
 <listitem>
-<para>Expunge a file from the repo history.</para>
+<para>Expunge a file from the repo history. Does not take a selection
+set.</para>
 <!-- document handling of tags, branches, renames, deletes, copies. --> 
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
@@ -71,14 +208,16 @@ between these modes is that the interactive one begins by turning on the
 <varlistentry>
 <term><cmdsynopsis><command>coalesce</command></cmdsynopsis></term>
 <listitem>
-<para>Scan the history for runs of commits with identical comments close to
-each other in time (this is a common form of scar tissues in
-repository up-conversions from older file-oriented version-control systems).
-Merge these cliques.</para>
+<para>Scan the selection set for runs of commits with identical
+comments close to each other in time (this is a common form of scar
+tissues in repository up-conversions from older file-oriented
+version-control systems).  Merge these cliques.</para>
 
-<para>The required first argument is a commit range to operate on.  The optional
-second argument, if present, is a maximum time separation in seconds;
-the default is 90 seconds.</para>
+<para>The required first argument is a selection set to operate on.
+The optional second argument, if present, is a maximum time separation
+in seconds; the default is 90 seconds.</para>
+
+<para>The default selection set for this command is =c, all commits.</para>
 <!-- document handling of tags, branches, renames, deletes, copies. --> 
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
@@ -86,35 +225,14 @@ the default is 90 seconds.</para>
 <varlistentry>
 <term><cmdsynopsis><command>edit</command></cmdsynopsis></term>
 <listitem>
-<para>Edit a blob or commit or tag, identified by date or mark or tag
-name.</para>
+<para>Edit a selection set of commands.</para>
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
 </variablelist>
 
-<para>A commit range is either a single commit identifier or a pair
-of them separated by "..".  A commit identifier is a mark number
-(preceded by ':'). There are some commands that help you find interesting
-mark numbers:</para>
-
-<variablelist>
-<varlistentry>
-<term><cmdsynopsis><command>index</command> <arg choice="opt">+b</arg></cmdsynopsis></term>
-<listitem>
-<para>Display four columns of info on objects: their number, their type,
-the associate mark (or '-' if no mark) and a summary field varying by type.
-For a branch or tag it's the reference; for a commit it's the commit branch;
-for a blob it's the repository path of the fiile in the blob.</para>
-
-<para>Normally, listing of blobs in the index is suppressed, as it is not very
-useful to list them independently of the commits that reference them. The
-<option>+b</option> option enables display of blobs.</para>
-</listitem>
-</varlistentry>
-</variablelist>
-
-<para>These are backed up by the following housekeeping commands:</para>
+<para>These are backed up by the following housekeeping commands, none of 
+which take a selection set:</para>
 
 <variablelist>
 <varlistentry>
