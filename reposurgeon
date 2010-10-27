@@ -575,13 +575,13 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "eval_visibility(%s)" % self.line
         self.line = self.line.lstrip()
-        if not self.peek() in "+-=":
+        if not self.peek() in ("+", "-", "="):
             visibility = None
         else:
             Unknown = type("")
             visible = set([Commit, Tag, Branch, Unknown])
             modmode = None
-            while self.peek() in "+-=Bctbu":
+            while self.peek() in ("+", "-", "=", "B", "c", "t", "b", "u"):
                 c = self.pop()
                 if c == "+":
                     modmode = '+'
@@ -637,11 +637,12 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "eval_polyrange(%s)" % self.line
         self.line = self.line.lstrip()
-        if not self.peek() in ":0123456789$":
+        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$")
+        if not self.peek() in polyrange_initials:
             polyrange = None
         else:
             selection = []
-            while self.peek() in ":0123456789.,$":
+            while self.peek() in polyrange_initials + (".", ","):
                 # First, literal command numbers (1-origin)
                 match = re.match("[0-9]+", self.line)
                 if match:
