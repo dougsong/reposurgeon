@@ -915,7 +915,7 @@ if __name__ == '__main__':
                     interpreter.cmdloop()
                     interpreter.use_rawinput = False
                 else:
-                    interpreter.onecmd(cmd)
+                    interpreter.onecmd(interpreter.precmd(cmd))
     except RepoSurgeonException, e:
         fatal(e.msg)
     except KeyboardInterrupt:
