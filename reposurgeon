@@ -382,6 +382,11 @@ def read_repo(source, preferred, verbose):
             repo.type = foundname
             repo.sourcedir = source
             (tfdesc, tfname) = tempfile.mkstemp()
+            # A FIFO version wouldn't block our reads until
+            # the entire file is written - faster, and makes our baton
+            # spinner useful -- if it worked.
+            #tfname = os.path.join("/tmp/reposurgeon"+`os.getpid()`)
+            #os.mkfifo(tfname)
             cmd = ""
             if source != '.':
                 cmd += "cd %s >/dev/null;" % source
