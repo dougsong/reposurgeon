@@ -588,6 +588,8 @@ class RepoSurgeon(cmd.Cmd):
         term = self.eval_visibility()
         if term is None:
             term = self.eval_polyrange()
+            if term is None:
+                term = self.eval_textsearch()
         if self.verbose >= 2:
             print "%s <- eval_term(), left = %s" % (term, `self.line`)
         return term
@@ -659,7 +661,7 @@ class RepoSurgeon(cmd.Cmd):
                             selection.append(i)
                             break
                     else:
-                        raise RepoSugeonException("mark %s not found." % markref)
+                        raise RepoSurgeonException("mark %s not found." % markref)
                     continue
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
@@ -677,7 +679,7 @@ class RepoSurgeon(cmd.Cmd):
                         self.line = self.line[2:]
                         continue
                     else:
-                        raise RepoSugeonException("start of span is missing")
+                        raise RepoSurgeonException("start of span is missing")
                         return line
             if self.verbose >= 2:
                 print "reposurgeon: location list is %s with %s left" % (selection, `self.line`)
@@ -707,6 +709,33 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "%s <- eval_polyrange(), left = %s" % (polyrange, `self.line`)
         return polyrange
+    def eval_textsearch(self):
+        "Parse a text search specification."
+        if self.verbose >= 2:
+            print "eval_textsearch(%s)" % self.line
+        self.line = self.line.lstrip()
+        if not self.peek() == '/':
+            textsearch = None
+        elif '/' not in self.line[1:]:
+            raise RepoSurgeonException("malformed text search specifier")
+        else:
+            assert(self.pop() == '/')
+            endat = self.line.index('/')
+            regex = re.compile(self.line[:endat])
+            self.line = self.line[endat+1:]
+            matchers = []
+            for (i, cmd) in enumerate(self.repo.commands):
+                # This catches commits and tags
+                if hasattr(cmd, "comment") and regex.search(cmd.comment):
+                    matchers.append(i)
+                # And this catches passthroughs
+                elif hasattr(cmd, "text") and regex.search(cmd.text):
+                    matchers.append(i)
+                # We don't do blobs because it would be too slow
+                # and not very useful.
+            if self.verbose >= 2:
+                print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
+            return set(matchers)
     def help_help(self):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):

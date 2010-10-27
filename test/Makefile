@@ -20,7 +20,8 @@ SELECT_TEST = resolve 15; \
 	resolve =TR; \
 	resolve 24..97; \
 	resolve 24..97&=C; \
-	resolve 3,:15
+	resolve 3,:15; \
+	resolve /regression/
 select_test:
 	cat simple.dump | ../reposurgeon "read -" "echo 1" "index; $(SELECT_TEST)"
 make_selectregress:

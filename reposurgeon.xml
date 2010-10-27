@@ -161,9 +161,20 @@ letters. These are the type letters:</para>
 
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><firstterm>text search</firstterm></term>
+<listitem><para>A text search expression is a Python regular expression 
+surrounded by forward slashes (to embed a forward slash in it, use a
+Python string escape such as \x2f).</para>
+
+<para>A text search matches against the comment fields of commits and
+annotated tags; it also matches against the text of passthrough
+objects.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
-<para>Set expressions bay be combined with the operators | and &amp;;
+<para>Set expressions may be combined with the operators | and &amp;;
 these are, respectively, set uniomn and intersection.</para>
 
 <para>Here are the available and planned surgical commands:</para>
