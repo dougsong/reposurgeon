@@ -863,11 +863,12 @@ doing a quick eyeball check ofter a rebuild command.
         if not self.repo:
             complain("no repo is loaded.")
             return
-        self.set_selection_set(line, range(len(self.repo.commands)))
-        for (i, command) in enumerate(self.selection):
+        default = map(lambda x: x[0], filter(lambda (n, o): not isinstance(o, Blob), enumerate(self.repo.commands)))
+        self.set_selection_set(line, default)
+        for i in self.selection:
+            command = self.repo.commands[i]
             if isinstance(command, Blob):
-                if seeblobs:
-                    print "%6d blob   %6s    %s" % (i, command.mark,command.path)
+                print "%6d blob   %6s    %s" % (i, command.mark,command.path)
                 continue
             if isinstance(command, Commit):
                 print "%6d commit %6s    %s" % (i, command.mark or '-', command.branch) 
