@@ -117,8 +117,8 @@ accepted, with the obvious meaning.</para></listitem>
 <term><firstterm>visibility sets</firstterm></term>
 <listitem>
 <para>A visibility set is an expression specifying a set of event
-types. It will consist of a leading plus, minus, or equal sign,
-followed by type letters. These are the type letters:</para>
+types. It will consist of a leading equal sign, followed by type
+letters. These are the type letters:</para>
 
 <informaltable pgwide='0' frame='all'>
   <tgroup cols='3' align='center'>
@@ -158,10 +158,6 @@ followed by type letters. These are the type letters:</para>
     </tbody>
   </tgroup>
 </informaltable>
-
-<para>The = prefix specifies exactly the set of types following; the +
-prefix adds to the default set for the command; and the - prefix
-subtracts from that set.</para>
 
 </listitem>
 </varlistentry>

@@ -583,7 +583,7 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "eval_visibility(%s)" % self.line
         self.line = self.line.lstrip()
-        if not self.peek() in ("+", "-", "="):
+        if not self.peek() == "=":
             visibility = None
         else:
             Unknown = type("")
@@ -593,28 +593,15 @@ class RepoSurgeon(cmd.Cmd):
                 "T" : Tag,
                 "R" : Reset,
                 }
-            visible = set([Commit, Tag, Reset, Unknown])
+            visible = set([])
             modmode = None
-            while self.peek() in ("+","-","=","U") + tuple(typeletters.keys()):
+            self.pop()
+            while self.peek() in ("U",) + tuple(typeletters.keys()):
                 c = self.pop()
-                if c == "+":
-                    modmode = '+'
-                elif c == '-':
-                    modmode = '-'
-                elif c == '=':
-                    modmode = '+'
-                    visible = set([])
-                elif c in typeletters:
-                    if modmode == '+':
-                        objtype = typeletters[c]
-                        visible.add(objtype)
-                    elif modmode == '-' and objtype in visible:
-                        visible.remove(objtype)
+                if c in typeletters:
+                    visible.add(typeletters[c])
                 elif c == 'U':
-                    if modmode == '+':
-                        visible.add(Unknown)
-                    elif modmode == '-' and Unknown in visible:
-                        visible.remove(Unknown)
+                    visible.add(Unknown)
             # We need a special check here because these expressions
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
