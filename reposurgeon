@@ -533,7 +533,9 @@ class RepoSurgeon(cmd.Cmd):
             else:
                 disjunct |= conjunct
             self.line = self.line.lstrip()
-            if not self.peek() == '|':
+            if self.peek() == '|':
+                self.pop()
+            else:
                 break
         if self.verbose >= 2:
             print "%s <- eval_disjunct(), left = %s" % (disjunct, `self.line`)
@@ -551,7 +553,9 @@ class RepoSurgeon(cmd.Cmd):
             else:
                 conjunct = conjunct & term
             self.line = self.line.lstrip()
-            if not self.peek() == '&':
+            if self.peek() == '&':
+                self.pop()
+            else:
                 break
         if self.verbose >= 2:
             print "%s <- eval_conjunct(), left = %s" % (conjunct, `self.line`)
