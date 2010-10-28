@@ -29,7 +29,7 @@ import signal, shutil
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
 #
-# Note that some of the commands used here are plugins or extenstions
+# Note that some of the commands used here are plugins or extensions
 # that are not part of the basic VCS. Thus these may fail when called;
 # we need to be prepared to cope with that.
 #
@@ -673,6 +673,7 @@ class RepoSurgeon(cmd.Cmd):
     #
     def set_selection_set(self, line, default=None):
         "Implement object-selection syntax."
+        # Returns the line with the selection removed
         self.selection = []
         if not self.repo:
             return line
@@ -911,7 +912,7 @@ class RepoSurgeon(cmd.Cmd):
             complain("no repo is loaded.")
             return
         default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.repo.commands)))
-        self.set_selection_set(line, default)
+        line = self.set_selection_set(line, default)
         outfile = line.strip()
         if outfile and outfile != '-':
             fp = open(outfile, "w")
@@ -1209,6 +1210,10 @@ At present only the comment fields of commits and tags are updated from
 the mailbox contents; commit and tag metadata cannot be altered. This
 may change in a future release.
 """
+    def do_edit(self, line):
+        "Edit metadata interactively."
+        line = self.report_select(line, "email_out")
+        # FIXME
 
 if __name__ == '__main__':
     try:
