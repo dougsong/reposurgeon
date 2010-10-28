@@ -2,11 +2,25 @@
 #
 # rs - a repository surgeon.
 #
+# By ESR, October 2010.  BSD terms apply.
+#
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
 import readline, time, re, email.message, email.parser
 import signal, shutil
 
+# TO DO
 #
+# * Implement delete, expunge, coalesce, spawn to Emacs edit.
+#
+# * Sanity checking - dangling marks etc.
+#
+# * Test hg and bzr methods.
+#
+# * Validity check in edit_in to ensure we have the right type.
+#   Should catch the common case where we feed edit_in an out-of date
+#   mailbox, so it inflicts a comment change meant for something in the
+#   tag list on a commit comment.
+
 # All knowledge about specific version-control systems lives in the
 # following dictionary. The key is the subdirectory name that tells us
 # we have a given VCS active.  The values in the tuple are,
@@ -601,7 +615,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         # Revert signals
         for sig in range(1, signal.NSIG):
             if not sig == signals.SIGKILL:
-                signal.signal(sig, handlers[sig-1]))
+                signal.signal(sig, handlers[sig-1])
 
         map(lambda (i, s): signal.signal(s, i+1), enumerate(handlers))
         if verbose:
@@ -1194,7 +1208,7 @@ At present only the comment fields of commits and tags are updated from
 the mailbox contents; commit and tag metadata cannot be altered. This
 may change in a future release.
 """
- 
+
 if __name__ == '__main__':
     try:
         interpreter = RepoSurgeon()
