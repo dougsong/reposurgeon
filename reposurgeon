@@ -95,9 +95,29 @@ def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
     return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
 
 class RepoSurgeonEmail(email.message.Message):
+    "Specialized email message with a distinguishing starter."
     def __init__(self, **kwargs):
         email.message.Message.__init__(self, **kwargs)        
-        self.set_unixfrom("From reposurgeon "+rfc822_from_unixtime(time.time()))
+        self.set_unixfrom(78 * "-")
+    @staticmethod
+    def readmsg(fp):
+        msg = ''
+        firstline = fp.readline()
+        if not firstline:
+            return None
+        elif not firstline.startswith(78 * "-"):
+            msg = firstline
+        while True:
+            line = fp.readline()
+            if not line:
+                break
+            if line.startswith(78 * "-"):
+                break
+            msg += line
+        return msg
+
+    def __str__(self):
+        return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
 class Action:
     "Represents an instance of a person acting on the repo."
@@ -1051,15 +1071,31 @@ output.
 """
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
-        parser = email.parser.Parser()
         infile = line.strip()
         if infile and infile != '-':
             fp = open(infile)
         else:
             fp = sys.stdin
-        update_list = parser.parse(fp)
+        update_list = []
+        while True:
+            msg = RepoSurgeonEmail.readmsg(fp)
+            if not msg:
+                break
+            update_list.append(email.message_from_string(msg))
         if infile:
             fp.close()
+        # First, a validation pass
+        for (i, message) in enumerate(update_list):
+            if "Event-Number" not in message:
+                raise RepoSurgeonError("missing event number in update %d" % i)
+            event = message["Event-Number"]
+            if event < 1 or event >= len(self.repo.events):
+                raise RepoSurgeonError("event number out of range in update %d" % i)
+            event = self.repo.events[i]
+            if not hasattr(event, "email_in"):
+                raise RepoSurgeonError("event %d cannot be modified" % event)
+        # Now apply the updates
+        #FIXME
 
     def help_mailbox_in(self):
         print """
@@ -1069,10 +1105,18 @@ no selection set.  If there is an argument it will be taken as the
 name of a mailbox file to read from; no argument, or one of '-'; reads
 from standard output.
 
+Users should be aware that modifying an Event-Number field will change
+which event the update from that message is applied to.  This is
+unlikely to have good results.
+
+Event updates are atomic; if reposurgeon throws an error while in this
+command events updated before the error will keep their changed state,
+but no event will be partially modified. Event numbers are validated
+before any individual event is updated.
+
 At present only the comment fields of commits and tags are updated from
-the mailbox contents; commit and tag metadata cannot be altered. Users
-should be aware that modifying the Event-Number field will change which
-event the update is applied to.
+the mailbox contents; commit and tag metadata cannot be altered. This
+may change in a future release.
 """
  
 if __name__ == '__main__':

@@ -253,6 +253,11 @@ no selection set.  If there is an argument it will be taken as the
 name of a mailbox file to read from; no argument, or one of '-'; reads
 from standard output.</para>
 
+<para>Event updates are atomic; if reposurgeon throws an error while in this
+command events updated before the error will keep their changed state,
+but no event will be partially modified. Event numbers are validated
+before any individual event is updated.</para>
+
 <para>Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.</para>
