@@ -26,7 +26,7 @@ version:
 	@echo $(VERS)
 
 check:
-	cd test; make
+	cd test; make --quiet
 
 dist: reposurgeon-$(VERS).tar.gz
 
