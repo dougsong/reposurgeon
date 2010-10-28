@@ -522,6 +522,25 @@ def filelist(exclude):
             dirs.remove(exclude)
     return found
 
+class CriticalRegion:
+    "Encapsulate operations to try and make us un-interruptible."
+    # This number is magic. Python sets a much higher signal.NSIG
+    # value, but under Linux the signal caalls start to trigger
+    # runtime errors at this value and above.
+    NSIG = 32
+    def __init__(self):
+        "Begin critical region."
+        # Alas that we lack sigblock support
+        self.handlers = []
+        for sig in range(1, CriticalRegion.NSIG):
+            if not sig in (signal.SIGKILL, signal.SIGSTOP):
+                self.handlers.append(signal.signal(sig, signal.SIG_IGN))
+    def __del__(self):
+        "End critical region."
+        for sig in range(1, CriticalRegion.NSIG):
+            if not sig in (signal.SIGKILL, signal.SIGSTOP):
+                signal.signal(sig, self.handlers[sig-1])
+
 def rebuild_repo(repo, target, preferred, verbose):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
@@ -582,14 +601,9 @@ def rebuild_repo(repo, target, preferred, verbose):
         assert(os.path.abspath(savedir))
 
         # This is a critical region.  Ignore all signals until we're done.
-        # Alas that we lack sigblock support
         if verbose:
             complain("build critical region begins...")
-        handlers = []
-        for sig in range(1, signal.NSIG):
-            if not sig in (signal.SIGKILL, signal.SIGSTOP):
-                complain("blocking signal %d" % sig)
-                handlers.append(signal.signal(sig, signal.SIG_IGN))
+        critical = CriticalRegion()
 
         # Move the unmodified repo contents in target to the backup directory.
         # Then move the staging contents to the target directory.
@@ -612,14 +626,9 @@ def rebuild_repo(repo, target, preferred, verbose):
                       os.path.join(target, keeper))
             shutil.copy2(os.path.join(target, keeper),
                         os.path.join(savedir, keeper))
-        # Revert signals
-        for sig in range(1, signal.NSIG):
-            if not sig in (signal.SIGKILL, signal.SIGSTOP):
-                signal.signal(sig, handlers[sig-1])
-
-        map(lambda (i, s): signal.signal(s, i+1), enumerate(handlers))
         if verbose:
             complain("build critical region ends. Success.")
+        del critical
     finally:
         os.chdir(here)
         #os.remove(tfname)
