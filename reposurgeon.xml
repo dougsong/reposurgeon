@@ -70,7 +70,7 @@ syntax.</para>
 <programlisting>
 edit :15                 ;; edit the object associated with mark :15
 
-index 29..71             ;; list summary index of events 20..71
+list 29..71              ;; list summary index of events 20..71
 
 list /regression/        ;; list all commits with comments containing 
                          ;; the string "regression"
@@ -174,7 +174,6 @@ Python string escape such as \x2f).</para>
 annotated tags; it also matches against the text of passthrough
 objects.</para>
 </listitem>
-</varlistentry>
 </variablelist>
 
 <para>Set expressions may be combined with the operators | and &amp;;
@@ -187,7 +186,13 @@ these are, respectively, set uniomn and intersection.</para>
 <term><cmdsynopsis><command>list</command></cmdsynopsis></term>
 <listitem><para>This is the main command for identifying the objects
 you want to modify.  It lists commits in the selection set by event
-sequence number with summary information.</para></listitem>
+sequence number with summary information. The first column is raw
+event numbers, the second a timestamp, and the third the leading text
+of the comment.  If there is a second argument, or the first is not
+recognized as a selection set, it will be taken as the name
+of the file to report to; no argument, or one of '-'; writes to
+standard output.
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
@@ -227,12 +232,15 @@ CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>edit_out</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>email_out</command></cmdsynopsis></term>
 <listitem>
-<para>Dump to standard output a mailbox file of messages in RFC822
-format representing the contents of the metadata in commits and
-annotated tags. Takes a selection set; members of the set other than
-commits and annotated tags are ignored.</para>
+<para>Emit a mailbox file of messages in RFC822 format representing
+the contents of the metadata in commits and annotated tags. Takes a
+selection set; members of the set other than commits and annotated
+tags are ignored.  If there is a second argument, or the first is not
+recognized as a selection set, it will be taken as the name of the
+file to report to; no argument, or one of '-'; writes to standard
+output.</para>
 </listitem>
 </varlistentry>
 </variablelist>
