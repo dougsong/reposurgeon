@@ -587,7 +587,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             complain("build critical region begins...")
         handlers = []
         for sig in range(1, signal.NSIG):
-            if not sig == signal.SIGKILL:
+            if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 complain("blocking signal %d" % sig)
                 handlers.append(signal.signal(sig, signal.SIG_IGN))
 
@@ -614,7 +614,7 @@ def rebuild_repo(repo, target, preferred, verbose):
                         os.path.join(savedir, keeper))
         # Revert signals
         for sig in range(1, signal.NSIG):
-            if not sig == signal.SIGKILL:
+            if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, handlers[sig-1])
 
         map(lambda (i, s): signal.signal(s, i+1), enumerate(handlers))
