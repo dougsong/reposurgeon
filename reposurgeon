@@ -556,8 +556,6 @@ def rebuild_repo(repo, target, preferred, verbose):
     (repodir,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
     here = os.getcwd()
     try:
-        herefiles = set(filelist(exclude=repodir))
-        
         os.chdir(staging)
         if os.system(initializer):
             complain("repo initialization failed")
@@ -572,8 +570,6 @@ def rebuild_repo(repo, target, preferred, verbose):
         if os.system(checkout):
             complain("repo checkout failed")
             return
-        trackedfiles = set(filelist(exclude=repodir))
-        untracked = herefiles - trackedfiles
         if verbose:
             print "reposurgeon: rebuild is complete."
 
@@ -610,7 +606,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         del critical
     finally:
         os.chdir(here)
-        os.remove(tfname)
+        #os.remove(tfname)
         os.system("rm -fr " + staging)
 
 def act(cmd):
