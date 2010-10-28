@@ -512,16 +512,6 @@ def read_repo(source, preferred, verbose):
             os.remove(tfname)
     return repo
 
-def filelist(exclude):
-    "Return a list of relative paths under the current directory."
-    found = []
-    for root, dirs, files in os.walk("."):
-        for name in files:
-            found.append(os.path.join(root, name)) 
-        if exclude in dirs:
-            dirs.remove(exclude)
-    return found
-
 class CriticalRegion:
     "Encapsulate operations to try and make us un-interruptible."
     # This number is magic. Python sets a much higher signal.NSIG
@@ -563,10 +553,9 @@ def rebuild_repo(repo, target, preferred, verbose):
         complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
-    (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
+    (repodir,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
     here = os.getcwd()
     try:
-        repodir = vcstypes[preferred][0]
         herefiles = set(filelist(exclude=repodir))
         
         os.chdir(staging)
@@ -616,18 +605,6 @@ def rebuild_repo(repo, target, preferred, verbose):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
 
-        if 0:  # This logic doesn't work:
-            # Restore untracked files from the backup directory.
-            # We move them to target and then copy back in order
-            # to preserve file mod dates and metadata even if
-            # shutil.copy2() can't hack that.
-            if verbose:
-                complain("restoring %s" % " ".join(untracked))
-            for keeper in untracked:
-                os.rename(os.path.join(savedir, keeper),
-                          os.path.join(target, keeper))
-                shutil.copy2(os.path.join(target, keeper),
-                            os.path.join(savedir, keeper))
         if verbose:
             complain("build critical region ends. Success.")
         del critical
