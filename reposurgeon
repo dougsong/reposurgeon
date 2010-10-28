@@ -504,6 +504,9 @@ class RepoSurgeon(cmd.Cmd):
         self.repo = None
         self.preferred = None
         self.selection = []
+    #
+    # Housekeeping hooks.
+    #
     def postcmd(self, stop, line):
         if line == "EOF":
             return True
@@ -514,6 +517,15 @@ class RepoSurgeon(cmd.Cmd):
         if self.echo:
             print line
         return line
+    def do_shell(self, line):
+        "Execute a shell command."
+        os.system(line)
+    def do_EOF(self, line):
+        "Terminate reposurgeon."
+        return True
+    #
+    # The selection-language parsing code starts here.
+    #
     def set_selection_set(self, line, default=None):
         "Implement object-selection syntax."
         self.selection = []
@@ -747,6 +759,9 @@ class RepoSurgeon(cmd.Cmd):
             if self.verbose >= 2:
                 print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
             return set(matchers)
+    #
+    # On-line help and instrumentation
+    #
     def help_help(self):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
@@ -772,6 +787,9 @@ of verbosity are available but intended for developers only.
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
+    #
+    # Serialization and de-serialization.
+    #
     def do_prefer(self, line):
         "Report or select the preferred repository type."
         if line:
@@ -824,25 +842,6 @@ With an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).
 """
-    def do_stats(self, line):
-        "Report on the loaded repository infrmation"
-        if self.repo:
-            def count(otype):
-                return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
-            print "%d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
-                  (len(self.repo.commands),
-                   count(Blob), count(Commit), count(Tag), count(Reset),
-                   self.repo.nmarks)
-            if self.repo.type:
-                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:", "Viewer:"), vcstypes[self.repo.type]):
-                    print "%14s %s" % (legend, command)
-        else:
-            print "reposurgeon: no repository loaded."
-    def help_stats(self):
-        print """
-Report size statistics and import/export method information after reading
-a repo or stream.
-"""
     def do_write(self, line):
         "Stream out the results of repo surgery."
         if not line:
@@ -873,6 +872,34 @@ repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
 """
+    def help_rebuild(self):
+        print """
+View a repo through the default GUI browser for its version control system.
+Note that this does not show the in-core state; it is mainly useful for
+doing a quick eyeball check ofter a rebuild command.
+"""
+    #
+    # Information-gathering
+    #
+    def do_stats(self, line):
+        "Report on the loaded repository infrmation"
+        if self.repo:
+            def count(otype):
+                return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
+            print "%d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
+                  (len(self.repo.commands),
+                   count(Blob), count(Commit), count(Tag), count(Reset),
+                   self.repo.nmarks)
+            if self.repo.type:
+                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:", "Viewer:"), vcstypes[self.repo.type]):
+                    print "%14s %s" % (legend, command)
+        else:
+            print "reposurgeon: no repository loaded."
+    def help_stats(self):
+        print """
+Report size statistics and import/export method information after reading
+a repo or stream.
+"""
     def do_view(self, line):
         "View a repo through its GUI."
         if not self.preferred:
@@ -883,15 +910,6 @@ its contents are backed up to a save directory.
             complain("no GUI is available.")
             return
         os.system(gui)
-    def help_rebuild(self):
-        print """
-View a repo through the default GUI browser for its version control system.
-Note that this does not show the in-core state; it is mainly useful for
-doing a quick eyeball check ofter a rebuild command.
-"""
-    def do_shell(self, line):
-        "Execute a shell command."
-        os.system(line)
     def do_index(self, line):
         "Generate a summary listing of objects."
         if not self.repo:
@@ -915,6 +933,14 @@ doing a quick eyeball check ofter a rebuild command.
                 continue
             else:
                 print "?      -      %s" % (command,) 
+    def help_index(self):
+        print """
+Display four columns of info on selected objects: their number, their
+type, the associate mark (or '-' if no mark) and a summary field
+varying by type.  For a branch or tag it's the reference; for a commit
+it's the commit branch; for a blob it's the repository path of the
+file in the blob.
+"""
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
         if not self.repo:
@@ -932,14 +958,6 @@ doing a quick eyeball check ofter a rebuild command.
         print """
 Display commits in a human-friendly format.
 """
-    def help_index(self):
-        print """
-Display four columns of info on selected objects: their number, their
-type, the associate mark (or '-' if no mark) and a summary field
-varying by type.  For a branch or tag it's the reference; for a commit
-it's the commit branch; for a blob it's the repository path of the
-file in the blob.
-"""
     def do_resolve(self, line):
         "Display the set of event numbers generated by a section set."
         self.set_selection_set(line)
@@ -951,9 +969,6 @@ and echo the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.
 """
-    def do_EOF(self, line):
-        "Terminate reposurgeon."
-        return True
 
 if __name__ == '__main__':
     try:
