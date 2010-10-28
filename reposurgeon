@@ -149,7 +149,7 @@ class Blob:
     "Represent a detached blob of data referenced by a mark."
     def __init__(self, subdir):
         self.mark = None
-        self.subdir = subdir
+        self.subdir = os.path.abspath(subdir)
         self.path = None      # First in-repo path associated with this blob
     def blobfile(self):
         return self.subdir + "/blob-" + self.mark
@@ -539,7 +539,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         # Rebuild succeeded - make an empty backup directory
         backupcount = 1
         while True:
-            savedir = target + ".~%d%~" % backupcount
+            savedir = target + (".~%d~" % backupcount)
             if os.path.exists(savedir):
                 backupcount += 1
             else:
