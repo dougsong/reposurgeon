@@ -293,9 +293,14 @@ class Repository:
         self.subdir = ".rs"
     def error(self, msg, atline=True):
         if atline:
-            raise RepoSurgeonException(msg + (" at line " + `self.import_line`))
+            raise RepoSurgeonException(msg + " at line " + `self.import_line`)
         else:
             raise RepoSurgeonException(msg)
+    def warn(self, msg, atline=True):
+        if atline:
+            print "reposurgeon: " + msg + " at line " + `self.import_line`
+        else:
+            raise "reposurgeon: " + msg
     def __del__(self):
         os.system("rm -fr %s" % (self.subdir,))
     def fast_import(self, fp, baton=None):
@@ -397,6 +402,9 @@ class Repository:
                             for obj in self.commands:
                                 if isinstance(obj, Blob) and obj.mark == ref:
                                     obj.path = path
+                                    break
+                            else:
+                                self.error("no blob matches commit reference to %s" % ref)
                         elif ref[0] == 'inline':
                             copyname = self.subdir + "/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
