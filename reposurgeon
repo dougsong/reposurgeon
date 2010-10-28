@@ -16,10 +16,7 @@ import signal, shutil
 #
 # * Test hg and bzr methods.
 #
-# * Validity check in edit_in to ensure we have the right type.
-#   Should catch the common case where we feed edit_in an out-of date
-#   mailbox, so it inflicts a comment change meant for something in the
-#   tag list on a commit comment.
+# * Simplify the rebuild gymnastics - three-directory monte is too complex.
 
 # All knowledge about specific version-control systems lives in the
 # following dictionary. The key is the subdirectory name that tells us
@@ -191,6 +188,9 @@ class Tag:
         return str(msg)
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
+        if "Tag-Name" not in msg:
+            raise RepoSurgeonException("update to tag %s is malformed" %
+                                       self.name)
         modified = False
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
@@ -237,6 +237,10 @@ class Commit:
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
+        if "Author" not in msg:
+            idme = self.mark or "unmarked"
+            raise RepoSurgeonException("update to commit %s is malformed" %
+                                       idme)
         modified = False
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
