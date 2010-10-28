@@ -4,6 +4,7 @@
 #
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
 import readline, time, re, email.message, email.parser
+import signal, shutil
 
 #
 # All knowledge about specific version-control systems lives in the
@@ -497,6 +498,16 @@ def read_repo(source, preferred, verbose):
             os.remove(tfname)
     return repo
 
+def filelist(exclude):
+    "Return a list of relative paths under the current directory."
+    found = []
+    for root, dirs, files in os.walk("."):
+        for name in files:
+            found.append(os.pathjoin(root, name)) 
+        if exclude in dirs:
+            dirs.remove(exclude)
+    return found
+
 def rebuild_repo(repo, target, preferred, verbose):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
@@ -509,6 +520,7 @@ def rebuild_repo(repo, target, preferred, verbose):
     if not preferred:
         complain("please prefer a repo type first")
         return
+
     # Create a new empty directory to do the rebuild in
     staging = target + "-stage" + str(os.getpid())
     assert(os.path.isabs(target) and os.path.isabs(staging))
@@ -521,6 +533,9 @@ def rebuild_repo(repo, target, preferred, verbose):
     (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
     here = os.getcwd()
     try:
+        repodir = vcstypes[self.preferred][0]
+        herefiles = set(filelist(exclude=repodir))
+        
         os.chdir(staging)
         if os.system(initializer):
             complain("repo initialization failed")
@@ -535,6 +550,8 @@ def rebuild_repo(repo, target, preferred, verbose):
         if os.system(checkout):
             complain("repo checkout failed")
             return
+        trackedfiles = set(filelist(exclude=repodir))
+        untracked = herefiles - trackedfiles
         os.chdir(here)
         # Rebuild succeeded - make an empty backup directory
         backupcount = 1
@@ -546,6 +563,14 @@ def rebuild_repo(repo, target, preferred, verbose):
                 break
         os.mkdir(savedir)
         assert(os.path.abspath(savedir))
+
+        # This is a critical region.  Ignore all signals until we're done.
+        # Alas that we lack sigblock support
+        if self.verbose:
+            complain("build critical region begins...")
+        handlers = map(lambda s: signal.signal(s, signal.SIG_IGN),
+                       range(1, signal.NSIG))
+        
         # Move the unmodified repo contents in target to the backup directory.
         # Then move the staging contents to the target directory.
         for sub in os.listdir(target):
@@ -556,6 +581,19 @@ def rebuild_repo(repo, target, preferred, verbose):
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
+        # Restore untracked files from the backup directory.
+        # We move them to target and then copy back in order
+        # to preserve file mod dates and metadata even if
+        # shutil.copy2() can't hack that.
+        for keeper in untracked:
+            os.rename(os.path.join(savedir, keeper),
+                      os.path.join(target, keeper))
+            shutil.copy2(os.path.join(target, keeper),
+                        os.path.join(savedir, keeper))
+        # Revert signals
+        map(lambda (i, s): signal.signal(s, i+1), enumerate(handlers))
+        if self.verbose:
+            complain("build critical region ends. Success.")
     finally:
         os.chdir(here)
         os.remove(tfname)

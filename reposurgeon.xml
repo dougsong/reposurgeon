@@ -444,6 +444,57 @@ url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
 Wiki tools page</ulink> for a large collection of such tools.</para>
 </refsect1>
 
+<refsect1 id='recovery'><title>CRASH RECOVERY</title>
+
+<para>This section will become relevant only if 
+<application>reposurgeon</application> or something underneath it in the
+software and hardware stack crashes while in the middle of writing out 
+a repository, in particular if the target directory of the rebuild is
+your current directory.</para>
+
+<para>The tool has two conflicting objectives: on the one hand, we
+never want to risk clobbering a pre-existing repo.  On the other hand,
+we want to be able to run this tool in a directory with a repo and
+modify it in place.</para>
+
+<para>We resolve this directory with a game of three-directory monte.</para>
+
+<procedure>
+<step><para>First, we build the repo in a freshly-created staging
+directory.  if your target directory is named
+<filename>/path/to/foo</filename>, the staging directory will be a
+peer named <filename>/path/to/foo-stageNNNN</filename>, where NNNN is
+a cookie derived from <application>reposurgeon</application>'s process
+ID.</para></step>
+
+<step>
+<para>We then make an empty backup directory.  This directory will
+be named <filename>/path/to/foo.~N~</filename>, where N is incremented
+so as not to conflict with any existing backup drectories.  
+<application>reposurgeon</application> never, under any circumstances.
+ever deletes a backup directory.</para>
+
+<para>So far all,operations are safe; the worst that can happen up to
+this point if the process gets interrupted is that the staging and
+backup directories get left behind.</para>
+</step>
+
+<step><para>The critical region begins. We first move everything in the
+target directory to the backup directory.</para></step>
+
+<step><para>Then we move everything in the staging directory to the
+target.</para></step>
+
+<step><para>We finish off by restoring untracked files in the target
+directory from the backup directory. That ends the critical
+region.</para></step>
+</procedure>
+
+<para>During the critical region, all signals that can be ignored are
+ignored.</para>
+
+</refsect1>
+
 <refsect1 id='author'><title>AUTHOR</title>
 
 <para>Eric S. Raymond <email>esr@snark.thyrsus.com</email>; project
