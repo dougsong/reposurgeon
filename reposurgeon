@@ -754,11 +754,20 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "eval_term(%s)" % self.line
         self.line = self.line.lstrip()
-        term = self.eval_visibility()
-        if term is None:
-            term = self.eval_polyrange()
+        if self.peek() == '{':
+            self.pop()
+            term = self.eval_disjunct()
+            self.line = self.line.lstrip()
+            if self.peek() != '}':
+                raise RepoSurgeonException("trailing junk on inner expression")
+            else:
+                self.pop()
+        else:
+            term = self.eval_visibility()
             if term is None:
-                term = self.eval_textsearch()
+                term = self.eval_polyrange()
+                if term is None:
+                    term = self.eval_textsearch()
         if self.verbose >= 2:
             print "%s <- eval_term(), left = %s" % (term, `self.line`)
         return term

@@ -178,7 +178,9 @@ objects.</para>
 </variablelist>
 
 <para>Set expressions may be combined with the operators | and &amp;;
-these are, respectively, set uniomn and intersection.</para>
+these are, respectively, set union and intersection. The | has lower
+precendence than intersection, but you may use curly brackets '{' and
+'}' to group expressions in case there is ambiguity..</para>
 
 <para>Here are the available and planned surgical commands:</para>
 
