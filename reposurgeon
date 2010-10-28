@@ -533,7 +533,7 @@ def rebuild_repo(repo, target, preferred, verbose):
     (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
     here = os.getcwd()
     try:
-        repodir = vcstypes[self.preferred][0]
+        repodir = vcstypes[preferred][0]
         herefiles = set(filelist(exclude=repodir))
         
         os.chdir(staging)
@@ -552,6 +552,9 @@ def rebuild_repo(repo, target, preferred, verbose):
             return
         trackedfiles = set(filelist(exclude=repodir))
         untracked = herefiles - trackedfiles
+        if verbose:
+            print "reposurgeon: rebuild is complete."
+
         os.chdir(here)
         # Rebuild succeeded - make an empty backup directory
         backupcount = 1
@@ -596,7 +599,7 @@ def rebuild_repo(repo, target, preferred, verbose):
             complain("build critical region ends. Success.")
     finally:
         os.chdir(here)
-        os.remove(tfname)
+        #os.remove(tfname)
         os.system("rm -fr " + staging)
 
 def act(cmd):
