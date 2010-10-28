@@ -1,4 +1,4 @@
-# Test-suite makefile for rs
+# Test-suite makefile for reposurgeon
 
 all: roundtrip selectregress
 	@echo "No diff output is good news."
@@ -31,3 +31,6 @@ selectregress:
 	@make --quiet select_test >/tmp/regress
 	@diff -u select_test.chk /tmp/regress
 	@rm -f /tmp/regress
+
+# Alas, we can't regression-test email_out without giving up generating 
+# a now timestamp into the header

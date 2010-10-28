@@ -2,7 +2,8 @@
 #
 # rs - a repository surgeon.
 #
-import sys, os, getopt, commands, cStringIO, cmd, tempfile, readline, time, re
+import sys, os, getopt, commands, cStringIO, cmd, tempfile
+import readline, time, re, email.message
 
 #
 # All knowledge about specific version-control systems lives in the
@@ -83,9 +84,20 @@ class Baton:
             self.stream.write("...(%2.2f sec) %s.\n" % (time.time() - self.time, msg))
         return
 
-def iso8601_from_unixtime(secs_since_epoch):
-    "Make an ISO8601 tumestamp frm Unix time."
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(secs_since_epoch))
+def iso8601_from_unixtime(secs_since_epoch, tzoff=""):
+    "Make an ISO8601 timestamp frm Unix time."
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
+
+def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
+    "Make an RFC822 timestamp from Unix time."
+    if tzoff:
+        tzoff = " " + tzoff
+    return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
+
+class RepoSurgeonEmail(email.message.Message):
+    def __init__(self, **kwargs):
+        email.message.Message.__init__(self, **kwargs)        
+        self.set_unixfrom("From reposurgeon "+rfc822_from_unixtime(time.time()))
 
 class Action:
     "Represents an instance of a person acting on the repo."
@@ -97,8 +109,19 @@ class Action:
         timeout = self.when
         if self.when[0].isdigit():
             (unixtime, tzoff) = self.when.split()
-            timeout = iso8601_from_unixtime(int(unixtime)) + tzoff
+            timeout = iso8601_from_unixtime(int(unixtime), tzoff)
         return timeout
+    def rfc822date(self):
+        "Return RFC822 format for time/date of this action."
+        timeout = self.when
+        if self.when[0].isdigit():
+            (unixtime, tzoff) = self.when.split()
+            timeout = rfc822_from_unixtime(int(unixtime), tzoff)
+        return timeout
+    def email_out(self, msg, hdr):
+        "Update an RC822 message object with a representation of this."
+        msg[hdr] = self.name + " <" + self.email + ">"
+        msg[hdr + "-Date"] = self.rfc822date()
     def __str__(self):
         return self.name + " <" + self.email + "> " + self.when
 
@@ -123,6 +146,12 @@ class Tag:
         self.committish = committish
         self.tagger = tagger
         self.comment = content
+    def email_out(self):
+        msg = RepoSurgeonEmail()
+        msg["Tag-Name"] = self.name
+        self.tagger.email_out(msg, "Tagger")
+        msg.set_payload(self.comment)
+        return msg
     def __str__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
@@ -148,6 +177,12 @@ class Commit:
         self.parents = []            # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
+    def email_out(self):
+        msg = RepoSurgeonEmail()
+        self.author.email_out(msg, "Author")
+        self.committer.email_out(msg, "Committer")
+        msg.set_payload(self.comment)
+        return msg
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -969,7 +1004,27 @@ and echo the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.
 """
-
+    #
+    # Editing commands
+    #
+    def do_email_out(self, line):
+        "Generate a mailbox file representing object metadata."
+        if not self.repo:
+            complain("no repo is loaded.")
+            return
+        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.repo.commands)))
+        self.set_selection_set(line, default)
+        for i in self.selection:
+            command = self.repo.commands[i]
+            if hasattr(command, "email_out"):
+                print command.email_out()
+    def help_email_out(self):
+        print """
+Dump to standard output a mailbox file of messages in RFC822 format representing
+the contents of the metadata in commits and annotated tags. Takes a selection
+set; members of the set other than commits and annotated tags are ignored.
+"""
+ 
 if __name__ == '__main__':
     try:
         interpreter = RepoSurgeon()

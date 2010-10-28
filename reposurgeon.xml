@@ -227,10 +227,12 @@ CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>edit</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>edit_out</command></cmdsynopsis></term>
 <listitem>
-<para>Edit a selection set of events.</para>
-<para>NOT YET IMPLEMENTED.</para>
+<para>Dump to standard output a mailbox file of messages in RFC822
+format representing the contents of the metadata in commits and
+annotated tags. Takes a selection set; members of the set other than
+commits and annotated tags are ignored.</para>
 </listitem>
 </varlistentry>
 </variablelist>
