@@ -3,7 +3,7 @@
 # rs - a repository surgeon.
 #
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
-import readline, time, re, email.message
+import readline, time, re, email.message, email.parser
 
 #
 # All knowledge about specific version-control systems lives in the
@@ -813,7 +813,7 @@ class RepoSurgeon(cmd.Cmd):
         self.set_selection_set(line, default)
         outfile = line.strip()
         if outfile and outfile != '-':
-            fp = open(line.strip(), "w")
+            fp = open(outfile, "w")
         else:
             fp = sys.stdout
         for i in self.selection:
@@ -1036,10 +1036,10 @@ for exploring the selection-set language.
     #
     # Editing commands
     #
-    def do_email_out(self, line):
+    def do_mailbox_out(self, line):
         "Generate a mailbox file representing object metadata."
         self.report_select(line, "email_out")
-    def help_email_out(self):
+    def help_mailbox_out(self):
         print """
 Emit a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
@@ -1048,7 +1048,31 @@ tags are ignored.  If there is a second argument, or the first is not
 recognized as a selection set, it will be taken as the name of the
 file to report to; no argument, or one of '-'; writes to standard
 output.
+"""
+    def do_mailbox_in(self, line):
+        "Accept a mailbox file representing object metadata and update from it."
+        parser = email.parser.Parser()
+        infile = line.strip()
+        if infile and infile != '-':
+            fp = open(infile)
+        else:
+            fp = sys.stdin
+        update_list = parser.parse(fp)
+        if infile:
+            fp.close()
 
+    def help_mailbox_in(self):
+        print """
+Accept a mailbox file of messages in RFC822 format representing the
+contents of the metadata in selected commits and annotated tags. Takes
+no selection set.  If there is an argument it will be taken as the
+name of a mailbox file to read from; no argument, or one of '-'; reads
+from standard output.
+
+At present only the comment fields of commits and tags are updated from
+the mailbox contents; commit and tag metadata cannot be altered. Users
+should be aware that modifying the Event-Number field will change which
+event the update is applied to.
 """
  
 if __name__ == '__main__':

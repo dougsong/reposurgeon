@@ -233,7 +233,7 @@ CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>email_out</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>mailbox_out</command></cmdsynopsis></term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
 the contents of the metadata in commits and annotated tags. Takes a
@@ -242,6 +242,24 @@ tags are ignored.  If there is a second argument, or the first is not
 recognized as a selection set, it will be taken as the name of the
 file to report to; no argument, or one of '-'; writes to standard
 output.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>mailbox_in</command></cmdsynopsis></term>
+<listitem>
+<para>Accept a mailbox file of messages in RFC822 format representing the
+contents of the metadata in selected commits and annotated tags. Takes
+no selection set.  If there is an argument it will be taken as the
+name of a mailbox file to read from; no argument, or one of '-'; reads
+from standard output.</para>
+
+<para>Users should be aware that modifying an Event-Number field will change
+which event the update from that message is applied to.  This is
+unlikely to have good results.</para>
+
+<para>At present only the comment fields of commits and tags are updated from
+the mailbox contents; commit and tag metadata cannot be altered. This
+may change in a future release.</para>
 </listitem>
 </varlistentry>
 </variablelist>
