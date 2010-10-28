@@ -572,7 +572,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         if verbose:
             complain("build critical region begins...")
         handlers = []
-        for sig in range(1, signal.NSIG)):
+        for sig in range(1, signal.NSIG):
             complain("blocking signal %d" % sig)
             handlers.append(signal.signal(sig, signal.SIG_IGN))
 
