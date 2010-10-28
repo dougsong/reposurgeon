@@ -1118,7 +1118,10 @@ output.
             if event.email_in(update):
                 modified.append(eventnum+1)
         if self.verbose:
-            print "reposurgeon: events %s modified" % (modified,)
+            if not modified:
+                print "reposurgeon: no events modified."
+            else:
+                print "reposurgeon: modified events are %s." % (modified,)
 
     def help_mailbox_in(self):
         print """
