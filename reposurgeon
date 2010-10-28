@@ -511,14 +511,14 @@ def rebuild_repo(repo, target, preferred, verbose):
         return
     # Create a new empty directory to do the rebuild in
     staging = target + "-stage" + str(os.getpid())
-    assert(isabspath(target) and isabspath(staging))
+    assert(os.path.isabs(target) and os.path.isabs(staging))
     try:
         os.mkdir(staging)
     except OSError:
         complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
-    (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[self.preferred]
+    (dirname,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
     here = os.getcwd()
     try:
         os.chdir(staging)
