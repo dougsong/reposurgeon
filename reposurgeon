@@ -12,8 +12,6 @@ import signal, shutil
 #
 # * Implement delete, expunge, coalesce, spawn to Emacs edit.
 #
-# * Sanity checking - dangling marks etc.
-#
 # * Dates and refnames in specification expressions.
 #
 # * Test hg and bzr methods.
@@ -289,6 +287,7 @@ class Repository:
         self.commands = []    # A list of the commands encountered, in order
         self.nmarks = 0
         self.refs_to_branches = {}
+        self.blob_refcount = {}
         self.import_line = 0
         self.subdir = ".rs"
     def error(self, msg, atline=True):
@@ -398,7 +397,8 @@ class Repository:
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
                             copyname = self.subdir + "/blob-" + ref
-                            commit.fileops.append((op, mode, ref, path, copyname))
+                            commit.fileops.append((op,mode,ref,path,copyname))
+                            self.blob_refcount[ref] = self.blob_refcount.get(ref, 0)+1
                             for obj in self.commands:
                                 if isinstance(obj, Blob) and obj.mark == ref:
                                     obj.path = path
@@ -457,6 +457,9 @@ class Repository:
                 commands.append(line)
         if baton:
             baton.end()
+        for blob in self.blob_refcount:
+            if self.blob_refcount[blob] != 1:
+                self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
     def fast_export(self, fp, baton=None):
         "Dump the repo object in fast-export format."
         for command in self.commands:
