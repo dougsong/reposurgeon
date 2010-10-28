@@ -534,7 +534,7 @@ class CriticalRegion:
         self.handlers = [None]*(CriticalRegion.NSIG+1)
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
-                self.handlers[sig] = signal.signal(sig, signal.SIG_IGN))
+                self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
     def __del__(self):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
