@@ -615,23 +615,25 @@ def rebuild_repo(repo, target, preferred, verbose):
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
-        # Restore untracked files from the backup directory.
-        # We move them to target and then copy back in order
-        # to preserve file mod dates and metadata even if
-        # shutil.copy2() can't hack that.
-        if verbose:
-            complain("restoring %s" % " ".join(untracked))
-        for keeper in untracked:
-            os.rename(os.path.join(savedir, keeper),
-                      os.path.join(target, keeper))
-            shutil.copy2(os.path.join(target, keeper),
-                        os.path.join(savedir, keeper))
+
+        if 0:  # This logic doesn't work:
+            # Restore untracked files from the backup directory.
+            # We move them to target and then copy back in order
+            # to preserve file mod dates and metadata even if
+            # shutil.copy2() can't hack that.
+            if verbose:
+                complain("restoring %s" % " ".join(untracked))
+            for keeper in untracked:
+                os.rename(os.path.join(savedir, keeper),
+                          os.path.join(target, keeper))
+                shutil.copy2(os.path.join(target, keeper),
+                            os.path.join(savedir, keeper))
         if verbose:
             complain("build critical region ends. Success.")
         del critical
     finally:
         os.chdir(here)
-        #os.remove(tfname)
+        os.remove(tfname)
         os.system("rm -fr " + staging)
 
 def act(cmd):
