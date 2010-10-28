@@ -267,6 +267,15 @@ the mailbox contents; commit and tag metadata cannot be altered. This
 may change in a future release.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>edit</command></cmdsynopsis></term>
+<listitem>
+<para>Report the selection set of events to a tempfile as mailbox_out does,
+call an editor on it, and update from the result as mailbox_in does.
+If you do not specify an editor name as second argument, it will be
+taken from the $EDITOR variable in your environment.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>These are backed up by the following housekeeping commands, none of 

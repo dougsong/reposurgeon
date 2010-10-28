@@ -10,7 +10,7 @@ import signal, shutil
 
 # TO DO
 #
-# * Implement delete, expunge, coalesce, spawn to Emacs edit.
+# * Implement delete, expunge, coalesce.
 #
 # * Dates and refnames in specification expressions.
 #
@@ -1212,8 +1212,35 @@ may change in a future release.
 """
     def do_edit(self, line):
         "Edit metadata interactively."
-        line = self.report_select(line, "email_out")
-        # FIXME
+        if not self.repo:
+            complain("no repo is loaded")
+            return
+        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.repo.commands)))
+        line = self.set_selection_set(line, default)
+        editor = line or os.getenv("EDITOR")
+        if not editor:
+            complain("you have not specified an editor and $EDITOR is not set")
+            return
+        try:
+            (tfdesc, tfname) = tempfile.mkstemp()
+            tfp = open(tfname, "w")
+            for i in self.selection:
+                command = self.repo.commands[i]
+                if hasattr(command, "email_out"):
+                    tfp.write(command.email_out(i))
+            tfp.close()
+            if os.system(editor + " " + tfname):
+                complain("%s returned a failure status" % editor)
+            self.do_mailbox_in(tfname)
+        finally:
+            os.remove(tfname)
+    def help_edit(self):
+        print """
+Report the selection set of events to a tempfile as mailbox_out does,
+call an editor on it, and update from the result as mailbox_in does.
+If you do not specify an editor name as second argument, it will be
+taken from the $EDITOR variable in your environment.
+"""
 
 if __name__ == '__main__':
     try:
