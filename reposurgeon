@@ -791,7 +791,7 @@ class RepoSurgeon(cmd.Cmd):
                 raise RepoSurgeonException("incomplete range expression.")
             for elt in selection:
                 if elt < 0 or elt > len(self.repo.commands)-1:
-                    print RepoSurgeonException("command number %s out of range" % elt)
+                    print RepoSurgeonException("event number %s out of range" % elt)
             polyrange = set(selection)
         if self.verbose >= 2:
             print "%s <- eval_polyrange(), left = %s" % (polyrange, `self.line`)
@@ -1088,12 +1088,12 @@ output.
         for (i, message) in enumerate(update_list):
             if "Event-Number" not in message:
                 raise RepoSurgeonError("missing event number in update %d" % i)
-            event = message["Event-Number"]
-            if event < 1 or event >= len(self.repo.commands):
-                raise RepoSurgeonException("event number out of range in update %d" % i)
-            event = self.repo.events[i]
+            eventnum = int(message["Event-Number"]) - 1
+            if eventnum < 0 or eventnum >= len(self.repo.commands):
+                raise RepoSurgeonException("event number %d out of range in update %d" % (eventnum, i+1))
+            event = self.repo.commands[eventnum]
             if not hasattr(event, "email_in"):
-                raise RepoSurgeonError("event %d cannot be modified" % event)
+                raise RepoSurgeonException("event %d cannot be modified" % (eventnum+1,))
         # Now apply the updates
         print update_list
 
