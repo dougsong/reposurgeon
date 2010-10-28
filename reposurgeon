@@ -569,7 +569,7 @@ def rebuild_repo(repo, target, preferred, verbose):
 
         # This is a critical region.  Ignore all signals until we're done.
         # Alas that we lack sigblock support
-        if self.verbose:
+        if verbose:
             complain("build critical region begins...")
         handlers = map(lambda s: signal.signal(s, signal.SIG_IGN),
                        range(1, signal.NSIG))
@@ -588,7 +588,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         # We move them to target and then copy back in order
         # to preserve file mod dates and metadata even if
         # shutil.copy2() can't hack that.
-        if self.verbose:
+        if verbose:
             complain("restoring %s" % " ".join(untracked))
         for keeper in untracked:
             os.rename(os.path.join(savedir, keeper),
@@ -597,7 +597,7 @@ def rebuild_repo(repo, target, preferred, verbose):
                         os.path.join(savedir, keeper))
         # Revert signals
         map(lambda (i, s): signal.signal(s, i+1), enumerate(handlers))
-        if self.verbose:
+        if verbose:
             complain("build critical region ends. Success.")
     finally:
         os.chdir(here)
