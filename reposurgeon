@@ -503,7 +503,7 @@ def filelist(exclude):
     found = []
     for root, dirs, files in os.walk("."):
         for name in files:
-            found.append(os.pathjoin(root, name)) 
+            found.append(os.path.join(root, name)) 
         if exclude in dirs:
             dirs.remove(exclude)
     return found
@@ -588,6 +588,8 @@ def rebuild_repo(repo, target, preferred, verbose):
         # We move them to target and then copy back in order
         # to preserve file mod dates and metadata even if
         # shutil.copy2() can't hack that.
+        if self.verbose:
+            complain("restoring %s" % " ".join(untracked))
         for keeper in untracked:
             os.rename(os.path.join(savedir, keeper),
                       os.path.join(target, keeper))
