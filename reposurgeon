@@ -971,6 +971,11 @@ a repo or stream.
         if not self.repo:
             complain("no repo is loaded.")
             return
+        # We could do all this logic using report_select() and index() methods
+        # in the objects, but that would have two disavadntages.  First, we'd
+        # get a default-set computation we don't want.  Second, for this
+        # function it's helpful to have the method strings close together so
+        # we can maintain columnation.
         default = map(lambda x: x[0], filter(lambda (n, o): not isinstance(o, Blob), enumerate(self.repo.commands)))
         self.set_selection_set(line, default)
         for i in self.selection:
