@@ -571,9 +571,11 @@ def rebuild_repo(repo, target, preferred, verbose):
         # Alas that we lack sigblock support
         if verbose:
             complain("build critical region begins...")
-        handlers = map(lambda s: signal.signal(s, signal.SIG_IGN),
-                       range(1, signal.NSIG))
-        
+        handlers = []
+        for sig in range(1, signal.NSIG)):
+            complain("blocking signal %d" % sig)
+            handlers.append(signal.signal(sig, signal.SIG_IGN))
+
         # Move the unmodified repo contents in target to the backup directory.
         # Then move the staging contents to the target directory.
         for sub in os.listdir(target):
