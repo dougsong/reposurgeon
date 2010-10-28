@@ -146,8 +146,10 @@ class Tag:
         self.committish = committish
         self.tagger = tagger
         self.comment = content
-    def email_out(self):
+    def email_out(self, eventnum):
+        "Enable do_email_out() to report these."
         msg = RepoSurgeonEmail()
+        msg["Event-Number"] = str(eventnum)
         msg["Tag-Name"] = self.name
         self.tagger.email_out(msg, "Tagger")
         msg.set_payload(self.comment)
@@ -177,8 +179,15 @@ class Commit:
         self.parents = []            # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
-    def email_out(self):
+    def lister(self, eventnum):
+        "Enable do_list() to report these."
+        topline = self.comment.split("\n")[0]
+        return "%6d %s %-50s" % \
+                      (eventnum, self.committer.isodate()[:-5], topline[:50]) 
+    def email_out(self, eventnum):
+        "Enable do_email_out() to report these."
         msg = RepoSurgeonEmail()
+        msg["Event-Number"] = str(eventnum)
         self.author.email_out(msg, "Author")
         self.committer.email_out(msg, "Committer")
         msg.set_payload(self.comment)
@@ -794,6 +803,18 @@ class RepoSurgeon(cmd.Cmd):
             if self.verbose >= 2:
                 print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
             return set(matchers)
+
+    def report_select(self, line, method):
+        "Generate a repository report on all objects with a specified method."
+        if not self.repo:
+            complain("no repo is loaded.")
+            return
+        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.repo.commands)))
+        self.set_selection_set(line, default)
+        for i in self.selection:
+            command = self.repo.commands[i]
+            if hasattr(command, method):
+                print getattr(command, method)(i)
     #
     # On-line help and instrumentation
     #
@@ -978,17 +999,8 @@ file in the blob.
 """
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
-        if not self.repo:
-            complain("no repo is loaded.")
-            return
-        default = map(lambda x: x[0], filter(lambda (n, o): isinstance(o, Commit), enumerate(self.repo.commands)))
-        self.set_selection_set(line, default)
-        for i in self.selection:
-            command = self.repo.commands[i]
-            if isinstance(command, Commit):
-                topline = command.comment.split("\n")[0]
-                print "%6d %s %-50s" % \
-                      (i, command.committer.isodate()[:-5], topline[:50]) 
+        self.report_select(line, "lister")
+
     def help_list(self):
         print """
 Display commits in a human-friendly format.
@@ -1009,15 +1021,7 @@ for exploring the selection-set language.
     #
     def do_email_out(self, line):
         "Generate a mailbox file representing object metadata."
-        if not self.repo:
-            complain("no repo is loaded.")
-            return
-        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.repo.commands)))
-        self.set_selection_set(line, default)
-        for i in self.selection:
-            command = self.repo.commands[i]
-            if hasattr(command, "email_out"):
-                print command.email_out()
+        self.report_select(line, "email_out")
     def help_email_out(self):
         print """
 Dump to standard output a mailbox file of messages in RFC822 format representing
