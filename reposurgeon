@@ -153,7 +153,7 @@ class Tag:
         msg["Tag-Name"] = self.name
         self.tagger.email_out(msg, "Tagger")
         msg.set_payload(self.comment)
-        return msg
+        return str(msg)
     def __str__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
              % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
@@ -191,7 +191,7 @@ class Commit:
         self.author.email_out(msg, "Author")
         self.committer.email_out(msg, "Committer")
         msg.set_payload(self.comment)
-        return msg
+        return str(msg)
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
