@@ -525,21 +525,21 @@ def filelist(exclude):
 class CriticalRegion:
     "Encapsulate operations to try and make us un-interruptible."
     # This number is magic. Python sets a much higher signal.NSIG
-    # value, but under Linux the signal caalls start to trigger
+    # value, but under Linux the signal calls start to trigger
     # runtime errors at this value and above.
     NSIG = 32
     def __init__(self):
         "Begin critical region."
         # Alas that we lack sigblock support
-        self.handlers = []
+        self.handlers = [None]*(CriticalRegion.NSIG+1)
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
-                self.handlers.append(signal.signal(sig, signal.SIG_IGN))
+                self.handlers[sig] = signal.signal(sig, signal.SIG_IGN))
     def __del__(self):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
-                signal.signal(sig, self.handlers[sig-1])
+                signal.signal(sig, self.handlers[sig])
 
 def rebuild_repo(repo, target, preferred, verbose):
     "Rebuild a repository from the captured state."
