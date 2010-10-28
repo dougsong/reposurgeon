@@ -510,7 +510,7 @@ def rebuild_repo(repo, target, preferred, verbose):
         complain("please prefer a repo type first")
         return
     # Create a new empty directory to do the rebuild in
-    staging = target + "-stage" + os.getpid()
+    staging = target + "-stage" + str(os.getpid())
     assert(isabspath(target) and isabspath(staging))
     try:
         os.mkdir(staging)
@@ -962,7 +962,7 @@ and is a directory or anything other than a plain file.
 """
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
-        rebuild_repo(self.repo, line, self.prepared, self.verbose)
+        rebuild_repo(self.repo, line, self.preferred, self.verbose)
     def help_rebuild(self):
         print """
 Rebuild a repository from the state held by reposurgeon.  The argument
