@@ -28,6 +28,7 @@ import signal, shutil
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
+# * Command to view the repo.
 #
 # Note that some of the commands used here are plugins or extensions
 # that are not part of the basic VCS. Thus these may fail when called;
