@@ -1083,7 +1083,7 @@ for exploring the selection-set language.
         try:
             for cmdline in open(line):
                 interpreter.onecmd(interpreter.precmd(cmdline))
-        except OSError:
+        except IOError:
             complain("failed to open script %s" % line)
     #
     # Information-gathering

@@ -1,24 +1,28 @@
 # Test-suite makefile for reposurgeon
 
-all: roundtrip selectregress
+all: roundtrip regress
 	@echo "No diff output is good news."
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
-	@echo "Testing round-tripping of dump file."
 	@for file in *.dump; do \
+	    echo "Testing round-tripping of $${file}.tst."; \
 	    ../reposurgeon "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 
-make_selectregress:
-	../reposurgeon "script simple-dump.tst" >simple-dump.chk
-selectregress:
-	@echo "Regression-testing the selection language."
-	@../reposurgeon "script simple-dump.tst" >/tmp/regress
-	@diff -u simple-dump.chk /tmp/regress
+TESTLOADS = simple-dump
+makeregress:
+	@for file in $(TESTLOADS); do \
+	    echo "Remaking $${file}.chk"; \
+	    ../reposurgeon "script $${file}.tst" >$${file}.chk; \
+	done
+regress:
+	@for file in $(TESTLOADS); do \
+	    echo "Regression test using $${file}.tst"; \
+	    ../reposurgeon "script $${file}.tst" >/tmp/regress; \
+	    diff -u $${file}.chk /tmp/regress; \
+	done
 	@rm -f /tmp/regress
 
-# Alas, we can't regression-test email_out without giving up generating 
-# a now timestamp into the header
