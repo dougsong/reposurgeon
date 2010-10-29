@@ -28,10 +28,11 @@
 <para>The purpose of <application>reposurgeon</application> is to
 enable risky operations that version-control systems don't want to let
 you do, such as (a) editing past comments and metadata, (b) excising
-commits, (c) coalescing commits, and (d) removing files and subtrees
-from repo history. The original motivation for
-<application>reposurgeon</application> was to clean up artifacts
-created by repository conversions.</para>
+commits, (c) coalescing commits, (d) removing files and subtrees from
+repo history, and (e) cutting a repo in two by cutting a parent-child
+like, preserving the branch structure of both child repos. The
+original motivation for <application>reposurgeon</application> was to
+clean up artifacts created by repository conversions.</para>
 
 <para>To keep <application>reposurgeon</application> simple and
 flexible, it does not do its own repository reading and writing.
@@ -337,6 +338,16 @@ discarded only when those are.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><cmdsynopsis><command>cut</command></cmdsynopsis></term>
+<listitem>
+<para>Attempt to partition a repo by cutting the parent-child link
+between two specified commits (they must be adjacent). This operation
+may fail if the commit graph remains connected through another path;
+the tool will detect this.</para>
+<para>NOT YET IMPLEMENTED.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>expunge</command></cmdsynopsis></term>
 <listitem>
 <para>Expunge a file from the repo history. Does not take a selection
@@ -351,7 +362,8 @@ set.</para>
 <para>Scan the selection set for runs of commits with identical
 comments close to each other in time (this is a common form of scar
 tissues in repository up-conversions from older file-oriented
-version-control systems).  Merge these cliques.</para>
+version-control systems).  Merge these cliques by deleting all but the
+last commit, in order.</para>
 
 <para>The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.</para>
