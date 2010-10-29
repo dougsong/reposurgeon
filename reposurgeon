@@ -304,6 +304,8 @@ class Repository:
         self.blob_refcount = {}
         self.import_line = 0
         self.restore_set = set([])
+    def __del__(self):
+        os.system("rm -fr %s" % (self.subdir(),))
     def subdir(self):
         if not self.name:
             return ".rs"
@@ -319,8 +321,6 @@ class Repository:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
             raise "reposurgeon: " + msg
-    def __del__(self):
-        os.system("rm -fr %s" % (self.subdir(),))
     def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
