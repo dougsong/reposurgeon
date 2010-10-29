@@ -298,7 +298,7 @@ class Repository:
         self.readsize = 0
         self.type = None
         self.sourcedir = None
-        self.commands = []    # A list of the commands encountered, in order
+        self.events = []    # A list of the events encountered, in order
         self.nmarks = 0
         self.branches = set([])
         self.blob_refcount = {}
@@ -375,7 +375,7 @@ class Repository:
                     self.nmarks += 1
                 else:
                     self.error("missing mark after blob")
-                self.commands.append(blob)
+                self.events.append(blob)
                 if baton:
                     baton.twirl()
             elif line.startswith("data"):
@@ -420,7 +420,7 @@ class Repository:
                             copyname = self.subdir() + "/blob-" + ref
                             commit.fileops.append((op,mode,ref,path,copyname))
                             self.blob_refcount[ref] = self.blob_refcount.get(ref, 0)+1
-                            for obj in self.commands:
+                            for obj in self.events:
                                 if isinstance(obj, Blob) and obj.mark == ref:
                                     obj.path = path
                                     break
@@ -439,7 +439,7 @@ class Repository:
                 if not (commit.mark and commit.author and commit.committer):
                     self.import_line = commitbegin
                     self.error("missing required fields in commit")
-                self.commands.append(commit)
+                self.events.append(commit)
                 if baton:
                     baton.twirl()
             elif line.startswith("reset"):
@@ -450,7 +450,7 @@ class Repository:
                     reset.committish = line[5:].strip()
                 else:
                     pushback(line)
-                self.commands.append(reset)
+                self.events.append(reset)
                 if baton:
                     baton.twirl()
             elif line.startswith("tag"):
@@ -469,13 +469,13 @@ class Repository:
                 else:
                     self.error("missing tagger after from in tag")
                 dp = read_data(cStringIO.StringIO())
-                self.commands.append(Tag(tagname,
+                self.events.append(Tag(tagname,
                                        referent, tagger, dp.getvalue()))
                 if baton:
                     baton.twirl()
             else:
                 # Simply pass through any line we don't understand.
-                commands.append(line)
+                events.append(line)
         if baton:
             baton.end()
         self.readtime = time.time()
@@ -484,7 +484,7 @@ class Repository:
                 self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
     def fast_export(self, fp, baton=None):
         "Dump the repo object in fast-export format."
-        for command in self.commands:
+        for command in self.events:
             if baton:
                 baton.twirl()
             fp.write(str(command))
@@ -510,9 +510,16 @@ class Repository:
         oldsubdir = self.subdir()
         self.name = name
         os.rename(oldsubdir, self.subdir())
-        for event in self.commands:
+        for event in self.events:
             if isinstance(event, Blob):
                 event.subdir = os.path.abspath(self.subdir())
+    # Container emulation methods
+    def __len__(self):
+        return len(self.events)
+    def __getitem__(self, i):
+        return self.events[i]
+    def __setitem__(self, i, v):
+        self.events[i] = v
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -780,7 +787,7 @@ class RepoSurgeon(cmd.Cmd):
         if self.verbose >= 2:
             print "eval_conjunct(%s)" % self.line
         self.line = self.line.lstrip()
-        conjunct = set(range(0, len(self.repo.commands)))
+        conjunct = set(range(0, len(self.repo)))
         while True:
             term = self.eval_term()
             if term is None:
@@ -845,9 +852,8 @@ class RepoSurgeon(cmd.Cmd):
             if self.verbose >= 2:
                 print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), `self.line`)
             selected = []
-            for i in set(range(0, len(self.repo.commands))):
-                cmd = self.repo.commands[i]
-                if cmd.__class__ in visible:
+            for (i, event) in enumerate(self.repo):
+                if event.__class__ in visible:
                     selected.append(i)
             visibility = set(selected)
         if self.verbose >= 2:
@@ -876,7 +882,7 @@ class RepoSurgeon(cmd.Cmd):
                 if match:
                     markref = match.group()
                     self.line = self.line[len(markref):]
-                    for (i, cmd) in enumerate(self.repo.commands):
+                    for (i, cmd) in enumerate(self.repo):
                         if hasattr(cmd, "mark") and cmd.mark == markref:
                             selection.append(i)
                             break
@@ -888,7 +894,7 @@ class RepoSurgeon(cmd.Cmd):
                     continue
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
-                    selection.append(len(self.repo.commands)-1)
+                    selection.append(len(self.repo)-1)
                     self.pop()
                     continue
                 # Comma just delimits a location spec
@@ -915,7 +921,7 @@ class RepoSurgeon(cmd.Cmd):
                             self.line = self.line[len(symbol):]
                             loc = None
                             # Find the last commit with this branchname
-                            for (i, event) in enumerate(self.repo.commands):
+                            for (i, event) in enumerate(self.repo):
                                 if isinstance(event,Commit) and event.branch == symbol:
                                     loc = i
                             if loc is None:
@@ -924,12 +930,12 @@ class RepoSurgeon(cmd.Cmd):
                                 matched = True
                                 selection.append(loc)
                     # Next, search tags
-                    taglist = filter(lambda e: isinstance(e, Tag), self.repo.commands)
+                    taglist = filter(lambda e: isinstance(e, Tag), self.repo.events)
                     taglist.sort(lambda x, y: len(x.name)-len(y.name))
                     for tag in taglist:
                         if self.line.startswith(tag.name):
                             self.line = self.line[len(tag.name):]
-                            for (i, event) in self.repo.commands:
+                            for (i, event) in enumerate(self.repo):
                                 if isinstance(event, Commit) and commit.mark == tag.mark:
                                     matched = True
                                     selection.append(i)
@@ -959,7 +965,7 @@ class RepoSurgeon(cmd.Cmd):
             if spanning:
                 raise RepoSurgeonException("incomplete range expression.")
             for elt in selection:
-                if elt < 0 or elt > len(self.repo.commands)-1:
+                if elt < 0 or elt > len(self.repo)-1:
                     raise RepoSurgeonException("event number %s out of range" % elt)
             polyrange = set(selection)
         if self.verbose >= 2:
@@ -980,7 +986,7 @@ class RepoSurgeon(cmd.Cmd):
             regex = re.compile(self.line[:endat])
             self.line = self.line[endat+1:]
             matchers = []
-            for (i, cmd) in enumerate(self.repo.commands):
+            for (i, cmd) in enumerate(self.repo):
                 # This catches commits and tags
                 if hasattr(cmd, "comment") and regex.search(cmd.comment):
                     matchers.append(i)
@@ -1000,7 +1006,7 @@ class RepoSurgeon(cmd.Cmd):
         if not self.repo:
             complain("no repo is loaded.")
             return
-        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.repo.commands)))
+        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.repo)))
         line = self.set_selection_set(line, default)
         outfile = line.strip()
         if outfile and outfile != '-':
@@ -1008,9 +1014,9 @@ class RepoSurgeon(cmd.Cmd):
         else:
             fp = sys.stdout
         for i in self.selection:
-            command = self.repo.commands[i]
-            if hasattr(command, method):
-                fp.write(getattr(command, method)(i) + "\n")
+            event = self.repo.events[i]
+            if hasattr(event, method):
+                fp.write(getattr(event, method)(i) + "\n")
         if outfile:
             fp.close()
 
@@ -1072,7 +1078,7 @@ for exploring the selection-set language.
         "List all known symbolic names of branches and tags."
         for branch in self.repo.branches:
             print "branch %s" % branch
-        for event in self.repo.commands:
+        for event in self.repo:
             if isinstance(event, Tag):
                 print "tag    %s" % event.name
     def do_script(self, line):
@@ -1092,12 +1098,12 @@ for exploring the selection-set language.
         "Report on the loaded repository infrmation"
         if self.repo:
             def count(otype):
-                return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
+                return len(filter(lambda x: isinstance(x,otype), self.repo.events))
             print "Repository '%s' was read at %s" % (self.repo.name, iso8601_from_unixtime(self.repo.readtime))
             if self.repo.sourcedir:
                 print "Loaded from", self.repo.sourcedir
             print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
-                  (self.repo.readsize / 1000.0, len(self.repo.commands),
+                  (self.repo.readsize / 1000.0, len(self.repo),
                    count(Blob), count(Commit), count(Tag), count(Reset),
                    self.repo.nmarks)
             if self.repo.type:
@@ -1131,24 +1137,24 @@ a repo or stream.
         # get a default-set computation we don't want.  Second, for this
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
-        default = map(lambda x: x[0], filter(lambda (n, o): not isinstance(o, Blob), enumerate(self.repo.commands)))
+        default = map(lambda x: x[0], filter(lambda (n, o): not isinstance(o, Blob), enumerate(self.repo)))
         self.set_selection_set(line, default)
         for i in self.selection:
-            command = self.repo.commands[i]
-            if isinstance(command, Blob):
-                print "%6d blob   %6s    %s" % (i+1, command.mark,command.path)
+            event = self.repo.events[i]
+            if isinstance(event, Blob):
+                print "%6d blob   %6s    %s" % (i+1, event.mark,event.path)
                 continue
-            if isinstance(command, Commit):
-                print "%6d commit %6s    %s" % (i+1, command.mark or '-', command.branch) 
+            if isinstance(event, Commit):
+                print "%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch) 
                 continue
-            if isinstance(command, Tag):
-                print "%6d tag      -       %4s" % (i+1, command.name,) 
+            if isinstance(event, Tag):
+                print "%6d tag      -       %4s" % (i+1, event.name,) 
                 continue
-            if isinstance(command, Reset):
-                print "%6d branch %6s    %s" % (i+1, command.committish or '-', command.ref) 
+            if isinstance(event, Reset):
+                print "%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref) 
                 continue
             else:
-                print "?      -      %s" % (command,) 
+                print "?      -      %s" % (event,) 
     def help_index(self):
         print """
 Display four columns of info on selected objects: their number, their
@@ -1360,16 +1366,16 @@ to standard output.
             if "Event-Number" not in message:
                 raise RepoSurgeonError("missing event number in update %d" % i)
             eventnum = int(message["Event-Number"]) - 1
-            if eventnum < 0 or eventnum >= len(self.repo.commands):
+            if eventnum < 0 or eventnum >= len(self.repo):
                 raise RepoSurgeonException("event number %d out of range in update %d" % (eventnum, i+1))
-            event = self.repo.commands[eventnum]
+            event = self.repo[eventnum]
             if not hasattr(event, "email_in"):
                 raise RepoSurgeonException("event %d cannot be modified" % (eventnum+1,))
         # Now apply the updates
         modified = []
         for update in update_list:
             eventnum = int(update["Event-Number"]) - 1
-            event = self.repo.commands[eventnum]
+            event = self.repo[eventnum]
             if event.email_in(update):
                 modified.append(eventnum+1)
         if self.verbose:
@@ -1404,7 +1410,7 @@ may change in a future release.
         if not self.repo:
             complain("no repo is loaded")
             return
-        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.repo.commands)))
+        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.repo)))
         line = self.set_selection_set(line, default)
         editor = line or os.getenv("EDITOR")
         if not editor:
@@ -1412,7 +1418,7 @@ may change in a future release.
             return
         # Special case: user selected a single blob
         if len(self.selection) == 1:
-            singleton = self.commands[self.selection[0]]
+            singleton = self.repo[self.selection[0]]
             if isinstance(singleton, Blob):
                 os.system(editor + " " + singleton.blobfile())
                 return
@@ -1421,7 +1427,7 @@ may change in a future release.
             (tfdesc, tfname) = tempfile.mkstemp()
             tfp = open(tfname, "w")
             for i in self.selection:
-                command = self.repo.commands[i]
+                event = self.repo[i]
                 if hasattr(command, "email_out"):
                     tfp.write(command.email_out(i))
             tfp.close()
