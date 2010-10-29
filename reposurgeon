@@ -705,7 +705,7 @@ class RepoSurgeon(cmd.Cmd):
     def precmd(self, line):
         "Pre-command hook."
         if self.repeat:
-            print line
+            sys.stdout.write(line)
         return line
     def do_shell(self, line):
         "Execute a shell command."
@@ -1075,6 +1075,16 @@ for exploring the selection-set language.
         for event in self.repo.commands:
             if isinstance(event, Tag):
                 print "tag    %s" % event.name
+    def do_script(self, line):
+        "Read and execute commands from a named file."
+        if not line:
+            complain("script requires a file argument")
+            return
+        try:
+            for cmdline in open(line):
+                interpreter.onecmd(interpreter.precmd(cmdline))
+        except OSError:
+            complain("failed to open script %s" % line)
     #
     # Information-gathering
     #

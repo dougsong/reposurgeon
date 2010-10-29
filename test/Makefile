@@ -12,27 +12,12 @@ roundtrip:
 	    rm -f /tmp/rs$$$$; \
 	done
 
-# Test that the selection language gives consistent results.
-# Pile up test cases in SELECT_TEST.  The checkfile contains an 
-# index listing that you can use to sanity-check the resolve
-# results by eyeball.
-SELECT_TEST = resolve 15; \
-	resolve =TR; \
-	resolve 24..97; \
-	resolve 24..97&=C; \
-	resolve 3,:15; \
-	resolve @master \
-	resolve @lightweight-sample \
-	resolve @annotated-sample \
-	resolve /regression/
-select_test:
-	cat simple.dump | ../reposurgeon "read -" "repeat 1" "index; $(SELECT_TEST)"
 make_selectregress:
-	make --quiet select_test >select_test.chk
+	../reposurgeon "script simple-dump.tst" >simple-dump.chk
 selectregress:
 	@echo "Regression-testing the selection language."
-	@make --quiet select_test >/tmp/regress
-	@diff -u select_test.chk /tmp/regress
+	@../reposurgeon "script simple-dump.tst" >/tmp/regress
+	@diff -u simple-dump.chk /tmp/regress
 	@rm -f /tmp/regress
 
 # Alas, we can't regression-test email_out without giving up generating 

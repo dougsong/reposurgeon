@@ -588,6 +588,11 @@ but intended for developers only.</para></listitem>
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
 </varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>script</command></cmdsynopsis></term>
+<listitem><para>Takes a filename argument. Reads each line from the file 
+and executes it as a command.</para></listitem>
+</varlistentry>
 </variablelist>
 </refsect1>
 
