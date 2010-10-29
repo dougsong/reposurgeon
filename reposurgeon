@@ -545,11 +545,21 @@ class Repository:
     def __delitem__(self, i):
         event = self.events[i]
         if event.__class__ in (Reset, Tag, Passthrough):
-            self.events = self.events[i:] + self.events[:i+1]
+            self.events.pop(i)
         elif isinstance(event, Blob):
             raise RepoSurgeonException("attempt to directly delete blob")
         elif isinstance(event, Commit):
-            raise RepoSurgeonException("commit deletion not yet implemented")
+            # Propagate file operations forward and reparent
+            for child in event.children():
+                child.parents.remove(event.mark)
+                child.parents += event.parents
+                pass       # FIXME: File op propagation & blob deletion go here 
+            # Remove tags referring to this event
+            self.repo.events = filter(lambda e: not isinstance(e, Tag) \
+                                      or e.committish != event.mark,
+                                      self.repo.events)
+            # And remove it
+            self.events.pop(i)
         else:
             raise RepoSurgeonException("unexpected object in event array")
 
@@ -1486,6 +1496,22 @@ Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
 """
+    def do_delete(self, line):
+        "Delete events in the specified selection set."
+        if not self.repo:
+            complain("no repo is loaded")
+            return
+        self.set_selection_set(line, [])
+        self.selection.reverse()
+        for i in self.selection:
+            del self.repo[i]
+    def help_delete(self):
+        print """
+Delete a selection set of commits (and their associated blobs, if
+any).  The default selection set for this command is empty.  Tags
+pointing at the commits are also removed.
+"""
+
 
 if __name__ == '__main__':
     try:

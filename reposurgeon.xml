@@ -372,6 +372,10 @@ The following cases may occur:</para>
   </tgroup>
 </informaltable>
 
+<para>Deleting a commit will leave any tag pointing to it dangling;
+these will be garbage-collected. Children of the deleted commit 
+get it removed from their parent set and its parents added,</para>
+
 <para>No <command>blob</command> event can be deleted with this
 command; <command>blob</command> events are tied to associated
 <command>commit</command> or <command>tag</command> events and are
