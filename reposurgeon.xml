@@ -39,7 +39,9 @@ Instead, it relies on being able to parse and emit the repo-command
 streams created by git-fast-export and read by git-fast-import.  This
 means that it can be used on any version-control system that that has
 both fast-export and fast-import utilities.  This set includes git
-itself, hg, and bzr.</para>
+itself, hg, and bzr. It also implicitly defines a common language of
+primitive operations for <application>reposurgeon</application> to
+speak.</para>
 </refsect1>
 
 <refsect1 id='options'><title>OPERATION</title>
@@ -186,6 +188,29 @@ precendence than intersection, but you may use curly brackets '{' and
 
 <variablelist>
 <varlistentry>
+<term><cmdsynopsis><command>read</command></cmdsynopsis></term>
+<listitem><para>With a directory-name argument, this command attempts
+to read in the contents of a repository in any supported
+version-control system under that directory; read with no
+arguments does this in the current directory. If the argument is the
+name of a plain file, it will be read in as a fast-import stream. With
+an argument of <quote>-</quote>, this command reads a fast-import
+stream from standard input (this will be useful in filters constructed
+with command-line arguments).</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>write</command></cmdsynopsis></term>
+<listitem>
+<para>Dump a fast-import stream representing the edited repostory to
+standard output (if argument is empty or '-') or, with optional second
+argument, to a file.  Fails if the argument exists and is a directory
+or anything other than a plain file.</para>
+
+<para>Note: a <command>write</command> with a small selection set is 
+a useful way to examine small groups of commits.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>list</command></cmdsynopsis></term>
 <listitem><para>This is the main command for identifying the objects
 you want to modify.  It lists commits in the selection set by event
@@ -200,9 +225,114 @@ standard output.
 <varlistentry>
 <term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
 <listitem>
-<para>Delete a selection set of commits.  The default selection set
-for this command is empty.</para>
-<!-- document handling of tags, branches, renames, deletes, copies. --> 
+<para>Delete a selection set of commits (and their associated blobs,
+if any).  The default selection set for this command is empty.</para>
+
+<para>Deleting a commit that has children does not back out the
+changes made by that commit, as they will still be present in the
+blobs attached to the children.  All it does is lose the metadata
+information about when and by who those changes were actually made;
+after the delete those changes will be attributed to the deletee's
+children.  It is expected that this command will be useful mainly
+for removing commits mechanically generated  by repository converters
+such as <command>cvs2svn</command>.</para>
+
+<para>Recall that each commit has a list of file operations, each a M
+(modify), D (delete), R (rename) or C (copy); M operations have
+associated blobs.  When a commit is deleted, each file operation in
+the commit (and its associated blob reference) normally gets pushed
+forward onto the beginning of each child's operation list.
+
+The following cases may occur:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='4' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <colspec colname='c4'/>
+    <thead>
+      <row>
+        <entry align='center'>Parent op</entry>
+        <entry align='center'>Child op</entry>
+        <entry align='center'>Copy forward?</entry>
+	<entry><para>Note</para></entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>M</entry>
+        <entry align='center'>M, D</entry>
+        <entry align='center'>no</entry>
+	<entry><para>Child state of the file supersdes the parent
+	state</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M</entry>
+        <entry align='center'>C, R, none</entry>
+        <entry align='center'>yes</entry>
+	<entry><para>Note that if there are multiple
+	children this can result in the blob having multiple
+	references to it.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D</entry>
+        <entry align='center'>M, none</entry>
+        <entry align='center'>no</entry>
+	<entry><para>C or R isn't possible.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D</entry>
+        <entry align='center'>R, C</entry>
+        <entry align='center'>no</entry>
+	<entry><para>This combination should be impossible; the
+	program will throw an error if it occurs.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R</entry>
+        <entry align='center'>M, C, none</entry>
+        <entry align='center'>yes</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R</entry>
+        <entry align='center'>D</entry>
+        <entry align='center'>no</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R</entry>
+        <entry align='center'>R</entry>
+        <entry align='center'>modified</entry>
+	<entry><para>The child rename is modified. If the renames are
+	X &rarr; Y and Y &rarr; Z, the resulting rename will be X &rarr;
+	Z</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C</entry>
+        <entry align='center'>M, R, C, none</entry>
+        <entry align='center'>yes</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C</entry>
+        <entry align='center'>D</entry>
+        <entry align='center'>modified</entry>
+	<entry><para>A copy of X to Y followed by a delete of X is
+	composed into a rename of X to Y, </para></entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+<para>No <command>blob</command> event can be deleted with this
+command; <command>blob</command> events are tied to associated
+<command>commit</command> or <command>tag</command> events and are
+discarded only when those are.</para>
+
+<para>Deleting a <command>tag</command>, <command>reset</command> or
+<command>passthrough</command> event has no side effects.</para>
+
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
@@ -313,29 +443,10 @@ to the type of that repository.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>read</command></cmdsynopsis></term>
-<listitem><para>With a directory-name argument, this command attempts
-to read in the contents of a repository in any supported
-version-control system under that directory; read with no
-arguments does this in the current directory. If the argument is the
-name of a plain file, it will be read in as a fast-import stream. With
-an argument of <quote>-</quote>, this command reads a fast-import
-stream from standard input (this will be useful in filters constructed
-with command-line arguments).</para></listitem>
-</varlistentry>
-<varlistentry>
 <term><cmdsynopsis><command>stats</command></cmdsynopsis></term>
 <listitem><para>
 Report size statistics and import/export method information after reading
 a repo or stream.
-</para></listitem>
-</varlistentry>
-<varlistentry>
-<term><cmdsynopsis><command>write</command></cmdsynopsis></term>
-<listitem><para>
-Dump a fast-import stream representing the edited repostory to standard output
-(if argument is empty or '-') or a file.  Fails if the argument exists
-and is a directory or anything other than a plain file.
 </para></listitem>
 </varlistentry>
 <varlistentry>
