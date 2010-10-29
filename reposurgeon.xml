@@ -266,10 +266,11 @@ for removing commits mechanically generated  by repository converters
 such as <command>cvs2svn</command>.</para>
 
 <para>Recall that each commit has a list of file operations, each a M
-(modify), D (delete), R (rename) or C (copy); M operations have
-associated blobs.  When a commit is deleted, each file operation in
-the commit (and its associated blob reference) normally gets pushed
-forward onto the beginning of each child's operation list.
+(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
+files). Only M operations have associated blobs.  When a commit is deleted,
+each file operation in the commit (and its associated blob reference)
+normally gets pushed forward onto the beginning of each child's
+operation list.
 
 The following cases may occur:</para>
 
@@ -290,7 +291,7 @@ The following cases may occur:</para>
     <tbody>
       <row>
         <entry align='center'>M</entry>
-        <entry align='center'>M, D</entry>
+        <entry align='center'>M, D, deleteall</entry>
         <entry align='center'>no</entry>
 	<entry><para>Child state of the file supersdes the parent
 	state</para></entry>
@@ -324,7 +325,7 @@ The following cases may occur:</para>
       </row>
       <row>
         <entry align='center'>R</entry>
-        <entry align='center'>D</entry>
+        <entry align='center'>D, deleteall</entry>
         <entry align='center'>no</entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
@@ -347,7 +348,25 @@ The following cases may occur:</para>
         <entry align='center'>D</entry>
         <entry align='center'>modified</entry>
 	<entry><para>A copy of X to Y followed by a delete of X is
-	composed into a rename of X to Y, </para></entry>
+	composed into a rename of X to Y.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C</entry>
+        <entry align='center'>deleteall</entry>
+        <entry align='center'>no</entry>
+	<entry><para>Both copies perish in the deleteall.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>deleteall</entry>
+        <entry align='center'>M</entry>
+        <entry align='center'>no</entry>
+	<entry><para>This is a file creation.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>deleteall</entry>
+        <entry align='center'>D, C, R, deleteall</entry>
+        <entry align='center'>no</entry>
+	<entry><para>This should never happen</para></entry>
       </row>
     </tbody>
   </tgroup>
