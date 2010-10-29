@@ -179,7 +179,7 @@ class Tag:
         self.tagger = tagger
         self.comment = content
     def email_out(self, eventnum):
-        "Enable do_email_out() to report these."
+        "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Tag-Name"] = self.name
@@ -228,7 +228,7 @@ class Commit:
         return "%6d %s %-50s" % \
                       (eventnum+1, self.committer.isodate()[:-5], topline[:50]) 
     def email_out(self, eventnum):
-        "Enable do_email_out() to report these."
+        "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         self.author.email_out(msg, "Author")
@@ -276,6 +276,12 @@ class Passthrough:
     "Represents a passthrough line."
     def __init__(self, line):
         self.text = text
+    def email_out(self, eventnum):
+        "Enable do_mailbox_out() to report these."
+        msg = RepoSurgeonEmail()
+        msg["Event-Number"] = str(eventnum+1)
+        msg.set_payload(self.comment)
+        return str(msg)
     def __str__(self):
         return self.text
 
@@ -502,6 +508,9 @@ class Repository:
         oldsubdir = self.subdir()
         self.name = name
         os.rename(oldsubdir, self.subdir())
+        for event in self.commands:
+            if isinstance(event, Blob):
+                event.subdir = os.path.abspath(self.subdir())
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -1267,12 +1276,12 @@ for exploring the selection-set language.
     def help_mailbox_out(self):
         print """
 Emit a mailbox file of messages in RFC822 format representing the
-contents of the metadata in selected commits and annotated tags. Takes
-a selection set; members of the set other than commits and annotated
-tags are ignored.  If there is a second argument, or the first is not
-recognized as a selection set, it will be taken as the name of the
-file to report to; no argument, or one of '-'; writes to standard
-output.
+contents of repository metadata. Takes a selection set; members of the set
+other than commits, annotated tags, and passthroughs are ignored (that
+is, presently, blobs and resets).  If there is a second argument, or
+the first is not recognized as a selection set, it will be taken as
+the name of the file to report to; no argument, or one of '-'; writes
+to standard output.
 """
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
@@ -1344,6 +1353,13 @@ may change in a future release.
         if not editor:
             complain("you have not specified an editor and $EDITOR is not set")
             return
+        # Special case: user selected a single blob
+        if len(self.selection) == 1:
+            singleton = self.commands[self.selection[0]]
+            if isinstance(singleton, Blob):
+                os.system(editor + " " + singleton.blobfile())
+                return
+        # Otherwise, mailboxize and edit the non-blobs in the selection
         try:
             (tfdesc, tfname) = tempfile.mkstemp()
             tfp = open(tfname, "w")
@@ -1363,6 +1379,10 @@ Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.
+
+Normally this command ignores blobs because mailbox_out does.
+However, if you specify a selection set consisting of a single
+blob, your editor will be called on the blob file.
 """
 
 if __name__ == '__main__':

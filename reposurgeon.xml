@@ -61,10 +61,13 @@ require specifying a selection of event sequence numbers so
 <application>reposurgeon</application> will know which events to
 modify or delete.</para>
 
-<para>When a command takes a selection-set argument, it will
-immediately follow the command keyword; other arguments will
-follow. It is often possible to omit the selection-set argument and
-have it default to something reasonable.</para>
+<para>Commands to <application>reposurgeon</application> consist of a
+command keyword, sometimes followed by a selection set, sometimes
+followed by whitespace-separated arguments. It is often possible to
+omit the selection-set argument and have it default to something
+reasonable. When the command descriptions refer to a 'second' 
+argument, it may actually be first after the keyword with the
+selection set omitted.</para>
 
 <para>Here are some motivating examples.  The commands will be
 explained in more detail after the description of selection
@@ -72,6 +75,8 @@ syntax.</para>
 
 <programlisting>
 edit :15                 ;; edit the object associated with mark :15
+
+edit                     ;; edit all editable objects
 
 list 29..71              ;; list summary index of events 20..71
 
@@ -393,12 +398,12 @@ CVS lifts.</para>
 <term><cmdsynopsis><command>mailbox_out</command></cmdsynopsis></term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
-the contents of the metadata in commits and annotated tags. Takes a
-selection set; members of the set other than commits and annotated
-tags are ignored.  If there is a second argument, or the first is not
-recognized as a selection set, it will be taken as the name of the
-file to report to; no argument, or one of '-'; writes to standard
-output.</para>
+the contents of repository metadata. Takes a selection set; members of
+the set other than commits, annotated tags, and passthroughs are
+ignored (that is, presently, blobs and resets).  If there is a second
+argument, or the first is not recognized as a selection set, it will
+be taken as the name of the file to report to; no argument, or one of
+'-'; writes to standard output.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -431,6 +436,10 @@ may change in a future release.</para>
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.</para>
+
+<para>Normally this command ignores blobs because mailbox_out does.
+However, if you specify a selection set consisting of a single
+blob, your editor will be called directly on the blob file.</para>
 </listitem>
 </varlistentry>
 </variablelist>
