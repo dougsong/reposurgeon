@@ -423,10 +423,11 @@ class Repository:
                         dp.close()
                     elif line.startswith("from") or line.startswith("merge"):
                         commit.parents.append(line.split()[1])
+                    # Handling of file ops begins.
                     elif line[0] in ("C", "D", "R"):
                         commit.fileops.append(line.strip().split())
                     elif line == "filedeletall\n":
-                        commit.fileops.append("filedeleteall")
+                        commit.fileops.append(("filedeleteall",))
                     elif line[0] == "M":
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
@@ -440,12 +441,13 @@ class Repository:
                             else:
                                 self.error("no blob matches commit reference to %s" % ref)
                         elif ref[0] == 'inline':
-                            copyname = self.subdir + "/inline-" + `inline_count`
+                            copyname = self.subdir() + "/inline-" + `inline_count`
                             self.read_data(open(copyname, "w")).close()
                             inline_count += 1
-                            commit.fileops.append((op, mode, ref, path, copyname))
+                            commit.fileops.append((op,mode,ref,path,copyname))
                         else:
                             self.error("unknown content type in filemodify")
+                    # Handling of file ops ends.
                     else:
                         pushback(line)
                         break
