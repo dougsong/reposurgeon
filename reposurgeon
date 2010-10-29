@@ -672,7 +672,7 @@ class RepoSurgeon(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
         self.verbose = 0
-        self.echo = 0
+        self.repeat = 0
         self.prompt = "reposurgeon% "
         self.repo = None
         self.preferred = None
@@ -688,7 +688,7 @@ class RepoSurgeon(cmd.Cmd):
         pass
     def precmd(self, line):
         "Pre-command hook."
-        if self.echo:
+        if self.repeat:
             print line
         return line
     def do_shell(self, line):
@@ -992,14 +992,14 @@ class RepoSurgeon(cmd.Cmd):
 'verbose 1' enables progress messages, 'verbose 0' disables them. Higher levels
 of verbosity are available but intended for developers only.
 """
-    def do_echo(self, line):
-        "Set or clear echoing commands before processing (for regression tests)"
+    def do_repeat(self, line):
+        "Set or clear repeating commands before processing (for regression tests)"
         try:
-            self.echo = int(line)
+            self.repeat = int(line)
         except ValueError:
             print "reposurgeon: verbosity value must be an integer"
         if self.verbose:
-            print "reposurgeon: echo %d" % self.echo
+            print "reposurgeon: repeat %d" % self.repeat
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
@@ -1186,7 +1186,7 @@ output.
     def help_index(self):
         print """
 Does nothing but resolve a selection-set expression
-and echo the resulting event-number set to standard
+and report the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.
 """

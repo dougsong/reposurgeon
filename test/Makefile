@@ -23,7 +23,7 @@ SELECT_TEST = resolve 15; \
 	resolve 3,:15; \
 	resolve /regression/
 select_test:
-	cat simple.dump | ../reposurgeon "read -" "echo 1" "index; $(SELECT_TEST)"
+	cat simple.dump | ../reposurgeon "read -" "repeat 1" "index; $(SELECT_TEST)"
 make_selectregress:
 	make --quiet select_test >select_test.chk
 selectregress:
