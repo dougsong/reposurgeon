@@ -14,9 +14,9 @@ import signal, shutil
 #
 # * Dates and refnames in specification expressions.
 #
-# * Test hg and bzr methods.
+# * Allow editing of date and author fields.
 #
-# * Simplify the rebuild gymnastics - three-directory monte is too complex.
+# * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
 # following dictionary. The key is the subdirectory name that tells us
@@ -294,6 +294,7 @@ class Repository:
         self.blob_refcount = {}
         self.import_line = 0
         self.subdir = ".rs"
+        self.restore_set = set([])
     def error(self, msg, atline=True):
         if atline:
             raise RepoSurgeonException(msg + " at line " + `self.import_line`)
@@ -472,6 +473,21 @@ class Repository:
             fp.write(str(command))
         if baton:
             baton.end()
+    def restore(self, filename):
+        "Add a path to the restore set, to be copied back on rebuild."
+        if os.path.exists(filename):
+            self.restore_set.add(filename)
+        else:
+            self.error("%s doesn't exist" % filename, atline=False)
+    def unrestore(self, filename):
+        "Remove a path from the restore set."
+        if filename in self.restorable:
+            self.restore_set.remove(filename)
+        else:
+            self.error("%s doesn't exist" % filename, atline=False)
+    def restorable(self):
+        "Return the repo's restore set."
+        return self.restore_set
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -609,6 +625,7 @@ def rebuild_repo(repo, target, preferred, verbose):
 
         # Move the unmodified repo contents in target to the backup directory.
         # Then move the staging contents to the target directory.
+        # Finally, restore designated files from backup to target.
         for sub in os.listdir(target):
             os.rename(os.path.join(target, sub),
                       os.path.join(savedir, sub))
@@ -617,13 +634,15 @@ def rebuild_repo(repo, target, preferred, verbose):
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
-
+        for file in repo.restore:
+            shutil.copytree(os.path.join(savedir, sub),
+                            os.path.join(target, sub))
         if verbose:
             complain("build critical region ends. Success.")
         del critical
     finally:
         os.chdir(here)
-        #os.remove(tfname)
+        os.remove(tfname)
         os.system("rm -fr " + staging)
 
 def act(cmd):
@@ -1147,6 +1166,30 @@ for exploring the selection-set language.
     #
     # Editing commands
     #
+    def do_restore(self, line):
+        "Add files and subdirectories to the restore set."
+        for filename in line.split():
+            self.repo.restore(filename)
+        print self.repo.restorable()
+    def help_restore(self):
+        print """
+Add (presumably untracked) files or directories to the repo's list of
+paths to be restored from the backup directory after a rebuild. Each
+argument, if any, is interpreted as a pathname.  The current restore
+list is displayed afterwards.
+"""
+    def do_unrestore(self, line):
+        "Remove files and subdirectories from the restore set."
+        for filename in line.split():
+            self.repo.unrestore(filename)
+        print self.repo.restorable()
+    def help_unrestore(self):
+        print """
+Remove (presumably untracked) files or directories to the repo's list
+of paths to be restored from the backup directory after a
+rebuild. Each argument, if any, is interpreted as a pathname.  The
+current restore list is displayed afterwards.
+"""
     def do_mailbox_out(self, line):
         "Generate a mailbox file representing object metadata."
         self.report_select(line, "email_out")

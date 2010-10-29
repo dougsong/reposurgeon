@@ -212,6 +212,18 @@ a useful way to examine small groups of commits.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><cmdsynopsis><command>rebuild</command></cmdsynopsis></term>
+<listitem><para>
+Rebuild a repository from the state held by
+<application>reposurgeon</application>.  The argument specifies the
+target directory in which to do the rebuild; if the repository read
+was from a repo directory (and not a git-import stream), it defaults
+to that directory.  If the target directory is nonempty its contents
+are backed up to a save directory.  Files and directories on the
+repository's restore list are copied back from the backup directory.
+</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>list</command></cmdsynopsis></term>
 <listitem><para>This is the main command for identifying the objects
 you want to modify.  It lists commits in the selection set by event
@@ -462,15 +474,19 @@ a repo or stream.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>rebuild</command></cmdsynopsis></term>
-<listitem><para>
-Rebuild a repository from the state held by
-<application>reposurgeon</application>.  The argument specifies the
-target directory in which to do the rebuild; if the repository read
-was from a repo directory (and not a git-import stream), it defaults
-to that directory.  If the target directory is nonempty its contents
-are backed up to a save directory.
-</para></listitem>
+<term><cmdsynopsis><command>restore</command></cmdsynopsis></term>
+<listitem><para>Add (presumably untracked) files or directories to the repo's 
+list of paths to be restored from the backup directory after a 
+<command>rebuild</command>. Each argument, if any, is interpreted as a
+pathname.  The current restore list is displayed afterwards.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>unrestore</command></cmdsynopsis></term>
+<listitem><para>Remove (presumably untracked) files or directories to
+the repo's list of paths to be restored from the backup directory
+after a <command>rebuild</command>. Each argument, if any, is
+interpreted as a pathname.  The current restore list is displayed
+afterwards.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>view</command></cmdsynopsis></term>
