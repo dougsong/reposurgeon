@@ -74,16 +74,18 @@ explained in more detail after the description of selection
 syntax.</para>
 
 <programlisting>
-edit :15                 ;; edit the object associated with mark :15
+edit :15               ;; edit the object associated with mark :15
 
-edit                     ;; edit all editable objects
+edit                   ;; edit all editable objects
 
-list 29..71              ;; list summary index of events 20..71
+list 29..71            ;; list summary index of events 20..71
 
-list /regression/        ;; list all commits with comments containing 
-                         ;; the string "regression"
+list /regression/      ;; list all commits with comments containing 
+                       ;; the string "regression"
 
-delete =t &amp; 1..:97       ;; delete tags from event 1 to mark 15
+delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 15
+
+list @rel2.0..@head    ;; List commits frm the "rel2.0" tag to the "head" tag 
 </programlisting>
 
 <para>The selection-set specification syntax is an expression-oriented 
@@ -102,6 +104,14 @@ event-sequence number.</para></listitem>
 <listitem><para>A numeric literal preceded by a colon is interpreted
 as a mark; see the format documentation for explanation of the 
 semantics of marks.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>symbolic names</firstterm></term>
+<listitem>
+<para>The name of a branch refers to its tip commit.  The name of a tag
+is equivalent to its mark, and through that to a commit. Names are
+led with @ to distinguish them from command keywords.</para>
+</listitem>
 </varlistentry>
 </variablelist>
 
@@ -390,7 +400,6 @@ separation in seconds; the default is 90 seconds.</para>
 commits. Occasionally you may want to restrict it, for example to
 avoid coalescing unrelated "*** empty log message ***" commits from
 CVS lifts.</para>
-<!-- document handling of tags, branches, renames, deletes, copies. --> 
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
