@@ -958,9 +958,10 @@ class RepoSurgeon(cmd.Cmd):
                             self.line = self.line[len(symbol):]
                             loc = None
                             # Find the last commit with this branchname
-                            for (i, event) in enumerate(self.repo.commits()):
-                                if event.branch == symbol:
-                                    loc = i
+                            for (i, event) in enumerate(self.repo):
+                                if isinstance(event, Commit):
+                                    if event.branch == symbol:
+                                        loc = i
                             if loc is None:
                                 raise RepoSurgeonException("branch name %s points to hyperspace" % symbol)
                             else:
@@ -972,8 +973,8 @@ class RepoSurgeon(cmd.Cmd):
                     for tag in taglist:
                         if self.line.startswith(tag.name):
                             self.line = self.line[len(tag.name):]
-                            for (i, event) in enumerate(self.repo.commits()):
-                                if event.mark == tag.mark:
+                            for (i, event) in enumerate(self.repo):
+                                if isinstance(event, Commit) and event.mark == tag.mark:
                                     matched = True
                                     selection.append(i)
                             else:
