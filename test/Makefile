@@ -21,6 +21,9 @@ SELECT_TEST = resolve 15; \
 	resolve 24..97; \
 	resolve 24..97&=C; \
 	resolve 3,:15; \
+	resolve @master \
+	resolve @lightweight-sample \
+	resolve @annotated-sample \
 	resolve /regression/
 select_test:
 	cat simple.dump | ../reposurgeon "read -" "repeat 1" "index; $(SELECT_TEST)"
