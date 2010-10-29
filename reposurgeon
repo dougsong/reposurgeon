@@ -288,6 +288,7 @@ class Repository:
     def __init__(self):
         self.name = None
         self.readtime = None
+        self.readsize = 0
         self.type = None
         self.sourcedir = None
         self.commands = []    # A list of the commands encountered, in order
@@ -348,6 +349,7 @@ class Repository:
             else:
                 self.import_line += 1
                 line = fp.readline()
+                self.readsize += len(line)
             return line
         def pushback(line):
             linebuffers.append(line)
@@ -1104,8 +1106,8 @@ doing a quick eyeball check ofter a rebuild command.
             print "Repository '%s' was read at %s" % (self.repo.name, iso8601_from_unixtime(self.repo.readtime))
             if self.repo.sourcedir:
                 print "Loaded from", self.repo.sourcedir
-            print "%d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
-                  (len(self.repo.commands),
+            print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
+                  (self.repo.readsize / 1000.0, len(self.repo.commands),
                    count(Blob), count(Commit), count(Tag), count(Reset),
                    self.repo.nmarks)
             if self.repo.type:
@@ -1205,8 +1207,14 @@ for exploring the selection-set language.
             print "%s %s" % (iso8601_from_unixtime(readtime), name)
     def help_choose(self):
         print """
-Choose a named repo on which to operate.  With no argument, lists the
-currently stored repositories and their load times.
+Choose a named repo on which to operate.  The name of a repo is
+normally the basename of the directory or file it was loaded from, but
+repos loaded from standard input are 'unnamed'. The program will add
+a disambiguating suffix if there have been multiple reads from the
+same source.
+
+With no argument, lists the names of the currently stored repositories
+and their load times.
 """
     def do_restore(self, line):
         "Add files and subdirectories to the restore set."

@@ -14,7 +14,7 @@ reposurgeon.html: reposurgeon.xml
 	xmlto html-nochunks reposurgeon.xml
 
 clean:
-	rm -f *~ *.1 *.html MANIFEST SHIPPER.*
+	rm -f .rs/* test/.rs* *~ *.1 *.html MANIFEST SHIPPER.*
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
 	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST

@@ -355,7 +355,8 @@ discarded only when those are.</para>
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). This operation
 may fail if the commit graph remains connected through another path;
-the tool will detect this.</para>
+the tool will detect this. If the repo was named 'foo', the cut segments
+will be named 'foo-early' and 'foo-late'.</para>
 <para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
@@ -476,8 +477,14 @@ a repo or stream.
 <varlistentry>
 <term><cmdsynopsis><command>choose</command></cmdsynopsis></term>
 <listitem>
-<para>Choose a named repo on which to operate.  With no argument, lists the
-currently stored repositories and their load times.</para>
+<para>Choose a named repo on which to operate.  The name of a repo is
+normally the basename of the directory or file it was loaded from, but
+repos loaded from standard input are "unnamed".
+<application>reposurgeon</application> will add a disambiguating
+suffix if there have been multiple reads from the same source.</para>
+
+<para>With no argument, lists the names of the currently stored
+repositories and their load times.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
