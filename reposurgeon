@@ -215,7 +215,8 @@ class Reset:
 
 class Commit:
     "Generic commit object."
-    def __init__(self):
+    def __init__(self, repo):
+        self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
         self.author = None           # Author of commit
         self.committer = None        # Person responsible for committing it.
@@ -248,6 +249,9 @@ class Commit:
             modified = True
         self.comment = newcomment
         return modified
+    def children(self):
+        "Get a list of this commit's children."
+        return filter(lambda e: self.mark in e.parents, self.repo.commits()) 
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -292,7 +296,8 @@ class RepoSurgeonException:
 
 class Repository:
     "Generic repository object."
-    def __init__(self):
+    def __init__(self, verbose=0):
+        self.verbose = verbose
         self.name = None
         self.readtime = None
         self.readsize = 0
@@ -304,8 +309,11 @@ class Repository:
         self.blob_refcount = {}
         self.import_line = 0
         self.restore_set = set([])
-    def __del__(self):
-        os.system("rm -fr %s" % (self.subdir(),))
+    def cleanup(self):
+        cmd = "rm -fr %s" % (self.subdir(),)
+        if self.verbose:
+            print "Repository cleanup calls " + cmd
+        os.system(cmd)
     def subdir(self, name=None):
         if name is None:
             name = self.name
@@ -326,7 +334,10 @@ class Repository:
     def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
-            os.system("rm -fr %s; mkdir %s" % (self.subdir(), self.subdir()))
+            cmd = "rm -fr %s; mkdir %s" % (self.subdir(), self.subdir())
+            if self.verbose >= 2:
+                print "Repository fast import calls " + cmd
+            os.system(cmd)
         except OSError:
             self.error("can't create operating directory", atline=False)
         self.import_line = 0
@@ -384,7 +395,7 @@ class Repository:
                 self.error("unexpected data object")
             elif line.startswith("commit"):
                 commitbegin = self.import_line
-                commit = Commit()
+                commit = Commit(self)
                 commit.branch = line.split()[1]
                 self.branches.add(commit.branch)
                 ncommits += 1
@@ -511,13 +522,19 @@ class Repository:
         "Rename the repo."
         try:
             # Can fail if the target directory exists.
+            if self.verbose >= 2:
+                print "Repository rename calls os.rename(%s, %s)" % (self.subdir(), self.subdir(newname))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
             for event in self.events:
                 if isinstance(event, Blob):
                     event.subdir = os.path.abspath(self.subdir())
-        except OSError:
-            raise RepoSurgeonException("repo rename failed")
+        except OSError, e:
+            raise RepoSurgeonException("repo rename %s -> %s failed"
+                                       % (self.subdir(), self.subdir(newname)))
+    def commits(self):
+        "Return a list of the repository commit objects."
+        return filter(lambda e: isinstance(e, Commit), self.events)
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -525,6 +542,16 @@ class Repository:
         return self.events[i]
     def __setitem__(self, i, v):
         self.events[i] = v
+    def __delitem__(self, i):
+        event = self.events[i]
+        if event.__class__ in (Reset, Tag, Passthrough):
+            self.events = self.events[i:] + self.events[:i+1]
+        elif isinstance(event, Blob):
+            raise RepoSurgeonException("attempt to directly delete blob")
+        elif isinstance(event, Commit):
+            raise RepoSurgeonException("commit deletion not yet implemented")
+        else:
+            raise RepoSurgeonException("unexpected object in event array")
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -532,7 +559,7 @@ def complain(msg):
 def read_repo(source, preferred, verbose):
     "Read a repository using fast-import."
     if source == '-':
-        repo = Repository()
+        repo = Repository(verbose)
         repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: from stdin"))
     elif not os.path.exists(source):
         complain("%s does not exist" % source)
@@ -724,7 +751,12 @@ class RepoSurgeon(cmd.Cmd):
         os.system(line)
     def do_EOF(self, line):
         "Terminate reposurgeon."
+        self.cleanup()
         return True
+    def cleanup(self):
+        "Tell all the repos we're holding to clean up."
+        for repo in self.name_to_repo.values():
+            repo.cleanup()
     #
     # The selection-language parsing code starts here.
     #
@@ -926,8 +958,8 @@ class RepoSurgeon(cmd.Cmd):
                             self.line = self.line[len(symbol):]
                             loc = None
                             # Find the last commit with this branchname
-                            for (i, event) in enumerate(self.repo):
-                                if isinstance(event,Commit) and event.branch == symbol:
+                            for (i, event) in enumerate(self.repo.commits()):
+                                if event.branch == symbol:
                                     loc = i
                             if loc is None:
                                 raise RepoSurgeonException("branch name %s points to hyperspace" % symbol)
@@ -940,8 +972,8 @@ class RepoSurgeon(cmd.Cmd):
                     for tag in taglist:
                         if self.line.startswith(tag.name):
                             self.line = self.line[len(tag.name):]
-                            for (i, event) in enumerate(self.repo):
-                                if isinstance(event, Commit) and commit.mark == tag.mark:
+                            for (i, event) in enumerate(self.repo.commits()):
+                                if event.mark == tag.mark:
                                     matched = True
                                     selection.append(i)
                             else:
@@ -1473,5 +1505,5 @@ if __name__ == '__main__':
         fatal(e.msg)
     except KeyboardInterrupt:
         print ""
-
+    interpreter.cleanup()
 # end
