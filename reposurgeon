@@ -10,7 +10,7 @@ import signal, shutil
 
 # TO DO
 #
-# * Implement delete, expunge, coalesce.
+# * Implement delete, expunge, coalesce, cut.
 #
 # * Dates and refnames in specification expressions.
 #
@@ -286,6 +286,8 @@ class RepoSurgeonException:
 class Repository:
     "Generic repository object."
     def __init__(self):
+        self.name = None
+        self.readtime = None
         self.type = None
         self.sourcedir = None
         self.commands = []    # A list of the commands encountered, in order
@@ -293,8 +295,12 @@ class Repository:
         self.refs_to_branches = {}
         self.blob_refcount = {}
         self.import_line = 0
-        self.subdir = ".rs"
         self.restore_set = set([])
+    def subdir(self):
+        if not self.name:
+            return ".rs"
+        else:
+            return ".rs-" + self.name 
     def error(self, msg, atline=True):
         if atline:
             raise RepoSurgeonException(msg + " at line " + `self.import_line`)
@@ -306,11 +312,11 @@ class Repository:
         else:
             raise "reposurgeon: " + msg
     def __del__(self):
-        os.system("rm -fr %s" % (self.subdir,))
+        os.system("rm -fr %s" % (self.subdir(),))
     def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
-            os.system("rm -fr %s; mkdir %s" % (self.subdir, self.subdir))
+            os.system("rm -fr %s; mkdir %s" % (self.subdir(), self.subdir()))
         except OSError:
             self.error("can't create operating directory", atline=False)
         self.import_line = 0
@@ -352,7 +358,7 @@ class Repository:
             elif not line.strip():
                 continue
             elif line.startswith("blob"):
-                blob = Blob(self.subdir)
+                blob = Blob(self.subdir())
                 line = readline()
                 if line.startswith("mark"):
                     blob.mark = line[5:].strip()
@@ -401,7 +407,7 @@ class Repository:
                     elif line[0] == "M":
                         (op, mode, ref, path) = line.split()
                         if ref[0] == ':':
-                            copyname = self.subdir + "/blob-" + ref
+                            copyname = self.subdir() + "/blob-" + ref
                             commit.fileops.append((op,mode,ref,path,copyname))
                             self.blob_refcount[ref] = self.blob_refcount.get(ref, 0)+1
                             for obj in self.commands:
@@ -462,6 +468,7 @@ class Repository:
                 commands.append(line)
         if baton:
             baton.end()
+        self.readtime = time.time()
         for blob in self.blob_refcount:
             if self.blob_refcount[blob] != 1:
                 self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
@@ -668,6 +675,7 @@ class RepoSurgeon(cmd.Cmd):
         self.repo = None
         self.preferred = None
         self.selection = []
+        self.name_to_repo = {}
     #
     # Housekeeping hooks.
     #
@@ -933,7 +941,9 @@ class RepoSurgeon(cmd.Cmd):
             if self.verbose >= 2:
                 print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
             return set(matchers)
-
+    #
+    # Helpers
+    #
     def report_select(self, line, method):
         "Generate a repository report on all objects with a specified method."
         if not self.repo:
@@ -952,6 +962,17 @@ class RepoSurgeon(cmd.Cmd):
                 fp.write(getattr(command, method)(i) + "\n")
         if outfile:
             fp.close()
+
+    def uniquify(self, name):
+        "Uniquify a repo name in the repo list."
+        if name not in self.name_to_repo:
+            return name
+        else:
+            # repo "foo" is #1
+            seq = 2
+            while name + str(seq) in self.name_to_repo:
+                seq += 1
+            return name + str(seq)
     #
     # On-line help and instrumentation
     #
@@ -1014,16 +1035,17 @@ to the type of that repository.
         self.preferred = None 
         if not line or line == '.':
             line = os.getcwd();
-        if self.repo and self.verbose:
-            print "reposurgeon: previous data discarded."
         self.repo = read_repo(line, self.preferred, self.verbose)
         if self.repo and self.repo.type:
             self.preferred = self.repo.type
+        name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
+        self.repo.name = name
+        self.name_to_repo[name] = self.repo 
     def help_read(self):
         print """
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
-        
+ 
 With a directory-name argument, this command attempts to read in the
 contents of a repository in any supported version-control system under
 that directory.
@@ -1079,11 +1101,15 @@ doing a quick eyeball check ofter a rebuild command.
         if self.repo:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype),self.repo.commands))
+            print "Repository '%s' was read at %s" % (self.repo.name, iso8601_from_unixtime(self.repo.readtime))
+            if self.repo.sourcedir:
+                print "Loaded from", self.repo.sourcedir
             print "%d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
                   (len(self.repo.commands),
                    count(Blob), count(Commit), count(Tag), count(Reset),
                    self.repo.nmarks)
             if self.repo.type:
+                print "         Type:", self.repo.type
                 for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:", "Viewer:"), vcstypes[self.repo.type]):
                     print "%14s %s" % (legend, command)
         else:
@@ -1142,7 +1168,6 @@ file in the blob.
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister")
-
     def help_list(self):
         print """
 Display commits in a human-friendly format; the first column is raw
@@ -1166,6 +1191,23 @@ for exploring the selection-set language.
     #
     # Editing commands
     #
+    def do_choose(self, line):
+        "Choose a named repo on which to operate."
+        if line:
+            if line in self.name_to_repo:
+                self.repo = self.name_to_repo[line]
+            else:
+                complain("no such repo")
+        repolist = map(lambda n: (n, self.name_to_repo[n].readtime),
+                       self.name_to_repo.keys())
+        repolist.sort(lambda x, y: cmp(x[1], y[1]))
+        for (name, readtime) in repolist:
+            print "%s %s" % (iso8601_from_unixtime(readtime), name)
+    def help_choose(self):
+        print """
+Choose a named repo on which to operate.  With no argument, lists the
+currently stored repositories and their load times.
+"""
     def do_restore(self, line):
         "Add files and subdirectories to the restore set."
         for filename in line.split():

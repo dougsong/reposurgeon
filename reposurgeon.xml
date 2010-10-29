@@ -474,6 +474,13 @@ a repo or stream.
 </para></listitem>
 </varlistentry>
 <varlistentry>
+<term><cmdsynopsis><command>choose</command></cmdsynopsis></term>
+<listitem>
+<para>Choose a named repo on which to operate.  With no argument, lists the
+currently stored repositories and their load times.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>restore</command></cmdsynopsis></term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
