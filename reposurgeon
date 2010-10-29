@@ -906,6 +906,7 @@ class RepoSurgeon(cmd.Cmd):
                         return line
                 if self.peek() == "@":
                     self.pop()
+                    matched = False
                     # First, search branches
                     branchlist = list(self.repo.branches)
                     branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
@@ -920,6 +921,7 @@ class RepoSurgeon(cmd.Cmd):
                             if loc is None:
                                 raise RepoSurgeonException("branch name %s points to hyperspace" % symbol)
                             else:
+                                matched = True
                                 selection.append(loc)
                     # Next, search tags
                     taglist = filter(lambda e: isinstance(e, Tag), self.repo.commands)
@@ -929,9 +931,12 @@ class RepoSurgeon(cmd.Cmd):
                             self.line = self.line[len(tag.name):]
                             for (i, event) in self.repo.commands:
                                 if isinstance(event, Commit) and commit.mark == tag.mark:
+                                    matched = True
                                     selection.append(i)
                             else:
                                 raise RepoSurgeonException("tag name %s points to hyperspace" % tag.name)
+                    if not matched:
+                        raise RepoSurgeonException("couldn't match a name at @%s" % self.line)
             if self.verbose >= 2:
                 print "reposurgeon: location list is %s with %s left" % (selection, `self.line`)
             # Resolve spans
@@ -955,7 +960,7 @@ class RepoSurgeon(cmd.Cmd):
                 raise RepoSurgeonException("incomplete range expression.")
             for elt in selection:
                 if elt < 0 or elt > len(self.repo.commands)-1:
-                    print RepoSurgeonException("event number %s out of range" % elt)
+                    raise RepoSurgeonException("event number %s out of range" % elt)
             polyrange = set(selection)
         if self.verbose >= 2:
             print "%s <- eval_polyrange(), left = %s" % (polyrange, `self.line`)

@@ -108,7 +108,7 @@ semantics of marks.</para></listitem>
 <varlistentry>
 <term><firstterm>symbolic names</firstterm></term>
 <listitem>
-<para>The name of a branch refers to its tip commit.  The name of a tag
+<para>The basename of a branch refers to its tip commit.  The name of a tag
 is equivalent to its mark, and through that to a commit. Names are
 led with @ to distinguish them from command keywords.</para>
 </listitem>
@@ -563,6 +563,11 @@ except blobs.</para>
 and echo the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>names</command></cmdsynopsis></term>
+<listitem><para>List the names of all knowmn branches and tags.
+Tells you what things are legal after @.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>version</command></cmdsynopsis></term>
