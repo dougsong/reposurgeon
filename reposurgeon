@@ -306,11 +306,13 @@ class Repository:
         self.restore_set = set([])
     def __del__(self):
         os.system("rm -fr %s" % (self.subdir(),))
-    def subdir(self):
-        if not self.name:
+    def subdir(self, name=None):
+        if name is None:
+            name = self.name
+        if not name:
             return ".rs"
         else:
-            return ".rs-" + self.name 
+            return ".rs-" + name 
     def error(self, msg, atline=True):
         if atline:
             raise RepoSurgeonException(msg + " at line " + `self.import_line`)
@@ -505,14 +507,17 @@ class Repository:
     def restorable(self):
         "Return the repo's restore set."
         return self.restore_set
-    def rename(self, name):
+    def rename(self, newname):
         "Rename the repo."
-        oldsubdir = self.subdir()
-        self.name = name
-        os.rename(oldsubdir, self.subdir())
-        for event in self.events:
-            if isinstance(event, Blob):
-                event.subdir = os.path.abspath(self.subdir())
+        try:
+            # Can fail if the target directory exists.
+            os.rename(self.subdir(), self.subdir(newname))
+            self.name = newname
+            for event in self.events:
+                if isinstance(event, Blob):
+                    event.subdir = os.path.abspath(self.subdir())
+        except OSError:
+            raise RepoSurgeonException("repo rename failed")
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1273,11 +1278,12 @@ current restore list is displayed afterwards.
         if not line or line == '.':
             line = os.getcwd();
         self.repo = read_repo(line, self.preferred, self.verbose)
-        if self.repo and self.repo.type:
-            self.preferred = self.repo.type
-        name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
-        self.repo.rename(name)
-        self.name_to_repo[name] = self.repo 
+        if self.repo:
+            if self.repo.type:
+                self.preferred = self.repo.type
+            name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
+            self.repo.rename(name)
+            self.name_to_repo[name] = self.repo 
     def help_read(self):
         print """
 A read command with no arguments is treated as 'read .', operating on the

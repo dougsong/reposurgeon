@@ -1,7 +1,10 @@
 # Test-suite makefile for reposurgeon
 
-all: roundtrip regress
+all: clean roundtrip regress
 	@echo "No diff output is good news."
+
+clean:
+	rm -fr .rs*
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
