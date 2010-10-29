@@ -488,6 +488,14 @@ repositories and their load times.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><cmdsynopsis><command>rename</command></cmdsynopsis></term>
+<listitem>
+<para>Rename the currently chosen repo; requires an argument.  Won't
+do it if there is already one by the new name.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><cmdsynopsis><command>restore</command></cmdsynopsis></term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 

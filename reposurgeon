@@ -497,6 +497,11 @@ class Repository:
     def restorable(self):
         "Return the repo's restore set."
         return self.restore_set
+    def rename(self, name):
+        "Rename the repo."
+        oldsubdir = self.subdir()
+        self.name = name
+        os.rename(oldsubdir, self.subdir())
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
@@ -1139,6 +1144,19 @@ same source.
 With no argument, lists the names of the currently stored repositories
 and their load times.
 """
+    def do_rename(self, line):
+        "Rename a repository."
+        if line in self.name_to_repo:
+            complain("there is already a repo named %s" % line)
+        else:
+            del self.name_to_repo[self.repo.name]
+            self.name_to_repo[line] = self.repo
+            self.repo.rename(line)
+    def help_rename():
+        print """
+Rename the currently chosen repo; requires an argument.  Won't do it
+if there is already one by the new name.
+"""
     def do_restore(self, line):
         "Add files and subdirectories to the restore set."
         for filename in line.split():
@@ -1175,7 +1193,7 @@ current restore list is displayed afterwards.
         if self.repo and self.repo.type:
             self.preferred = self.repo.type
         name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
-        self.repo.name = name
+        self.repo.rename(name)
         self.name_to_repo[name] = self.repo 
     def help_read(self):
         print """
