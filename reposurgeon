@@ -1590,18 +1590,20 @@ if __name__ == '__main__':
         interpreter.use_rawinput = False
         if not sys.argv[1:]:
             sys.argv.append("-")
-        for arg in sys.argv[1:]:
-            for cmd in arg.split(";"):
-                if cmd == '-':
-                    interpreter.use_rawinput = True
-                    interpreter.verbose = 1
-                    interpreter.cmdloop()
-                    interpreter.use_rawinput = False
-                else:
-                    interpreter.onecmd(interpreter.precmd(cmd))
+        try:
+            for arg in sys.argv[1:]:
+                for cmd in arg.split(";"):
+                    if cmd == '-':
+                        interpreter.use_rawinput = True
+                        interpreter.verbose = 1
+                        interpreter.cmdloop()
+                        interpreter.use_rawinput = False
+                    else:
+                        interpreter.onecmd(interpreter.precmd(cmd))
+        finally:
+            interpreter.cleanup()
     except RepoSurgeonException, e:
         fatal(e.msg)
     except KeyboardInterrupt:
         print ""
-    interpreter.cleanup()
 # end
