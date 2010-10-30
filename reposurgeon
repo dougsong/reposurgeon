@@ -97,16 +97,6 @@ class Baton:
             self.stream.write("...(%2.2f sec) %s.\n" % (time.time() - self.time, msg))
         return
 
-def iso8601_from_unixtime(secs_since_epoch, tzoff=""):
-    "Make an ISO8601 timestamp frm Unix time."
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
-
-def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
-    "Make an RFC822 timestamp from Unix time."
-    if tzoff:
-        tzoff = " " + tzoff
-    return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
-
 class RepoSurgeonEmail(email.message.Message):
     "Specialized email message with a distinguishing starter."
     def __init__(self, **kwargs):
@@ -132,6 +122,57 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
+def iso8601_from_unixtime(secs_since_epoch, tzoff=""):
+    "Make an ISO8601 timestamp frm Unix time."
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
+
+def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
+    "Make an RFC822 timestamp from Unix time."
+    if tzoff:
+        tzoff = " " + tzoff
+    return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
+
+def gitdate_from_unixtime(secs_since_epoch, tzoff):
+    "Make a git timestamp from Unix time."
+    return str(secs_since_epoch) + " " + tzoff
+
+def parse_date_or_die(text):
+    "Recognize date formats that exporters or Email programs might emit."
+    # OK, here is where we try to be as robust as possible in
+    # recognizing dates. First, look for git's preferred format.
+    # We can leave this unchanged.
+    text = text.strip() 
+    if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
+        (unixtime, timezone) = text.split()
+        unixtime = int(unixtime)
+        return (text, unixtime, timezone)
+    # If that didn't work, look for an RFC822 date, which git also
+    # accepts. Note, there could be edge cases that Python's parser
+    # handles but git doesn't.
+    rfcdate = email.utils.parsedate_tz(text) 
+    if rfcdate:
+        (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
+               tm_sec, tm_wday, tm_yday, tim_isdst, timezone) = rfcdate
+        unixtime = email.utils.mktime_tz(rfcdate)
+        timezone = (timezone or "+0000")
+        #text = gitdate_from_unixtime(unixtime, timezone)
+        return (text, unixtime, timezone)
+    # Also accept IS8601 dates in Zulu time, just becasuse I
+    # like them.  These we'll canonicalize to git format.
+    # Someday we should accept ISO8601 with [+-]nnnn timezone. 
+    try:
+        iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+        unixtime = calendar.timegm(iso860date)
+        timezone = "+0000"
+        text = gitdate_from_unixtime(unixtime, timezone)
+        return  (text, unixtime, timezone)
+    except ValueError:
+        # time.strptime() throws this
+        # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
+        pass
+    # Date format not recognized
+    raise RepoSurgeonException("'%s' is not a valid timestamp" % text)
+
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
     def __init__(self, person):
@@ -146,40 +187,7 @@ class Attribution:
             self.when = person.strip().split("|")[2]
         except (ValueError, IndexError):
             raise RepoSurgeonException("malformed attribution %s" % person)
-        # OK, here is where we try to be as robust as possible in
-        # recognizing dates. First, look for git's preferred format.
-        # We can leave this unchanged.
-        self.when = self.when.strip() 
-        if re.match(r"[0-9]+\s*[+-][0-9]+$", self.when):
-            (self.unixtime, self.timezone) = self.when.split()
-            self.unixtime = int(self.unixtime)
-            return
-        # If that didn't work, look for an RFC822 date, which git also
-        # accepts. Note, there could be edge cases that Python's parser
-        # handles but git doesn't.
-        rfcdate = email.utils.parsedate_tz(self.when) 
-        if rfcdate:
-            (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-                   tm_sec, tm_wday, tm_yday, tim_isdst, timezone) = rfcdate
-            self.unixtime = email.utils.mktime_tz(rfcdate)
-            self.timezone = (timezone or "+0000")
-            #self.when = self.gitdate()
-            return
-        # Also accept IS8601 dates in Zulu time, just becasuse I
-        # like them.  These we'll canonicalize to git format.
-        # Someday we should accept ISO8601 with [+-]nnnn timezone. 
-        try:
-            iso860date = time.strptime(self.when, "%Y-%m-%dT%H:%M:%SZ")
-            self.unixtime = calendar.timegm(iso860date)
-            self.timezone = "+0000"
-            self.when = self.gitdate()
-            return
-        except ValueError:
-            # time.strptime()
-            # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
-            pass
-        # Date format not recognized
-        raise RepoSurgeonException("'%s' is not a valid timestamp" % self.when)
+        (self.when, self.unixtime, self.timezone) = parse_date_or_die(self.when)
     def isodate(self):
         "Return ISO format for time/date of this action."
         return iso8601_from_unixtime(self.unixtime, self.timezone)
@@ -187,8 +195,8 @@ class Attribution:
         "Return RFC822 format for time/date of this action."
         return rfc822_from_unixtime(self.unixtime, self.timezone)
     def gitdate(self):
-        "Return git internal format for time/dare of this action."
-        return str(self.unixtime) + " " + self.timezone
+        "Return git internal format for time/date of this action."
+        return gitdate_from_unixtime(self.unixtime, self.timezone)
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
