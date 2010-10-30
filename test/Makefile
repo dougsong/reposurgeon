@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip regress
+all: clean roundtrip mailboxing regress
 	@echo "No diff output is good news."
 
 clean:
@@ -15,6 +15,18 @@ roundtrip:
 	    rm -f /tmp/rs$$$$; \
 	done
 
+# Test that dumping metadata to mailbox form and updating from the mailbox
+# is idempotent if you make no changes to the mailbox.
+mailboxing:
+	@for file in *.dump; do \
+	    echo "Testing mailbox-out/mailbox-in roundtripping using $${file}";\
+	    ../reposurgeon "read $${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
+	    diff -u $${file} /tmp/regress; \
+	done
+	@rm -f /tmp/regress
+
+# General regression testing of commands and output; look at the *,tst and
+# corresponding *.chk files to see which tests this runs.
 TESTLOADS = simple-dump
 makeregress:
 	@for file in $(TESTLOADS); do \
