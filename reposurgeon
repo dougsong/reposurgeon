@@ -182,10 +182,10 @@ class Attribution:
         raise RepoSurgeonException("'%s' is not a valid timestamp" % self.when)
     def isodate(self):
         "Return ISO format for time/date of this action."
-        return iso8601_from_unixtime(self.unixtime, tself.timezone)
+        return iso8601_from_unixtime(self.unixtime, self.timezone)
     def rfc822date(self):
         "Return RFC822 format for time/date of this action."
-        return rfc822_from_unixtime(self.unixtime, tself.timezone)
+        return rfc822_from_unixtime(self.unixtime, self.timezone)
     def gitdate(self):
         "Return git internal format for time/dare of this action."
         return str(self.unixtime) + " " + self.timezone
@@ -1528,8 +1528,8 @@ may change in a future release.
             tfp = open(tfname, "w")
             for i in self.selection:
                 event = self.repo[i]
-                if hasattr(command, "email_out"):
-                    tfp.write(command.email_out(i))
+                if hasattr(event, "email_out"):
+                    tfp.write(event.email_out(i))
             tfp.close()
             if os.system(editor + " " + tfname):
                 complain("%s returned a failure status" % editor)
