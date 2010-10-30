@@ -163,7 +163,7 @@ class Attribution:
                    tm_sec, tm_wday, tm_yday, tim_isdst, timezone) = rfcdate
             self.unixtime = email.utils.mktime_tz(rfcdate)
             self.timezone = (timezone or "+0000")
-            #self.when = str(self.unixtime) + " " + self.timezone
+            #self.when = self.gitdate()
             return
         # Also accept IS8601 dates in Zulu time, just becasuse I
         # like them.  These we'll canonicalize to git format.
@@ -172,7 +172,7 @@ class Attribution:
             iso860date = time.strptime(self.when, "%Y-%m-%dT%H:%M:%SZ")
             self.unixtime = calendar.timegm(iso860date)
             self.timezone = "+0000"
-            self.when = str(self.unixtime) + " " + self.timezone
+            self.when = self.gitdate()
             return
         except ValueError:
             # time.strptime()
@@ -182,18 +182,13 @@ class Attribution:
         raise RepoSurgeonException("'%s' is not a valid timestamp" % self.when)
     def isodate(self):
         "Return ISO format for time/date of this action."
-        timeout = self.when
-        if self.when[0].isdigit():
-            (unixtime, tzoff) = self.when.split()
-            timeout = iso8601_from_unixtime(int(unixtime), tzoff)
-        return timeout
+        return iso8601_from_unixtime(self.unixtime, tself.timezone)
     def rfc822date(self):
         "Return RFC822 format for time/date of this action."
-        timeout = self.when
-        if self.when[0].isdigit():
-            (unixtime, tzoff) = self.when.split()
-            timeout = rfc822_from_unixtime(int(unixtime), tzoff)
-        return timeout
+        return rfc822_from_unixtime(self.unixtime, tself.timezone)
+    def gitdate(self):
+        "Return git internal format for time/dare of this action."
+        return str(self.unixtime) + " " + self.timezone
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
