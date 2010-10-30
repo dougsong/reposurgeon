@@ -135,39 +135,44 @@ class RepoSurgeonEmail(email.message.Message):
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
     def __init__(self, person):
+        # First, validity-check the email address
+        (self.name, self.email) = email.utils.parseaddr(person)
+        if not self.name or not self.email:
+            RepoSurgeonException("can't recognize address in attribution")
+        # Attribution format is actually stricter than RFC822;
+        # needs to have a following date in the right place.
         person = person.replace(" <", "|").replace("> ", "|")
         try:
-            (self.name, self.email, self.when) = person.strip().split("|")
+            self.when = person.strip().split("|")[2]
         except ValueError:
-            raise RepoSurgeonException("malformed attribution header")
+            raise RepoSurgeonException("malformed attribution")
         # OK, here is where we try to be as robust as possible in
         # recognizing dates. First, look for git's preferred format.
         # We can leave this unchanged.
         self.when = self.when.strip() 
-        if re.match(r"[0-9]+\s*[+-][0-9]+", self.when):
+        if re.match(r"[0-9]+\s*[+-][0-9]+$", self.when):
+            (self.unixtime, self.timezone) = self.when.split()
+            self.unixtime = int(self.unixtime)
             return
         # If that didn't work, look for an RFC822 date, which git also
         # accepts. Note, there could be edge cases that Python's parser
         # handles but git doesn't.
         rfcdate = email.utils.parsedate_tz(self.when) 
         if rfcdate:
-            # If we ever decide to canonicalize incoming RFC822 dates
-            # to git form, this is how to do it.  Note, doing this
-            # would break roundtripping tests with exporters that
-            # generate RFC822 dates.
-            #(tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-            #       tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-            #unixtime = email.utils.mktime_tz(rfcdate)
-            #self.when = str(unixtime) + " " + (tz or "+0000")
+            (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
+                   tm_sec, tm_wday, tm_yday, tim_isdst, timezone) = rfcdate
+            self.unixtime = email.utils.mktime_tz(rfcdate)
+            self.timezone = (timezone or "+0000")
+            #self.when = str(self.unixtime) + " " + self.timezone
             return
-        # Also accept an IS8601 date, just becasuse I like them.
-        # These we'll canonicalize to git format. Note, this ignores
-        # any trailing timezone literal, not sure whether we should
-        # look for that or not.
+        # Also accept IS8601 dates in Zulu time, just becasuse I
+        # like them.  These we'll canonicalize to git format.
+        # Someday we should accept ISO8601 with [+-]nnnn timezone. 
         try:
-            iso860date = time.strptime(self.when, "%Y-%m-%dT%H:%M:%S")
-            unixtime = calendar.timegm(iso860date)
-            self.when = str(unixtime)
+            iso860date = time.strptime(self.when, "%Y-%m-%dT%H:%M:%SZ")
+            self.unixtime = calendar.timegm(iso860date)
+            self.timezone = "+0000"
+            self.when = str(self.unixtime) + " " + self.timezone
             return
         except ValueError:
             # time.strptime()
