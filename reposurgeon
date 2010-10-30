@@ -144,8 +144,8 @@ class Attribution:
         person = person.replace(" <", "|").replace("> ", "|")
         try:
             self.when = person.strip().split("|")[2]
-        except ValueError:
-            raise RepoSurgeonException("malformed attribution")
+        except (ValueError, IndexError):
+            raise RepoSurgeonException("malformed attribution %s" % person)
         # OK, here is where we try to be as robust as possible in
         # recognizing dates. First, look for git's preferred format.
         # We can leave this unchanged.
@@ -236,6 +236,13 @@ class Tag:
             raise RepoSurgeonException("update to tag %s is malformed" %
                                        self.name)
         modified = False
+        newname = msg["Tag-Name"]
+        if self.name != newname:
+            modified = True
+        if 0:
+            newtagger = Attribution(msg["Tagger"])
+            if newtagger != self.tagger:
+                modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             modified = True
@@ -1396,6 +1403,9 @@ with command-line arguments).
 """
     def do_write(self, line):
         "Stream out the results of repo surgery."
+        if not self.repo:
+            complain("no repo is loaded.")
+            return
         if not line:
             line = '-'
         if line == '-':
