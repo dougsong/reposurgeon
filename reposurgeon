@@ -132,11 +132,14 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
-class Action:
-    "Represents an instance of a person acting on the repo."
+class Attribution:
+    "Represents an attribution of a repo action to a person and time."
     def __init__(self, person):
         person = person.replace(" <", "|").replace("> ", "|")
-        (self.name, self.email, self.when) = person.strip().split("|")
+        try:
+            (self.name, self.email, self.when) = person.strip().split("|")
+        except ValueError:
+            raise RepoSurgeonException("malformed attrubution header")
     def isodate(self):
         "Return ISO format for time/date of this action."
         timeout = self.when
@@ -409,12 +412,12 @@ class Repository:
                         self.nmarks += 1
                     elif line.startswith("author"):
                         try:
-                            commit.author = Action(line[7:])
+                            commit.author = Attribution(line[7:])
                         except ValueError:
                             self.error("malformed author line")
                     elif line.startswith("committer"):
                         try:
-                            commit.committer = Action(line[10:])
+                            commit.committer = Attribution(line[10:])
                         except ValueError:
                             self.error("malformed committer line")
                     elif line.startswith("data"):
@@ -478,7 +481,7 @@ class Repository:
                 line = readline()
                 if line.startswith("tagger"):
                         try:
-                            tagger = Action(line[7:])
+                            tagger = Attribution(line[7:])
                         except ValueError:
                             self.error("malformed tagger line")
                 else:
