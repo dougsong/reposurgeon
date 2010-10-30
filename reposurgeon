@@ -533,7 +533,7 @@ class Repository:
                     baton.twirl()
             else:
                 # Simply pass through any line we don't understand.
-                events.append(line)
+                self.events.append(line)
         if baton:
             baton.end()
         self.readtime = time.time()
