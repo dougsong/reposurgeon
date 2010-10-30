@@ -14,8 +14,6 @@ import email.message, email.parser, email.utils
 #
 # * Dates in specification expressions.
 #
-# * Allow editing of date and author fields.
-#
 # * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
@@ -255,6 +253,11 @@ class Tag:
             if self.tagger.name != newname or self.tagger.email != newemail:
                 (self.tagger.name, self.tagger.email) = (newname, newemail)
                 modified = True
+        (text, unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
+        if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
+            self.tagger.unixtime = unixtime
+            self.tagger.timezone = timezone
+            modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             modified = True
@@ -313,6 +316,11 @@ class Commit:
             if self.author.name != newname or self.author.email != newemail:
                 (self.author.name, self.author.email) = (newname, newemail)
                 modified = True
+        (text, unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
+        if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
+            self.author.unixtime = unixtime
+            self.author.timezone = timezone
+            modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newname or not newemail:
             RepoSurgeonException("can't recognize address in Committer")
@@ -320,6 +328,11 @@ class Commit:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
                 modified = True
+        (text, unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
+        if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
+            self.committer.unixtime = unixtime
+            self.committer.timezone = timezone
+            modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             modified = True

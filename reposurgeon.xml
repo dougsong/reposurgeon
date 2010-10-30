@@ -448,10 +448,6 @@ before any individual event is updated.</para>
 <para>Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.</para>
-
-<para>At present only the comment fields of commits and tags are updated from
-the mailbox contents; commit and tag metadata cannot be altered. This
-may change in a future release.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
