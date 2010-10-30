@@ -198,7 +198,7 @@ objects.</para>
 <para>Set expressions may be combined with the operators | and &amp;;
 these are, respectively, set union and intersection. The | has lower
 precendence than intersection, but you may use curly brackets '{' and
-'}' to group expressions in case there is ambiguity..</para>
+'}' to group expressions in case there is ambiguity.</para>
 
 <para>Here are the available and planned surgical commands:</para>
 
@@ -256,120 +256,7 @@ standard output.
 <para>NOT YET IMPLEMENTED.</para>
 
 <para>Delete a selection set of commits (and their associated blobs,
-if any).  The default selection set for this command is empty.</para>
-
-<para>Deleting a commit that has children does not back out the
-changes made by that commit, as they will still be present in the
-blobs attached to the children.  All it does is lose the metadata
-information about when and by who those changes were actually made;
-after the delete those changes will be attributed to the deletee's
-children.  It is expected that this command will be useful mainly
-for removing commits mechanically generated  by repository converters
-such as <command>cvs2svn</command>.</para>
-
-<para>Recall that each commit has a list of file operations, each a M
-(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
-files). Only M operations have associated blobs.  When a commit is deleted,
-each file operation in the commit (and its associated blob reference)
-normally gets pushed forward onto the beginning of each child's
-operation list.
-
-The following cases may occur:</para>
-
-<informaltable pgwide='0' frame='all'>
-  <tgroup cols='4' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <colspec colname='c3'/>
-    <colspec colname='c4'/>
-    <thead>
-      <row>
-        <entry align='center'>Parent op</entry>
-        <entry align='center'>Child op</entry>
-        <entry align='center'>Copy forward?</entry>
-	<entry align='left'><para>Note</para></entry>
-      </row>
-    </thead>
-    <tbody>
-      <row>
-        <entry align='center' morerows='1'>M</entry>
-        <entry align='center'>M, D, deleteall</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para>Child state of the file supersedes the parent
-	state</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C, R, none</entry>
-        <entry align='center'>yes</entry>
-	<entry align='left'><para>Note that if there are multiple
-	children this can result in the blob having multiple
-	references to it.</para></entry>
-      </row>
-      <row>
-        <entry align='center' morerows='1'>D</entry>
-        <entry align='center'>M, deleteall, none</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para></para></entry>
-      </row>
-      <row>
-        <entry align='center'>R, C</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para>This combination should be impossible; the
-	program will throw an error if it occurs.</para></entry>
-      </row>
-      <row>
-        <entry align='center' morerows='2'>R</entry>
-        <entry align='center'>M, C, none</entry>
-        <entry align='center'>yes</entry>
-	<entry align='left'><para>&nbsp;</para></entry>
-      </row>
-      <row>
-        <entry align='center'>D, deleteall</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para>&nbsp;</para></entry>
-      </row>
-      <row>
-        <entry align='center'>R</entry>
-        <entry align='center'>modified</entry>
-	<entry align='left'><para>The child rename is modified. If the
-	renames are X &rarr; Y and Y &rarr; Z, the resulting rename
-	will be X &rarr; Z</para></entry>
-      </row>
-      <row>
-        <entry align='center' morerows='2'>C</entry>
-        <entry align='center'>M, R, C, none</entry>
-        <entry align='center'>yes</entry>
-	<entry align='left'><para>&nbsp;</para></entry>
-      </row>
-      <row>
-        <entry align='center'>D</entry>
-        <entry align='center'>modified</entry>
-	<entry align='left'><para>A copy of X to Y followed by a delete of X is
-	composed into a rename of X to Y.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>deleteall</entry>
-        <entry align='center'>no</entry>
-	<entry><para>Both copies perish in the deleteall.</para></entry>
-      </row>
-      <row>
-        <entry align='center' morerows='1'>deleteall</entry>
-        <entry align='center'>M, none</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para>M is a file creation.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>D, C, R, deleteall</entry>
-        <entry align='center'>no</entry>
-	<entry align='left'><para>This should never happen</para></entry>
-      </row>
-    </tbody>
-  </tgroup>
-</informaltable>
-
-<para>Deleting a commit will leave any tag pointing to it dangling;
-these will be garbage-collected. Children of the deleted commit 
-get it removed from their parent set and its parents added,</para>
+if any). The default selection set for this command is empty.</para>
 
 <para>No <command>blob</command> event can be deleted with this
 command; <command>blob</command> events are tied to associated
@@ -378,6 +265,106 @@ discarded only when those are.</para>
 
 <para>Deleting a <command>tag</command>, <command>reset</command> or
 <command>passthrough</command> event has no side effects.</para>
+
+<para>Recall that each commit has a list of file operations, each a M
+(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
+files). Only M operations have associated blobs.  Normally there is only
+one M operation per individual file in a commit's operation list.</para>
+
+<para>When a commit is deleted, its file operation list (and any
+associated blob references) gets pushed forward onto the beginning of
+the operation list of each of the commit's children. Following all
+pushes, every one of the altered file operation lists (which may
+contain any number of Ms for individual files as a result of this
+operation) is reduced to a shortest normalized form that once
+again has only one M per individual file.</para>
+
+<para>To understand how the reduction process works, it's enough to
+understand the case where all the operation in the list are working
+on the same file. Sublists of operations referring to different
+files don't affect each other and reducing them can be thought
+of as separate operations.  Also, a "deleteall" acts a a D for
+everything. </para>
+
+<para>The reduction process walks through the list from the beginning
+looking for adjacent pairs of operations it can compose.  With 4
+operations, there are 16 possible cases.  The following table
+describes all but one of the reductions.</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <tbody>
+      <row>
+        <entry align='center'>{M|R} + D &rarr; D</entry>
+	<entry align='left'><para>If a file is modified or remamed
+	then deleted, the result is as though it had been
+	deleted.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M + {R|C}</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D + M &rarr; M</entry>
+	<entry align='left'><para>If a file is deleted and modified,
+	the result is as though the deletion had not taken place
+	(because M operations store entire files, not
+	deltas).</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D + {D|R|C}</entry>
+	<entry align='left'><para>Theses case should be impossible
+	and would suggest the repository has been corrupted.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>{R|C} + M</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + R b c &rarr; R a c</entry>
+	<entry align='left'><para>The b terms have to match for these
+	operations to have made sense when they lived in separate
+	commits; if they don't, it indicates repository
+	corruption.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + C b c &rarr; C a c</entry>
+	<entry align='left'><para>See above.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + D a &rarr; R a b</entry>
+	<entry align='left'><para></para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + D b &rarr; nothing</entry>
+	<entry align='left'><para>This delete undoes the copy.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + R a c</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + R b c &rarr; C a c</entry>
+	<entry align='left'><para></para></entry>
+      </row>
+      <row>
+        <entry align='center'>C + C</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+<para>The one (very important) case not covered in this table is M +
+M. That's because the right way to resolve it is a question of policy
+rather than mechchanics.  </para>
+
+<para>Deleting a commit will leave any tag pointing to it dangling;
+these will be garbage-collected. Children of the deleted commit 
+get it removed from their parent set and its parents added,</para>
 
 </listitem>
 </varlistentry>
