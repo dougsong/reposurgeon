@@ -242,6 +242,7 @@ class Tag:
         if 0:
             newtagger = Attribution(msg["Tagger"])
             if newtagger != self.tagger:
+                self.tagger = newtagger 
                 modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
@@ -294,6 +295,15 @@ class Commit:
             raise RepoSurgeonException("update to commit %s is malformed" %
                                        idme)
         modified = False
+        if 0:
+            newauthor = Attribution(msg["Author"])
+            if newauthor != self.author:
+                self.author = newauthor
+                modified = True
+            newcommitter = Attribution(msg["Committer"])
+            if newcommitter != self.committer:
+                self,committer = newcommitter
+                modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             modified = True
