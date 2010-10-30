@@ -253,6 +253,8 @@ standard output.
 <varlistentry>
 <term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
 <listitem>
+<para>NOT YET IMPLEMENTED.</para>
+
 <para>Delete a selection set of commits (and their associated blobs,
 if any).  The default selection set for this command is empty.</para>
 
@@ -377,32 +379,46 @@ discarded only when those are.</para>
 <para>Deleting a <command>tag</command>, <command>reset</command> or
 <command>passthrough</command> event has no side effects.</para>
 
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>undo</command></cmdsynopsis></term>
+<listitem>
 <para>NOT YET IMPLEMENTED.</para>
+
+<para>Remove a commit, attempting to back out modifications 
+made in it by diffing them against parent commits and reversing
+the diff to patch forward in the branch history. Differs from
+<command>delete</command>, which only erases metadata.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>cut</command></cmdsynopsis></term>
 <listitem>
+<para>NOT YET IMPLEMENTED.</para>
+
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). This operation
 may fail if the commit graph remains connected through another path;
 the tool will detect this. If the repo was named 'foo', the cut segments
 will be named 'foo-early' and 'foo-late'.</para>
-<para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>expunge</command></cmdsynopsis></term>
 <listitem>
+<para>NOT YET IMPLEMENTED.</para>
+
 <para>Expunge a file from the repo history. Does not take a selection
 set.</para>
 <!-- document handling of tags, branches, renames, deletes, copies. --> 
-<para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>coalesce</command></cmdsynopsis></term>
 <listitem>
+<para>NOT YET IMPLEMENTED.</para>
+
 <para>Scan the selection set for runs of commits with identical
 comments close to each other in time (this is a common form of scar
 tissues in repository up-conversions from older file-oriented
@@ -416,7 +432,6 @@ separation in seconds; the default is 90 seconds.</para>
 commits. Occasionally you may want to restrict it, for example to
 avoid coalescing unrelated "*** empty log message ***" commits from
 CVS lifts.</para>
-<para>NOT YET IMPLEMENTED.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -10,7 +10,7 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Implement delete, expunge, coalesce, cut.
+# * Implement delete, undo, expunge, coalesce, cut.
 #
 # * Dates in specification expressions.
 #
@@ -1610,6 +1610,11 @@ blob, your editor will be called on the blob file.
 Delete a selection set of commits (and their associated blobs, if
 any).  The default selection set for this command is empty.  Tags
 pointing at the commits are also removed.
+
+Note that applying this command to a commit with a modify operation will
+*not* remove changes made by that commit from later versions.  It will
+have the effect of retracting the modifications only when they are the
+final ones on the commit's branch.
 """
 
 
