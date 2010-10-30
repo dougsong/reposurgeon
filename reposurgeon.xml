@@ -305,9 +305,9 @@ The following cases may occur:</para>
       </row>
       <row>
         <entry align='center' morerows='1'>D</entry>
-        <entry align='center'>M, none</entry>
+        <entry align='center'>M, deleteall, none</entry>
         <entry align='center'>no</entry>
-	<entry align='left'><para>C or R isn't possible.</para></entry>
+	<entry align='left'><para></para></entry>
       </row>
       <row>
         <entry align='center'>R, C</entry>
@@ -352,9 +352,9 @@ The following cases may occur:</para>
       </row>
       <row>
         <entry align='center' morerows='1'>deleteall</entry>
-        <entry align='center'>M</entry>
+        <entry align='center'>M, none</entry>
         <entry align='center'>no</entry>
-	<entry align='left'><para>This is a file creation.</para></entry>
+	<entry align='left'><para>M is a file creation.</para></entry>
       </row>
       <row>
         <entry align='center'>D, C, R, deleteall</entry>

@@ -544,24 +544,30 @@ class Repository:
         return self.events[i]
     def __setitem__(self, i, v):
         self.events[i] = v
-    def __delitem__(self, i):
-        event = self.events[i]
+    def __delitem__(self, e):
+        event = self.events[ei]
         if event.__class__ in (Reset, Tag, Passthrough):
-            self.events.pop(i)
+            self.events.pop(d)
         elif isinstance(event, Blob):
             raise RepoSurgeonException("attempt to directly delete blob")
         elif isinstance(event, Commit):
-            # Propagate file operations forward and reparent
+            def optype(event):
+                "Get the operation type (MDRC or deleteall) from s file op."
+                return event[0]
+            def opfile(event):
+                "Get the file field of a file op."
+                return e[{"M":3, "D":1, "R":1, "C":1}[optype(event)]]
             for child in event.children():
+                # Reparent each child
                 child.parents.remove(event.mark)
                 child.parents += event.parents
-                pass       # FIXME: File op propagation & blob deletion go here 
+                # FICME: fileop composition policy goes here
             # Remove tags referring to this event
-            self.repo.events = filter(lambda e: not isinstance(e, Tag) \
-                                      or e.committish != event.mark,
+            self.repo.events = filter(lambda t: not isinstance(t, Tag) \
+                                      or t.committish != event.mark,
                                       self.repo.events)
             # And remove it
-            self.events.pop(i)
+            self.events.pop(d)
         else:
             raise RepoSurgeonException("unexpected object in event array")
 
