@@ -5,8 +5,8 @@
 # By ESR, October 2010.  BSD terms apply.
 #
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
-import readline, time, re, email.message, email.parser
-import signal, shutil
+import readline, time, calendar, re, signal, shutil
+import email.message, email.parser, email.utils
 
 # TO DO
 #
@@ -139,7 +139,42 @@ class Attribution:
         try:
             (self.name, self.email, self.when) = person.strip().split("|")
         except ValueError:
-            raise RepoSurgeonException("malformed attrubution header")
+            raise RepoSurgeonException("malformed attribution header")
+        # OK, here is where we try to be as robust as possible in
+        # recognizing dates. First, look for git's preferred format.
+        # We can leave this unchanged.
+        self.when = self.when.strip() 
+        if re.match(r"[0-9]+\s*[+-][0-9]+", self.when):
+            return
+        # If that didn't work, look for an RFC822 date, which git also
+        # accepts. Note, there could be edge cases that Python's parser
+        # handles but git doesn't.
+        rfcdate = email.utils.parsedate_tz(self.when) 
+        if rfcdate:
+            # If we ever decide to canonicalize incoming RFC822 dates
+            # to git form, this is how to do it.  Note, doing this
+            # would break roundtripping tests with exporters that
+            # generate RFC822 dates.
+            #(tm_year, tm_mon, tm_mday, tm_hour, tm_min,
+            #       tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
+            #unixtime = email.utils.mktime_tz(rfcdate)
+            #self.when = str(unixtime) + " " + (tz or "+0000")
+            return
+        # Also accept an IS8601 date, just becasuse I like them.
+        # These we'll canonicalize to git format. Note, this ignores
+        # any trailing timezone literal, not sure whether we should
+        # look for that or not.
+        try:
+            iso860date = time.strptime(self.when, "%Y-%m-%dT%H:%M:%S")
+            unixtime = calendar.timegm(iso860date)
+            self.when = str(unixtime)
+            return
+        except ValueError:
+            # time.strptime()
+            # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
+            pass
+        # Date format not recognized
+        raise RepoSurgeonException("'%s' is not a valid timestamp" % self.when)
     def isodate(self):
         "Return ISO format for time/date of this action."
         timeout = self.when
