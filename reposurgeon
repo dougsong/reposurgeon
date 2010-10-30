@@ -198,6 +198,11 @@ class Attribution:
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
         msg[hdr + "-Date"] = self.rfc822date()
+    def __eq__(self, other):
+        "Compare attributions after canonicalization."
+        return (self.name == other.name and self.email == other.email
+                and self.unixtime == other.unixtime
+                and self.timezone == other.timezone)
     def __str__(self):
         return self.name + " <" + self.email + "> " + self.when
 
