@@ -189,7 +189,7 @@ class Tag:
         return str(msg)
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
-        if "Tag-Name" not in msg:
+        if "Tag-Name" not in msg or "Tagger" not in msg:
             raise RepoSurgeonException("update to tag %s is malformed" %
                                        self.name)
         modified = False
@@ -239,7 +239,7 @@ class Commit:
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
-        if "Author" not in msg:
+        if "Author" not in msg or "Committer" not in msg or "Author-Date" not in msg or "Committer-Date" not in msg:
             idme = self.mark or "unmarked"
             raise RepoSurgeonException("update to commit %s is malformed" %
                                        idme)
@@ -561,7 +561,7 @@ class Repository:
                 # Reparent each child
                 child.parents.remove(event.mark)
                 child.parents += event.parents
-                # FICME: fileop composition policy goes here
+                # FIXME: fileop composition policy goes here
             # Remove tags referring to this event
             self.repo.events = filter(lambda t: not isinstance(t, Tag) \
                                       or t.committish != event.mark,
