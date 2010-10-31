@@ -30,9 +30,13 @@ enable risky operations that version-control systems don't want to let
 you do, such as (a) editing past comments and metadata, (b) excising
 commits, (c) coalescing commits, (d) removing files and subtrees from
 repo history, and (e) cutting a repo in two by cutting a parent-child
-like, preserving the branch structure of both child repos. The
-original motivation for <application>reposurgeon</application> was to
-clean up artifacts created by repository conversions.</para>
+like, preserving the branch structure of both child repos.</para>
+
+<para>The original motivation for
+<application>reposurgeon</application> was to clean up artifacts
+created by repository conversions. It may also have applications
+whencode needs to be removed from repositories for legal
+reasons.</para>
 
 <para>To keep <application>reposurgeon</application> simple and
 flexible, it does not do its own repository reading and writing.
@@ -53,13 +57,13 @@ between these modes is that the interactive one begins by turning on the
 'verbose 1' option.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
-which must be executed in the specified sequence to build the repo;
-to avoiid confusion with <application>reposurgeon</application> commands
-we will refer to the stream commands here as <emphasis>events</emphasis>.
-These events are implicitly numbered from 1 upwards.  Most commands
-require specifying a selection of event sequence numbers so
-<application>reposurgeon</application> will know which events to
-modify or delete.</para>
+which must be executed in the specified sequence to build the repo; to
+avoid confusion with <application>reposurgeon</application> commands
+we will refer to the stream commands as <emphasis>events</emphasis> in
+this documentation.  These events are implicitly numbered from 1
+upwards.  Most commands require specifying a selection of event
+sequence numbers so <application>reposurgeon</application> will know
+which events to modify or delete.</para>
 
 <para>Commands to <application>reposurgeon</application> consist of a
 command keyword, sometimes followed by a selection set, sometimes
@@ -85,7 +89,7 @@ list /regression/      ;; list all commits with comments containing
 
 delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 15
 
-list @rel2.0..@head    ;; List commits frm the "rel2.0" tag to the "head" tag 
+list @rel2.0..@head    ;; List commits from the "rel2.0" tag to the "head" tag 
 </programlisting>
 
 <para>The selection-set specification syntax is an expression-oriented 
@@ -102,8 +106,8 @@ event-sequence number.</para></listitem>
 <varlistentry>
 <term><firstterm>marks</firstterm></term>
 <listitem><para>A numeric literal preceded by a colon is interpreted
-as a mark; see the format documentation for explanation of the 
-semantics of marks.</para></listitem>
+as a mark; see the import stream format documentation for explanation
+of the semantics of marks.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><firstterm>symbolic names</firstterm></term>
@@ -240,7 +244,7 @@ repository's restore list are copied back from the backup directory.
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>list</command></cmdsynopsis></term>
-<listitem><para>This is the main command for identifying the objects
+<listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
 event numbers, the second a timestamp, and the third the leading text
@@ -251,7 +255,7 @@ standard output.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>delete</command> <arg choice='opt'>policy</arg></cmdsynopsis></term>
 <listitem>
 <para>Delete a selection set of commits (and their associated blobs,
 if any). The default selection set for this command is empty.</para>
@@ -274,8 +278,9 @@ associated blob references) gets pushed forward onto the beginning of
 the operation list of each of the commit's children. Following all
 pushes, every one of the altered file operation lists (which may
 contain any number of Ms for individual files as a result of this
-operation) is reduced to a shortest normalized form that once
-again has only one M per individual file.</para>
+operation) is reduced to a shortest normalized form. The algorithm
+used aims at once again again having only one M per individual
+file; however, this is not always achievable.</para>
 
 <para>To understand how the reduction process works, it's enough to
 understand the case where all the operation in the list are working
@@ -445,7 +450,7 @@ set.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>coalesce</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>coalesce</command> <arg choice='opt'>timefuzz</arg></cmdsynopsis></term>
 <listitem>
 <para>NOT YET IMPLEMENTED.</para>
 
