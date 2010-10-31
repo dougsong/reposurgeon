@@ -290,6 +290,18 @@ class FileOp:
             self.op = "deleteall"
         else:
             raise RepoSureonException("unexpected fileop %s while parsing" % opline)
+    def paths(self):
+        "return the set of all paths touched by this file op."
+        if self.op == "M":
+            return set([self.ref])
+        elif self.op in ("D", "R", "C"):
+            return set([source, self.target])
+    def relevant(self, other):
+        "Do two fileops touch the same file(s)?"
+        if self.op or other.op == "deleteall":
+            return True
+        else:
+            return self.paths().intersect(other.paths) 
     def __str__(self):
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "
