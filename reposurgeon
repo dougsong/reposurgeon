@@ -10,8 +10,6 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Delete dependent tags and blobs when deleting commits.
-#
 # * Two classes of error: fatal and recoverable.
 #
 # * Implement undo, expunge, coalesce, cut.
@@ -840,9 +838,12 @@ class Repository:
                     # and mark it as needing resolution
                     child.fileops = copy.copy(event.fileops) + child.fileops
                     child.pushed_to = True
-                # Remove tags referring to this event
-                self.events = filter(lambda t: not isinstance(t, Tag) \
-                                          or t.committish != event.mark,
+                # Remove tags and blobs referring to this event
+                self.events = filter(lambda t: not ((isinstance(t, Tag)
+                                                     and t.committish == event.mark)
+                                                    or 
+                                                    (isinstance(t, Blob)
+                                                     and t.mark == event.mark)),
                                           self.events)
                 # And remove it
                 self.events.pop(ei)
