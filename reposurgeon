@@ -427,6 +427,14 @@ class FileOp:
                 break
         self.fileops = filter(lambda x: x is not None, self.fileops) 
         return coverage
+    def cliques(self):
+        "Return a dictionary mapping filenames to associated M cliques."
+        cliques = {}
+        for (i, fileop) in enumerate(self.fileops):
+            if fileop.op == "M":
+                if fileop.path not in cliques:
+                    cliques[fileop.path] = []
+                cliques[fileop.path].append(i)
     def __str__(self):
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "
@@ -790,6 +798,8 @@ class Repository:
         return filter(lambda e: isinstance(e, Commit), self.events)
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
+        if not policy:
+            policy = "complain"
         # Make sure we do deletions from gretest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
@@ -813,27 +823,28 @@ class Repository:
                     print "Commit %d, after canonicalization:" % i
                     for op in commit.fileops:
                         print str(op)
-                        # Now apply policy in the mutiple-M case
-                for clique in commit.modification_cliques():
-                    if len(clique) == 1:
+                # Now apply policy in the mutiple-M case
+                for (path, oplist) in commit.cliques.items():
+                    if len(oplist) == 1:
                         continue
                     if not policy or policy == "complain" or self.verbose >= 2:
-                        first = commit.fileops[clique[0]]
-                        print >>sys.stderr, "Commit %d has multiple Ms for %s" \
-                              % (i, first.path)
-                    # The "complain" policy: bitch but nothing else 
-                    if not policy or policy == "complain":
-                        continue
-                    # The "coalesce" policy: remove all but the last M
-                    if policy == "coalesce":
-                        while len(clique) > 1:
-                            commit.fileops.pop(clique.pop(0))
-                        continue
-                    # There aren't any more yet.
-                    raise RepoSurgeonException("unknown policy %s" % policy)
+                        print "Commit %d has multiple Ms for %s" % (i, path)
+                    self.__dict__["policy_" + policy](commit)
+                    if self.verbose >= 2:
+                        print "Commit %d, after applying policy:" % i
+                        for op in commit.fileops:
+                            print str(op)
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
+    # Deletion policy hooks
+    def policy_complain(self, commit, oplist):
+        "Bitch but nothing else." 
+        pass
+    def policy_coalesce(self, commit, oplist):
+        "Remove all but the last M."
+        while len(oplist) > 1:
+            commit.fileops.pop(oplist.pop(0))
     # Container emulation methods
     def __len__(self):
         return len(self.events)
