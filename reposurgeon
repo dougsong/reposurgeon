@@ -419,7 +419,13 @@ class FileOp:
                 content = fp.read()
                 fp.close()
                 st += "data %d\n%s\n" % (len(content), content)
-        elif self.op in ("D", "R", "C"):
+        elif self.op in "D":
+            st = "D "
+            if len(self.path.split()) > 1:
+                st += '"' + self.path + '"'
+            else:
+                st += self.path
+        elif self.op in ("R", "C"):
             st = '%s "%s" "%s"' %  (self.op, self.source, self.target)
         elif self.op == "deleteall":
             st = self.op
