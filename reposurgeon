@@ -10,7 +10,11 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Implement delete, undo, expunge, coalesce, cut.
+# * Delete blobs when deleting commits.
+#
+# * Validity-check policy literals
+#
+# * Implement undo, expunge, coalesce, cut.
 #
 # * Dates in specification expressions.
 #
@@ -317,6 +321,9 @@ class FileOp:
         #
         # First op M
         #
+        if pair == ("M", "M"):
+            # Leve these in place, they get handled later.
+            return (False, self, other, None, 0)
         # Modify X followed by delete X is equivalent to delete X 
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
@@ -521,6 +528,7 @@ class Commit:
                 if fileop.path not in cliques:
                     cliques[fileop.path] = []
                 cliques[fileop.path].append(i)
+        return cliques
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -836,23 +844,24 @@ class Repository:
                 continue
             elif event.pushed_to:
                 if verbose >= 2:
-                    print "Commit %d, before canonicalization:" % i
+                    print "Commit %d, before canonicalization:" % (i + 1,)
                     for op in event.fileops:
                         print str(op)
                 self.case_coverage |= event.canonicalize(lambda m: self.warn(m, atline=False))
                 if verbose >= 2:
-                    print "Commit %d, after canonicalization:" % i
+                    print "Commit %d, after canonicalization:" % (i +1,)
                     for op in event.fileops:
                         print str(op)
                 # Now apply policy in the mutiple-M case
-                for (path, oplist) in event.cliques.items():
+                for (path, oplist) in event.cliques().items():
                     if len(oplist) == 1:
                         continue
                     if not policy or policy == "complain" or verbose >= 2:
-                        print "Commit %d has multiple Ms for %s" % (i, path)
-                    self.__dict__["policy_" + policy](commit)
+                        print "Commit %d has multiple Ms for %s" % (i+1, path)
+                    func = getattr(self, 'policy_' + policy)
+                    func(event, oplist)
                     if verbose >= 2:
-                        print "Commit %d, after applying policy:" % i
+                        print "Commit %d, after applying policy:" % (i +1,)
                         for op in event.fileops:
                             print str(op)
         # Clear everybody's problem flag
@@ -1816,7 +1825,7 @@ blob, your editor will be called on the blob file.
             complain("no repo is loaded")
             return
         self.set_selection_set(line, [])
-        self.repo.delete(self.selection, line)
+        self.repo.delete(self.selection, self.line)
     def help_delete(self):
         print """
 Delete a selection set of commits (and their associated blobs, if

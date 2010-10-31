@@ -253,8 +253,6 @@ standard output.
 <varlistentry>
 <term><cmdsynopsis><command>delete</command></cmdsynopsis></term>
 <listitem>
-<para>NOT YET IMPLEMENTED.</para>
-
 <para>Delete a selection set of commits (and their associated blobs,
 if any). The default selection set for this command is empty.</para>
 
@@ -287,8 +285,7 @@ of as separate operations.  Also, a "deleteall" acts a a D for
 everything and cancels all operations before it in the list. </para>
 
 <para>The reduction process walks through the list from the beginning
-looking for adjacent pairs of operations it can compose.  With 4
-operations, there are 16 possible cases.  The following table
+looking for adjacent pairs of operations it can compose.  The following table
 describes all possible cases and all but one of the reductions.</para>
 
 <informaltable pgwide='0' frame='all'>
@@ -383,9 +380,30 @@ describes all possible cases and all but one of the reductions.</para>
   </tgroup>
 </informaltable>
 
-<para>The one (very important) case not covered in this table is M +
-M. That's because the right way to resolve it is a question of policy
-rather than mechchanics.</para>
+<para>After canonicalization, a file op list may end up containing
+multiple M operations in the on the same file.  Two policies are
+presently available for dealing with this:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <tbody>
+      <row>
+        <entry align='center'>complain</entry>
+	<entry align='left'><para>Complain about, but do
+	nothing. This is the default.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>coalesce</entry>
+	<entry align='left'><para>Discard all M operations (and associated
+	blobs) except the last.</para></entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+<para>Other policies may be added in future releases.</para>
 
 <para>Deleting a commit will leave any tag pointing to it dangling;
 these will be garbage-collected. Children of the deleted commit 
