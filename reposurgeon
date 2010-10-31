@@ -278,6 +278,23 @@ class Reset:
             st += "from %s\n\n" % self.committish
         return st
 
+class FileOp:
+    "Represent a primitive operation on a file."
+    def __init__(self, opline):
+        self.opline = opline
+        self.delete_flagged = False
+        if opline.startswith("M"):
+            # FIXME: Parse will fail on quoted paths
+            (self.op, self.mode, self.ref, self.path) = self.opline.split()
+    def __str__(self):
+        st = self.opline
+        if self.opline.startswith("M") and self.opline.split()[2] == 'inline':
+            fp = open(op.copyname)
+            content = fp.read()
+            fp.close()
+            st += "data %d\n%s\n" % (len(content), content)
+        return st
+
 class Commit:
     "Generic commit object."
     def __init__(self, repo):
@@ -356,15 +373,7 @@ class Commit:
         for ancestor in self.parents[1:]:
             st += "merge %s\n" % self.parents[0]
         for op in self.fileops:
-            if type(op) == type(""):
-                st += op + "\n"
-            else:
-                st += " ".join(op[:4]) + "\n"
-                if op[2] == 'inline':
-                    fp = open(op[4])
-                    content = fp.read()
-                    fp.close()
-                    st += "data %d\n%s\n" % (len(content), content)
+            st += str(op)
         return st + "\n"
 
 class Passthrough:
@@ -515,26 +524,25 @@ class Repository:
                         commit.parents.append(line.split()[1])
                     # Handling of file ops begins.
                     elif line[0] in ("C", "D", "R"):
-                        commit.fileops.append(line.strip().split())
+                        commit.fileops.append(FileOp(line))
                     elif line == "filedeletall\n":
-                        commit.fileops.append(("filedeleteall",))
+                        commit.fileops.append(FileOp("filedeleteall"))
                     elif line[0] == "M":
-                        (op, mode, ref, path) = line.split()
-                        if ref[0] == ':':
-                            copyname = self.subdir() + "/blob-" + ref
-                            commit.fileops.append((op,mode,ref,path,copyname))
-                            self.blob_refcount[ref] = self.blob_refcount.get(ref, 0)+1
+                        fileop = FileOp(line)
+                        commit.fileops.append(fileop)
+                        if fileop.ref[0] == ':':
+                            fileop.copyname = self.subdir() + "/blob-" + fileop.ref
+                            self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
                             for obj in self.events:
-                                if isinstance(obj, Blob) and obj.mark == ref:
-                                    obj.path = path
+                                if isinstance(obj, Blob) and obj.mark == fileop.ref:
+                                    obj.path = fileop.path
                                     break
                             else:
-                                self.error("no blob matches commit reference to %s" % ref)
-                        elif ref[0] == 'inline':
-                            copyname = self.subdir() + "/inline-" + `inline_count`
-                            self.read_data(open(copyname, "w")).close()
+                                self.error("no blob matches commit reference to %s" % fileop.ref)
+                        elif fileop.ref[0] == 'inline':
+                            fileop.copyname = self.subdir() + "/inline-" + `inline_count`
+                            self.read_data(open(fileop.copyname, "w")).close()
                             inline_count += 1
-                            commit.fileops.append((op,mode,ref,path,copyname))
                         else:
                             self.error("unknown content type in filemodify")
                     # Handling of file ops ends.
@@ -627,7 +635,7 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
-    def canonicalize(self, commit):
+    def canonicalize(self, commit, policy):
         "Canonicalize a list of file operations."
         pass
     # Container emulation methods
@@ -1608,7 +1616,7 @@ blob, your editor will be called on the blob file.
             del self.repo[i]
         for commit in self.repo.commits():
             if commit.pushed_to:
-                self.repo.canonicalize(commit)
+                self.repo.canonicalize(commit, line)
                 commit.pushed_to = False
     def help_delete(self):
         print """
