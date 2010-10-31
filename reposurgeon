@@ -284,7 +284,9 @@ class FileOp:
         self.delete_flagged = False
         if opline.startswith("M"):
             (self.op, self.mode, self.ref, self.path) = shlex.split(opline)
-        elif opline[0] in ("D", "R", "C"):
+        elif opline[0] == "D":
+            (self.op, self.path) = shlex.split(opline)
+        elif opline[0] in ("R", "C"):
             (self.op, self.source, self.target) = shlex.split(opline)
         elif opline == "deleteall":
             self.op = "deleteall"
@@ -301,7 +303,106 @@ class FileOp:
         if self.op or other.op == "deleteall":
             return True
         else:
-            return self.paths().intersect(other.paths) 
+            return self.paths().intersect(other.paths)
+    def compose(self, other):
+        "Compose two relevant fileops."
+        # Here's what the fields in the return value mean:
+        # 0: Was this a modification
+        # 1: Op to replace the first with (None means delete)
+        # 2: Op to replace the second with (None means delete)
+        # 3: If not None, a warning to emit
+        # 4: Case number, for coverage analysis
+        pair = (self.op, other.op)
+        #
+        # First op M
+        #
+        # Modify X followed by delete X is equivalent to delete X 
+        if self.op == "M" and other.op in "D":
+            return (True, other, None, None, 1)
+        if self.op == "M" and other.op in ("R", "C"):
+            # Commute R and C ops with M so they fall towards start oof list
+            if self.path == other.source:
+                self.path = other.target
+                return (True, other, self, None, 2)
+            # The copy or rename undoes the modification
+            elif self.path == other.target:
+                return(True, other, None, None, 3)
+        #
+        # First op D or deleteall
+        #
+        # Delete followed by modify undoes delete, since M carries whole files 
+        if pair == ("D", "M"):
+            return (True, other, None, None, 4)
+        # But we have to leave deletealls in place, since they affect other ops
+        if pair == ("deleteall", "M"):
+            return (False, self, other, None, 5)
+        # These cases should be impossible
+        if self.op == "deleteall" and other.op != "M":
+            return (False, self, other,
+                    "operation other than M after deleteall?", 6)
+        if self.op == "D" and other.op == "D":
+            return (False, self, other, "Two Ds of %?" % self.path, 7)
+        if self.op == "D" and other.op in ("R", "C"):
+            if self.path == other.source:
+                return (False, self, other,
+                        "R or C of %s after deletion?" % self.path, 8)
+            else:
+                return (False, self, other, None, 9)
+        #
+        # First op R
+        #
+        if pair == ("R", "D"):
+            if self.target == other.path:
+                # Rename followed by delete of target composes to nothing
+                return (True, None, None, None, 10)
+            else:
+                # On followed by delete of source discard the delete
+                # but user should be warned. 
+                return (False, self, None,
+                        "delete of %s after renaming to %s?" % (other.path, self.source), 11)
+        # Rename followed by deleteall should'd be possible
+        if pair == ("R", "deleteall") and self.target == other.path:
+            return (False, None, other,
+                    "rename before deletall not removed?", 12)
+        # Leave rename or copy followed by modify alone
+        if pair == ("R", "M") or pair == ("C", "M"):
+            return (False, self, other, None, 13)
+        # Compose renames and copies where possible
+        if self.op == "R" and other.op in ("R", "C"):
+            if self.target == other.source:
+                self.target = other.target
+                return (True, source, None, None, 14)
+            else:
+                return (False, source, other,
+                        "R %s %s is inconsistent with following operation" \
+                        % (self.source, self.target), 15)
+        #
+        # First op C
+        #
+        if pair == ("C", "D"):
+            if self.source == target.path:
+                # Copy followed by delete of the source is a rename.
+                self.op = "R"
+                return (True, self, None, None, 16)
+            elif self.target == target.path:
+                # This delete undoes the copy
+                return (True, None, None, None, 17)
+        if pair == ("C", "R"):
+            if self.source == other.source:
+                # No reduction
+                return (False, self, other, None, 18)
+            else:
+                # Copy followed by a rename of the target reduces to single copy
+                if self.target == other.source:
+                    self.target = other.target
+                    return (True, self, None, None, 19)
+        if pair == ("C", "C"):
+            # No reduction
+            return (False, self, other, None, 13)
+        #
+        # Case not covered
+        #
+        raise RepoSurgeonException("can't compose op '%s' and '$s'" % (self, other))
     def __str__(self):
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "

@@ -284,36 +284,43 @@ understand the case where all the operation in the list are working
 on the same file. Sublists of operations referring to different
 files don't affect each other and reducing them can be thought
 of as separate operations.  Also, a "deleteall" acts a a D for
-everything. </para>
+everything and cancels all operations before it in the list. </para>
 
 <para>The reduction process walks through the list from the beginning
 looking for adjacent pairs of operations it can compose.  With 4
 operations, there are 16 possible cases.  The following table
-describes all but one of the reductions.</para>
+describes all possible cases and all but one of the reductions.</para>
 
 <informaltable pgwide='0' frame='all'>
   <tgroup cols='2' align='center'>
     <colspec colname='c1'/>
     <colspec colname='c2'/>
-    <colspec colname='c3'/>
     <tbody>
       <row>
-        <entry align='center'>{M|R} + D &rarr; D</entry>
-	<entry align='left'><para>If a file is modified or renamed
+        <entry align='center'>M + D &rarr; D</entry>
+	<entry align='left'><para>If a file is modified
 	then deleted, the result is as though it had been
 	deleted.</para></entry>
       </row>
       <row>
-        <entry align='center'>M a + {R a b|C a b} &rarr; {R a b|C a b} + M b</entry>
+        <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
         <entry align='left'><para>The purpose of this transformation is 
-	to push renames and copies towards the beginning of the list,
+	to push renames towards the beginning of the list,
 	where they may become adjacent to another R or C they can 
 	be composed with.</para></entry>
       </row>
       <row>
-        <entry align='center'>M b + {R a b|C a b} &rarr; {R a b|C a b}
-        + M b</entry>
-	<entry align='left'><para>The copy or rename undoes the
+        <entry align='center'>M a + C a b &rarr; C a b + M b</entry>
+	<entry align='left'><para>Push copies towards the beginning.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M b + R a b &rarr; nothing</entry>
+	<entry align='left'><para>The rename undoes the
+	modification.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M b + C a b &rarr; nothing</entry>
+	<entry align='left'><para>The copy undoes the
 	modification.</para></entry>
       </row>
       <row>
@@ -325,8 +332,16 @@ describes all but one of the reductions.</para>
       </row>
       <row>
         <entry align='center'>D + {D|R|C}</entry>
-	<entry align='left'><para>Theses case should be impossible
+	<entry align='left'><para>These cases should be impossible
 	and would suggest the repository has been corrupted.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + D a</entry>
+	<entry align='left'><para>Should never happen..</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + D b &rarr; nothing</entry>
+	<entry align='left'><para>The delete removes the just-renamed file.</para></entry>
       </row>
       <row>
         <entry align='center'>{R|C} + M</entry>
@@ -345,7 +360,7 @@ describes all but one of the reductions.</para>
       </row>
       <row>
         <entry align='center'>C a b + D a &rarr; R a b</entry>
-	<entry align='left'><para></para></entry>
+	<entry align='left'><para>Copy followed by delete of the source is a rename.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + D b &rarr; nothing</entry>
@@ -357,7 +372,8 @@ describes all but one of the reductions.</para>
       </row>
       <row>
         <entry align='center'>C a b + R b c &rarr; C a c</entry>
-	<entry align='left'><para></para></entry>
+	<entry align='left'><para>Copy followed by a rename of the
+	target reduces to single copy</para></entry>
       </row>
       <row>
         <entry align='center'>C + C</entry>
