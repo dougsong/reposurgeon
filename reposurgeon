@@ -868,7 +868,7 @@ class Repository:
                     if len(oplist) == 1:
                         continue
                     if not policy or policy == "complain" or verbose >= 2:
-                        print "Commit %d has multiple Ms for %s" % (i+1, path)
+                        print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (i+1, path)
                     func = getattr(self, 'policy_' + policy)
                     func(event, oplist)
                     if verbose >= 2:
@@ -1834,9 +1834,9 @@ blob, your editor will be called on the blob file.
         if not self.repo:
             complain("no repo is loaded")
             return
-        self.set_selection_set(line, [])
-        if not hasattr(self.repo, "policy_" + line):
-            complain("no such deletion policy as " + line)
+        line = self.set_selection_set(line, [])
+        if line and not hasattr(self.repo, "policy_" + line):
+            complain("no such deletion policy as " + `line`)
             return
         self.repo.delete(self.selection, self.line)
     def help_delete(self):
