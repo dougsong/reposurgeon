@@ -299,13 +299,22 @@ describes all but one of the reductions.</para>
     <tbody>
       <row>
         <entry align='center'>{M|R} + D &rarr; D</entry>
-	<entry align='left'><para>If a file is modified or remamed
+	<entry align='left'><para>If a file is modified or renamed
 	then deleted, the result is as though it had been
 	deleted.</para></entry>
       </row>
       <row>
-        <entry align='center'>M + {R|C}</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='center'>M a + {R a b|C a b} &rarr; {R a b|C a b} + M b</entry>
+        <entry align='left'><para>The purpose of this transformation is 
+	to push renames and copies towards the beginning of the list,
+	where they may become adjacent to another R or C they can 
+	be composed with.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M b + {R a b|C a b} &rarr; {R a b|C a b}
+        + M b</entry>
+	<entry align='left'><para>The copy or rename undoes the
+	modification.</para></entry>
       </row>
       <row>
         <entry align='center'>D + M &rarr; M</entry>
@@ -360,7 +369,7 @@ describes all but one of the reductions.</para>
 
 <para>The one (very important) case not covered in this table is M +
 M. That's because the right way to resolve it is a question of policy
-rather than mechchanics.  </para>
+rather than mechchanics.</para>
 
 <para>Deleting a commit will leave any tag pointing to it dangling;
 these will be garbage-collected. Children of the deleted commit 
