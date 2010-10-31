@@ -807,24 +807,24 @@ class Repository:
             print "Deletion list is %s" % selected
         # Here are the deletions
         for i in selected:
-            del self.repo[i]
+            del self.events[i]
         # Canonicalize all the commits that got ops pushed to them
-        for (i, event) in enuerate(self.events):
+        for (i, event) in enumerate(self.events):
             if not isinstance(event, Commit):
                 continue
-            elif commit.pushed_to:
+            elif event.pushed_to:
                 if self.verbose >= 2:
                     print "Commit %d, before canonicalization:" % i
-                    for op in commit.fileops:
+                    for op in event.fileops:
                         print str(op)
-                self.case_coverage |= commit.canonicalize(commit,
+                self.case_coverage |= event.canonicalize(commit,
                                                           lambda m: self.warn(m, atline=False))
                 if self.verbose >= 2:
                     print "Commit %d, after canonicalization:" % i
-                    for op in commit.fileops:
+                    for op in event.fileops:
                         print str(op)
                 # Now apply policy in the mutiple-M case
-                for (path, oplist) in commit.cliques.items():
+                for (path, oplist) in event.cliques.items():
                     if len(oplist) == 1:
                         continue
                     if not policy or policy == "complain" or self.verbose >= 2:
@@ -832,7 +832,7 @@ class Repository:
                     self.__dict__["policy_" + policy](commit)
                     if self.verbose >= 2:
                         print "Commit %d, after applying policy:" % i
-                        for op in commit.fileops:
+                        for op in event.fileops:
                             print str(op)
         # Clear everybody's problem flag
         for commit in self.commits():
