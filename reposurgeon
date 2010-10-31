@@ -62,6 +62,8 @@ vcstypes = {
              None),    # FIXME: there probably is something...
     }
 
+verbose = 0
+
 class Baton:
     "Ship progress indications to stderr."
     def __init__(self, prompt, endmsg='done'):
@@ -555,8 +557,7 @@ class RepoSurgeonException:
 
 class Repository:
     "Generic repository object."
-    def __init__(self, verbose=0):
-        self.verbose = verbose
+    def __init__(self):
         self.name = None
         self.readtime = None
         self.readsize = 0
@@ -571,7 +572,7 @@ class Repository:
         self.case_coverage = set([])
     def cleanup(self):
         cmd = "rm -fr %s" % (self.subdir(),)
-        if self.verbose:
+        if verbose:
             print "Repository cleanup calls " + cmd
         os.system(cmd)
     def subdir(self, name=None):
@@ -595,7 +596,7 @@ class Repository:
         "Initialize repo object from fast-import stream."
         try:
             cmd = "rm -fr %s; mkdir %s" % (self.subdir(), self.subdir())
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "Repository fast import calls " + cmd
             os.system(cmd)
         except OSError:
@@ -783,7 +784,7 @@ class Repository:
         "Rename the repo."
         try:
             # Can fail if the target directory exists.
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "Repository rename calls os.rename(%s, %s)" % (self.subdir(), self.subdir(newname))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
@@ -803,7 +804,7 @@ class Repository:
         # Make sure we do deletions from gretest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "Deletion list is %s" % selected
         # Here are the deletions
         for i in selected:
@@ -813,13 +814,13 @@ class Repository:
             if not isinstance(event, Commit):
                 continue
             elif event.pushed_to:
-                if self.verbose >= 2:
+                if verbose >= 2:
                     print "Commit %d, before canonicalization:" % i
                     for op in event.fileops:
                         print str(op)
                 self.case_coverage |= event.canonicalize(commit,
                                                           lambda m: self.warn(m, atline=False))
-                if self.verbose >= 2:
+                if verbose >= 2:
                     print "Commit %d, after canonicalization:" % i
                     for op in event.fileops:
                         print str(op)
@@ -827,10 +828,10 @@ class Repository:
                 for (path, oplist) in event.cliques.items():
                     if len(oplist) == 1:
                         continue
-                    if not policy or policy == "complain" or self.verbose >= 2:
+                    if not policy or policy == "complain" or verbose >= 2:
                         print "Commit %d has multiple Ms for %s" % (i, path)
                     self.__dict__["policy_" + policy](commit)
-                    if self.verbose >= 2:
+                    if verbose >= 2:
                         print "Commit %d, after applying policy:" % i
                         for op in event.fileops:
                             print str(op)
@@ -879,10 +880,10 @@ class Repository:
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
 
-def read_repo(source, preferred, verbose):
+def read_repo(source, preferred):
     "Read a repository using fast-import."
     if source == '-':
-        repo = Repository(verbose)
+        repo = Repository()
         repo.fast_import(sys.stdin, verbose and Baton("reposurgeon: from stdin"))
     elif not os.path.exists(source):
         complain("%s does not exist" % source)
@@ -951,7 +952,7 @@ class CriticalRegion:
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, self.handlers[sig])
 
-def rebuild_repo(repo, target, preferred, verbose):
+def rebuild_repo(repo, target, preferred):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
         target = repo.sourcedir
@@ -1049,7 +1050,6 @@ class RepoSurgeon(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
-        self.verbose = 0
         self.repeat = 0
         self.prompt = "reposurgeon% "
         self.repo = None
@@ -1112,19 +1112,19 @@ class RepoSurgeon(cmd.Cmd):
     def push(c):
         self.line = c + self.line[0]
     def eval_expression(self):
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_expression(%s)" % self.line
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
         if c and not c.isspace() and not c.isalpha():
             raise RepoSurgeonException("trailing junk on selection: %s" % `self.line`)
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_expression(), left = %s" % (value, `self.line`)
         return value
     def eval_disjunct(self):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_disjunct(%s)" % self.line
         self.line = self.line.lstrip()
         disjunct = set([])
@@ -1139,12 +1139,12 @@ class RepoSurgeon(cmd.Cmd):
                 self.pop()
             else:
                 break
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_disjunct(), left = %s" % (disjunct, `self.line`)
         return disjunct
     def eval_conjunct(self):
         "Evaluate a conjunctive expression (& has higher precedence)" 
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_conjunct(%s)" % self.line
         self.line = self.line.lstrip()
         conjunct = set(range(0, len(self.repo)))
@@ -1159,11 +1159,11 @@ class RepoSurgeon(cmd.Cmd):
                 self.pop()
             else:
                 break
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_conjunct(), left = %s" % (conjunct, `self.line`)
         return conjunct
     def eval_term(self):
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_term(%s)" % self.line
         self.line = self.line.lstrip()
         if self.peek() == '{':
@@ -1180,12 +1180,12 @@ class RepoSurgeon(cmd.Cmd):
                 term = self.eval_polyrange()
                 if term is None:
                     term = self.eval_textsearch()
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_term(), left = %s" % (term, `self.line`)
         return term
     def eval_visibility(self):
         "Parse a visibility spec."
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_visibility(%s)" % self.line
         self.line = self.line.lstrip()
         if not self.peek() == "=":
@@ -1209,19 +1209,19 @@ class RepoSurgeon(cmd.Cmd):
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
                 raise RepoSurgeonException("garbled type mask at %s" % `self.line`)
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), `self.line`)
             selected = []
             for (i, event) in enumerate(self.repo):
                 if event.__class__ in visible:
                     selected.append(i)
             visibility = set(selected)
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_visibility(), left = %s" % (visibility, `self.line`)
         return visibility
     def eval_polyrange(self):
         "Parse a polyrange specification (list of intervals)."
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_polyrange(%s)" % self.line
         self.line = self.line.lstrip()
         polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "@")
@@ -1304,7 +1304,7 @@ class RepoSurgeon(cmd.Cmd):
                                 raise RepoSurgeonException("tag name %s points to hyperspace" % tag.name)
                     if not matched:
                         raise RepoSurgeonException("couldn't match a name at @%s" % self.line)
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "reposurgeon: location list is %s with %s left" % (selection, `self.line`)
             # Resolve spans
             resolved = []
@@ -1320,7 +1320,7 @@ class RepoSurgeon(cmd.Cmd):
                         resolved.append(elt)
                     last = elt
             selection = resolved
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "reposurgeon: resolved list is %s with %s left" % (selection, `self.line`)
             # Sanity checks
             if spanning:
@@ -1329,12 +1329,12 @@ class RepoSurgeon(cmd.Cmd):
                 if elt < 0 or elt > len(self.repo)-1:
                     raise RepoSurgeonException("event number %s out of range" % elt)
             polyrange = set(selection)
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "%s <- eval_polyrange(), left = %s" % (polyrange, `self.line`)
         return polyrange
     def eval_textsearch(self):
         "Parse a text search specification."
-        if self.verbose >= 2:
+        if verbose >= 2:
             print "eval_textsearch(%s)" % self.line
         self.line = self.line.lstrip()
         if not self.peek() == '/':
@@ -1356,7 +1356,7 @@ class RepoSurgeon(cmd.Cmd):
                     matchers.append(i)
                 # We don't do blobs because it would be too slow
                 # and not very useful.
-            if self.verbose >= 2:
+            if verbose >= 2:
                 print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
             return set(matchers)
     #
@@ -1397,12 +1397,13 @@ class RepoSurgeon(cmd.Cmd):
     def help_help(self):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
+        global verbose
         try:
-            self.verbose = int(line)
+            verbose = int(line)
         except ValueError:
             print "reposurgeon: verbosity value must be an integer"
-        if self.verbose:
-            print "reposurgeon: verbose %d" % self.verbose
+        if verbose:
+            print "reposurgeon: verbose %d" % verbose
     def help_verbose(self):
         print """
 'verbose 1' enables progress messages, 'verbose 0' disables them. Higher levels
@@ -1413,8 +1414,8 @@ of verbosity are available but intended for developers only.
         try:
             self.repeat = int(line)
         except ValueError:
-            print "reposurgeon: verbosity value must be an integer"
-        if self.verbose:
+            print "reposurgeon: repeat value must be an integer"
+        if verbose:
             print "reposurgeon: repeat %d" % self.repeat
     def do_version(self, line):
         "Report the program version and supported version-control systems."
@@ -1547,7 +1548,7 @@ output.
                 self.preferred = line
             else:
                 complain("known types are %s.") % known
-        if self.verbose:
+        if verbose:
             if not self.preferred:
                 print "reposurgeon: no preferred type has been set."
             else:
@@ -1633,7 +1634,7 @@ current restore list is displayed afterwards.
         self.preferred = None 
         if not line or line == '.':
             line = os.getcwd();
-        self.repo = read_repo(line, self.preferred, self.verbose)
+        self.repo = read_repo(line, self.preferred)
         if self.repo:
             if self.repo.type:
                 self.preferred = self.repo.type
@@ -1680,7 +1681,7 @@ and is a directory or anything other than a plain file.
 """
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
-        rebuild_repo(self.repo, line, self.preferred, self.verbose)
+        rebuild_repo(self.repo, line, self.preferred)
     def help_rebuild(self):
         print """
 Rebuild a repository from the state held by reposurgeon.  The argument
@@ -1743,7 +1744,7 @@ to standard output.
             event = self.repo[eventnum]
             if event.email_in(update):
                 modified.append(eventnum+1)
-        if self.verbose:
+        if verbose:
             if not modified:
                 print "reposurgeon: no events modified."
             else:
