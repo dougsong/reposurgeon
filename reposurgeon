@@ -402,7 +402,7 @@ class FileOp:
         # Case not covered
         #
         raise RepoSurgeonException("can't compose op '%s' and '$s'" % (self, other))
-    def canonicalize(self, policy, warnhook):
+    def canonicalize(self, warnhook):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
         while True:
@@ -560,6 +560,7 @@ class Repository:
         self.blob_refcount = {}
         self.import_line = 0
         self.restore_set = set([])
+        self.case_coverage = set([])
     def cleanup(self):
         cmd = "rm -fr %s" % (self.subdir(),)
         if self.verbose:
@@ -787,6 +788,52 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
+    def delete(self, selected, policy):
+        "Delete commits, handling multiple Ms on a file with specified policy"
+        # Make sure we do deletions from gretest commit number to least
+        selected = copy.copy(selected)
+        selected.sort(lambda x, y: cmp(y, x))
+        if self.verbose >= 2:
+            print "Deletion list is %s" % selected
+        # Here are the deletions
+        for i in selected:
+            del self.repo[i]
+        # Canonicalize all the commits that got ops pushed to them
+        for (i, event) in enuerate(self.events):
+            if not isinstance(event, Commit):
+                continue
+            elif commit.pushed_to:
+                if self.verbose >= 2:
+                    print "Commit %d, before canonicalization:" % i
+                    for op in commit.fileops:
+                        print str(op)
+                self.case_coverage |= commit.canonicalize(commit,
+                                                          lambda m: self.warn(m, atline=False))
+                if self.verbose >= 2:
+                    print "Commit %d, after canonicalization:" % i
+                    for op in commit.fileops:
+                        print str(op)
+                        # Now apply policy in the mutiple-M case
+                for clique in commit.modification_cliques():
+                    if len(clique) == 1:
+                        continue
+                    if not policy or policy == "complain" or self.verbose >= 2:
+                        first = commit.fileops[clique[0]]
+                        print >>sys.stderr, "Commit %d has multiple Ms for %s" \
+                              % (i, first.path)
+                    # The "complain" policy: bitch but nothing else 
+                    if not policy or policy == "complain":
+                        continue
+                    # The "coalesce" policy: remove all but the last M
+                    if policy == "coalesce":
+                        while len(clique) > 1:
+                            commit.fileops.pop(clique.pop(0))
+                        continue
+                    # There aren't any more yet.
+                    raise RepoSurgeonException("unknown policy %s" % policy)
+        # Clear everybody's problem flag
+        for commit in self.commits():
+            commit.pushed_to = False
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1760,13 +1807,7 @@ blob, your editor will be called on the blob file.
             complain("no repo is loaded")
             return
         self.set_selection_set(line, [])
-        self.selection.reverse()
-        for i in self.selection:
-            del self.repo[i]
-        for commit in self.repo.commits():
-            if commit.pushed_to:
-                commit.canonicalize(commit, line, complain)
-                commit.pushed_to = False
+        self.repo.delete(self.selection, line)
     def help_delete(self):
         print """
 Delete a selection set of commits (and their associated blobs, if
