@@ -403,40 +403,7 @@ class FileOp:
         #
         # Case not covered
         #
-        raise RepoSurgeonException("can't compose op '%s' and '$s'" % (self, other))
-    def canonicalize(self, warnhook):
-        "Canonicalize the list of file operations in this commit."
-        coverage = set([])
-        while True:
-            # Keep making passes until nothing mutates
-            mutated = False
-            for (i, a) in enumerate(self.fileops):
-                if a is None:
-                    continue
-                for (i, b) in enumerate(self.fileops):
-                    if b is None:
-                        continue
-                    if a.relevant(b):
-                        (modified, newa, newb, warn, case) = a.compose(b)
-                        if modified:
-                            mutated = True
-                            self.fileops[i] = newa
-                            self.fileops[j] = newb
-                            if warn:
-                                warnhook(warn)
-                            coverage.add(case)
-            if not mutated:
-                break
-        self.fileops = filter(lambda x: x is not None, self.fileops) 
-        return coverage
-    def cliques(self):
-        "Return a dictionary mapping filenames to associated M cliques."
-        cliques = {}
-        for (i, fileop) in enumerate(self.fileops):
-            if fileop.op == "M":
-                if fileop.path not in cliques:
-                    cliques[fileop.path] = []
-                cliques[fileop.path].append(i)
+        raise RepoSurgeonException("can't compose op '%s' and '%s'" % (self, other))
     def __str__(self):
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "
@@ -521,6 +488,39 @@ class Commit:
     def children(self):
         "Get a list of this commit's children."
         return filter(lambda e: self.mark in e.parents, self.repo.commits()) 
+    def canonicalize(self, warnhook):
+        "Canonicalize the list of file operations in this commit."
+        coverage = set([])
+        while True:
+            # Keep making passes until nothing mutates
+            mutated = False
+            for (i, a) in enumerate(self.fileops):
+                if a is None:
+                    continue
+                for (i, b) in enumerate(self.fileops):
+                    if b is None:
+                        continue
+                    if a.relevant(b):
+                        (modified, newa, newb, warn, case) = a.compose(b)
+                        if modified:
+                            mutated = True
+                            self.fileops[i] = newa
+                            self.fileops[j] = newb
+                            if warn:
+                                warnhook(warn)
+                            coverage.add(case)
+            if not mutated:
+                break
+        self.fileops = filter(lambda x: x is not None, self.fileops) 
+        return coverage
+    def cliques(self):
+        "Return a dictionary mapping filenames to associated M cliques."
+        cliques = {}
+        for (i, fileop) in enumerate(self.fileops):
+            if fileop.op == "M":
+                if fileop.path not in cliques:
+                    cliques[fileop.path] = []
+                cliques[fileop.path].append(i)
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -807,8 +807,29 @@ class Repository:
         if verbose >= 2:
             print "Deletion list is %s" % selected
         # Here are the deletions
-        for i in selected:
-            del self.events[i]
+        for ei in selected:
+            event = self.events[ei]
+            if event.__class__ in (Reset, Tag, Passthrough):
+                self.events.pop(d)
+            elif isinstance(event, Blob):
+                raise RepoSurgeonException("attempt to directly delete blob")
+            elif isinstance(event, Commit):
+                for child in event.children():
+                    # Reparent each child
+                    child.parents.remove(event.mark)
+                    child.parents += event.parents
+                    # Push a copy of the parent's file ops to it
+                    # and mark it as needing resolution
+                    child.fileops = copy.copy(event.fileops) + child.fileops
+                    child.pushed_to = True
+                # Remove tags referring to this event
+                self.events = filter(lambda t: not isinstance(t, Tag) \
+                                          or t.committish != event.mark,
+                                          self.events)
+                # And remove it
+                self.events.pop(ei)
+            else:
+                raise RepoSurgeonException("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
         for (i, event) in enumerate(self.events):
             if not isinstance(event, Commit):
@@ -818,8 +839,7 @@ class Repository:
                     print "Commit %d, before canonicalization:" % i
                     for op in event.fileops:
                         print str(op)
-                self.case_coverage |= event.canonicalize(commit,
-                                                          lambda m: self.warn(m, atline=False))
+                self.case_coverage |= event.canonicalize(lambda m: self.warn(m, atline=False))
                 if verbose >= 2:
                     print "Commit %d, after canonicalization:" % i
                     for op in event.fileops:
@@ -853,29 +873,6 @@ class Repository:
         return self.events[i]
     def __setitem__(self, i, v):
         self.events[i] = v
-    def __delitem__(self, e):
-        event = self.events[ei]
-        if event.__class__ in (Reset, Tag, Passthrough):
-            self.events.pop(d)
-        elif isinstance(event, Blob):
-            raise RepoSurgeonException("attempt to directly delete blob")
-        elif isinstance(event, Commit):
-            for child in event.children():
-                # Reparent each child
-                child.parents.remove(event.mark)
-                child.parents += event.parents
-                # Push a copy of the parent's file ops to it
-                # and mark it as needing resolution
-                child.fileops = copy.copy(event.fileops) + child.fileops
-                child.pushed_to = True
-            # Remove tags referring to this event
-            self.repo.events = filter(lambda t: not isinstance(t, Tag) \
-                                      or t.committish != event.mark,
-                                      self.repo.events)
-            # And remove it
-            self.events.pop(d)
-        else:
-            raise RepoSurgeonException("unexpected object in event array")
 
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
