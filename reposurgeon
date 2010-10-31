@@ -10,7 +10,9 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Delete blobs when deleting commits.
+# * Delete dependent tags and blobs when deleting commits.
+#
+# * Two classes of error: fatal and recoverable.
 #
 # * Implement undo, expunge, coalesce, cut.
 #
@@ -369,7 +371,7 @@ class FileOp:
         # Rename followed by deleteall shouldn't be possible
         if pair == ("R", "deleteall") and self.target == other.path:
             return (False, None, other,
-                    "rename before deletall not removed?", -5)
+                    "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
         if pair == ("R", "M") or pair == ("C", "M"):
             return (False, self, other, None, 7)
@@ -496,7 +498,7 @@ class Commit:
     def canonicalize(self, warnhook):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
-        # Handling deletall ioerations is simple
+        # Handling deleteall ioerations is simple
         lastdeleteall = None
         for (i, a) in enumerate(self.fileops):
             if a.op == "deleteall":
@@ -703,7 +705,7 @@ class Repository:
                     # Handling of file ops begins.
                     elif line[0] in ("C", "D", "R"):
                         commit.fileops.append(FileOp(line))
-                    elif line == "filedeletall\n":
+                    elif line == "filedeleteall\n":
                         commit.fileops.append(FileOp("filedeleteall"))
                     elif line[0] == "M":
                         fileop = FileOp(line)
