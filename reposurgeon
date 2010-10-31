@@ -5,7 +5,7 @@
 # By ESR, October 2010.  BSD terms apply.
 #
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
-import readline, time, calendar, re, signal, shutil
+import readline, time, calendar, re, signal, shutil, copy
 import email.message, email.parser, email.utils
 
 # TO DO
@@ -289,6 +289,7 @@ class Commit:
         self.parents = []            # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
+        self.pushed_to = False       # Flagged for resolution after delete
     def lister(self, eventnum):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
@@ -626,6 +627,9 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
+    def canonicalize(self, commit):
+        "Canonicalize a list of file operations."
+        pass
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -640,17 +644,14 @@ class Repository:
         elif isinstance(event, Blob):
             raise RepoSurgeonException("attempt to directly delete blob")
         elif isinstance(event, Commit):
-            def optype(event):
-                "Get the operation type (MDRC or deleteall) from s file op."
-                return event[0]
-            def opfile(event):
-                "Get the file field of a file op."
-                return e[{"M":3, "D":1, "R":1, "C":1}[optype(event)]]
             for child in event.children():
                 # Reparent each child
                 child.parents.remove(event.mark)
                 child.parents += event.parents
-                # FIXME: fileop composition policy goes here
+                # Push a copy of the parent's file ops to it
+                # and mark it as needing resolution
+                child.fileops = copy.copy(event.fileops) + child.fileops
+                child.pushed_to = True
             # Remove tags referring to this event
             self.repo.events = filter(lambda t: not isinstance(t, Tag) \
                                       or t.committish != event.mark,
@@ -1605,6 +1606,10 @@ blob, your editor will be called on the blob file.
         self.selection.reverse()
         for i in self.selection:
             del self.repo[i]
+        for commit in self.repo.commits():
+            if commit.pushed_to:
+                self.repo.canonicalize(commit)
+                commit.pushed_to = False
     def help_delete(self):
         print """
 Delete a selection set of commits (and their associated blobs, if
