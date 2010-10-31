@@ -296,7 +296,7 @@ class FileOp:
         elif opline == "deleteall":
             self.op = "deleteall"
         else:
-            raise RepoSureonException("unexpected fileop %s while parsing" % opline)
+            raise RepoSurgeonException("unexpected fileop %s while parsing" % opline)
     def paths(self):
         "return the set of all paths touched by this file op."
         if self.op == "M":
@@ -428,7 +428,7 @@ class FileOp:
         elif self.op == "deleteall":
             st = self.op
         else:
-            raise RepoSureonException("unexpected fileop %s while writing" % opline)
+            raise RepoSurgeonException("unexpected fileop %s while writing" % opline)
         return st
 
 class Commit:
