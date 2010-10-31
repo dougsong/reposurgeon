@@ -1881,9 +1881,9 @@ only when they are the final ones on the commit's branch.
             elif this.comment != next.comment:
                 continue
             elif this.committer.unixtime + timefuzz > next.committer.unixtime:
-                eligible.append(i)
-        print eligible
-        #self.repo.delete(cliques, "coalesce")
+                eligible.append(commits[i][0])
+        print "reposurgeon: deletion set is %s" % map(lambda x: x+1, eligible)
+        self.repo.delete(eligible, "coalesce")
     def help_coalesce(self):
         print """
 Scan the selection set for runs of commits with identical
