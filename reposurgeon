@@ -12,8 +12,6 @@ import email.message, email.parser, email.utils
 #
 # * Delete blobs when deleting commits.
 #
-# * Validity-check policy literals
-#
 # * Implement undo, expunge, coalesce, cut.
 #
 # * Dates in specification expressions.
@@ -506,7 +504,7 @@ class Commit:
         if i is not None:
             if verbose >= 2:
                 print "reposurgeon: removing all before rightmost deleteall"
-            self.fileops = self.fileops[latdeleteall:]
+            self.fileops = self.fileops[lastdeleteall:]
         # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
@@ -1834,6 +1832,9 @@ blob, your editor will be called on the blob file.
             complain("no repo is loaded")
             return
         self.set_selection_set(line, [])
+        if not hasattr(self.repo, "policy_" + line):
+            complain("no such deletion policy as " + line)
+            return
         self.repo.delete(self.selection, self.line)
     def help_delete(self):
         print """
