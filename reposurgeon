@@ -254,7 +254,7 @@ class Tag:
             modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
         if not newname or not newemail:
-            RepoSurgeonException("can't recognize address in Tagger")
+            raise RepoSurgeonException("can't recognize address in Tagger")
         else:
             if self.tagger.name != newname or self.tagger.email != newemail:
                 (self.tagger.name, self.tagger.email) = (newname, newemail)
@@ -465,7 +465,7 @@ class Commit:
         modified = False
         (newname, newemail) = email.utils.parseaddr(msg["Author"])
         if not newname or not newemail:
-            RepoSurgeonException("can't recognize address in Author")
+            raise RepoSurgeonException("can't recognize address in Author")
         else:
             if self.author.name != newname or self.author.email != newemail:
                 (self.author.name, self.author.email) = (newname, newemail)
@@ -477,7 +477,7 @@ class Commit:
             modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newname or not newemail:
-            RepoSurgeonException("can't recognize address in Committer")
+            raise RepoSurgeonException("can't recognize address in Committer")
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
@@ -1275,7 +1275,6 @@ class RepoSurgeon(cmd.Cmd):
                         continue
                     else:
                         raise RepoSurgeonException("start of span is missing")
-                        return line
                 if self.peek() == "@":
                     self.pop()
                     matched = False
