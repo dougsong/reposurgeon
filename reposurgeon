@@ -498,6 +498,16 @@ class Commit:
     def canonicalize(self, warnhook):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
+        # Handling deletall ioerations is simple
+        lastdeleteall = None
+        for (i, a) in enumerate(self.fileops):
+            if a.op == "deleteall":
+                lastdeleteall = i
+        if i is not None:
+            if verbose >= 2:
+                print "reposurgeon: removing all before rightmost deleteall"
+            self.fileops = self.fileops[latdeleteall:]
+        # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
             mutated = False
