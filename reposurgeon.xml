@@ -6,7 +6,7 @@
 <refmeta>
 <refentrytitle>reposurgeon</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='date'>Aug 24 1994</refmiscinfo>
+<refmiscinfo class='date'>Oct 31 2010</refmiscinfo>
 <refmiscinfo class='productname'>reposurgeon</refmiscinfo>
 <refmiscinfo class='source'>reposurgeon</refmiscinfo>
 <refmiscinfo class='manual'>Development Tools</refmiscinfo>
@@ -34,9 +34,18 @@ like, preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for
 <application>reposurgeon</application> was to clean up artifacts
-created by repository conversions. It may also have applications
-whencode needs to be removed from repositories for legal
-reasons.</para>
+created by repository conversions. It was foreseen that the tool would
+also have applications when code needs to be removed from repositories
+for legal or policy reasons.</para>
+
+<warning><para><application>reposurgeon</application> is a sharp
+enough tool to cut you.  It takes care not to ever write a repository
+in an actually inconsistent state, and will terminate with an error
+rather than proceed when its internal data structures are confused.
+However, there are lots of things you can do with it - like altering
+stored commit timestamps to they no longer match the commit sequence
+- that are likely to cause havoc after you're done.  Proceed with
+caution and check your work.</para></warning>
 
 <para>To keep <application>reposurgeon</application> simple and
 flexible, it does not do its own repository reading and writing.
@@ -44,9 +53,9 @@ Instead, it relies on being able to parse and emit the repo-command
 streams created by git-fast-export and read by git-fast-import.  This
 means that it can be used on any version-control system that that has
 both fast-export and fast-import utilities.  This set includes git
-itself, hg, and bzr. It also implicitly defines a common language of
-primitive operations for <application>reposurgeon</application> to
-speak.</para>
+itself, hg, and bzr. The git-import stream format also implicitly
+defines a common language of primitive operations for
+<application>reposurgeon</application> to speak.</para>
 </refsect1>
 
 <refsect1 id='options'><title>OPERATION</title>
@@ -260,18 +269,25 @@ standard output.
 <para>Delete a selection set of commits (and their associated blobs,
 if any). The default selection set for this command is empty.</para>
 
-<para>No <command>blob</command> event can be deleted with this
-command; <command>blob</command> events are tied to associated
+<para>No <command>blob</command> event can be deleted directly with
+this command; <command>blob</command> events are tied to associated
 <command>commit</command> or <command>tag</command> events and are
 discarded only when those are.</para>
 
 <para>Deleting a <command>tag</command>, <command>reset</command> or
 <command>passthrough</command> event has no side effects.</para>
 
+<para>The interesting use of this commant is to delete commits.
+Children of a deleted commit get it removed from their parent set and
+its parents added.  Any tag pointing to a deleted commit will also
+be deleted (note that git lightweight tags are implemented as 
+branches and will thus escape this fate).</para>
+
 <para>Recall that each commit has a list of file operations, each a M
 (modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
-files). Only M operations have associated blobs.  Normally there is only
-one M operation per individual file in a commit's operation list.</para>
+files). Only M operations have associated blobs.  Normally there is
+only one M operation per individual file in a commit's operation
+list.</para>
 
 <para>When a commit is deleted, its file operation list (and any
 associated blob references) gets pushed forward onto the beginning of
@@ -279,8 +295,8 @@ the operation list of each of the commit's children. Following all
 pushes, every one of the altered file operation lists (which may
 contain any number of Ms for individual files as a result of this
 operation) is reduced to a shortest normalized form. The algorithm
-used aims at once again again having only one M per individual
-file; however, this is not always achievable.</para>
+used aims at once again again having only one M per individual file;
+however, this is not always achievable.</para>
 
 <para>To understand how the reduction process works, it's enough to
 understand the case where all the operation in the list are working
@@ -408,12 +424,17 @@ presently available for dealing with this:</para>
   </tgroup>
 </informaltable>
 
-<para>Other policies may be added in future releases.</para>
+<para>Under either of these policies, deleting a commit that has
+children does not back out the changes made by that commit, as they
+will still be present in the blobs attached versions past the end of
+the commit.  All it does is lose the metadata information about when
+and by who those changes were actually made; after the delete any such
+changes will.  It is expected that this command will be useful mainly
+for removing commits mechanically generated by repository converters
+such as <command>cvs2svn</command>.</para>
 
-<para>Deleting a commit will leave any tag pointing to it dangling;
-these will be garbage-collected. Children of the deleted commit 
-get it removed from their parent set and its parents added,</para>
-
+<para>Other policies which do more to attempt to back out content
+changes may be added in future releases.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -659,6 +680,10 @@ and executes it as a command.</para></listitem>
 </refsect1>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
+
+<para>Guarantee: <application>reposurgeon</application> only requires
+main memory proportional to the size of a repository's metadata
+history, not its entire content history. Blobs are stored on disk.</para>
 
 <para>Guarantee: <application>reposurgeon</application> never modifies
 the contents of a repository it reads or deletes any repository. The
