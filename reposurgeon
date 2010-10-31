@@ -5,7 +5,7 @@
 # By ESR, October 2010.  BSD terms apply.
 #
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
-import readline, time, calendar, re, signal, shutil, copy
+import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
 # TO DO
@@ -281,18 +281,33 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     def __init__(self, opline):
-        self.opline = opline
         self.delete_flagged = False
         if opline.startswith("M"):
-            # FIXME: Parse will fail on quoted paths
-            (self.op, self.mode, self.ref, self.path) = self.opline.split()
+            (self.op, self.mode, self.ref, self.path) = shlex.split(opline)
+        elif opline[0] in ("D", "R", "C"):
+            (self.op, self.source, self.target) = shlex.split(opline)
+        elif opline == "deleteall":
+            self.op = "deleteall"
+        else:
+            raise RepoSureonException("unexpected fileop %s while parsing" % opline)
     def __str__(self):
-        st = self.opline
-        if self.opline.startswith("M") and self.opline.split()[2] == 'inline':
-            fp = open(op.copyname)
-            content = fp.read()
-            fp.close()
-            st += "data %d\n%s\n" % (len(content), content)
+        if self.op == "M":
+            st = " ".join((self.op, self.mode, self.ref)) + " "
+            if len(self.path.split()) > 1:
+                st += '"' + self.path + '"'
+            else:
+                st += self.path
+            if self.ref == 'inline':
+                fp = open(op.copyname)
+                content = fp.read()
+                fp.close()
+                st += "data %d\n%s\n" % (len(content), content)
+        elif self.op in ("D", "R", "C"):
+            st = '%s "%s" "%s"' %  (self.op, self.source, self.target)
+        elif self.op == "deleteall":
+            st = self.op
+        else:
+            raise RepoSureonException("unexpected fileop %s while writing" % opline)
         return st
 
 class Commit:
@@ -373,7 +388,7 @@ class Commit:
         for ancestor in self.parents[1:]:
             st += "merge %s\n" % self.parents[0]
         for op in self.fileops:
-            st += str(op)
+            st += str(op) + "\n"
         return st + "\n"
 
 class Passthrough:
