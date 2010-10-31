@@ -281,7 +281,6 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     def __init__(self, opline):
-        self.delete_flagged = False
         if opline.startswith("M"):
             (self.op, self.mode, self.ref, self.path) = shlex.split(opline)
         elif opline[0] == "D":
@@ -339,43 +338,43 @@ class FileOp:
         # These cases should be impossible
         if self.op == "deleteall" and other.op != "M":
             return (False, self, other,
-                    "operation other than M after deleteall?", 6)
+                    "operation other than M after deleteall?", -1)
         if self.op == "D" and other.op == "D":
-            return (False, self, other, "Two Ds of %?" % self.path, 7)
+            return (False, self, other, "Two Ds of %?" % self.path, -2)
         if self.op == "D" and other.op in ("R", "C"):
             if self.path == other.source:
                 return (False, self, other,
-                        "R or C of %s after deletion?" % self.path, 8)
+                        "R or C of %s after deletion?" % self.path, -3)
             else:
-                return (False, self, other, None, 9)
+                return (False, self, other, None, 6)
         #
         # First op R
         #
         if pair == ("R", "D"):
             if self.target == other.path:
                 # Rename followed by delete of target composes to nothing
-                return (True, None, None, None, 10)
+                return (True, None, None, None, 7)
             else:
                 # On followed by delete of source discard the delete
                 # but user should be warned. 
                 return (False, self, None,
-                        "delete of %s after renaming to %s?" % (other.path, self.source), 11)
-        # Rename followed by deleteall should'd be possible
+                        "delete of %s after renaming to %s?" % (other.path, self.source), -4)
+        # Rename followed by deleteall shouldn't be possible
         if pair == ("R", "deleteall") and self.target == other.path:
             return (False, None, other,
-                    "rename before deletall not removed?", 12)
+                    "rename before deletall not removed?", -5)
         # Leave rename or copy followed by modify alone
         if pair == ("R", "M") or pair == ("C", "M"):
-            return (False, self, other, None, 13)
+            return (False, self, other, None, 7)
         # Compose renames and copies where possible
         if self.op == "R" and other.op in ("R", "C"):
             if self.target == other.source:
                 self.target = other.target
-                return (True, source, None, None, 14)
+                return (True, source, None, None, 8)
             else:
                 return (False, source, other,
                         "R %s %s is inconsistent with following operation" \
-                        % (self.source, self.target), 15)
+                        % (self.source, self.target), -6)
         #
         # First op C
         #
@@ -383,19 +382,19 @@ class FileOp:
             if self.source == target.path:
                 # Copy followed by delete of the source is a rename.
                 self.op = "R"
-                return (True, self, None, None, 16)
+                return (True, self, None, None, 9)
             elif self.target == target.path:
                 # This delete undoes the copy
-                return (True, None, None, None, 17)
+                return (True, None, None, None, 10)
         if pair == ("C", "R"):
             if self.source == other.source:
                 # No reduction
-                return (False, self, other, None, 18)
+                return (False, self, other, None, 11)
             else:
                 # Copy followed by a rename of the target reduces to single copy
                 if self.target == other.source:
                     self.target = other.target
-                    return (True, self, None, None, 19)
+                    return (True, self, None, None, 12)
         if pair == ("C", "C"):
             # No reduction
             return (False, self, other, None, 13)
@@ -403,6 +402,31 @@ class FileOp:
         # Case not covered
         #
         raise RepoSurgeonException("can't compose op '%s' and '$s'" % (self, other))
+    def canonicalize(self, policy, warnhook):
+        "Canonicalize the list of file operations in this commit."
+        coverage = set([])
+        while True:
+            # Keep making passes until nothing mutates
+            mutated = False
+            for (i, a) in enumerate(self.fileops):
+                if a is None:
+                    continue
+                for (i, b) in enumerate(self.fileops):
+                    if b is None:
+                        continue
+                    if a.relevant(b):
+                        (modified, newa, newb, warn, case) = a.compose(b)
+                        if modified:
+                            mutated = True
+                            self.fileops[i] = newa
+                            self.fileops[j] = newb
+                            if warn:
+                                warnhook(warn)
+                            coverage.add(case)
+            if not mutated:
+                break
+        self.fileops = filter(lambda x: x is not None, self.fileops) 
+        return coverage
     def __str__(self):
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "
@@ -763,9 +787,6 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
-    def canonicalize(self, commit, policy):
-        "Canonicalize a list of file operations."
-        pass
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1744,7 +1765,7 @@ blob, your editor will be called on the blob file.
             del self.repo[i]
         for commit in self.repo.commits():
             if commit.pushed_to:
-                self.repo.canonicalize(commit, line)
+                commit.canonicalize(commit, line, complain)
                 commit.pushed_to = False
     def help_delete(self):
         print """
