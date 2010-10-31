@@ -779,14 +779,11 @@ region.</para></step>
 
 <para>During the critical region, all signals that can be ignored are
 ignored.</para>
-
 </refsect1>
 
 <refsect1 id='author'><title>AUTHOR</title>
 
-<para>Eric S. Raymond <email>esr@snark.thyrsus.com</email>; project
-page at <ulink
+<para>Eric S. Raymond <email>esr@thyrsus.com</email>; project page at <ulink
 url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>.</para>
 </refsect1>
 </refentry>
-
