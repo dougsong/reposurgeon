@@ -1,7 +1,7 @@
 #
 # makefile for reposurgeon
 #
-VERS=VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
+VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
 SOURCES = README COPYING reposurgeon reposurgeon.xml reposurgeon.1 Makefile
 
