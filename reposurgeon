@@ -598,8 +598,8 @@ class Repository:
         self.case_coverage = set([])
     def cleanup(self):
         cmd = "rm -fr %s" % (self.subdir(),)
-        if verbose:
-            print "Repository cleanup calls " + cmd
+        if verbose >= 2:
+            warn("repository cleanup calls " + cmd)
         os.system(cmd)
     def subdir(self, name=None):
         if name is None:
