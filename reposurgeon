@@ -273,8 +273,8 @@ class Tag:
         (text, unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
         if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unixtime), (self.tagger.timezone, timezone))
+                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s (delta %d)" \
+                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unixtime), (self.tagger.timezone, timezone), unixtime - self.tagger.unixtime)
             self.tagger.unixtime = unixtime
             self.tagger.timezone = timezone
             modified = True
@@ -499,8 +499,8 @@ class Commit:
         (text, unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
         if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), (self.author.unixtime, unixtime), (self.author.timezone, timezone))
+                print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s (delta %d)" \
+                      % (int(msg["Event-Number"]), (self.author.unixtime, unixtime), (self.author.timezone, timezone), unixtime - self.author.unixtime)
             self.author.unixtime = unixtime
             self.author.timezone = timezone
             modified = True
@@ -517,8 +517,8 @@ class Commit:
         (text, unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
         if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, Committer-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), (self.committer.unixtime, unixtime), (self.committer.timezone, timezone))
+                print >>sys.stderr,"reposurgeon: in commit %d, Committer-Date is modified %s -> %s (delta %d)" \
+                      % (int(msg["Event-Number"]), (self.committer.unixtime, unixtime), (self.committer.timezone, timezone), unixtime - self.committer.unixtime)
             self.committer.unixtime = unixtime
             self.committer.timezone = timezone
             modified = True
