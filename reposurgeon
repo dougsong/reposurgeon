@@ -1172,7 +1172,7 @@ class RepoSurgeon(cmd.Cmd):
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
-        if c and not c.isspace() and not c.isalpha() and not c == '-':
+        if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
             raise RepoSurgeonException("trailing junk on selection: %s" % `self.line`)
         if verbose >= DEBUG_LEXER:
             print "%s <- eval_expression(), left = %s" % (value, `self.line`)
@@ -1938,6 +1938,61 @@ last commit, in order.
 
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
+"""
+    def do_timeoffset(self, line):
+        "Apply a time offset to all dates in selected events."
+        if not self.repo:
+            complain("no repo is loaded.")
+            return
+        line = self.set_selection_set(line, range(len(self.repo)))
+        if not line:
+            complain("a signed time offset argument is required.")
+            return
+        elif not line[0] in ('-', '+'):
+            complain("time offset argument must begin with + or -.")
+            return
+        args = line.split()
+        h = m = "0"
+        if args[0].count(":") == 0:
+            s = args[0]
+        elif args[0].count(":") == 1:
+            (m, s) = args[0].split(":")
+        elif args[0].count(":") == 2:
+            (h, m, s) = args[0].split(":")
+        else:
+            complain("too many colons")
+            return
+        try:
+            offset = int(h)*360 + int(m)*60 + int(s)
+        except ValueError:
+            complain("expected numeric literals in date format")
+            return
+        if len(args) > 1:
+            if not re.match("[+-][0-9][0-9][0-9][0-9]", args[1]):
+                complain("expected timezone literal to be [+-]hhmm")
+        for ei in self.selection:
+            event = self.repo[ei]
+            if isinstance(event, Tag):
+                event.tagger.unixtime += offset
+                if len(args) > 1:
+                    event.tagger.timezone = args[1]
+            elif isinstance(event, Commit):
+                event.committer.unixtime += offset
+                if len(args) > 1:
+                    event.committer.timezone = args[1]
+                event.author.unixtime += offset
+                if len(args) > 1:
+                    event.author.timezone = args[1]
+
+    def help_timeoffset(self):
+        print """
+Apply a time offset to all time/date stamps in the selected set.  An offset
+argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
+The leading sign is required to distingush it from a selection expression.
+
+Optionally you may also specify another argument in the form [+-]hhmm, a
+timeone literal to apply.  To apply a timezone without an offset, use
+an offset literal of +0 or -0.
 """
 
 if __name__ == '__main__':

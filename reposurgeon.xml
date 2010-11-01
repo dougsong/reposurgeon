@@ -424,6 +424,19 @@ However, if you specify a selection set consisting of a single
 blob, your editor will be called directly on the blob file.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>timeoffset</command> <arg choice='plain'>offast</arg> <arg choice='opt'>timezone</arg></cmdsynopsis></term>
+<listitem>
+<para>Apply a time offset to all time/date stamps in the selected set.
+An offset argument is required; it may be in the form [+-]ss,
+[+-]mm:ss or [+-]hh:mm:ss.  The leading sign is required to distingush
+it from a selection expression.
+
+Optionally you may also specify another argument in the form [+-]hhmm, a
+timeone literal to apply.  To apply a timezone without an offset, use
+an offset literal of +0 or -0.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>These are backed up by the following housekeeping commands, none of 
