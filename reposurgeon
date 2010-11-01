@@ -137,7 +137,7 @@ def gitdate_from_unixtime(secs_since_epoch, tzoff):
     return str(secs_since_epoch) + " " + tzoff
 
 def parse_date_or_die(text):
-    "Recognize date formats that exporters or Email programs might emit."
+    "Recognize date formats that exporters or email programs might emit."
     # OK, here is where we try to be as robust as possible in
     # recognizing dates. First, look for git's preferred format.
     # We can leave this unchanged.
@@ -152,9 +152,15 @@ def parse_date_or_die(text):
     rfcdate = email.utils.parsedate_tz(text) 
     if rfcdate:
         (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-               tm_sec, tm_wday, tm_yday, tim_isdst, timezone) = rfcdate
+               tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
         unixtime = email.utils.mktime_tz(rfcdate)
-        timezone = (timezone or "+0000")
+        # Python returns timezone as a signed offset in seconds 
+        if tz < 0:
+            timezone = "-"
+        else:
+            timezone = "+"
+        tz = abs(tz)
+        timezone += "%02d%02d" % (tz/360, (tz % 360)/60)
         #text = gitdate_from_unixtime(unixtime, timezone)
         return (text, unixtime, timezone)
     # Also accept IS8601 dates in Zulu time, just becasuse I
