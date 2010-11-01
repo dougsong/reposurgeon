@@ -1726,7 +1726,7 @@ with command-line arguments).
         else:
             try:
                 out = open(line, "w")
-                self.repo.fast_export(out)
+                self.repo.fast_export(self.selection, out)
                 out.close()
             except OSError:
                 print "reposurgeon: open of %s for write failed.\n" % line
