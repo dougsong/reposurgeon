@@ -1818,7 +1818,8 @@ may change in a future release.
             tfp.close()
             if os.system(editor + " " + tfname):
                 complain("%s returned a failure status" % editor)
-            self.do_mailbox_in(tfname)
+            else:
+                self.do_mailbox_in(tfname)
         finally:
             os.remove(tfname)
     def help_edit(self):
