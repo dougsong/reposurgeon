@@ -226,7 +226,7 @@ class Blob:
         self.subdir = os.path.abspath(subdir)
         self.path = None      # First in-repo path associated with this blob
     def blobfile(self):
-        return self.subdir + "/blob-" + self.mark
+        return self.subdir + "/blob-" + `id(self)` + "-" + self.mark
     def __str__(self):
         dp = open(self.blobfile())
         content = dp.read()
@@ -750,16 +750,16 @@ class Repository:
                         fileop = FileOp(line)
                         commit.fileops.append(fileop)
                         if fileop.ref[0] == ':':
-                            fileop.copyname = self.subdir() + "/blob-" + fileop.ref
                             self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
                             for obj in self.events:
                                 if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                     obj.path = fileop.path
+                                    fileop.copyname = obj.blobfile()
                                     break
                             else:
                                 self.error("no blob matches commit reference to %s" % fileop.ref)
                         elif fileop.ref[0] == 'inline':
-                            fileop.copyname = self.subdir() + "/inline-" + `inline_count`
+                            fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
                             self.read_data(open(fileop.copyname, "w")).close()
                             inline_count += 1
                         else:
