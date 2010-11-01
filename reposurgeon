@@ -252,6 +252,9 @@ class Tag:
         modified = False
         newname = msg["Tag-Name"]
         if self.name != newname:
+            if verbose >= 3:
+                print "reposurgeon: in tag %d, Tag-Name is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), `self.name`, `newname`)
             self.name = newname
             modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
@@ -260,16 +263,25 @@ class Tag:
         else:
             if self.tagger.name != newname or self.tagger.email != newemail:
                 (self.tagger.name, self.tagger.email) = (newname, newemail)
+                if verbose >= 3:
+                    print "reposurgeon: in tag %d, Tagger is modified" \
+                          % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
         if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
+            if verbose >= 3:
+                print "reposurgeon: in event %d, Tagger-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unitime), (self.tagger.timezone, timezone))
             self.tagger.unixtime = unixtime
             self.tagger.timezone = timezone
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
+            if verbose >= 3:
+                print "reposurgeon: in tag %d, comment is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
             modified = True
-        self.comment = newcomment
+            self.comment = newcomment
         return modified
     def __str__(self):
         return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
@@ -477,9 +489,15 @@ class Commit:
         else:
             if self.author.name != newname or self.author.email != newemail:
                 (self.author.name, self.author.email) = (newname, newemail)
+                if verbose >= 3:
+                    print "reposurgeon: in commit %d, Author is modified" \
+                          % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
         if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
+            if verbose >= 3:
+                print "reposurgeon: in commit %d, Author-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"], (self.author.unixtime, unitime), (self.author.timezone, timezone)))
             self.author.unixtime = unixtime
             self.author.timezone = timezone
             modified = True
@@ -489,16 +507,25 @@ class Commit:
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
+                if verbose >= 3:
+                    print "reposurgeon: in commit %d, Committer is modified" \
+                          % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
         if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
+            if verbose >= 3:
+                print "reposurgeon: in commit %d, Committer-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), (self.committer.unixtime, unitime), (self.committer.timezone, timezone))
             self.committer.unixtime = unixtime
             self.committer.timezone = timezone
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
+            if verbose >= 3:
+                print "reposurgeon: in commit %d, comment is modified %s -> %s" \
+                      % (int(msg["Event-Number"], `self.comment`, `newcomment`))
             modified = True
-        self.comment = newcomment
+            self.comment = newcomment
         return modified
     def children(self):
         "Get a list of this commit's children."
