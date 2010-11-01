@@ -21,8 +21,8 @@ import email.message, email.parser, email.utils
 # we have a given VCS active.  The values in the tuple are,
 # respectively:
 #
-# * Name of the SCM for diagnostic messages
-# * Command to export from the SCM to the interchange format
+# * Name of the VCS for diagnostic messages
+# * Command to export from the VCS to the interchange format
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
@@ -38,7 +38,7 @@ import email.message, email.parser, email.utils
 # would be excessively messy, so we don't. Instead we let the user
 # transform dump files and cope with the export/import himself.
 #
-version="1.0"
+version="0.1"
 
 vcstypes = {
     "git" : (".git",
