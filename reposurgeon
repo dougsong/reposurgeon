@@ -1043,7 +1043,7 @@ def rebuild_repo(repo, target, preferred):
         for sub in os.listdir(staging):
             os.rename(os.path.join(staging, sub),
                       os.path.join(target, sub))
-        for file in repo.restore:
+        for file in repo.restore_set:
             shutil.copytree(os.path.join(savedir, sub),
                             os.path.join(target, sub))
         if verbose:
