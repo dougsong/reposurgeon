@@ -641,10 +641,10 @@ class Repository:
         else:
             raise RepoSurgeonException(msg)
     def warn(self, msg, atline=True):
-        if atline:
+        if atline and self.import_line:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
-            raise "reposurgeon: " + msg
+            print "reposurgeon: " + msg
     def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
@@ -804,6 +804,7 @@ class Repository:
             else:
                 # Simply pass through any line we don't understand.
                 self.events.append(line)
+        self.import_line = 0
         if baton:
             baton.end()
         self.readtime = time.time()
@@ -1946,7 +1947,8 @@ if __name__ == '__main__':
                 for cmd in arg.split(";"):
                     if cmd == '-':
                         interpreter.use_rawinput = True
-                        verbose = 1
+                        if verbose == 0:
+                            verbose = 1
                         interpreter.cmdloop()
                         interpreter.use_rawinput = False
                     else:
