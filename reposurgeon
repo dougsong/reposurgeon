@@ -156,14 +156,15 @@ def parse_date_or_die(text):
     if rfcdate:
         (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
                tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-        unixtime = int(email.utils.mktime_tz(rfcdate))
-        # Python returns timezone as a signed offset in seconds 
+        # Adding tz is necessary for RFC822 dates to round-trip
+        # properly, but it's black magic - I don't know why.
+        unixtime = int(email.utils.mktime_tz(rfcdate)) + tz
         if tz < 0:
             timezone = "-"
         else:
             timezone = "+"
         tz = abs(tz)
-        timezone += "%02d%02d" % (tz/360, (tz % 360)/60)
+        timezone += "%02d%02d" % (tz/3600, (tz % 3600)/60)
         #text = gitdate_from_unixtime(unixtime, timezone)
         return (text, unixtime, timezone)
     # Also accept IS8601 dates in Zulu time, just becasuse I
