@@ -1955,7 +1955,7 @@ if __name__ == '__main__':
             interpreter.cleanup()
         raise SystemExit, 0
     except RepoSurgeonException, e:
-        print >>sys.stderr, "reposurgeon:", e
+        print >>sys.stderr, "reposurgeon:", e.msg
         raise SystemExit, 1
     except KeyboardInterrupt:
         print ""
