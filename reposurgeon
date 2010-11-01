@@ -783,12 +783,12 @@ class Repository:
         for blob in self.blob_refcount:
             if self.blob_refcount[blob] != 1:
                 self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
-    def fast_export(self, fp, baton=None):
+    def fast_export(self, selection, fp, baton=None):
         "Dump the repo object in fast-export format."
-        for command in self.events:
+        for ei in selection:
             if baton:
                 baton.twirl()
-            fp.write(str(command))
+            fp.write(str(self.events[ei]))
         if baton:
             baton.end()
     def restore(self, filename):
@@ -1140,7 +1140,7 @@ class RepoSurgeon(cmd.Cmd):
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
-        if c and not c.isspace() and not c.isalpha():
+        if c and not c.isspace() and not c.isalpha() and not c == '-':
             raise RepoSurgeonException("trailing junk on selection: %s" % `self.line`)
         if verbose >= 2:
             print "%s <- eval_expression(), left = %s" % (value, `self.line`)
@@ -1687,10 +1687,11 @@ with command-line arguments).
         if not self.repo:
             complain("no repo is loaded.")
             return
+        line = self.set_selection_set(line, range(len(self.repo)))
         if not line:
             line = '-'
         if line == '-':
-            self.repo.fast_export(sys.stdout)
+            self.repo.fast_export(self.selection, sys.stdout)
         else:
             try:
                 out = open(line, "w")
@@ -1700,9 +1701,10 @@ with command-line arguments).
                 print "reposurgeon: open of %s for write failed.\n" % line
     def help_write(self):
         print """
-Dump a fast-import stream representing the repostory to standard output
-(if argument is empty or '-') or a file.  Fails if the argument exists
-and is a directory or anything other than a plain file.
+Dump a fast-import stream representing selected events to standard output
+(if second argument is empty or '-') or a file.  Fails if the argument exists
+and is a directory or anything other than a plain file. The default selection
+is all events.
 """
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."

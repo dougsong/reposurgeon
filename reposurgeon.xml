@@ -226,14 +226,18 @@ name of a plain file, it will be read in as a fast-import stream. With
 an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para></listitem>
+
+<para>Note: this command does not take a selection set.</para>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>write</command></cmdsynopsis></term>
 <listitem>
-<para>Dump a fast-import stream representing the edited repostory to
-standard output (if argument is empty or '-') or, with optional second
-argument, to a file.  Fails if the argument exists and is a directory
-or anything other than a plain file.</para>
+<para>Dump selected events as a fast-import stream representing the
+edited repository; the default selection set is all events. The
+optional second argument tells where to dump to; standard output if
+argument is empty or '-' or a named file otherwise.  Fails if the
+argument exists and is a directory or anything other than a plain
+file.</para>
 
 <para>Note: a <command>write</command> with a small selection set is 
 a useful way to examine small groups of commits.</para>
