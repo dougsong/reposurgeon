@@ -253,7 +253,7 @@ class Tag:
         newname = msg["Tag-Name"]
         if self.name != newname:
             if verbose >= 3:
-                print "reposurgeon: in tag %d, Tag-Name is modified %s -> %s" \
+                print >>sys.stderr,"reposurgeon: in tag %d, Tag-Name is modified %s -> %s" \
                       % (int(msg["Event-Number"]), `self.name`, `newname`)
             self.name = newname
             modified = True
@@ -264,21 +264,21 @@ class Tag:
             if self.tagger.name != newname or self.tagger.email != newemail:
                 (self.tagger.name, self.tagger.email) = (newname, newemail)
                 if verbose >= 3:
-                    print "reposurgeon: in tag %d, Tagger is modified" \
+                    print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
         if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
             if verbose >= 3:
-                print "reposurgeon: in event %d, Tagger-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unitime), (self.tagger.timezone, timezone))
+                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unixtime), (self.tagger.timezone, timezone))
             self.tagger.unixtime = unixtime
             self.tagger.timezone = timezone
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= 3:
-                print "reposurgeon: in tag %d, comment is modified %s -> %s" \
+                print >>sys.stderr,"reposurgeon: in tag %d, comment is modified %s -> %s" \
                       % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
             modified = True
             self.comment = newcomment
@@ -490,14 +490,14 @@ class Commit:
             if self.author.name != newname or self.author.email != newemail:
                 (self.author.name, self.author.email) = (newname, newemail)
                 if verbose >= 3:
-                    print "reposurgeon: in commit %d, Author is modified" \
+                    print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
         if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
             if verbose >= 3:
-                print "reposurgeon: in commit %d, Author-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"], (self.author.unixtime, unitime), (self.author.timezone, timezone)))
+                print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"], (self.author.unixtime, unixtime), (self.author.timezone, timezone)))
             self.author.unixtime = unixtime
             self.author.timezone = timezone
             modified = True
@@ -508,22 +508,22 @@ class Commit:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
                 if verbose >= 3:
-                    print "reposurgeon: in commit %d, Committer is modified" \
+                    print >>sys.stderr,"reposurgeon: in commit %d, Committer is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
         (text, unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
         if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
             if verbose >= 3:
-                print "reposurgeon: in commit %d, Committer-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), (self.committer.unixtime, unitime), (self.committer.timezone, timezone))
+                print >>sys.stderr,"reposurgeon: in commit %d, Committer-Date is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), (self.committer.unixtime, unixtime), (self.committer.timezone, timezone))
             self.committer.unixtime = unixtime
             self.committer.timezone = timezone
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= 3:
-                print "reposurgeon: in commit %d, comment is modified %s -> %s" \
-                      % (int(msg["Event-Number"], `self.comment`, `newcomment`))
+                print >>sys.stderr,"reposurgeon: in commit %d, comment is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
             modified = True
             self.comment = newcomment
         return modified
@@ -650,7 +650,7 @@ class Repository:
         try:
             cmd = "rm -fr %s; mkdir %s" % (self.subdir(), self.subdir())
             if verbose >= 2:
-                print "Repository fast import calls " + cmd
+                self.warn("repository fast import calls " + cmd)
             os.system(cmd)
         except OSError:
             self.error("can't create operating directory", atline=False)
@@ -838,7 +838,7 @@ class Repository:
         try:
             # Can fail if the target directory exists.
             if verbose >= 2:
-                print "Repository rename calls os.rename(%s, %s)" % (self.subdir(), self.subdir(newname))
+                self.warn("repository rename calls os.rename(%s, %s)" % (`self.subdir()`, `self.subdir(newname)`))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
             for event in self.events:
