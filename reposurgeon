@@ -153,7 +153,7 @@ def parse_date_or_die(text):
     if rfcdate:
         (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
                tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-        unixtime = email.utils.mktime_tz(rfcdate)
+        unixtime = int(email.utils.mktime_tz(rfcdate))
         # Python returns timezone as a signed offset in seconds 
         if tz < 0:
             timezone = "-"
@@ -497,7 +497,7 @@ class Commit:
         if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
             if verbose >= 3:
                 print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s" \
-                      % (int(msg["Event-Number"], (self.author.unixtime, unixtime), (self.author.timezone, timezone)))
+                      % (int(msg["Event-Number"]), (self.author.unixtime, unixtime), (self.author.timezone, timezone))
             self.author.unixtime = unixtime
             self.author.timezone = timezone
             modified = True
