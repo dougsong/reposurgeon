@@ -225,9 +225,10 @@ arguments does this in the current directory. If the argument is the
 name of a plain file, it will be read in as a fast-import stream. With
 an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
-with command-line arguments).</para></listitem>
+with command-line arguments).</para>
 
 <para>Note: this command does not take a selection set.</para>
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>write</command></cmdsynopsis></term>
@@ -296,116 +297,13 @@ list.</para>
 <para>When a commit is deleted, its file operation list (and any
 associated blob references) gets pushed forward onto the beginning of
 the operation list of each of the commit's children. Following all
-pushes, every one of the altered file operation lists (which may
-contain any number of Ms for individual files as a result of this
-operation) is reduced to a shortest normalized form. The algorithm
-used aims at once again again having only one M per individual file;
-however, this is not always achievable.</para>
+pushes, every one of the altered file operation lists is reduced to a
+shortest normalized form. The normalized from detects various
+combinations of modification, deletion, and renaming and simplifies
+the operation sequence as much as it can without losing any
+information.</para>
 
-<para>To understand how the reduction process works, it's enough to
-understand the case where all the operation in the list are working
-on the same file. Sublists of operations referring to different
-files don't affect each other and reducing them can be thought
-of as separate operations.  Also, a "deleteall" acts a a D for
-everything and cancels all operations before it in the list. </para>
-
-<para>The reduction process walks through the list from the beginning
-looking for adjacent pairs of operations it can compose.  The following table
-describes all possible cases and all but one of the reductions.</para>
-
-<informaltable pgwide='0' frame='all'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <tbody>
-      <row>
-        <entry align='center'>M + D &rarr; D</entry>
-	<entry align='left'><para>If a file is modified
-	then deleted, the result is as though it had been
-	deleted.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
-        <entry align='left'><para>The purpose of this transformation is 
-	to push renames towards the beginning of the list,
-	where they may become adjacent to another R or C they can 
-	be composed with.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>M a + C a b &rarr; C a b + M b</entry>
-	<entry align='left'><para>Push copies towards the beginning.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>M b + R a b &rarr; nothing</entry>
-	<entry align='left'><para>The rename undoes the
-	modification.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>M b + C a b &rarr; nothing</entry>
-	<entry align='left'><para>The copy undoes the
-	modification.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>D + M &rarr; M</entry>
-	<entry align='left'><para>If a file is deleted and modified,
-	the result is as though the deletion had not taken place
-	(because M operations store entire files, not
-	deltas).</para></entry>
-      </row>
-      <row>
-        <entry align='center'>D + {D|R|C}</entry>
-	<entry align='left'><para>These cases should be impossible
-	and would suggest the repository has been corrupted.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>R a b + D a</entry>
-	<entry align='left'><para>Should never happen..</para></entry>
-      </row>
-      <row>
-        <entry align='center'>R a b + D b &rarr; nothing</entry>
-	<entry align='left'><para>The delete removes the just-renamed file.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>{R|C} + M</entry>
-	<entry align='left'><para>No reduction.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>R a b + R b c &rarr; R a c</entry>
-	<entry align='left'><para>The b terms have to match for these
-	operations to have made sense when they lived in separate
-	commits; if they don't, it indicates repository
-	corruption.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>R a b + C b c &rarr; C a c</entry>
-	<entry align='left'><para>See above.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C a b + D a &rarr; R a b</entry>
-	<entry align='left'><para>Copy followed by delete of the source is a rename.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C a b + D b &rarr; nothing</entry>
-	<entry align='left'><para>This delete undoes the copy.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C a b + R a c</entry>
-	<entry align='left'><para>No reduction.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C a b + R b c &rarr; C a c</entry>
-	<entry align='left'><para>Copy followed by a rename of the
-	target reduces to single copy</para></entry>
-      </row>
-      <row>
-        <entry align='center'>C + C</entry>
-	<entry align='left'><para>No reduction.</para></entry>
-      </row>
-    </tbody>
-  </tgroup>
-</informaltable>
-
-<para>After canonicalization, a file op list may end up containing
+<para>After canonicalization, a file op list may still end up containing
 multiple M operations in the on the same file.  Two policies are
 presently available for dealing with this:</para>
 
@@ -430,15 +328,16 @@ presently available for dealing with this:</para>
 
 <para>Under either of these policies, deleting a commit that has
 children does not back out the changes made by that commit, as they
-will still be present in the blobs attached versions past the end of
-the commit.  All it does is lose the metadata information about when
-and by who those changes were actually made; after the delete any such
-changes will.  It is expected that this command will be useful mainly
-for removing commits mechanically generated by repository converters
-such as <command>cvs2svn</command>.</para>
+will still be present in the blobs attached to versions past the end
+of the deletion set.  All a delete does when the commit has children
+is lose the metadata information about when and by who those changes
+were actually made; after the delete any such changes will.  It is
+expected that this command will be useful mainly for removing commits
+mechanically generated by repository converters such as
+<command>cvs2svn</command>.</para>
 
 <para>Other policies which do more to attempt to back out content
-changes may be added in future releases.</para>
+changes may be added in future versions of this tool.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -720,6 +619,119 @@ fast-import format, their repositories will become editable by
 <application>reposurgeon</application>. See the <ulink
 url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
 Wiki tools page</ulink> for a large collection of such tools.</para>
+</refsect1>
+
+<refsect1 id='policy'><title>CANONICALIZATION RULES</title>
+
+<para>It is extended that <application>reposurgeon</application> will
+be extended with more deletion policies. Policy authors may 
+need to know more about how a commit's file operation sequence
+is reduced to normal form after operations from deleted commits
+are prepended to it.</para>
+
+<para>To understand how the reduction process works, it's enough to
+understand the case where all the operation in the list are working
+on the same file. Sublists of operations referring to different
+files don't affect each other and reducing them can be thought
+of as separate operations.  Also, a "deleteall" acts a a D for
+everything and cancels all operations before it in the list. </para>
+
+<para>The reduction process walks through the list from the beginning
+looking for adjacent pairs of operations it can compose.  The following table
+describes all possible cases and all but one of the reductions.</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <tbody>
+      <row>
+        <entry align='center'>M + D &rarr; D</entry>
+	<entry align='left'><para>If a file is modified
+	then deleted, the result is as though it had been
+	deleted.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
+        <entry align='left'><para>The purpose of this transformation is 
+	to push renames towards the beginning of the list,
+	where they may become adjacent to another R or C they can 
+	be composed with.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M a + C a b &rarr; C a b + M b</entry>
+	<entry align='left'><para>Push copies towards the beginning.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M b + R a b &rarr; nothing</entry>
+	<entry align='left'><para>The rename undoes the
+	modification.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M b + C a b &rarr; nothing</entry>
+	<entry align='left'><para>The copy undoes the
+	modification.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D + M &rarr; M</entry>
+	<entry align='left'><para>If a file is deleted and modified,
+	the result is as though the deletion had not taken place
+	(because M operations store entire files, not
+	deltas).</para></entry>
+      </row>
+      <row>
+        <entry align='center'>D + {D|R|C}</entry>
+	<entry align='left'><para>These cases should be impossible
+	and would suggest the repository has been corrupted.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + D a</entry>
+	<entry align='left'><para>Should never happen..</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + D b &rarr; nothing</entry>
+	<entry align='left'><para>The delete removes the just-renamed file.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>{R|C} + M</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + R b c &rarr; R a c</entry>
+	<entry align='left'><para>The b terms have to match for these
+	operations to have made sense when they lived in separate
+	commits; if they don't, it indicates repository
+	corruption.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>R a b + C b c &rarr; C a c</entry>
+	<entry align='left'><para>See above.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + D a &rarr; R a b</entry>
+	<entry align='left'><para>Copy followed by delete of the source is a rename.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + D b &rarr; nothing</entry>
+	<entry align='left'><para>This delete undoes the copy.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + R a c</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C a b + R b c &rarr; C a c</entry>
+	<entry align='left'><para>Copy followed by a rename of the
+	target reduces to single copy</para></entry>
+      </row>
+      <row>
+        <entry align='center'>C + C</entry>
+	<entry align='left'><para>No reduction.</para></entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
 </refsect1>
 
 <refsect1 id='recovery'><title>CRASH RECOVERY</title>
