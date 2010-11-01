@@ -1423,8 +1423,10 @@ class RepoSurgeon(cmd.Cmd):
             print "reposurgeon: verbose %d" % verbose
     def help_verbose(self):
         print """
-'verbose 1' enables progress messages, 'verbose 0' disables them. Higher levels
-of verbosity are available but intended for developers only.
+Without an argument, this command requists a report of the verbosity
+kevel.  'verbose 1' enables progress messages, 'verbose 0' disables
+them. Higher levels of verbosity are available but intended for
+developers only.
 """
     def do_repeat(self, line):
         "Set or clear repeating commands before processing (for regression tests)"
