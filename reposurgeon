@@ -1414,11 +1414,12 @@ class RepoSurgeon(cmd.Cmd):
         print "Show help for a command. Follow with a space and the command name"
     def do_verbose(self, line):
         global verbose
-        try:
-            verbose = int(line)
-        except ValueError:
-            print "reposurgeon: verbosity value must be an integer"
-        if verbose:
+        if line:
+            try:
+                verbose = int(line)
+            except ValueError:
+                print "reposurgeon: verbosity value must be an integer"
+        if not line or verbose:
             print "reposurgeon: verbose %d" % verbose
     def help_verbose(self):
         print """
@@ -1907,7 +1908,7 @@ if __name__ == '__main__':
                 for cmd in arg.split(";"):
                     if cmd == '-':
                         interpreter.use_rawinput = True
-                        interpreter.verbose = 1
+                        verbose = 1
                         interpreter.cmdloop()
                         interpreter.use_rawinput = False
                     else:

@@ -584,14 +584,14 @@ do it if there is already one by the new name.
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>restore</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>restore</command> <arg choice='opt' rep='repeat'>files</arg></cmdsynopsis></term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current restore list is displayed afterwards.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>unrestore</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>unrestore</command> <arg choice='opt' rep='repeat'>files</arg></cmdsynopsis></term>
 <listitem><para>Remove (presumably untracked) files or directories to
 the repo's list of paths to be restored from the backup directory
 after a <command>rebuild</command>. Each argument, if any, is
@@ -646,7 +646,7 @@ and the list of version-control systems it directly supports.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>verbose</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>verbose</command> <arg choice='opt'>n</arg></cmdsynopsis></term>
 <listitem><para>'verbose 1' enables progress and messages,
 'verbose 0' disables them. Higher levels of verbosity are available
 but intended for developers only.</para></listitem>
@@ -659,7 +659,7 @@ output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>script</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>script</command> <arg choice='plain'>filename</arg></cmdsynopsis></term>
 <listitem><para>Takes a filename argument. Reads each line from the file 
 and executes it as a command.</para></listitem>
 </varlistentry>
@@ -748,7 +748,7 @@ so as not to conflict with any existing backup drectories.
 <application>reposurgeon</application> never, under any circumstances.
 ever deletes a backup directory.</para>
 
-<para>So far all,operations are safe; the worst that can happen up to
+<para>So far, all operations are safe; the worst that can happen up to
 this point if the process gets interrupted is that the staging and
 backup directories get left behind.</para>
 </step>
