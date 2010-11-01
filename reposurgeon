@@ -10,7 +10,7 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Implement undo, expunge, cut.
+# * Implement expunge, cut.
 #
 # * Dates in specification expressions.
 #

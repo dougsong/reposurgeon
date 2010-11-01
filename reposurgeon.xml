@@ -438,17 +438,6 @@ changes may be added in future releases.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>undo</command></cmdsynopsis></term>
-<listitem>
-<para>NOT YET IMPLEMENTED.</para>
-
-<para>Remove a commit, attempting to back out modifications 
-made in it by diffing them against parent commits and reversing
-the diff to patch forward in the branch history. Differs from
-<command>delete</command>, which only erases metadata.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><cmdsynopsis><command>cut</command></cmdsynopsis></term>
 <listitem>
 <para>NOT YET IMPLEMENTED.</para>
