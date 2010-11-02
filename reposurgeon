@@ -656,6 +656,12 @@ class Repository:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
             print "reposurgeon: " + msg
+    def find(self, mark):
+        "Find an object by mark"
+        for (i, e) in enumerate(self.events):
+            if hasattr(e, "mark") and mark == e.mark:
+                return i
+        return None
     def fast_import(self, fp, baton=None):
         "Initialize repo object from fast-import stream."
         try:
@@ -2041,6 +2047,11 @@ an offset literal of +0 or -0.
                     if event.color:
                         if neighbor.color == None:
                             neighbor.color = event.color
+                            for fileop in neighbor.fileops:
+                                if fileop.op == "M" and fileop.ref != "inline":
+                                    blob = self.find(fileop.ref)
+                                    assert isinstance(blob. Blob)
+                                    blob.color = event.color
                             keepgoing = True
                         elif neighbor.color != event.color:
                             conflict = True
@@ -2050,8 +2061,10 @@ an offset literal of +0 or -0.
                 event.color = None
             complain("repository cannot be split here")
             return
-        # Repo can be split, so we need to color blobs and tags and resets
-        # FIXME
+        # Repo can be split, so we need to color tags
+        for e in self.repo.events:
+            if isinstance(e, Tag):
+                e.color = self.find(e.committish)
     def help_split(self):
         print """
 """
