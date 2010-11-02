@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress
+all: clean roundtrip mailboxing regress coalesce
 	@echo "No diff output is good news."
 
 clean:
@@ -37,6 +37,16 @@ regress:
 	@for file in $(TESTLOADS); do \
 	    echo "Regression test using $${file}.tst"; \
 	    ../reposurgeon "script $${file}.tst" >/tmp/regress; \
+	    diff -u $${file}.chk /tmp/regress; \
+	done
+	@rm -f /tmp/regress
+
+# Test coalescence operation
+COALESCE=uncoalesced
+coalesce:
+	@for file in $(COALESCE); do \
+	    echo "Coalescence regression test using $${file}.dump"; \
+	    ../reposurgeon "read $${file}.dump; coalesce; write -" >/tmp/regress; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress
