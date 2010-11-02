@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.2:
+     The 'view' command was a bad idea abd has removed.
+
 0.1: 2010-11-01
      First public release. Working with git, untested with hg and bzr
 

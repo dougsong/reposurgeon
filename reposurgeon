@@ -17,16 +17,14 @@ import email.message, email.parser, email.utils
 # * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
-# following dictionary. The key is the subdirectory name that tells us
-# we have a given VCS active.  The values in the tuple are,
-# respectively:
+# following dictionary. The key is the name of the VCS. The values in the
+# tuple are, respectively:
 #
-# * Name of the VCS for diagnostic messages
+# * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
-# * Command to view the repo.
 #
 # Note that some of the commands used here are plugins or extensions
 # that are not part of the basic VCS. Thus these may fail when called;
@@ -45,21 +43,18 @@ vcstypes = {
              "git fast-export -M -C --all >%s",
              "git init",
              "git fast-import <%s",
-             "git checkout",
-             "gitk"),
+             "git checkout"),
      # FIXME: hg and bzr methods are untested
     "hg" : (".hg",
             "hg-fast-export.sh %s",   # Not part of stock hg
             "hg init",
             "hg fast-import %s",      # Not part of stock hg
-            "hg checkout",
-            "hg view"),
+            "hg checkout"),
     "bzr" : (".bzr",
              "bzr-fast-export --plain %s",
              "bzr init",
              "bzr fast-import %s",
-             "bzr checkout",
-             None),    # FIXME: there probably is something...
+             "bzr checkout"),
     }
 
 verbose       = 0
@@ -969,7 +964,7 @@ def read_repo(source, preferred):
             else:
                 print "reposurgeon: looking for any repo..."
         hitcount = 0
-        for (name, (dirname, exporter, initializer, importer, checkout, viewer)) in vcstypes.items():
+        for (name, (dirname, exporter, initializer, importer, checkout)) in vcstypes.items():
             if preferred and name != preferred:
                 continue
             subdir = os.path.join(source, dirname)
@@ -1045,7 +1040,7 @@ def rebuild_repo(repo, target, preferred):
         complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
-    (repodir,exporter,initializer,importer,checkout,viewer) = vcstypes[preferred]
+    (repodir, exporter, initializer, importer, checkout) = vcstypes[preferred]
     here = os.getcwd()
     try:
         os.chdir(staging)
@@ -1539,7 +1534,7 @@ for exploring the selection-set language.
                    self.repo.nmarks)
             if self.repo.type:
                 print "         Type:", self.repo.type
-                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:", "Viewer:"), vcstypes[self.repo.type]):
+                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:"), vcstypes[self.repo.type]):
                     print "%14s %s" % (legend, command)
         else:
             print "reposurgeon: no repository loaded."
@@ -1548,16 +1543,6 @@ for exploring the selection-set language.
 Report size statistics and import/export method information after reading
 a repo or stream.
 """
-    def do_view(self, line):
-        "View a repo through its GUI."
-        if not self.preferred:
-            complain("prefer a repo type first.")
-            return
-        gui = vcstypes[self.preferred][5]
-        if not gui:
-            complain("no GUI is available.")
-            return
-        os.system(gui)
     def do_index(self, line):
         "Generate a summary listing of objects."
         if not self.repo:
@@ -1760,12 +1745,6 @@ specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
-"""
-    def help_rebuild(self):
-        print """
-View a repo through the default GUI browser for its version control system.
-Note that this does not show the in-core state; it is mainly useful for
-doing a quick eyeball check ofter a rebuild command.
 """
     #
     # Editing commands

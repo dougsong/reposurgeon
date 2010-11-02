@@ -566,15 +566,6 @@ after a <command>rebuild</command>. Each argument, if any, is
 interpreted as a pathname.  The current restore list is displayed
 afterwards.</para></listitem>
 </varlistentry>
-<varlistentry>
-<term><cmdsynopsis><command>view</command></cmdsynopsis></term>
-<listitem><para>
-View a repo through the default GUI browser for its version control
-system.  Note that this does not show the edited state held by
-<application>reposurgeon</application> in core; it is mainly useful
-for doing a quick eyeball check ofter a rebuild command.
-</para></listitem>
-</varlistentry>
 </variablelist>
 
 <para>A few commands have been implemented primarily for debugging and
