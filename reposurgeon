@@ -1938,7 +1938,8 @@ only when they are the final ones on the commit's branch.
                 continue
             elif this.committer.unixtime + timefuzz > next.committer.unixtime:
                 eligible.append(commits[i][0])
-        print "reposurgeon: deletion set is %s" % map(lambda x: x+1, eligible)
+        if verbose:
+            print "reposurgeon: deletion set is %s" % map(lambda x: x+1, eligible)
         self.repo.delete(eligible, "coalesce")
     def help_coalesce(self):
         print """
