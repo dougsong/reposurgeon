@@ -10,7 +10,7 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Implement expunge, cut.
+# * Implement expunge.
 #
 # * Dates in specification expressions.
 #
@@ -1983,7 +1983,6 @@ separation in seconds; the default is 90 seconds.
                 event.author.unixtime += offset
                 if len(args) > 1:
                     event.author.timezone = args[1]
-
     def help_timeoffset(self):
         print """
 Apply a time offset to all time/date stamps in the selected set.  An offset
@@ -1993,6 +1992,39 @@ The leading sign is required to distingush it from a selection expression.
 Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
+"""
+    def do_split(self, line):
+        "Attempt to topologically split the repo."
+        if not self.repo:
+            complain("no repo is loaded.")
+            return
+        line = self.set_selection_set([])
+        if len(self.selection) == 0:
+            complain("one or possibly two arguments specifying a link are required")
+            return
+        early = self.repo[self.selection[0]]
+        possibles = early.children() 
+        if len(self.selection) == 1:    
+            if len(possibles) > 1:
+                complain("commit has multiple children, one must be specified")
+                return
+            elif len(possibles) == 1:
+                possibles = early.children()
+                late = possibles[0]
+            else:
+                complain("parent has no children")
+                return
+        elif len(self.selection) == 2:
+            late = self.repo[self.selection[1]]
+            if early.mark not in late.parents:
+                complain("not a parent-child pair")
+                return
+        elif len(self.selection) > 2:
+            complain("too many arguments")
+        assert(early and late)
+        #FIXME
+    def help_split(self):
+        print """
 """
 
 if __name__ == '__main__':

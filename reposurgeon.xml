@@ -29,7 +29,7 @@
 enable risky operations that version-control systems don't want to let
 you do, such as (a) editing past comments and metadata, (b) excising
 commits, (c) coalescing commits, (d) removing files and subtrees from
-repo history, and (e) cutting a repo in two by cutting a parent-child
+repo history, and (e) splitting a repo in two by cutting a parent-child
 like, preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for
@@ -341,15 +341,19 @@ changes may be added in future versions of this tool.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>cut</command></cmdsynopsis></term>
+<term><cmdsynopsis><command>split</command><arg choice='plain'><replaceable>parent</replaceable></arg></cmdsynopsis></term>
 <listitem>
 <para>NOT YET IMPLEMENTED.</para>
 
 <para>Attempt to partition a repo by cutting the parent-child link
-between two specified commits (they must be adjacent). This operation
-may fail if the commit graph remains connected through another path;
-the tool will detect this. If the repo was named 'foo', the cut segments
-will be named 'foo-early' and 'foo-late'.</para>
+between two specified commits (they must be adjacent). Does not take a
+general selection-set argument.  It is only necessary to specify the
+parent commit, unless it has multiple children in which case the child
+commit must follow.</para>
+
+<para>This operation may fail if the commit graph remains connected
+through another path; the tool will detect this. If the repo was named
+'foo', the cut segments will be named 'foo-early' and 'foo-late'.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
