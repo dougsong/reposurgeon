@@ -298,7 +298,6 @@ class Reset:
     def __init__(self):
         self.ref = None
         self.committish = None
-        self.color = None
     def __str__(self):
         st = "reset %s\n" % self.ref
         if self.committish:
@@ -2036,35 +2035,45 @@ an offset literal of +0 or -0.
             complain("too many arguments")
         assert(early and late)
         # Graph-coloring algorithm to determine if the repo can be split
-        early.color = "early"
-        late.color = "late"
-        conflict = False
-        keepgoing = True
-        while keepgoing and not conflict:
-            keepgoing = False
-            for event in self.repo:
-                for neighbor in self.parents() + self.children():
-                    if event.color:
-                        if neighbor.color == None:
-                            neighbor.color = event.color
-                            for fileop in neighbor.fileops:
-                                if fileop.op == "M" and fileop.ref != "inline":
-                                    blob = self.find(fileop.ref)
-                                    assert isinstance(blob. Blob)
-                                    blob.color = event.color
-                            keepgoing = True
-                        elif neighbor.color != event.color:
-                            conflict = True
-                            break
-        if conflict:
+        try:
+            def do_color(commit, color):
+                commit.color = color
+                for fileop in commit.fileops:
+                    if fileop.op == "M" and fileop.ref != "inline":
+                        blob = self.find(fileop.ref)
+                        assert isinstance(blob. Blob)
+                        blob.color = color
+            do_color(early, "early")
+            do_color(late, "late")
+            conflict = False
+            keepgoing = True
+            while keepgoing and not conflict:
+                keepgoing = False
+                for event in self.repo:
+                    for neighbor in self.parents() + self.children():
+                        if event.color:
+                            if neighbor.color == None:
+                                do_color(neighbor, event.color)
+                                keepgoing = True
+                            elif neighbor.color != event.color:
+                                conflict = True
+                                break
+            if conflict:
+                complain("repository cannot be split here")
+                return
+            # Repo can be split, so we need to color tags
+            for e in self.repo.events:
+                if isinstance(e, Tag):
+                    e.color = self.find(e.committish)
+            # Resets are tricky.  One may have both colors.
+            trackbranches = {"early": set([]), "late": set([])}
+            for commit in self.commits():
+                trackbranches[commit.color].add(commit.branch)
+            # Now it's time to do the actual partitioning
+            # FIXME
+        finally:
             for event in self.repo:
                 event.color = None
-            complain("repository cannot be split here")
-            return
-        # Repo can be split, so we need to color tags
-        for e in self.repo.events:
-            if isinstance(e, Tag):
-                e.color = self.find(e.committish)
     def help_split(self):
         print """
 """
