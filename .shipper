@@ -1,0 +1,54 @@
+indextemplate = """
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN'
+    'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html>
+<head>
+<link rev='made' href='mailto:esr@snark.thyrsus.com' />
+<link rel='stylesheet' href='/~esr/sitestyle.css' type='text/css' />
+<meta name='description' content='Resource page for %(package)s' />
+<meta name='generator' content='shipper' />
+<meta name='MSSmartTagsPreventParsing' content='TRUE' />
+<meta name='description' content="%(summary)s"/>
+<title>Resource page for %(package)s %(version)s</title>
+<style>
+/*<![CDATA[*/
+#Content>p {margin-bottom: 2ex;}
+/*]]>*/
+</style>
+</head>
+<body>
+
+<div id='Header'>
+<table width='100%%' cellpadding='0' summary='Canned page header'>
+<tr>
+<td>Resource page for %(package)s %(version)s</td>
+<td align="center"><img src="sturgeon2.gif"></td>
+<td align='right'>%(date)s</td>
+</tr>
+</table>
+</div>
+
+<div id='Menu'>
+	<hr/>
+	<a href='/~esr' title='My home page'>Home Page</a><br />
+	<a href='/~esr/whatsnew.html' title="What's new on this site">What's New</a><br />
+	<a href='/~esr/sitemap.html' title='Map of the site'>Site Map</a><br />
+	<a href='/~esr/software.html' title='Software'>Software</a><br />
+	<hr/>
+</div>
+
+<div id='Content'>
+
+<p>%(description)s</p>
+
+<br />
+%(resourcetable)s
+<br />
+
+%(extralines)s
+
+</div>
+</body>
+</html>
+"""
