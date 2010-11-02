@@ -124,8 +124,7 @@ class Date:
     "A time/date in local time."
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
-        # OK, here is where we try to be as robust as possible in
-        # recognizing dates. First, look for git's preferred format.
+        # First, look for git's preferred format.
         text = text.strip() 
         if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
             (self.timestamp, self.timezone) = text.split()
@@ -134,17 +133,12 @@ class Date:
         # If that didn't work, look for an RFC822 date, which git also
         # accepts. Note, there could be edge cases that Python's parser
         # handles but git doesn't.
-        rfcdate = email.utils.parsedate_tz(text) 
+        rfcdate = email.utils.parsedate(text) 
         if rfcdate:
             (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-                   tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-            self.timestamp = int(email.utils.mktime_tz(rfcdate))
-            if tz < 0:
-                self.timezone = "-"
-            else:
-                self.timezone = "+"
-            tz = abs(tz)
-            self.timezone += "%02d%02d" % (tz/3600, (tz % 3600)/60)
+                   tm_sec, tm_wday, tm_yday, tim_isdst) = rfcdate
+            self.timestamp = int(time.mktime(rfcdate))
+            self.timezone = text.split()[5]
             return
         # Also accept IS8601 dates in Zulu time, just because I like them.
         try:
@@ -171,6 +165,7 @@ class Date:
         return str(self.timestamp) + " " + self.timezone
     def __eq__(self, other):
         return self.timestamp == other.timestamp and self.timezone == other.timezone
+
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
     def __init__(self, person):
@@ -1905,7 +1900,7 @@ only when they are the final ones on the commit's branch.
                 continue
             elif this.comment != next.comment:
                 continue
-            elif this.committer.unixtime + timefuzz > next.committer.unixtime:
+            elif this.committer.date.delta(next.committer.date) < timefuzz:
                 eligible.append(commits[i][0])
         if verbose:
             print "reposurgeon: deletion set is %s" % map(lambda x: x+1, eligible)
