@@ -9,3 +9,8 @@ conversions.
 
 To test the correctness of this software, type 'make check'
 
+Acknowledgment: The Blue Sturgeon of Doom used on the reposurgeon
+website and carried in this directory was GIMPed from the logo applied
+to the the Hudson River Estuary by the Bew York State Department of
+Environmental Conservation. Our adaptation of it is strictly nonprofit
+and whimsical, so don't hurt us please.
