@@ -38,7 +38,7 @@ import email.message, email.parser, email.utils
 # would be excessively messy, so we don't. Instead we let the user
 # transform dump files and cope with the export/import himself.
 #
-version="0.1"
+version="0.1~dev"
 
 vcstypes = {
     "git" : (".git",
@@ -346,7 +346,7 @@ class FileOp:
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
         if self.op == "M" and other.op in ("R", "C"):
-            # Commute R and C ops with M so they fall towards start oof list
+            # Commute R and C ops with M so they fall towards start of list
             if self.path == other.source:
                 self.path = other.target
                 return (True, other, self, None, 2)
