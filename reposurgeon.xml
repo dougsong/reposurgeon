@@ -30,7 +30,7 @@ enable risky operations that version-control systems don't want to let
 you do, such as (a) editing past comments and metadata, (b) excising
 commits, (c) coalescing commits, (d) removing files and subtrees from
 repo history, and (e) splitting a repo in two by cutting a parent-child
-like, preserving the branch structure of both child repos.</para>
+link, preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for
 <application>reposurgeon</application> was to clean up artifacts
