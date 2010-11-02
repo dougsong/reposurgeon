@@ -25,7 +25,7 @@ mailboxing:
 	done
 	@rm -f /tmp/regress
 
-# General regression testing of commands and output; look at the *,tst and
+# General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
 TESTLOADS = simple-dump
 makeregress:
@@ -41,8 +41,14 @@ regress:
 	done
 	@rm -f /tmp/regress
 
-# Test coalescence operation
+# Test coalescence operation.
 COALESCE=uncoalesced
+makecoalesce:
+	@for file in $(COALESCE); do \
+	    echo "Rebuliding coalescence regression test using $${file}.dump"; \
+	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk \
+	done
+	@rm -f /tmp/regress
 coalesce:
 	@for file in $(COALESCE); do \
 	    echo "Coalescence regression test using $${file}.dump"; \
