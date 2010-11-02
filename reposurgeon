@@ -121,7 +121,7 @@ class RepoSurgeonEmail(email.message.Message):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
 class Date:
-    "A time/date in local time."
+    "A time/date in local time. Preserves TZ information bu doesn't use it."
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
         # First, look for git's preferred format.
@@ -133,13 +133,14 @@ class Date:
         # If that didn't work, look for an RFC822 date, which git also
         # accepts. Note, there could be edge cases that Python's parser
         # handles but git doesn't.
-        rfcdate = email.utils.parsedate(text) 
-        if rfcdate:
-            (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-                   tm_sec, tm_wday, tm_yday, tim_isdst) = rfcdate
-            self.timestamp = int(time.mktime(rfcdate))
+        try:
+            self.timestamp = int(time.mktime(email.utils.parsedate(text)))
             self.timezone = text.split()[5]
             return
+        except TypeError:
+            # time.mktime throws this when it gets None:
+            # TypeError: argument must be 9-item sequence, not None
+            pass
         # Also accept IS8601 dates in Zulu time, just because I like them.
         try:
             iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
