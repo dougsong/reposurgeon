@@ -46,7 +46,7 @@ COALESCE=uncoalesced
 makecoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuliding coalescence regression test using $${file}.dump"; \
-	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk \
+	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk; \
 	done
 	@rm -f /tmp/regress
 coalesce:
