@@ -217,7 +217,10 @@ precendence than intersection, but you may use curly brackets '{' and
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis><command>read</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>read</command> 
+        <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>With a directory-name argument, this command attempts
 to read in the contents of a repository in any supported
 version-control system under that directory; read with no
@@ -231,7 +234,11 @@ with command-line arguments).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>write</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>write</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+        <arg choice='opt'><replaceable>outfile</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Dump selected events as a fast-import stream representing the
 edited repository; the default selection set is all events. The
@@ -245,19 +252,25 @@ a useful way to examine small groups of commits.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>rebuild</command></cmdsynopsis></term>
-<listitem><para>
-Rebuild a repository from the state held by
-<application>reposurgeon</application>.  The argument specifies the
-target directory in which to do the rebuild; if the repository read
-was from a repo directory (and not a git-import stream), it defaults
-to that directory.  If the target directory is nonempty its contents
-are backed up to a save directory.  Files and directories on the
-repository's restore list are copied back from the backup directory.
-</para></listitem>
+<term><cmdsynopsis>
+    <command>rebuild</command>
+        <arg choice='opt'><replaceable>directory</replaceable></arg>
+</cmdsynopsis></term>
+<listitem><para> Rebuild a repository from the state held by
+<application>reposurgeon</application>.  This command does not take a
+selection-set argument.  The single argument, if present argument
+specifies the target directory in which to do the rebuild; if the
+repository read was from a repo directory (and not a git-import
+stream), it defaults to that directory.  If the target directory is
+nonempty its contents are backed up to a save directory.  Files and
+directories on the repository's restore list are copied back from the
+backup directory.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>list</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>list</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
@@ -269,10 +282,14 @@ standard output.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>delete</command> <arg choice='opt'>policy</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>delete</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+        <arg choice='opt'><replaceable>policy</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
-<para>Delete a selection set of commits (and their associated blobs,
-if any). The default selection set for this command is empty.</para>
+<para>Delete a selection set of commits. The default selection set for
+this command is empty.</para>
 
 <para>No <command>blob</command> event can be deleted directly with
 this command; <command>blob</command> events are tied to associated
@@ -282,17 +299,11 @@ discarded only when those are.</para>
 <para>Deleting a <command>tag</command>, <command>reset</command> or
 <command>passthrough</command> event has no side effects.</para>
 
-<para>The interesting use of this commant is to delete commits.
+<para>The interesting use of this command is to delete commits.
 Children of a deleted commit get it removed from their parent set and
 its parents added.  Any tag pointing to a deleted commit will also
 be deleted (note that git lightweight tags are implemented as 
 branches and will thus escape this fate).</para>
-
-<para>Recall that each commit has a list of file operations, each a M
-(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
-files). Only M operations have associated blobs.  Normally there is
-only one M operation per individual file in a commit's operation
-list.</para>
 
 <para>When a commit is deleted, its file operation list (and any
 associated blob references) gets pushed forward onto the beginning of
@@ -314,7 +325,7 @@ presently available for dealing with this:</para>
     <tbody>
       <row>
         <entry align='center'>complain</entry>
-	<entry align='left'><para>Complain about, but do
+	<entry align='left'><para>Complain about them, but do
 	nothing. This is the default.</para></entry>
       </row>
       <row>
@@ -341,7 +352,9 @@ changes may be added in future versions of this tool.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>split</command><arg choice='plain'><replaceable>parent</replaceable></arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>split</command>
+        <arg choice='plain'><replaceable>parent</replaceable></arg></cmdsynopsis></term>
 <listitem>
 <para>NOT YET IMPLEMENTED.</para>
 
@@ -357,7 +370,9 @@ through another path; the tool will detect this. If the repo was named
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>expunge</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>expunge</command>
+</cmdsynopsis></term>
 <listitem>
 <para>NOT YET IMPLEMENTED.</para>
 
@@ -367,7 +382,11 @@ set.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>coalesce</command> <arg choice='opt'>timefuzz</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>coalesce</command> 
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+        <arg choice='opt'><replaceable>timefuzz</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Scan the selection set for runs of commits with identical
 comments close to each other in time (this is a common form of scar
@@ -385,7 +404,11 @@ CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>mailbox_out</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>mailbox_out</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+        <arg choice='opt'><replaceable>outfile</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
 the contents of repository metadata. Takes a selection set; members of
@@ -397,13 +420,16 @@ be taken as the name of the file to report to; no argument, or one of
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>mailbox_in</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>mailbox_in</command>
+        <arg choice='opt'><replaceable>infile</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set.  If there is an argument it will be taken as the
 name of a mailbox file to read from; no argument, or one of '-'; reads
-from standard output.</para>
+from standard input.</para>
 
 <para>Event updates are atomic; if reposurgeon throws an error while in this
 command events updated before the error will keep their changed state,
@@ -416,7 +442,10 @@ unlikely to have good results.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>edit</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>edit</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
@@ -429,7 +458,11 @@ blob, your editor will be called directly on the blob file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>timeoffset</command> <arg choice='plain'>offast</arg> <arg choice='opt'>timezone</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>timeoffset</command>
+        <arg choice='plain'>offast</arg> 
+        <arg choice='opt'><replaceable>timezone</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Apply a time offset to all time/date stamps in the selected set.
 An offset argument is required; it may be in the form [+-]ss,
@@ -461,7 +494,10 @@ also invokes this.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>prefer</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>prefer</command>
+        <arg choice='opt'><replaceable>repotype</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Report or set (with argument) the preferred type of repository. This
 will have two effects.  First, if there are multiple repositories in a
@@ -483,7 +519,10 @@ a repo or stream.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>choose</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>choose</command>
+        <arg choice='opt'><replaceable>reponame</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
@@ -496,7 +535,10 @@ repositories and their load times.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>rename</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>rename</command>
+        <arg choice='opt'><replaceable>reponame</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Rename the currently chosen repo; requires an argument.  Won't
 do it if there is already one by the new name.
@@ -504,14 +546,20 @@ do it if there is already one by the new name.
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>restore</command> <arg choice='opt' rep='repeat'>files</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>restore</command> 
+    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current restore list is displayed afterwards.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>unrestore</command> <arg choice='opt' rep='repeat'>files</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>unrestore</command>
+    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>Remove (presumably untracked) files or directories to
 the repo's list of paths to be restored from the backup directory
 after a <command>rebuild</command>. Each argument, if any, is
@@ -535,7 +583,10 @@ circumstances.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis><command>index</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>index</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+</cmdsynopsis></term>
 <listitem>
 <para>Display four columns of info on objects in the selection set:
 their number, their type, the associate mark (or '-' if no mark) and a
@@ -548,7 +599,10 @@ except blobs.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>resolve</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>resolve</command>
+        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>Does nothing but resolve a selection-set expression
 and echo the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
@@ -566,20 +620,29 @@ and the list of version-control systems it directly supports.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>verbose</command> <arg choice='opt'>n</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>verbose</command> 
+        <arg choice='opt'>n</arg>
+</cmdsynopsis></term>
 <listitem><para>'verbose 1' enables progress and messages,
 'verbose 0' disables them. Higher levels of verbosity are available
 but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>echo</command></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>echo</command>
+        <arg choice='opt'><replaceable>number</replaceable></arg>
+</cmdsynopsis></term>
 <listitem><para>'echo 1' causes each 
 <application>reposurgeon</application> command to be echoed to standard
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>script</command> <arg choice='plain'>filename</arg></cmdsynopsis></term>
+<term><cmdsynopsis>
+    <command>script</command>
+        <arg choice='plain'>filename</arg>
+</cmdsynopsis></term>
 <listitem><para>Takes a filename argument. Reads each line from the file 
 and executes it as a command.</para></listitem>
 </varlistentry>
@@ -645,6 +708,12 @@ be extended with more deletion policies. Policy authors may
 need to know more about how a commit's file operation sequence
 is reduced to normal form after operations from deleted commits
 are prepended to it.</para>
+
+<para>Recall that each commit has a list of file operations, each a M
+(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
+files). Only M operations have associated blobs.  Normally there is
+only one M operation per individual file in a commit's operation
+list.</para>
 
 <para>To understand how the reduction process works, it's enough to
 understand the case where all the operation in the list are working
