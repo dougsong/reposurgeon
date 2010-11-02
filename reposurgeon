@@ -225,6 +225,7 @@ class Blob:
         self.mark = None
         self.subdir = os.path.abspath(subdir)
         self.path = None      # First in-repo path associated with this blob
+        self.color = None
     def blobfile(self):
         return self.subdir + "/blob-" + `id(self)` + "-" + self.mark
     def __str__(self):
@@ -240,6 +241,7 @@ class Tag:
         self.committish = committish
         self.tagger = tagger
         self.comment = content
+        self.color = None
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -296,6 +298,7 @@ class Reset:
     def __init__(self):
         self.ref = None
         self.committish = None
+        self.color = None
     def __str__(self):
         st = "reset %s\n" % self.ref
         if self.committish:
@@ -463,10 +466,11 @@ class Commit:
         self.author = None           # Author of commit
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
-        self.parents = []            # List of parent nodes
+        self.parent_marks = []            # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.pushed_to = False       # Flagged for resolution after delete
+        self.color = None
     def lister(self, eventnum):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
@@ -533,7 +537,10 @@ class Commit:
         return modified
     def children(self):
         "Get a list of this commit's children."
-        return filter(lambda e: self.mark in e.parents, self.repo.commits()) 
+        return filter(lambda e:self.mark in e.parent_marks,self.repo.commits()) 
+    def parents(self):
+        "Get a list of this commit's parents."
+        return filter(lambda e:e.mark in self.parent_marks,self.repo.commits()) 
     def canonicalize(self, warnhook):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
@@ -587,10 +594,10 @@ class Commit:
         if self.committer:
             st += "committer %s\n" % self.committer
         st += "data %d\n%s" % (len(self.comment), self.comment) 
-        if self.parents:
-            st += "from %s\n" % self.parents[0]
-        for ancestor in self.parents[1:]:
-            st += "merge %s\n" % self.parents[0]
+        if self.parent_marks:
+            st += "from %s\n" % self.parent_marks[0]
+        for ancestor in self.parent_marks[1:]:
+            st += "merge %s\n" % self.parent_marks[0]
         for op in self.fileops:
             st += str(op) + "\n"
         return st + "\n"
@@ -740,7 +747,7 @@ class Repository:
                         commit.comment = dp.getvalue()
                         dp.close()
                     elif line.startswith("from") or line.startswith("merge"):
-                        commit.parents.append(line.split()[1])
+                        commit.parent_marks.append(line.split()[1])
                     # Handling of file ops begins.
                     elif line[0] in ("C", "D", "R"):
                         commit.fileops.append(FileOp(line))
@@ -874,8 +881,8 @@ class Repository:
             elif isinstance(event, Commit):
                 for child in event.children():
                     # Reparent each child
-                    child.parents.remove(event.mark)
-                    child.parents += event.parents
+                    child.parent_marks.remove(event.mark)
+                    child.parent_marks += event.parent_marks
                     # Push a copy of the parent's file ops to it
                     # and mark it as needing resolution
                     child.fileops = copy.copy(event.fileops) + child.fileops
@@ -2016,13 +2023,35 @@ an offset literal of +0 or -0.
                 return
         elif len(self.selection) == 2:
             late = self.repo[self.selection[1]]
-            if early.mark not in late.parents:
+            if early.mark not in late.parent_marks:
                 complain("not a parent-child pair")
                 return
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
-        #FIXME
+        # Graph-coloring algorithm to determine if the repo can be split
+        early.color = "early"
+        late.color = "late"
+        conflict = False
+        keepgoing = True
+        while keepgoing and not conflict:
+            keepgoing = False
+            for event in self.repo:
+                for neighbor in self.parents() + self.children():
+                    if event.color:
+                        if neighbor.color == None:
+                            neighbor.color = event.color
+                            keepgoing = True
+                        elif neighbor.color != event.color:
+                            conflict = True
+                            break
+        if conflict:
+            for event in self.repo:
+                event.color = None
+            complain("repository cannot be split here")
+            return
+        # Repo can be split, so we need to color blobs and tags and resets
+        # FIXME
     def help_split(self):
         print """
 """
