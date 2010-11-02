@@ -128,7 +128,7 @@ def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
     "Make an RFC822 timestamp from Unix time."
     if tzoff:
         tzoff = " " + tzoff
-    return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(secs_since_epoch)) + tzoff
+    return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(secs_since_epoch)) + tzoff
 
 def gitdate_from_unixtime(secs_since_epoch, tzoff):
     "Make a git timestamp from Unix time."
@@ -151,9 +151,7 @@ def parse_date_or_die(text):
     if rfcdate:
         (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
                tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-        # Adding tz is necessary for RFC822 dates to round-trip
-        # properly, but it's black magic - I don't know why.
-        unixtime = int(email.utils.mktime_tz(rfcdate)) + tz
+        unixtime = int(email.utils.mktime_tz(rfcdate))
         if tz < 0:
             timezone = "-"
         else:
