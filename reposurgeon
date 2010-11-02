@@ -138,12 +138,11 @@ def parse_date_or_die(text):
     "Recognize date formats that exporters or email programs might emit."
     # OK, here is where we try to be as robust as possible in
     # recognizing dates. First, look for git's preferred format.
-    # We can leave this unchanged.
     text = text.strip() 
     if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
         (unixtime, timezone) = text.split()
         unixtime = int(unixtime)
-        return (text, unixtime, timezone)
+        return (unixtime, timezone)
     # If that didn't work, look for an RFC822 date, which git also
     # accepts. Note, there could be edge cases that Python's parser
     # handles but git doesn't.
@@ -159,16 +158,14 @@ def parse_date_or_die(text):
         tz = abs(tz)
         timezone += "%02d%02d" % (tz/3600, (tz % 3600)/60)
         #text = gitdate_from_unixtime(unixtime, timezone)
-        return (text, unixtime, timezone)
+        return (unixtime, timezone)
     # Also accept IS8601 dates in Zulu time, just becasuse I
-    # like them.  These we'll canonicalize to git format.
-    # Someday we should accept ISO8601 with [+-]nnnn timezone. 
+    # like them.
     try:
         iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
         unixtime = calendar.timegm(iso860date)
         timezone = "+0000"
-        text = gitdate_from_unixtime(unixtime, timezone)
-        return  (text, unixtime, timezone)
+        return  (unixtime, timezone)
     except ValueError:
         # time.strptime() throws this
         # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
@@ -187,10 +184,10 @@ class Attribution:
         # needs to have a following date in the right place.
         person = person.replace(" <", "|").replace("> ", "|")
         try:
-            self.when = person.strip().split("|")[2]
+            when = person.strip().split("|")[2]
         except (ValueError, IndexError):
             raise RepoSurgeonException("malformed attribution %s" % person)
-        (self.when, self.unixtime, self.timezone) = parse_date_or_die(self.when)
+        (self.unixtime, self.timezone) = parse_date_or_die(when)
     def isodate(self):
         "Return ISO format for time/date of this action."
         return iso8601_from_unixtime(self.unixtime, self.timezone)
@@ -210,7 +207,7 @@ class Attribution:
                 and self.unixtime == other.unixtime
                 and self.timezone == other.timezone)
     def __str__(self):
-        return self.name + " <" + self.email + "> " + self.when
+        return self.name + " <" + self.email + "> " + self.gitdate()
 
 class Blob:
     "Represent a detached blob of data referenced by a mark."
@@ -266,7 +263,7 @@ class Tag:
                     print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (text, unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
+        (unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
         if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s (delta %d)" \
@@ -493,7 +490,7 @@ class Commit:
                     print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (text, unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
+        (unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
         if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s (delta %d)" \
@@ -511,7 +508,7 @@ class Commit:
                     print >>sys.stderr,"reposurgeon: in commit %d, Committer is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (text, unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
+        (unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
         if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in commit %d, Committer-Date is modified %s -> %s (delta %d)" \
