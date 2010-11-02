@@ -23,7 +23,7 @@ indextemplate = """
 <table width='100%%' cellpadding='0' summary='Canned page header'>
 <tr>
 <td>Resource page for %(package)s %(version)s</td>
-<td align="center"><img src="sturgeon2.gif"></td>
+<td align="center"><img src="reposturgeon.gif"></td>
 <td align='right'>%(date)s</td>
 </tr>
 </table>
