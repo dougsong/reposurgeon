@@ -120,59 +120,57 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
-def iso8601_from_unixtime(secs_since_epoch, tzoff=""):
-    "Make an ISO8601 timestamp frm Unix time."
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(secs_since_epoch)) + tzoff
-
-def rfc822_from_unixtime(secs_since_epoch, tzoff=""):
-    "Make an RFC822 timestamp from Unix time."
-    if tzoff:
-        tzoff = " " + tzoff
-    return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(secs_since_epoch)) + tzoff
-
-def gitdate_from_unixtime(secs_since_epoch, tzoff):
-    "Make a git timestamp from Unix time."
-    return str(secs_since_epoch) + " " + tzoff
-
-def parse_date_or_die(text):
-    "Recognize date formats that exporters or email programs might emit."
-    # OK, here is where we try to be as robust as possible in
-    # recognizing dates. First, look for git's preferred format.
-    text = text.strip() 
-    if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
-        (unixtime, timezone) = text.split()
-        unixtime = int(unixtime)
-        return (unixtime, timezone)
-    # If that didn't work, look for an RFC822 date, which git also
-    # accepts. Note, there could be edge cases that Python's parser
-    # handles but git doesn't.
-    rfcdate = email.utils.parsedate_tz(text) 
-    if rfcdate:
-        (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-               tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
-        unixtime = int(email.utils.mktime_tz(rfcdate))
-        if tz < 0:
-            timezone = "-"
-        else:
-            timezone = "+"
-        tz = abs(tz)
-        timezone += "%02d%02d" % (tz/3600, (tz % 3600)/60)
-        #text = gitdate_from_unixtime(unixtime, timezone)
-        return (unixtime, timezone)
-    # Also accept IS8601 dates in Zulu time, just becasuse I
-    # like them.
-    try:
-        iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
-        unixtime = calendar.timegm(iso860date)
-        timezone = "+0000"
-        return  (unixtime, timezone)
-    except ValueError:
-        # time.strptime() throws this
-        # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
-        pass
-    # Date format not recognized
-    raise RepoSurgeonException("'%s' is not a valid timestamp" % text)
-
+class Date:
+    "A time/date in local time."
+    def __init__(self, text):
+        "Recognize date formats that exporters or email programs might emit."
+        # OK, here is where we try to be as robust as possible in
+        # recognizing dates. First, look for git's preferred format.
+        text = text.strip() 
+        if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
+            (self.timestamp, self.timezone) = text.split()
+            self.timestamp = int(self.timestamp)
+            return
+        # If that didn't work, look for an RFC822 date, which git also
+        # accepts. Note, there could be edge cases that Python's parser
+        # handles but git doesn't.
+        rfcdate = email.utils.parsedate_tz(text) 
+        if rfcdate:
+            (tm_year, tm_mon, tm_mday, tm_hour, tm_min,
+                   tm_sec, tm_wday, tm_yday, tim_isdst, tz) = rfcdate
+            self.timestamp = int(email.utils.mktime_tz(rfcdate))
+            if tz < 0:
+                self.timezone = "-"
+            else:
+                self.timezone = "+"
+            tz = abs(tz)
+            self.timezone += "%02d%02d" % (tz/3600, (tz % 3600)/60)
+            return
+        # Also accept IS8601 dates in Zulu time, just because I like them.
+        try:
+            iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+            self.timestamp = calendar.timegm(iso860date)
+            self.timezone = "+0000"
+            return
+        except ValueError:
+            # time.strptime() throws this
+            # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
+            pass
+        # Date format not recognized
+        raise RepoSurgeonException("'%s' is not a valid timestamp" % text)
+    def iso8601(self):
+        "Format as an ISO8601 timestamp."
+        return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.timestamp)) + self.timezone
+    def rfc822(self):
+        "Format as an RFC822 timestamp."
+        return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(self.timestamp)) + " " + self.timezone
+    def delta(self, other):
+        return other.timestamp - self.timestamp
+    def __str__(self):
+        "Format as a git timestamp."
+        return str(self.timestamp) + " " + self.timezone
+    def __eq__(self, other):
+        return self.timestamp == other.timestamp and self.timezone == other.timezone
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
     def __init__(self, person):
@@ -184,30 +182,20 @@ class Attribution:
         # needs to have a following date in the right place.
         person = person.replace(" <", "|").replace("> ", "|")
         try:
-            when = person.strip().split("|")[2]
+            self.date = Date(person.strip().split("|")[2])
         except (ValueError, IndexError):
             raise RepoSurgeonException("malformed attribution %s" % person)
-        (self.unixtime, self.timezone) = parse_date_or_die(when)
-    def isodate(self):
-        "Return ISO format for time/date of this action."
-        return iso8601_from_unixtime(self.unixtime, self.timezone)
-    def rfc822date(self):
-        "Return RFC822 format for time/date of this action."
-        return rfc822_from_unixtime(self.unixtime, self.timezone)
-    def gitdate(self):
-        "Return git internal format for time/date of this action."
-        return gitdate_from_unixtime(self.unixtime, self.timezone)
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
-        msg[hdr + "-Date"] = self.rfc822date()
+        msg[hdr + "-Date"] = self.date.rfc822()
     def __eq__(self, other):
         "Compare attributions after canonicalization."
-        return (self.name == other.name and self.email == other.email
-                and self.unixtime == other.unixtime
-                and self.timezone == other.timezone)
+        return (self.name == other.name
+                and self.email == other.email
+                and self.date == other.date)
     def __str__(self):
-        return self.name + " <" + self.email + "> " + self.gitdate()
+        return self.name + " <" + self.email + "> " + str(self.date)
 
 class Blob:
     "Represent a detached blob of data referenced by a mark."
@@ -263,13 +251,14 @@ class Tag:
                     print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (unixtime, timezone) = parse_date_or_die(msg["Tagger-Date"])
-        if unixtime!=self.tagger.unixtime or timezone!=self.tagger.timezone:
+        date = Date(msg["Tagger-Date"])
+        if date != self.tagger.date:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s (delta %d)" \
-                      % (int(msg["Event-Number"]), (self.tagger.unixtime, unixtime), (self.tagger.timezone, timezone), unixtime - self.tagger.unixtime)
-            self.tagger.unixtime = unixtime
-            self.tagger.timezone = timezone
+                      % (int(msg["Event-Number"]),
+                         self.tagger.date, self.date,
+                         self.tagger.date.delta(self.date))
+            self.tagger.date = date
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
@@ -490,13 +479,14 @@ class Commit:
                     print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (unixtime, timezone) = parse_date_or_die(msg["Author-Date"])
-        if unixtime!=self.author.unixtime or timezone!=self.author.timezone:
+        date = Date(msg["Author-Date"])
+        if date != self.author.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, Author-Date is modified %s -> %s (delta %d)" \
-                      % (int(msg["Event-Number"]), (self.author.unixtime, unixtime), (self.author.timezone, timezone), unixtime - self.author.unixtime)
-            self.author.unixtime = unixtime
-            self.author.timezone = timezone
+                print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified %s -> %s (delta %d)" \
+                      % (int(msg["Event-Number"]),
+                         self.author.date, self.date,
+                         self.author.date.delta(self.date))
+            self.author.date = date
             modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newname or not newemail:
@@ -508,13 +498,14 @@ class Commit:
                     print >>sys.stderr,"reposurgeon: in commit %d, Committer is modified" \
                           % (int(msg["Event-Number"]))
                 modified = True
-        (unixtime, timezone) = parse_date_or_die(msg["Committer-Date"])
-        if unixtime!=self.committer.unixtime or timezone!=self.committer.timezone:
+        date = Date(msg["Committer-Date"])
+        if date != self.committer.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, Committer-Date is modified %s -> %s (delta %d)" \
-                      % (int(msg["Event-Number"]), (self.committer.unixtime, unixtime), (self.committer.timezone, timezone), unixtime - self.committer.unixtime)
-            self.committer.unixtime = unixtime
-            self.committer.timezone = timezone
+                print >>sys.stderr,"reposurgeon: in event %d, Committer-Date is modified %s -> %s (delta %d)" \
+                      % (int(msg["Event-Number"]),
+                         self.committer.date, self.date,
+                         self.committer.date.delta(self.date))
+            self.committer.date = date
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
@@ -1101,6 +1092,10 @@ def act(cmd):
         return False
     else:
         return True
+
+def iso8601_from_unixtime(secs_since_epoch):
+    "Make an ISO8601 timestamp frm Unix time."
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(secs_since_epoch))
 
 class RepoSurgeon(cmd.Cmd):
     "Repository surgeon command interpreter."
