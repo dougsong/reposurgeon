@@ -14,8 +14,6 @@ import email.message, email.parser, email.utils
 #
 # * Dates in specification expressions.
 #
-# * Warn user when editing a non-final blob
-#
 # * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
@@ -1901,8 +1899,24 @@ may change in a future release.
         if len(self.selection) == 1:
             singleton = self.repo[self.selection[0]]
             if isinstance(singleton, Blob):
-                os.system(editor + " " + singleton.blobfile())
+                def find_successor(event, path):
+                    here = []
+                    for child in event.children():
+                        for fileop in child.fileops:
+                            if fileop.op == "M" and fileop.path == path:
+                                here.append(child.mark)
+                        here += find_successor(child, path)
+                    return here 
+                blobfile = singleton.blobfile()
+                for event in self.repo.commits():
+                    for fileop in event.fileops:
+                        if fileop.op == 'M' and fileop.ref == singleton.mark:
+                            if len(find_successor(event, fileop.path)) > 0:
+                                complain("beware: not the last 'M %s' on its branch" % fileop.path)
+                            break
+                os.system(editor + " " + blobfile)
                 return
+            # Fall through
         # Otherwise, mailboxize and edit the non-blobs in the selection
         try:
             (tfdesc, tfname) = tempfile.mkstemp()
