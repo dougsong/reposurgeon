@@ -59,11 +59,13 @@ defines a common language of primitive operations for
 </refsect1>
 
 <refsect1 id='options'><title>OPERATION</title>
-<para>The program can be run in one of two modes, either as an interactive
-command interpreter or to execute commands given as arguments on the
-<command>reposurgeon</command> invocation line. The only difference
-between these modes is that the interactive one begins by turning on the
-'verbose 1' option.</para>
+<para>The program can be run in one of two modes, either as an
+interactive command interpreter or to execute commands given as
+arguments on the <command>reposurgeon</command> invocation line. The
+only difference between these modes is that the interactive one begins
+by turning on the 'verbose 1' option. Also, in interactive mode,
+Ctrl-P and Ctrl-N will be available to scroll through your command
+history.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
 which must be executed in the specified sequence to build the repo; to
@@ -480,7 +482,7 @@ and 'foo-late'.</para>
 <listitem>
 <para>NOT YET IMPLEMENTED</para>
 
-<para>Expunge files from the selected potion of the repo history; the
+<para>Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.</para>
 
