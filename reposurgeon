@@ -2001,50 +2001,59 @@ an offset literal of +0 or -0.
             complain("too many arguments")
         assert(early and late)
         # Graph-coloring algorithm to determine if the repo can be split
+        wherein = late.parent_marks.index(early.mark)
+        late.parent_marks.remove(early.mark)
         def do_color(commit, color):
             commit.color = color
             for fileop in commit.fileops:
                 if fileop.op == "M" and fileop.ref != "inline":
                     blob = self.repo.find(fileop.ref)
-                    assert isinstance(blob, Blob)
-                    blob.color = color
+                    assert isinstance(self.repo[blob], Blob)
+                    self.repo[blob].color = color
         do_color(early, "early")
         do_color(late, "late")
         conflict = False
         keepgoing = True
+        visited = [False] * len(self.repo.commits())
         while keepgoing and not conflict:
             keepgoing = False
-            for event in self.repo:
-                for neighbor in self.parents() + self.children():
-                    if event.color:
+            for (i, event) in enumerate(self.repo.commits()):
+                if event.color and not visited[i]:
+                    visited[i] = True
+                    for neighbor in event.parents() + event.children():
                         if neighbor.color == None:
                             do_color(neighbor, event.color)
                             keepgoing = True
+                            break
                         elif neighbor.color != event.color:
                             conflict = True
                             break
         if conflict:
             complain("repository cannot be split here")
+            late.parent_marks.push(early.mark, where)
             for event in self.repo:
                 if hasattr(event, "color"):
                     event.color = None
             return
         # Repo can be split, so we need to color tags
-        for e in self.repo.events:
-            if isinstance(e, Tag):
-                e.color = self.find(e.committish)
+        for t in self.repo.events:
+            if isinstance(t, Tag):
+                for c in self.repo.events:
+                    if isinstance(c, Commit):
+                        if c.mark == t.committish:
+                            t.color = c.color
         # Resets are tricky.  One may have both colors.
         trackbranches = {"early": set([]), "late": set([])}
-        for commit in self.commits():
+        for commit in self.repo.commits():
             trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
         early = Repository()
         late = Repository()
         for event in self.repo:
-            if isinstance(event, Branch):
-                if branch.name in trackbranches["early"]:
+            if isinstance(event, Reset):
+                if event.ref in trackbranches["early"]:
                     early.events.append(copy.copy(event))
-                if branch.name in trackbranches["late"]:
+                if event.ref in trackbranches["late"]:
                     late.events.append(copy.copy(event))
             else:
                 if event.color == "early":
@@ -2052,13 +2061,13 @@ an offset literal of +0 or -0.
                 elif event.color == "late":
                     late.events.append(event)
                 else:
-                    raise RepoSurgeonException("coloring algorithm failed")
+                    raise RepoSurgeonException("coloring algorithm failed on %s" % event)
         # Add the split results to the name table. 
         early.name = self.repo.name + "-early" 
-        self.repo_names[early.name] = early
+        self.name_to_repo[early.name] = early
         late.name = self.repo.name + "-late"
-        self.repo_names[late.name] = late
-        del self.repo_names[self.repo.name]
+        self.name_to_repo[late.name] = late
+        del self.name_to_repo[self.repo.name]
         del self.repo
         self.repo = None
     def help_split(self):
