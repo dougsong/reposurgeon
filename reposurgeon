@@ -1610,16 +1610,25 @@ to the type of that repository.
 """
     def do_choose(self, line):
         "Choose a named repo on which to operate."
-        if line:
-            if line in self.name_to_repo:
-                self.repo = self.name_to_repo[line]
-            else:
-                complain("no such repo")
+        if not self.name_to_repo:
+            if verbose > 0:
+                print "reposurgeon: no repositories are loaded."
         repolist = map(lambda n: (n, self.name_to_repo[n].readtime),
                        self.name_to_repo.keys())
         repolist.sort(lambda x, y: cmp(x[1], y[1]))
-        for (name, readtime) in repolist:
-            print "%s %s" % (iso8601_from_unixtime(readtime), name)
+        if not line:
+            for (name, readtime) in repolist:
+                status =  '-'
+                if self.repo and self.repo.name == name:
+                    status = '*'
+                print "%s %s %s" % (iso8601_from_unixtime(readtime), status, name)
+        else:
+            if line in self.name_to_repo:
+                self.repo = self.name_to_repo[line]
+                if verbose:
+                    self.do_stats(line)
+            else:
+                complain("no such repo")
     def help_choose(self):
         print """
 Choose a named repo on which to operate.  The name of a repo is
