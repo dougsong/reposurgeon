@@ -230,6 +230,9 @@ an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para>
 
+<para>The just-read-in repo becomes the current one, selected for
+surgery.</para>
+
 <para>Note: this command does not take a selection set.</para>
 </listitem>
 </varlistentry>
@@ -365,6 +368,9 @@ commit must follow.</para>
 <para>This operation may fail if the commit graph remains connected
 through another path; the tool will detect this. If the repo was named
 'foo', the cut segments will be named 'foo-early' and 'foo-late'.</para>
+
+<para>The original repo will be dropped, and thre will be no chosen repo 
+after this operation.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -512,8 +518,8 @@ to the type of that repository.</para>
 <varlistentry>
 <term><cmdsynopsis><command>stats</command></cmdsynopsis></term>
 <listitem><para>
-Report size statistics and import/export method information after reading
-a repo or stream.
+Report size statistics and import/export method information about
+the currently chosen repository.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -522,6 +528,10 @@ a repo or stream.
         <arg choice='opt'><replaceable>reponame</replaceable></arg>
 </cmdsynopsis></term>
 <listitem>
+<para><application>reposurgeon</application> can hold multiple repository
+states in core.  Each has a name.  At any given time, one may be selected
+for editing.</para>
+
 <para>Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
 repos loaded from standard input are "unnamed".

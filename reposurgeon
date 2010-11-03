@@ -1414,7 +1414,7 @@ class RepoSurgeon(cmd.Cmd):
     def report_select(self, line, method):
         "Generate a repository report on all objects with a specified method."
         if not self.repo:
-            complain("no repo is loaded.")
+            complain("no repo has been chosen.")
             return
         default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.repo)))
         line = self.set_selection_set(line, default)
@@ -1509,7 +1509,7 @@ for exploring the selection-set language.
     # Information-gathering
     #
     def do_stats(self, line):
-        "Report on the loaded repository infrmation"
+        "Report on the chosen repository's information"
         if self.repo:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype), self.repo.events))
@@ -1525,16 +1525,16 @@ for exploring the selection-set language.
                 for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:"), vcstypes[self.repo.type]):
                     print "%14s %s" % (legend, command)
         else:
-            print "reposurgeon: no repository loaded."
+            complain("no repository has been chosen.")
     def help_stats(self):
         print """
-Report size statistics and import/export method information after reading
-a repo or stream.
+Report size statistics and import/export method information of the
+currently chosen repository.
 """
     def do_index(self, line):
         "Generate a summary listing of objects."
         if not self.repo:
-            complain("no repo is loaded.")
+            complain("no repo has been chosen.")
             return
         # We could do all this logic using report_select() and index() methods
         # in the objects, but that would have two disavadntages.  First, we'd
@@ -1711,7 +1711,7 @@ with command-line arguments).
     def do_write(self, line):
         "Stream out the results of repo surgery."
         if not self.repo:
-            complain("no repo is loaded.")
+            complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, range(len(self.repo)))
         if not line:
@@ -1931,7 +1931,7 @@ separation in seconds; the default is 90 seconds.
     def do_timeoffset(self, line):
         "Apply a time offset to all dates in selected events."
         if not self.repo:
-            complain("no repo is loaded.")
+            complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, range(len(self.repo)))
         if not line:
@@ -1985,7 +1985,7 @@ an offset literal of +0 or -0.
     def do_split(self, line):
         "Attempt to topologically split the repo."
         if not self.repo:
-            complain("no repo is loaded.")
+            complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, [])
         if len(self.selection) == 0:
