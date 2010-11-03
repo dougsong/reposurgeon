@@ -356,8 +356,6 @@ changes may be added in future versions of this tool.</para>
     <command>split</command>
         <arg choice='plain'><replaceable>parent</replaceable></arg></cmdsynopsis></term>
 <listitem>
-<para>NOT YET IMPLEMENTED.</para>
-
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the

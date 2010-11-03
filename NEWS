@@ -1,7 +1,10 @@
 			reposurgeon project news
 
 0.2:
-     The 'view' command was a bad idea abd has removed.
+     The promised 'split' operation is now working.
+     The 'view' command was a bad idea and has been removed.
+     A bug that caused spurious date modifications when editing events
+     with a non-local timezone has been fixed.
 
 0.1: 2010-11-01
      First public release. Working with git, untested with hg and bzr

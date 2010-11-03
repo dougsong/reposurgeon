@@ -2037,6 +2037,7 @@ an offset literal of +0 or -0.
                 if hasattr(event, "color"):
                     event.color = None
             return
+        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.repo))
         # Repo can be split, so we need to color tags
         for t in self.repo.events:
             if isinstance(t, Tag):
@@ -2059,7 +2060,7 @@ an offset literal of +0 or -0.
                     late.events.append(copy.copy(event))
             else:
                 if event.color == "early":
-                    late.events.append(event)
+                    early.events.append(event)
                 elif event.color == "late":
                     late.events.append(event)
                 else:
