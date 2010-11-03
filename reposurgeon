@@ -14,6 +14,10 @@ import email.message, email.parser, email.utils
 #
 # * Dates in specification expressions.
 #
+# * Branch labels should resolve to a set, not a location
+#
+# * Warn user when editing a non-final blob
+#
 # * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
@@ -1105,6 +1109,7 @@ class RepoSurgeon(cmd.Cmd):
         self.preferred = None
         self.selection = []
         self.name_to_repo = {}
+        self.history = []
     #
     # Housekeeping hooks.
     #
@@ -1115,6 +1120,7 @@ class RepoSurgeon(cmd.Cmd):
         pass
     def precmd(self, line):
         "Pre-command hook."
+        self.history.append(line)
         if self.repeat:
             sys.stdout.write(line)
         return line
@@ -1505,6 +1511,10 @@ for exploring the selection-set language.
                 interpreter.onecmd(interpreter.precmd(cmdline))
         except IOError:
             complain("failed to open script %s" % line)
+    def do_history(self, line):
+        "Dump your command list from this session so far."
+        for line in self.history:
+            print line
     #
     # Information-gathering
     #

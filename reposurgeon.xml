@@ -700,6 +700,14 @@ tests that are easily checked by eyeball.</para></listitem>
 <listitem><para>Takes a filename argument. Reads each line from the file 
 and executes it as a command.</para></listitem>
 </varlistentry>
+<varlistentry>
+<term><cmdsynopsis>
+    <command>history</command>
+</cmdsynopsis></term>
+<listitem>
+<para>List the commands you have entered this session.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 </refsect1>
