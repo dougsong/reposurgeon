@@ -164,8 +164,8 @@ class Date:
     def __str__(self):
         "Format as a git timestamp."
         return str(self.timestamp) + " " + self.timezone
-    def __eq__(self, other):
-        return self.timestamp == other.timestamp and self.timezone == other.timezone
+    def __cmp__(self, other):
+        return cmp(self.timestamp, other.timestamp)
 
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
@@ -250,16 +250,16 @@ class Tag:
         date = Date(msg["Tagger-Date"])
         if date != self.tagger.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified %s -> %s (delta %d)" \
+                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
-                         self.tagger.date, self.date,
-                         self.tagger.date.delta(self.date))
+                         self.tagger.date, date,
+                         self.tagger.date.delta(date))
             self.tagger.date = date
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in tag %d, comment is modified %s -> %s" \
+                print >>sys.stderr,"reposurgeon: in tag %d, comment is modified '%s' -> '%s'" \
                       % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
             modified = True
             self.comment = newcomment
@@ -478,10 +478,10 @@ class Commit:
         date = Date(msg["Author-Date"])
         if date != self.author.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified %s -> %s (delta %d)" \
+                print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
-                         self.author.date, self.date,
-                         self.author.date.delta(self.date))
+                         self.author.date, date,
+                         self.author.date.delta(date))
             self.author.date = date
             modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
@@ -497,16 +497,16 @@ class Commit:
         date = Date(msg["Committer-Date"])
         if date != self.committer.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Committer-Date is modified %s -> %s (delta %d)" \
+                print >>sys.stderr,"reposurgeon: in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
-                         self.committer.date, self.date,
-                         self.committer.date.delta(self.date))
+                         self.committer.date, date,
+                         self.committer.date.delta(date))
             self.committer.date = date
             modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, comment is modified %s -> %s" \
+                print >>sys.stderr,"reposurgeon: in commit %d, comment is modified '%s' -> '%s'" \
                       % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
             modified = True
             self.comment = newcomment
