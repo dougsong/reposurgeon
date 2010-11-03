@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 0.2:
+     & followed by branch name resolves to everything on the branch.
      The promised 'split' operation (topological cut) is now working.
      There is a new 'drop' command to drop reposories from the load list.
      There is a new 'history' command to display your session history.

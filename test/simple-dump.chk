@@ -57,7 +57,7 @@ index
    127 commit   :126    refs/heads/master
    129 commit   :128    refs/heads/master
    130 branch   :128    refs/heads/master
-   131 tag      -       annotated-sample
+   131 tag      :113    'annotated-sample'
 resolve 15
 [15]
 resolve =TR
@@ -68,10 +68,12 @@ resolve 24..97&=C
 [24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
 resolve 3,:15
 [3, 16]
-resolve @master
-[129]
+resolve *master
+[116, 118, 120, 122, 124, 127, 129, 130]
 resolve @lightweight-sample
 [83]
+resolve *annotated-sample
+[85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 131]
 resolve @annotated-sample
 [114]
 resolve /regression/

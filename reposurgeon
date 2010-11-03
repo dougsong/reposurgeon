@@ -14,8 +14,6 @@ import email.message, email.parser, email.utils
 #
 # * Dates in specification expressions.
 #
-# * Branch labels should resolve to a set, not a location
-#
 # * Warn user when editing a non-final blob
 #
 # * Test hg and bzr methods.
@@ -1236,6 +1234,8 @@ class RepoSurgeon(cmd.Cmd):
                 term = self.eval_polyrange()
                 if term is None:
                     term = self.eval_textsearch()
+                    if term == None:
+                        term = self.eval_branchset()
         if verbose >= DEBUG_LEXER:
             print "%s <- eval_term(), left = %s" % (term, `self.line`)
         return term
@@ -1414,6 +1414,35 @@ class RepoSurgeon(cmd.Cmd):
             if verbose >= DEBUG_LEXER:
                 print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
             return set(matchers)
+    def eval_branchset(self):
+        "Resolve a branch name to its set of associated events."
+        if self.peek() != "*":
+            return None
+        else:
+            self.pop()
+            branchlist = list(self.repo.branches)
+            branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
+            selection = []
+            for symbol in branchlist:
+                if self.line.startswith(os.path.basename(symbol)):
+                    for (i, event) in enumerate(self.repo):
+                        if isinstance(event, Reset):
+                            if event.ref == symbol:
+                                selection.append(i)
+                        elif isinstance(event, Commit):
+                            if event.branch == symbol:
+                                selection.append(i)
+                        elif isinstance(event, Tag):
+                            ti = self.repo.find(event.committish)
+                            assert(ti is not None)
+                            assert(isinstance(self.repo[ti], Commit))
+                            if self.repo[ti].branch == symbol:
+                                selection.append(i)
+                    self.line = self.line[len(os.path.basename(symbol)):]
+                    break
+            else:
+                raise RepoSurgeonException("unknown branch name %s" % self.line)
+            return set(selection)
     #
     # Helpers
     #
@@ -1562,7 +1591,7 @@ currently chosen repository.
                 print "%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch) 
                 continue
             if isinstance(event, Tag):
-                print "%6d tag      -       %4s" % (i+1, event.name,) 
+                print "%6d tag    %6s    %4s" % (i+1, event.committish, `event.name`,) 
                 continue
             if isinstance(event, Reset):
                 print "%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref) 
