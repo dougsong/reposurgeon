@@ -15,7 +15,8 @@ reposurgeon.html: reposurgeon.xml
 	xmlto html-nochunks reposurgeon.xml
 
 clean:
-	rm -fr .rs/* test/.rs* *~ *.1 *.html MANIFEST SHIPPER.*
+	rm -f  *~ *.1 *.html MANIFEST SHIPPER.*
+	rm -fr .rs .rs* tesst/.rs test/.rs*
 	rm -f typescript test/typescript
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
