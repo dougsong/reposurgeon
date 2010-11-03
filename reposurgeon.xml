@@ -874,7 +874,7 @@ never want to risk clobbering a pre-existing repo.  On the other hand,
 we want to be able to run this tool in a directory with a repo and
 modify it in place.</para>
 
-<para>We resolve this directory with a game of three-directory monte.</para>
+<para>We resolve this dilemma by playing a game of three-directory monte.</para>
 
 <procedure>
 <step><para>First, we build the repo in a freshly-created staging
