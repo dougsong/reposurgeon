@@ -1613,6 +1613,7 @@ to the type of that repository.
         if not self.name_to_repo:
             if verbose > 0:
                 print "reposurgeon: no repositories are loaded."
+                return
         repolist = map(lambda n: (n, self.name_to_repo[n].readtime),
                        self.name_to_repo.keys())
         repolist.sort(lambda x, y: cmp(x[1], y[1]))
@@ -1628,7 +1629,7 @@ to the type of that repository.
                 if verbose:
                     self.do_stats(line)
             else:
-                complain("no such repo")
+                complain("no such repo as %s" % line)
     def help_choose(self):
         print """
 Choose a named repo on which to operate.  The name of a repo is
@@ -1639,6 +1640,32 @@ same source.
 
 With no argument, lists the names of the currently stored repositories
 and their load times.
+"""
+    def do_drop(self, line):
+        "Drop a repo from reposurgeon's list."
+        if not self.name_to_repo:
+            if verbose > 0:
+                print "reposurgeon: no repositories are loaded."
+                return
+        if not line:
+            line = self.repo.name
+        if line in self.name_to_repo:
+            holdrepo = self.name_to_repo[line]
+            holdrepo.cleanup()
+            del self.name_to_repo[line]
+            if line == self.repo.name:
+                self.repo = None
+            del holdrepo
+        else:
+            complain("no such repo as %s" % line)
+        if verbose > 0:
+            # Emit listing of remaining repos
+            self.do_choose('')
+    def help_drop(self):
+        print """
+Drop a repo named by the argument from reposurgeon's list, freeing the memory
+used for its metadata and deleting on-disk blobs. With no argument, drops the
+currently chosen repo.
 """
     def do_rename(self, line):
         "Rename a repository."
@@ -1691,7 +1718,9 @@ current restore list is displayed afterwards.
                 self.preferred = self.repo.type
             name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
             self.repo.rename(name)
-            self.name_to_repo[name] = self.repo 
+            self.name_to_repo[name] = self.repo
+        if verbose:
+            self.do_choose('')
     def help_read(self):
         print """
 A read command with no arguments is treated as 'read .', operating on the
@@ -2077,8 +2106,10 @@ an offset literal of +0 or -0.
         # Add the split results to the name table. 
         early.name = self.repo.name + "-early" 
         self.name_to_repo[early.name] = early
+        early.readtime = time.time()
         late.name = self.repo.name + "-late"
         self.name_to_repo[late.name] = late
+        late.readtime = time.time()
         del self.name_to_repo[self.repo.name]
         self.repo.cleanup()
         del self.repo
