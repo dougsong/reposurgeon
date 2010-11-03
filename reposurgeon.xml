@@ -25,7 +25,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 
-<para>The purpose of <application>reposurgeon</application> is to
+<para>The purpose of <command>reposurgeon</command> is to
 enable risky operations that version-control systems don't want to let
 you do, such as (a) editing past comments and metadata, (b) excising
 commits, (c) coalescing commits, (d) removing files and subtrees from
@@ -33,12 +33,12 @@ repo history, and (e) splitting a repo in two by cutting a parent-child
 link, preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for
-<application>reposurgeon</application> was to clean up artifacts
+<command>reposurgeon</command> was to clean up artifacts
 created by repository conversions. It was foreseen that the tool would
 also have applications when code needs to be removed from repositories
 for legal or policy reasons.</para>
 
-<warning><para><application>reposurgeon</application> is a sharp
+<warning><para><command>reposurgeon</command> is a sharp
 enough tool to cut you.  It takes care not to ever write a repository
 in an actually inconsistent state, and will terminate with an error
 rather than proceed when its internal data structures are confused.
@@ -47,7 +47,7 @@ stored commit timestamps to they no longer match the commit sequence
 - that are likely to cause havoc after you're done.  Proceed with
 caution and check your work.</para></warning>
 
-<para>To keep <application>reposurgeon</application> simple and
+<para>To keep <command>reposurgeon</command> simple and
 flexible, it does not do its own repository reading and writing.
 Instead, it relies on being able to parse and emit the repo-command
 streams created by git-fast-export and read by git-fast-import.  This
@@ -55,26 +55,26 @@ means that it can be used on any version-control system that that has
 both fast-export and fast-import utilities.  This set includes git
 itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
-<application>reposurgeon</application> to speak.</para>
+<command>reposurgeon</command> to speak.</para>
 </refsect1>
 
 <refsect1 id='options'><title>OPERATION</title>
 <para>The program can be run in one of two modes, either as an interactive
 command interpreter or to execute commands given as arguments on the
-<application>reposurgeon</application> invocation line. The only difference
+<command>reposurgeon</command> invocation line. The only difference
 between these modes is that the interactive one begins by turning on the
 'verbose 1' option.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
 which must be executed in the specified sequence to build the repo; to
-avoid confusion with <application>reposurgeon</application> commands
+avoid confusion with <command>reposurgeon</command> commands
 we will refer to the stream commands as <emphasis>events</emphasis> in
 this documentation.  These events are implicitly numbered from 1
 upwards.  Most commands require specifying a selection of event
-sequence numbers so <application>reposurgeon</application> will know
+sequence numbers so <command>reposurgeon</command> will know
 which events to modify or delete.</para>
 
-<para>Commands to <application>reposurgeon</application> consist of a
+<para>Commands to <command>reposurgeon</command> consist of a
 command keyword, sometimes followed by a selection set, sometimes
 followed by whitespace-separated arguments. It is often possible to
 omit the selection-set argument and have it default to something
@@ -93,7 +93,7 @@ edit                   ;; edit all editable objects
 
 list 29..71            ;; list summary index of events 20..71
 
-list /regression/      ;; list all commits with comments containing 
+list /regression/      ;; list all commits and tags with comments containing 
                        ;; the string "regression"
 
 delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 15
@@ -213,7 +213,12 @@ these are, respectively, set union and intersection. The | has lower
 precendence than intersection, but you may use curly brackets '{' and
 '}' to group expressions in case there is ambiguity.</para>
 
-<para>Here are the available and planned surgical commands:</para>
+<refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
+
+<para><command>reposurgeon</command> can hold multiple repository
+states in core.  Each has a name.  At any given time, one may be selected
+for editing. Commands in this group import repositories, export them,
+and manipulate the in-core list and the selection.</para>
 
 <variablelist>
 <varlistentry>
@@ -250,17 +255,67 @@ argument is empty or '-' or a named file otherwise.  Fails if the
 argument exists and is a directory or anything other than a plain
 file.</para>
 
-<para>Note: a <command>write</command> with a small selection set is 
-a useful way to examine small groups of commits.</para>
+<para>Note: a <command>write</command> with a small selection set can 
+be a useful way to examine small groups of commits.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><cmdsynopsis>
+    <command>choose</command>
+        <arg choice='opt'><replaceable>reponame</replaceable></arg>
+</cmdsynopsis></term>
+<listitem>
+<para>Choose a named repo on which to operate.  The name of a repo is
+normally the basename of the directory or file it was loaded from, but
+repos loaded from standard input are "unnamed".
+<command>reposurgeon</command> will add a disambiguating
+suffix if there have been multiple reads from the same source.</para>
+
+<para>With no argument, lists the names of the currently stored
+repositories and their load times.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis>
+    <command>drop</command>
+        <arg choice='opt'><replaceable>reponame</replaceable></arg>
+</cmdsynopsis></term>
+<listitem>
+<para>Drop a repo named by the argument from reposurgeon's list,
+freeing the memory used for its metadata and deleting on-disk
+blobs. With no argument, drops the currently chosen repo.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis>
+    <command>rename</command>
+        <arg choice='plain'><replaceable>reponame</replaceable></arg>
+</cmdsynopsis></term>
+<listitem>
+<para>Rename the currently chosen repo; requires an argument.  Won't
+do it if there is already one by the new name.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2 id='rebuild'><title>REBUILDS IN PLACE</title>
+
+<para><command>reposurgeon</command> can rebuild an altered
+repository in place.  Because of safety measures it takes to ensure
+that no exiting repo is ever altered or clobbered, it has to be told
+which untracked files should be saved and restored when the contents
+of the new repository is checked out.</para>
+
+<variablelist>
 <varlistentry>
 <term><cmdsynopsis>
     <command>rebuild</command>
         <arg choice='opt'><replaceable>directory</replaceable></arg>
 </cmdsynopsis></term>
 <listitem><para> Rebuild a repository from the state held by
-<application>reposurgeon</application>.  This command does not take a
+<command>reposurgeon</command>.  This command does not take a
 selection-set argument.  The single argument, if present argument
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import
@@ -271,19 +326,65 @@ backup directory.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis>
+    <command>restore</command> 
+    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
+</cmdsynopsis></term>
+<listitem><para>Add (presumably untracked) files or directories to the repo's 
+list of paths to be restored from the backup directory after a 
+<command>rebuild</command>. Each argument, if any, is interpreted as a
+pathname.  The current restore list is displayed afterwards.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis>
+    <command>unrestore</command>
+    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
+</cmdsynopsis></term>
+<listitem><para>Remove (presumably untracked) files or directories to
+the repo's list of paths to be restored from the backup directory
+after a <command>rebuild</command>. Each argument, if any, is
+interpreted as a pathname.  The current restore list is displayed
+afterwards.</para></listitem>
+</varlistentry>
+</variablelist>
+
+</refsect2>
+
+<refsect2 id='information'><title>INFORMATION AND REPORTS</title>
+
+<para>Commands in this group report information about the selected
+repository.</para>
+
+<variablelist>
+<varlistentry>
+<term><cmdsynopsis>
     <command>list</command>
         <arg choice='opt'><replaceable>selection-set</replaceable></arg>
 </cmdsynopsis></term>
 <listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
-event numbers, the second a timestamp, and the third the leading text
-of the comment.  If there is a second argument, or the first is not
-recognized as a selection set, it will be taken as the name
-of the file to report to; no argument, or one of '-'; writes to
-standard output.
+event numbers, the second a timestamp in local time, and the third the
+leading text of the comment.  If there is a second argument, or the
+first is not recognized as a selection set, it will be taken as the
+name of the file to report to; no argument, or one of '-'; writes to
+standard output.  </para></listitem>
+</varlistentry>
+<varlistentry>
+<term><cmdsynopsis><command>stats</command></cmdsynopsis></term>
+<listitem><para>
+Report size statistics and import/export method information about
+the currently chosen repository.
 </para></listitem>
 </varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2 id='surgical'><title>SURGICAL OPERATIONS</title>
+
+<para>These are the operations the rest of reposurgeon is designed
+to support.</para>
+
+<variablelist>
 <varlistentry>
 <term><cmdsynopsis>
     <command>delete</command>
@@ -321,24 +422,20 @@ information.</para>
 multiple M operations in the on the same file.  Two policies are
 presently available for dealing with this:</para>
 
-<informaltable pgwide='0' frame='all'>
-  <tgroup cols='2' align='center'>
-    <colspec colname='c1'/>
-    <colspec colname='c2'/>
-    <tbody>
-      <row>
-        <entry align='center'>complain</entry>
-	<entry align='left'><para>Complain about them, but do
-	nothing. This is the default.</para></entry>
-      </row>
-      <row>
-        <entry align='center'>coalesce</entry>
-	<entry align='left'><para>Discard all M operations (and associated
-	blobs) except the last.</para></entry>
-      </row>
-    </tbody>
-  </tgroup>
-</informaltable>
+<variablelist>
+<varlistentry>
+<term>complain</term>
+<listitem>
+<para>Complain about them, but do nothing. This is the default.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>coalesce</term>
+<listitem>
+<para>Discard all M operations (and associated blobs) except the last.</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 <para>Under either of these policies, deleting a commit that has
 children does not back out the changes made by that commit, as they
@@ -366,11 +463,12 @@ parent commit, unless it has multiple children in which case the child
 commit must follow.</para>
 
 <para>This operation may fail if the commit graph remains connected
-through another path; the tool will detect this. If the repo was named
-'foo', the cut segments will be named 'foo-early' and 'foo-late'.</para>
+through another path; the tool will detect this.</para>
 
-<para>The original repo will be dropped, and thre will be no chosen repo 
-after this operation.</para>
+<para>On success, original repo will be dropped, and there will be no
+repo still chosen, but two repos will appear in the in-core list. If
+the repo was named 'foo', the cut segments will be named 'foo-early'
+and 'foo-late'.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -435,11 +533,6 @@ no selection set.  If there is an argument it will be taken as the
 name of a mailbox file to read from; no argument, or one of '-'; reads
 from standard input.</para>
 
-<para>Event updates are atomic; if reposurgeon throws an error while in this
-command events updated before the error will keep their changed state,
-but no event will be partially modified. Event numbers are validated
-before any individual event is updated.</para>
-
 <para>Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.</para>
@@ -479,6 +572,9 @@ an offset literal of +0 or -0.</para>
 </listitem>
 </varlistentry>
 </variablelist>
+</refsect2>
+
+<refsect2 id='housekeeping'><title>HOUSEKEEPING</title>
 
 <para>These are backed up by the following housekeeping commands, none of 
 which take a selection set:</para>
@@ -515,66 +611,11 @@ repository (but not a fast-import stream) will implicitly set it
 to the type of that repository.</para>
 </listitem>
 </varlistentry>
-<varlistentry>
-<term><cmdsynopsis><command>stats</command></cmdsynopsis></term>
-<listitem><para>
-Report size statistics and import/export method information about
-the currently chosen repository.
-</para></listitem>
-</varlistentry>
-<varlistentry>
-<term><cmdsynopsis>
-    <command>choose</command>
-        <arg choice='opt'><replaceable>reponame</replaceable></arg>
-</cmdsynopsis></term>
-<listitem>
-<para><application>reposurgeon</application> can hold multiple repository
-states in core.  Each has a name.  At any given time, one may be selected
-for editing.</para>
-
-<para>Choose a named repo on which to operate.  The name of a repo is
-normally the basename of the directory or file it was loaded from, but
-repos loaded from standard input are "unnamed".
-<application>reposurgeon</application> will add a disambiguating
-suffix if there have been multiple reads from the same source.</para>
-
-<para>With no argument, lists the names of the currently stored
-repositories and their load times.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term><cmdsynopsis>
-    <command>rename</command>
-        <arg choice='opt'><replaceable>reponame</replaceable></arg>
-</cmdsynopsis></term>
-<listitem>
-<para>Rename the currently chosen repo; requires an argument.  Won't
-do it if there is already one by the new name.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term><cmdsynopsis>
-    <command>restore</command> 
-    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
-</cmdsynopsis></term>
-<listitem><para>Add (presumably untracked) files or directories to the repo's 
-list of paths to be restored from the backup directory after a 
-<command>rebuild</command>. Each argument, if any, is interpreted as a
-pathname.  The current restore list is displayed afterwards.</para></listitem>
-</varlistentry>
-<varlistentry>
-<term><cmdsynopsis>
-    <command>unrestore</command>
-    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
-</cmdsynopsis></term>
-<listitem><para>Remove (presumably untracked) files or directories to
-the repo's list of paths to be restored from the backup directory
-after a <command>rebuild</command>. Each argument, if any, is
-interpreted as a pathname.  The current restore list is displayed
-afterwards.</para></listitem>
-</varlistentry>
 </variablelist>
+
+</refsect2>
+
+<refsect2 id='instrumentation'><title>INSTRUMENTATION</title>
 
 <para>A few commands have been implemented primarily for debugging and
 regression-testing purposes, but may be useful in unusual
@@ -609,12 +650,12 @@ for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>names</command></cmdsynopsis></term>
-<listitem><para>List the names of all knowmn branches and tags.
+<listitem><para>List the names of all known branches and tags.
 Tells you what things are legal after @.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis><command>version</command></cmdsynopsis></term>
-<listitem><para>Report the version of <application>reposurgeon</application>
+<listitem><para>Report the version of <command>reposurgeon</command>
 and the list of version-control systems it directly supports.
 </para></listitem>
 </varlistentry>
@@ -629,11 +670,11 @@ but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><cmdsynopsis>
-    <command>echo</command>
+    <command>repeat</command>
         <arg choice='opt'><replaceable>number</replaceable></arg>
 </cmdsynopsis></term>
-<listitem><para>'echo 1' causes each 
-<application>reposurgeon</application> command to be echoed to standard
+<listitem><para>'repeat 1' causes each 
+<command>reposurgeon</command> command to be echoed to standard
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
 </varlistentry>
@@ -646,31 +687,32 @@ tests that are easily checked by eyeball.</para></listitem>
 and executes it as a command.</para></listitem>
 </varlistentry>
 </variablelist>
+</refsect2>
 </refsect1>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
 
-<para>Guarantee: <application>reposurgeon</application> only requires
+<para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
 history, not its entire content history. Blobs are stored on disk.</para>
 
-<para>Guarantee: <application>reposurgeon</application> never modifies
+<para>Guarantee: <command>reposurgeon</command> never modifies
 the contents of a repository it reads or deletes any repository. The
 results of surgery are always expressed in a new repository </para>
 
 <para>Guarantee: Any line in a fast-import stream that is not a part
-of a command <application>reposurgeon</application> parses and
+of a command <command>reposurgeon</command> parses and
 understands will be passed through unaltered.  At present the set of
 potential passthroughs is known to include the
 <command>progress</command>, the <command>options</command>, and
 <command>checkpoint</command> commands as well as comments led by
 #.</para>
 
-<para>Guarantee: All <application>reposurgeon</application> operations either
+<para>Guarantee: All <command>reposurgeon</command> operations either
 preserve all repository state they are not explicitly told to modify
 or warn you when they cannot do so.</para>
 
-<para>Limitation: Because <application>reposurgeon</application>
+<para>Limitation: Because <command>reposurgeon</command>
 relies on other programs to generate and interpret the fast-import command
 stream, it is subject to bugs in those prograns.</para>
 
@@ -695,14 +737,14 @@ export/import separately.</para>
 
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
-<application>reposurgeon</application>. See the <ulink
+<command>reposurgeon</command>. See the <ulink
 url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
 Wiki tools page</ulink> for a large collection of such tools.</para>
 </refsect1>
 
-<refsect1 id='policy'><title>CANONICALIZATION RULES</title>
+<refsect1 id='canonicalization'><title>CANONICALIZATION RULES</title>
 
-<para>It is extended that <application>reposurgeon</application> will
+<para>It is extended that <command>reposurgeon</command> will
 be extended with more deletion policies. Policy authors may 
 need to know more about how a commit's file operation sequence
 is reduced to normal form after operations from deleted commits
@@ -822,7 +864,7 @@ describes all possible cases and all but one of the reductions.</para>
 <refsect1 id='recovery'><title>CRASH RECOVERY</title>
 
 <para>This section will become relevant only if 
-<application>reposurgeon</application> or something underneath it in the
+<command>reposurgeon</command> or something underneath it in the
 software and hardware stack crashes while in the middle of writing out 
 a repository, in particular if the target directory of the rebuild is
 your current directory.</para>
@@ -839,14 +881,14 @@ modify it in place.</para>
 directory.  if your target directory is named
 <filename>/path/to/foo</filename>, the staging directory will be a
 peer named <filename>/path/to/foo-stageNNNN</filename>, where NNNN is
-a cookie derived from <application>reposurgeon</application>'s process
+a cookie derived from <command>reposurgeon</command>'s process
 ID.</para></step>
 
 <step>
 <para>We then make an empty backup directory.  This directory will
 be named <filename>/path/to/foo.~N~</filename>, where N is incremented
 so as not to conflict with any existing backup drectories.  
-<application>reposurgeon</application> never, under any circumstances.
+<command>reposurgeon</command> never, under any circumstances.
 ever deletes a backup directory.</para>
 
 <para>So far, all operations are safe; the worst that can happen up to
