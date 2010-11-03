@@ -40,7 +40,7 @@ version="0.1~dev"
 
 vcstypes = {
     "git" : (".git",
-             "git fast-export -M -C --all >%s",
+             "git fast-export -M -C --signed-tags=warn --all >%s",
              "git init",
              "git fast-import <%s",
              "git checkout"),
