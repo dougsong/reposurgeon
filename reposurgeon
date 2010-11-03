@@ -615,6 +615,7 @@ class Repository:
         if verbose >= DEBUG_SHUFFLE:
             self.warn("repository cleanup calls " + cmd)
         os.system(cmd)
+    __del__ = cleanup
     def subdir(self, name=None):
         if name is None:
             name = self.name
@@ -1128,6 +1129,7 @@ class RepoSurgeon(cmd.Cmd):
         "Tell all the repos we're holding to clean up."
         for repo in self.name_to_repo.values():
             repo.cleanup()
+    __del__ = cleanup
     #
     # The selection-language parsing code starts here.
     #
@@ -2068,6 +2070,7 @@ an offset literal of +0 or -0.
         late.name = self.repo.name + "-late"
         self.name_to_repo[late.name] = late
         del self.name_to_repo[self.repo.name]
+        self.repo.cleanup()
         del self.repo
         self.repo = None
     def help_split(self):
