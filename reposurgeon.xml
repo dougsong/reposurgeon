@@ -495,13 +495,13 @@ and 'foo-late'.</para>
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.</para>
 
-<para>All filemodify (M) operations and delete (D) involving a matched
-file in the selected set of events are removed.  Renames are followed
-as the tool walks forward in the selection set; each triggers a
-warning message. If a selected file is a copy (C) target, the copy
-will be deleted and a wearning message issued. If a selected file
-is a copy source, the copy target will be added to the list of
-paths to be deleted and a warning issued.</para>
+<para>All filemodify (M) operations and delete (D) operations
+involving a matched file in the selected set of events are removed.
+Renames are followed as the tool walks forward in the selection set;
+each triggers a warning message. If a selected file is a copy (C)
+target, the copy will be deleted and a wearning message issued. If a
+selected file is a copy source, the copy target will be added to the
+list of paths to be deleted and a warning issued.</para>
 
 <para>After file expunges have been performed, any commits with no
 remaining file operations will be deleted, and any tags pointing to

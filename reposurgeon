@@ -2179,6 +2179,39 @@ This operation may fail if the commit graph remains connected
 through another path; the tool will detect this. If the repo was named
 'foo', the cut segments will be named 'foo-early' and 'foo-late'.
 """
+    def do_expunge(self, line):
+        "Expunge files from the chosen repository."
+        if not self.repo:
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, [])
+        try:
+            matcher = re.compile("|".join(map(lambda s: "(?:" + s + ")",
+                                              line.split())))
+        except re.error:
+            complain("you confused the regular-expression processor.")
+        modified = []
+        for event in self.selection:
+            pass
+        # FIXME
+    def help_expunge(self):
+        print """
+Expunge files from the selected portion of the repo history; the
+default is the entire history.  The arguments to this command may be
+paths or Python regular expressions matching paths.
+
+All filemodify (M) operations and delete (D) operations involving a
+matched file in the selected set of events are removed.  Renames are
+followed as the tool walks forward in the selection set; each triggers
+a warning message. If a selected file is a copy (C) target, the copy
+will be deleted and a earning message issued. If a selected file is a
+copy source, the copy target will be added to the list of paths to be
+deleted and a warning issued.
+
+After file expunges have been performed, any commits with no
+remaining file operations will be deleted, and any tags pointing to
+them.
+"""
 
 if __name__ == '__main__':
     try:
