@@ -937,6 +937,9 @@ class Repository:
 def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
 
+def announce(msg):
+    "reposurgeon:", msg
+
 def read_repo(source, preferred):
     "Read a repository using fast-import."
     if source == '-':
@@ -951,9 +954,9 @@ def read_repo(source, preferred):
     else:
         if verbose > 1:
             if preferred:
-                print "reposurgeon: looking for a %s repo..." % preferred
+                announce("looking for a %s repo..." % preferred)
             else:
-                print "reposurgeon: looking for any repo..."
+                announce("reposurgeon: looking for any repo...")
         hitcount = 0
         for (name, (dirname, exporter, initializer, importer, checkout)) in vcstypes.items():
             if preferred and name != preferred:
@@ -1049,7 +1052,7 @@ def rebuild_repo(repo, target, preferred):
             complain("repo checkout failed")
             return
         if verbose:
-            print "reposurgeon: rebuild is complete."
+            announce("rebuild is complete.")
 
         os.chdir(here)
         # Rebuild succeeded - make an empty backup directory
@@ -1157,7 +1160,7 @@ class RepoSurgeon(cmd.Cmd):
             else:
                 self.selection.sort()
         except RepoSurgeonException, e:
-            print >>sys.stderr, "reposurgeon:", e.msg
+            print complain(e.msg)
             self.selection = []
         return self.line
     def peek(self):
@@ -1366,7 +1369,7 @@ class RepoSurgeon(cmd.Cmd):
                     if not matched:
                         raise RepoSurgeonException("couldn't match a name at @%s" % self.line)
             if verbose >= DEBUG_LEXER:
-                print "reposurgeon: location list is %s with %s left" % (selection, `self.line`)
+                announce("location list is %s with %s left" % (selection, `self.line`))
             # Resolve spans
             resolved = []
             spanning = last = 0
@@ -1382,7 +1385,7 @@ class RepoSurgeon(cmd.Cmd):
                     last = elt
             selection = resolved
             if verbose >= DEBUG_LEXER:
-                print "reposurgeon: resolved list is %s with %s left" % (selection, `self.line`)
+                announce("resolved list is %s with %s left" % (selection, `self.line`))
             # Sanity checks
             if spanning:
                 raise RepoSurgeonException("incomplete range expression.")
@@ -1494,7 +1497,7 @@ class RepoSurgeon(cmd.Cmd):
             except ValueError:
                 print "reposurgeon: verbosity value must be an integer"
         if not line or verbose:
-            print "reposurgeon: verbose %d" % verbose
+            announce("verbose %d" % verbose)
     def help_verbose(self):
         print """
 Without an argument, this command requists a report of the verbosity
@@ -1507,9 +1510,9 @@ developers only.
         try:
             self.repeat = int(line)
         except ValueError:
-            print "reposurgeon: repeat value must be an integer"
+            announce("repeat value must be an integer")
         if verbose:
-            print "reposurgeon: repeat %d" % self.repeat
+            announce("repeat %d" % self.repeat)
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
@@ -1637,9 +1640,9 @@ output.
                 complain("known types are %s.") % known
         if verbose:
             if not self.preferred:
-                print "reposurgeon: no preferred type has been set."
+                announce("no preferred type has been set.")
             else:
-                print "reposurgeon: %s is the preferred type." % self.preferred
+                announce("%s is the preferred type." % self.preferred)
     def help_prefer(self):
         print """
 Report or set (with argument) the preferred type of repository. This
@@ -1657,7 +1660,7 @@ to the type of that repository.
         "Choose a named repo on which to operate."
         if not self.name_to_repo:
             if verbose > 0:
-                print "reposurgeon: no repositories are loaded."
+                complain("no repositories are loaded.")
                 return
         repolist = map(lambda n: (n, self.name_to_repo[n].readtime),
                        self.name_to_repo.keys())
@@ -1690,7 +1693,7 @@ and their load times.
         "Drop a repo from reposurgeon's list."
         if not self.name_to_repo:
             if verbose > 0:
-                print "reposurgeon: no repositories are loaded."
+                complain("no repositories are loaded.")
                 return
         if not line:
             line = self.repo.name
@@ -1798,7 +1801,7 @@ with command-line arguments).
                 self.repo.fast_export(self.selection, out)
                 out.close()
             except OSError:
-                print "reposurgeon: open of %s for write failed.\n" % line
+                complain("open of %s for write failed.\n" % line)
     def help_write(self):
         print """
 Dump a fast-import stream representing selected events to standard output
@@ -1867,9 +1870,9 @@ to standard output.
                 modified.append(eventnum+1)
         if verbose:
             if not modified:
-                print "reposurgeon: no events modified."
+                announce("no events modified.")
             else:
-                print "reposurgeon: modified events are %s." % (modified,)
+                announce("modified events are %s." % (modified,))
 
     def help_mailbox_in(self):
         print """
@@ -2005,7 +2008,7 @@ only when they are the final ones on the commit's branch.
             elif this.committer.date.delta(next.committer.date) < timefuzz:
                 eligible.append(commits[i][0])
         if verbose:
-            print "reposurgeon: deletion set is %s" % map(lambda x: x+1, eligible)
+            announce("deletion set is %s" % map(lambda x: x+1, eligible))
         self.repo.delete(eligible, "coalesce")
     def help_coalesce(self):
         print """
@@ -2207,12 +2210,12 @@ through another path; the tool will detect this. If the repo was named
                         if fileop.op in "DM" and expunge.search(fileop.path):
                             deletia.append(i)
                             if verbose > 0:
-                                print "reposurgeon: at commit %d, deleting" \
-                                      % (ei, fileop.path)
+                                announce("at commit %d, deleting" \
+                                      % (ei, fileop.path))
                                 if fileop.op == 'M':
                                     os.remove(fileop.path)
                                     if verbose:
-                                        print "reposurgeon: at %d, deleting %s" % (i+1, fileop.path)
+                                        announce("at %d, deleting %s" % (i+1, fileop.path))
                         elif fileop.op in "RC":
                             if expunge.search(fileop.source):
                                 deletia.append(i)
@@ -2238,7 +2241,7 @@ through another path; the tool will detect this. If the repo was named
         # Now remove any commits that no longer have fileops
         deletia = map(lambda x: x[0], filter(lambda (i, e): not isinstance(e, Commit) or len(e.fileops), enumerate(self.repo.events)))
         if verbose:
-            print "reposurgeon: deleting empty commits %s" % map(lambda x: x+1, deletia) 
+            announce("deleting empty commits %s" % map(lambda x: x+1, deletia))
             deletia.reverse()
             for i in deletia:
                 self.repo.events.pop(i)
@@ -2282,7 +2285,7 @@ if __name__ == '__main__':
             interpreter.cleanup()
         raise SystemExit, 0
     except RepoSurgeonException, e:
-        print >>sys.stderr, "reposurgeon:", e.msg
+        complain(e.msg)
         raise SystemExit, 1
     except KeyboardInterrupt:
         print ""
