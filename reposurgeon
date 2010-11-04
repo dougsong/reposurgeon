@@ -224,7 +224,8 @@ class Tag:
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Tag-Name"] = self.name
-        self.tagger.email_out(msg, "Tagger")
+        if self.tagger:
+            self.tagger.email_out(msg, "Tagger")
         msg.set_payload(self.comment)
         return str(msg)
     def email_in(self, msg):
@@ -240,25 +241,26 @@ class Tag:
                       % (int(msg["Event-Number"]), `self.name`, `newname`)
             self.name = newname
             modified = True
-        (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
-        if not newname or not newemail:
-            raise FatalException("can't recognize address in Tagger")
-        else:
-            if self.tagger.name != newname or self.tagger.email != newemail:
-                (self.tagger.name, self.tagger.email) = (newname, newemail)
+        if "Tagger" in msg:
+            (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
+            if not newname or not newemail:
+                raise FatalException("can't recognize address in Tagger")
+            else:
+                if self.tagger.name != newname or self.tagger.email != newemail:
+                    (self.tagger.name, self.tagger.email) = (newname, newemail)
+                    if verbose >= DEBUG_EMAILIN:
+                        print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
+                              % (int(msg["Event-Number"]))
+                    modified = True
+            date = Date(msg["Tagger-Date"])
+            if date != self.tagger.date:
                 if verbose >= DEBUG_EMAILIN:
-                    print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
-                          % (int(msg["Event-Number"]))
+                    print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
+                          % (int(msg["Event-Number"]),
+                             self.tagger.date, date,
+                             self.tagger.date.delta(date))
+                self.tagger.date = date
                 modified = True
-        date = Date(msg["Tagger-Date"])
-        if date != self.tagger.date:
-            if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
-                      % (int(msg["Event-Number"]),
-                         self.tagger.date, date,
-                         self.tagger.date.delta(date))
-            self.tagger.date = date
-            modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -268,8 +270,11 @@ class Tag:
             self.comment = newcomment
         return modified
     def __str__(self):
-        return "tag %s\nfrom %s\ntagger %s\ndata %d\n%s\n" \
-             % (self.name, self.committish, self.tagger, len(self.comment), self.comment)
+        st = "tag %s\nfrom %s\n" % (self.name, self.committish)
+        if self.tagger:
+            st += "tagger %s\n" % self.tagger
+        st += "data %d\n%s\n" % (len(self.comment), self.comment,)
+        return st
 
 class Reset:
     "Represents a branch creation."
@@ -795,6 +800,7 @@ class Repository:
                 if baton:
                     baton.twirl()
             elif line.startswith("tag"):
+                tagger = None
                 tagname = line[4:].strip()
                 line = readline()
                 if line.startswith("from"):
@@ -803,12 +809,13 @@ class Repository:
                     self.error("missing from after tag")
                 line = readline()
                 if line.startswith("tagger"):
-                        try:
-                            tagger = Attribution(line[7:])
-                        except ValueError:
-                            self.error("malformed tagger line")
+                    try:
+                        tagger = Attribution(line[7:])
+                    except ValueError:
+                        self.error("malformed tagger line")
                 else:
-                    self.error("missing tagger after from in tag")
+                    self.warn("missing tagger after from in tag")
+                    pushback(line)
                 dp = read_data(cStringIO.StringIO())
                 self.events.append(Tag(tagname,
                                        referent, tagger, dp.getvalue()))
@@ -2067,9 +2074,10 @@ separation in seconds; the default is 90 seconds.
         for ei in self.selection:
             event = self.repo[ei]
             if isinstance(event, Tag):
-                event.tagger.unixtime += offset
-                if len(args) > 1:
-                    event.tagger.timezone = args[1]
+                if event.tagger:
+                    event.tagger.unixtime += offset
+                    if len(args) > 1:
+                        event.tagger.timezone = args[1]
             elif isinstance(event, Commit):
                 event.committer.unixtime += offset
                 if len(args) > 1:
