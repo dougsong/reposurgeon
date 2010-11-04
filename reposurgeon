@@ -202,6 +202,9 @@ class Blob:
         self.color = None
     def blobfile(self):
         return self.subdir + "/blob-" + `id(self)` + "-" + self.mark
+    def release(self):
+        os.remove(self.blobfile())
+        self.path = None             # Marked for deletion
     def __str__(self):
         dp = open(self.blobfile())
         content = dp.read()
@@ -622,7 +625,7 @@ class Repository:
     def cleanup(self):
         delcmd = "rm -fr %s" % (self.subdir(),)
         if verbose >= DEBUG_SHUFFLE:
-            self.warn("repository cleanup calls " + cmd)
+            self.warn("repository cleanup calls " + delcmd)
         os.system(delcmd)
     __del__ = cleanup
     def subdir(self, name=None):
@@ -2214,15 +2217,19 @@ through another path; the tool will detect this. If the repo was named
                 if hasattr(event, "fileops"):
                     deletia = []
                     for (i, fileop) in enumerate(event.fileops):
+                        if verbose > 1:
+                            announce("commit %s: %s" % (ei, str(fileop)))
                         if fileop.op in "DM" and expunge.search(fileop.path):
                             deletia.append(i)
-                            if verbose > 0:
-                                announce("at commit %d, deleting" \
-                                      % (ei, fileop.path))
-                                if fileop.op == 'M':
-                                    os.remove(fileop.path)
-                                    if verbose:
-                                        announce("at %d, deleting %s" % (i+1, fileop.path))
+                            if fileop.op == 'M':
+                                if fileop.ref == 'inline':
+                                    os.remove(fileop.copyname)
+                                else:
+                                    bi = self.repo.find(fileop.ref)
+                                    assert(isinstance(self.repo[bi], Blob))
+                                    self.repo[bi].release()
+                                if verbose:
+                                    announce("at %d, deleting %s" % (i+1, fileop.path))
                         elif fileop.op in "RC":
                             if expunge.search(fileop.source):
                                 deletia.append(i)
@@ -2242,11 +2249,11 @@ through another path; the tool will detect this. If the repo was named
                     if deletia:
                         deletia.reverse()
                         for i in deletia:
-                            fileops.pop(i)
+                            event.fileops.pop(i)
         except re.error:
             raise FatalException("you confused the regular-expression processor.")
-        # Now remove any commits that no longer have fileops
-        deletia = map(lambda x: x[0], filter(lambda (i, e): not isinstance(e, Commit) or len(e.fileops), enumerate(self.repo.events)))
+        # Now remove commits that no longer have fileops, and released blobs.
+        deletia = map(lambda x: x[0], filter(lambda (i, e): not ((isinstance(e, Commit) and not len(e.fileops)) or (isinstance(e, Blob) and not e.path)), enumerate(self.repo.events)))
         if verbose:
             announce("deleting empty commits %s" % map(lambda x: x+1, deletia))
             deletia.reverse()
