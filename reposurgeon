@@ -2215,7 +2215,7 @@ through another path; the tool will detect this. If the repo was named
         if not self.repo:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, [])
+        line = self.set_selection_set(line, range(len(self.repo)))
         def digest(toklist):
             return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
         matchers = line.split()

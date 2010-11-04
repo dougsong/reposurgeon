@@ -53,8 +53,8 @@ defines a common language of primitive operations for
 
 <para><command>reposurgeon</command> is a sharp enough tool to cut
 you.  It takes care not to ever write a repository in an actually
-inconsistent state, and will terminate with an error rather than
-proceed when its internal data structures are confused.  However,
+inconsistent state, and will terminate with an error message rather
+than proceed when its internal data structures are confused.  However,
 there are lots of things you can do with it - like altering stored
 commit timestamps to they no longer match the commit sequence - that
 are likely to cause havoc after you're done.  Proceed with caution and
@@ -532,8 +532,8 @@ separation in seconds; the default is 90 seconds.</para>
 
 <para>The default selection set for this command is =C, all
 commits. Occasionally you may want to restrict it, for example to
-avoid coalescing unrelated "*** empty log message ***" commits from
-CVS lifts.</para>
+avoid coalescing unrelated cliques of "*** empty log message ***"
+commits from CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
