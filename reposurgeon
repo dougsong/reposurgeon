@@ -682,10 +682,10 @@ class Repository:
                 try:
                     count = int(line[5:])
                     dp.write(fp.read(count))
-                except ValueSelf.Error:
-                    raise self.error("bad count in data")
+                except ValueError:
+                    self.error("bad count in data")
             else:
-                raise self.error("malformed data header %s" % `line`)
+                self.error("malformed data header %s" % `line`)
             return dp
         def readline():
             if linebuffers:
