@@ -40,7 +40,7 @@ version="0.1~dev"
 
 vcstypes = {
     "git" : (".git",
-             "git fast-export -M -C --signed-tags=warn --all >%s",
+             "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all >%s",
              "git init",
              "git fast-import <%s",
              "git checkout"),
@@ -749,7 +749,10 @@ class Repository:
                     elif line == "filedeleteall\n":
                         commit.fileops.append(FileOp("filedeleteall"))
                     elif line[0] == "M":
-                        fileop = FileOp(line)
+                        try:
+                            fileop = FileOp(line)
+                        except ValueError, e:
+                            self.error(`e` + " on line " + `line`)
                         commit.fileops.append(fileop)
                         if fileop.ref[0] == ':':
                             self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
@@ -989,7 +992,7 @@ def read_repo(source, preferred):
             if source != '.':
                 incmd += "cd %s >/dev/null;" % source
             incmd += foundexporter % tfname
-            act(incmd)
+            do_or_die(incmd, "repository export")
             tp = open(tfname)
             repo.fast_import(tp, verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source))));
             tp.close()
@@ -1042,19 +1045,13 @@ def rebuild_repo(repo, target, preferred):
     here = os.getcwd()
     try:
         os.chdir(staging)
-        if os.system(initializer):
-            complain("repo initialization failed")
-            return
+        do_or_die(initializer, "repository initialization")
         (tfdesc, tfname) = tempfile.mkstemp()
         tp = open(tfname, "w")
         repo.fast_export(range(len(repo)), tp, verbose and Baton("reposurgeon: exporting"))
         tp.close()
-        if os.system(importer % tfname):
-            complain("repo import failed")
-            return
-        if os.system(checkout):
-            complain("repo checkout failed")
-            return
+        do_or_die(importer % tfname, "repository import")
+        do_or_die(checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
 
@@ -1097,13 +1094,12 @@ def rebuild_repo(repo, target, preferred):
         os.remove(tfname)
         os.system("rm -fr " + staging)
 
-def act(mycmd):
+def do_or_die(mycmd, legend=""):
     (err, out) = commands.getstatusoutput(mycmd)
+    if legend:
+        legend += " "
     if err:
-        complain("'%s' failed" % mycmd)
-        return False
-    else:
-        return True
+        FatalException("%s'%s' failed" % (legend, mycmd))
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."

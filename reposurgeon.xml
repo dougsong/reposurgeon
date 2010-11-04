@@ -49,7 +49,7 @@ defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
 </refsect1>
 
-<refsect1 id='warning'><title>SAFETY WARNING</title>
+<refsect1 id='warning'><title>SAFETY WARNINGS</title>
 
 <para><command>reposurgeon</command> is a sharp enough tool to cut
 you.  It takes care not to ever write a repository in an actually
@@ -66,6 +66,10 @@ publicly-accessible repository with this tool would be a bad idea. All
 of the surgical operations in <command>reposurgeon</command> will
 modify the hash chains, meaning others will become unable to pull
 from or push to the repo.</para>
+
+<para>Under git, signed tags are importted verbatim. However, any
+operation that modifies any commit upstream of the target of the 
+tag will invalidate it.</para>
 
 </refsect1>
 
