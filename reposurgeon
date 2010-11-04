@@ -2287,7 +2287,7 @@ if __name__ == '__main__':
                         interpreter.cmdloop()
                         interpreter.use_rawinput = False
                     else:
-                        # Call the bse merthod so RecoverableExceptios
+                        # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
                         cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
         finally:
