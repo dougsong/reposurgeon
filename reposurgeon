@@ -322,23 +322,28 @@ class FileOp:
         # Modify X followed by delete X is equivalent to delete X 
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
-        if self.op == "M" and other.op in ("R", "C"):
-            # Commute R and C ops with M so they fall towards start of list
+        # Commute R ops with M so they fall towards start of list
+        if self.op == "M" and other.op == "R":
             if self.path == other.source:
                 self.path = other.target
                 return (True, other, self, None, 2)
             # The copy or rename undoes the modification
             elif self.path == other.target:
                 return(True, other, None, None, 3)
+        # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
+        # that is we'd have to duplicate the modify. We'll leave it in place
+        # for now.
+        if self.op == "M" and other.op == "C":
+            return (False, self, other, None, 4)
         #
         # First op D or deleteall
         #
         # Delete followed by modify undoes delete, since M carries whole files 
         if pair == ("D", "M"):
-            return (True, other, None, None, 4)
+            return (True, other, None, None, 5)
         # But we have to leave deletealls in place, since they affect other ops
         if pair == ("deleteall", "M"):
-            return (False, self, other, None, 5)
+            return (False, self, other, None, 6)
         # These cases should be impossible
         if self.op == "deleteall" and other.op != "M":
             return (False, self, other,
@@ -350,14 +355,14 @@ class FileOp:
                 return (False, self, other,
                         "R or C of %s after deletion?" % self.path, -3)
             else:
-                return (False, self, other, None, 6)
+                return (False, self, other, None, 7)
         #
         # First op R
         #
         if pair == ("R", "D"):
             if self.target == other.path:
                 # Rename followed by delete of target composes to nothing
-                return (True, None, None, None, 7)
+                return (True, None, None, None, 8)
             else:
                 # On followed by delete of source discard the delete
                 # but user should be warned. 
@@ -369,16 +374,19 @@ class FileOp:
                     "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
         if pair == ("R", "M") or pair == ("C", "M"):
-            return (False, self, other, None, 7)
-        # Compose renames and copies where possible
-        if self.op == "R" and other.op in ("R", "C"):
+            return (False, self, other, None, 9)
+        # Compose renames where possible
+        if self.op == "R" and other.op == "R":
             if self.target == other.source:
                 self.target = other.target
-                return (True, source, None, None, 8)
+                return (True, source, None, None, 10)
             else:
                 return (False, source, other,
                         "R %s %s is inconsistent with following operation" \
                         % (self.source, self.target), -6)
+        # We could do R a b + C b c -> C a c + R a b, but why?
+        if self.op == "R" and other.op == "C":
+            return (False, self, other, None, 11)
         #
         # First op C
         #
@@ -386,22 +394,22 @@ class FileOp:
             if self.source == target.path:
                 # Copy followed by delete of the source is a rename.
                 self.op = "R"
-                return (True, self, None, None, 9)
+                return (True, self, None, None, 12)
             elif self.target == target.path:
                 # This delete undoes the copy
-                return (True, None, None, None, 10)
+                return (True, None, None, None, 13)
         if pair == ("C", "R"):
             if self.source == other.source:
                 # No reduction
-                return (False, self, other, None, 11)
+                return (False, self, other, None, 14)
             else:
                 # Copy followed by a rename of the target reduces to single copy
                 if self.target == other.source:
                     self.target = other.target
-                    return (True, self, None, None, 12)
+                    return (True, self, None, None, 15)
         if pair == ("C", "C"):
             # No reduction
-            return (False, self, other, None, 13)
+            return (False, self, other, None, 16)
         #
         # Case not covered
         #
@@ -2210,7 +2218,7 @@ through another path; the tool will detect this. If the repo was named
                     if deletia:
                         if verbose > 0:
                             print "reposurgeon: deleting at commit %d" % ei
-                       deletia.reverse()
+                        deletia.reverse()
                        # FIXME
         except re.error:
             raise RepoSurgeonException("you confused the regular-expression processor.")

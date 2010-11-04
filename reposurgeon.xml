@@ -98,7 +98,7 @@ list 29..71            ;; list summary index of events 20..71
 list /regression/      ;; list all commits and tags with comments containing 
                        ;; the string "regression"
 
-delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 15
+delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 97
 
 list *master           ;; List commits on the 'master' branch
 </programlisting>
@@ -819,8 +819,8 @@ describes all possible cases and all but one of the reductions.</para>
 	be composed with.</para></entry>
       </row>
       <row>
-        <entry align='center'>M a + C a b &rarr; C a b + M b</entry>
-	<entry align='left'><para>Push copies towards the beginning.</para></entry>
+        <entry align='center'>M a + C a b</entry>
+	<entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>M b + R a b &rarr; nothing</entry>
@@ -864,8 +864,8 @@ describes all possible cases and all but one of the reductions.</para>
 	corruption.</para></entry>
       </row>
       <row>
-        <entry align='center'>R a b + C b c &rarr; C a c</entry>
-	<entry align='left'><para>See above.</para></entry>
+        <entry align='center'>R a b + C b c</entry>
+	<entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + D a &rarr; R a b</entry>
