@@ -47,7 +47,6 @@ both fast-export and fast-import utilities.  This set includes git
 itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
-
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNING</title>
@@ -72,12 +71,13 @@ from or push to the repo.</para>
 
 <refsect1 id='options'><title>OPERATION</title>
 <para>The program can be run in one of two modes, either as an
-interactive command interpreter or to execute commands given as
-arguments on the <command>reposurgeon</command> invocation line. The
-only difference between these modes is that the interactive one begins
-by turning on the 'verbose 1' option. Also, in interactive mode,
-Ctrl-P and Ctrl-N will be available to scroll through your command
-history.</para>
+interactive command interpreter or in batch mode to execute commands
+given as arguments on the <command>reposurgeon</command> invocation
+line. The only differences between these modes are (1) the interactive
+one begins by turning on the 'verbose 1' option, and (2) in batch mode
+all errors (including normally recoverable errors in selection-set syntax)
+are fatal. Also, in interactive mode, Ctrl-P and Ctrl-N will be
+available to scroll through your command history.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
 which must be executed in the specified sequence to build the repo; to
@@ -939,6 +939,11 @@ region.</para></step>
 
 <para>During the critical region, all signals that can be ignored are
 ignored.</para>
+</refsect1>
+
+<refsect1 id='returns'><title>ERROR RETURNS</title>
+<para>Returns 1 on fatal error, 0 otherwise.  In batch mode all errors
+are fatal.</para>
 </refsect1>
 
 <refsect1 id='author'><title>AUTHOR</title>
