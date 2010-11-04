@@ -10,11 +10,11 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Implement expunge.
-#
 # * Dates in specification expressions.
 #
 # * Test hg and bzr methods.
+#
+# * Create a test-load repo that exercises all the weird cases.
 
 # All knowledge about specific version-control systems lives in the
 # following dictionary. The key is the name of the VCS. The values in the
@@ -2206,22 +2206,42 @@ through another path; the tool will detect this. If the repo was named
                     for (i, fileop) in enumerate(event.fileops):
                         if fileop.op in "DM" and expunge.search(fileop.path):
                             deletia.append(i)
+                            if verbose > 0:
+                                print "reposurgeon: at commit %d, deleting" \
+                                      % (ei, fileop.path)
+                                if fileop.op == 'M':
+                                    os.remove(fileop.path)
+                                    if verbose:
+                                        print "reposurgeon: at %d, deleting %s" % (i+1, fileop.path)
                         elif fileop.op in "RC":
                             if expunge.search(fileop.source):
                                 deletia.append(i)
+                                complain("following %s of %s to %s" %
+                                         (fileop.op,
+                                          fileop.source,
+                                          fileop.target))
                                 if fileop.op == "R" and file.source in matchers:
                                     matchers.remove(fileop.source)
-                                matchers.append("^" + fileop.target + "$")
-                                expunge = digest(matchers)
                             elif expunge.search(fileop.target):
-                                deletia.append(i)
+                                if fileop.op == "R":
+                                    fileop.op = "D"
+                                elif fileop.op == "C":
+                                    deletia.append(i)
+                            matchers.append("^" + fileop.target + "$")
+                            expunge = digest(matchers)
                     if deletia:
-                        if verbose > 0:
-                            print "reposurgeon: deleting at commit %d" % ei
                         deletia.reverse()
-                       # FIXME
+                        for i in deletia:
+                            fileops.pop(i)
         except re.error:
             raise RepoSurgeonException("you confused the regular-expression processor.")
+        # Now remove any commits that no longer have fileops
+        deletia = map(lambda x: x[0], filter(lambda (i, e): not isinstance(e, Commit) or len(e.fileops), enumerate(self.repo.events)))
+        if verbose:
+            print "reposurgeon: deleting empty commits %s" % map(lambda x: x+1, deletia) 
+            deletia.reverse()
+            for i in deletia:
+                self.repo.events.pop(i)
     def help_expunge(self):
         print """
 Expunge files from the selected portion of the repo history; the

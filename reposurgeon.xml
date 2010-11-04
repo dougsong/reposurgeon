@@ -38,15 +38,6 @@ created by repository conversions. It was foreseen that the tool would
 also have applications when code needs to be removed from repositories
 for legal or policy reasons.</para>
 
-<warning><para><command>reposurgeon</command> is a sharp
-enough tool to cut you.  It takes care not to ever write a repository
-in an actually inconsistent state, and will terminate with an error
-rather than proceed when its internal data structures are confused.
-However, there are lots of things you can do with it - like altering
-stored commit timestamps to they no longer match the commit sequence
-- that are likely to cause havoc after you're done.  Proceed with
-caution and check your work.</para></warning>
-
 <para>To keep <command>reposurgeon</command> simple and
 flexible, it does not do its own repository reading and writing.
 Instead, it relies on being able to parse and emit the repo-command
@@ -56,6 +47,27 @@ both fast-export and fast-import utilities.  This set includes git
 itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
+
+</refsect1>
+
+<refsect1 id='warning'><title>SAFETY WARNING</title>
+
+<para><command>reposurgeon</command> is a sharp enough tool to cut
+you.  It takes care not to ever write a repository in an actually
+inconsistent state, and will terminate with an error rather than
+proceed when its internal data structures are confused.  However,
+there are lots of things you can do with it - like altering stored
+commit timestamps to they no longer match the commit sequence - that
+are likely to cause havoc after you're done.  Proceed with caution and
+check your work.</para>
+
+<para>Also note that, if your DVCS does the usual thing of making
+commit IDs a cryptographic has of content and parent links, editing a
+publicly-accessible repository with this tool would be a bad idea. All
+of the surgical operations in <command>reposurgeon</command> will
+modify the hash chains, meaning others will become unable to pull
+from or push to the repo.</para>
+
 </refsect1>
 
 <refsect1 id='options'><title>OPERATION</title>
@@ -715,7 +727,7 @@ main memory proportional to the size of a repository's metadata
 history, not its entire content history. Blobs are stored on disk.</para>
 
 <para>Guarantee: <command>reposurgeon</command> never modifies
-the contents of a repository it reads or deletes any repository. The
+the contents of a repository it reads, nor deletes any repository. The
 results of surgery are always expressed in a new repository </para>
 
 <para>Guarantee: Any line in a fast-import stream that is not a part
