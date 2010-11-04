@@ -2185,15 +2185,35 @@ through another path; the tool will detect this. If the repo was named
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, [])
+        def digest(toklist):
+            return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
+        matchers = line.split()
         try:
-            matcher = re.compile("|".join(map(lambda s: "(?:" + s + ")",
-                                              line.split())))
+            expunge = digest(matchers)
+            modified = []
+            for ei in self.selection:
+                event = self.repo[ei]
+                if hasattr(event, "fileops"):
+                    deletia = []
+                    for (i, fileop) in enumerate(event.fileops):
+                        if fileop.op in "DM" and expunge.search(fileop.path):
+                            deletia.append(i)
+                        elif fileop.op in "RC":
+                            if expunge.search(fileop.source):
+                                deletia.append(i)
+                                if fileop.op == "R" and file.source in matchers:
+                                    matchers.remove(fileop.source)
+                                matchers.append("^" + fileop.target + "$")
+                                expunge = digest(matchers)
+                            elif expunge.search(fileop.target):
+                                deletia.append(i)
+                    if deletia:
+                        if verbose > 0:
+                            print "reposurgeon: deleting at commit %d" % ei
+                       deletia.reverse()
+                       # FIXME
         except re.error:
-            complain("you confused the regular-expression processor.")
-        modified = []
-        for event in self.selection:
-            pass
-        # FIXME
+            raise RepoSurgeonException("you confused the regular-expression processor.")
     def help_expunge(self):
         print """
 Expunge files from the selected portion of the repo history; the
@@ -2204,7 +2224,7 @@ All filemodify (M) operations and delete (D) operations involving a
 matched file in the selected set of events are removed.  Renames are
 followed as the tool walks forward in the selection set; each triggers
 a warning message. If a selected file is a copy (C) target, the copy
-will be deleted and a earning message issued. If a selected file is a
+will be deleted and a warning message issued. If a selected file is a
 copy source, the copy target will be added to the list of paths to be
 deleted and a warning issued.
 
