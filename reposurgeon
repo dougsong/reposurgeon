@@ -1767,7 +1767,9 @@ current restore list is displayed afterwards.
     #
     def do_read(self, line):
         "Read in a repository for surgery."
-        self.preferred = None 
+        self.preferred = None
+        if line:
+            line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd();
         self.repo = read_repo(line, self.preferred)
