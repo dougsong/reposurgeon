@@ -12,4 +12,6 @@ resolve *annotated-sample
 resolve @annotated-sample
 resolve /regression/
 history
+verbose 1
+expunge 1..$ theory.txt
 

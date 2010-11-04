@@ -31,12 +31,12 @@ TESTLOADS = simple-dump
 makeregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    ../reposurgeon "script $${file}.tst" >$${file}.chk; \
+	    ../reposurgeon "script $${file}.tst" >$${file}.chk 2>&1; \
 	done
 regress:
 	@for file in $(TESTLOADS); do \
 	    echo "Regression test using $${file}.tst"; \
-	    ../reposurgeon "script $${file}.tst" >/tmp/regress; \
+	    ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress
