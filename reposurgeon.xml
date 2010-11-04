@@ -206,6 +206,7 @@ letters. These are the type letters:</para>
 all commits on that branch, plus any tags pointed at them and any
 associated branch resets.</para>
 </listitem>
+</varlistentry>
 <varlistentry>
 <term><firstterm>text search</firstterm></term>
 <listitem><para>A text search expression is a Python regular expression 
@@ -233,10 +234,9 @@ and manipulate the in-core list and the selection.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>read</command> 
-        <arg choice='opt'><replaceable>infile</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>read</command> 
+        [<emphasis>infile</emphasis>]
+</term>
 <listitem><para>With a directory-name argument, this command attempts
 to read in the contents of a repository in any supported
 version-control system under that directory; read with no
@@ -253,11 +253,10 @@ surgery.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>write</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-        <arg choice='opt'><replaceable>outfile</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>write</command>
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>outfile</emphasis>]
+</term>
 <listitem>
 <para>Dump selected events as a fast-import stream representing the
 edited repository; the default selection set is all events. The
@@ -271,10 +270,9 @@ be a useful way to examine small groups of commits.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>choose</command>
-        <arg choice='opt'><replaceable>reponame</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>choose</command>
+        [<emphasis>reponame</emphasis>]
+</term>
 <listitem>
 <para>Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
@@ -287,10 +285,9 @@ repositories and their load times.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>drop</command>
-        <arg choice='opt'><replaceable>reponame</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>drop</command>
+        [<emphasis>reponame</emphasis>]
+</term>
 <listitem>
 <para>Drop a repo named by the argument from reposurgeon's list,
 freeing the memory used for its metadata and deleting on-disk
@@ -298,10 +295,9 @@ blobs. With no argument, drops the currently chosen repo.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>rename</command>
-        <arg choice='plain'><replaceable>reponame</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>rename</command>
+        <emphasis>reponame</emphasis>
+</term>
 <listitem>
 <para>Rename the currently chosen repo; requires an argument.  Won't
 do it if there is already one by the new name.
@@ -321,10 +317,9 @@ of the new repository is checked out.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>rebuild</command>
-        <arg choice='opt'><replaceable>directory</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>rebuild</command>
+        [<emphasis>directory</emphasis>]
+</term>
 <listitem><para> Rebuild a repository from the state held by
 <command>reposurgeon</command>.  This command does not take a
 selection-set argument.  The single argument, if present argument
@@ -336,20 +331,18 @@ directories on the repository's restore list are copied back from the
 backup directory.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>restore</command> 
-    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>restore</command> 
+    [<emphasis>file...</emphasis>]
+</term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current restore list is displayed afterwards.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>unrestore</command>
-    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>unrestore</command>
+    [<emphasis>file...</emphasis>]
+</term>
 <listitem><para>Remove (presumably untracked) files or directories to
 the repo's list of paths to be restored from the backup directory
 after a <command>rebuild</command>. Each argument, if any, is
@@ -367,10 +360,9 @@ repository.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>list</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>list</command>
+        [<emphasis>selection-set</emphasis>]
+</term>
 <listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
@@ -381,7 +373,8 @@ name of the file to report to; no argument, or one of '-'; writes to
 standard output.  </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>stats</command></cmdsynopsis></term>
+<term><command>stats</command>
+</term>
 <listitem><para>
 Report size statistics and import/export method information about
 the currently chosen repository.
@@ -397,11 +390,10 @@ to support.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>delete</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-        <arg choice='opt'><replaceable>policy</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>delete</command>
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>policy</emphasis>]
+</term>
 <listitem>
 <para>Delete a selection set of commits. The default selection set for
 this command is empty.</para>
@@ -435,13 +427,15 @@ presently available for dealing with this:</para>
 
 <variablelist>
 <varlistentry>
-<term>complain</term>
+<term>complain
+</term>
 <listitem>
 <para>Complain about them, but do nothing. This is the default.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>coalesce</term>
+<term>coalesce
+</term>
 <listitem>
 <para>Discard all M operations (and associated blobs) except the last.</para>
 </listitem>
@@ -463,9 +457,9 @@ changes may be added in future versions of this tool.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>split</command>
-        <arg choice='plain'><replaceable>parent</replaceable></arg></cmdsynopsis></term>
+<term><command>split</command>
+        <emphasis>parent</emphasis>
+</term>
 <listitem>
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
@@ -483,11 +477,10 @@ and 'foo-late'.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>expunge</command> 
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-        <arg choice='plain' rep='repeat'><replaceable>regexp</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>expunge</command> 
+        [<emphasis>selection-set</emphasis>]
+        <emphasis>regexp...</emphasis>
+</term>
 <listitem>
 <para>NOT YET IMPLEMENTED</para>
 
@@ -509,11 +502,10 @@ them.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>coalesce</command> 
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-        <arg choice='opt'><replaceable>timefuzz</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>coalesce</command> 
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>timefuzz</emphasis>]
+</term>
 <listitem>
 <para>Scan the selection set for runs of commits with identical
 comments close to each other in time (this is a common form of scar
@@ -531,11 +523,10 @@ CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>mailbox_out</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-        <arg choice='opt'><replaceable>outfile</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>mailbox_out</command>
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>outfile</emphasis>]
+</term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
 the contents of repository metadata. Takes a selection set; members of
@@ -547,10 +538,9 @@ be taken as the name of the file to report to; no argument, or one of
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>mailbox_in</command>
-        <arg choice='opt'><replaceable>infile</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>mailbox_in</command>
+        [<emphasis>infile</emphasis>]
+</term>
 <listitem>
 <para>Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
@@ -564,10 +554,9 @@ unlikely to have good results.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>edit</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>edit</command>
+        [<emphasis>selection-set</emphasis>]
+</term>
 <listitem>
 <para>Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
@@ -580,11 +569,10 @@ blob, your editor will be called directly on the blob file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>timeoffset</command>
-        <arg choice='plain'>offast</arg> 
-        <arg choice='opt'><replaceable>timezone</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>timeoffset</command>
+        offset 
+        [<emphasis>timezone</emphasis>]
+</term>
 <listitem>
 <para>Apply a time offset to all time/date stamps in the selected set.
 An offset argument is required; it may be in the form [+-]ss,
@@ -606,23 +594,24 @@ which take a selection set:</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis><command>help</command></cmdsynopsis></term>
+<term><command>help</command>
+</term>
 <listitem><para>Get help on the interpreter commands. Optionally follow with
 whitespace and a command name; with no argument, lists all commands. '?'
 also invokes this.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>shell</command></cmdsynopsis></term>
+<term><command>shell</command>
+</term>
 <listitem><para>Execute the shell command given in the remainder of the line.
 '!' also invokes this.  
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>prefer</command>
-        <arg choice='opt'><replaceable>repotype</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>prefer</command>
+        [<emphasis>repotype</emphasis>]
+</term>
 <listitem>
 <para>Report or set (with argument) the preferred type of repository. This
 will have two effects.  First, if there are multiple repositories in a
@@ -648,10 +637,9 @@ circumstances.</para>
 
 <variablelist>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>index</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>index</command>
+        [<emphasis>selection-set</emphasis>]
+</term>
 <listitem>
 <para>Display four columns of info on objects in the selection set:
 their number, their type, the associate mark (or '-' if no mark) and a
@@ -664,57 +652,54 @@ except blobs.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>resolve</command>
-        <arg choice='opt'><replaceable>selection-set</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>resolve</command>
+        [<emphasis>selection-set</emphasis>]
+</term>
 <listitem><para>Does nothing but resolve a selection-set expression
 and echo the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>names</command></cmdsynopsis></term>
+<term><command>names</command>
+</term>
 <listitem><para>List the names of all known branches and tags.
 Tells you what things are legal after @.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis><command>version</command></cmdsynopsis></term>
+<term><command>version</command>
+</term>
 <listitem><para>Report the version of <command>reposurgeon</command>
 and the list of version-control systems it directly supports.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>verbose</command> 
-        <arg choice='opt'>n</arg>
-</cmdsynopsis></term>
+<term><command>verbose</command> 
+        [n]
+</term>
 <listitem><para>'verbose 1' enables progress and messages,
 'verbose 0' disables them. Higher levels of verbosity are available
 but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>repeat</command>
-        <arg choice='opt'><replaceable>number</replaceable></arg>
-</cmdsynopsis></term>
+<term><command>repeat</command>
+        [<emphasis>number</emphasis>]
+</term>
 <listitem><para>'repeat 1' causes each 
 <command>reposurgeon</command> command to be echoed to standard
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>script</command>
-        <arg choice='plain'>filename</arg>
-</cmdsynopsis></term>
+<term><command>script</command>
+        <emphasis>filename</emphasis>
+</term>
 <listitem><para>Takes a filename argument. Reads each line from the file 
 and executes it as a command.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><cmdsynopsis>
-    <command>history</command>
-</cmdsynopsis></term>
+<term><command>history</command>
+</term>
 <listitem>
 <para>List the commands you have entered this session.</para>
 </listitem>
