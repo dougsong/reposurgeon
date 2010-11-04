@@ -2217,19 +2217,20 @@ through another path; the tool will detect this. If the repo was named
                 if hasattr(event, "fileops"):
                     deletia = []
                     for (i, fileop) in enumerate(event.fileops):
-                        if verbose > 1:
-                            announce("commit %s: %s" % (ei, str(fileop)))
-                        if fileop.op in "DM" and expunge.search(fileop.path):
-                            deletia.append(i)
-                            if fileop.op == 'M':
-                                if fileop.ref == 'inline':
-                                    os.remove(fileop.copyname)
-                                else:
-                                    bi = self.repo.find(fileop.ref)
-                                    assert(isinstance(self.repo[bi], Blob))
-                                    self.repo[bi].release()
-                                if verbose:
-                                    announce("at %d, deleting %s" % (i+1, fileop.path))
+                        if verbose >= 2:
+                            print str(fileop)
+                        if fileop.op in "DM":
+                            if expunge.search(fileop.path):
+                                deletia.append(i)
+                                if fileop.op == 'M':
+                                    if fileop.ref == 'inline':
+                                        os.remove(fileop.copyname)
+                                    else:
+                                        bi = self.repo.find(fileop.ref)
+                                        assert(isinstance(self.repo[bi], Blob))
+                                        self.repo[bi].release()
+                                    if verbose:
+                                        announce("at %d, deleting %s" % (ei+1, fileop.path))
                         elif fileop.op in "RC":
                             if expunge.search(fileop.source):
                                 deletia.append(i)
@@ -2239,13 +2240,15 @@ through another path; the tool will detect this. If the repo was named
                                           fileop.target))
                                 if fileop.op == "R" and file.source in matchers:
                                     matchers.remove(fileop.source)
+                                matchers.append("^" + fileop.target + "$")
+                                expunge = digest(matchers)
                             elif expunge.search(fileop.target):
                                 if fileop.op == "R":
                                     fileop.op = "D"
                                 elif fileop.op == "C":
                                     deletia.append(i)
-                            matchers.append("^" + fileop.target + "$")
-                            expunge = digest(matchers)
+                                matchers.append("^" + fileop.target + "$")
+                                expunge = digest(matchers)
                     if deletia:
                         deletia.reverse()
                         for i in deletia:
@@ -2253,7 +2256,8 @@ through another path; the tool will detect this. If the repo was named
         except re.error:
             raise FatalException("you confused the regular-expression processor.")
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda x: x[0], filter(lambda (i, e): not ((isinstance(e, Commit) and not len(e.fileops)) or (isinstance(e, Blob) and not e.path)), enumerate(self.repo.events)))
+        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.repo.events)
+        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
         if verbose:
             announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
             deletia.reverse()
