@@ -36,7 +36,7 @@ import email.message, email.parser, email.utils
 # would be excessively messy, so we don't. Instead we let the user
 # transform dump files and cope with the export/import himself.
 #
-version="0.1~dev"
+version="0.2"
 
 vcstypes = {
     "git" : (".git",
