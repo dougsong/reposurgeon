@@ -1771,7 +1771,7 @@ current restore list is displayed afterwards.
         if self.repo:
             if self.repo.type:
                 self.preferred = self.repo.type
-            name = self.uniquify(os.path.basename(self.repo.sourcedir or "unnamed"))
+            name = self.uniquify(os.path.basename(self.repo.sourcedir or line or "unnamed"))
             self.repo.rename(name)
             self.name_to_repo[name] = self.repo
         if verbose:
