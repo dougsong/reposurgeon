@@ -942,7 +942,7 @@ def complain(msg):
     print >>sys.stderr, "reposurgeon:", msg
 
 def announce(msg):
-    "reposurgeon:", msg
+    print "reposurgeon:", msg
 
 def read_repo(source, preferred):
     "Read a repository using fast-import."
@@ -2255,7 +2255,7 @@ through another path; the tool will detect this. If the repo was named
         # Now remove commits that no longer have fileops, and released blobs.
         deletia = map(lambda x: x[0], filter(lambda (i, e): not ((isinstance(e, Commit) and not len(e.fileops)) or (isinstance(e, Blob) and not e.path)), enumerate(self.repo.events)))
         if verbose:
-            announce("deleting empty commits %s" % map(lambda x: x+1, deletia))
+            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
             deletia.reverse()
             for i in deletia:
                 self.repo.events.pop(i)
