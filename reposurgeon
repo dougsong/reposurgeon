@@ -1138,7 +1138,7 @@ class RepoSurgeon(cmd.Cmd):
         pass
     def precmd(self, line):
         "Pre-command hook."
-        self.history.append(line)
+        self.history.append(line.rstrip())
         if self.repeat:
             sys.stdout.write(line)
         return line

@@ -78,3 +78,20 @@ resolve @annotated-sample
 [114]
 resolve /regression/
 [50, 58, 120, 131]
+history
+script simple-dump.tst
+repeat 1
+read simple.dump
+index
+resolve 15
+resolve =TR
+resolve 24..97
+resolve 24..97&=C
+resolve 3,:15
+resolve *master
+resolve @lightweight-sample
+resolve *annotated-sample
+resolve @annotated-sample
+resolve /regression/
+history
+
