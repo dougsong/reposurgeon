@@ -284,11 +284,15 @@ class Reset:
 
 class FileOp:
     "Represent a primitive operation on a file."
+    modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     def __init__(self, opline):
         if opline.startswith("M"):
-            (self.op, self.mode, self.ref, self.path) = shlex.split(opline)
+            m = FileOp.modify_re.match(opline)
+            if not m:
+                raise FatalException("bad format of M line: %s" % `opline`)
+            (self.op, self.mode, self.ref, self.path) = m.groups()
         elif opline[0] == "D":
-            (self.op, self.path) = shlex.split(opline)
+            (self.op, self.path) = ("D", opline[2:].strip())
         elif opline[0] in ("R", "C"):
             (self.op, self.source, self.target) = shlex.split(opline)
         elif opline == "deleteall":
