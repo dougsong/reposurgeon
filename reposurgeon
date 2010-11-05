@@ -1029,6 +1029,9 @@ def read_repo(source, preferred):
                 incmd = foundexporter
                 with popen_or_die(incmd, "repository export") as tp:
                     repo.fast_import(tp);
+                if tp.close() is not None:
+                    raise FatalException("%s repository export returned error.",
+                                         incmd)
         finally:
             os.chdir(here)
     return repo
@@ -1095,7 +1098,10 @@ def rebuild_repo(repo, target, preferred):
         else:
             with popen_or_die(importer, "repository import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp)
-            
+            if tp.close() is not None:
+                raise FatalException("%s repository import returned error.",
+                                     importer)
+
         do_or_die(checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
@@ -1146,11 +1152,18 @@ def do_or_die(mycmd, legend=""):
         elif retcode != 0:
             raise FatalException("child returned %d" % retcode)
     except OSError, e:
-        raise FatalException("execution of %s failed: %s" % (mycmd, e))
+        raise FatalException("execution of %s%s failed: %s" % (mycmd, legend, e))
 
 def popen_or_die(mycmd, legend="", mode="r"):
     "Read or write from a subordinate process."
-    return os.popen(mycmd, mode)
+    if legend:
+        legend = " "  + legend
+    if verbose >= 2:
+        announce("executing %s%s" % (mycmd, legend))
+    try:
+        return os.popen(mycmd, mode)
+    except OSError, e:
+        raise FatalException("execution of %s%s failed: %s" % (mycmd, legend, e))
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
