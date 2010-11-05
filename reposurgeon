@@ -989,19 +989,12 @@ def read_repo(source, preferred):
         elif hitcount > 1:
             complain("too many repos under %s" % os.path.relpath(source))
             return None
+        repo = Repository()
+        repo.type = foundname
+        repo.sourcedir = source
         try:
-            repo = Repository()
-            repo.type = foundname
-            repo.sourcedir = source
             (tfdesc, tfname) = tempfile.mkstemp()
-            # A FIFO version wouldn't block our reads until
-            # the entire file is written - faster, and makes our baton
-            # spinner useful -- if it worked.
-            #tfname = os.path.join("/tmp/reposurgeon"+`os.getpid()`)
-            #os.mkfifo(tfname)
-            incmd = ""
-            if source != '.':
-                incmd += "cd %s >/dev/null;" % source
+            incmd = "cd %s >/dev/null;" % source
             incmd += foundexporter % tfname
             do_or_die(incmd, "repository export")
             tp = open(tfname)
