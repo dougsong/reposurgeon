@@ -687,169 +687,172 @@ class Repository:
     def fast_import(self, fp):
         "Initialize repo object from fast-import stream."
         try:
-            delcmd = "rm -fr %s; mkdir %s" % (self.subdir(), self.subdir())
-            if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository fast import calls " + delcmd)
-            os.system(delcmd)
-        except OSError:
-            self.error("can't create operating directory", atline=False)
-        with Baton("reposurgeon: from %s" % os.path.relpath(fp.name)) as baton:
-            self.import_line = 0
-            linebuffers = []
-            ncommits = 0
-            def read_data(dp, line=None):
-                if not line:
-                    line = readline()
-                if line.startswith("data <<"):
-                    delim = line[7:]
-                    while True:
-                        dataline = fp.readline()
-                        if dataline == delim:
-                            break
-                        elif not dataline:
-                            raise FatalException("EOF while reading blob")
-                elif line.startswith("data"):
-                    try:
-                        count = int(line[5:])
-                        dp.write(fp.read(count))
-                    except ValueError:
-                        self.error("bad count in data")
-                else:
-                    self.error("malformed data header %s" % `line`)
-                return dp
-            def readline():
-                if linebuffers:
-                    line = linebuffers.pop()
-                else:
-                    self.import_line += 1
-                    line = fp.readline()
-                    self.readsize += len(line)
-                return line
-            def pushback(line):
-                linebuffers.append(line)
-            while True:
-                line = readline()
-                if not line:
-                    break
-                elif not line.strip():
-                    continue
-                elif line.startswith("blob"):
-                    blob = Blob(self.subdir())
-                    line = readline()
-                    if line.startswith("mark"):
-                        blob.mark = line[5:].strip()
-                        read_data(open(blob.blobfile(), "w")).close()
-                        self.nmarks += 1
-                    else:
-                        self.error("missing mark after blob")
-                    self.events.append(blob)
-                    baton.twirl()
-                elif line.startswith("data"):
-                    self.error("unexpected data object")
-                elif line.startswith("commit"):
-                    commitbegin = self.import_line
-                    commit = Commit(self)
-                    commit.branch = line.split()[1]
-                    self.branches.add(commit.branch)
-                    ncommits += 1
-                    inlinecount = 0
-                    while True:
+            try:
+                if verbose >= DEBUG_SHUFFLE:
+                    self.warn("repository fast import creates " + self.subdir())
+                os.mkdir(self.subdir())
+            except OSError:
+                self.error("can't create operating directory", atline=False)
+            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name)) as baton:
+                self.import_line = 0
+                linebuffers = []
+                ncommits = 0
+                def read_data(dp, line=None):
+                    if not line:
                         line = readline()
-                        if not line:
-                            self.error("EOF after commit")
-                        elif line.startswith("mark"):
-                            commit.mark = line[5:].strip()
+                    if line.startswith("data <<"):
+                        delim = line[7:]
+                        while True:
+                            dataline = fp.readline()
+                            if dataline == delim:
+                                break
+                            elif not dataline:
+                                raise FatalException("EOF while reading blob")
+                    elif line.startswith("data"):
+                        try:
+                            count = int(line[5:])
+                            dp.write(fp.read(count))
+                        except ValueError:
+                            self.error("bad count in data")
+                    else:
+                        self.error("malformed data header %s" % `line`)
+                    return dp
+                def readline():
+                    if linebuffers:
+                        line = linebuffers.pop()
+                    else:
+                        self.import_line += 1
+                        line = fp.readline()
+                        self.readsize += len(line)
+                    return line
+                def pushback(line):
+                    linebuffers.append(line)
+                while True:
+                    line = readline()
+                    if not line:
+                        break
+                    elif not line.strip():
+                        continue
+                    elif line.startswith("blob"):
+                        blob = Blob(self.subdir())
+                        line = readline()
+                        if line.startswith("mark"):
+                            blob.mark = line[5:].strip()
+                            read_data(open(blob.blobfile(), "w")).close()
                             self.nmarks += 1
-                        elif line.startswith("author"):
-                            try:
-                                commit.author = Attribution(line[7:])
-                            except ValueError:
-                                self.error("malformed author line")
-                        elif line.startswith("committer"):
-                            try:
-                                commit.committer = Attribution(line[10:])
-                            except ValueError:
-                                self.error("malformed committer line")
-                        elif line.startswith("data"):
-                            dp = read_data(cStringIO.StringIO(), line)
-                            commit.comment = dp.getvalue()
-                            dp.close()
-                        elif line.startswith("from") or line.startswith("merge"):
-                            commit.parent_marks.append(line.split()[1])
-                        # Handling of file ops begins.
-                        elif line[0] in ("C", "D", "R"):
-                            commit.fileops.append(FileOp(line))
-                        elif line == "filedeleteall\n":
-                            commit.fileops.append(FileOp("filedeleteall"))
-                        elif line[0] == "M":
-                            try:
-                                fileop = FileOp(line)
-                            except ValueError, e:
-                                self.error(`e` + " on line " + `line`)
-                            commit.fileops.append(fileop)
-                            if fileop.ref[0] == ':':
-                                self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
-                                for obj in self.events:
-                                    if isinstance(obj, Blob) and obj.mark == fileop.ref:
-                                        obj.path = fileop.path
-                                        fileop.copyname = obj.blobfile()
-                                        break
+                        else:
+                            self.error("missing mark after blob")
+                        self.events.append(blob)
+                        baton.twirl()
+                    elif line.startswith("data"):
+                        self.error("unexpected data object")
+                    elif line.startswith("commit"):
+                        commitbegin = self.import_line
+                        commit = Commit(self)
+                        commit.branch = line.split()[1]
+                        self.branches.add(commit.branch)
+                        ncommits += 1
+                        inlinecount = 0
+                        while True:
+                            line = readline()
+                            if not line:
+                                self.error("EOF after commit")
+                            elif line.startswith("mark"):
+                                commit.mark = line[5:].strip()
+                                self.nmarks += 1
+                            elif line.startswith("author"):
+                                try:
+                                    commit.author = Attribution(line[7:])
+                                except ValueError:
+                                    self.error("malformed author line")
+                            elif line.startswith("committer"):
+                                try:
+                                    commit.committer = Attribution(line[10:])
+                                except ValueError:
+                                    self.error("malformed committer line")
+                            elif line.startswith("data"):
+                                dp = read_data(cStringIO.StringIO(), line)
+                                commit.comment = dp.getvalue()
+                                dp.close()
+                            elif line.startswith("from") or line.startswith("merge"):
+                                commit.parent_marks.append(line.split()[1])
+                            # Handling of file ops begins.
+                            elif line[0] in ("C", "D", "R"):
+                                commit.fileops.append(FileOp(line))
+                            elif line == "filedeleteall\n":
+                                commit.fileops.append(FileOp("filedeleteall"))
+                            elif line[0] == "M":
+                                try:
+                                    fileop = FileOp(line)
+                                except ValueError, e:
+                                    self.error(`e` + " on line " + `line`)
+                                commit.fileops.append(fileop)
+                                if fileop.ref[0] == ':':
+                                    self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
+                                    for obj in self.events:
+                                        if isinstance(obj, Blob) and obj.mark == fileop.ref:
+                                            obj.path = fileop.path
+                                            fileop.copyname = obj.blobfile()
+                                            break
+                                    else:
+                                        self.error("no blob matches commit reference to %s" % fileop.ref)
+                                elif fileop.ref[0] == 'inline':
+                                    fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
+                                    self.read_data(open(fileop.copyname, "w")).close()
+                                    inline_count += 1
                                 else:
-                                    self.error("no blob matches commit reference to %s" % fileop.ref)
-                            elif fileop.ref[0] == 'inline':
-                                fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
-                                self.read_data(open(fileop.copyname, "w")).close()
-                                inline_count += 1
+                                    self.error("unknown content type in filemodify")
+                            # Handling of file ops ends.
                             else:
-                                self.error("unknown content type in filemodify")
-                        # Handling of file ops ends.
+                                pushback(line)
+                                break
+                        if not (commit.mark and commit.author and commit.committer):
+                            self.import_line = commitbegin
+                            self.error("missing required fields in commit")
+                        self.events.append(commit)
+                        baton.twirl()
+                    elif line.startswith("reset"):
+                        reset = Reset()
+                        reset.ref = line[6:].strip()
+                        line = readline()
+                        if line.startswith("from"):
+                            reset.committish = line[5:].strip()
                         else:
                             pushback(line)
-                            break
-                    if not (commit.mark and commit.author and commit.committer):
-                        self.import_line = commitbegin
-                        self.error("missing required fields in commit")
-                    self.events.append(commit)
-                    baton.twirl()
-                elif line.startswith("reset"):
-                    reset = Reset()
-                    reset.ref = line[6:].strip()
-                    line = readline()
-                    if line.startswith("from"):
-                        reset.committish = line[5:].strip()
+                        self.events.append(reset)
+                        baton.twirl()
+                    elif line.startswith("tag"):
+                        tagger = None
+                        tagname = line[4:].strip()
+                        line = readline()
+                        if line.startswith("from"):
+                            referent = line[5:].strip()
+                        else:
+                            self.error("missing from after tag")
+                        line = readline()
+                        if line.startswith("tagger"):
+                            try:
+                                tagger = Attribution(line[7:])
+                            except ValueError:
+                                self.error("malformed tagger line")
+                        else:
+                            self.warn("missing tagger after from in tag")
+                            pushback(line)
+                        dp = read_data(cStringIO.StringIO())
+                        self.events.append(Tag(tagname,
+                                               referent, tagger, dp.getvalue()))
+                        baton.twirl()
                     else:
-                        pushback(line)
-                    self.events.append(reset)
-                    baton.twirl()
-                elif line.startswith("tag"):
-                    tagger = None
-                    tagname = line[4:].strip()
-                    line = readline()
-                    if line.startswith("from"):
-                        referent = line[5:].strip()
-                    else:
-                        self.error("missing from after tag")
-                    line = readline()
-                    if line.startswith("tagger"):
-                        try:
-                            tagger = Attribution(line[7:])
-                        except ValueError:
-                            self.error("malformed tagger line")
-                    else:
-                        self.warn("missing tagger after from in tag")
-                        pushback(line)
-                    dp = read_data(cStringIO.StringIO())
-                    self.events.append(Tag(tagname,
-                                           referent, tagger, dp.getvalue()))
-                    baton.twirl()
-                else:
-                    # Simply pass through any line we don't understand.
-                    self.events.append(line)
-            self.import_line = 0
-        self.readtime = time.time()
-        for blob in self.blob_refcount:
-            if self.blob_refcount[blob] != 1:
-                self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
+                        # Simply pass through any line we don't understand.
+                        self.events.append(line)
+                self.import_line = 0
+            self.readtime = time.time()
+            for blob in self.blob_refcount:
+                if self.blob_refcount[blob] != 1:
+                    self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
+        except KeyboardInterrupt:
+            nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
+            raise KeyboardInterrupt
     def fast_export(self, selection, fp):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting") as baton:
@@ -1181,6 +1184,8 @@ class RepoSurgeon(cmd.Cmd):
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
+        if verbose >= DEBUG_SHUFFLE:
+            announce("interpreter cleanup called.")
         for repo in self.name_to_repo.values():
             repo.cleanup()
     __del__ = cleanup
