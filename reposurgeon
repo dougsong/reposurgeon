@@ -4,6 +4,8 @@
 #
 # By ESR, October 2010.  BSD terms apply.
 #
+# Requires Python 2.5 or newer.
+#
 import sys, os, getopt, commands, cStringIO, cmd, tempfile
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
@@ -206,9 +208,8 @@ class Blob:
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
     def __str__(self):
-        dp = open(self.blobfile())
-        content = dp.read()
-        dp.close()
+        with open(self.blobfile()) as dp:
+            content = dp.read()
         return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
 
 class Tag:
@@ -434,9 +435,8 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                fp = open(op.copyname)
-                content = fp.read()
-                fp.close()
+                with open(op.copyname) as fp:
+                    content = fp.read()
                 st += "data %d\n%s\n" % (len(content), content)
         elif self.op in "D":
             st = "D "
@@ -1055,9 +1055,8 @@ def rebuild_repo(repo, target, preferred):
         os.chdir(staging)
         do_or_die(initializer, "repository initialization")
         (tfdesc, tfname) = tempfile.mkstemp()
-        tp = open(tfname, "w")
-        repo.fast_export(range(len(repo)), tp, verbose and Baton("reposurgeon: exporting"))
-        tp.close()
+        with open(tfname, "w") as tp:
+            repo.fast_export(range(len(repo)), tp, verbose and Baton("reposurgeon: exporting"))
         do_or_die(importer % tfname, "repository import")
         do_or_die(checkout, "repository_checkout")
         if verbose:
@@ -1808,9 +1807,8 @@ with command-line arguments).
             self.repo.fast_export(self.selection, sys.stdout)
         else:
             try:
-                out = open(line, "w")
-                self.repo.fast_export(self.selection, out)
-                out.close()
+                with open(line, "w") as out:
+                    self.repo.fast_export(self.selection, out)
             except OSError:
                 complain("open of %s for write failed.\n" % line)
     def help_write(self):
@@ -1942,12 +1940,11 @@ may change in a future release.
         # Otherwise, mailboxize and edit the non-blobs in the selection
         try:
             (tfdesc, tfname) = tempfile.mkstemp()
-            tfp = open(tfname, "w")
-            for i in self.selection:
-                event = self.repo[i]
-                if hasattr(event, "email_out"):
-                    tfp.write(event.email_out(i))
-            tfp.close()
+            with open(tfname, "w") as tfp:
+                for i in self.selection:
+                    event = self.repo[i]
+                    if hasattr(event, "email_out"):
+                        tfp.write(event.email_out(i))
             if os.system(editor + " " + tfname):
                 complain("%s returned a failure status" % editor)
             else:
