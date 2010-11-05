@@ -81,6 +81,10 @@ def nuke(directory, legend, verbosity=1):
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
                 baton.twirl()
+    try:
+        os.rmdir(directory)
+    except OSError:
+        pass
 
 class Baton:
     "Ship progress indications to stdout."
@@ -113,6 +117,8 @@ class Baton:
         self.count = self.count + 1
         return
     def __exit__(self, type, value, traceback):
+        if type in (KeyboardInterrupt, FatalException):
+            self.endmsg = "interrupted"
         if self.stream:
             self.stream.write("...(%2.2f sec) %s.\n" \
                               % (time.time() - self.time, self.endmsg))
@@ -659,9 +665,9 @@ class Repository:
         if name is None:
             name = self.name
         if not name:
-            return ".rs"
+            return ".rs" + `os.getpid()`
         else:
-            return ".rs-" + name 
+            return ".rs" + `os.getpid()`+ "-" + name 
     def error(self, msg, atline=True):
         if atline:
             raise FatalException(msg + " at line " + `self.import_line`)

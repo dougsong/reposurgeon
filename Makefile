@@ -16,7 +16,7 @@ reposurgeon.html: reposurgeon.xml
 
 clean:
 	rm -f  *~ *.1 *.html MANIFEST SHIPPER.*
-	rm -fr .rs .rs* tesst/.rs test/.rs*
+	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
