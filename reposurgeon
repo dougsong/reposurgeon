@@ -71,12 +71,23 @@ DEBUG_SHUFFLE = 2    # Debug directory handling
 DEBUG_EMAILIN = 3    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_LEXER   = 4    # Debug selection-language parsing
 
+def nuke(directory, legend, verbosity=1):
+    "Remove a (large) directory, with a progress indicator."
+    with Baton(legend, verbosity=verbosity) as baton:
+        for root, dirs, files in os.walk(directory, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+                baton.twirl()
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+                baton.twirl()
+
 class Baton:
     "Ship progress indications to stdout."
-    def __init__(self, prompt, endmsg='done'):
+    def __init__(self, prompt, endmsg='done', verbosity=1):
         self.prompt = prompt
         self.endmsg = endmsg
-        if verbose:
+        if verbose >= verbosity:
             self.stream = sys.stdout
         else:
             self.stream = None
@@ -1113,7 +1124,7 @@ def rebuild_repo(repo, target, preferred):
                                 os.path.join(target, sub))
     finally:
         os.chdir(here)
-        os.system("rm -fr " + staging)
+        nuke(staging, "reposurgeon: removing staging directory", verbosity=2)
 
 def do_or_die(mycmd, legend=""):
     (err, out) = commands.getstatusoutput(mycmd)
