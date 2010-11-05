@@ -60,7 +60,7 @@ vcstypes = {
             "hg fast-import %s",      # Not part of stock hg
             "hg checkout"),
     "bzr" : (".bzr",
-             "bzr-fast-export --plain %s",
+             "bzr fast-export --plain %s",
              "bzr init",
              "bzr fast-import %s",
              "bzr checkout"),
@@ -1217,7 +1217,8 @@ class RepoSurgeon(cmd.Cmd):
         return line
     def do_shell(self, line):
         "Execute a shell command."
-        os.system(line)
+        if os.system(line):
+            raise RecoverableException("'shell %s' returned error." % line)
     def do_EOF(self, line):
         "Terminate reposurgeon."
         print ""
@@ -2020,7 +2021,7 @@ may change in a future release.
                     if hasattr(event, "email_out"):
                         tfp.write(event.email_out(i))
             if os.system(editor + " " + tfname):
-                complain("%s returned a failure status" % editor)
+                raise RecoverableException("%s returned a failure status" % editor)
             else:
                 self.do_mailbox_in(tfname)
         finally:
