@@ -653,14 +653,7 @@ class Repository:
         self.restore_set = set([])
         self.case_coverage = set([])
     def cleanup(self):
-        with Baton("reposurgeon: cleaning up %s" % self.subdir()) as baton:
-            for root, dirs, files in os.walk(self.subdir(), topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                    baton.twirl()
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
-                    baton.twirl()
+        nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     __del__ = cleanup
     def subdir(self, name=None):
         if name is None:
