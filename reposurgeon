@@ -1029,9 +1029,6 @@ def read_repo(source, preferred):
                 incmd = foundexporter
                 with popen_or_die(incmd, "repository export") as tp:
                     repo.fast_import(tp);
-                if tp.close() is not None:
-                    raise FatalException("%s repository export returned error.",
-                                         incmd)
         finally:
             os.chdir(here)
     return repo
@@ -1098,9 +1095,6 @@ def rebuild_repo(repo, target, preferred):
         else:
             with popen_or_die(importer, "repository import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp)
-            if tp.close() is not None:
-                raise FatalException("%s repository import returned error.",
-                                     importer)
 
         do_or_die(checkout, "repository_checkout")
         if verbose:
@@ -1154,16 +1148,28 @@ def do_or_die(mycmd, legend=""):
     except OSError, e:
         raise FatalException("execution of %s%s failed: %s" % (mycmd, legend, e))
 
-def popen_or_die(mycmd, legend="", mode="r"):
+class popen_or_die:
     "Read or write from a subordinate process."
-    if legend:
-        legend = " "  + legend
-    if verbose >= 2:
-        announce("executing %s%s" % (mycmd, legend))
-    try:
-        return os.popen(mycmd, mode)
-    except OSError, e:
-        raise FatalException("execution of %s%s failed: %s" % (mycmd, legend, e))
+    def __init__(self, cmd, legend="", mode="r"):
+        self.cmd = cmd
+        self.legend = legend
+        self.mode = mode
+        if self.legend:
+            self.legend = " "  + self.legend
+    def __enter__(self):
+        if verbose >= 2:
+            announce("executing %s%s" % (self.cmd, self.legend))
+        try:
+            self.fp = os.popen(self.cmd, self.mode)
+            return self.fp
+        except OSError, e:
+            raise FatalException("execution of %s%s failed: %s" \
+                                 % (self.cmd, self.legend, e))
+    def __exit__(self, type, value, traceback):
+        if self.fp.close() is not None:
+            raise FatalException("%s%s returned error." \
+                                 % (self.cmd, self.legend))
+        return False
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
