@@ -1027,7 +1027,7 @@ def read_repo(source, preferred):
                     os.remove(tfname)
             else:
                 incmd = foundexporter
-                with os.popen(incmd) as tp:
+                with popen_or_die(incmd, "repository export") as tp:
                     repo.fast_import(tp);
         finally:
             os.chdir(here)
@@ -1093,7 +1093,7 @@ def rebuild_repo(repo, target, preferred):
             finally:
                 os.remove(tfname)
         else:
-            with os.popen(importer, "w") as tp:
+            with popen_or_die(importer, "repository import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp)
             
         do_or_die(checkout, "repository_checkout")
@@ -1147,6 +1147,10 @@ def do_or_die(mycmd, legend=""):
             FatalException("child returned %d" % retcode)
     except OSError, e:
         raise FatalException("execution of %s failed: %s" % (mycmd, e))
+
+def popen_or_die(mycmd, legend="", mode="r"):
+    "Read or write from a subordinate process."
+    return os.popen(mycmd, mode)
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
