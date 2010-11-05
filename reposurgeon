@@ -997,9 +997,8 @@ def read_repo(source, preferred):
             incmd = "cd %s >/dev/null;" % source
             incmd += foundexporter % tfname
             do_or_die(incmd, "repository export")
-            tp = open(tfname)
-            repo.fast_import(tp, verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source))));
-            tp.close()
+            with open(tfname) as tp:
+                repo.fast_import(tp, verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source))));
         finally:
             os.remove(tfname)
     return repo
@@ -1010,18 +1009,23 @@ class CriticalRegion:
     # value, but under Linux the signal calls start to trigger
     # runtime errors at this value and above.
     NSIG = 32
-    def __init__(self):
+    def __enter__(self):
         "Begin critical region."
+        if verbose:
+            complain("critical region begins...")
         # Alas that we lack sigblock support
         self.handlers = [None]*(CriticalRegion.NSIG+1)
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
-    def __del__(self):
+    def __exit__(self, type, value, traceback):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, self.handlers[sig])
+        if verbose:
+            complain("critical region ends.")
+        return False
 
 def rebuild_repo(repo, target, preferred):
     "Rebuild a repository from the captured state."
@@ -1072,27 +1076,22 @@ def rebuild_repo(repo, target, preferred):
         assert(os.path.abspath(savedir))
 
         # This is a critical region.  Ignore all signals until we're done.
-        if verbose:
-            complain("build critical region begins...")
-        critical = CriticalRegion()
-
-        # Move the unmodified repo contents in target to the backup directory.
-        # Then move the staging contents to the target directory.
-        # Finally, restore designated files from backup to target.
-        for sub in os.listdir(target):
-            os.rename(os.path.join(target, sub),
-                      os.path.join(savedir, sub))
-        if verbose:
-            complain("repo backed up to %s" % os.path.relpath(savedir))
-        for sub in os.listdir(staging):
-            os.rename(os.path.join(staging, sub),
-                      os.path.join(target, sub))
-        for file in repo.restore_set:
-            shutil.copytree(os.path.join(savedir, sub),
-                            os.path.join(target, sub))
-        if verbose:
-            complain("build critical region ends. Success.")
-        del critical
+        with CriticalRegion() as critical:
+            # Move the unmodified repo contents in target to the
+            # backup directory.  Then move the staging contents to the
+            # target directory.  Finally, restore designated files
+            # from backup to target.
+            for sub in os.listdir(target):
+                os.rename(os.path.join(target, sub),
+                          os.path.join(savedir, sub))
+            if verbose:
+                complain("repo backed up to %s" % os.path.relpath(savedir))
+            for sub in os.listdir(staging):
+                os.rename(os.path.join(staging, sub),
+                          os.path.join(target, sub))
+            for file in repo.restore_set:
+                shutil.copytree(os.path.join(savedir, sub),
+                                os.path.join(target, sub))
     finally:
         os.chdir(here)
         os.remove(tfname)
