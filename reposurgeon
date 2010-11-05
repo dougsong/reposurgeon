@@ -71,6 +71,11 @@ DEBUG_SHUFFLE = 2    # Debug directory handling
 DEBUG_EMAILIN = 3    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_LEXER   = 4    # Debug selection-language parsing
 
+def screenwidth():
+    "Return the current width of the terminal window."
+    with popen_or_die('stty size', 'r') as tp:
+        return int(tp.read().split()[1])
+
 def nuke(directory, legend, verbosity=1):
     "Remove a (large) directory, with a progress indicator."
     with Baton(legend, verbosity=verbosity) as baton:
@@ -492,11 +497,11 @@ class Commit:
         self.fileops = []            # blob and file operation list
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
-    def lister(self, eventnum):
+    def lister(self, eventnum, cols):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
-        return "%6d %s %-50s" % \
-                      (eventnum+1, self.committer.date.iso8601()[:-5], topline[:50]) 
+        return "%6d %s %-*s" % \
+                      (eventnum+1, self.committer.date.iso8601()[:-5], cols-27, topline[:cols-27]) 
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1538,7 +1543,7 @@ class RepoSurgeon(cmd.Cmd):
     #
     # Helpers
     #
-    def report_select(self, line, method):
+    def report_select(self, line, method, optargs=()):
         "Generate a repository report on all objects with a specified method."
         if not self.repo:
             complain("no repo has been chosen.")
@@ -1553,7 +1558,7 @@ class RepoSurgeon(cmd.Cmd):
         for i in self.selection:
             event = self.repo.events[i]
             if hasattr(event, method):
-                fp.write(getattr(event, method)(i) + "\n")
+                fp.write(getattr(event, method)(*((i,)+optargs)) + "\n")
         if outfile:
             fp.close()
 
@@ -1700,7 +1705,7 @@ file in the blob.
 """
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
-        self.report_select(line, "lister")
+        self.report_select(line, "lister", (screenwidth(),))
     def help_list(self):
         print """
 Display commits in a human-friendly format; the first column is raw

@@ -1,7 +1,10 @@
 			reposurgeon project news
 
 0.3:
+     'list' command adaps to current width of terminal window.
      Issue a baton prompt during repo cleanup, which can be a long process.
+     Multiple instances can now run in the same directory.
+     Some speedup on import and export.
 
 0.2: 2010-11-04
      Filenames with embedded whitespace are handled. 
