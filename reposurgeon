@@ -1133,20 +1133,20 @@ def rebuild_repo(repo, target, preferred):
         os.chdir(here)
         nuke(staging, "reposurgeon: removing staging directory", verbosity=2)
 
-def do_or_die(mycmd, legend=""):
+def do_or_die(cmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
         legend = " "  + legend
     if verbose >= 2:
-        announce("executing %s%s" % (mycmd, legend))
+        announce("executing %s%s" % (cmd, legend))
     try:
-        retcode = subprocess.call(mycmd, shell=True)
+        retcode = subprocess.call(cmd, shell=True)
         if retcode < 0:
             raise FatalException("child was terminated by signal %d" % -retcode)
         elif retcode != 0:
             raise FatalException("child returned %d" % retcode)
     except OSError, e:
-        raise FatalException("execution of %s%s failed: %s" % (mycmd, legend, e))
+        raise FatalException("execution of %s%s failed: %s" % (cmd, legend, e))
 
 class popen_or_die:
     "Read or write from a subordinate process."
