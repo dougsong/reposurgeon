@@ -1113,7 +1113,7 @@ def rebuild_repo(repo, target, preferred):
         assert(os.path.abspath(savedir))
 
         # This is a critical region.  Ignore all signals until we're done.
-        with CriticalRegion() as critical:
+        with CriticalRegion():
             # Move the unmodified repo contents in target to the
             # backup directory.  Then move the staging contents to the
             # target directory.  Finally, restore designated files
@@ -1151,6 +1151,7 @@ def do_or_die(cmd, legend=""):
 class popen_or_die:
     "Read or write from a subordinate process."
     def __init__(self, cmd, legend="", mode="r"):
+        assert mode in ("r", "w")
         self.cmd = cmd
         self.legend = legend
         self.mode = mode
@@ -1158,7 +1159,10 @@ class popen_or_die:
             self.legend = " "  + self.legend
     def __enter__(self):
         if verbose >= 2:
-            announce("executing %s%s" % (self.cmd, self.legend))
+            if mode == "r":
+                announce("resding from %s%s" % (self.cmd, self.legend))
+            else:
+                announce("writing to %s%s" % (self.cmd, self.legend))
         try:
             self.fp = os.popen(self.cmd, self.mode)
             return self.fp
