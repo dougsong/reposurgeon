@@ -32,6 +32,13 @@ import email.message, email.parser, email.utils
 # that are not part of the basic VCS. Thus these may fail when called;
 # we need to be prepared to cope with that.
 #
+# %s in a command gets substituted with the name of a tempile that the
+# calling code will know to read or write from as appropriate after the command
+# is dome.  If your exporter can simply dump to stdout, or your importer
+# reasd from stdin, leave out the %s; reposurgeon will popen(3) the command,
+# and it will actually be slightly faster (especially on large repos)
+# because it won't have to wait for the tempfile I/O to complete.
+#
 # Subversion/RCS/CVS aren't in this table because exporting from them
 # requires fixups of usernames in the committer information to full
 # email addresses.  Trying to handle that entirely inside this tool
@@ -42,7 +49,7 @@ version="0.2"
 
 vcstypes = {
     "git" : (".git",
-             "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all >%s",
+             "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
              "git init",
              "git fast-import <%s",
              "git checkout"),
@@ -992,15 +999,21 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.type = foundname
         repo.sourcedir = source
-        try:
-            (tfdesc, tfname) = tempfile.mkstemp()
-            incmd = "cd %s >/dev/null;" % source
-            incmd += foundexporter % tfname
-            do_or_die(incmd, "repository export")
-            with open(tfname) as tp:
-                repo.fast_import(tp, verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source))));
-        finally:
-            os.remove(tfname)
+        baton = verbose and Baton("reposurgeon: from %s repo at '%s'" % (foundname, os.path.relpath(source)))
+        incmd = "cd %s >/dev/null;" % source
+        if "%s" in foundexporter:
+            try:
+                (tfdesc, tfname) = tempfile.mkstemp()
+                incmd += foundexporter % tfname
+                do_or_die(incmd, "repository export")
+                with open(tfname) as tp:
+                    repo.fast_import(tp, baton);
+            finally:
+                os.remove(tfname)
+        else:
+            incmd += foundexporter
+            with os.popen(incmd) as tp:
+                repo.fast_import(tp, baton);
     return repo
 
 class CriticalRegion:
