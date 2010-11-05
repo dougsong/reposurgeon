@@ -658,6 +658,7 @@ class Repository:
         self.import_line = 0
         self.restore_set = set([])
         self.case_coverage = set([])
+        self.basedir = os.getcwd()
     def cleanup(self):
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     __del__ = cleanup
@@ -665,9 +666,9 @@ class Repository:
         if name is None:
             name = self.name
         if not name:
-            return ".rs" + `os.getpid()`
+            return os.path.join(self.basedir, ".rs" + `os.getpid()`)
         else:
-            return ".rs" + `os.getpid()`+ "-" + name 
+            return os.path.join(self.basedir, ".rs" + `os.getpid()`+ "-" + name) 
     def error(self, msg, atline=True):
         if atline:
             raise FatalException(msg + " at line " + `self.import_line`)
@@ -1012,20 +1013,24 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.type = foundname
         repo.sourcedir = source
-        incmd = "cd %s >/dev/null;" % source
-        if "%s" in foundexporter:
-            try:
-                (tfdesc, tfname) = tempfile.mkstemp()
-                incmd += foundexporter % tfname
-                do_or_die(incmd, "repository export")
-                with open(tfname) as tp:
+        try:
+            here = os.getcwd()
+            os.chdir(repo.sourcedir)
+            if "%s" in foundexporter:
+                try:
+                    (tfdesc, tfname) = tempfile.mkstemp()
+                    incmd = foundexporter % tfname
+                    do_or_die(incmd, "repository export")
+                    with open(tfname) as tp:
+                        repo.fast_import(tp);
+                finally:
+                    os.remove(tfname)
+            else:
+                incmd = foundexporter
+                with os.popen(incmd) as tp:
                     repo.fast_import(tp);
-            finally:
-                os.remove(tfname)
-        else:
-            incmd += foundexporter
-            with os.popen(incmd) as tp:
-                repo.fast_import(tp);
+        finally:
+            os.chdir(here)
     return repo
 
 class CriticalRegion:
