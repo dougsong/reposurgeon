@@ -51,7 +51,7 @@ vcstypes = {
     "git" : (".git",
              "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
              "git init",
-             "git fast-import <%s",
+             "git fast-import",
              "git checkout"),
      # FIXME: hg and bzr methods are untested
     "hg" : (".hg",
@@ -72,12 +72,12 @@ DEBUG_EMAILIN = 3    # Debug event round-tripping through mailbox_{out|in}
 DEBUG_LEXER   = 4    # Debug selection-language parsing
 
 class Baton:
-    "Ship progress indications to stderr."
+    "Ship progress indications to stdout."
     def __init__(self, prompt, endmsg='done'):
         self.prompt = prompt
         self.endmsg = endmsg
         if verbose:
-            self.stream = sys.stderr
+            self.stream = sys.stdout
         else:
             self.stream = None
     def __enter__(self):
@@ -1066,10 +1066,18 @@ def rebuild_repo(repo, target, preferred):
     try:
         os.chdir(staging)
         do_or_die(initializer, "repository initialization")
-        (tfdesc, tfname) = tempfile.mkstemp()
-        with open(tfname, "w") as tp:
-            repo.fast_export(range(len(repo)), tp)
-        do_or_die(importer % tfname, "repository import")
+        if "%s" in importer:
+            try:
+                (tfdesc, tfname) = tempfile.mkstemp()
+                with open(tfname, "w") as tp:
+                    repo.fast_export(range(len(repo)), tp)
+                do_or_die(importer % tfname, "repository import")
+            finally:
+                os.remove(tfname)
+        else:
+            with os.popen(importer, "w") as tp:
+                repo.fast_export(range(len(repo)), tp)
+            
         do_or_die(checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
@@ -1105,7 +1113,6 @@ def rebuild_repo(repo, target, preferred):
                                 os.path.join(target, sub))
     finally:
         os.chdir(here)
-        os.remove(tfname)
         os.system("rm -fr " + staging)
 
 def do_or_die(mycmd, legend=""):
