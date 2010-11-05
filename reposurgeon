@@ -1142,9 +1142,9 @@ def do_or_die(mycmd, legend=""):
     try:
         retcode = subprocess.call(mycmd, shell=True)
         if retcode < 0:
-            FatalException("child was terminated by signal %d" % -retcode)
+            raise FatalException("child was terminated by signal %d" % -retcode)
         elif retcode != 0:
-            FatalException("child returned %d" % retcode)
+            raise FatalException("child returned %d" % retcode)
     except OSError, e:
         raise FatalException("execution of %s failed: %s" % (mycmd, e))
 
