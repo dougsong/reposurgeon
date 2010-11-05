@@ -6,7 +6,7 @@
 #
 # Requires Python 2.5 or newer.
 #
-import sys, os, getopt, commands, cStringIO, cmd, tempfile
+import sys, os, getopt, commands, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
@@ -1129,11 +1129,19 @@ def rebuild_repo(repo, target, preferred):
         nuke(staging, "reposurgeon: removing staging directory", verbosity=2)
 
 def do_or_die(mycmd, legend=""):
-    (err, out) = commands.getstatusoutput(mycmd)
+    "Either execute a command or raise a fatal exception."
     if legend:
-        legend += " "
-    if err:
-        FatalException("%s'%s' failed" % (legend, mycmd))
+        legend = " "  + legend
+    if verbose >= 2:
+        announce("executing %s%s" % (mycmd, legend))
+    try:
+        retcode = subprocess.call(mycmd, shell=True)
+        if retcode < 0:
+            FatalException("child was terminated by signal %d" % -retcode)
+        elif retcode != 0:
+            FatalException("child returned %d" % retcode)
+    except OSError, e:
+        raise FatalException("execution of %s failed: %s" % (mycmd, e))
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
