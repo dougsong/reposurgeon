@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.3:
+     Issue a baton prompt during repo cleanup, which can be a long process.
+
 0.2: 2010-11-04
      Filenames with embedded whitespace are handled. 
      The 'expunge' operation to remove files from the history is working.

@@ -639,10 +639,19 @@ class Repository:
         self.restore_set = set([])
         self.case_coverage = set([])
     def cleanup(self):
-        delcmd = "rm -fr %s" % (self.subdir(),)
-        if verbose >= DEBUG_SHUFFLE:
-            self.warn("repository cleanup calls " + delcmd)
-        os.system(delcmd)
+        if verbose:
+            baton = Baton("reposurgeon: cleaning up %s" % self.subdir())
+        for root, dirs, files in os.walk(self.subdir(), topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+                if verbose:
+                    baton.twirl()
+            for name in dirs:
+                if verbose:
+                    os.rmdir(os.path.join(root, name))
+                    baton.twirl()
+        if verbose:
+            baton.end("done")
     __del__ = cleanup
     def subdir(self, name=None):
         if name is None:
@@ -1161,7 +1170,7 @@ class RepoSurgeon(cmd.Cmd):
         os.system(line)
     def do_EOF(self, line):
         "Terminate reposurgeon."
-        self.cleanup()
+        print ""
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
