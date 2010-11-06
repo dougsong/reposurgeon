@@ -281,8 +281,8 @@ argument is empty or '-' or a named file otherwise.  Fails if the
 argument exists and is a directory or anything other than a plain
 file.</para>
 
-<para>Note: a <command>write</command> with a small selection set can 
-be a useful way to examine small groups of commits.</para>
+<para>Note: to examine small groups of commits without the progress
+meter, use <command>inspect</command>.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -386,7 +386,7 @@ event numbers, the second a timestamp in local time, and the third the
 leading text of the comment.  If there is a second argument, or the
 first is not recognized as a selection set, it will be taken as the
 name of the file to report to; no argument, or one of '-'; writes to
-standard output.  </para></listitem>
+standard output.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>stats</command>
@@ -394,6 +394,14 @@ standard output.  </para></listitem>
 <listitem><para>
 Report size statistics and import/export method information about
 the currently chosen repository.
+</para></listitem>
+</varlistentry>
+<varlistentry>
+<term><command>inspect</command>
+</term>
+<listitem><para>
+Dump a fast-import stream representing selected events to standard output.
+Just like a write, except the progress meter is disabled.
 </para></listitem>
 </varlistentry>
 </variablelist>

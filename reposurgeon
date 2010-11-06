@@ -1913,6 +1913,19 @@ Dump a fast-import stream representing selected events to standard output
 and is a directory or anything other than a plain file. The default selection
 is all events.
 """
+    def do_inspect(self, line):
+        "Dump raw events."
+        if not self.repo:
+            complain("no repo has been chosen.")
+            return
+        self.set_selection_set(line, range(len(self.repo)))
+        for ei in self.selection:
+            sys.stdout.write(str(self.repo[ei]))
+    def help_inspect(self):
+        print """
+Dump a fast-import stream representing selected events to standard output.
+Just like a write, except the progress meter is disabled.
+"""
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
         rebuild_repo(self.repo, line, self.preferred)
