@@ -762,8 +762,15 @@ class Repository:
     #
     # Delete machinery begins here
     #
-    @staticmethod
-    def __compose(ei, left, right):
+    def __ancestor_count(self, event, path):
+        "Count modifications of a path in this commit and its ancestry chain."
+        count = 0
+        for fileop in event.fileops:
+            if fileop.op == "M" and fileop.path == path:
+                count = 1
+                break
+        return count + sum(map(lambda c: self.__ancestor_count(c, path), event.parents()))
+    def __compose(self, event, left, right):
         "Compose two relevant fileops."
         # Here's what the fields in the return value mean:
         # 0: Was this a modification
@@ -779,31 +786,40 @@ class Repository:
             # Leve these in place, they get handled later.
             return (False, left, right, None, 0)
         # M a + D a -> D a
-        # Note: Could lead to a D with no preceding M.
+        # Or, could reduce to nothing if M a was the only modify..
         if left.op == "M" and right.op in "D":
-            return (True, right, None, None, 1)
+            if self.__ancestor_count(event, left.path) == 1:
+                return (True, None, None, None, 1)
+            else:
+                return (True, right, None, None, 2)
         if left.op == "M" and right.op == "R":
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
-                left.path = right.target
-                return (True, right, left, None, 2)
+                if self.__ancestor_count(event, left.path) == 1:
+                    # M a has no ancestors, preceding R can be dropped
+                    left.path = right.target
+                    return (True, left, None, None, 3)
+                else:
+                    # M a has ancestors, R is still needed
+                    left.path = right.target
+                    return (True, right, left, None, 4)
             # M b + R a b -> R a b, copy or rename undoes the modification
             elif left.path == right.target:
-                return(True, right, None, None, 3)
+                return(True, right, None, None, 5)
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
         if left.op == "M" and right.op == "C":
-            return (False, left, right, None, 4)
+            return (False, left, right, None, 6)
         #
         # First op D or deleteall
         #
-        # Delete followed by modify undoes delete, since M carries whole files 
+        # Delete followed by modify undoes delete, since M carries whole files. 
         if pair == ("D", "M"):
-            return (True, right, None, None, 5)
+            return (True, right, None, None, 7)
         # But we have to leave deletealls in place, since they affect right ops
         if pair == ("deleteall", "M"):
-            return (False, left, right, None, 6)
+            return (False, left, right, None, 8)
         # These cases should be impossible
         if left.op == "deleteall" and right.op != "M":
             return (False, left, right,
@@ -815,14 +831,14 @@ class Repository:
                 return (False, left, right,
                         "R or C of %s after deletion?" % left.path, -3)
             else:
-                return (False, left, right, None, 7)
+                return (False, left, right, None, 9)
         #
         # First op R
         #
         if pair == ("R", "D"):
             if left.target == right.path:
                 # Rename followed by delete of target composes to nothing
-                return (True, None, None, None, 8)
+                return (True, None, None, None, 10)
             else:
                 # On followed by delete of source discard the delete
                 # but user should be warned. 
@@ -834,19 +850,19 @@ class Repository:
                     "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
         if pair == ("R", "M") or pair == ("C", "M"):
-            return (False, left, right, None, 9)
+            return (False, left, right, None, 11)
         # Compose renames where possible
         if left.op == "R" and right.op == "R":
             if left.target == right.source:
                 left.target = right.target
-                return (True, source, None, None, 10)
+                return (True, source, None, None, 12)
             else:
                 return (False, source, right,
                         "R %s %s is inconsistent with following operation" \
                         % (left.source, left.target), -6)
         # We could do R a b + C b c -> C a c + R a b, but why?
         if left.op == "R" and right.op == "C":
-            return (False, left, right, None, 11)
+            return (False, left, right, None, 13)
         #
         # First op C
         #
@@ -854,22 +870,22 @@ class Repository:
             if left.source == target.path:
                 # Copy followed by delete of the source is a rename.
                 left.op = "R"
-                return (True, left, None, None, 12)
+                return (True, left, None, None, 14)
             elif left.target == target.path:
                 # This delete undoes the copy
-                return (True, None, None, None, 13)
+                return (True, None, None, None, 15)
         if pair == ("C", "R"):
             if left.source == right.source:
                 # No reduction
-                return (False, left, right, None, 14)
+                return (False, left, right, None, 16)
             else:
                 # Copy followed by a rename of the target reduces to single copy
                 if left.target == right.source:
                     left.target = right.target
-                    return (True, left, None, None, 15)
+                    return (True, left, None, None, 17)
         if pair == ("C", "C"):
             # No reduction
-            return (False, left, right, None, 16)
+            return (False, left, right, None, 18)
         #
         # Case not covered
         #
@@ -898,7 +914,7 @@ class Repository:
                     if b is None:
                         continue
                     if i < j and a.relevant(b):
-                        (modified, newa, newb, warn, case) = Repository.__compose(ei, a, b)
+                        (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         if modified:
                             if verbose >= DEBUG_DELETE:
                                 print "Reduction case %d fired on %s" % (case, (i,j))
