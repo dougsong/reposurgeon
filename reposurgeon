@@ -323,7 +323,8 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
-    def __init__(self, opline):
+    def __init__(self, opline, commit):
+        self.commit = commit                 # Only used for debugging.
         if opline.startswith("M"):
             m = FileOp.modify_re.match(opline)
             if not m:
@@ -364,7 +365,8 @@ class FileOp:
         if pair == ("M", "M"):
             # Leve these in place, they get handled later.
             return (False, self, other, None, 0)
-        # Modify X followed by delete X is equivalent to delete X 
+        # Modify X followed by delete X is equivalent to delete X.
+        # Note: Could lead to a D with no preceding M.
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
         if self.op == "M" and other.op == "R":
@@ -394,7 +396,7 @@ class FileOp:
             return (False, self, other,
                     "operation other than M after deleteall?", -1)
         if self.op == "D" and other.op == "D":
-            return (False, self, other, "Two Ds of %?" % self.path, -2)
+            return (False, self, other, "Two Ds of %s?" % self.path, -2)
         if self.op == "D" and other.op in ("R", "C"):
             if self.path == other.source:
                 return (False, self, other,
@@ -588,15 +590,16 @@ class Commit:
             for (i, a) in enumerate(self.fileops):
                 if a is None:
                     continue
-                for (i, b) in enumerate(self.fileops):
+                for (j, b) in enumerate(self.fileops):
                     if b is None:
                         continue
                     if a.relevant(b):
                         (modified, newa, newb, warn, case) = a.compose(b)
+                        #print "Reduction case %d fired" % case
                         if modified:
                             mutated = True
                             self.fileops[i] = newa
-                            self.fileops[i] = newb
+                            self.fileops[j] = newb
                             if warn:
                                 warnhook(warn)
                             coverage.add(case)
@@ -784,14 +787,13 @@ class Repository:
                                 commit.parent_marks.append(line.split()[1])
                             # Handling of file ops begins.
                             elif line[0] in ("C", "D", "R"):
-                                commit.fileops.append(FileOp(line))
+                                commit.fileops.append(FileOp(line, commit.mark))
                             elif line == "filedeleteall\n":
-                                commit.fileops.append(FileOp("filedeleteall"))
+                                commit.fileops.append(FileOp("filedeleteall"), commit.mark)
                             elif line[0] == "M":
-                                try:
-                                    fileop = FileOp(line)
-                                except ValueError, e:
-                                    self.error(`e` + " on line " + `line`)
+                                fileop = FileOp(line, commit.mark)
+                                if commit.mark is None:
+                                    self.warn("unmarked commit")
                                 commit.fileops.append(fileop)
                                 if fileop.ref[0] == ':':
                                     self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
@@ -901,7 +903,7 @@ class Repository:
         "Delete commits, handling multiple Ms on a file with specified policy"
         if not policy:
             policy = "complain"
-        # Make sure we do deletions from gretest commit number to least
+        # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
         if verbose >= 2:
@@ -940,6 +942,7 @@ class Repository:
                 self.events.pop(ei)
             else:
                 raise FatalException("unexpected object in event array")
+            # FIXME: remove deletes for which there are no longer preceding Ms
         # Canonicalize all the commits that got ops pushed to them
         for (i, event) in enumerate(self.events):
             if not isinstance(event, Commit):
@@ -1655,9 +1658,14 @@ for exploring the selection-set language.
         if not self.repo:
             complain("no repo has been chosen.")
             return
+        for (i, e) in enumerate(self.repo.events):
+            if isinstance(e, Commit):
+                print "commit %d, mark %s:" % (i+1, e.mark)
+                for op in e.fileops:
+                    print "%-20s\t# %s" % (str(op), op.commit)
         coverage = list(self.repo.case_coverage)
         coverage.sort()
-        print coverage
+        print "Case coverage:", coverage
     #
     # Information-gathering
     #
