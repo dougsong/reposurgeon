@@ -105,6 +105,55 @@ Create the third doomed file.
 from :11
 M 100644 :12 doomed3
 
-reset refs/heads/master
+blob
+mark :14
+data 70
+This fiie needs to have at least one commit other than its creation.
+
+
+commit refs/heads/master
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
+data 62
+Second commit to doomed3, so there will be an ancestry chain.
 from :13
+M 100644 :14 doomed3
+
+blob
+mark :16
+data 50
+And let's give it another one fot good measure.
+
+
+
+commit refs/heads/master
+mark :17
+author Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
+data 61
+Third commit to doomed3, so there will be an ancestry chain.
+from :15
+M 100644 :16 doomed3
+
+commit refs/heads/master
+mark :18
+author Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
+data 30
+doomed3, thy end has arrived.
+from :17
+D doomed3
+
+commit refs/heads/master
+mark :19
+author Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
+data 53
+Commit this so we test a non-tip deletion reduction.
+from :18
+M 100644 :3 README
+
+reset refs/heads/master
+from :19
 

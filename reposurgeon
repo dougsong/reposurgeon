@@ -15,8 +15,6 @@ import email.message, email.parser, email.utils
 # * Dates in specification expressions.
 #
 # * Test hg and bzr methods.
-#
-# * Create a test-load repo that exercises all the weird cases.
 
 # All knowledge about specific version-control systems lives in the
 # following dictionary. The key is the name of the VCS. The values in the
@@ -985,7 +983,7 @@ class Repository:
                 self.case_coverage |= self.canonicalize(ei)
                 if verbose >= DEBUG_DELETE:
                     print "After canonicalization:"
-                    event.fileop_dump(i)
+                    event.fileop_dump(ei)
                 # Now apply policy in the mutiple-M case
                 for (path, oplist) in event.cliques().items():
                     if len(oplist) == 1:
@@ -1246,7 +1244,7 @@ class RepoSurgeon(cmd.Cmd):
     # Housekeeping hooks.
     #
     def onecmd(self, line):
-        "Execute one command, fielding itnerrupts for recoverable exceptions."
+        "Execute one command, fielding interrupts for recoverable exceptions."
         try:
             cmd.Cmd.onecmd(self, line)
         except RecoverableException, e:
@@ -1260,7 +1258,7 @@ class RepoSurgeon(cmd.Cmd):
         "Pre-command hook."
         self.history.append(line.rstrip())
         if self.repeat:
-            sys.stdout.write(line)
+            sys.stdout.write(line.rstrip()+"\n")
         if "#" in line:
             line = line[:line.index("#")].rstrip()
         return line

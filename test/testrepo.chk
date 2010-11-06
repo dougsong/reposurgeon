@@ -1,5 +1,6 @@
 This exercises many delete cases in the test repo
 read testrepo.dump
+reposurgeon: 2 references to blob :3
 coverage
 commit 3, mark :2:
 0: M 100644 :1 README  	# :2
@@ -16,6 +17,14 @@ commit 12, mark :11:
 0: R "doomed2" "renamed1"	# :11
 commit 14, mark :13:
 0: M 100644 :12 doomed3	# :13
+commit 16, mark :15:
+0: M 100644 :14 doomed3	# :15
+commit 18, mark :17:
+0: M 100644 :16 doomed3	# :17
+commit 19, mark :18:
+0: D doomed3           	# :18
+commit 20, mark :19:
+0: M 100644 :3 README  	# :19
 Case coverage: []
 delete :7,:8
 coverage       # Expect this to show case 1 covered.
@@ -30,8 +39,35 @@ commit 10, mark :11:
 0: R "doomed2" "renamed1"	# :11
 commit 12, mark :13:
 0: M 100644 :12 doomed3	# :13
+commit 14, mark :15:
+0: M 100644 :14 doomed3	# :15
+commit 16, mark :17:
+0: M 100644 :16 doomed3	# :17
+commit 17, mark :18:
+0: D doomed3           	# :18
+commit 18, mark :19:
+0: M 100644 :3 README  	# :19
 Case coverage: [1]
 delete :10,:11
+coverage       # Expect this to show case 3 covered.
+commit 3, mark :2:
+0: M 100644 :1 README  	# :2
+commit 5, mark :4:
+0: M 100644 :3 README  	# :4
+commit 10, mark :13:
+0: M 100644 :5 README  	# :7
+1: M 100644 :9 renamed1	# :10
+2: M 100644 :12 doomed3	# :13
+commit 12, mark :15:
+0: M 100644 :14 doomed3	# :15
+commit 14, mark :17:
+0: M 100644 :16 doomed3	# :17
+commit 15, mark :18:
+0: D doomed3           	# :18
+commit 16, mark :19:
+0: M 100644 :3 README  	# :19
+Case coverage: [1, 3]
+delete :17,:18
 coverage       # Expect this to show case 2 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  	# :2
@@ -41,5 +77,9 @@ commit 10, mark :13:
 0: M 100644 :5 README  	# :7
 1: M 100644 :9 renamed1	# :10
 2: M 100644 :12 doomed3	# :13
-Case coverage: [1, 3]
-
+commit 12, mark :15:
+0: M 100644 :14 doomed3	# :15
+commit 14, mark :19:
+0: D doomed3           	# :18
+1: M 100644 :3 README  	# :19
+Case coverage: [1, 2, 3]
