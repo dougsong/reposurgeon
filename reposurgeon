@@ -573,46 +573,6 @@ class Commit:
     def parents(self):
         "Get a list of this commit's parents."
         return filter(lambda e:e.mark in self.parent_marks,self.repo.commits()) 
-    def canonicalize(self, ei, warnhook):
-        "Canonicalize the list of file operations in this commit."
-        coverage = set([])
-        # Handling deleteall operations is simple
-        lastdeleteall = None
-        for (i, a) in enumerate(self.fileops):
-            if a.op == "deleteall":
-                lastdeleteall = i
-        if lastdeleteall is not None:
-            if verbose >= 2:
-                print "reposurgeon: removing all before rightmost deleteall"
-            self.fileops = self.fileops[lastdeleteall:]
-        # Composition in the general case is trickier.
-        while True:
-            # Keep making passes until nothing mutates
-            mutated = False
-            for (i, a) in enumerate(self.fileops):
-                if a is None:
-                    continue
-                for (j, b) in enumerate(self.fileops):
-                    if b is None:
-                        continue
-                    if i < j and a.relevant(b):
-                        (modified, newa, newb, warn, case) = FileOp.compose(a, b)
-                        if modified:
-                            if verbose >= DEBUG_DELETE:
-                                print "Reduction case %d fired on %s" % (case, (i,j))
-                            mutated = True
-                            self.fileops[i] = newa
-                            self.fileops[j] = newb
-                            if verbose >= DEBUG_DELETE:
-                                print "During canonicalization:"
-                                self.fileop_dump(ei)
-                            if warn:
-                                warnhook(warn)
-                            coverage.add(case)
-            if not mutated:
-                break
-        self.fileops = filter(lambda x: x is not None, self.fileops)
-        return coverage
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = {}
@@ -911,6 +871,46 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
+    def canonicalize(self, commit, ei, warnhook):
+        "Canonicalize the list of file operations in this commit."
+        coverage = set([])
+        # Handling deleteall operations is simple
+        lastdeleteall = None
+        for (i, a) in enumerate(commit.fileops):
+            if a.op == "deleteall":
+                lastdeleteall = i
+        if lastdeleteall is not None:
+            if verbose >= 2:
+                print "reposurgeon: removing all before rightmost deleteall"
+            commit.fileops = commit.fileops[lastdeleteall:]
+        # Composition in the general case is trickier.
+        while True:
+            # Keep making passes until nothing mutates
+            mutated = False
+            for (i, a) in enumerate(commit.fileops):
+                if a is None:
+                    continue
+                for (j, b) in enumerate(commit.fileops):
+                    if b is None:
+                        continue
+                    if i < j and a.relevant(b):
+                        (modified, newa, newb, warn, case) = FileOp.compose(a, b)
+                        if modified:
+                            if verbose >= DEBUG_DELETE:
+                                print "Reduction case %d fired on %s" % (case, (i,j))
+                            mutated = True
+                            commit.fileops[i] = newa
+                            commit.fileops[j] = newb
+                            if verbose >= DEBUG_DELETE:
+                                print "During canonicalization:"
+                                commit.fileop_dump(ei)
+                            if warn:
+                                warnhook(warn)
+                            coverage.add(case)
+            if not mutated:
+                break
+        commit.fileops = filter(lambda x: x is not None, commit.fileops)
+        return coverage
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         if not policy:
@@ -956,14 +956,14 @@ class Repository:
                 raise FatalException("unexpected object in event array")
             # FIXME: remove deletes for which there are no longer preceding Ms
         # Canonicalize all the commits that got ops pushed to them
-        for (i, event) in enumerate(self.events):
+        for (ei, event) in enumerate(self.events):
             if not isinstance(event, Commit):
                 continue
             elif event.pushed_to:
                 if verbose >= DEBUG_DELETE:
                     print "Before canonicalization:"
-                    event.fileop_dump(i)
-                self.case_coverage |= event.canonicalize(i, lambda m: self.warn(m, atline=False))
+                    event.fileop_dump(ei)
+                self.case_coverage |= self.canonicalize(event, ei, lambda m: self.warn(m, atline=False))
                 if verbose >= DEBUG_DELETE:
                     print "After canonicalization:"
                     event.fileop_dump(i)
@@ -976,7 +976,7 @@ class Repository:
                     func = getattr(self, 'policy_' + policy)
                     func(event, oplist)
                     if verbose >= 2:
-                        print "Commit %d, after applying policy:" % (i +1,)
+                        print "Commit %d, after applying policy:" % (ei +1,)
                         for op in event.fileops:
                             print str(op)
         # Clear everybody's problem flag
