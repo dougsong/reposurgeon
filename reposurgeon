@@ -914,21 +914,28 @@ class Repository:
             elif isinstance(event, Blob):
                 raise FatalException("attempt to directly delete blob")
             elif isinstance(event, Commit):
-                for child in event.children():
-                    # Reparent each child
-                    child.parent_marks.remove(event.mark)
-                    child.parent_marks += event.parent_marks
-                    # Push a copy of the parent's file ops to it
-                    # and mark it as needing resolution
-                    child.fileops = copy.copy(event.fileops) + child.fileops
-                    child.pushed_to = True
-                # Remove tags and blobs referring to this event
-                self.events = filter(lambda t: not ((isinstance(t, Tag)
-                                                     and t.committish == event.mark)
-                                                    or 
-                                                    (isinstance(t, Blob)
-                                                     and t.mark == event.mark)),
-                                          self.events)
+                if not event.children():
+                    # Tip revision.  Release all its blobs.
+                    for fileop in event.fileops:
+                        if fileop.op == "M":
+                            bi = self.find(fileop.ref)
+                            assert(isinstance(self.events[bi], Blob))
+                            self.events[bi].release()
+                else:
+                    for child in event.children():
+                        # Reparent each child
+                        child.parent_marks.remove(event.mark)
+                        child.parent_marks += event.parent_marks
+                        # Push a copy of the parent's file ops to it
+                        # and mark it as needing resolution
+                        child.fileops = copy.copy(event.fileops) + child.fileops
+                        child.pushed_to = True
+                # Remove tags referring to this event. Its children will
+                # still own the blobs, though they may be removed by
+                # canonicalization.
+                self.events = filter(lambda t: not (isinstance(t, Tag)
+                                                    and t.committish == event.mark),
+                                     self.events)
                 # And remove it
                 self.events.pop(ei)
             else:
