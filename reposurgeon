@@ -339,16 +339,16 @@ class FileOp:
             raise FatalException("unexpected fileop %s while parsing" % opline)
     def paths(self):
         "return the set of all paths touched by this file op."
-        if self.op == "M":
-            return set([self.ref])
-        elif self.op in ("D", "R", "C"):
-            return set([source, self.target])
+        if self.op in ("M", "D"):
+            return set([self.path])
+        elif self.op in ("R", "C"):
+            return set([self.source, self.target])
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
-        if self.op or other.op == "deleteall":
+        if self.op == "deleteall" or other.op == "deleteall":
             return True
         else:
-            return self.paths().intersect(other.paths)
+            return self.paths() & other.paths()
     def compose(self, other):
         "Compose two relevant fileops."
         # Here's what the fields in the return value mean:
@@ -1922,7 +1922,7 @@ is all events.
             return
         self.set_selection_set(line, range(len(self.repo)))
         for ei in self.selection:
-            sys.stdout.write(`ei` + ": " + (72 * "=") + "\n") 
+            sys.stdout.write(`ei+1` + ": " + (72 * "=") + "\n") 
             sys.stdout.write(str(self.repo[ei]))
     def help_inspect(self):
         print """
