@@ -1,0 +1,72 @@
+blob
+mark :1
+data 180
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similsr tools.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
+data 30
+Entirely boring first commit.
+M 100644 :1 README
+
+blob
+mark :3
+data 180
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+commit refs/heads/master
+mark :4
+author Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
+data 51
+Conveniently, the first commit needded a typo fix.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
+data 284
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+Now we're going to modify this at the same time we create another file
+whose destiny is to be deleted.
+
+blob
+mark :6
+data 51
+This file is doomed. Its destiny is to be deleted.
+
+commit refs/heads/master
+mark :7
+author Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
+data 35
+Creation of the first doomed file.
+from :4
+M 100644 :5 README
+M 100644 :6 doomed1
+
+commit refs/heads/master
+mark :8
+author Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
+data 61
+Deleting the doomed1.  Will produce M followed by D, case 1.
+from :7
+D doomed1
+
+reset refs/heads/master
+from :8
+

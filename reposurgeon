@@ -1641,6 +1641,14 @@ for exploring the selection-set language.
         "Dump your command list from this session so far."
         for line in self.history:
             print line
+    def do_coverage(self, line):
+        "Display the coverage-case set (developer instrumentation)."
+        if not self.repo:
+            complain("no repo has been chosen.")
+            return
+        coverage = list(self.repo.case_coverage)
+        coverage.sort()
+        print coverage
     #
     # Information-gathering
     #

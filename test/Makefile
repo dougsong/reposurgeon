@@ -45,7 +45,7 @@ regress:
 COALESCE=uncoalesced
 makecoalesce:
 	@for file in $(COALESCE); do \
-	    echo "Rebuliding coalescence regression test using $${file}.dump"; \
+	    echo "Rebuilding coalescence regression test using $${file}.dump"; \
 	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk; \
 	done
 	@rm -f /tmp/regress
@@ -57,3 +57,5 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
+testdelete:
+	../reposurgeon "script testrepo.tst" 
