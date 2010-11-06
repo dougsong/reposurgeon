@@ -596,13 +596,13 @@ class Commit:
                         if modified:
                             mutated = True
                             self.fileops[i] = newa
-                            self.fileops[j] = newb
+                            self.fileops[i] = newb
                             if warn:
                                 warnhook(warn)
                             coverage.add(case)
             if not mutated:
                 break
-        self.fileops = filter(lambda x: x is not None, self.fileops) 
+        self.fileops = filter(lambda x: x is not None, self.fileops)
         return coverage
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."

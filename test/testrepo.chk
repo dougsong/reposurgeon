@@ -1,3 +1,9 @@
+This exercises many delete cases in the test repo
+read testrepo.dump
+delete 8,9
+coverage       # Expect this to show case 1 covered.
+[1]
+inspect
 blob
 mark :1
 data 180
@@ -48,25 +54,6 @@ mark :6
 data 51
 This file is doomed. Its destiny is to be deleted.
 
-commit refs/heads/master
-mark :7
-author Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
-committer Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
-data 35
-Creation of the first doomed file.
-from :4
-M 100644 :5 README
-M 100644 :6 doomed1
-
-commit refs/heads/master
-mark :8
-author Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
-committer Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
-data 61
-Deleting the doomed1.  Will produce M followed by D, case 1.
-from :7
-D doomed1
-
 blob
 mark :9
 data 102
@@ -79,7 +66,9 @@ author Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
 data 34
 Make the previous commit non-tip.
-from :8
+from :4
+M 100644 :5 README
+M 100644 :6 doomed1
 M 100644 :9 doomed2
 
 reset refs/heads/master

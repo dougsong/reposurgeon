@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce
+all: clean roundtrip mailboxing regress coalesce testdelete
 	@echo "No diff output is good news."
 
 clean:
@@ -57,5 +57,11 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
+maketestdelete:
+	../reposurgeon "script testrepo.tst" >testrepo.chk
 testdelete:
-	../reposurgeon "script testrepo.tst" 
+	@echo "Test of canonicalization-after-commit cases."
+	@../reposurgeon "script testrepo.tst" >/tmp/regress
+	@diff -u testrepo.chk /tmp/regress
+	@rm -f /tmp/regress
+
