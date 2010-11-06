@@ -367,8 +367,8 @@ class FileOp:
         # Modify X followed by delete X is equivalent to delete X 
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
-        # Commute R ops with M so they fall towards start of list
         if self.op == "M" and other.op == "R":
+            # Commute R op with M so it falls towards start of list
             if self.path == other.source:
                 self.path = other.target
                 return (True, other, self, None, 2)
@@ -1226,6 +1226,8 @@ class RepoSurgeon(cmd.Cmd):
         self.history.append(line.rstrip())
         if self.repeat:
             sys.stdout.write(line)
+        if "#" in line:
+            line = line[:line.index("#")].rstrip()
         return line
     def do_shell(self, line):
         "Execute a shell command."
