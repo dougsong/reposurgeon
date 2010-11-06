@@ -68,6 +68,7 @@ vcstypes = {
 
 verbose       = 0
 DEBUG_SHUFFLE = 2    # Debug directory handling
+DEBUG_DELETE  = 2    # Debug canonicalization after deletes
 DEBUG_EMAILIN = 3    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_LEXER   = 4    # Debug selection-language parsing
 
@@ -365,16 +366,16 @@ class FileOp:
         if pair == ("M", "M"):
             # Leve these in place, they get handled later.
             return (False, self, other, None, 0)
-        # Modify X followed by delete X is equivalent to delete X.
+        # M a + D a -> D a
         # Note: Could lead to a D with no preceding M.
         if self.op == "M" and other.op in "D":
             return (True, other, None, None, 1)
         if self.op == "M" and other.op == "R":
-            # Commute R op with M so it falls towards start of list
+            # M a + R a b -> R a b M b, so R falls towards start of list
             if self.path == other.source:
                 self.path = other.target
                 return (True, other, self, None, 2)
-            # The copy or rename undoes the modification
+            # M b + R a b -> R a b, copy or rename undoes the modification
             elif self.path == other.target:
                 return(True, other, None, None, 3)
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
@@ -571,15 +572,15 @@ class Commit:
     def parents(self):
         "Get a list of this commit's parents."
         return filter(lambda e:e.mark in self.parent_marks,self.repo.commits()) 
-    def canonicalize(self, warnhook):
+    def canonicalize(self, ei, warnhook):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
-        # Handling deleteall ioerations is simple
+        # Handling deleteall operations is simple
         lastdeleteall = None
         for (i, a) in enumerate(self.fileops):
             if a.op == "deleteall":
                 lastdeleteall = i
-        if i is not None:
+        if lastdeleteall is not None:
             if verbose >= 2:
                 print "reposurgeon: removing all before rightmost deleteall"
             self.fileops = self.fileops[lastdeleteall:]
@@ -593,13 +594,17 @@ class Commit:
                 for (j, b) in enumerate(self.fileops):
                     if b is None:
                         continue
-                    if a.relevant(b):
+                    if i < j and a.relevant(b):
                         (modified, newa, newb, warn, case) = a.compose(b)
-                        #print "Reduction case %d fired" % case
                         if modified:
+                            if verbose >= DEBUG_DELETE:
+                                print "Reduction case %d fired on %s" % (case, (i,j))
                             mutated = True
                             self.fileops[i] = newa
                             self.fileops[j] = newb
+                            if verbose >= DEBUG_DELETE:
+                                print "During canonicalization:"
+                                self.fileop_dump(ei)
                             if warn:
                                 warnhook(warn)
                             coverage.add(case)
@@ -616,6 +621,12 @@ class Commit:
                     cliques[fileop.path] = []
                 cliques[fileop.path].append(i)
         return cliques
+    def fileop_dump(self, i):
+        "Dump file ops with origin marks; used for debugging only."
+        print "commit %d, mark %s:" % (i+1, self.mark)
+        for (i, op) in enumerate(self.fileops):
+            if op is not None:
+                print "%d: %-20s\t# %s" % (i, str(op), op.commit)
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -948,15 +959,13 @@ class Repository:
             if not isinstance(event, Commit):
                 continue
             elif event.pushed_to:
-                if verbose >= 2:
-                    print "Commit %d, before canonicalization:" % (i + 1,)
-                    for op in event.fileops:
-                        print str(op)
-                self.case_coverage |= event.canonicalize(lambda m: self.warn(m, atline=False))
-                if verbose >= 2:
-                    print "Commit %d, after canonicalization:" % (i +1,)
-                    for op in event.fileops:
-                        print str(op)
+                if verbose >= DEBUG_DELETE:
+                    print "Before canonicalization:"
+                    event.fileop_dump(i)
+                self.case_coverage |= event.canonicalize(i, lambda m: self.warn(m, atline=False))
+                if verbose >= DEBUG_DELETE:
+                    print "After canonicalization:"
+                    event.fileop_dump(i)
                 # Now apply policy in the mutiple-M case
                 for (path, oplist) in event.cliques().items():
                     if len(oplist) == 1:
@@ -1660,9 +1669,7 @@ for exploring the selection-set language.
             return
         for (i, e) in enumerate(self.repo.events):
             if isinstance(e, Commit):
-                print "commit %d, mark %s:" % (i+1, e.mark)
-                for op in e.fileops:
-                    print "%-20s\t# %s" % (str(op), op.commit)
+                e.fileop_dump(i)
         coverage = list(self.repo.case_coverage)
         coverage.sort()
         print "Case coverage:", coverage
