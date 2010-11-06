@@ -1922,11 +1922,13 @@ is all events.
             return
         self.set_selection_set(line, range(len(self.repo)))
         for ei in self.selection:
+            sys.stdout.write(`ei` + ": " + (72 * "=") + "\n") 
             sys.stdout.write(str(self.repo[ei]))
     def help_inspect(self):
         print """
 Dump a fast-import stream representing selected events to standard output.
-Just like a write, except the progress meter is disabled.
+Just like a write, except the progress meter is disabled and there is
+a header identifying the event before each commit.
 """
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."

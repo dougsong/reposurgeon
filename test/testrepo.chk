@@ -4,6 +4,7 @@ delete 8,9
 coverage       # Expect this to show case 1 covered.
 [1]
 inspect
+0: ========================================================================
 blob
 mark :1
 data 180
@@ -12,7 +13,9 @@ This is a dummy test repository.
 It has no other purpose in life than to be used for making fast-import
 files with which to test reposurgeon and, possibly, other similsr tools.
 
+1: ========================================================================
 reset refs/heads/master
+2: ========================================================================
 commit refs/heads/master
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
@@ -21,6 +24,7 @@ data 30
 Entirely boring first commit.
 M 100644 :1 README
 
+3: ========================================================================
 blob
 mark :3
 data 180
@@ -29,6 +33,7 @@ This is a dummy test repository.
 It has no other purpose in life than to be used for making fast-import
 files with which to test reposurgeon and, possibly, other similar tools.
 
+4: ========================================================================
 commit refs/heads/master
 mark :4
 author Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
@@ -38,6 +43,7 @@ Conveniently, the first commit needded a typo fix.
 from :2
 M 100644 :3 README
 
+5: ========================================================================
 blob
 mark :5
 data 284
@@ -49,17 +55,20 @@ files with which to test reposurgeon and, possibly, other similar tools.
 Now we're going to modify this at the same time we create another file
 whose destiny is to be deleted.
 
+6: ========================================================================
 blob
 mark :6
 data 51
 This file is doomed. Its destiny is to be deleted.
 
+7: ========================================================================
 blob
 mark :9
 data 102
 This file is doomed too.  Though, right now, we're only using it to make
 the previous commit non-tip.
 
+8: ========================================================================
 commit refs/heads/master
 mark :10
 author Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
@@ -71,6 +80,33 @@ M 100644 :5 README
 M 100644 :6 doomed1
 M 100644 :9 doomed2
 
-reset refs/heads/master
+9: ========================================================================
+commit refs/heads/master
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+data 72
+Rename doomed2 created in previous commit.  Should produce M+R, case 2.
 from :10
+R "doomed2" "renamed1"
+
+10: ========================================================================
+blob
+mark :12
+data 35
+Creation of the third doomed file.
+
+11: ========================================================================
+commit refs/heads/master
+mark :13
+author Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+data 30
+Create the third doomed file.
+from :11
+M 100644 :12 doomed3
+
+12: ========================================================================
+reset refs/heads/master
+from :13
 

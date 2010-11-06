@@ -82,6 +82,29 @@ Make the previous commit non-tip.
 from :8
 M 100644 :9 doomed2
 
-reset refs/heads/master
+commit refs/heads/master
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+data 72
+Rename doomed2 created in previous commit.  Should produce M+R, case 2.
 from :10
+R "doomed2" "renamed1"
+
+blob
+mark :12
+data 35
+Creation of the third doomed file.
+
+commit refs/heads/master
+mark :13
+author Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+data 30
+Create the third doomed file.
+from :11
+M 100644 :12 doomed3
+
+reset refs/heads/master
+from :13
 
