@@ -28,7 +28,7 @@ mailboxing:
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
 TESTLOADS = simple-dump
-makeregress:
+buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
 	    ../reposurgeon "script $${file}.tst" >$${file}.chk 2>&1; \
@@ -43,7 +43,7 @@ regress:
 
 # Test coalescence operation.
 COALESCE=uncoalesced
-makecoalesce:
+buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.dump"; \
 	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk; \
@@ -57,7 +57,8 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
-maketestdelete:
+# Test delete and canonicalization operations
+buildtestdelete:
 	../reposurgeon "script testrepo.tst" >testrepo.chk
 testdelete:
 	@echo "Test of canonicalization-after-commit cases."
