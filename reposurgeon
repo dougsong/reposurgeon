@@ -678,7 +678,7 @@ class Repository:
                                             break
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
-                                elif fileop.ref[0] == 'inline':
+                                elif fileop.ref == 'inline':
                                     fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
                                     self.read_data(open(fileop.copyname, "w")).close()
                                     inline_count += 1
