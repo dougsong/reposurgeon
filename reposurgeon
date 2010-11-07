@@ -29,11 +29,12 @@ class VCS:
         self.importer = importer
         self.checkout = checkout
     def __repr__(self):
-        return "Subdirectory: " + self.subdirectory + "\n" \
-             + "Exporter: " + self.exporter + "\n" \
-             + "Initializer: " + self.initializer + "\n" \
-             + "Importer: " + self.importer + "\n" \
-             + "Checkout: " + self.checkout + "\n"
+        return "      Subdirectory: " + self.subdirectory + "\n" \
+             + "          Exporter: " + self.exporter + "\n" \
+             + "Exporter-verbosity: " + `self.exportverbosity` + "\n" \
+             + "       Initializer: " + self.initializer + "\n" \
+             + "          Importer: " + self.importer + "\n" \
+             + "          Checkout: " + self.checkout + "\n"
 
 # All knowledge about specific version-control systems lives in the
 # following class list.  The members are, respectively:
@@ -564,7 +565,7 @@ class Repository:
             if hasattr(e, "mark") and mark == e.mark:
                 return i
         return None
-    def fast_import(self, fp):
+    def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
         try:
             try:
@@ -573,7 +574,7 @@ class Repository:
                 os.mkdir(self.subdir())
             except OSError:
                 self.error("can't create operating directory", atline=False)
-            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=verbose>0) as baton:
+            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
                 ncommits = 0
@@ -1038,13 +1039,13 @@ def read_repo(source, preferred):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
-        repo.fast_import(sys.stdin)
+        repo.fast_import(sys.stdin, progress=verbose>0)
     elif not os.path.exists(source):
         complain("%s does not exist" % source)
         return None
     elif not os.path.isdir(source):
         repo = Repository()
-        repo.fast_import(open(source))
+        repo.fast_import(open(source), progress=verbose>0)
     else:
         if verbose >= DEBUG_SHUFFLE:
             if preferred:
@@ -1052,13 +1053,13 @@ def read_repo(source, preferred):
             else:
                 announce("reposurgeon: looking for any repo...")
         hitcount = 0
-        foundvcs = None
-        for vcs in vcstypes:
-            if preferred and vcs.name != preferred:
+        vcs = None
+        for possible in vcstypes:
+            if preferred and possible.name != preferred:
                 continue
-            subdir = os.path.join(source, vcs.subdirectory)
+            subdir = os.path.join(source, possible.subdirectory)
             if os.path.exists(subdir) and os.path.isdir(subdir):
-                foundvcs = vcs
+                vcs = possible
                 hitcount += 1
         if hitcount == 0:
             complain("couldn't find a repo under %s" % os.path.relpath(source))
@@ -1066,9 +1067,12 @@ def read_repo(source, preferred):
         elif hitcount > 1:
             complain("too many repos under %s" % os.path.relpath(source))
             return None
+        elif verbose > 0:
+            announce("found %s repository" % vcs.name)
         repo = Repository()
-        repo.vcs = foundvcs
+        repo.vcs = vcs
         repo.sourcedir = source
+        showprogress = (verbose > 0) and not vcs.exportverbosity
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
@@ -1077,12 +1081,12 @@ def read_repo(source, preferred):
                     (tfdesc, tfname) = tempfile.mkstemp()
                     do_or_die(repo.vcs.exporter % tfname, "repository export")
                     with open(tfname) as tp:
-                        repo.fast_import(tp);
+                        repo.fast_import(tp, progress=showprogress);
                 finally:
                     os.remove(tfname)
             else:
                 with popen_or_die(repo.vcs.exporter, "repository export") as tp:
-                    repo.fast_import(tp);
+                    repo.fast_import(tp, progress=showprogress);
         finally:
             os.chdir(here)
     return repo
