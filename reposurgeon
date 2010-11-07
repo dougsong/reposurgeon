@@ -91,9 +91,9 @@ def screenwidth():
     with popen_or_die('stty size', 'r') as tp:
         return int(tp.read().split()[1])
 
-def nuke(directory, legend, verbosity=DEBUG_SHUFFLE):
+def nuke(directory, legend):
     "Remove a (large) directory, with a progress indicator."
-    with Baton(legend, verbosity=verbosity) as baton:
+    with Baton(legend, enable=verbose>=DEBUG_SHUFFLE) as baton:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
                 os.remove(os.path.join(root, name))
@@ -108,10 +108,10 @@ def nuke(directory, legend, verbosity=DEBUG_SHUFFLE):
 
 class Baton:
     "Ship progress indications to stdout."
-    def __init__(self, prompt, endmsg='done', verbosity=1):
+    def __init__(self, prompt, endmsg='done', enable=False):
         self.prompt = prompt
         self.endmsg = endmsg
-        if verbose >= verbosity:
+        if enable:
             self.stream = sys.stdout
         else:
             self.stream = None
@@ -573,7 +573,7 @@ class Repository:
                 os.mkdir(self.subdir())
             except OSError:
                 self.error("can't create operating directory", atline=False)
-            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name)) as baton:
+            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=verbose>0) as baton:
                 self.import_line = 0
                 linebuffers = []
                 ncommits = 0
@@ -730,7 +730,7 @@ class Repository:
             raise KeyboardInterrupt
     def fast_export(self, selection, fp):
         "Dump the repo object in fast-export format."
-        with Baton("reposurgeon: exporting") as baton:
+        with Baton("reposurgeon: exporting", enable=verbose>0) as baton:
             for ei in selection:
                 baton.twirl()
                 fp.write(str(self.events[ei]))
