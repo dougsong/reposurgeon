@@ -56,7 +56,7 @@ vcstypes = {
             "hg fast-import %s",      # Not part of stock hg
             "hg checkout"),
     "bzr" : (".bzr",
-             "bzr fast-export --plain %s",
+             "bzr fast-export --plain FOO",
              "bzr init",
              "bzr fast-import %s",
              "bzr checkout"),
@@ -1210,7 +1210,7 @@ class popen_or_die:
             self.legend = " "  + self.legend
     def __enter__(self):
         if verbose >= DEBUG_COMMANDS:
-            if mode == "r":
+            if self.mode == "r":
                 announce("reading from '%s'%s" % (self.cmd, self.legend))
             else:
                 announce("writing to '%s'%s" % (self.cmd, self.legend))
