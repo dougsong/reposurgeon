@@ -729,11 +729,11 @@ class Repository:
             self.error("%s doesn't exist" % filename, atline=False)
     def unpreserve(self, filename):
         "Remove a path from the preserve set."
-        if filename in self.restorable:
+        if filename in self.preserve_set:
             self.preserve_set.remove(filename)
         else:
             self.error("%s doesn't exist" % filename, atline=False)
-    def restorable(self):
+    def preservable(self):
         "Return the repo's preserve set."
         return self.preserve_set
     def rename(self, newname):
@@ -1882,7 +1882,7 @@ if there is already one by the new name.
         "Add files and subdirectories to the preserve set."
         for filename in line.split():
             self.repo.preserve(filename)
-        print self.repo.restorable()
+        announce("preserving %s." % list(self.repo.preserve_set))
     def help_preserve(self):
         print """
 Add (presumably untracked) files or directories to the repo's list of
@@ -1894,7 +1894,7 @@ list is displayed afterwards.
         "Remove files and subdirectories from the preserve set."
         for filename in line.split():
             self.repo.unpreserve(filename)
-        print self.repo.restorable()
+        announce("preserving %s." % list(self.repo.preserve_set))
     def help_unpreserve(self):
         print """
 Remove (presumably untracked) files or directories to the repo's list
