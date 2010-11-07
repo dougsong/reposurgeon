@@ -1,7 +1,9 @@
 			reposurgeon project news
 
 0.3:
-     'list' command adaps to current width of terminal window.
+     'split' operation renamed to 'cut'.
+     New 'inspect' command for looking at commits in raw form.
+     'list' command adapts to current width of terminal window.
      Issue a baton prompt during repo cleanup, which can be a long process.
      Multiple instances can now run in the same directory.
      Some speedup on import and export.

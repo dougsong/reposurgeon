@@ -2238,8 +2238,8 @@ Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
 """
-    def do_split(self, line):
-        "Attempt to topologically split the repo."
+    def do_cut(self, line):
+        "Attempt to topologically partition the repo."
         if not self.repo:
             complain("no repo has been chosen.")
             return
@@ -2341,7 +2341,7 @@ an offset literal of +0 or -0.
         self.repo.cleanup()
         del self.repo
         self.repo = None
-    def help_split(self):
+    def help_cut(self):
         print """
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
