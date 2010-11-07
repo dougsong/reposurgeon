@@ -218,18 +218,20 @@ class Date:
 
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
-    def __init__(self, person):
-        # First, validity-check the email address
-        (self.name, self.email) = email.utils.parseaddr(person)
-        if not self.name or not self.email:
-            FatalException("can't recognize address in attribution")
-        # Attribution format is actually stricter than RFC822;
-        # needs to have a following date in the right place.
-        person = person.replace(" <", "|").replace("> ", "|")
-        try:
-            self.date = Date(person.strip().split("|")[2])
-        except (ValueError, IndexError):
-            raise FatalException("malformed attribution %s" % person)
+    def __init__(self, person=None):
+        self.name = self.email = self.date = None
+        if person:
+            # First, validity-check the email address
+            (self.name, self.email) = email.utils.parseaddr(person)
+            if not self.name or not self.email:
+                FatalException("can't recognize address in attribution")
+            # Attribution format is actually stricter than RFC822;
+            # needs to have a following date in the right place.
+            person = person.replace(" <", "|").replace("> ", "|")
+            try:
+                self.date = Date(person.strip().split("|")[2])
+            except (ValueError, IndexError):
+                raise FatalException("malformed attribution %s" % person)
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
@@ -412,36 +414,17 @@ class Commit:
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
-        self.author.email_out(msg, "Author")
+        if self.author:
+            self.author.email_out(msg, "Author")
         self.committer.email_out(msg, "Committer")
         msg.set_payload(self.comment)
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
-        if "Author" not in msg or "Committer" not in msg or "Author-Date" not in msg or "Committer-Date" not in msg:
+        if "Committer" not in msg or "Committer-Date" not in msg:
             idme = self.mark or "unmarked"
-            raise FatalException("update to commit %s is malformed" %
-                                       idme)
+            raise FatalException("update to commit %s is malformed" % idme)
         modified = False
-        (newname, newemail) = email.utils.parseaddr(msg["Author"])
-        if not newname or not newemail:
-            raise FatalException("can't recognize address in Author")
-        else:
-            if self.author.name != newname or self.author.email != newemail:
-                (self.author.name, self.author.email) = (newname, newemail)
-                if verbose >= DEBUG_EMAILIN:
-                    print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
-                          % (int(msg["Event-Number"]))
-                modified = True
-        date = Date(msg["Author-Date"])
-        if date != self.author.date:
-            if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified '%s' -> '%s' (delta %d)" \
-                      % (int(msg["Event-Number"]),
-                         self.author.date, date,
-                         self.author.date.delta(date))
-            self.author.date = date
-            modified = True
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newname or not newemail:
             raise FatalException("can't recognize address in Committer")
@@ -461,6 +444,26 @@ class Commit:
                          self.committer.date.delta(date))
             self.committer.date = date
             modified = True
+        if "Author" in msg:
+            if not self.author:
+                self.author = Attribution()
+            (newname, newemail) = email.utils.parseaddr(msg["Author"])
+            if not newname or not newemail:
+                raise FatalException("can't recognize address in Author")
+            else:
+                if self.author.name != newname or self.author.email != newemail:
+                    (self.author.name, self.author.email) = (newname, newemail)
+                    if verbose >= DEBUG_EMAILIN:
+                        print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
+                              % (int(msg["Event-Number"]))
+                    modified = True
+            date = Date(msg["Author-Date"])
+            if date != self.author.date:
+                if verbose >= DEBUG_EMAILIN:
+                    print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified" \
+                          % (int(msg["Event-Number"]))
+                self.author.date = date
+                modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -685,7 +688,7 @@ class Repository:
                             else:
                                 pushback(line)
                                 break
-                        if not (commit.mark and commit.author and commit.committer):
+                        if not (commit.mark and commit.committer):
                             self.import_line = commitbegin
                             self.error("missing required fields in commit")
                         self.events.append(commit)
@@ -2239,9 +2242,10 @@ separation in seconds; the default is 90 seconds.
                 event.committer.unixtime += offset
                 if len(args) > 1:
                     event.committer.timezone = args[1]
-                event.author.unixtime += offset
-                if len(args) > 1:
-                    event.author.timezone = args[1]
+                if event.author:
+                    event.author.unixtime += offset
+                    if len(args) > 1:
+                        event.author.timezone = args[1]
     def help_timeoffset(self):
         print """
 Apply a time offset to all time/date stamps in the selected set.  An offset
