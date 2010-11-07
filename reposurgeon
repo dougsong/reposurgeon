@@ -1164,13 +1164,25 @@ def rebuild_repo(repo, target, preferred):
                 os.rename(os.path.join(target, sub),
                           os.path.join(savedir, sub))
             if verbose:
-                complain("repo backed up to %s" % os.path.relpath(savedir))
+                announce("repo backed up to %s." % os.path.relpath(savedir))
             for sub in os.listdir(staging):
                 os.rename(os.path.join(staging, sub),
                           os.path.join(target, sub))
-            for file in repo.restore_set:
-                shutil.copytree(os.path.join(savedir, sub),
-                                os.path.join(target, sub))
+            if verbose:
+                announce("modified repo moved to %s." % os.path.relpath(target))
+            if not repo.restore_set:
+                if verbose:
+                    announce("no preservations.")
+            else:
+                for sub in repo.restore_set:
+                    src = os.path.join(savedir, sub)
+                    dst = os.path.join(target, sub)
+                    if os.path.isdir(src):
+                        shutil.copytree(src, dst)
+                    else:
+                        shutil.copy2(src, dst)
+                if verbose:
+                    announce("preserved files restored.")
     finally:
         os.chdir(here)
         nuke(staging, "reposurgeon: removing staging directory", verbosity=2)
@@ -1184,9 +1196,9 @@ def do_or_die(cmd, legend=""):
     try:
         retcode = subprocess.call(cmd, shell=True)
         if retcode < 0:
-            raise FatalException("child was terminated by signal %d" % -retcode)
+            raise FatalException("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
-            raise FatalException("child returned %d" % retcode)
+            raise FatalException("child returned %d." % retcode)
     except OSError, e:
         raise FatalException("execution of %s%s failed: %s" % (cmd, legend, e))
 
