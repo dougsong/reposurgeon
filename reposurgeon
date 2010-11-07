@@ -10,20 +10,39 @@ import sys, os, getopt, commands, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-# TO DO
-#
-# * Test hg and bzr methods.
+version="0.3"
+
+class VCS:
+    "Class representing a version-control system."
+    def __init__(self, name,
+                 subdirectory,
+                 exporter,
+                 exportverbosity,
+                 initializer,
+                 importer,
+                 checkout):
+        self.name = name
+        self.subdirectory = subdirectory
+        self.exporter = exporter
+        self.exportverbosity = exportverbosity
+        self.initializer = initializer
+        self.importer = importer
+        self.checkout = checkout
+    def __repr__(self):
+        return "Subdirectory: " + self.subdirectory + "\n" \
+             + "Exporter: " + self.exporter + "\n" \
+             + "Initializer: " + self.initializer + "\n" \
+             + "Importer: " + self.importer + "\n" \
+             + "Checkout: " + self.checkout + "\n"
 
 # All knowledge about specific version-control systems lives in the
-# following dictionary. The key is the name of the VCS. The values in the
-# tuple are, respectively:
+# following class list.  The members are, respectively:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
 # * Flag, True if the exporter emits its own progress messages
 # * Command to initialize a new repo
 # * Command to import from the interchange format
-# * Flag, True if the importer emits its own progress messages
 # * Command to check out working copies of the repo files.
 #
 # Note that some of the commands used here are plugins or extensions
@@ -43,31 +62,6 @@ import email.message, email.parser, email.utils
 # would be excessively messy, so we don't. Instead we let the user
 # transform dump files and cope with the export/import himself.
 #
-version="0.3"
-
-class VCS:
-    "Class representing a version-control system."
-    def __init__(self, name,
-                 subdirectory,
-                 exporter, exportverbosity,
-                 initializer,
-                 importer, importverbosity,
-                 checkout):
-        self.name = name
-        self.subdirectory = subdirectory
-        self.exporter = exporter
-        self.exportverbosity = exportverbosity
-        self.initializer = initializer
-        self.importer = importer
-        self.importverbosity = importverbosity
-        self.checkout = checkout
-    def __repr__(self):
-        return "Subdirectory: " + self.subdirectory + "\n" \
-             + "Exporter: " + self.exporter + "\n" \
-             + "Initializer: " + self.initializer + "\n" \
-             + "Importer: " + self.importer + "\n" \
-             + "Checkout: " + self.checkout + "\n"
-
 vcstypes = [
     VCS(name="git",
         subdirectory=".git",
@@ -75,7 +69,6 @@ vcstypes = [
         exportverbosity=False,
         initializer="git init",
         importer="git fast-import",
-        importverbosity=True,
         checkout="git checkout"),
     VCS(name="bzr",
         subdirectory=".bzr",
@@ -83,7 +76,6 @@ vcstypes = [
         exportverbosity=True,
         initializer="bzr init",
         importer="bzr fast-import %s",
-        importverbosity=False,
         checkout="bzr checkout"),
     ]
 
