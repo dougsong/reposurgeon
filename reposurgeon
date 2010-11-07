@@ -530,7 +530,7 @@ class Repository:
         self.name = None
         self.readtime = None
         self.readsize = 0
-        self.type = None
+        self.vcs = None
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
         self.nmarks = 0
@@ -1922,8 +1922,8 @@ current preserve list is displayed afterwards.
             line = os.getcwd();
         self.repo = read_repo(line, self.preferred)
         if self.repo:
-            if self.repo.type:
-                self.preferred = self.repo.type
+            if self.repo.vcs:
+                self.preferred = self.repo.vcs.name
             name = self.uniquify(os.path.basename(self.repo.sourcedir or line or "unnamed"))
             self.repo.rename(name)
             self.name_to_repo[name] = self.repo
