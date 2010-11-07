@@ -344,26 +344,26 @@ specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import
 stream), it defaults to that directory.  If the target directory is
 nonempty its contents are backed up to a save directory.  Files and
-directories on the repository's restore list are copied back from the
+directories on the repository's preserve list are copied back from the
 backup directory.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>restore</command> 
+<term><command>preserve</command> 
     [<emphasis>file...</emphasis>]
 </term>
 <listitem><para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
 <command>rebuild</command>. Each argument, if any, is interpreted as a
-pathname.  The current restore list is displayed afterwards.</para></listitem>
+pathname.  The current preserve list is displayed afterwards.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>unrestore</command>
+<term><command>unpreserve</command>
     [<emphasis>file...</emphasis>]
 </term>
 <listitem><para>Remove (presumably untracked) files or directories to
 the repo's list of paths to be restored from the backup directory
 after a <command>rebuild</command>. Each argument, if any, is
-interpreted as a pathname.  The current restore list is displayed
+interpreted as a pathname.  The current preserve list is displayed
 afterwards.</para></listitem>
 </varlistentry>
 </variablelist>

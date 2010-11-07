@@ -522,7 +522,7 @@ class Repository:
         self.nmarks = 0
         self.branches = set([])
         self.import_line = 0
-        self.restore_set = set([])
+        self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
     def cleanup(self):
@@ -721,21 +721,21 @@ class Repository:
             for ei in selection:
                 baton.twirl()
                 fp.write(str(self.events[ei]))
-    def restore(self, filename):
-        "Add a path to the restore set, to be copied back on rebuild."
+    def preserve(self, filename):
+        "Add a path to the preserve set, to be copied back on rebuild."
         if os.path.exists(filename):
-            self.restore_set.add(filename)
+            self.preserve_set.add(filename)
         else:
             self.error("%s doesn't exist" % filename, atline=False)
-    def unrestore(self, filename):
-        "Remove a path from the restore set."
+    def unpreserve(self, filename):
+        "Remove a path from the preserve set."
         if filename in self.restorable:
-            self.restore_set.remove(filename)
+            self.preserve_set.remove(filename)
         else:
             self.error("%s doesn't exist" % filename, atline=False)
     def restorable(self):
-        "Return the repo's restore set."
-        return self.restore_set
+        "Return the repo's preserve set."
+        return self.preserve_set
     def rename(self, newname):
         "Rename the repo."
         try:
@@ -1170,11 +1170,11 @@ def rebuild_repo(repo, target, preferred):
                           os.path.join(target, sub))
             if verbose:
                 announce("modified repo moved to %s." % os.path.relpath(target))
-            if not repo.restore_set:
+            if not repo.preserve_set:
                 if verbose:
                     announce("no preservations.")
             else:
-                for sub in repo.restore_set:
+                for sub in repo.preserve_set:
                     src = os.path.join(savedir, sub)
                     dst = os.path.join(target, sub)
                     if os.path.isdir(src):
@@ -1878,29 +1878,29 @@ currently chosen repo.
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
 """
-    def do_restore(self, line):
-        "Add files and subdirectories to the restore set."
+    def do_preserve(self, line):
+        "Add files and subdirectories to the preserve set."
         for filename in line.split():
-            self.repo.restore(filename)
+            self.repo.preserve(filename)
         print self.repo.restorable()
-    def help_restore(self):
+    def help_preserve(self):
         print """
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
-argument, if any, is interpreted as a pathname.  The current restore
+argument, if any, is interpreted as a pathname.  The current preserve
 list is displayed afterwards.
 """
-    def do_unrestore(self, line):
-        "Remove files and subdirectories from the restore set."
+    def do_unpreserve(self, line):
+        "Remove files and subdirectories from the preserve set."
         for filename in line.split():
-            self.repo.unrestore(filename)
+            self.repo.unpreserve(filename)
         print self.repo.restorable()
-    def help_unrestore(self):
+    def help_unpreserve(self):
         print """
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
-current restore list is displayed afterwards.
+current preserve list is displayed afterwards.
 """
     #
     # Serialization and de-serialization.
