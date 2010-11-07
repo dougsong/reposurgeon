@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-0.3:
+0.3: 2010-11-07
      'split' operation renamed to 'cut'.
      New 'inspect' command for looking at commits in raw form.
      'list' command adapts to current width of terminal window.
