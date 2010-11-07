@@ -40,7 +40,7 @@ for legal or policy reasons.</para>
 
 <para>To keep <command>reposurgeon</command> simple and
 flexible, it does not do its own repository reading and writing.
-Instead, it relies on being able to parse and emit the repo-command
+Instead, it relies on being able to parse and emit the command
 streams created by git-fast-export and read by git-fast-import.  This
 means that it can be used on any version-control system that that has
 both fast-export and fast-import utilities.  This set includes git
@@ -67,7 +67,7 @@ of the surgical operations in <command>reposurgeon</command> will
 modify the hash chains, meaning others will become unable to pull
 from or push to the repo.</para>
 
-<para>Under git, signed tags are importted verbatim. However, any
+<para>Under git, signed tags are imported verbatim. However, any
 operation that modifies any commit upstream of the target of the 
 tag will invalidate it.</para>
 
@@ -79,9 +79,10 @@ interactive command interpreter or in batch mode to execute commands
 given as arguments on the <command>reposurgeon</command> invocation
 line. The only differences between these modes are (1) the interactive
 one begins by turning on the 'verbose 1' option, and (2) in batch mode
-all errors (including normally recoverable errors in selection-set syntax)
-are fatal. Also, in interactive mode, Ctrl-P and Ctrl-N will be
-available to scroll through your command history.</para>
+all errors (including normally recoverable errors in selection-set
+syntax) are fatal. Also, in interactive mode, Ctrl-P and Ctrl-N will
+be available to scroll through your command history and tab completion
+of command keywords is available.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
 which must be executed in the specified sequence to build the repo; to
