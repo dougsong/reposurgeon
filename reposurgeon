@@ -1189,7 +1189,7 @@ def do_or_die(cmd, legend=""):
     if legend:
         legend = " "  + legend
     if verbose >= DEBUG_COMMANDS:
-        announce("executing %s%s" % (cmd, legend))
+        announce("executing '%s'%s" % (cmd, legend))
     try:
         retcode = subprocess.call(cmd, shell=True)
         if retcode < 0:
@@ -1211,9 +1211,9 @@ class popen_or_die:
     def __enter__(self):
         if verbose >= DEBUG_COMMANDS:
             if mode == "r":
-                announce("reading from %s%s" % (self.cmd, self.legend))
+                announce("reading from '%s'%s" % (self.cmd, self.legend))
             else:
-                announce("writing to %s%s" % (self.cmd, self.legend))
+                announce("writing to '%s'%s" % (self.cmd, self.legend))
         try:
             self.fp = os.popen(self.cmd, self.mode)
             return self.fp
