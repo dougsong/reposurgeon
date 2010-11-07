@@ -729,9 +729,9 @@ class Repository:
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
-    def fast_export(self, selection, fp):
+    def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
-        with Baton("reposurgeon: exporting", enable=verbose>0) as baton:
+        with Baton("reposurgeon: exporting", enable=progress) as baton:
             for ei in selection:
                 baton.twirl()
                 fp.write(str(self.events[ei]))
@@ -1145,14 +1145,13 @@ def rebuild_repo(repo, target, preferred):
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
-                    repo.fast_export(range(len(repo)), tp)
+                    repo.fast_export(range(len(repo)), tp, progress=verbose>0)
                 do_or_die(repo.vcs.importer % tfname, "import")
             finally:
                 os.remove(tfname)
         else:
             with popen_or_die(repo.vcs.importer, "import", mode="w") as tp:
-                repo.fast_export(range(len(repo)), tp)
-
+                repo.fast_export(range(len(repo)), tp, progress=verbose>0)
         do_or_die(repo.vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
@@ -1958,7 +1957,7 @@ with command-line arguments).
         if not line:
             line = '-'
         if line == '-':
-            self.repo.fast_export(self.selection, sys.stdout)
+            self.repo.fast_export(self.selection, sys.stdout, progress=verbose>0)
         else:
             try:
                 with open(line, "w") as out:
