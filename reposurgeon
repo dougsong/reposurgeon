@@ -12,8 +12,6 @@ import email.message, email.parser, email.utils
 
 # TO DO
 #
-# * Dates in specification expressions.
-#
 # * Test hg and bzr methods.
 
 # All knowledge about specific version-control systems lives in the
@@ -150,7 +148,6 @@ class RepoSurgeonEmail(email.message.Message):
                 break
             msg += line
         return msg
-
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
