@@ -796,23 +796,24 @@ class Repository:
                     # M a has ancestors, R is still needed
                     left.path = right.target
                     return (True, right, left, None, 4)
-            # M b + R a b -> R a b, copy or rename undoes the modification
+            # M b + R a b can't happen.  If you try to generate this with
+            # git mv it throws an error.  An ordinary mv results in D b M a.
             elif left.path == right.target:
-                return(True, right, None, None, 5)
+                return(True, right, None, None, -1)
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
         elif left.op == "M" and right.op == "C":
-            return (False, left, right, None, 6)
+            return (False, left, right, None, 5)
         #
         # First op D or deleteall
         #
         # Delete followed by modify undoes delete, since M carries whole files. 
         elif pair == ("D", "M"):
-            return (True, right, None, None, 7)
+            return (True, right, None, None, 6)
         # But we have to leave deletealls in place, since they affect right ops
         elif pair == ("deleteall", "M"):
-            return (False, left, right, None, 8)
+            return (False, left, right, None, 7)
         # These cases should be impossible
         elif left.op == "deleteall" and right.op != "M":
             return (False, left, right,
@@ -824,14 +825,14 @@ class Repository:
                 return (False, left, right,
                         "R or C of %s after deletion?" % left.path, -3)
             else:
-                return (False, left, right, None, 9)
+                return (False, left, right, None, 8)
         #
         # First op R
         #
         elif pair == ("R", "D"):
             if left.target == right.path:
                 # Rename followed by delete of target composes to nothing
-                return (True, None, None, None, 10)
+                return (True, None, None, None, 9)
             else:
                 # On followed by delete of source discard the delete
                 # but user should be warned. 
@@ -843,19 +844,19 @@ class Repository:
                     "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
         elif pair == ("R", "M") or pair == ("C", "M"):
-            return (False, left, right, None, 11)
+            return (False, left, right, None, 10)
         # Compose renames where possible
         elif left.op == "R" and right.op == "R":
             if left.target == right.source:
                 left.target = right.target
-                return (True, source, None, None, 12)
+                return (True, source, None, None, 11)
             else:
                 return (False, source, right,
                         "R %s %s is inconsistent with following operation" \
                         % (left.source, left.target), -6)
         # We could do R a b + C b c -> C a c + R a b, but why?
         if left.op == "R" and right.op == "C":
-            return (False, left, right, None, 13)
+            return (False, left, right, None, 12)
         #
         # First op C
         #
@@ -863,22 +864,22 @@ class Repository:
             if left.source == target.path:
                 # Copy followed by delete of the source is a rename.
                 left.op = "R"
-                return (True, left, None, None, 14)
+                return (True, left, None, None, 13)
             elif left.target == target.path:
                 # This delete undoes the copy
-                return (True, None, None, None, 15)
+                return (True, None, None, None, 14)
         elif pair == ("C", "R"):
             if left.source == right.source:
                 # No reduction
-                return (False, left, right, None, 16)
+                return (False, left, right, None, 15)
             else:
                 # Copy followed by a rename of the target reduces to single copy
                 if left.target == right.source:
                     left.target = right.target
-                    return (True, left, None, None, 17)
+                    return (True, left, None, None, 16)
         elif pair == ("C", "C"):
             # No reduction
-            return (False, left, right, None, 18)
+            return (False, left, right, None, 17)
         #
         # Case not covered
         #

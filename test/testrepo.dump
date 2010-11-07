@@ -232,6 +232,19 @@ This is a target commit for testing case M+R with ancestry of M.
 from :26
 M 100644 :27 README
 
-reset refs/heads/master
+commit refs/heads/master
+mark :29
+author Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
+data 152
+Let's see what a mv of bar to renamed1 generates.
+
+Looks like it turns into a D bar M renamed1 rather than an R.
+(git mv bar renamed1 throws an error.)
 from :28
+D bar
+M 100644 :24 renamed1
+
+reset refs/heads/master
+from :29
 
