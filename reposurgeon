@@ -520,7 +520,6 @@ class Repository:
         self.events = []    # A list of the events encountered, in order
         self.nmarks = 0
         self.branches = set([])
-        self.blob_refcount = {}
         self.import_line = 0
         self.restore_set = set([])
         self.case_coverage = set([])
@@ -654,7 +653,6 @@ class Repository:
                                     self.warn("unmarked commit")
                                 commit.fileops.append(fileop)
                                 if fileop.ref[0] == ':':
-                                    self.blob_refcount[fileop.ref] = self.blob_refcount.get(fileop.ref, 0)+1
                                     for obj in self.events:
                                         if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                             obj.path = fileop.path
@@ -713,9 +711,6 @@ class Repository:
                         self.events.append(line)
                 self.import_line = 0
             self.readtime = time.time()
-            for blob in self.blob_refcount:
-                if self.blob_refcount[blob] != 1:
-                    self.warn("%d references to blob %s" % (self.blob_refcount[blob], blob))
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -785,12 +780,12 @@ class Repository:
             return (False, left, right, None, 0)
         # M a + D a -> D a
         # Or, could reduce to nothing if M a was the only modify..
-        if left.op == "M" and right.op in "D":
+        elif left.op == "M" and right.op in "D":
             if self.__ancestor_count(event, left.path) == 1:
                 return (True, None, None, None, 1)
             else:
                 return (True, right, None, None, 2)
-        if left.op == "M" and right.op == "R":
+        elif left.op == "M" and right.op == "R":
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
                 if self.__ancestor_count(event, left.path) == 1:
@@ -807,19 +802,19 @@ class Repository:
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
-        if left.op == "M" and right.op == "C":
+        elif left.op == "M" and right.op == "C":
             return (False, left, right, None, 6)
         #
         # First op D or deleteall
         #
         # Delete followed by modify undoes delete, since M carries whole files. 
-        if pair == ("D", "M"):
+        elif pair == ("D", "M"):
             return (True, right, None, None, 7)
         # But we have to leave deletealls in place, since they affect right ops
-        if pair == ("deleteall", "M"):
+        elif pair == ("deleteall", "M"):
             return (False, left, right, None, 8)
         # These cases should be impossible
-        if left.op == "deleteall" and right.op != "M":
+        elif left.op == "deleteall" and right.op != "M":
             return (False, left, right,
                     "operation right than M after deleteall?", -1)
         if left.op == "D" and right.op == "D":
@@ -833,7 +828,7 @@ class Repository:
         #
         # First op R
         #
-        if pair == ("R", "D"):
+        elif pair == ("R", "D"):
             if left.target == right.path:
                 # Rename followed by delete of target composes to nothing
                 return (True, None, None, None, 10)
@@ -843,14 +838,14 @@ class Repository:
                 return (False, left, None,
                         "delete of %s after renaming to %s?" % (right.path, left.source), -4)
         # Rename followed by deleteall shouldn't be possible
-        if pair == ("R", "deleteall") and left.target == right.path:
+        elif pair == ("R", "deleteall") and left.target == right.path:
             return (False, None, right,
                     "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
-        if pair == ("R", "M") or pair == ("C", "M"):
+        elif pair == ("R", "M") or pair == ("C", "M"):
             return (False, left, right, None, 11)
         # Compose renames where possible
-        if left.op == "R" and right.op == "R":
+        elif left.op == "R" and right.op == "R":
             if left.target == right.source:
                 left.target = right.target
                 return (True, source, None, None, 12)
@@ -864,7 +859,7 @@ class Repository:
         #
         # First op C
         #
-        if pair == ("C", "D"):
+        elif pair == ("C", "D"):
             if left.source == target.path:
                 # Copy followed by delete of the source is a rename.
                 left.op = "R"
@@ -872,7 +867,7 @@ class Repository:
             elif left.target == target.path:
                 # This delete undoes the copy
                 return (True, None, None, None, 15)
-        if pair == ("C", "R"):
+        elif pair == ("C", "R"):
             if left.source == right.source:
                 # No reduction
                 return (False, left, right, None, 16)
@@ -881,7 +876,7 @@ class Repository:
                 if left.target == right.source:
                     left.target = right.target
                     return (True, left, None, None, 17)
-        if pair == ("C", "C"):
+        elif pair == ("C", "C"):
             # No reduction
             return (False, left, right, None, 18)
         #
