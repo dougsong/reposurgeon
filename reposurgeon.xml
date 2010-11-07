@@ -816,14 +816,16 @@ describes all possible cases and all but one of the reductions.</para>
         <entry align='center'>M + D &rarr; D</entry>
 	<entry align='left'><para>If a file is modified
 	then deleted, the result is as though it had been
-	deleted.</para></entry>
+	deleted. If the M was the only modify for the file, it's 
+	removed too.</para></entry>
       </row>
       <row>
         <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
         <entry align='left'><para>The purpose of this transformation is 
 	to push renames towards the beginning of the list,
 	where they may become adjacent to another R or C they can 
-	be composed with.</para></entry>
+	be composed with. If the M is the only modify operation for
+	this file, the rename is dropped.</para></entry>
       </row>
       <row>
         <entry align='center'>M a + C a b</entry>
@@ -831,8 +833,8 @@ describes all possible cases and all but one of the reductions.</para>
       </row>
       <row>
         <entry align='center'>M b + R a b &rarr; nothing</entry>
-	<entry align='left'><para>The rename undoes the
-	modification.</para></entry>
+	<entry align='left'><para>Should be impossible, and may
+	indicate repository corruption.</para></entry>
       </row>
       <row>
         <entry align='center'>M b + C a b &rarr; nothing</entry>

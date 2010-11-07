@@ -800,7 +800,7 @@ class Repository:
             # M b + R a b can't happen.  If you try to generate this with
             # git mv it throws an error.  An ordinary mv results in D b M a.
             elif left.path == right.target:
-                return(True, right, None, None, -1)
+                return(True, right, None, "M followed by R to the M operand?", -1)
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
@@ -818,7 +818,7 @@ class Repository:
         # These cases should be impossible
         elif left.op == "deleteall" and right.op != "M":
             return (False, left, right,
-                    "operation right than M after deleteall?", -1)
+                    "Non-M operation after deleteall?", -1)
         if left.op == "D" and right.op == "D":
             return (False, left, right, "Two Ds of %s?" % left.path, -2)
         if left.op == "D" and right.op in ("R", "C"):
