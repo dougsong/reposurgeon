@@ -45,22 +45,47 @@ import email.message, email.parser, email.utils
 #
 version="0.3"
 
-vcstypes = {
-    "git" : (".git",
-             "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-             False,
-             "git init",
-             "git fast-import",
-             True,
-             "git checkout"),
-    "bzr" : (".bzr",
-             "bzr fast-export --plain FOO",
-             True,
-             "bzr init",
-             "bzr fast-import %s",
-             False,
-             "bzr checkout"),
-    }
+class VCS:
+    "Class representing a version-control system."
+    def __init__(self, name,
+                 subdirectory,
+                 exporter, exportverbosity,
+                 initializer,
+                 importer, importverbosity,
+                 checkout):
+        self.name = name
+        self.subdirectory = subdirectory
+        self.exporter = exporter
+        self.exportverbosity = exportverbosity
+        self.initializer = initializer
+        self.importer = importer
+        self.importverbosity = importverbosity
+        self.checkout = checkout
+    def __repr__(self):
+        return "Subdirectory: " + self.subdirectory + "\n" \
+             + "Exporter: " + self.exporter + "\n" \
+             + "Initializer: " + self.initializer + "\n" \
+             + "Importer: " + self.importer + "\n" \
+             + "Checkout: " + self.checkout + "\n"
+
+vcstypes = [
+    VCS(name="git",
+        subdirectory=".git",
+        exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
+        exportverbosity=False,
+        initializer="git init",
+        importer="git fast-import",
+        importverbosity=True,
+        checkout="git checkout"),
+    VCS(name="bzr",
+        subdirectory=".bzr",
+        exporter="bzr fast-export --plain FOO",
+        exportverbosity=True,
+        initializer="bzr init",
+        importer="bzr fast-import %s",
+        importverbosity=False,
+        checkout="bzr checkout"),
+    ]
 
 verbose         = 0
 DEBUG_SHUFFLE   = 2    # Debug directory handling
@@ -524,7 +549,6 @@ class Repository:
         self.basedir = os.getcwd()
     def cleanup(self):
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
-    __del__ = cleanup
     def subdir(self, name=None):
         if name is None:
             name = self.name
@@ -1036,12 +1060,13 @@ def read_repo(source, preferred):
             else:
                 announce("reposurgeon: looking for any repo...")
         hitcount = 0
-        for (name, (dirname, exporter, expvflag, initializer, importer, impvflag, checkout)) in vcstypes.items():
-            if preferred and name != preferred:
+        foundvcs = None
+        for vcs in vcstypes:
+            if preferred and vcs.name != preferred:
                 continue
-            subdir = os.path.join(source, dirname)
+            subdir = os.path.join(source, vcs.subdirectory)
             if os.path.exists(subdir) and os.path.isdir(subdir):
-                (foundname, foundexporter) = (name, exporter)
+                foundvcs = vcs
                 hitcount += 1
         if hitcount == 0:
             complain("couldn't find a repo under %s" % os.path.relpath(source))
@@ -1050,23 +1075,21 @@ def read_repo(source, preferred):
             complain("too many repos under %s" % os.path.relpath(source))
             return None
         repo = Repository()
-        repo.type = foundname
+        repo.vcs = foundvcs
         repo.sourcedir = source
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
-            if "%s" in foundexporter:
+            if "%s" in repo.vcs.exporter:
                 try:
                     (tfdesc, tfname) = tempfile.mkstemp()
-                    incmd = foundexporter % tfname
-                    do_or_die(incmd, "repository export")
+                    do_or_die(repo.vcs.exporter % tfname, "repository export")
                     with open(tfname) as tp:
                         repo.fast_import(tp);
                 finally:
                     os.remove(tfname)
             else:
-                incmd = foundexporter
-                with popen_or_die(incmd, "repository export") as tp:
+                with popen_or_die(repo.vcs.exporter, "repository export") as tp:
                     repo.fast_import(tp);
         finally:
             os.chdir(here)
@@ -1105,7 +1128,7 @@ def rebuild_repo(repo, target, preferred):
     else:
         complain("no default destination for rebuild")
         return
-    if not preferred:
+    if not repo.vcs:
         complain("please prefer a repo type first")
         return
 
@@ -1118,24 +1141,23 @@ def rebuild_repo(repo, target, preferred):
         complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
-    (repodir, exporter, expvflag, initializer, importer, impvflag, checkout) = vcstypes[preferred]
     here = os.getcwd()
     try:
         os.chdir(staging)
-        do_or_die(initializer, "repository initialization")
-        if "%s" in importer:
+        do_or_die(repo.vcs.initializer, "repository initialization")
+        if "%s" in repo.vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
                     repo.fast_export(range(len(repo)), tp)
-                do_or_die(importer % tfname, "repository import")
+                do_or_die(repo.vcs.importer % tfname, "import")
             finally:
                 os.remove(tfname)
         else:
-            with popen_or_die(importer, "repository import", mode="w") as tp:
+            with popen_or_die(repo.vcs.importer, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp)
 
-        do_or_die(checkout, "repository_checkout")
+        do_or_die(repo.vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
 
@@ -1282,7 +1304,6 @@ class RepoSurgeon(cmd.Cmd):
             announce("interpreter cleanup called.")
         for repo in self.name_to_repo.values():
             repo.cleanup()
-    __del__ = cleanup
     #
     # The selection-language parsing code starts here.
     #
@@ -1651,7 +1672,7 @@ developers only.
             announce("repeat %d" % self.repeat)
     def do_version(self, line):
         "Report the program version and supported version-control systems."
-        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x[0], vcstypes.keys()))
+        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x.name, vcstypes))
     def do_resolve(self, line):
         "Display the set of event numbers generated by a section set."
         self.set_selection_set(line)
@@ -1715,10 +1736,8 @@ for exploring the selection-set language.
                   (self.repo.readsize / 1000.0, len(self.repo),
                    count(Blob), count(Commit), count(Tag), count(Reset),
                    self.repo.nmarks)
-            if self.repo.type:
-                print "         Type:", self.repo.type
-                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Exporter verbosity", "Initializer:", "Importer:", "Importer verbosity", "Checkout:"), vcstypes[self.repo.type]):
-                    print "%14s %s" % (legend, command)
+            if self.repo.vcs:
+                print repr(self.repo.vcs)
         else:
             complain("no repository has been chosen.")
     def help_stats(self):
@@ -1780,8 +1799,8 @@ output.
     def do_prefer(self, line):
         "Report or select the preferred repository type."
         if line:
-            known = " ".join(vcstypes.keys())
-            if line.lower() in map(lambda x: x.lower(), vcstypes.keys()):
+            known = " ".join(map(lambda x: x.name, vcstypes))
+            if line.lower() in map(lambda x: x.name.lower(), vcstypes):
                 self.preferred = line
             else:
                 complain("known types are %s.") % known
