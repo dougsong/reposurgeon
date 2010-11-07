@@ -20,8 +20,10 @@ import email.message, email.parser, email.utils
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
+# * Flag, True if the exporter emits its own progress messages
 # * Command to initialize a new repo
 # * Command to import from the interchange format
+# * Flag, True if the importer emits its own progress messages
 # * Command to check out working copies of the repo files.
 #
 # Note that some of the commands used here are plugins or extensions
@@ -46,19 +48,17 @@ version="0.3"
 vcstypes = {
     "git" : (".git",
              "git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
+             False,
              "git init",
              "git fast-import",
+             True,
              "git checkout"),
-     # FIXME: hg and bzr methods are untested
-    "hg" : (".hg",
-            "hg-fast-export.sh %s",   # Not part of stock hg
-            "hg init",
-            "hg fast-import %s",      # Not part of stock hg
-            "hg checkout"),
     "bzr" : (".bzr",
              "bzr fast-export --plain FOO",
+             True,
              "bzr init",
              "bzr fast-import %s",
+             False,
              "bzr checkout"),
     }
 
@@ -1036,7 +1036,7 @@ def read_repo(source, preferred):
             else:
                 announce("reposurgeon: looking for any repo...")
         hitcount = 0
-        for (name, (dirname, exporter, initializer, importer, checkout)) in vcstypes.items():
+        for (name, (dirname, exporter, expvflag, initializer, importer, impvflag, checkout)) in vcstypes.items():
             if preferred and name != preferred:
                 continue
             subdir = os.path.join(source, dirname)
@@ -1118,7 +1118,7 @@ def rebuild_repo(repo, target, preferred):
         complain("staging directory creation failed")
         return
     # Try the rebuild in the empty staging directory 
-    (repodir, exporter, initializer, importer, checkout) = vcstypes[preferred]
+    (repodir, exporter, expvflag, initializer, importer, impvflag, checkout) = vcstypes[preferred]
     here = os.getcwd()
     try:
         os.chdir(staging)
@@ -1717,7 +1717,7 @@ for exploring the selection-set language.
                    self.repo.nmarks)
             if self.repo.type:
                 print "         Type:", self.repo.type
-                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Initializer:", "Importer:", "Checkout:"), vcstypes[self.repo.type]):
+                for (legend, command) in zip(("Subdirectory:", "Exporter:", "Exporter verbosity", "Initializer:", "Importer:", "Importer verbosity", "Checkout:"), vcstypes[self.repo.type]):
                     print "%14s %s" % (legend, command)
         else:
             complain("no repository has been chosen.")
