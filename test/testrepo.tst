@@ -8,3 +8,5 @@ delete :10,:11
 coverage       # Expect this to show case 3 covered.
 delete :17,:18
 coverage       # Expect this to show case 2 covered.
+delete :25,:26
+coverage       # Expect this to show case 4 covered.

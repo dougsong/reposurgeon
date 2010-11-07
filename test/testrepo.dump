@@ -154,6 +154,84 @@ Commit this so we test a non-tip deletion reduction.
 from :18
 M 100644 :3 README
 
-reset refs/heads/master
+blob
+mark :20
+data 74
+The file foo needs a content modification so we can test a rename case.
+
+
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
+data 47
+Build an ancestry for foo before we rename it.
 from :19
+M 100644 :20 foo
+
+blob
+mark :22
+data 48
+Let's give it a second content modification.
+
+
+
+
+commit refs/heads/master
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
+data 36
+Second content modification of foo.
+from :21
+M 100644 :22 foo
+
+blob
+mark :24
+data 47
+Let's give it a third content modification.
+
+
+
+
+commit refs/heads/master
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
+data 35
+Third content modification of foo.
+from :23
+M 100644 :24 foo
+
+commit refs/heads/master
+mark :26
+author Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
+data 29
+Now foo gets renamed to bar.
+from :25
+R "foo" "bar"
+
+blob
+mark :27
+data 231
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+We need a commit to push some deletes forward to.
+
+commit refs/heads/master
+mark :28
+author Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
+data 65
+This is a target commit for testing case M+R with ancestry of M.
+from :26
+M 100644 :27 README
+
+reset refs/heads/master
+from :28
 
