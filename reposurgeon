@@ -64,18 +64,19 @@ vcstypes = {
              "bzr checkout"),
     }
 
-verbose       = 0
-DEBUG_SHUFFLE = 2    # Debug directory handling
-DEBUG_DELETE  = 2    # Debug canonicalization after deletes
-DEBUG_EMAILIN = 3    # Debug event round-tripping through mailbox_{out|in} 
-DEBUG_LEXER   = 4    # Debug selection-language parsing
+verbose         = 0
+DEBUG_SHUFFLE   = 2    # Debug directory handling
+DEBUG_DELETE    = 2    # Debug canonicalization after deletes
+DEBUG_COMMANDS  = 2    # Show commands as they are executed
+DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_LEXER     = 4    # Debug selection-language parsing
 
 def screenwidth():
     "Return the current width of the terminal window."
     with popen_or_die('stty size', 'r') as tp:
         return int(tp.read().split()[1])
 
-def nuke(directory, legend, verbosity=1):
+def nuke(directory, legend, verbosity=DEBUG_SHUFFLE):
     "Remove a (large) directory, with a progress indicator."
     with Baton(legend, verbosity=verbosity) as baton:
         for root, dirs, files in os.walk(directory, topdown=False):
@@ -894,7 +895,7 @@ class Repository:
             if a.op == "deleteall":
                 lastdeleteall = i
         if lastdeleteall is not None:
-            if verbose >= 2:
+            if verbose >= DEBUG_DELETE:
                 print "reposurgeon: removing all before rightmost deleteall"
             commit.fileops = commit.fileops[lastdeleteall:]
         # Composition in the general case is trickier.
@@ -932,8 +933,8 @@ class Repository:
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
-        if verbose >= 2:
-            print "Deletion list is %s" % selected
+        if verbose >= DEBUG_DELETE:
+            print "Deletion list is %s" % map(lambda x: x+1, selected)
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
@@ -984,11 +985,11 @@ class Repository:
                 for (path, oplist) in event.cliques().items():
                     if len(oplist) == 1:
                         continue
-                    if not policy or policy == "complain" or verbose >= 2:
+                    if not policy or policy == "complain" or verbose >= DEBUG_DELETE:
                         print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (i+1, path)
                     func = getattr(self, 'policy_' + policy)
                     func(event, oplist)
-                    if verbose >= 2:
+                    if verbose >= DEBUG_DELETE:
                         print "Commit %d, after applying policy:" % (ei +1,)
                         for op in event.fileops:
                             print str(op)
@@ -1032,7 +1033,7 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.fast_import(open(source))
     else:
-        if verbose > 1:
+        if verbose >= DEBUG_SHUFFLE:
             if preferred:
                 announce("looking for a %s repo..." % preferred)
             else:
@@ -1178,7 +1179,7 @@ def do_or_die(cmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
         legend = " "  + legend
-    if verbose >= 2:
+    if verbose >= DEBUG_COMMANDS:
         announce("executing %s%s" % (cmd, legend))
     try:
         retcode = subprocess.call(cmd, shell=True)
@@ -1199,9 +1200,9 @@ class popen_or_die:
         if self.legend:
             self.legend = " "  + self.legend
     def __enter__(self):
-        if verbose >= 2:
+        if verbose >= DEBUG_COMMANDS:
             if mode == "r":
-                announce("resding from %s%s" % (self.cmd, self.legend))
+                announce("reading from %s%s" % (self.cmd, self.legend))
             else:
                 announce("writing to %s%s" % (self.cmd, self.legend))
         try:
@@ -1829,7 +1830,7 @@ and their load times.
     def do_drop(self, line):
         "Drop a repo from reposurgeon's list."
         if not self.name_to_repo:
-            if verbose > 0:
+            if verbose:
                 complain("no repositories are loaded.")
                 return
         if not line:
@@ -1843,7 +1844,7 @@ and their load times.
             del holdrepo
         else:
             complain("no such repo as %s" % line)
-        if verbose > 0:
+        if verbose:
             # Emit listing of remaining repos
             self.do_choose('')
     def help_drop(self):
@@ -2360,7 +2361,7 @@ through another path; the tool will detect this. If the repo was named
                 if hasattr(event, "fileops"):
                     deletia = []
                     for (i, fileop) in enumerate(event.fileops):
-                        if verbose >= 2:
+                        if verbose >= DEBUG_DELETE:
                             print str(fileop)
                         if fileop.op in "DM":
                             if expunge.search(fileop.path):
