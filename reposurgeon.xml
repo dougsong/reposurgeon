@@ -783,6 +783,31 @@ url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
 Wiki tools page</ulink> for a large collection of such tools.</para>
 </refsect1>
 
+<refsect1 id='requirements'><title>REQUIREMENTS</title>
+
+<para><command>reposurgeon</command> relies on importers and exporters 
+associated with the VCSes it supports,</para>
+
+<variablelist>
+<varlistentry>
+<term>git</term>
+<listitem><para>Core git supports both export and input.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>bzr</term>
+<listitem><para>Requires bzr plus the bzr-fast-import plugin.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>hg</term>
+<listitem>
+<para>Requires core hg, the hg-fastimport plugin, and the third-party 
+hg-fast-export.py script.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect1>
+
 <refsect1 id='canonicalization'><title>CANONICALIZATION RULES</title>
 
 <para>It is extended that <command>reposurgeon</command> will
