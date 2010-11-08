@@ -375,7 +375,7 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                with open(os.path.join(self.repo.subdir(), self.copyname)) as fp:
+                with open(os.path.join(self.commit.repo.subdir(), self.copyname)) as fp:
                     content = fp.read()
                 st += "data %d\n%s\n" % (len(content), content)
         elif self.op in "D":
@@ -492,7 +492,7 @@ class Commit:
         print "commit %d, mark %s:" % (i+1, self.mark)
         for (i, op) in enumerate(self.fileops):
             if op is not None:
-                print "%d: %-20s\t# %s" % (i, str(op), op.commit)
+                print "%d: %-20s\t# %s" % (i, str(op), op.commit.mark)
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -662,11 +662,11 @@ class Repository:
                                 commit.parent_marks.append(line.split()[1])
                             # Handling of file ops begins.
                             elif line[0] in ("C", "D", "R"):
-                                commit.fileops.append(FileOp(line, commit.mark))
+                                commit.fileops.append(FileOp(line, commit))
                             elif line == "filedeleteall\n":
-                                commit.fileops.append(FileOp("filedeleteall"), commit.mark)
+                                commit.fileops.append(FileOp("filedeleteall"), commit)
                             elif line[0] == "M":
-                                fileop = FileOp(line, commit.mark)
+                                fileop = FileOp(line, commit)
                                 if commit.mark is None:
                                     self.warn("unmarked commit")
                                 commit.fileops.append(fileop)
@@ -680,7 +680,7 @@ class Repository:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
                                     fileop.copyname = "inline-" + `id(self)` + "-" + `self.inline_count`
-                                    read_data(open(os.path.join(self.repo.subdir(), fileop.copyname), "w")).close()
+                                    read_data(open(os.path.join(self.subdir(), fileop.copyname), "w")).close()
                                     self.inline_count += 1
                                 else:
                                     self.error("unknown content type in filemodify")
@@ -984,6 +984,8 @@ class Repository:
                         child.parent_marks += event.parent_marks
                         # Push a copy of the parent's file ops to it
                         # and mark it as needing resolution
+                        for fileop in event.fileops:
+                            fileop.commit = child
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
                 # Remove tags referring to this event. Its children will
