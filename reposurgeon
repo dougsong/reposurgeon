@@ -71,12 +71,21 @@ vcstypes = [
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout"),
+    # The bzr import/export methods require the bzr-fast-import plugin.
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --plain FOO",
         styleflags=("export-progress", "nl-after-comment",),
         initializer="bzr init",
         importer="bzr fast-import %s",
+        checkout="bzr checkout"),
+    # The hg export-import methods are not part of stock hg
+    VCS(name="hg",
+        subdirectory=".hg",
+        exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
+        styleflags=("nl-after-comment",),
+        initializer="hg init",
+        importer="hg fastimport %s",
         checkout="bzr checkout"),
     ]
 
@@ -605,6 +614,9 @@ class Repository:
                             self.error("bad count in data")
                     else:
                         self.error("malformed data header %s" % `line`)
+                    line = readline()
+                    if line != '\n':
+                        pushback(line) # Data commands optionally end with LF
                     return dp
                 def readline():
                     if linebuffers:
