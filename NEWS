@@ -2,6 +2,7 @@
 
 0.5:
      Multiple author headers per commit are handled (helps with bzr).
+     So are branch-nick commit attributes (also helps with bzr). 
 
 0.4: 2010-11-08:
      Handling of inline data, previously extremely buggy, has been fixed.

@@ -771,7 +771,8 @@ directories.</para>
 </itemizedlist>
 
 <para>Note, however, that <command>reposurgeon</command> will handle,
-edit, and emit commits with multiple author fields.</para>
+edit, and emit commits with multiple author fields and with
+branch-nicks.</para>
 
 <para>Limitation: Subversion/RCS/CVS aren't directly supported because
 exporting from them requires fixups of usernames in the committer
