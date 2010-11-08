@@ -763,11 +763,15 @@ state. Presently the only known limitations are:</para>
 
 <itemizedlist>
 <listitem>
-<para>Under bzr, dumps do not capture information about (a) multiple-author 
-commits, (b) bzr custom commit properties (e.g. branch-nick and bugs 
-fixed by this change), or (c) empty directories.</para>
+<para>Under bzr, --plain dumps do not capture information about (a)
+multiple-author commits, (b) bzr custom commit properties
+(e.g. branch-nick and bugs fixed by this change), or (c) empty
+directories.</para>
 </listitem>
 </itemizedlist>
+
+<para>Note, however, that <command>reposurgeon</command> will handle,
+edit, and emit commits with multiple author fields.</para>
 
 <para>Limitation: Subversion/RCS/CVS aren't directly supported because
 exporting from them requires fixups of usernames in the committer

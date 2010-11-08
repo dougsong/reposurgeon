@@ -411,7 +411,7 @@ class Commit:
     def __init__(self, repo):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
-        self.author = None           # Author of commit
+        self.authors = []            # Authors of commit
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
         self.parent_marks = []            # List of parent nodes
@@ -428,8 +428,10 @@ class Commit:
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
-        if self.author:
-            self.author.email_out(msg, "Author")
+        if self.authors:
+            self.authors[0].email_out(msg, "Author")
+            for (i, coauthor) in enumerate(self.authors):
+                coauthor.email_out(msg, "Author" + `2+i`)
         self.committer.email_out(msg, "Committer")
         msg.set_payload(self.comment)
         return str(msg)
@@ -459,25 +461,36 @@ class Commit:
             self.committer.date = date
             modified = True
         if "Author" in msg:
-            if not self.author:
-                self.author = Attribution()
-            (newname, newemail) = email.utils.parseaddr(msg["Author"])
-            if not newname or not newemail:
-                raise FatalException("can't recognize address in Author")
-            else:
-                if self.author.name != newname or self.author.email != newemail:
-                    (self.author.name, self.author.email) = (newname, newemail)
+            author_re = re.compile("Author[0-9]*:")
+            authorkeys = filter(lambda s: author_re.match(s), msg.keys())
+            # Potential minor bug here if > 10 authors;
+            # lexicographic sort order doesn't match numeric
+            authorkeys.sort()
+            for i in range(len(authorkeys) - len(self.authors)):
+                self.authors.append(Attribution())
+            # Another potential minor bug: permuting the set of authors
+            # will look like a modification, as old and new authors are
+            # compaired pairwise rather than set equality being checked.
+            # Possibly a feature if one things order is significant, but
+            # I just did it this way because it was easier.
+            for (i, hdr) in enumerate(authorkeys):
+                (newname, newemail) = email.utils.parseaddr(msg[hdr])
+                if not newname or not newemail:
+                    raise FatalException("can't recognize address in %s" % hdr)
+                else:
+                    if self.authors[i].name != newname or self.authors[i].email != newemail:
+                        (self.authors[i].name, self.authors[i].email) = (newname, newemail)
+                        if verbose >= DEBUG_EMAILIN:
+                            print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
+                                  % (int(msg["Event-Number"]))
+                        modified = True
+                date = Date(msg[hdr + "-Date"])
+                if date != self.authors[i].date:
                     if verbose >= DEBUG_EMAILIN:
-                        print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
-                              % (int(msg["Event-Number"]))
+                        print >>sys.stderr,"reposurgeon: in event %d, %s-Date is modified" \
+                              % (int(msg["Event-Number"]), hdr)
+                    self.authors[i].date = date
                     modified = True
-            date = Date(msg["Author-Date"])
-            if date != self.author.date:
-                if verbose >= DEBUG_EMAILIN:
-                    print >>sys.stderr,"reposurgeon: in event %d, Author-Date is modified" \
-                          % (int(msg["Event-Number"]))
-                self.author.date = date
-                modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -511,8 +524,9 @@ class Commit:
         st = "commit %s\n" % self.branch
         if self.mark:
             st += "mark %s\n" % self.mark
-        if self.author:
-            st += "author %s\n" % self.author
+        if self.authors:
+            for author in self.authors:
+                st += "author %s\n" % author
         if self.committer:
             st += "committer %s\n" % self.committer
         st += "data %d\n%s" % (len(self.comment), self.comment) 
@@ -667,7 +681,7 @@ class Repository:
                                 self.nmarks += 1
                             elif line.startswith("author"):
                                 try:
-                                    commit.author = Attribution(line[7:])
+                                    commit.authors.append(Attribution(line[7:]))
                                 except ValueError:
                                     self.error("malformed author line")
                             elif line.startswith("committer"):
@@ -2283,10 +2297,10 @@ separation in seconds; the default is 90 seconds.
                 event.committer.unixtime += offset
                 if len(args) > 1:
                     event.committer.timezone = args[1]
-                if event.author:
-                    event.author.unixtime += offset
+                for author in event.authors:
+                    author.unixtime += offset
                     if len(args) > 1:
-                        event.author.timezone = args[1]
+                        author.timezone = args[1]
     def help_timeoffset(self):
         print """
 Apply a time offset to all time/date stamps in the selected set.  An offset

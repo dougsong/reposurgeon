@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.5:
+     Multiple author headers per commit are handled (helps with bzr).
+
 0.4: 2010-11-08:
      Handling of inline data, previously extremely buggy, has been fixed.
      Can now handle streams produced by bzr-fast-export, which uses inline.
