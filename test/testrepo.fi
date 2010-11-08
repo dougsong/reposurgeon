@@ -245,6 +245,48 @@ from :28
 D bar
 M 100644 :24 renamed1
 
-reset refs/heads/master
+commit refs/heads/master
+mark :30
+author Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
+data 66
+This is an attempt to create a copy operation in the export file.
 from :29
+M 100644 :24 copy1
+
+blob
+mark :31
+data 76
+Recreating bar after it was deleted, to test another canonicalization case.
+
+commit refs/heads/master
+mark :32
+author Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
+data 16
+Recreating bar.
+from :30
+M 100644 :31 bar
+
+blob
+mark :33
+data 243
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+Once again, we need a commit to push some deletes forward to.
+
+commit refs/heads/master
+mark :34
+author Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
+data 33
+Give the deletion push a target.
+from :32
+M 100644 :33 README
+
+reset refs/heads/master
+from :34
 
