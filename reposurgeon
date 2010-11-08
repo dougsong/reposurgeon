@@ -636,11 +636,11 @@ class Repository:
                         commit.branch = line.split()[1]
                         self.branches.add(commit.branch)
                         ncommits += 1
-                        inlinecount = 0
+                        inline_count = 0
                         while True:
                             line = readline()
                             if not line:
-                                self.error("EOF after commit")
+                                break
                             elif line.startswith("mark"):
                                 commit.mark = line[5:].strip()
                                 self.nmarks += 1
@@ -680,11 +680,21 @@ class Repository:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
                                     fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
-                                    self.read_data(open(fileop.copyname, "w")).close()
+                                    read_data(open(fileop.copyname, "w")).close()
                                     inline_count += 1
                                 else:
                                     self.error("unknown content type in filemodify")
                             # Handling of file ops ends.
+                            elif line.isspace():
+                                # This handles slightly broken
+                                # exporters like the bzr-fast-export
+                                # one that may tack an extra LF onto
+                                # the end of data objects.  With it,
+                                # we don't drop out of the
+                                # commit-processing loop until we see
+                                # a *nonblank* line that doesn't match
+                                # a commit subpart.
+                                continue
                             else:
                                 pushback(line)
                                 break
