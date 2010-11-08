@@ -80,7 +80,7 @@ vcstypes = [
         subdirectory=".bzr",
         exporter="bzr fast-export --plain FOO",
         styleflags=("export-progress", "nl-after-comment",),
-        initializer="bzr init",
+        initializer=None,
         importer="bzr fast-import %s",
         checkout="bzr checkout"),
     # The hg export-import methods are not part of stock hg
@@ -1182,7 +1182,8 @@ def rebuild_repo(repo, target, preferred):
     here = os.getcwd()
     try:
         os.chdir(staging)
-        do_or_die(repo.vcs.initializer, "repository initialization")
+        if repo.vcs.initializer:
+            do_or_die(repo.vcs.initializer, "repository initialization")
         if "%s" in repo.vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
