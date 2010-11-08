@@ -84,10 +84,11 @@ vcstypes = [
         importer="bzr fast-import %s",
         checkout="bzr checkout"),
     # The hg export-import methods are not part of stock hg
+    # Export is tested and works; import is flaky.
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags=("nl-after-commit", "export-progress"),
+        styleflags=("nl-after-commit", "nl-after-commit", "export-progress"),
         initializer="hg init",
         importer="hg fastimport %s",
         checkout="bzr checkout"),
