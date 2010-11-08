@@ -91,7 +91,7 @@ vcstypes = [
         styleflags=("nl-after-commit", "nl-after-commit", "export-progress"),
         initializer="hg init",
         importer="hg fastimport %s",
-        checkout="bzr checkout"),
+        checkout="hg checkout"),
     ]
 
 verbose         = 0
