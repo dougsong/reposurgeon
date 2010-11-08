@@ -377,7 +377,7 @@ class FileOp:
             if self.ref == 'inline':
                 with open(os.path.join(self.commit.repo.subdir(), self.copyname)) as fp:
                     content = fp.read()
-                st += "data %d\n%s\n" % (len(content), content)
+                st += "\ndata %d\n%s" % (len(content), content)
         elif self.op in "D":
             st = "D "
             if len(self.path.split()) > 1:
