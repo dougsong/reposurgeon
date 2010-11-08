@@ -152,8 +152,10 @@ class Baton:
         self.count = self.count + 1
         return
     def __exit__(self, type, value, traceback):
-        if type in (KeyboardInterrupt, FatalException):
+        if type == KeyboardInterrupt:
             self.endmsg = "interrupted"
+        if type == FatalException:
+            self.endmsg = "aborted by error"
         if self.stream:
             self.stream.write("...(%2.2f sec) %s.\n" \
                               % (time.time() - self.time, self.endmsg))
