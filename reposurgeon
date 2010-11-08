@@ -10,7 +10,7 @@ import sys, os, getopt, commands, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-version="0.3"
+version="0.4"
 
 class VCS:
     "Class representing a version-control system."
@@ -41,7 +41,7 @@ class VCS:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
-# * Flag, True if the exporter emits its own progress messages
+# * Export-style flags.  
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
@@ -83,7 +83,7 @@ vcstypes = [
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags=("nl-after-comment",),
+        styleflags=(),
         initializer="hg init",
         importer="hg fastimport %s",
         checkout="bzr checkout"),
