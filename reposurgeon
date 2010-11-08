@@ -41,7 +41,11 @@ class VCS:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
-# * Export-style flags.  
+# * Export-style flags.
+#     "nl-after-commit" = inserts an extra NL after each commit
+#     "nl-after-comment" = inserts an extra NL after each comment
+#     "export-progress" = exporter generates its own progress messages,
+#                         no need for baton prompt.
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
@@ -83,7 +87,7 @@ vcstypes = [
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags=(”nl-after-commit”, “export-progress”),
+        styleflags=("nl-after-commit", "export-progress"),
         initializer="hg init",
         importer="hg fastimport %s",
         checkout="bzr checkout"),
