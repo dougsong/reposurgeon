@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+0.4:
+     Can now handle streams prodced by bzr-fast-exort, which uses inline.
+     Unfortunately, bzr-fast-import is buggy enough to make rebuilds fail.
+
 0.3: 2010-11-07
      'split' operation renamed to 'cut'.
      New 'inspect' command for looking at commits in raw form.
