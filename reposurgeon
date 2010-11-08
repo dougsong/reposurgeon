@@ -246,13 +246,13 @@ class Attribution:
 
 class Blob:
     "Represent a detached blob of data referenced by a mark."
-    def __init__(self, subdir):
+    def __init__(self, repo):
+        self.repo = repo
         self.mark = None
-        self.subdir = os.path.abspath(subdir)
         self.path = None      # First in-repo path associated with this blob
         self.color = None
     def blobfile(self):
-        return self.subdir + "/blob-" + `id(self)` + "-" + self.mark
+        return self.repo.subdir() + "/blob-" + `id(self)` + "-" + self.mark
     def release(self):
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
@@ -375,7 +375,7 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                with open(self.copyname) as fp:
+                with open(os.path.join(self.repo.subdir(), self.copyname)) as fp:
                     content = fp.read()
                 st += "data %d\n%s\n" % (len(content), content)
         elif self.op in "D":
@@ -619,7 +619,7 @@ class Repository:
                     elif not line.strip():
                         continue
                     elif line.startswith("blob"):
-                        blob = Blob(self.subdir())
+                        blob = Blob(self)
                         line = readline()
                         if line.startswith("mark"):
                             blob.mark = line[5:].strip()
@@ -679,8 +679,8 @@ class Repository:
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
-                                    fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `self.inline_count`
-                                    read_data(open(fileop.copyname, "w")).close()
+                                    fileop.copyname = "inline-" + `id(self)` + "-" + `self.inline_count`
+                                    read_data(open(os.path.join(self.repo.subdir(), fileop.copyname), "w")).close()
                                     self.inline_count += 1
                                 else:
                                     self.error("unknown content type in filemodify")
@@ -2353,8 +2353,10 @@ an offset literal of +0 or -0.
                     late.events.append(copy.copy(event))
             else:
                 if event.color == "early":
+                    event.repo = early
                     early.events.append(event)
                 elif event.color == "late":
+                    event.repo = late
                     late.events.append(event)
                 else:
                     raise FatalException("coloring algorithm failed on %s" % event)
@@ -2405,7 +2407,7 @@ through another path; the tool will detect this. If the repo was named
                                 deletia.append(i)
                                 if fileop.op == 'M':
                                     if fileop.ref == 'inline':
-                                        os.remove(fileop.copyname)
+                                        os.remove(os.path.join(self.repo.subdir(), fileop.copyname))
                                     else:
                                         bi = self.repo.find(fileop.ref)
                                         assert(isinstance(self.repo[bi], Blob))
