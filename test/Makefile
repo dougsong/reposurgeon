@@ -8,7 +8,7 @@ clean:
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
-	@for file in *.dump; do \
+	@for file in *.fi; do \
 	    echo "Testing round-tripping of $${file}.tst."; \
 	    ../reposurgeon "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
@@ -18,7 +18,7 @@ roundtrip:
 # Test that dumping metadata to mailbox form and updating from the mailbox
 # is idempotent if you make no changes to the mailbox.
 mailboxing:
-	@for file in *.dump; do \
+	@for file in *.fi; do \
 	    echo "Testing mailbox-out/mailbox-in roundtripping using $${file}";\
 	    ../reposurgeon "read $${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
 	    diff -u $${file} /tmp/regress; \
@@ -27,7 +27,7 @@ mailboxing:
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
-TESTLOADS = simple-dump
+TESTLOADS = simple-fi
 buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
@@ -45,14 +45,14 @@ regress:
 COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
-	    echo "Rebuilding coalescence regression test using $${file}.dump"; \
-	    ../reposurgeon "read $${file}.dump; coalesce; write -" > $${file}.chk; \
+	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
+	    ../reposurgeon "read $${file}.fi; coalesce; write -" > $${file}.chk; \
 	done
 	@rm -f /tmp/regress
 coalesce:
 	@for file in $(COALESCE); do \
-	    echo "Coalescence regression test using $${file}.dump"; \
-	    ../reposurgeon "read $${file}.dump; coalesce; write -" >/tmp/regress; \
+	    echo "Coalescence regression test using $${file}.fi"; \
+	    ../reposurgeon "read $${file}.fi; coalesce; write -" >/tmp/regress; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress

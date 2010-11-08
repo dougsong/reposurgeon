@@ -1,4 +1,4 @@
-read simple.dump
+read simple.fi
 index
      2 branch      -    refs/tags/lightweight-sample
      3 commit     :2    refs/tags/lightweight-sample
@@ -79,9 +79,9 @@ resolve @annotated-sample
 resolve /regression/
 [50, 58, 120, 131]
 history
-script simple-dump.tst
+script simple-fi.tst
 repeat 1
-read simple.dump
+read simple.fi
 index
 resolve 15
 resolve =TR

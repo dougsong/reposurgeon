@@ -1,5 +1,5 @@
 repeat 1
-read simple.dump
+read simple.fi
 index
 resolve 15
 resolve =TR

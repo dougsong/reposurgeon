@@ -1,6 +1,6 @@
 !echo This exercises many delete cases in the test repo
 repeat 1
-read testrepo.dump
+read testrepo.fi
 coverage
 delete :7,:8
 coverage       # Expect this to show case 1 covered.
