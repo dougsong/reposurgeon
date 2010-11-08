@@ -17,24 +17,24 @@ class VCS:
     def __init__(self, name,
                  subdirectory,
                  exporter,
-                 exportverbosity,
+                 styleflags,
                  initializer,
                  importer,
                  checkout):
         self.name = name
         self.subdirectory = subdirectory
         self.exporter = exporter
-        self.exportverbosity = exportverbosity
+        self.styleflags = styleflags
         self.initializer = initializer
         self.importer = importer
         self.checkout = checkout
     def __repr__(self):
-        return "      Subdirectory: " + self.subdirectory + "\n" \
-             + "          Exporter: " + self.exporter + "\n" \
-             + "Exporter-verbosity: " + `self.exportverbosity` + "\n" \
-             + "       Initializer: " + self.initializer + "\n" \
-             + "          Importer: " + self.importer + "\n" \
-             + "          Checkout: " + self.checkout + "\n"
+        return "Subdirectory: " + self.subdirectory + "\n" \
+             + "    Exporter: " + self.exporter + "\n" \
+             + "Export-Style: " + `self.styleflags` + "\n" \
+             + " Initializer: " + self.initializer + "\n" \
+             + "    Importer: " + self.importer + "\n" \
+             + "    Checkout: " + self.checkout + "\n"
 
 # All knowledge about specific version-control systems lives in the
 # following class list.  The members are, respectively:
@@ -67,14 +67,14 @@ vcstypes = [
     VCS(name="git",
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-        exportverbosity=False,
+        styleflags=("nl-after-commit",),
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout"),
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --plain FOO",
-        exportverbosity=True,
+        styleflags=("export-progress", "nl-after-comment",),
         initializer="bzr init",
         importer="bzr fast-import %s",
         checkout="bzr checkout"),
@@ -502,7 +502,7 @@ class Commit:
         if self.committer:
             st += "committer %s\n" % self.committer
         st += "data %d\n%s" % (len(self.comment), self.comment) 
-        if self.repo.style == "bzr-fast-export":
+        if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
             st += "from %s\n" % self.parent_marks[0]
@@ -510,7 +510,7 @@ class Commit:
             st += "merge %s\n" % self.parent_marks[0]
         for op in self.fileops:
             st += str(op) + "\n"
-        if self.repo.style == "git-fast-export":
+        if "nl-after-commit" in self.repo.export_style():
             st += "\n"
         return st
 
@@ -548,7 +548,6 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.style = "git-fast-export"
     def cleanup(self):
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     def subdir(self, name=None):
@@ -747,6 +746,13 @@ class Repository:
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
+    def export_style(self):
+        "How should we tune the export dump format?"
+        if self.vcs:
+            return self.vcs.styleflags
+        else:
+            # Default to git style
+            return ("nl-after-commit",)
     def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
@@ -1092,7 +1098,7 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.vcs = vcs
         repo.sourcedir = source
-        showprogress = (verbose > 0) and not vcs.exportverbosity
+        showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
