@@ -2,7 +2,7 @@
 
 0.4: 2010-11-08:
      Handling of inline data, previously extremely buggy, has been fixed.
-     Can now handle streams produced by bzr-fast-exort, which uses inline.
+     Can now handle streams produced by bzr-fast-export, which uses inline.
      Unfortunately, bzr-fast-import is buggy enough to make rebuilds fail.
      First cut at hg support, by Phil Roberts.
 
