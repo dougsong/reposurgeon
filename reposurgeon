@@ -375,7 +375,7 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                with open(op.copyname) as fp:
+                with open(self.copyname) as fp:
                     content = fp.read()
                 st += "data %d\n%s\n" % (len(content), content)
         elif self.op in "D":
@@ -540,6 +540,7 @@ class Repository:
         self.nmarks = 0
         self.branches = set([])
         self.import_line = 0
+        self.inline_count = 0
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
@@ -636,7 +637,6 @@ class Repository:
                         commit.branch = line.split()[1]
                         self.branches.add(commit.branch)
                         ncommits += 1
-                        inline_count = 0
                         while True:
                             line = readline()
                             if not line:
@@ -679,9 +679,9 @@ class Repository:
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
-                                    fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `inline_count`
+                                    fileop.copyname = self.subdir() + "/inline-" + `id(self)` + "-" + `self.inline_count`
                                     read_data(open(fileop.copyname, "w")).close()
-                                    inline_count += 1
+                                    self.inline_count += 1
                                 else:
                                     self.error("unknown content type in filemodify")
                             # Handling of file ops ends.
@@ -1212,7 +1212,7 @@ def rebuild_repo(repo, target, preferred):
                     announce("preserved files restored.")
     finally:
         os.chdir(here)
-        nuke(staging, "reposurgeon: removing staging directory", verbosity=2)
+        nuke(staging, "reposurgeon: removing staging directory")
 
 def do_or_die(cmd, legend=""):
     "Either execute a command or raise a fatal exception."
