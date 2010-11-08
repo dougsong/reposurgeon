@@ -488,11 +488,11 @@ class Commit:
                 cliques[fileop.path].append(i)
         return cliques
     def fileop_dump(self, i):
-        "Dump file ops with origin marks; used for debugging only."
+        "Dump file ops without data or inlines; used for debugging only."
         print "commit %d, mark %s:" % (i+1, self.mark)
         for (i, op) in enumerate(self.fileops):
             if op is not None:
-                print "%d: %-20s\t# %s" % (i, str(op), op.commit.mark)
+                print "%d: %-20s" % (i, str(op))
     def __str__(self):
         st = "commit %s\n" % self.branch
         if self.mark:
