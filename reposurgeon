@@ -502,13 +502,17 @@ class Commit:
         if self.committer:
             st += "committer %s\n" % self.committer
         st += "data %d\n%s" % (len(self.comment), self.comment) 
+        if self.repo.style == "bzr-fast-export":
+            st += "\n"
         if self.parent_marks:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % self.parent_marks[0]
         for op in self.fileops:
             st += str(op) + "\n"
-        return st + "\n"
+        if self.repo.style == "git-fast-export":
+            st += "\n"
+        return st
 
 class Passthrough:
     "Represents a passthrough line."
@@ -544,6 +548,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
+        self.style = "git-fast-export"
     def cleanup(self):
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     def subdir(self, name=None):
