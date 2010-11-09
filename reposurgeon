@@ -2520,8 +2520,8 @@ After file expunges have been performed, any commits with no
 remaining file operations will be deleted, and any tags pointing to
 them.
 """
-    def do_fileops(self, line):
-        "Perform microsurgery on a commit's fileops."
+    def do_split(self, line):
+        "Split a commit."
         if not self.repo:
             raise RecoverableException("no repo has been chosen.")
             return
@@ -2534,26 +2534,48 @@ them.
         if not isinstance(event, Commit):
             raise RecoverableException("fileop argument doesn't point at a commit")
             return
-        if line.startswith("split"):
-            line = line[5:].lstrip()
+        if not line.startswith("at"):
+            raise RecoverableException("expected 'at'")
+            return
+        else:
+            line = line[2:].lstrip()
             try:
                 splitpoint = int(line.split()[0]) - 1
             except ValueError:
                 raise RecoverableException("expected integer fileop index (1-origin)")
-            if splitpoint not in range(len(event.fileops)):
+            if splitpoint not in range(1, len(event.fileops)):
                 raise RecoverableException("fileop index out of range")
             # Actual implementation starts here
             self.repo.events.insert(where+1, copy.deepcopy(event))
             event2 = self.repo.events[where+1]
             assert(event.mark == event2.mark)
             event2.mark = event.mark + "bis"
+            # Fix up parent/child relationships
+            event2.parent_marks = [event.mark]
+            for child in event.children():
+                for (j, mark) in enumerate(child.parent_marks):
+                    if mark == event.mark:
+                        child.parent_marks[j] == event2.mark
+            # Fileop split happens here
             event2.fileops = event.fileops[splitpoint:]
             event.fileops = event.fileops[:splitpoint]
             if verbose:
                 self.do_inspect(`where+1`+","+`where+2`)
-        else:
-            raise RecoverableException("unknown subcommand")
-            return
+    def help_split(self):
+        print """
+Split a specified commit in two, the opposite of coalesce.  The first argument
+is required to be a commit location; the separating keyword 'at' must follow,
+then an integer 1-origin index of a file operation within the commit.
+
+The commit is copied copied and inserted into a new position in the
+event sequence, immediately following itself; the duplicate becomes
+the child of the original, and replaces it as parent of the original's
+children. Commit metadata is duplicated; the mark of the new commit is
+then changed, with 'bis' added as a suffix.
+
+Finally, some file operations - starting at the one indexed by the split
+argument - are moved forward from the original commit into the new one.
+"""
 
 if __name__ == '__main__':
     try:

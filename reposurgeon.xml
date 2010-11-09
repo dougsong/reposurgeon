@@ -546,6 +546,28 @@ commits from CVS lifts.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>split</command> 
+        <emphasis>commit-location</emphasis>
+        <command>at</command> 
+        <emphasis>index</emphasis>
+</term>
+<listitem>
+<para>Split a specified commit in two, the opposite of coalesce.  The
+first argument is required to be a commit location; the separating
+keyword 'at' must follow, then an integer 1-origin index of a file
+operation within the commit.</para>
+
+<para>The commit is copied and inserted into a new position in the
+event sequence, immediately following itself; the duplicate becomes
+the child of the original, and replaces it as parent of the original's
+children. Commit metadata is duplicated; the mark of the new commit is
+then changed, with 'bis' added as a suffix.</para>
+
+<para>Finally, some file operations - starting at the one indexed by the split
+argument - are moved forward from the original commit into the new one.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>mailbox_out</command>
         [<emphasis>selection-set</emphasis>]
         [<emphasis>outfile</emphasis>]

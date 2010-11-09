@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 0.5:
+     New 'split' operation, opposite of coalesce.
      Multiple author headers per commit are handled (helps with bzr).
      So are branch-nick commit attributes (also helps with bzr). 
 
