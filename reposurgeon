@@ -1800,7 +1800,7 @@ developers only.
         elif type(self.selection) == type([]):
             print map(lambda x: x+1, self.selection)
         else:
-            complain("resolve did't expect a selection of %s" % self.selection)
+            complain("resolve didn't expect a selection of %s" % self.selection)
     def help_resolve(self):
         print """
 Does nothing but resolve a selection-set expression
