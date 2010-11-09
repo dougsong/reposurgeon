@@ -1,12 +1,12 @@
 			reposurgeon project news
 
-0.5:
+0.5: 2010-11-09
      We can round-trip bzr dumps with commit properties.
-     New 'split' operation, opposite of coalesce.
+     New 'split' operation, opposite of coalesce/delete.
      Multiple author headers per commit are handled (helps with bzr).
      So are branch-nick commit attributes (also helps with bzr). 
 
-0.4: 2010-11-08:
+0.4: 2010-11-08
      Handling of inline data, previously extremely buggy, has been fixed.
      Can now handle streams produced by bzr-fast-export, which uses inline.
      Unfortunately, bzr-fast-import is buggy enough to make rebuilds fail.
