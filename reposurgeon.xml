@@ -563,10 +563,10 @@ the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
 then changed, with 'bis' added as a suffix.</para>
 
-<para>Finally, some file operations - starting at the one indexed by the split
-argument - are moved forward from the original commit into the new one.</para>
-Legal indices are 2-n, where n is the number of file operations in the
-original commit.
+<para>Finally, some file operations - starting at the one indexed by
+the split argument - are moved forward from the original commit into
+the new one.  Legal indices are 2-n, where n is the number of file
+operations in the original commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
