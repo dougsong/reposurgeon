@@ -2520,6 +2520,40 @@ After file expunges have been performed, any commits with no
 remaining file operations will be deleted, and any tags pointing to
 them.
 """
+    def do_fileops(self, line):
+        "Perform microsurgery on a commit's fileops."
+        if not self.repo:
+            raise RecoverableException("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, [])
+        if len(self.selection) != 1:
+            raise RecoverableException("selection of a single commit required for this command")
+            return
+        where = self.selection[0]
+        event = self.repo[where]
+        if not isinstance(event, Commit):
+            raise RecoverableException("fileop argument doesn't point at a commit")
+            return
+        if line.startswith("split"):
+            line = line[5:].lstrip()
+            try:
+                splitpoint = int(line.split()[0]) - 1
+            except ValueError:
+                raise RecoverableException("expected integer fileop index (1-origin)")
+            if splitpoint not in range(len(event.fileops)):
+                raise RecoverableException("fileop index out of range")
+            # Actual implementation starts here
+            self.repo.events.insert(where+1, copy.deepcopy(event))
+            event2 = self.repo.events[where+1]
+            assert(event.mark == event2.mark)
+            event2.mark = event.mark + "bis"
+            event2.fileops = event.fileops[splitpoint:]
+            event.fileops = event.fileops[:splitpoint]
+            if verbose:
+                self.do_inspect(`where+1`+","+`where+2`)
+        else:
+            raise RecoverableException("unknown subcommand")
+            return
 
 if __name__ == '__main__':
     try:
