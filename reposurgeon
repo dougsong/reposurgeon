@@ -84,7 +84,7 @@ vcstypes = [
         exporter="bzr fast-export --no-plain %(basename)s",
         styleflags=("export-progress", "nl-after-comment",),
         initializer=None,
-        importer="bzr fast-import %(tempfile)s",
+        importer="bzr fast-import -",
         checkout="bzr checkout"),
     # The hg export-import methods are not part of stock hg
     # Export is tested and works; import is flaky.
