@@ -54,12 +54,15 @@ class VCS:
 # that are not part of the basic VCS. Thus these may fail when called;
 # we need to be prepared to cope with that.
 #
-# %s in a command gets substituted with the name of a tempile that the
-# calling code will know to read or write from as appropriate after the command
-# is dome.  If your exporter can simply dump to stdout, or your importer
-# reasd from stdin, leave out the %s; reposurgeon will popen(3) the command,
-# and it will actually be slightly faster (especially on large repos)
-# because it won't have to wait for the tempfile I/O to complete.
+# %(tempfile)s in a command gets substituted with the name of a
+# tempile that the calling code will know to read or write from as
+# appropriate after the command is done.  If your exporter can simply
+# dump to stdout, or your importer reasd from stdin, leave out the
+# %(tempfile)s; reposurgeon will popen(3) the command, and it will
+# actually be slightly faster (especially on large repos) because it
+# won't have to wait for the tempfile I/O to complete.
+#
+# %(basename) is replaced with the basename of the repo directory.
 #
 # Subversion/RCS/CVS aren't in this table because exporting from them
 # requires fixups of usernames in the committer information to full
@@ -78,10 +81,10 @@ vcstypes = [
     # The bzr import/export methods require the bzr-fast-import plugin.
     VCS(name="bzr",
         subdirectory=".bzr",
-        exporter="bzr fast-export --plain FOO",
+        exporter="bzr fast-export --plain %(basename)s",
         styleflags=("export-progress", "nl-after-comment",),
         initializer=None,
-        importer="bzr fast-import %s",
+        importer="bzr fast-import %(tempfile)s",
         checkout="bzr checkout"),
     # The hg export-import methods are not part of stock hg
     # Export is tested and works; import is flaky.
@@ -90,7 +93,7 @@ vcstypes = [
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
         styleflags=("nl-after-commit", "nl-after-commit", "export-progress"),
         initializer="hg init",
-        importer="hg fastimport %s",
+        importer="hg fastimport %(tempfile)s",
         checkout="hg checkout"),
     ]
 
@@ -1132,19 +1135,21 @@ def read_repo(source, preferred):
         repo.vcs = vcs
         repo.sourcedir = source
         showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
+        context = {"basename": os.path.basename(repo.sourcedir)}
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
-            if "%s" in repo.vcs.exporter:
+            if "%(tempfile)s" in repo.vcs.exporter:
                 try:
                     (tfdesc, tfname) = tempfile.mkstemp()
-                    do_or_die(repo.vcs.exporter % tfname, "repository export")
+                    context["tempfile"] = tfname
+                    do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname) as tp:
                         repo.fast_import(tp, progress=showprogress);
                 finally:
                     os.remove(tfname)
             else:
-                with popen_or_die(repo.vcs.exporter, "repository export") as tp:
+                with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(tp, progress=showprogress);
         finally:
             os.chdir(here)
@@ -1201,16 +1206,17 @@ def rebuild_repo(repo, target, preferred):
         os.chdir(staging)
         if repo.vcs.initializer:
             do_or_die(repo.vcs.initializer, "repository initialization")
-        if "%s" in repo.vcs.importer:
+        parameters = {"basename": os.path.basename(repo.sourcedir)}
+        if "%(tempfile)s" in repo.vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
                     repo.fast_export(range(len(repo)), tp, progress=verbose>0)
-                do_or_die(repo.vcs.importer % tfname, "import")
+                do_or_die(repo.vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
-            with popen_or_die(repo.vcs.importer, "import", mode="w") as tp:
+            with popen_or_die(repo.vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp, progress=verbose>0)
         do_or_die(repo.vcs.checkout, "repository_checkout")
         if verbose:
