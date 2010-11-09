@@ -1325,7 +1325,7 @@ class RepoSurgeon(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.use_rawinput = True
-        self.repeat = 0
+        self.echo = 0
         self.prompt = "reposurgeon% "
         self.repo = None
         self.preferred = None
@@ -1349,7 +1349,7 @@ class RepoSurgeon(cmd.Cmd):
     def precmd(self, line):
         "Pre-command hook."
         self.history.append(line.rstrip())
-        if self.repeat:
+        if self.echo:
             sys.stdout.write(line.rstrip()+"\n")
         if "#" in line:
             line = line[:line.index("#")].rstrip()
@@ -1726,14 +1726,14 @@ kevel.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
 developers only.
 """
-    def do_repeat(self, line):
-        "Set or clear repeating commands before processing (for regression tests)"
+    def do_echo(self, line):
+        "Set or clear echoing commands before processing (for regression tests)"
         try:
-            self.repeat = int(line)
+            self.echo = int(line)
         except ValueError:
-            announce("repeat value must be an integer")
+            announce("echo value must be an integer")
         if verbose:
-            announce("repeat %d" % self.repeat)
+            announce("echo %d" % self.echo)
     def do_version(self, line):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x.name, vcstypes))

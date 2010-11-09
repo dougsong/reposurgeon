@@ -727,10 +727,10 @@ and the list of version-control systems it directly supports.
 but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>repeat</command>
+<term><command>echo</command>
         [<emphasis>number</emphasis>]
 </term>
-<listitem><para>'repeat 1' causes each 
+<listitem><para>'echo 1' causes each 
 <command>reposurgeon</command> command to be echoed to standard
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>

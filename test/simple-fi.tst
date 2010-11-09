@@ -1,4 +1,4 @@
-repeat 1
+echo 1
 read simple.fi
 index
 resolve 15

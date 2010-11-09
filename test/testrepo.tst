@@ -1,5 +1,5 @@
 !echo This exercises many delete cases in the test repo
-repeat 1
+echo 1
 read testrepo.fi
 coverage
 delete :7,:8

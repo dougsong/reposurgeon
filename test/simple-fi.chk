@@ -80,7 +80,7 @@ resolve /regression/
 [50, 58, 120, 131]
 history
 script simple-fi.tst
-repeat 1
+echo 1
 read simple.fi
 index
 resolve 15
