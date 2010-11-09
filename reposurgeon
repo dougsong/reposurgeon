@@ -2575,6 +2575,8 @@ then changed, with 'bis' added as a suffix.
 
 Finally, some file operations - starting at the one indexed by the split
 argument - are moved forward from the original commit into the new one.
+Legal indices are 2-n, where n is the number of file operations in the
+original commit.
 """
 
 if __name__ == '__main__':

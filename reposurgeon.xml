@@ -565,6 +565,8 @@ then changed, with 'bis' added as a suffix.</para>
 
 <para>Finally, some file operations - starting at the one indexed by the split
 argument - are moved forward from the original commit into the new one.</para>
+Legal indices are 2-n, where n is the number of file operations in the
+original commit.
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -720,7 +722,7 @@ and the list of version-control systems it directly supports.
 </varlistentry>
 <varlistentry>
 <term><command>verbose</command> 
-        [n]
+        [<emphasis>n</emphasis>]
 </term>
 <listitem><para>'verbose 1' enables progress and messages,
 'verbose 0' disables them. Higher levels of verbosity are available
