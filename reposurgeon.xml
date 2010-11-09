@@ -28,7 +28,7 @@
 <para>The purpose of <command>reposurgeon</command> is to enable risky
 operations that version-control systems don't want to let you do, such
 as (a) editing past comments and metadata, (b) excising commits, (c)
-coalescing ans splitting commits, (d) removing files and subtrees from
+coalescing and splitting commits, (d) removing files and subtrees from
 repo history, and (e) cutting a repo in two by cutting a parent-child
 link, preserving the branch structure of both child repos.</para>
 
@@ -776,6 +776,11 @@ potential passthroughs is known to include the
 <para>Guarantee: All <command>reposurgeon</command> operations either
 preserve all repository state they are not explicitly told to modify
 or warn you when they cannot do so.</para>
+
+<para>Guarantee: <command>reposurgeon</command> handles the bzr 
+commit-properties extension, correctly passing through property
+items including those with embedded newlines. (Such properties
+are also editable in the mailbox format.)</para>
 
 <para>Limitation: Because <command>reposurgeon</command>
 relies on other programs to generate and interpret the fast-import command
