@@ -418,7 +418,6 @@ class Commit:
         self.comment = None          # Commit comment
         self.parent_marks = []            # List of parent nodes
         self.branch = None           # branch name
-        self.branch_nick = None      # bzr extension
         self.fileops = []            # blob and file operation list
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
@@ -436,8 +435,6 @@ class Commit:
             for (i, coauthor) in enumerate(self.authors):
                 coauthor.email_out(msg, "Author" + `2+i`)
         self.committer.email_out(msg, "Committer")
-        if self.branch_nick:
-            msg["Branch-Nick"] = self.branch_nick
         msg.set_payload(self.comment)
         return str(msg)
     def email_in(self, msg):
@@ -496,10 +493,6 @@ class Commit:
                               % (int(msg["Event-Number"]), hdr)
                     self.authors[i].date = date
                     modified = True
-        if "Branch-Nick" in msg:
-            if self.branch_nick != msg["Branch-Nick"]:
-                msg["Branch-Nick"] = self.branch_nick
-                modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -531,8 +524,6 @@ class Commit:
                 print "%d: %-20s" % (i, str(op))
     def __str__(self):
         st = "commit %s\n" % self.branch
-        if self.branch_nick:
-            st += "branch-nick %s\n" % self.branch_nick
         if self.mark:
             st += "mark %s\n" % self.mark
         if self.authors:
