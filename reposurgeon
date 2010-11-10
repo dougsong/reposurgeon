@@ -6,7 +6,7 @@
 #
 # Requires Python 2.5 or newer.
 #
-import sys, os, getopt, commands, cStringIO, cmd, tempfile, subprocess
+import sys, os, getopt, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
@@ -243,7 +243,7 @@ class Attribution:
             # First, validity-check the email address
             (self.name, self.email) = email.utils.parseaddr(person)
             if not self.name or not self.email:
-                FatalException("can't recognize address in attribution")
+                raise FatalException("can't recognize address in attribution")
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
             person = person.replace(" <", "|").replace("> ", "|")
