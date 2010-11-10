@@ -61,7 +61,7 @@ are likely to cause havoc after you're done.  Proceed with caution and
 check your work.</para>
 
 <para>Also note that, if your DVCS does the usual thing of making
-commit IDs a cryptographic has of content and parent links, editing a
+commit IDs a cryptographic hash of content and parent links, editing a
 publicly-accessible repository with this tool would be a bad idea. All
 of the surgical operations in <command>reposurgeon</command> will
 modify the hash chains, meaning others will become unable to pull
@@ -786,10 +786,13 @@ are also editable in the mailbox format.)</para>
 relies on other programs to generate and interpret the fast-import command
 stream, it is subject to bugs in those prograns.</para>
 
-<para>Limitation: Because of bzr's strange model of branches, rebuilding
-a repo may produce a subdirectory structure that differs from what you
-expect.  You may need look for your content under the subdirectory 
-'trunk'.</para>
+<para>Limitation: bzr suffers from deep confusion over whether its
+unit of work is a repository or a floating branch that might have been
+cloned from a repo or created from scratch, and might or might not be
+destined to be merged to a repo one day. Its exporter only works on
+branches, but its importer creates repos.  Thus, a rebuild operation
+will produce a subdirectory structure that differs from what you
+expect.  Look for your content under the subdirectory 'trunk'.</para>
 
 <para>Limitation: Under version-control systems other than git,
 fast-import format may not capture the entire repository
