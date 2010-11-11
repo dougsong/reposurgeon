@@ -1370,8 +1370,11 @@ class popen_or_die:
                                  % (self.cmd, self.legend, e))
     def __exit__(self, type, value, traceback):
         if self.fp.close() is not None:
-            raise FatalException("%s%s returned error." \
-                                 % (self.cmd, self.legend))
+            legend = "%s%s returned error" % (self.cmd, self.legend)
+            if type == FatalException:
+                value.msg += " and " + legend
+            else:
+                raise FatalException(legend + ".")
         return False
 
 def iso8601_from_unixtime(secs_since_epoch):
