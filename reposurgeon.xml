@@ -67,9 +67,8 @@ of the surgical operations in <command>reposurgeon</command> will
 modify the hash chains, meaning others will become unable to pull
 from or push to the repo.</para>
 
-<para>Under git, signed tags are imported verbatim. However, any
-operation that modifies any commit upstream of the target of the 
-tag will invalidate it.</para>
+<para>Please also see the notes on system-specific issues under <xref
+linkend='limitations'/>.</para>
 
 </refsect1>
 
@@ -794,22 +793,9 @@ branches, but its importer creates repos.  Thus, a rebuild operation
 will produce a subdirectory structure that differs from what you
 expect.  Look for your content under the subdirectory 'trunk'.</para>
 
-<para>Limitation: Under version-control systems other than git,
-fast-import format may not capture the entire repository
-state. Presently the only known limitations are:</para>
-
-<itemizedlist>
-<listitem>
-<para>Under bzr, --plain dumps do not capture information about (a)
-multiple-author commits, (b) bzr custom commit properties
-(e.g. branch-nick and bugs fixed by this change), or (c) empty
-directories.</para>
-</listitem>
-</itemizedlist>
-
-<para>Note, however, that <command>reposurgeon</command> will handle,
-edit, and emit commits with multiple author fields and with
-branch-nicks.</para>
+<para>Limitation: under git, signed tags are imported verbatim. However, any
+operation that modifies any commit upstream of the target of the 
+tag will invalidate it.</para>
 
 <para>Limitation: Subversion/RCS/CVS aren't directly supported because
 exporting from them requires fixups of usernames in the committer
