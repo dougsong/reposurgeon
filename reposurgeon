@@ -10,7 +10,7 @@ import sys, os, getopt, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-version="0.5"
+version="0.6"
 
 class VCS:
     "Class representing a version-control system."
