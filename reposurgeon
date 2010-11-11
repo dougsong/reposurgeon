@@ -761,7 +761,14 @@ class Repository:
                                 if commit.mark is None:
                                     self.warn("unmarked commit")
                                 commit.fileops.append(fileop)
-                                if fileop.ref[0] == ':':
+                                if fileop.mode == "160000":
+                                    # This is a submodule link.  The ref
+                                    # field is a SHA1 hash and the path
+                                    # is an external reference name.
+                                    # Don't try to collect data, just pass
+                                    # it through.
+                                    pass
+                                elif fileop.ref[0] == ':':
                                     for obj in self.events:
                                         if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                             obj.path = fileop.path
