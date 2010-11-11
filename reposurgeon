@@ -189,7 +189,7 @@ class RepoSurgeonEmail(email.message.Message):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
 class Date:
-    "A time/date in local time. Preserves TZ information bu doesn't use it."
+    "A time/date in local time. Preserves TZ information but doesn't use it."
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
         # First, look for git's preferred format.
