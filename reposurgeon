@@ -436,7 +436,7 @@ class Commit:
         msg["Event-Number"] = str(eventnum+1)
         if self.authors:
             self.authors[0].email_out(msg, "Author")
-            for (i, coauthor) in enumerate(self.authors):
+            for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, "Author" + `2+i`)
         self.committer.email_out(msg, "Committer")
         empty_properties = []
