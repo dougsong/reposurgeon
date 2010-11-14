@@ -890,6 +890,9 @@ class Repository:
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
+    def earliest(self):
+        "Return the date of earlist commit."
+        return self.commits()[0].committer.date
     #
     # Delete machinery begins here
     #
@@ -2643,6 +2646,7 @@ original commit.
 """
     def merge(self):
         "Merge repos together."
+        self.repo = None
         factors = []
         for name in line.split():
             repo = self.name_to_repo.get(name)
@@ -2650,6 +2654,7 @@ original commit.
                 raise RecoverableException("no such repo as %s" % name)
             else:
                 factors.append(repo)
+        factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
         roots = map(lambda x: self.events[0], factors)
         union = Repository()
         union.name = "+".join(map(lambda r: r.name), factors)
@@ -2663,28 +2668,77 @@ original commit.
             union.preserve_set += factor.preserve_set
             union.case_coverage += factor.case_coverage
             del self.name_to_repo[name]
+            marklist = []
             for event in factor.events:
+                # Reparent all objects with pointers upwards to the union
                 if hasattr(event, "repo"):
                     event.repo = union
-                # Disambiguate all marks
+                # Disambiguate branches and tags
+                if i != 0:
+                    prefix = factor.name + "-"
+                    for (type, attr) in ((Commit, "branch"),
+                                         (Tag, "name"),
+                                         (Reset, "ref")):
+                        if isinstance(event, type):
+                            setattr(event, attr, prefix + getattr(event, attr))
+                # Disambiguate all marks.
                 for fld in ("mark", "committish"):
                     if hasattr(event, fld):
                         old = getattr(event, fld)
                         if not old.startswith(":"):
                             raise FatalException("field not in mark format")
                         else:
-                            setattr(event, fld, old + `i+1`)
+                            new = old + factor.name
+                            setattr(event, fld, new)
+                            marklist.append(new)
                 if isinstance(event, Commit):
                     for fileop in commit.fileops:
                         if fileop.op == "M" and fileop.ref.starttswith(":"):
-                            fileop.ref += `i+1`
+                            new = fileop.ref + factor.name
+                            fileop.ref = new
+                            marklist.append(new)
                 # Merge in the commits
                 union.commits += factor.commits
                 factor.commits = []
                 del factor
-        union.commits.sort(lambda x,y:
-                           cmp(x.committer.date.timestamp, y.committer.date.timestamp))
-        # FIXME: sort out the root grafts
+        # Sort all the commits by commit date
+        union.commits.sort(lambda x,y: cmp(x.committer.date, y.committer.date))
+        # Renumber the marks:
+        for event in factor.events:
+            for fld in ("mark", "committish"):
+                if hasattr(event, fld):
+                    new = ":" + `1 + marklist.index(getattr(event, fld))`
+                    setattr(event, fld, new)
+            if isinstance(event, Commit):
+                for fileop in commit.fileops:
+                    if fileop.op == "M" and fileop.ref.starttswith(":"):
+                        new = ":" + `1 + marklist.index(fileop.ref)`
+                        fileop.ref = new
+        # Sort out the root grafts. All but the first get glued to the
+        # previous commit closest in time.
+        lastcommit = None
+        for commit in union.commits():
+            if not commit.parent_marks:
+                if not lastcommit and commit != roots[0]:
+                    raise FatalException("can't find previous commit to link")
+                if lastcommit.mark is None:
+                    raise FatalException("can't link to commit with no mark")
+                commit.parent_marks.append(lastcommit.mark)
+    def help_merge(self):
+        print """
+Merge repositories. Name any number of loaded repositories; they will
+be merged into one union repo and removed from the load list.
+
+Before merging, the repos will be sorted by date of first commit.  The
+oldest will keep all its branch and tag names unchanged (this rule is
+followed so there will always be a defined default branch).  All others
+will have their branch and tag names prefixed with their load name.
+Marks will be renumbered.
+
+The name of the new repo will be the names of all parts concatenated,
+separated by '+'. It will have no source directory or preferred system
+type.
+"""
 
 if __name__ == '__main__':
     try:
