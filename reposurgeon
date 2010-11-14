@@ -609,7 +609,6 @@ class Repository:
         self.nmarks = 0
         self.branches = set([])
         self.import_line = 0
-        self.inline_count = 0
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
@@ -777,9 +776,8 @@ class Repository:
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
-                                    fileop.copyname = "inline-" + `id(self)` + "-" + `self.inline_count`
+                                    fileop.copyname = "inline-%s" % `id(commit)`
                                     read_data(open(os.path.join(self.subdir(), fileop.copyname), "w")).close()
-                                    self.inline_count += 1
                                 else:
                                     self.error("unknown content type in filemodify")
                             # Handling of file ops ends.
@@ -2643,6 +2641,50 @@ argument - are moved forward from the original commit into the new one.
 Legal indices are 2-n, where n is the number of file operations in the
 original commit.
 """
+    def merge(self):
+        "Merge repos together."
+        factors = []
+        for name in line.split():
+            repo = self.name_to_repo.get(name)
+            if repo is None:
+                raise RecoverableException("no such repo as %s" % name)
+            else:
+                factors.append(repo)
+        roots = map(lambda x: self.events[0], factors)
+        union = Repository()
+        union.name = "+".join(map(lambda r: r.name), factors)
+        union.readtime = time.time()
+        for (i, factor) in enumerate(factors):
+            # Only vcstype, sourcedir, and basedir are not copied here
+            union.readsize += factor.readsize
+            union.nmarks += factor.nmarks
+            union.branches += factor.branches
+            union.import_line += factor.import_line
+            union.preserve_set += factor.preserve_set
+            union.case_coverage += factor.case_coverage
+            del self.name_to_repo[name]
+            for event in factor.events:
+                if hasattr(event, "repo"):
+                    event.repo = union
+                # Disambiguate all marks
+                for fld in ("mark", "committish"):
+                    if hasattr(event, fld):
+                        old = getattr(event, fld)
+                        if not old.startswith(":"):
+                            raise FatalException("field not in mark format")
+                        else:
+                            setattr(event, fld, old + `i+1`)
+                if isinstance(event, Commit):
+                    for fileop in commit.fileops:
+                        if fileop.op == "M" and fileop.ref.starttswith(":"):
+                            fileop.ref += `i+1`
+                # Merge in the commits
+                union.commits += factor.commits
+                factor.commits = []
+                del factor
+        union.commits.sort(lambda x,y:
+                           cmp(x.committer.date.timestamp, y.committer.date.timestamp))
+        # FIXME: sort out the root grafts
 
 if __name__ == '__main__':
     try:
