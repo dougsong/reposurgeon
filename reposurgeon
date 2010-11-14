@@ -2644,7 +2644,7 @@ argument - are moved forward from the original commit into the new one.
 Legal indices are 2-n, where n is the number of file operations in the
 original commit.
 """
-    def merge(self):
+    def do_merge(self, line):
         "Merge repos together."
         self.repo = None
         factors = []
@@ -2655,19 +2655,20 @@ original commit.
             else:
                 factors.append(repo)
         factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
-        roots = map(lambda x: self.events[0], factors)
+        roots = map(lambda x: x.commits()[0], factors)
         union = Repository()
-        union.name = "+".join(map(lambda r: r.name), factors)
+        union.name = "+".join(map(lambda r: r.name, factors))
         union.readtime = time.time()
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.readsize += factor.readsize
             union.nmarks += factor.nmarks
-            union.branches += factor.branches
+            union.branches |= factor.branches
             union.import_line += factor.import_line
-            union.preserve_set += factor.preserve_set
-            union.case_coverage += factor.case_coverage
-            del self.name_to_repo[name]
+            union.preserve_set |= factor.preserve_set
+            union.case_coverage |= factor.case_coverage
+            # FIXME: has to be removed sometime
+            #del self.name_to_repo[name]
             marklist = []
             for event in factor.events:
                 # Reparent all objects with pointers upwards to the union
@@ -2685,33 +2686,36 @@ original commit.
                 for fld in ("mark", "committish"):
                     if hasattr(event, fld):
                         old = getattr(event, fld)
-                        if not old.startswith(":"):
+                        if old is None:
+                            continue
+                        elif not old.startswith(":"):
                             raise FatalException("field not in mark format")
                         else:
                             new = old + factor.name
                             setattr(event, fld, new)
                             marklist.append(new)
                 if isinstance(event, Commit):
-                    for fileop in commit.fileops:
-                        if fileop.op == "M" and fileop.ref.starttswith(":"):
+                    for fileop in event.fileops:
+                        if fileop.op == "M" and fileop.ref.startswith(":"):
                             new = fileop.ref + factor.name
                             fileop.ref = new
                             marklist.append(new)
-                # Merge in the commits
-                union.commits += factor.commits
-                factor.commits = []
-                del factor
+            # Merge in the commits
+            union.events += factor.events
+            factor.events = []
+            del factor
         # Sort all the commits by commit date
-        union.commits.sort(lambda x,y: cmp(x.committer.date, y.committer.date))
+        # FIXME: This won't work, it chokes on resets and tags.
+        union.events.sort(lambda x,y: cmp(x.committer.date, y.committer.date))
         # Renumber the marks:
-        for event in factor.events:
+        for event in union.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld):
                     new = ":" + `1 + marklist.index(getattr(event, fld))`
                     setattr(event, fld, new)
             if isinstance(event, Commit):
-                for fileop in commit.fileops:
-                    if fileop.op == "M" and fileop.ref.starttswith(":"):
+                for fileop in event.fileops:
+                    if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = ":" + `1 + marklist.index(fileop.ref)`
                         fileop.ref = new
         # Sort out the root grafts. All but the first get glued to the
