@@ -98,6 +98,7 @@ vcstypes = [
     ]
 
 verbose         = 0
+DEBUG_MERGE     = 1    # Debug mark assignments in merging
 DEBUG_SHUFFLE   = 2    # Debug directory handling
 DEBUG_DELETE    = 2    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 2    # Show commands as they are executed
@@ -2745,14 +2746,21 @@ original commit.
                             new = old + factor.name
                             setattr(event, fld, new)
                             marklist.append(new)
+                            if verbose >= DEBUG_MERGE:
+                                announce("moving %s -> %s in %s" % (old, new, fld))
                 if isinstance(event, Commit):
-                    event.parent_marks = map(lambda m: m + factor.name,
-                                             event.parent_marks)
+                    for (i, old) in enumerate(event.parent_marks):
+                        new = old + factor.name
+                        event.parent_marks[i] = new
+                        if verbose >= DEBUG_MERGE:
+                            announce("moving %s -> %s in parents" % (old, new))
                     for fileop in event.fileops:
                         if fileop.op == "M" and fileop.ref.startswith(":"):
                             new = fileop.ref + factor.name
                             fileop.ref = new
                             marklist.append(new)
+                            if verbose >= DEBUG_MERGE:
+                                announce("moving %s -> %s in fileop"%(old, new))
             # Merge in the events and blobs
             union.events += factor.events
             for blobfile in os.listdir(factor.subdir()):
@@ -2767,15 +2775,23 @@ original commit.
         for event in union.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
-                    new = ":" + `1 + marklist.index(getattr(event, fld))`
+                    old = getattr(event, fld)
+                    new = ":" + `1 + marklist.index(old)`
                     setattr(event, fld, new)
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in %s" % (old, new,fld))
             if isinstance(event, Commit):
-                event.parent_marks = map(lambda m: ":" + `1+marklist.index(m)`,
-                                         event.parent_marks)
+                for (i, old) in enumerate(event.parent_marks):
+                    new = `1 + marklist.index(old)`
+                    event.parent_marks[i] = new
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in parents" % (old, new))
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = ":" + `1 + marklist.index(fileop.ref)`
                         fileop.ref = new
+                        if verbose >= DEBUG_MERGE:
+                            announce("renumbering %s -> %s in fileop" % (old, new))
         # Sort out the root grafts. All but the first get glued to the
         # previous commit closest in time.
         lastcommit = None
