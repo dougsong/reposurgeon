@@ -1388,7 +1388,7 @@ def do_or_die(cmd, legend=""):
             raise FatalException("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
             raise FatalException("child returned %d." % retcode)
-    except OSError, e:
+    except (OSError, IOError), e:
         raise FatalException("execution of %s%s failed: %s" % (cmd, legend, e))
 
 class popen_or_die:
@@ -1409,7 +1409,7 @@ class popen_or_die:
         try:
             self.fp = os.popen(self.cmd, self.mode)
             return self.fp
-        except OSError, e:
+        except (OSError, IOError), e:
             raise FatalException("execution of %s%s failed: %s" \
                                  % (self.cmd, self.legend, e))
     def __exit__(self, type, value, traceback):
@@ -2746,6 +2746,8 @@ original commit.
                             setattr(event, fld, new)
                             marklist.append(new)
                 if isinstance(event, Commit):
+                    event.parent_marks = map(lambda m: m + factor.name,
+                                             event.parent_marks)
                     for fileop in event.fileops:
                         if fileop.op == "M" and fileop.ref.startswith(":"):
                             new = fileop.ref + factor.name
@@ -2758,7 +2760,7 @@ original commit.
                           os.path.join(union.subdir(), blobfile))
             factor.events = []
             factor.cleanup()
-            del factor
+            #del factor
         # Sort all events by imputed timestamp
         union.events.sort(lambda x,y: cmp(x.when(), y.when()))
         # Renumber the marks:
@@ -2768,6 +2770,8 @@ original commit.
                     new = ":" + `1 + marklist.index(getattr(event, fld))`
                     setattr(event, fld, new)
             if isinstance(event, Commit):
+                event.parent_marks = map(lambda m: ":" + `1+marklist.index(m)`,
+                                         event.parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = ":" + `1 + marklist.index(fileop.ref)`
