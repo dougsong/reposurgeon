@@ -275,7 +275,7 @@ class Blob:
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def blobfile(self):
-        return self.repo.subdir() + "/blob-" + `id(self)` + "-" + self.mark
+        return self.repo.subdir() + "/blob-" + `id(self)`
     def release(self):
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
@@ -796,7 +796,7 @@ class Repository:
                                             # stability of Python sort
                                             # (guaranteed since Python 2.4).
                                             if obj.timestamp is None:
-                                                obj.timestamp = commit.timestamp() - 1
+                                                obj.timestamp = commit.when()-1
                                             break
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
@@ -1412,6 +1412,10 @@ class popen_or_die:
             raise FatalException("execution of %s%s failed: %s" \
                                  % (self.cmd, self.legend, e))
     def __exit__(self, type, value, traceback):
+        if verbose:
+            complain("exception %s in popen_or_die." % (type,))
+            if type:
+                raise type, value, traceback
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.cmd, self.legend)
             if type == FatalException:
@@ -2701,6 +2705,7 @@ original commit.
         union = Repository()
         union.name = "+".join(map(lambda r: r.name, factors))
         union.readtime = time.time()
+        marklist = []
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.readsize += factor.readsize
@@ -2711,7 +2716,6 @@ original commit.
             union.case_coverage |= factor.case_coverage
             # FIXME: has to be removed sometime
             #del self.name_to_repo[name]
-            marklist = []
             for event in factor.events:
                 # Reparent all objects with pointers upwards to the union
                 if hasattr(event, "repo"):
@@ -2751,7 +2755,7 @@ original commit.
         # Renumber the marks:
         for event in union.events:
             for fld in ("mark", "committish"):
-                if hasattr(event, fld):
+                if hasattr(event, fld) and getattr(event, fld):
                     new = ":" + `1 + marklist.index(getattr(event, fld))`
                     setattr(event, fld, new)
             if isinstance(event, Commit):
@@ -2763,12 +2767,13 @@ original commit.
         # previous commit closest in time.
         lastcommit = None
         for commit in union.commits():
-            if not commit.parent_marks:
-                if not lastcommit and commit != roots[0]:
+            if commit != roots[0] and not commit.parent_marks:
+                if not lastcommit:
                     raise FatalException("can't find previous commit to link")
                 if lastcommit.mark is None:
                     raise FatalException("can't link to commit with no mark")
                 commit.parent_marks.append(lastcommit.mark)
+            lastcommit = commit
     def help_merge(self):
         print """
 Merge repositories. Name any number of loaded repositories; they will
