@@ -1218,14 +1218,14 @@ def read_repo(source, preferred):
         repo.fast_import(open(source), progress=verbose>0)
     else:
         if verbose >= DEBUG_SHUFFLE:
-            if preferred:
-                announce("looking for a %s repo..." % preferred)
+            if preferred.name:
+                announce("looking for a %s repo..." % preferred.name)
             else:
                 announce("reposurgeon: looking for any repo...")
         hitcount = 0
         vcs = None
         for possible in vcstypes:
-            if preferred and possible.name != preferred:
+            if preferred and possible.name != preferred.name:
                 continue
             subdir = os.path.join(source, possible.subdirectory)
             if os.path.exists(subdir) and os.path.isdir(subdir):
@@ -1296,9 +1296,10 @@ def rebuild_repo(repo, target, preferred):
     else:
         complain("no default destination for rebuild")
         return
-    if not repo.vcs:
+    if not preferred and repo.vcs:
+        preferred = repo.vcs
+    if not preferred:
         complain("please prefer a repo type first")
-        return
 
     # Create a new empty directory to do the rebuild in
     staging = target + "-stage" + str(os.getpid())
@@ -1312,21 +1313,21 @@ def rebuild_repo(repo, target, preferred):
     here = os.getcwd()
     try:
         os.chdir(staging)
-        if repo.vcs.initializer:
-            do_or_die(repo.vcs.initializer, "repository initialization")
-        parameters = {"basename": os.path.basename(repo.sourcedir)}
-        if "%(tempfile)s" in repo.vcs.importer:
+        if preferred.initializer:
+            do_or_die(preferred.initializer, "repository initialization")
+        parameters = {"basename": os.path.basename(target)}
+        if "%(tempfile)s" in preferred.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
                     repo.fast_export(range(len(repo)), tp, progress=verbose>0)
-                do_or_die(repo.vcs.exporter % parameters, "import")
+                do_or_die(preferred.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
-            with popen_or_die(repo.vcs.importer % parameters, "import", mode="w") as tp:
+            with popen_or_die(preferred.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp, progress=verbose>0)
-        do_or_die(repo.vcs.checkout, "repository_checkout")
+        do_or_die(preferred.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
 
@@ -1412,10 +1413,10 @@ class popen_or_die:
             raise FatalException("execution of %s%s failed: %s" \
                                  % (self.cmd, self.legend, e))
     def __exit__(self, type, value, traceback):
-        if verbose:
-            complain("exception %s in popen_or_die." % (type,))
-            if type:
-                raise type, value, traceback
+        if type:
+            if verbose:
+                complain("exception %s in popen_or_die." % (type,))
+            raise type, value, traceback
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.cmd, self.legend)
             if type == FatalException:
@@ -1975,16 +1976,17 @@ output.
     def do_prefer(self, line):
         "Report or select the preferred repository type."
         if line:
-            known = " ".join(map(lambda x: x.name, vcstypes))
-            if line.lower() in map(lambda x: x.name.lower(), vcstypes):
-                self.preferred = line
+            for repotype in vcstypes:
+                if line.lower() == repotype.name:
+                    self.preferred = repotype
+                    break
             else:
-                complain("known types are %s.") % known
+                complain("known types are %s.") % " ".join(map(lambda x: x.name, vcstypes))
         if verbose:
             if not self.preferred:
                 announce("no preferred type has been set.")
             else:
-                announce("%s is the preferred type." % self.preferred)
+                announce("%s is the preferred type." % self.preferred.name)
     def help_prefer(self):
         print """
 Report or set (with argument) the preferred type of repository. This
@@ -2169,6 +2171,9 @@ a header identifying the event before each commit.
 """
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
+        if not self.repo:
+            complain("no repo has been chosen.")
+            return
         rebuild_repo(self.repo, line, self.preferred)
     def help_rebuild(self):
         print """
@@ -2706,6 +2711,7 @@ original commit.
         union.name = "+".join(map(lambda r: r.name, factors))
         union.readtime = time.time()
         marklist = []
+        os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.readsize += factor.readsize
@@ -2714,8 +2720,7 @@ original commit.
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
-            # FIXME: has to be removed sometime
-            #del self.name_to_repo[name]
+            del self.name_to_repo[factor.name]
             for event in factor.events:
                 # Reparent all objects with pointers upwards to the union
                 if hasattr(event, "repo"):
@@ -2746,9 +2751,13 @@ original commit.
                             new = fileop.ref + factor.name
                             fileop.ref = new
                             marklist.append(new)
-            # Merge in the commits
+            # Merge in the events and blobs
             union.events += factor.events
+            for blobfile in os.listdir(factor.subdir()):
+                os.rename(os.path.join(factor.subdir(), blobfile),
+                          os.path.join(union.subdir(), blobfile))
             factor.events = []
+            factor.cleanup()
             del factor
         # Sort all events by imputed timestamp
         union.events.sort(lambda x,y: cmp(x.when(), y.when()))
@@ -2774,6 +2783,11 @@ original commit.
                     raise FatalException("can't link to commit with no mark")
                 commit.parent_marks.append(lastcommit.mark)
             lastcommit = commit
+        # Put the result on the load list
+        self.name_to_repo[union.name] = union
+        self.repo = union
+        if verbose:
+            self.do_choose('')
     def help_merge(self):
         print """
 Merge repositories. Name any number of loaded repositories; they will
