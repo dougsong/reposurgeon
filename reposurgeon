@@ -98,11 +98,11 @@ vcstypes = [
     ]
 
 verbose         = 0
-DEBUG_MERGE     = 1    # Debug mark assignments in merging
 DEBUG_SHUFFLE   = 2    # Debug directory handling
 DEBUG_DELETE    = 2    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 2    # Show commands as they are executed
 DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_MERGE     = 3    # Debug mark assignments in merging
 DEBUG_LEXER     = 4    # Debug selection-language parsing
 
 def screenwidth():
@@ -869,15 +869,15 @@ class Repository:
                 self.import_line = 0
             self.readtime = time.time()
             # Patch Reset timestamps in case this repo is ever merged.
-            # This is another blatant hack. Try to keep them close to
-            # things they refer to.
+            # This is another blatant hack. Try to keep them immediately 
+            # after things they refer to.
             for sevent in self.events:
                 if isinstance(sevent, Reset):
                     if sevent.committish:
                         for tevent in self.events:
                             if isinstance(tevent, Commit):
                                 if tevent.mark == sevent.committish:
-                                    sevent.timestamp = tevent.when() - 1
+                                    sevent.timestamp = tevent.when() + 1
                                     break
                     else:
                         for tevent in self.events:
@@ -2729,11 +2729,14 @@ original commit.
                 # Disambiguate branches and tags
                 if i != 0:
                     prefix = factor.name + "-"
-                    for (type, attr) in ((Commit, "branch"),
-                                         (Tag, "name"),
-                                         (Reset, "ref")):
+                    for (type, attr) in ((Tag, "name"),):
                         if isinstance(event, type):
                             setattr(event, attr, prefix + getattr(event, attr))
+                    suffix = "-" + factor.name
+                    for (type, attr) in ((Commit, "branch"),
+                                         (Reset, "ref")):
+                        if isinstance(event, type):
+                            setattr(event, attr, getattr(event, attr) + suffix)
                 # Disambiguate all marks.
                 for fld in ("mark", "committish"):
                     if hasattr(event, fld):
@@ -2750,11 +2753,11 @@ original commit.
                             setattr(event, fld, new)
                             marklist.append(new)
                 if isinstance(event, Commit):
-                    for (i, old) in enumerate(event.parent_marks):
+                    for (j, old) in enumerate(event.parent_marks):
                         new = old + factor.name
                         if verbose >= DEBUG_MERGE:
                             announce("moving %s -> %s in parents" % (old, new))
-                        event.parent_marks[i] = new
+                        event.parent_marks[j] = new
                     for fileop in event.fileops:
                         if fileop.op == "M" and fileop.ref.startswith(":"):
                             new = fileop.ref + factor.name
