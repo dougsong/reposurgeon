@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.7: 2010-11-15
+     Added 'merge' command that merges repositories.
+
 0.6: 2010-11-10
      Tweaked to pass through git submodules without failing.
      Also contains a fix for a subtle bug in error handling.

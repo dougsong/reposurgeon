@@ -624,11 +624,31 @@ blob, your editor will be called directly on the blob file.</para>
 <para>Apply a time offset to all time/date stamps in the selected set.
 An offset argument is required; it may be in the form [+-]ss,
 [+-]mm:ss or [+-]hh:mm:ss.  The leading sign is required to distingush
-it from a selection expression.
+it from a selection expression.</para>
 
-Optionally you may also specify another argument in the form [+-]hhmm, a
+<para>Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>merge</command>
+        <emphasis>reponame</emphasis>...
+</term>
+<listitem>
+<para>Merge repositories. Name any number of loaded repositories; they will
+be merged into one union repo and removed from the load list.  The
+union repo will be selected.</para>
+
+<para>Before merging, the repos will be sorted by date of first commit.  The
+oldest will keep all its branch and tag names unchanged (this rule is
+followed so there will always be a defined default branch).  All others
+will have their branch and tag names suffixed with their load name.
+Marks will be renumbered.</para>
+
+<para>The name of the new repo will be the names of all parts concatenated,
+separated by '+'. It will have no source directory or preferred system
+type.</para>
 </listitem>
 </varlistentry>
 </variablelist>

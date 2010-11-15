@@ -10,7 +10,7 @@ import sys, os, getopt, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-version="0.6"
+version="0.7"
 
 class VCS:
     "Class representing a version-control system."
@@ -2816,12 +2816,13 @@ original commit.
     def help_merge(self):
         print """
 Merge repositories. Name any number of loaded repositories; they will
-be merged into one union repo and removed from the load list.
+be merged into one union repo and removed from the load list.  The
+union repo will be selected.
 
 Before merging, the repos will be sorted by date of first commit.  The
 oldest will keep all its branch and tag names unchanged (this rule is
 followed so there will always be a defined default branch).  All others
-will have their branch and tag names prefixed with their load name.
+will have their branch and tag names suffixed with their load name.
 Marks will be renumbered.
 
 The name of the new repo will be the names of all parts concatenated,
