@@ -269,7 +269,11 @@ class Blob:
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
+        self.timestamp = None
         self.color = None
+    def when(self):
+        "Imputed timestamp for sorting after merges."
+        return self.timestamp
     def blobfile(self):
         return self.repo.subdir() + "/blob-" + `id(self)` + "-" + self.mark
     def release(self):
@@ -288,6 +292,9 @@ class Tag:
         self.tagger = tagger
         self.comment = content
         self.color = None
+    def when(self):
+        "Imputed timestamp for sorting after merges."
+        return self.tagger.date.timestamp
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -350,6 +357,10 @@ class Reset:
     def __init__(self):
         self.ref = None
         self.committish = None
+        self.timestamp = None
+    def when(self):
+        "Imputed timestamp for sorting after merges."
+        return self.timestamp
     def __str__(self):
         st = "reset %s\n" % self.ref
         if self.committish:
@@ -425,6 +436,9 @@ class Commit:
         self.properties = {}         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
+    def when(self):
+        "Imputed timestamp for sorting after merges."
+        return self.committer.date.timestamp
     def lister(self, eventnum, cols):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
@@ -772,6 +786,17 @@ class Repository:
                                         if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                             obj.path = fileop.path
                                             fileop.copyname = obj.blobfile()
+                                            # This is a blatant hack.
+                                            # We need to impute a timestamp
+                                            # to each blob for sorting after
+                                            # merge operations. We want the
+                                            # blobs to tuck in close behind
+                                            # their first associated commits.
+                                            # So we do this and trust the
+                                            # stability of Python sort
+                                            # (guaranteed since Python 2.4).
+                                            if obj.timestamp is None:
+                                                obj.timestamp = commit.timestamp() - 1
                                             break
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
@@ -842,6 +867,23 @@ class Repository:
                         self.events.append(line)
                 self.import_line = 0
             self.readtime = time.time()
+            # Patch Reset timestamps in case this repo is ever merged.
+            # This is another blatant hack. Try to keep them close to
+            # things they refer to.
+            for sevent in self.events:
+                if isinstance(sevent, Reset):
+                    if sevent.committish:
+                        for tevent in self.events:
+                            if isinstance(tevent, Commit):
+                                if tevent.mark == sevent.committish:
+                                    sevent.timestamp = tevent.when() - 1
+                                    break
+                    else:
+                        for tevent in self.events:
+                            if isinstance(tevent, Commit):
+                                if tevent.branch == sevent.ref:
+                                    sevent.timestamp = tevent.when() - 1
+                                    break
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -2704,9 +2746,8 @@ original commit.
             union.events += factor.events
             factor.events = []
             del factor
-        # Sort all the commits by commit date
-        # FIXME: This won't work, it chokes on resets and tags.
-        union.events.sort(lambda x,y: cmp(x.committer.date, y.committer.date))
+        # Sort all events by imputed timestamp
+        union.events.sort(lambda x,y: cmp(x.when(), y.when()))
         # Renumber the marks:
         for event in union.events:
             for fld in ("mark", "committish"):
