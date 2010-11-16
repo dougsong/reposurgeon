@@ -597,7 +597,7 @@ class Commit:
 class Passthrough:
     "Represents a passthrough line."
     def __init__(self, line):
-        self.text = text
+        self.text = line
         self.timestamp = None
         # These must always be at start of file, so make them sort oldest.
         if line.startswith("feature") or line.startswith("option"):
@@ -872,7 +872,7 @@ class Repository:
                         baton.twirl()
                     else:
                         # Simply pass through any line we don't understand.
-                        self.events.append(line)
+                        self.events.append(Passthrough(line))
                 self.import_line = 0
             self.readtime = time.time()
             # Patch Reset timestamps in case this repo is ever merged.
@@ -893,7 +893,7 @@ class Repository:
                                     sevent.timestamp = tevent.when() - 1
                                     break
                 # Tuck Passthroughs right behind the first following commit 
-                elif isinstance(sevent, Passthrough) and event.timestamp != 0: 
+                elif isinstance(sevent, Passthrough) and sevent.timestamp != 0: 
                     for (t, tevent) in enumerate(self.events):
                         if isinstance(tevent, Commit) and t > s:
                             sevent.timestamp = tevent.when() - 1
