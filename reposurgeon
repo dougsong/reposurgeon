@@ -155,10 +155,10 @@ class Baton:
             self.stream.flush()
         self.count = self.count + 1
         return
-    def __exit__(self, type, value, traceback):
-        if type == KeyboardInterrupt:
+    def __exit__(self, extype, value, traceback):
+        if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
-        if type == FatalException:
+        if extype == FatalException:
             self.endmsg = "aborted by error"
         if self.stream:
             self.stream.write("...(%2.2f sec) %s.\n" \
@@ -598,12 +598,19 @@ class Passthrough:
     "Represents a passthrough line."
     def __init__(self, line):
         self.text = text
+        self.timestamp = None
+        # These must always be at start of file, so make them sort oldest.
+        if line.startswith("feature") or line.startswith("option"):
+            self.timestamp = 0
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg.set_payload(self.comment)
         return str(msg)
+    def when(self):
+        "Imputed timestamp for sorting after merges."
+        return self.timestamp
     def __str__(self):
         return self.text
 
@@ -871,7 +878,7 @@ class Repository:
             # Patch Reset timestamps in case this repo is ever merged.
             # This is another blatant hack. Try to keep them immediately 
             # after things they refer to.
-            for sevent in self.events:
+            for (s, sevent) in enumerate(self.events):
                 if isinstance(sevent, Reset):
                     if sevent.committish:
                         for tevent in self.events:
@@ -885,6 +892,12 @@ class Repository:
                                 if tevent.branch == sevent.ref:
                                     sevent.timestamp = tevent.when() - 1
                                     break
+                # Tuck Passthroughs right behind the first following commit 
+                elif isinstance(sevent, Passthrough) and event.timestamp != 0: 
+                    for (t, tevent) in enumerate(self.events):
+                        if isinstance(tevent, Commit) and t > s:
+                            sevent.timestamp = tevent.when() - 1
+                            break
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1279,7 +1292,7 @@ class CriticalRegion:
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, extype, value, traceback):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
@@ -1413,14 +1426,14 @@ class popen_or_die:
         except (OSError, IOError), e:
             raise FatalException("execution of %s%s failed: %s" \
                                  % (self.cmd, self.legend, e))
-    def __exit__(self, type, value, traceback):
-        if type:
+    def __exit__(self, extype, value, traceback):
+        if extype:
             if verbose:
-                complain("exception %s in popen_or_die." % (type,))
-            raise type, value, traceback
+                complain("exception %s in popen_or_die." % (extype,))
+            raise extype, value, traceback
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.cmd, self.legend)
-            if type == FatalException:
+            if extype == FatalException:
                 value.msg += " and " + legend
             else:
                 raise FatalException(legend + ".")
