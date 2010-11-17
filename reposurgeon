@@ -606,8 +606,10 @@ class Passthrough:
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
-        msg.set_payload(self.comment)
+        msg.set_payload(self.text)
         return str(msg)
+    def email_in(self, msg):
+        self.text = msg.get_payload()
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
