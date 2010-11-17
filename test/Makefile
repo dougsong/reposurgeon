@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce testdelete
+all: clean roundtrip mailboxing regress coalesce testdelete testmerge
 	@echo "No diff output is good news."
 
 clean:
@@ -68,9 +68,9 @@ testdelete:
 
 # Test merge
 buildtestmerge:
-	../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write testmerge.fi"
+	../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write testmerge.chk"
 testmerge:
 	@ echo "Test of the merge feature"
 	@../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write -" >/tmp/regress
-	@diff -u testmerge.fi /tmp/regress
+	@diff -u testmerge.chk /tmp/regress
 	@rm -f /tmp/regress
