@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.8:
+     Allow Passthrough events to be merged.
+
 0.7: 2010-11-15
      Added 'merge' command that merges repositories.
 

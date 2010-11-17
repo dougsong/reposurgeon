@@ -66,3 +66,11 @@ testdelete:
 	@diff -u testrepo.chk /tmp/regress
 	@rm -f /tmp/regress
 
+# Test merge
+buildtestmerge:
+	../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write testmerge.fi"
+testmerge:
+	@ echo "Test of the merge feature"
+	@../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write -" >/tmp/regress
+	@diff -u testmerge.fi /tmp/regress
+	@rm -f /tmp/regress

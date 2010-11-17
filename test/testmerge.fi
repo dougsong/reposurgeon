@@ -1,0 +1,320 @@
+feature commit-properties
+feature empty-directories
+feature multiple-authors
+blob
+mark :1
+data 180
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similsr tools.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
+data 30
+Entirely boring first commit.
+M 100644 :1 README
+
+blob
+mark :4
+data 180
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+commit refs/heads/master
+mark :5
+author Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
+data 51
+Conveniently, the first commit needded a typo fix.
+from :2
+M 100644 :4 README
+
+blob
+mark :7
+data 284
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+Now we're going to modify this at the same time we create another file
+whose destiny is to be deleted.
+
+blob
+mark :8
+data 51
+This file is doomed. Its destiny is to be deleted.
+
+commit refs/heads/master
+mark :9
+author Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
+data 35
+Creation of the first doomed file.
+from :5
+M 100644 :7 README
+M 100644 :8 doomed1
+
+commit refs/heads/master
+mark :12
+author Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
+data 61
+Deleting the doomed1.  Will produce M followed by D, case 1.
+from :9
+D doomed1
+
+blob
+mark :13
+data 102
+This file is doomed too.  Though, right now, we're only using it to make
+the previous commit non-tip.
+
+commit refs/heads/master
+mark :14
+author Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
+data 34
+Make the previous commit non-tip.
+from :12
+M 100644 :13 doomed2
+
+commit refs/heads/master
+mark :16
+author Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
+data 72
+Rename doomed2 created in previous commit.  Should produce M+R, case 2.
+from :14
+R "doomed2" "renamed1"
+
+blob
+mark :17
+data 35
+Creation of the third doomed file.
+
+commit refs/heads/master
+mark :18
+author Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
+data 30
+Create the third doomed file.
+from :16
+M 100644 :17 doomed3
+
+blob
+mark :20
+data 70
+This fiie needs to have at least one commit other than its creation.
+
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
+data 62
+Second commit to doomed3, so there will be an ancestry chain.
+from :18
+M 100644 :20 doomed3
+
+blob
+mark :23
+data 50
+And let's give it another one fot good measure.
+
+
+
+commit refs/heads/master
+mark :24
+author Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
+data 61
+Third commit to doomed3, so there will be an ancestry chain.
+from :21
+M 100644 :23 doomed3
+
+commit refs/heads/master
+mark :26
+author Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
+data 30
+doomed3, thy end has arrived.
+from :24
+D doomed3
+
+commit refs/heads/master
+mark :27
+author Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
+data 53
+Commit this so we test a non-tip deletion reduction.
+from :26
+M 100644 :4 README
+
+blob
+mark :29
+data 74
+The file foo needs a content modification so we can test a rename case.
+
+
+
+commit refs/heads/master
+mark :30
+author Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
+data 47
+Build an ancestry for foo before we rename it.
+from :27
+M 100644 :29 foo
+
+blob
+mark :32
+data 48
+Let's give it a second content modification.
+
+
+
+
+commit refs/heads/master
+mark :33
+author Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
+data 36
+Second content modification of foo.
+from :30
+M 100644 :32 foo
+
+blob
+mark :35
+data 47
+Let's give it a third content modification.
+
+
+
+
+commit refs/heads/master
+mark :36
+author Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
+data 35
+Third content modification of foo.
+from :33
+M 100644 :35 foo
+
+commit refs/heads/master
+mark :38
+author Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
+data 29
+Now foo gets renamed to bar.
+from :36
+R "foo" "bar"
+
+blob
+mark :39
+data 231
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+We need a commit to push some deletes forward to.
+
+commit refs/heads/master
+mark :40
+author Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
+data 65
+This is a target commit for testing case M+R with ancestry of M.
+from :38
+M 100644 :39 README
+
+commit refs/heads/master
+mark :42
+author Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
+data 152
+Let's see what a mv of bar to renamed1 generates.
+
+Looks like it turns into a D bar M renamed1 rather than an R.
+(git mv bar renamed1 throws an error.)
+from :40
+D bar
+M 100644 :35 renamed1
+
+commit refs/heads/master-bzr.fi
+mark :53
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+from :42
+property branch-nick 12 bzr-testrepo
+M 644 inline README
+data 41
+This is a test file in a dummy bzr repo.
+
+
+commit refs/heads/master-bzr.fi
+mark :54
+committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
+data 32
+Second commit, tasting editing.
+from :53
+property branch-nick 12 bzr-testrepo
+M 644 inline README
+data 43
+This is a modification of that test file.
+
+
+
+commit refs/heads/master
+mark :44
+author Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
+data 66
+This is an attempt to create a copy operation in the export file.
+from :42
+M 100644 :35 copy1
+
+blob
+mark :46
+data 76
+Recreating bar after it was deleted, to test another canonicalization case.
+
+commit refs/heads/master
+mark :47
+author Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
+data 16
+Recreating bar.
+from :44
+M 100644 :46 bar
+
+blob
+mark :49
+data 243
+This is a dummy test repository.  
+
+It has no other purpose in life than to be used for making fast-import
+files with which to test reposurgeon and, possibly, other similar tools.
+
+Once again, we need a commit to push some deletes forward to.
+
+commit refs/heads/master
+mark :50
+author Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
+data 33
+Give the deletion push a target.
+from :47
+M 100644 :49 README
+
+reset refs/heads/master
+from :50
+
