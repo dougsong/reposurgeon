@@ -993,9 +993,6 @@ class Repository:
                 self.warn("repository rename calls os.rename(%s, %s)" % (`self.subdir()`, `self.subdir(newname)`))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
-            for event in self.events:
-                if isinstance(event, Blob):
-                    event.subdir = os.path.abspath(self.subdir())
         except OSError, e:
             raise FatalException("repo rename %s -> %s failed"
                                        % (self.subdir(), self.subdir(newname)))
@@ -2173,8 +2170,8 @@ for exploring the selection-set language.
         try:
             for cmdline in open(line):
                 interpreter.onecmd(interpreter.precmd(cmdline))
-        except IOError:
-            complain("failed to open script %s" % line)
+        except IOError, e:
+            complain("script failure on '%s': %s" % (line, e))
     def do_history(self, line):
         "Dump your command list from this session so far."
         for line in self.history:
