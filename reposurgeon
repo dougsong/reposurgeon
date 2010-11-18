@@ -1555,7 +1555,7 @@ class RepositoryList:
         return self.repolist[self.reponames().index(name)]
     def remove_by_name(self, name):
         "Remove a repo by name."
-        if self.selected().name == name:
+        if self.repo and self.repo.name == name:
             self.deselect()
         self.repolist.pop(self.reponames().index(name))        
     def cut(self, early, late):
