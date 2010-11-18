@@ -12,6 +12,48 @@ import email.message, email.parser, email.utils
 
 version="0.7"
 
+#
+# This code is intended to be hackable to support for special-purpose or
+# custom operations, though it's even better if you ca come up with a new
+# surgical primitive general enough to ship with the stock version.  For
+# either case, here's a guide to the architecture.
+#
+# The core classes are largely about deserializing and reserializing import
+# streams.  In between these two operations the repo state lives in a
+# fairly simple Python object, Repository. The main part of Repository
+# is just a list of events - Commits, Blobs, Tags, Resets, and Passthroughs.
+# These are straightforward representations of the command types in an
+# import stream, with Passthrough as a way of losslessly conveying lines
+# the parser does not recognize.
+#
+#  +-------------+    +---------+    +-------------+
+#  | Deserialize |--->| Operate |--->| Reserialize |
+#  +-------------+    +---------+    +-------------+
+#
+# The general theory of reposurgeon is: you deserialize, you do stuff
+# to the event list that preserves correctness invariants, you
+# reserialize.  The "do stuff" is mostly not in the core classes, but
+# there is one exception.  The primitive to delete a commit and
+# shuffle its fileops forwards is seriously intertwined with the core
+# classes and actually makes up almost 50% of Repository by line count.
+#
+# The rest of the surgical code lives outside the core classes. Most of it
+# lives in the RepoSurgeon class, the command interpreter.  (This may change
+# in the future; that's an uncomfortably large lump of code.)
+#
+# In designing new commands for the interpreter, try hard to keep them
+# orthogonal to the selection-set code. As often as piossible, commands
+# should all have a similar form with a (single) selection set argument.
+#
+# VCS is not a core class.  The code for manipulating actual repos is bolted
+# on the the ends of the pipeline, like this:
+#
+#  +--------+    +-------------+    +---------+    +-------------+    +--------+
+#  | Import |--->| Deserialize |--->| Operate |--->| Deserialize |--->| Export |
+#  +--------+    +-------------+    +---------+    +-------------+    +--------+
+#
+# The Import and Export boxes call methods in VCS.
+
 class VCS:
     "Class representing a version-control system."
     def __init__(self, name,
