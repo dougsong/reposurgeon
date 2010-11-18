@@ -2097,7 +2097,8 @@ a disambiguating suffix if there have been multiple reads from the
 same source.
 
 With no argument, lists the names of the currently stored repositories
-and their load times.
+and their load times.  The second column is '*' for the currently selected
+repository, '-' for others.
 """
     def do_drop(self, line):
         "Drop a repo from reposurgeon's list."
