@@ -1278,8 +1278,7 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.fast_import(sys.stdin, progress=verbose>0)
     elif not os.path.exists(source):
-        complain("%s does not exist" % source)
-        return None
+        raise RecoverableException("%s does not exist" % source)
     elif not os.path.isdir(source):
         repo = Repository()
         repo.fast_import(open(source), progress=verbose>0)
@@ -1299,11 +1298,10 @@ def read_repo(source, preferred):
                 vcs = possible
                 hitcount += 1
         if hitcount == 0:
-            complain("couldn't find a repo under %s" % os.path.relpath(source))
+            raise RecoverableException("couldn't find a repo under %s" % os.path.relpath(source))
             return None
         elif hitcount > 1:
-            complain("too many repos under %s" % os.path.relpath(source))
-            return None
+            raise RecoverableException("too many repos under %s" % os.path.relpath(source))
         elif verbose > 0:
             announce("found %s repository" % vcs.name)
         repo = Repository()
@@ -2201,11 +2199,11 @@ to the type of that repository.
                 return
         self.repolist.sort(lambda x, y: cmp(x[1], y[1]))
         if not line:
-            for repo in repolist:
+            for repo in self.repolist:
                 status =  '-'
-                if self.selected() and self.selected().name == name:
+                if self.selected() and self.selected().name == line:
                     status = '*'
-                print "%s %s %s" % (iso8601_from_unixtime(repo.readtime), status, repo.name)
+                announce("%s %s %s" % (iso8601_from_unixtime(repo.readtime), status, repo.name))
         else:
             if line in self.reponames():
                 self.select(self.repo_by_name(line))
