@@ -1555,6 +1555,8 @@ class RepositoryList:
         return self.repolist[self.reponames().index(name)]
     def remove_by_name(self, name):
         "Remove a repo by name."
+        if self.selected().name == name:
+            self.deselect()
         self.repolist.pop(self.reponames().index(name))        
     def cut(self, early, late):
         "Attempt to topologically cut the selected repo."
@@ -1592,7 +1594,6 @@ class RepositoryList:
                 if hasattr(event, "color"):
                     event.color = None
             return False
-        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.selected()))
         # Repo can be split, so we need to color tags
         for t in self.selected().events:
             if isinstance(t, Tag):
@@ -1600,6 +1601,10 @@ class RepositoryList:
                     if isinstance(c, Commit):
                         if c.mark == t.committish:
                             t.color = c.color
+        # Front events go with early segment, they'll be copied to late one. 
+        for event in self.repo.front_events():
+            event.color = "early"        
+        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.selected()))
         # Resets are tricky.  One may have both colors.
         trackbranches = {"early": set([]), "late": set([])}
         for commit in self.selected().commits():
@@ -1621,7 +1626,10 @@ class RepositoryList:
                     event.repo = late
                     late.events.append(event)
                 else:
+                    # FIXME: Someday, color passthroughs that aren't fronted.
                     raise FatalException("coloring algorithm failed on %s" % event)
+        for event in self.selected():
+            event.color = None
         # Options and features may need to be copied to the late fragment.
         late.events = copy.deepcopy(early.front_events()) + late.events
         # Add the split results to the repo list. 
@@ -1631,9 +1639,8 @@ class RepositoryList:
         late.name = self.selected().name + "-late"
         self.repolist.append(late)
         late.readtime = time.time()
-        self.remove_by_name(name)
         self.selected().cleanup()
-        self.deselect()
+        self.remove_by_name(self.selected().name)
         return True
     def merge(self, factors):
         "Merge multiple repos into a union repo."
@@ -2764,7 +2771,7 @@ an offset literal of +0 or -0.
             complain("too many arguments")
         assert(early and late)
         if self.cut(early, late):
-            self.do_choose()
+            self.do_choose("")
         else:
             complain("repository cannot be split here")
     def help_cut(self):
