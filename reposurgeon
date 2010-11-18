@@ -1261,6 +1261,9 @@ class Repository:
     #
     # Delete machinery ends here
     #
+    def front_events(self):
+        "Return options, features, and any other events with  a zero timestamp."
+        return filter(lambda e: e.when() == 0, self.events)
     def renumber(self, transform=lambda x: x):
         "Renumber the marks in a repo."
         marklist = []
@@ -1620,8 +1623,7 @@ class RepositoryList:
                 else:
                     raise FatalException("coloring algorithm failed on %s" % event)
         # Options and features may need to be copied to the late fragment.
-        copyables = filter(lambda e: e.when() == 0, early.events)
-        late.events = copy.deepcopy(compyables) + late.events
+        late.events = copy.deepcopy(early.front_events()) + late.events
         # Add the split results to the repo list. 
         early.name = self.selected().name + "-early" 
         self.repolist.append(early)
