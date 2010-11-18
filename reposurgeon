@@ -347,6 +347,7 @@ class Tag:
             self.comment = newcomment
         return modified
     def __str__(self):
+        "Dump this tag in import-stream format."
         st = "tag %s\nfrom %s\n" % (self.name, self.committish)
         if self.tagger:
             st += "tagger %s\n" % self.tagger
@@ -363,6 +364,7 @@ class Reset:
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def __str__(self):
+        "Dump this reset in import-stream format."
         st = "reset %s\n" % self.ref
         if self.committish:
             st += "from %s\n\n" % self.committish
@@ -387,7 +389,7 @@ class FileOp:
         else:
             raise FatalException("unexpected fileop %s while parsing" % opline)
     def paths(self):
-        "return the set of all paths touched by this file op."
+        "Return the set of all paths touched by this file op."
         if self.op in ("M", "D"):
             return set([self.path])
         elif self.op in ("R", "C"):
@@ -399,6 +401,7 @@ class FileOp:
         else:
             return self.paths() & other.paths()
     def __str__(self):
+        "Dump this fileop in import-stream format."
         if self.op == "M":
             st = " ".join((self.op, self.mode, self.ref)) + " "
             if len(self.path.split()) > 1:
@@ -564,6 +567,7 @@ class Commit:
             if op is not None:
                 print "%d: %-20s" % (i, str(op))
     def __str__(self):
+        "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
         if self.mark:
             st += "mark %s\n" % self.mark
@@ -614,6 +618,7 @@ class Passthrough:
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def __str__(self):
+        "Dump this passthrough in import-stream format."
         return self.text
 
 class FatalException:
@@ -637,6 +642,7 @@ class Repository:
         self.case_coverage = set([])
         self.basedir = os.getcwd()
     def cleanup(self):
+        "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     def subdir(self, name=None):
         if name is None:
@@ -646,11 +652,13 @@ class Repository:
         else:
             return os.path.join(self.basedir, ".rs" + `os.getpid()`+ "-" + name) 
     def error(self, msg, atline=True):
+        "Throw fatal error during parsing."
         if atline:
             raise FatalException(msg + " at line " + `self.import_line`)
         else:
             raise FatalException(msg)
     def warn(self, msg, atline=True):
+        "Display a parse warning."
         if atline and self.import_line:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
