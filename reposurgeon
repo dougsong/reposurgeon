@@ -434,6 +434,8 @@ class FileOp:
             self.op = "deleteall"
         else:
             raise FatalException("unexpected fileop %s while parsing" % opline)
+    def inlinefile(self):
+        return self.commit.repo.subdir() + "/inline-" + `id(self)`
     def paths(self):
         "Return the set of all paths touched by this file op."
         if self.op in ("M", "D"):
@@ -455,7 +457,7 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                with open(os.path.join(self.commit.repo.subdir(), self.copyname)) as fp:
+                with open(self.inlinefile()) as fp:
                     content = fp.read()
                 st += "\ndata %d\n%s" % (len(content), content)
         elif self.op in "D":
@@ -849,7 +851,6 @@ class Repository:
                                     for obj in self.events:
                                         if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                             obj.path = fileop.path
-                                            fileop.copyname = obj.blobfile()
                                             # This is a blatant hack.
                                             # We need to impute a timestamp
                                             # to each blob for sorting after
@@ -865,8 +866,7 @@ class Repository:
                                     else:
                                         self.error("no blob matches commit reference to %s" % fileop.ref)
                                 elif fileop.ref == 'inline':
-                                    fileop.copyname = "inline-%s" % `id(commit)`
-                                    read_data(open(os.path.join(self.subdir(), fileop.copyname), "w")).close()
+                                    read_data(open(fileop.inlinefile(), "w")).close()
                                 else:
                                     self.error("unknown content type in filemodify")
                             # Handling of file ops ends.
@@ -2810,7 +2810,7 @@ through another path; the tool will detect this. If the repo was named
                                 deletia.append(i)
                                 if fileop.op == 'M':
                                     if fileop.ref == 'inline':
-                                        os.remove(os.path.join(self.selected().subdir(), fileop.copyname))
+                                        os.remove(fileop.inlinefile())
                                     else:
                                         bi = self.selected().find(fileop.ref)
                                         assert(isinstance(self.selected()[bi], Blob))
