@@ -38,8 +38,9 @@ version="0.7"
 # classes and actually makes up almost 50% of Repository by line count.
 #
 # The rest of the surgical code lives outside the core classes. Most of it
-# lives in the RepoSurgeon class, the command interpreter.  (This may change
-# in the future; that's an uncomfortably large lump of code.)
+# lives in the RepoSurgeon class, the command interpreter. A few bits, like
+# the repository reader and builder builder, have enough logic that's
+# independent of the interpreter to be factored out of it.
 #
 # In designing new commands for the interpreter, try hard to keep them
 # orthogonal to the selection-set code. As often as piossible, commands
@@ -1873,7 +1874,6 @@ class RepoSurgeon(cmd.Cmd):
                 fp.write(getattr(event, method)(*((i,)+optargs)) + "\n")
         if outfile:
             fp.close()
-
     def uniquify(self, name):
         "Uniquify a repo name in the repo list."
         if name not in self.name_to_repo:
@@ -1888,14 +1888,14 @@ class RepoSurgeon(cmd.Cmd):
     # On-line help and instrumentation
     #
     def help_help(self):
-        print "Show help for a command. Follow with a space and the command name"
+        print "Show help for a command. Follow with space and the command name."
     def do_verbose(self, line):
         global verbose
         if line:
             try:
                 verbose = int(line)
             except ValueError:
-                print "reposurgeon: verbosity value must be an integer"
+                complain("verbosity value must be an integer")
         if not line or verbose:
             announce("verbose %d" % verbose)
     def help_verbose(self):
