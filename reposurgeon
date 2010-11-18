@@ -1500,34 +1500,145 @@ class RecoverableException:
     def __init__(self, msg):
         self.msg = msg
 
-class RepoSurgeon(cmd.Cmd):
-    "Repository surgeon command interpreter."
+class RepositoryList:
+    "A repository list with selection and access by name."
     def __init__(self):
-        cmd.Cmd.__init__(self)
-        self.use_rawinput = True
-        self.echo = 0
-        self.prompt = "reposurgeon% "
         self.repo = None
         self.repolist = []
-        self.preferred = None
-        self.selection = []
-        self.history = []
-    #
-    # Selection and access by name
-    #
     def selected(self):
-        "Temporary - we're going to abstract out the repo list."
         return self.repo
     def select(self, repo):
         self.repo = repo
     def deselect(self):
         self.repo = None
     def reponames(self):
+        "Retturn a list of the names of all repositories."
         return map(lambda r: r.name, self.repolist)
     def repo_by_name(self, name):
+        "Retrieve a repo by name."
         return self.repolist[self.reponames().index(name)]
     def remove_by_name(self, name):
+        "Remove a repo by name."
         self.repolist.pop(self.reponames().index(name))        
+    def merge(self, factors):
+        "Merge multiple repos into a union repo."
+        factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
+        roots = map(lambda x: x.commits()[0], factors)
+        union = Repository()
+        union.name = "+".join(map(lambda r: r.name, factors))
+        union.readtime = time.time()
+        marklist = []
+        os.mkdir(union.subdir())
+        for (i, factor) in enumerate(factors):
+            # Only vcstype, sourcedir, and basedir are not copied here
+            union.readsize += factor.readsize
+            union.nmarks += factor.nmarks
+            union.branches |= factor.branches
+            union.import_line += factor.import_line
+            union.preserve_set |= factor.preserve_set
+            union.case_coverage |= factor.case_coverage
+            for event in factor.events:
+                # Reparent all objects with pointers upwards to the union
+                if hasattr(event, "repo"):
+                    event.repo = union
+                # Disambiguate branches and tags
+                if i != 0:
+                    prefix = factor.name + "-"
+                    for (type, attr) in ((Tag, "name"),):
+                        if isinstance(event, type):
+                            setattr(event, attr, prefix + getattr(event, attr))
+                    suffix = "-" + factor.name
+                    for (type, attr) in ((Commit, "branch"),
+                                         (Reset, "ref")):
+                        if isinstance(event, type):
+                            setattr(event, attr, getattr(event, attr) + suffix)
+                # Disambiguate all marks.
+                for fld in ("mark", "committish"):
+                    if hasattr(event, fld):
+                        old = getattr(event, fld)
+                        if old is None:
+                            continue
+                        elif not old.startswith(":"):
+                            raise FatalException("field not in mark format")
+                        else:
+                            new = old + factor.name
+                            if verbose >= DEBUG_MERGE:
+                                announce("moving %s -> %s in %s"
+                                         % (old, new, fld))
+                            setattr(event, fld, new)
+                            marklist.append(new)
+                if isinstance(event, Commit):
+                    for (j, old) in enumerate(event.parent_marks):
+                        new = old + factor.name
+                        if verbose >= DEBUG_MERGE:
+                            announce("moving %s -> %s in parents" % (old, new))
+                        event.parent_marks[j] = new
+                    for fileop in event.fileops:
+                        if fileop.op == "M" and fileop.ref.startswith(":"):
+                            new = fileop.ref + factor.name
+                            if verbose >= DEBUG_MERGE:
+                                announce("moving %s -> %s in fileop"
+                                         % (fileop.ref, new))
+                            fileop.ref = new
+                            marklist.append(new)
+            # Merge in the events and blobs
+            union.events += factor.events
+            for blobfile in os.listdir(factor.subdir()):
+                os.rename(os.path.join(factor.subdir(), blobfile),
+                          os.path.join(union.subdir(), blobfile))
+            factor.events = []
+            factor.cleanup()
+            self.remove_by_name(factor.name)
+            #del factor
+        # Sort all events by imputed timestamp
+        union.events.sort(lambda x,y: cmp(x.when(), y.when()))
+        # Renumber the marks:
+        for event in union.events:
+            for fld in ("mark", "committish"):
+                if hasattr(event, fld) and getattr(event, fld):
+                    old = getattr(event, fld)
+                    new = ":" + `1 + marklist.index(old)`
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in %s" % (old, new,fld))
+                    setattr(event, fld, new)
+            if isinstance(event, Commit):
+                for (i, old) in enumerate(event.parent_marks):
+                    new = ':' + `1 + marklist.index(old)`
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in parents" % (old, new))
+                    event.parent_marks[i] = new
+                for fileop in event.fileops:
+                    if fileop.op == "M" and fileop.ref.startswith(":"):
+                        new = ":" + `1 + marklist.index(fileop.ref)`
+                        if verbose >= DEBUG_MERGE:
+                            announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
+                        fileop.ref = new
+        # Sort out the root grafts. All but the first get glued to the
+        # previous commit closest in time.
+        lastcommit = None
+        for commit in union.commits():
+            if commit != roots[0] and not commit.parent_marks:
+                if not lastcommit:
+                    raise FatalException("can't find previous commit to link")
+                if lastcommit.mark is None:
+                    raise FatalException("can't link to commit with no mark")
+                commit.parent_marks.append(lastcommit.mark)
+            lastcommit = commit
+        # Put the result on the load list
+        self.repolist.append(union)
+        self.select(union)
+
+class RepoSurgeon(cmd.Cmd,RepositoryList):
+    "Repository surgeon command interpreter."
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        RepositoryList.__init__(self)
+        self.use_rawinput = True
+        self.echo = 0
+        self.prompt = "reposurgeon% "
+        self.preferred = None
+        self.selection = []
+        self.history = []
     #
     # Housekeeping hooks.
     #
@@ -2784,111 +2895,7 @@ original commit.
                 raise RecoverableException("no such repo as %s" % name)
             else:
                 factors.append(repo)
-        factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
-        roots = map(lambda x: x.commits()[0], factors)
-        union = Repository()
-        union.name = "+".join(map(lambda r: r.name, factors))
-        union.readtime = time.time()
-        marklist = []
-        os.mkdir(union.subdir())
-        for (i, factor) in enumerate(factors):
-            # Only vcstype, sourcedir, and basedir are not copied here
-            union.readsize += factor.readsize
-            union.nmarks += factor.nmarks
-            union.branches |= factor.branches
-            union.import_line += factor.import_line
-            union.preserve_set |= factor.preserve_set
-            union.case_coverage |= factor.case_coverage
-            for event in factor.events:
-                # Reparent all objects with pointers upwards to the union
-                if hasattr(event, "repo"):
-                    event.repo = union
-                # Disambiguate branches and tags
-                if i != 0:
-                    prefix = factor.name + "-"
-                    for (type, attr) in ((Tag, "name"),):
-                        if isinstance(event, type):
-                            setattr(event, attr, prefix + getattr(event, attr))
-                    suffix = "-" + factor.name
-                    for (type, attr) in ((Commit, "branch"),
-                                         (Reset, "ref")):
-                        if isinstance(event, type):
-                            setattr(event, attr, getattr(event, attr) + suffix)
-                # Disambiguate all marks.
-                for fld in ("mark", "committish"):
-                    if hasattr(event, fld):
-                        old = getattr(event, fld)
-                        if old is None:
-                            continue
-                        elif not old.startswith(":"):
-                            raise FatalException("field not in mark format")
-                        else:
-                            new = old + factor.name
-                            if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in %s"
-                                         % (old, new, fld))
-                            setattr(event, fld, new)
-                            marklist.append(new)
-                if isinstance(event, Commit):
-                    for (j, old) in enumerate(event.parent_marks):
-                        new = old + factor.name
-                        if verbose >= DEBUG_MERGE:
-                            announce("moving %s -> %s in parents" % (old, new))
-                        event.parent_marks[j] = new
-                    for fileop in event.fileops:
-                        if fileop.op == "M" and fileop.ref.startswith(":"):
-                            new = fileop.ref + factor.name
-                            if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in fileop"
-                                         % (fileop.ref, new))
-                            fileop.ref = new
-                            marklist.append(new)
-            # Merge in the events and blobs
-            union.events += factor.events
-            for blobfile in os.listdir(factor.subdir()):
-                os.rename(os.path.join(factor.subdir(), blobfile),
-                          os.path.join(union.subdir(), blobfile))
-            factor.events = []
-            factor.cleanup()
-            self.remove_by_name(factor.name)
-            #del factor
-        # Sort all events by imputed timestamp
-        union.events.sort(lambda x,y: cmp(x.when(), y.when()))
-        # Renumber the marks:
-        for event in union.events:
-            for fld in ("mark", "committish"):
-                if hasattr(event, fld) and getattr(event, fld):
-                    old = getattr(event, fld)
-                    new = ":" + `1 + marklist.index(old)`
-                    if verbose >= DEBUG_MERGE:
-                        announce("renumbering %s -> %s in %s" % (old, new,fld))
-                    setattr(event, fld, new)
-            if isinstance(event, Commit):
-                for (i, old) in enumerate(event.parent_marks):
-                    new = ':' + `1 + marklist.index(old)`
-                    if verbose >= DEBUG_MERGE:
-                        announce("renumbering %s -> %s in parents" % (old, new))
-                    event.parent_marks[i] = new
-                for fileop in event.fileops:
-                    if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = ":" + `1 + marklist.index(fileop.ref)`
-                        if verbose >= DEBUG_MERGE:
-                            announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
-                        fileop.ref = new
-        # Sort out the root grafts. All but the first get glued to the
-        # previous commit closest in time.
-        lastcommit = None
-        for commit in union.commits():
-            if commit != roots[0] and not commit.parent_marks:
-                if not lastcommit:
-                    raise FatalException("can't find previous commit to link")
-                if lastcommit.mark is None:
-                    raise FatalException("can't link to commit with no mark")
-                commit.parent_marks.append(lastcommit.mark)
-            lastcommit = commit
-        # Put the result on the load list
-        self.repolist.append(union)
-        self.select(union)
+        self.merge(factors)
         if verbose:
             self.do_choose('')
     def help_merge(self):
