@@ -33,14 +33,17 @@ version="0.7"
 # The general theory of reposurgeon is: you deserialize, you do stuff
 # to the event list that preserves correctness invariants, you
 # reserialize.  The "do stuff" is mostly not in the core classes, but
-# there is one exception.  The primitive to delete a commit and
+# there is one major exception.  The primitive to delete a commit and
 # shuffle its fileops forwards is seriously intertwined with the core
 # classes and actually makes up almost 50% of Repository by line count.
 #
-# The rest of the surgical code lives outside the core classes. Most of it
-# lives in the RepoSurgeon class, the command interpreter. A few bits, like
-# the repository reader and builder builder, have enough logic that's
-# independent of the interpreter to be factored out of it.
+# The rest of the surgical code lives outside the core classes. Most
+# of it lives in the RepoSurgeon class (the command interpreter) or
+# the RepositoryList class (which encapsulated name access to a list
+# of repositories and also hosts surgical operations involving
+# multiple repositories). A few bits, like the repository reader and
+# builder builder, have enough logic that's independent of the
+# interpreter to be factored out of it.
 #
 # In designing new commands for the interpreter, try hard to keep them
 # orthogonal to the selection-set code. As often as piossible, commands
@@ -1258,6 +1261,38 @@ class Repository:
     #
     # Delete machinery ends here
     #
+    def renumber(self, transform=lambda x: x):
+        "Renumber the marks in a repo."
+        marklist = []
+        for event in self.events:
+            if hasattr(event, "mark"):
+                mark = getattr(event, "mark")
+                if mark is None:
+                    continue
+                elif not mark.startswith(":"):
+                    raise FatalException("field not in mark format")
+                else:
+                    marklist.append(mark)
+        for event in self.events:
+            for fld in ("mark", "committish"):
+                if hasattr(event, fld) and getattr(event, fld):
+                    old = getattr(event, fld)
+                    new = ":" + `1 + marklist.index(old)`
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in %s" % (old, new,fld))
+                    setattr(event, fld, new)
+            if isinstance(event, Commit):
+                for (i, old) in enumerate(event.parent_marks):
+                    new = ':' + `1 + marklist.index(old)`
+                    if verbose >= DEBUG_MERGE:
+                        announce("renumbering %s -> %s in parents" % (old, new))
+                    event.parent_marks[i] = new
+                for fileop in event.fileops:
+                    if fileop.op == "M" and fileop.ref.startswith(":"):
+                        new = ":" + `1 + marklist.index(fileop.ref)`
+                        if verbose >= DEBUG_MERGE:
+                            announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
+                        fileop.ref = new
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1605,7 +1640,6 @@ class RepositoryList:
         union = Repository()
         union.name = "+".join(map(lambda r: r.name, factors))
         union.readtime = time.time()
-        marklist = []
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
@@ -1644,7 +1678,6 @@ class RepositoryList:
                                 announce("moving %s -> %s in %s"
                                          % (old, new, fld))
                             setattr(event, fld, new)
-                            marklist.append(new)
                 if isinstance(event, Commit):
                     for (j, old) in enumerate(event.parent_marks):
                         new = old + factor.name
@@ -1658,7 +1691,6 @@ class RepositoryList:
                                 announce("moving %s -> %s in fileop"
                                          % (fileop.ref, new))
                             fileop.ref = new
-                            marklist.append(new)
             # Merge in the events and blobs
             union.events += factor.events
             for blobfile in os.listdir(factor.subdir()):
@@ -1668,29 +1700,9 @@ class RepositoryList:
             factor.cleanup()
             self.remove_by_name(factor.name)
             #del factor
-        # Sort all events by imputed timestamp
+        # Renumber all events and sort by imputed timestamp
+        union.renumber()
         union.events.sort(lambda x,y: cmp(x.when(), y.when()))
-        # Renumber the marks:
-        for event in union.events:
-            for fld in ("mark", "committish"):
-                if hasattr(event, fld) and getattr(event, fld):
-                    old = getattr(event, fld)
-                    new = ":" + `1 + marklist.index(old)`
-                    if verbose >= DEBUG_MERGE:
-                        announce("renumbering %s -> %s in %s" % (old, new,fld))
-                    setattr(event, fld, new)
-            if isinstance(event, Commit):
-                for (i, old) in enumerate(event.parent_marks):
-                    new = ':' + `1 + marklist.index(old)`
-                    if verbose >= DEBUG_MERGE:
-                        announce("renumbering %s -> %s in parents" % (old, new))
-                    event.parent_marks[i] = new
-                for fileop in event.fileops:
-                    if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = ":" + `1 + marklist.index(fileop.ref)`
-                        if verbose >= DEBUG_MERGE:
-                            announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
-                        fileop.ref = new
         # Sort out the root grafts. All but the first get glued to the
         # previous commit closest in time.
         lastcommit = None
@@ -2651,6 +2663,18 @@ last commit, in order.
 
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
+"""
+    def do_renumber(self, line):
+        "Renumber the marks in the selected repo."
+        if not self.selected():
+            complain("no repo has been chosen.")
+            return
+        self.renumber()
+    def help_renumber(self):
+        print """
+Renumber the marks in a repository, from :1 up to <n> where <n> is the
+count of the last mark. Just in case an importer ever cares about mark
+ordering or gaps in the sequence.
 """
     def do_timeoffset(self, line):
         "Apply a time offset to all dates in selected events."

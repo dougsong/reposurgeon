@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 0.8:
+     New 'renumber' command, in case importers rver abot them being consecutive.
      Allow Passthrough events to be merged.
      After a cut operation, option and feature events in the original
      repo will be duplicated onto the late fragment as well as remaing

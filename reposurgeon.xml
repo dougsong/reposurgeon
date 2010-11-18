@@ -573,6 +573,15 @@ operations in the original commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>renumber</command>
+</term>
+<listitem>
+<para>Renumber the marks in a repository, from :1 up to :&lt;n&gt;
+where &lt;n&gt; is the count of the last mark. Just in case an importer
+ever cares about mark ordering or gaps in the sequence.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>mailbox_out</command>
         [<emphasis>selection-set</emphasis>]
         [<emphasis>outfile</emphasis>]
