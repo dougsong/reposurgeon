@@ -1508,10 +1508,13 @@ class RepoSurgeon(cmd.Cmd):
         self.echo = 0
         self.prompt = "reposurgeon% "
         self.repo = None
+        self.repolist = []
         self.preferred = None
         self.selection = []
-        self.name_to_repo = {}
         self.history = []
+    #
+    # Selection and access by name
+    #
     def selected(self):
         "Temporary - we're going to abstract out the repo list."
         return self.repo
@@ -1519,6 +1522,12 @@ class RepoSurgeon(cmd.Cmd):
         self.repo = repo
     def deselect(self):
         self.repo = None
+    def reponames(self):
+        return map(lambda r: r.name, self.repolist)
+    def repo_by_name(self, name):
+        return self.repolist[self.reponames().index(name)]
+    def remove_by_name(self, name):
+        self.repolist.pop(self.reponames().index(name))        
     #
     # Housekeeping hooks.
     #
@@ -1553,7 +1562,7 @@ class RepoSurgeon(cmd.Cmd):
         "Tell all the repos we're holding to clean up."
         if verbose >= DEBUG_SHUFFLE:
             announce("interpreter cleanup called.")
-        for repo in self.name_to_repo.values():
+        for repo in self.repolist:
             repo.cleanup()
     #
     # The selection-language parsing code starts here.
@@ -1883,12 +1892,12 @@ class RepoSurgeon(cmd.Cmd):
             fp.close()
     def uniquify(self, name):
         "Uniquify a repo name in the repo list."
-        if name not in self.name_to_repo:
+        if name not in self.reponames():
             return name
         else:
             # repo "foo" is #1
             seq = 2
-            while name + str(seq) in self.name_to_repo:
+            while name + str(seq) in self.reponames():
                 seq += 1
             return name + str(seq)
     #
@@ -2075,22 +2084,20 @@ to the type of that repository.
 """
     def do_choose(self, line):
         "Choose a named repo on which to operate."
-        if not self.name_to_repo:
+        if not self.repolist:
             if verbose > 0:
                 complain("no repositories are loaded.")
                 return
-        repolist = map(lambda n: (n, self.name_to_repo[n].readtime),
-                       self.name_to_repo.keys())
-        repolist.sort(lambda x, y: cmp(x[1], y[1]))
+        self.repolist.sort(lambda x, y: cmp(x[1], y[1]))
         if not line:
-            for (name, readtime) in repolist:
+            for repo in repolist:
                 status =  '-'
                 if self.selected() and self.selected().name == name:
                     status = '*'
-                print "%s %s %s" % (iso8601_from_unixtime(readtime), status, name)
+                print "%s %s %s" % (iso8601_from_unixtime(repo.readtime), status, repo.name)
         else:
-            if line in self.name_to_repo:
-                self.select(self.name_to_repo[line])
+            if line in self.reponames():
+                self.select(self.repo_by_name(line))
                 if verbose:
                     self.do_stats(line)
             else:
@@ -2109,16 +2116,16 @@ repository, '-' for others.
 """
     def do_drop(self, line):
         "Drop a repo from reposurgeon's list."
-        if not self.name_to_repo:
+        if not self.reponames():
             if verbose:
                 complain("no repositories are loaded.")
                 return
         if not line:
             line = self.selected().name
-        if line in self.name_to_repo:
-            holdrepo = self.name_to_repo[line]
+        if line in self.reponames():
+            holdrepo = self.repo_by_name(line)
             holdrepo.cleanup()
-            del self.name_to_repo[line]
+            self.remove_by_name(line)
             if line == self.selected().name:
                 self.deselect()
             del holdrepo
@@ -2135,11 +2142,9 @@ currently chosen repo.
 """
     def do_rename(self, line):
         "Rename a repository."
-        if line in self.name_to_repo:
+        if line in self.reponames():
             complain("there is already a repo named %s" % line)
         else:
-            del self.name_to_repo[self.selected().name]
-            self.name_to_repo[line] = self.selected()
             self.selected().rename(line)
     def help_rename():
         print """
@@ -2180,13 +2185,14 @@ current preserve list is displayed afterwards.
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd();
-        self.select(read_repo(line, self.preferred))
+        repo = read_repo(line, self.preferred)
+        self.repolist.append(repo)
+        self.select(repo)
         if self.selected():
             if self.selected().vcs:
                 self.preferred = self.selected().vcs.name
             name = self.uniquify(os.path.basename(self.selected().sourcedir or line or "unnamed"))
             self.selected().rename(name)
-            self.name_to_repo[name] = self.selected()
         if verbose:
             self.do_choose('')
     def help_read(self):
@@ -2609,12 +2615,12 @@ an offset literal of +0 or -0.
                     raise FatalException("coloring algorithm failed on %s" % event)
         # Add the split results to the name table. 
         early.name = self.selected().name + "-early" 
-        self.name_to_repo[early.name] = early
+        self.repolist.append(early)
         early.readtime = time.time()
         late.name = self.selected().name + "-late"
-        self.name_to_repo[late.name] = late
+        self.repolist.append(late)
         late.readtime = time.time()
-        del self.name_to_repo[self.selected().name]
+        self.remove_by_name(name)
         self.selected().cleanup()
         self.deselect()
     def help_cut(self):
@@ -2773,7 +2779,7 @@ original commit.
         self.deselect()
         factors = []
         for name in line.split():
-            repo = self.name_to_repo.get(name)
+            repo = self.repo_by_name(name)
             if repo is None:
                 raise RecoverableException("no such repo as %s" % name)
             else:
@@ -2793,7 +2799,6 @@ original commit.
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
-            del self.name_to_repo[factor.name]
             for event in factor.events:
                 # Reparent all objects with pointers upwards to the union
                 if hasattr(event, "repo"):
@@ -2845,6 +2850,7 @@ original commit.
                           os.path.join(union.subdir(), blobfile))
             factor.events = []
             factor.cleanup()
+            self.remove_by_name(factor.name)
             #del factor
         # Sort all events by imputed timestamp
         union.events.sort(lambda x,y: cmp(x.when(), y.when()))
@@ -2881,7 +2887,7 @@ original commit.
                 commit.parent_marks.append(lastcommit.mark)
             lastcommit = commit
         # Put the result on the load list
-        self.name_to_repo[union.name] = union
+        self.repolist.append(union)
         self.select(union)
         if verbose:
             self.do_choose('')
