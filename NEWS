@@ -2,6 +2,9 @@
 
 0.8:
      Allow Passthrough events to be merged.
+     After a cut operation, option and feature events in the original
+     repo will be duplicated onto the late fragment as well as remaing
+     on the early one.
 
 0.7: 2010-11-15
      Added 'merge' command that merges repositories.

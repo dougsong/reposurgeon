@@ -297,7 +297,8 @@ repos loaded from standard input are "unnamed".
 suffix if there have been multiple reads from the same source.</para>
 
 <para>With no argument, lists the names of the currently stored
-repositories and their load times.</para>
+repositories and their load times.  The second column is '*' for the
+currently selected repository, '-' for others.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -498,7 +499,9 @@ through another path; the tool will detect this.</para>
 <para>On success, original repo will be dropped, and there will be no
 repo still chosen, but two repos will appear in the in-core list. If
 the repo was named 'foo', the cut segments will be named 'foo-early'
-and 'foo-late'.</para>
+and 'foo-late'. Option and feature events at the beginning of the
+early segnment will be duplicated onto the beginning of the late
+one.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

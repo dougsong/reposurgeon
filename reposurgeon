@@ -1518,6 +1518,86 @@ class RepositoryList:
     def remove_by_name(self, name):
         "Remove a repo by name."
         self.repolist.pop(self.reponames().index(name))        
+    def cut(self, early, late):
+        "Attempt to topologically cut the selected repo."
+        # Apply a graph-coloring algorithm to determine if the repo can be split
+        wherein = late.parent_marks.index(early.mark)
+        late.parent_marks.remove(early.mark)
+        def do_color(commit, color):
+            commit.color = color
+            for fileop in commit.fileops:
+                if fileop.op == "M" and fileop.ref != "inline":
+                    blob = self.selected().find(fileop.ref)
+                    assert isinstance(self.selected()[blob], Blob)
+                    self.selected()[blob].color = color
+        do_color(early, "early")
+        do_color(late, "late")
+        conflict = False
+        keepgoing = True
+        visited = [False] * len(self.selected().commits())
+        while keepgoing and not conflict:
+            keepgoing = False
+            for (i, event) in enumerate(self.selected().commits()):
+                if event.color and not visited[i]:
+                    visited[i] = True
+                    for neighbor in event.parents() + event.children():
+                        if neighbor.color == None:
+                            do_color(neighbor, event.color)
+                            keepgoing = True
+                            break
+                        elif neighbor.color != event.color:
+                            conflict = True
+                            break
+        if conflict:
+            late.parent_marks.push(early.mark, where)
+            for event in self.selected():
+                if hasattr(event, "color"):
+                    event.color = None
+            return False
+        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.selected()))
+        # Repo can be split, so we need to color tags
+        for t in self.selected().events:
+            if isinstance(t, Tag):
+                for c in self.selected().events:
+                    if isinstance(c, Commit):
+                        if c.mark == t.committish:
+                            t.color = c.color
+        # Resets are tricky.  One may have both colors.
+        trackbranches = {"early": set([]), "late": set([])}
+        for commit in self.selected().commits():
+            trackbranches[commit.color].add(commit.branch)
+        # Now it's time to do the actual partitioning
+        early = Repository()
+        late = Repository()
+        for event in self.selected():
+            if isinstance(event, Reset):
+                if event.ref in trackbranches["early"]:
+                    early.events.append(copy.copy(event))
+                if event.ref in trackbranches["late"]:
+                    late.events.append(copy.copy(event))
+            else:
+                if event.color == "early":
+                    event.repo = early
+                    early.events.append(event)
+                elif event.color == "late":
+                    event.repo = late
+                    late.events.append(event)
+                else:
+                    raise FatalException("coloring algorithm failed on %s" % event)
+        # Options and features may need to be copied to the late fragment.
+        copyables = filter(lambda e: e.when() == 0, early.events)
+        late.events = copy.deepcopy(compyables) + late.events
+        # Add the split results to the repo list. 
+        early.name = self.selected().name + "-early" 
+        self.repolist.append(early)
+        early.readtime = time.time()
+        late.name = self.selected().name + "-late"
+        self.repolist.append(late)
+        late.readtime = time.time()
+        self.remove_by_name(name)
+        self.selected().cleanup()
+        self.deselect()
+        return True
     def merge(self, factors):
         "Merge multiple repos into a union repo."
         factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
@@ -2657,81 +2737,10 @@ an offset literal of +0 or -0.
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
-        # Graph-coloring algorithm to determine if the repo can be split
-        wherein = late.parent_marks.index(early.mark)
-        late.parent_marks.remove(early.mark)
-        def do_color(commit, color):
-            commit.color = color
-            for fileop in commit.fileops:
-                if fileop.op == "M" and fileop.ref != "inline":
-                    blob = self.selected().find(fileop.ref)
-                    assert isinstance(self.selected()[blob], Blob)
-                    self.selected()[blob].color = color
-        do_color(early, "early")
-        do_color(late, "late")
-        conflict = False
-        keepgoing = True
-        visited = [False] * len(self.selected().commits())
-        while keepgoing and not conflict:
-            keepgoing = False
-            for (i, event) in enumerate(self.selected().commits()):
-                if event.color and not visited[i]:
-                    visited[i] = True
-                    for neighbor in event.parents() + event.children():
-                        if neighbor.color == None:
-                            do_color(neighbor, event.color)
-                            keepgoing = True
-                            break
-                        elif neighbor.color != event.color:
-                            conflict = True
-                            break
-        if conflict:
+        if self.cut(early, late):
+            self.do_choose()
+        else:
             complain("repository cannot be split here")
-            late.parent_marks.push(early.mark, where)
-            for event in self.selected():
-                if hasattr(event, "color"):
-                    event.color = None
-            return
-        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.selected()))
-        # Repo can be split, so we need to color tags
-        for t in self.selected().events:
-            if isinstance(t, Tag):
-                for c in self.selected().events:
-                    if isinstance(c, Commit):
-                        if c.mark == t.committish:
-                            t.color = c.color
-        # Resets are tricky.  One may have both colors.
-        trackbranches = {"early": set([]), "late": set([])}
-        for commit in self.selected().commits():
-            trackbranches[commit.color].add(commit.branch)
-        # Now it's time to do the actual partitioning
-        early = Repository()
-        late = Repository()
-        for event in self.selected():
-            if isinstance(event, Reset):
-                if event.ref in trackbranches["early"]:
-                    early.events.append(copy.copy(event))
-                if event.ref in trackbranches["late"]:
-                    late.events.append(copy.copy(event))
-            else:
-                if event.color == "early":
-                    event.repo = early
-                    early.events.append(event)
-                elif event.color == "late":
-                    event.repo = late
-                    late.events.append(event)
-                else:
-                    raise FatalException("coloring algorithm failed on %s" % event)
-        # Add the split results to the name table. 
-        early.name = self.selected().name + "-early" 
-        self.repolist.append(early)
-        early.readtime = time.time()
-        late.name = self.selected().name + "-late"
-        self.repolist.append(late)
-        late.readtime = time.time()
-        self.remove_by_name(name)
-        self.selected().cleanup()
-        self.deselect()
     def help_cut(self):
         print """
 Attempt to partition a repo by cutting the parent-child link
