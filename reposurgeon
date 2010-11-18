@@ -1515,6 +1515,10 @@ class RepoSurgeon(cmd.Cmd):
     def selected(self):
         "Temporary - we're going to abstract out the repo list."
         return self.repo
+    def select(self, repo):
+        self.repo = repo
+    def deselect(self):
+        self.repo = None
     #
     # Housekeeping hooks.
     #
@@ -2086,7 +2090,7 @@ to the type of that repository.
                 print "%s %s %s" % (iso8601_from_unixtime(readtime), status, name)
         else:
             if line in self.name_to_repo:
-                self.repo = self.name_to_repo[line]
+                self.select(self.name_to_repo[line])
                 if verbose:
                     self.do_stats(line)
             else:
@@ -2116,7 +2120,7 @@ repository, '-' for others.
             holdrepo.cleanup()
             del self.name_to_repo[line]
             if line == self.selected().name:
-                self.repo = None
+                self.deselect()
             del holdrepo
         else:
             complain("no such repo as %s" % line)
@@ -2176,7 +2180,7 @@ current preserve list is displayed afterwards.
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd();
-        self.repo = read_repo(line, self.preferred)
+        self.select(read_repo(line, self.preferred))
         if self.selected():
             if self.selected().vcs:
                 self.preferred = self.selected().vcs.name
@@ -2612,8 +2616,7 @@ an offset literal of +0 or -0.
         late.readtime = time.time()
         del self.name_to_repo[self.selected().name]
         self.selected().cleanup()
-        del self.repo
-        self.repo = None
+        self.deselect()
     def help_cut(self):
         print """
 Attempt to partition a repo by cutting the parent-child link
@@ -2767,7 +2770,7 @@ original commit.
 """
     def do_merge(self, line):
         "Merge repos together."
-        self.repo = None
+        self.deselect()
         factors = []
         for name in line.split():
             repo = self.name_to_repo.get(name)
@@ -2879,7 +2882,7 @@ original commit.
             lastcommit = commit
         # Put the result on the load list
         self.name_to_repo[union.name] = union
-        self.repo = union
+        self.select(union)
         if verbose:
             self.do_choose('')
     def help_merge(self):
