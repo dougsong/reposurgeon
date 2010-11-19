@@ -1612,17 +1612,17 @@ class RepositoryList:
             commit.color = color
             for fileop in commit.fileops:
                 if fileop.op == "M" and fileop.ref != "inline":
-                    blob = self.selected().find(fileop.ref)
-                    assert isinstance(self.selected()[blob], Blob)
-                    self.selected()[blob].colors.append(color)
+                    blob = self.repo.find(fileop.ref)
+                    assert isinstance(self.repo[blob], Blob)
+                    self.repo[blob].colors.append(color)
         do_color(early, "early")
         do_color(late, "late")
         conflict = False
         keepgoing = True
-        visited = [False] * len(self.selected().commits())
+        visited = [False] * len(self.repo.commits())
         while keepgoing and not conflict:
             keepgoing = False
-            for (i, event) in enumerate(self.selected().commits()):
+            for (i, event) in enumerate(self.repo.commits()):
                 if event.color and not visited[i]:
                     visited[i] = True
                     for neighbor in event.parents() + event.children():
@@ -1635,34 +1635,34 @@ class RepositoryList:
                             break
         if conflict:
             late.parent_marks.push(early.mark, where)
-            for event in self.selected():
+            for event in self.repo:
                 if hasattr(event, "color"):
                     event.color = None
             return False
         # Repo can be split, so we need to color tags
-        for t in self.selected().events:
+        for t in self.repo.events:
             if isinstance(t, Tag):
-                for c in self.selected().events:
+                for c in self.repo.events:
                     if isinstance(c, Commit):
                         if c.mark == t.committish:
                             t.color = c.color
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
             event.color = "early"        
-        assert all(map(lambda x: hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset), self.selected()))
+        assert all(map(lambda x: hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset), self.repo))
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
         # of that earlier.
         trackbranches = {"early": set([]), "late": set([])}
-        for commit in self.selected().commits():
+        for commit in self.repo.commits():
             trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
-        early = Repository(self.selected().name + "-early")
+        early = Repository(self.repo.name + "-early")
         os.mkdir(early.subdir())
-        late = Repository(self.selected().name + "-late")
+        late = Repository(self.repo.name + "-late")
         os.mkdir(late.subdir())
-        for event in self.selected():
+        for event in self.repo:
             if isinstance(event, Reset):
                 if event.ref in trackbranches["early"]:
                     early.events.append(copy.copy(event))
@@ -1686,7 +1686,7 @@ class RepositoryList:
                 else:
                     # FIXME: Someday, color passthroughs that aren't fronted.
                     raise FatalException("coloring algorithm failed on %s" % event)
-        for event in self.selected():
+        for event in self.repo:
             if hasattr(event, "color"):
                 event.color = None
             if hasattr(event, "colors"):
@@ -1696,8 +1696,8 @@ class RepositoryList:
         # Add the split results to the repo list. 
         self.repolist.append(early)
         self.repolist.append(late)
-        self.selected().cleanup()
-        self.remove_by_name(self.selected().name)
+        self.repo.cleanup()
+        self.remove_by_name(self.repo.name)
         return True
     def merge(self, factors):
         "Merge multiple repos into a union repo."
@@ -1785,7 +1785,7 @@ class RepositoryList:
             alterations = []
             expunge = digest(matchers)
             for ei in selection:
-                event = self.selected()[ei]
+                event = self.repo[ei]
                 deletia = []
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.fileops):
@@ -1816,11 +1816,11 @@ class RepositoryList:
                                 expunge = digest(matchers)
                 alterations.append(deletia)
             # Second pass: perform actual fileop expunges
-            expunged = Repository(self.selected().name + "-expunges")
-            for event in self.selected():
+            expunged = Repository(self.repo.name + "-expunges")
+            for event in self.repo:
                 event.deletehook = None
             for (ei, deletia) in zip(selection, alterations):
-                event = self.selected()[ei]
+                event = self.repo[ei]
                 keepers = []
                 blobs = []
                 deletia.reverse()
@@ -1831,8 +1831,8 @@ class RepositoryList:
                     if fileop.op == 'M':
                         keepers.append(fileop)
                         if fileop.ref != 'inline':
-                            bi = self.selected().find(fileop.ref)
-                            blob = self.selected()[bi]
+                            bi = self.repo.find(fileop.ref)
+                            blob = self.repo[bi]
                             assert(isinstance(blob, Blob))
                             blobs.append(blob)
                         if verbose:
@@ -1857,22 +1857,22 @@ class RepositoryList:
         except re.error:
             raise FatalException("you confused the regexp processor!")
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.selected().events)
+        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.repo.events)
         deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
         if verbose:
             announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
             deletia.reverse()
             for i in deletia:
-                self.selected().events.pop(i)
+                self.repo.events.pop(i)
         # Finally, build the new repo and hook it into the load list
-        expunged.events = copy.copy(self.selected().front_events())
-        for event in self.selected():
+        expunged.events = copy.copy(self.repo.front_events())
+        for event in self.repo:
             if event.deletehook:
                 expunged.events.append(event)
                 event.deletehook = None
             # FIXME
             #elif isinstance(event, Reset) or isinstance(event, Tag):
-            #    if self.selected()[self.selected().find(event.committish)].deletehook:
+            #    if self.repo[self.repo.find(event.committish)].deletehook:
             #        expunged.events.append(copy.deepcopy(event))
         #self.repolist.append(expunge)
 
