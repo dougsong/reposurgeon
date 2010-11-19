@@ -1863,7 +1863,7 @@ class RepositoryList:
         expunged_branches = expunged.branchlist()
         for event in self.repo:
             if event.deletehook:
-                expunged.events.append(event)
+                expunged.events.append(event.deletehook)
                 event.deletehook = None
             elif isinstance(event, Reset) or isinstance(event, Tag):
                 target = self.repo.find(event.committish)
