@@ -716,7 +716,6 @@ class Repository:
         self.vcs = None
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
-        self.branches = set([])
         self.import_line = 0
         self.preserve_set = set([])
         self.case_coverage = set([])
@@ -743,6 +742,13 @@ class Repository:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
             print "reposurgeon: " + msg
+    def branchlist(self):
+        "Return a list of branchnames in this repo."
+        lst = []
+        for commit in self.commits():
+            if commit.branch not in lst:
+                lst.append(commit.branch)
+        return lst
     def find(self, mark):
         "Find an object by mark"
         for (i, e) in enumerate(self.events):
@@ -817,7 +823,6 @@ class Repository:
                         commitbegin = self.import_line
                         commit = Commit(self)
                         commit.branch = line.split()[1]
-                        self.branches.add(commit.branch)
                         ncommits += 1
                         while True:
                             line = readline()
@@ -1700,7 +1705,6 @@ class RepositoryList:
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.readsize += factor.readsize
-            union.branches |= factor.branches
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
@@ -2095,7 +2099,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
                     self.pop()
                     matched = False
                     # First, search branches
-                    branchlist = list(self.selected().branches)
+                    branchlist = self.selected().branchlist()
                     branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
                     for symbol in branchlist:
                         if self.line.startswith(os.path.basename(symbol)):
@@ -2186,7 +2190,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             return None
         else:
             self.pop()
-            branchlist = list(self.selected().branches)
+            branchlist = self.selected().branchlist()
             branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
             selection = []
             for symbol in branchlist:
@@ -2280,7 +2284,7 @@ for exploring the selection-set language.
 """
     def do_names(self, line):
         "List all known symbolic names of branches and tags."
-        for branch in self.selected().branches:
+        for branch in self.selected().branchlist():
             print "branch %s" % branch
         for event in self.selected():
             if isinstance(event, Tag):
