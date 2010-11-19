@@ -15,4 +15,6 @@ history
 verbose 1
 expunge 1..$ theory.txt
 verbose 0
+choose simple.fi-expunges
+write
 

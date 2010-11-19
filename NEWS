@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 0.8: 2010-11-19
-     Expunge now saves deleted material into a new repository,so it can
+     Expunge now saves deleted material into a new repository, so it can
      be used to carve up repositories by file path match.
      New 'renumber' command, in case importers ever care about marks 
      being consecutive.
