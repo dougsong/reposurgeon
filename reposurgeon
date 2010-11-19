@@ -46,7 +46,7 @@ version="0.8"
 # classes to be factored out of it.
 #
 # In designing new commands for the interpreter, try hard to keep them
-# orthogonal to the selection-set code. As often as piossible, commands
+# orthogonal to the selection-set code. As often as possible, commands
 # should all have a similar form with a (single) selection set argument.
 #
 # VCS is not a core class.  The code for manipulating actual repos is bolted
@@ -519,13 +519,14 @@ class Commit:
                 newinlines.append(fileop.inlinefile())
         for (old, new) in zip(oldinlines, newinlines):
             os.rename(old, new)
-    def clone(self, repo):
+    def clone(self, repo=None):
         "Clone this commit, without its fileops."
         c = copy.copy(self)
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
         c.fileops = []
-        c.moveto(repo)
+        if repo is not None:
+            c.moveto(repo)
         return c
     def lister(self, eventnum, cols):
         "Enable do_list() to report these."
@@ -3001,7 +3002,7 @@ them.
             if splitpoint not in range(1, len(event.fileops)):
                 raise RecoverableException("fileop index out of range")
             # Actual implementation starts here
-            self.selected().events.insert(where+1, copy.deepcopy(event))
+            self.selected().events.insert(where+1, event.clone())
             event2 = self.selected().events[where+1]
             assert(event.mark == event2.mark)
             event2.mark = event.mark + "bis"
