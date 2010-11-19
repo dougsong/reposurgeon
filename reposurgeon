@@ -75,12 +75,12 @@ class VCS:
         self.importer = importer
         self.checkout = checkout
     def __repr__(self):
-        return "Subdirectory: " + self.subdirectory + "\n" \
-             + "    Exporter: " + self.exporter + "\n" \
-             + "Export-Style: " + `self.styleflags` + "\n" \
-             + " Initializer: " + self.initializer + "\n" \
-             + "    Importer: " + self.importer + "\n" \
-             + "    Checkout: " + self.checkout + "\n"
+        return "  Subdirectory: " + self.subdirectory + "\n" \
+             + "      Exporter: " + self.exporter + "\n" \
+             + "  Export-Style: " + repr(self.styleflags) + "\n" \
+             + "   Initializer: " + str(self.initializer) + "\n" \
+             + "      Importer: " + self.importer + "\n" \
+             + "      Checkout: " + str(self.checkout) + "\n"
 
 # All knowledge about specific version-control systems lives in the
 # following class list.  The members are, respectively:
@@ -2348,17 +2348,25 @@ for exploring the selection-set language.
     # Information-gathering
     #
     def do_stats(self, line):
-        "Report on the chosen repository's information"
-        this = self.selected()
+        "Report information on repositories."
+        if not line:
+            line = self.selected().name
+            if line is None:
+                complain("no repo has been chosen.")
+                return                
+        for name in line.split():
+            this = self.repo_by_name(line)
+            if not this:
+                raise RecoverableException("no such repo as %s" % line)
         if this:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype), this.events))
-            print "Repository '%s' was read or created at %s" % (this.name, iso8601_from_unixtime(this.readtime))
+            print "%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
+                  (this.name, this.size() / 1000.0, len(this),
+                   count(Blob), count(Commit), count(Tag), count(Reset),
+                   iso8601_from_unixtime(this.readtime))
             if this.sourcedir:
-                print "Loaded from", this.sourcedir
-            print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets." % \
-                  (this.size() / 1000.0, len(this),
-                   count(Blob), count(Commit), count(Tag), count(Reset))
+                print "  Loaded from", this.sourcedir
             if this.vcs:
                 print repr(this.vcs)
         else:

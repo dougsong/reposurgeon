@@ -391,10 +391,11 @@ standard output.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>stats</command>
+        [<emphasis>repo-name</emphasis>...]
 </term>
 <listitem><para>
 Report size statistics and import/export method information about
-the currently chosen repository.
+named repositories, or with no argument currently chosen repository.
 </para></listitem>
 </varlistentry>
 <varlistentry>

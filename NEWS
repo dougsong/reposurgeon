@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+0.9:
+     The 'stats' command can now take a list of repo names as arguments.
+
 0.8: 2010-11-19
      This is a beta. It is likely the next release will be 1.0.
      Expunge now saves deleted material into a new repository, so it can
