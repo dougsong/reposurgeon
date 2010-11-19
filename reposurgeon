@@ -145,8 +145,8 @@ vcstypes = [
 
 verbose         = 0
 DEBUG_SHUFFLE   = 2    # Debug directory handling
-DEBUG_DELETE    = 2    # Debug canonicalization after deletes
-DEBUG_COMMANDS  = 2    # Show commands as they are executed
+DEBUG_DELETE    = 3    # Debug canonicalization after deletes
+DEBUG_COMMANDS  = 3    # Show commands as they are executed
 DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_MERGE     = 3    # Debug mark assignments in merging
 DEBUG_LEXER     = 4    # Debug selection-language parsing
@@ -990,12 +990,12 @@ class Repository:
         try:
             # Can fail if the target directory exists.
             if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository rename calls os.rename(%s, %s)" % (`self.subdir()`, `self.subdir(newname)`))
+                self.warn("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, `self.subdir()`, `self.subdir(newname)`))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
         except OSError, e:
-            raise FatalException("repo rename %s -> %s failed"
-                                       % (self.subdir(), self.subdir(newname)))
+            raise FatalException("repo rename %s -> %s failed: %s"
+                                       % (self.subdir(), self.subdir(newname), e))
     def commits(self):
         "Return a list of the repository commit objects."
         return filter(lambda e: isinstance(e, Commit), self.events)
@@ -1630,10 +1630,10 @@ class RepositoryList:
         # Options and features may need to be copied to the late fragment.
         late.events = copy.deepcopy(early.front_events()) + late.events
         # Add the split results to the repo list. 
-        early.name = self.selected().name + "-early" 
+        early.rename(self.selected().name + "-early") 
         self.repolist.append(early)
         early.readtime = time.time()
-        late.name = self.selected().name + "-late"
+        late.rename(self.selected().name + "-late")
         self.repolist.append(late)
         late.readtime = time.time()
         self.selected().cleanup()
