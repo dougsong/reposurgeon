@@ -523,8 +523,13 @@ selected file is a copy source, the copy target will be added to the
 list of paths to be deleted and a warning issued.</para>
 
 <para>After file expunges have been performed, any commits with no
-remaining file operations will be deleted, and any tags pointing to
+remaining file operations will be removed, and any tags pointing to
 them.</para>
+
+<para>The removed commits and blobs are not discarded. They are assembled
+into a new repository named after the old one with the suffix "-expunges"
+added.  This, this command can be used to carve a repository into sections
+by file path matches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

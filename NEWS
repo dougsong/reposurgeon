@@ -1,7 +1,10 @@
 			reposurgeon project news
 
-0.8:
-     New 'renumber' command, in case importers rver abot them being consecutive.
+0.8: 2010-11-19
+     Expunge now saves deleted material into a new repository,so it can
+     be used to carve up repositories by file path match.
+     New 'renumber' command, in case importers ever care about marks 
+     being consecutive.
      Allow Passthrough events to be merged.
      After a cut operation, option and feature events in the original
      repo will be duplicated onto the late fragment as well as remaing
