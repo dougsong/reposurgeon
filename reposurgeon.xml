@@ -262,8 +262,10 @@ an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para>
 
-<para>The just-read-in repo becomes the current one, selected for
-surgery.</para>
+<para>The just-read-in repo isdded to the list of loaded repositories and
+becomes the current one, selected for surgery. If it was read from a
+plain file and the file name ends with the extension <filename>.fi</filename>,
+that is removed from the load list name.</para>
 
 <para>Note: this command does not take a selection set.</para>
 </listitem>

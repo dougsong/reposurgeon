@@ -1593,6 +1593,8 @@ class RepositoryList:
         return map(lambda r: r.name, self.repolist)
     def uniquify(self, name):
         "Uniquify a repo name in the repo list."
+        if name.endswith(".fi"):
+            name = name[:-3]
         if name not in self.reponames():
             return name
         else:

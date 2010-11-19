@@ -104,7 +104,7 @@ reposurgeon: at 29, expunging theory.txt
 reposurgeon: at 52, expunging theory.txt
 reposurgeon: deleting blobs and empty commits [6, 7, 9, 23, 24, 28, 51, 52]
 verbose 0
-choose simple.fi-expunges
+choose simple-expunges
 write
 blob
 mark :5

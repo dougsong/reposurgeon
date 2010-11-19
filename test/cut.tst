@@ -1,9 +1,9 @@
 echo 1
 read bzr.fi
 cut :1
-choose bzr.fi-early
+choose bzr-early
 write 
-choose bzr.fi-late
+choose bzr-late
 write 
 renumber
 write

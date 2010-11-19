@@ -1,6 +1,6 @@
 read bzr.fi
 cut :1
-choose bzr.fi-early
+choose bzr-early
 write
 feature commit-properties
 feature empty-directories
@@ -16,7 +16,7 @@ data 41
 This is a test file in a dummy bzr repo.
 
 
-choose bzr.fi-late
+choose bzr-late
 write
 feature commit-properties
 feature empty-directories
