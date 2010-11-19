@@ -745,7 +745,7 @@ class Repository:
             print "reposurgeon: " + msg
     def size(self):
         "Return the size of this import stream, for statistics display."
-        return sum(lambda e: len(str(s)), self.events)
+        return sum(map(lambda e: len(str(e)), self.events))
     def branchlist(self):
         "Return a list of branchnames in this repo."
         lst = []
@@ -1836,7 +1836,7 @@ class RepositoryList:
                             assert(isinstance(blob, Blob))
                             blobs.append(blob)
                         if verbose:
-                            announce("at %d, deleting %s" % (ei+1,fileop.path))
+                            announce("at %d, expunging %s" % (ei+1,fileop.path))
                     elif fileop.op in ("R", "C"):
                         assert(fileop.sourcedelete or fileop.targetdelete)
                         if fileop.sourcedelete and fileop.targetdelete:
@@ -1882,7 +1882,7 @@ class RepositoryList:
         for event in self.repo.events + expunged.events:
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
-        #self.repolist.append(expunge)
+        self.repolist.append(expunged)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
     "Repository surgeon command interpreter."
@@ -2346,7 +2346,7 @@ for exploring the selection-set language.
         if this:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype), this.events))
-            print "Repository '%s' was read ore created at %s" % (this.name, iso8601_from_unixtime(this.readtime))
+            print "Repository '%s' was read or created at %s" % (this.name, iso8601_from_unixtime(this.readtime))
             if this.sourcedir:
                 print "Loaded from", this.sourcedir
             print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets." % \
@@ -2449,7 +2449,7 @@ to the type of that repository.
         if not line:
             for repo in self.repolist:
                 status =  '-'
-                if self.selected() and self.selected().name == line:
+                if self.selected() and repo == self.selected():
                     status = '*'
                 announce("%s %s %s" % (iso8601_from_unixtime(repo.readtime), status, repo.name))
         else:
