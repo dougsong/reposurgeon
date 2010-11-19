@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 0.8: 2010-11-19
+     This is a beta. It is likely the next release will be 1.0.
      Expunge now saves deleted material into a new repository, so it can
      be used to carve up repositories by file path match.
      New 'renumber' command, in case importers ever care about marks 
