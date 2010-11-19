@@ -97,11 +97,11 @@ history
 verbose 1
 reposurgeon: verbose 1
 expunge 1..$ theory.txt
-reposurgeon: at 7, deleting theory.txt
-reposurgeon: at 10, deleting theory.txt
-reposurgeon: at 24, deleting theory.txt
-reposurgeon: at 29, deleting theory.txt
-reposurgeon: at 52, deleting theory.txt
+reposurgeon: at 7, expunging theory.txt
+reposurgeon: at 10, expunging theory.txt
+reposurgeon: at 24, expunging theory.txt
+reposurgeon: at 29, expunging theory.txt
+reposurgeon: at 52, expunging theory.txt
 reposurgeon: deleting blobs and empty commits [6, 7, 9, 23, 24, 28, 51, 52]
 verbose 0
 
