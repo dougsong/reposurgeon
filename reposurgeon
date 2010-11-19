@@ -1568,6 +1568,16 @@ class RepositoryList:
     def reponames(self):
         "Retturn a list of the names of all repositories."
         return map(lambda r: r.name, self.repolist)
+    def uniquify(self, name):
+        "Uniquify a repo name in the repo list."
+        if name not in self.reponames():
+            return name
+        else:
+            # repo "foo" is #1
+            seq = 2
+            while name + str(seq) in self.reponames():
+                seq += 1
+            return name + str(seq)
     def repo_by_name(self, name):
         "Retrieve a repo by name."
         return self.repolist[self.reponames().index(name)]
@@ -2179,16 +2189,6 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
                 fp.write(getattr(event, method)(*((i,)+optargs)) + "\n")
         if outfile:
             fp.close()
-    def uniquify(self, name):
-        "Uniquify a repo name in the repo list."
-        if name not in self.reponames():
-            return name
-        else:
-            # repo "foo" is #1
-            seq = 2
-            while name + str(seq) in self.reponames():
-                seq += 1
-            return name + str(seq)
     #
     # On-line help and instrumentation
     #
