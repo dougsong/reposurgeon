@@ -1750,7 +1750,6 @@ class RepositoryList:
             return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
         try:
             expunge = digest(matchers)
-            modified = []
             for ei in selection:
                 event = self.selected()[ei]
                 if hasattr(event, "fileops"):
