@@ -716,7 +716,6 @@ class Repository:
         self.vcs = None
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
-        self.nmarks = 0
         self.branches = set([])
         self.import_line = 0
         self.preserve_set = set([])
@@ -808,7 +807,6 @@ class Repository:
                         if line.startswith("mark"):
                             blob.mark = line[5:].strip()
                             read_data(open(blob.blobfile(), "w")).close()
-                            self.nmarks += 1
                         else:
                             self.error("missing mark after blob")
                         self.events.append(blob)
@@ -827,7 +825,6 @@ class Repository:
                                 break
                             elif line.startswith("mark"):
                                 commit.mark = line[5:].strip()
-                                self.nmarks += 1
                             elif line.startswith("author"):
                                 try:
                                     commit.authors.append(Attribution(line[7:]))
@@ -1703,7 +1700,6 @@ class RepositoryList:
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.readsize += factor.readsize
-            union.nmarks += factor.nmarks
             union.branches |= factor.branches
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
@@ -2325,10 +2321,9 @@ for exploring the selection-set language.
             print "Repository '%s' was read at %s" % (self.selected().name, iso8601_from_unixtime(self.selected().readtime))
             if self.selected().sourcedir:
                 print "Loaded from", self.selected().sourcedir
-            print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets, %d marks." % \
+            print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets." % \
                   (self.selected().readsize / 1000.0, len(self.selected()),
-                   count(Blob), count(Commit), count(Tag), count(Reset),
-                   self.selected().nmarks)
+                   count(Blob), count(Commit), count(Tag), count(Reset))
             if self.selected().vcs:
                 print repr(self.selected().vcs)
         else:
