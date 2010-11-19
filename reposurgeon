@@ -323,11 +323,6 @@ class Blob:
         return self.timestamp
     def blobfile(self):
         return self.repo.subdir() + "/blob-" + `id(self)`
-    def clone(self, repo):
-        "Clone a copy of this blob, pointing at the same file."
-        c = copy.copy(self)
-        os.link(self.blobfile(), c.blobfile())
-        return c
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -337,6 +332,12 @@ class Blob:
             print >>sys.stderr,"blob rename calls os.rename(%s, %s)" % (oldloc, newloc)
         os.rename(oldloc, newloc)
         return self
+    def clone(self, repo):
+        "Clone a copy of this blob, pointing at the same file."
+        c = copy.copy(self)
+        os.link(self.blobfile(), c.blobfile())
+        c.moveto(repo)
+        return c
     def release(self):
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
@@ -505,14 +506,6 @@ class Commit:
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.committer.date.timestamp
-    def clone(self, repo):
-        "Clone this commit, without its fileops."
-        c = copy.copy(self)
-        c.committer = copy.deepcopy(self.committer)
-        c.authors = copy.deepcopy(self.authors)
-        c.repo = repo
-        c.fileops = []
-        return c
     def moveto(self, repo):
         "Change the repo this commit is associated with."
         oldinlines = []
@@ -526,6 +519,14 @@ class Commit:
                 newinlines.append(fileop.inlinefile())
         for (old, new) in zip(oldinlines, newinlines):
             os.rename(old, new)
+    def clone(self, repo):
+        "Clone this commit, without its fileops."
+        c = copy.copy(self)
+        c.committer = copy.deepcopy(self.committer)
+        c.authors = copy.deepcopy(self.authors)
+        c.fileops = []
+        c.moveto(repo)
+        return c
     def lister(self, eventnum, cols):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
@@ -1817,6 +1818,7 @@ class RepositoryList:
                 alterations.append(deletia)
             # Second pass: perform actual fileop expunges
             expunged = Repository(self.repo.name + "-expunges")
+            os.mkdir(expunged.subdir())
             for event in self.repo:
                 event.deletehook = None
             for (ei, deletia) in zip(selection, alterations):
@@ -1856,15 +1858,7 @@ class RepositoryList:
                         event.deletehook = newevent
         except re.error:
             raise FatalException("you confused the regexp processor!")
-        # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.repo.events)
-        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
-        if verbose:
-            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
-            deletia.reverse()
-            for i in deletia:
-                self.repo.events.pop(i)
-        # Finally, build the new repo and hook it into the load list
+        # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged_branches = expunged.branchlist()
         for event in self.repo:
@@ -1883,6 +1877,14 @@ class RepositoryList:
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
         self.repolist.append(expunged)
+        # Now remove commits that no longer have fileops, and released blobs.
+        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.repo.events)
+        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
+        if verbose:
+            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
+            deletia.reverse()
+            for i in deletia:
+                self.repo.events.pop(i)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
     "Repository surgeon command interpreter."
