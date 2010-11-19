@@ -885,7 +885,12 @@ class Repository:
                                     # is an external reference name.
                                     # Don't try to collect data, just pass
                                     # it through.
-                                    pass
+                                    self.warn("submodule link")
+                                elif fileop.mode == "120000":
+                                    # This is a submodule link.  Don't
+                                    # try to collect data, just pass
+                                    # it through.
+                                    self.warn("symbolic link")
                                 elif fileop.ref[0] == ':':
                                     for obj in self.events:
                                         if isinstance(obj, Blob) and obj.mark == fileop.ref:
