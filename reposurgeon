@@ -712,7 +712,6 @@ class Repository:
     def __init__(self, name=None):
         self.name = name
         self.readtime = time.time()
-        self.readsize = 0
         self.vcs = None
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
@@ -742,6 +741,9 @@ class Repository:
             print "reposurgeon: " + msg + " at line " + `self.import_line`
         else:
             print "reposurgeon: " + msg
+    def size(self):
+        "Return the size of this import stream, for statistics display."
+        return sum(lambda e: len(str(s)), self.events)
     def branchlist(self):
         "Return a list of branchnames in this repo."
         lst = []
@@ -797,7 +799,6 @@ class Repository:
                     else:
                         self.import_line += 1
                         line = fp.readline()
-                        self.readsize += len(line)
                     return line
                 def pushback(line):
                     linebuffers.append(line)
@@ -1704,7 +1705,6 @@ class RepositoryList:
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
-            union.readsize += factor.readsize
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
@@ -2319,17 +2319,18 @@ for exploring the selection-set language.
     #
     def do_stats(self, line):
         "Report on the chosen repository's information"
-        if self.selected():
+        this = self.selected()
+        if this:
             def count(otype):
-                return len(filter(lambda x: isinstance(x,otype), self.selected().events))
-            print "Repository '%s' was read at %s" % (self.selected().name, iso8601_from_unixtime(self.selected().readtime))
-            if self.selected().sourcedir:
-                print "Loaded from", self.selected().sourcedir
+                return len(filter(lambda x: isinstance(x,otype), this.events))
+            print "Repository '%s' was read ore created at %s" % (this.name, iso8601_from_unixtime(this.readtime))
+            if this.sourcedir:
+                print "Loaded from", this.sourcedir
             print "%.0fK, %d commands, %d blobs, %d commits, %d tags, %d resets." % \
-                  (self.selected().readsize / 1000.0, len(self.selected()),
+                  (this.size() / 1000.0, len(this),
                    count(Blob), count(Commit), count(Tag), count(Reset))
-            if self.selected().vcs:
-                print repr(self.selected().vcs)
+            if this.vcs:
+                print repr(this.vcs)
         else:
             complain("no repository has been chosen.")
     def help_stats(self):
