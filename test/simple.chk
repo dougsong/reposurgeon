@@ -79,7 +79,7 @@ resolve @annotated-sample
 resolve /regression/
 [50, 58, 120, 131]
 history
-script simple-fi.tst
+script simple.tst
 echo 1
 read simple.fi
 index
