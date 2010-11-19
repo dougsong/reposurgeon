@@ -507,7 +507,9 @@ class Commit:
         return self.committer.date.timestamp
     def clone(self, repo):
         "Clone this commit, without its fileops."
-        c = copy.deepcopy(self)
+        c = copy.copy(self)
+        c.committer = copy.deepcopy(self.committer)
+        c.authors = copy.deepcopy(self.authors)
         c.repo = repo
         c.fileops = []
         return c
@@ -1690,7 +1692,7 @@ class RepositoryList:
             if hasattr(event, "colors"):
                 event.colors = []
         # Options and features may need to be copied to the late fragment.
-        late.events = copy.deepcopy(early.front_events()) + late.events
+        late.events = copy.copy(early.front_events()) + late.events
         # Add the split results to the repo list. 
         self.repolist.append(early)
         self.repolist.append(late)
@@ -1815,7 +1817,8 @@ class RepositoryList:
                 alterations.append(deletia)
             # Second pass: perform actual fileop expunges
             expunged = Repository(self.selected().name + "-expunges")
-            expunged.events = copy.copy(self.selected().front_events())
+            for event in self.selected():
+                event.deletehook = None
             for (ei, deletia) in zip(selection, alterations):
                 event = self.selected()[ei]
                 keepers = []
@@ -1839,19 +1842,20 @@ class RepositoryList:
                         if fileop.sourcedelete and fileop.targetdelete:
                             keepers.append(fileop)
                     event.fileops.pop(i)
-                # If there are any keeper fileops, transplant them and
-                # their blobs to expunged, cloning the commit() for them.
+                # If there are any keeper fileops, hang them them and
+                # their blobs on deletehooks, cloning the commit() for them.
+                # 
                 if keepers:
                     keepers.reverse()
                     blobs.reverse()
                     for blob in blobs:
-                        expunged.events.append(blob.clone(expunged))
+                        blob.deletehook = blob.clone(expunged)
                         blob.release()
                         newevent = event.clone(expunged)
-                        expunged.events.append(newevent)
                         newevent.fileops = keepers
+                        event.deletehook = newevent
         except re.error:
-            raise FatalException("you confused the regular-expression processor.")
+            raise FatalException("you confused the regexp processor!")
         # Now remove commits that no longer have fileops, and released blobs.
         deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.selected().events)
         deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
@@ -1860,6 +1864,17 @@ class RepositoryList:
             deletia.reverse()
             for i in deletia:
                 self.selected().events.pop(i)
+        # Finally, build the new repo and hook it into the load list
+        expunged.events = copy.copy(self.selected().front_events())
+        for event in self.selected():
+            if event.deletehook:
+                expunged.events.append(event)
+                event.deletehook = None
+            # FIXME
+            #elif isinstance(event, Reset) or isinstance(event, Tag):
+            #    if self.selected()[self.selected().find(event.committish)].deletehook:
+            #        expunged.events.append(copy.deepcopy(event))
+        #self.repolist.append(expunge)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
     "Repository surgeon command interpreter."
