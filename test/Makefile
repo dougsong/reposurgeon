@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce testdelete testmerge
+all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut
 	@echo "No diff output is good news."
 
 clean:
@@ -74,3 +74,15 @@ testmerge:
 	@../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr.fi testrepo.fi" "write -" >/tmp/regress
 	@diff -u testmerge.chk /tmp/regress
 	@rm -f /tmp/regress
+
+# Test cut and renumber operations
+buildtestcut:
+	../reposurgeon "script cut.tst" >testcut.chk
+testcut:
+	@ echo "Test of the cut feature"
+	@../reposurgeon "script cut.tst" >/tmp/regress
+	@diff -u testcut.chk /tmp/regress
+	@rm -f /tmp/regress
+
+
+

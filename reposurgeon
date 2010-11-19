@@ -323,6 +323,11 @@ class Blob:
         return self.timestamp
     def blobfile(self):
         return self.repo.subdir() + "/blob-" + `id(self)`
+    def moveto(self, repo):
+        "Change the repo this blob is associated with."
+        oldloc = sef.blobfile()
+        self.repo = repo
+        os.rename(oldfile, self,blobfile())
     def release(self):
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
@@ -491,6 +496,19 @@ class Commit:
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.committer.date.timestamp
+    def moveto(self, repo):
+        "Change the repo this commit is associated with."
+        oldinlines = []
+        for fileop in self.fileops:
+            if fileop.op == 'M' and fileop.ref == 'inline': 
+                oldinlines.append(fileop.inlinefile()) 
+        self.repo = repo
+        newinlines = []
+        for fileop in self.fileops:
+            if fileop.op == 'M' and fileop.ref == 'inline': 
+                newinlines.append(fileop.inlinefile())
+        for (old, new) in zip(oldinlines, newinlines):
+            os.rename(old, new)
     def lister(self, eventnum, cols):
         "Enable do_list() to report these."
         topline = self.comment.split("\n")[0]
@@ -678,7 +696,7 @@ class Repository:
     "Generic repository object."
     def __init__(self):
         self.name = None
-        self.readtime = None
+        self.readtime = time.time()
         self.readsize = 0
         self.vcs = None
         self.sourcedir = None
@@ -1608,7 +1626,11 @@ class RepositoryList:
             trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
         early = Repository()
+        early.name = self.selected().name + "-early" 
+        os.mkdir(early.subdir())
         late = Repository()
+        late.name = self.selected().name + "-late" 
+        os.mkdir(late.subdir())
         for event in self.selected():
             if isinstance(event, Reset):
                 if event.ref in trackbranches["early"]:
@@ -1617,25 +1639,24 @@ class RepositoryList:
                     late.events.append(copy.copy(event))
             else:
                 if event.color == "early":
-                    event.repo = early
+                    if hasattr(event, "moveto"):
+                        event.moveto(early)
                     early.events.append(event)
                 elif event.color == "late":
-                    event.repo = late
+                    if hasattr(event, "moveto"):
+                        event.moveto(late)
                     late.events.append(event)
                 else:
                     # FIXME: Someday, color passthroughs that aren't fronted.
                     raise FatalException("coloring algorithm failed on %s" % event)
         for event in self.selected():
             event.color = None
+        
         # Options and features may need to be copied to the late fragment.
         late.events = copy.deepcopy(early.front_events()) + late.events
         # Add the split results to the repo list. 
-        early.rename(self.selected().name + "-early") 
         self.repolist.append(early)
-        early.readtime = time.time()
-        late.rename(self.selected().name + "-late")
         self.repolist.append(late)
-        late.readtime = time.time()
         self.selected().cleanup()
         self.remove_by_name(self.selected().name)
         return True
@@ -2675,7 +2696,7 @@ separation in seconds; the default is 90 seconds.
         if not self.selected():
             complain("no repo has been chosen.")
             return
-        self.renumber()
+        self.repo.renumber()
     def help_renumber(self):
         print """
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
@@ -2767,10 +2788,10 @@ an offset literal of +0 or -0.
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
-        if self.cut(early, late):
-            self.do_choose("")
-        else:
+        if not self.cut(early, late):
             complain("repository cannot be split here")
+        if verbose:
+            self.do_choose("")
     def help_cut(self):
         print """
 Attempt to partition a repo by cutting the parent-child link
