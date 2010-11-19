@@ -1744,6 +1744,64 @@ class RepositoryList:
         # Put the result on the load list
         self.repolist.append(union)
         self.select(union)
+    def expunge(self, selection, matchers):
+        "Expunge a set of files from the commits in the selection set."
+        def digest(toklist):
+            return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
+        try:
+            expunge = digest(matchers)
+            modified = []
+            for ei in selection:
+                event = self.selected()[ei]
+                if hasattr(event, "fileops"):
+                    deletia = []
+                    for (i, fileop) in enumerate(event.fileops):
+                        if verbose >= DEBUG_DELETE:
+                            print str(fileop)
+                        if fileop.op in "DM":
+                            if expunge.search(fileop.path):
+                                deletia.append(i)
+                                if fileop.op == 'M':
+                                    if fileop.ref == 'inline':
+                                        os.remove(fileop.inlinefile())
+                                    else:
+                                        bi = self.selected().find(fileop.ref)
+                                        assert(isinstance(self.selected()[bi], Blob))
+                                        self.selected()[bi].release()
+                                    if verbose:
+                                        announce("at %d, deleting %s" % (ei+1, fileop.path))
+                        elif fileop.op in "RC":
+                            if expunge.search(fileop.source):
+                                deletia.append(i)
+                                announce("following %s of %s to %s" %
+                                         (fileop.op,
+                                          fileop.source,
+                                          fileop.target))
+                                if fileop.op == "R" and file.source in matchers:
+                                    matchers.remove(fileop.source)
+                                matchers.append("^" + fileop.target + "$")
+                                expunge = digest(matchers)
+                            elif expunge.search(fileop.target):
+                                if fileop.op == "R":
+                                    fileop.op = "D"
+                                elif fileop.op == "C":
+                                    deletia.append(i)
+                                matchers.append("^" + fileop.target + "$")
+                                expunge = digest(matchers)
+                    if deletia:
+                        deletia.reverse()
+                        for i in deletia:
+                            event.fileops.pop(i)
+        except re.error:
+            raise FatalException("you confused the regular-expression processor.")
+        # Now remove commits that no longer have fileops, and released blobs.
+        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.selected().events)
+        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
+        if verbose:
+            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
+            deletia.reverse()
+            for i in deletia:
+                self.selected().events.pop(i)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
     "Repository surgeon command interpreter."
@@ -2810,63 +2868,7 @@ through another path; the tool will detect this. If the repo was named
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, range(len(self.selected())))
-        def digest(toklist):
-            return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
-        matchers = line.split()
-        try:
-            expunge = digest(matchers)
-            modified = []
-            for ei in self.selection:
-                event = self.selected()[ei]
-                if hasattr(event, "fileops"):
-                    deletia = []
-                    for (i, fileop) in enumerate(event.fileops):
-                        if verbose >= DEBUG_DELETE:
-                            print str(fileop)
-                        if fileop.op in "DM":
-                            if expunge.search(fileop.path):
-                                deletia.append(i)
-                                if fileop.op == 'M':
-                                    if fileop.ref == 'inline':
-                                        os.remove(fileop.inlinefile())
-                                    else:
-                                        bi = self.selected().find(fileop.ref)
-                                        assert(isinstance(self.selected()[bi], Blob))
-                                        self.selected()[bi].release()
-                                    if verbose:
-                                        announce("at %d, deleting %s" % (ei+1, fileop.path))
-                        elif fileop.op in "RC":
-                            if expunge.search(fileop.source):
-                                deletia.append(i)
-                                complain("following %s of %s to %s" %
-                                         (fileop.op,
-                                          fileop.source,
-                                          fileop.target))
-                                if fileop.op == "R" and file.source in matchers:
-                                    matchers.remove(fileop.source)
-                                matchers.append("^" + fileop.target + "$")
-                                expunge = digest(matchers)
-                            elif expunge.search(fileop.target):
-                                if fileop.op == "R":
-                                    fileop.op = "D"
-                                elif fileop.op == "C":
-                                    deletia.append(i)
-                                matchers.append("^" + fileop.target + "$")
-                                expunge = digest(matchers)
-                    if deletia:
-                        deletia.reverse()
-                        for i in deletia:
-                            event.fileops.pop(i)
-        except re.error:
-            raise FatalException("you confused the regular-expression processor.")
-        # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.selected().events)
-        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
-        if verbose:
-            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
-            deletia.reverse()
-            for i in deletia:
-                self.selected().events.pop(i)
+        self.expunge(self.selection, line.split())
     def help_expunge(self):
         print """
 Expunge files from the selected portion of the repo history; the
