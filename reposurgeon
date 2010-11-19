@@ -42,8 +42,8 @@ version="0.7"
 # the RepositoryList class (which encapsulated name access to a list
 # of repositories and also hosts surgical operations involving
 # multiple repositories). A few bits, like the repository reader and
-# builder builder, have enough logic that's independent of the
-# interpreter to be factored out of it.
+# builder, have enough logic that's independent of these
+# classes to be factored out of it.
 #
 # In designing new commands for the interpreter, try hard to keep them
 # orthogonal to the selection-set code. As often as piossible, commands
@@ -1584,7 +1584,7 @@ class RepositoryList:
     def deselect(self):
         self.repo = None
     def reponames(self):
-        "Retturn a list of the names of all repositories."
+        "Return a list of the names of all repositories."
         return map(lambda r: r.name, self.repolist)
     def uniquify(self, name):
         "Uniquify a repo name in the repo list."
