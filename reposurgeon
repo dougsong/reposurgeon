@@ -1870,10 +1870,11 @@ class RepositoryList:
             if event.deletehook:
                 expunged.events.append(event)
                 event.deletehook = None
-            # FIXME
-            #elif isinstance(event, Reset) or isinstance(event, Tag):
-            #    if self.repo[self.repo.find(event.committish)].deletehook:
-            #        expunged.events.append(copy.deepcopy(event))
+            elif isinstance(event, Reset) or isinstance(event, Tag):
+                target = self.repo.find(event.committish)
+                if target is not None:
+                    if self.repo[target].deletehook:
+                        expunged.events.append(copy.deepcopy(event))
         #self.repolist.append(expunge)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
