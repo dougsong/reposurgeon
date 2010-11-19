@@ -1866,6 +1866,7 @@ class RepositoryList:
                 self.repo.events.pop(i)
         # Finally, build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
+        expunged_branches = expunged.branchlist()
         for event in self.repo:
             if event.deletehook:
                 expunged.events.append(event)
@@ -1875,6 +1876,12 @@ class RepositoryList:
                 if target is not None:
                     if self.repo[target].deletehook:
                         expunged.events.append(copy.deepcopy(event))
+                    continue
+                if isinstance(event, Reset) and event.ref in expunged_branches:
+                    expunged.events.append(copy.copy(event))
+        for event in self.repo.events + expunged.events:
+            if hasattr(event, "deletehook"):
+                delattr(event, "deletehook")
         #self.repolist.append(expunge)
 
 class RepoSurgeon(cmd.Cmd,RepositoryList):
