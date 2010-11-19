@@ -1749,26 +1749,19 @@ class RepositoryList:
         def digest(toklist):
             return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
         try:
+            # First pass: compute fileop deletions
+            alterations = []
             expunge = digest(matchers)
             for ei in selection:
                 event = self.selected()[ei]
+                deletia = []
                 if hasattr(event, "fileops"):
-                    deletia = []
                     for (i, fileop) in enumerate(event.fileops):
                         if verbose >= DEBUG_DELETE:
                             print str(fileop)
                         if fileop.op in "DM":
                             if expunge.search(fileop.path):
                                 deletia.append(i)
-                                if fileop.op == 'M':
-                                    if fileop.ref == 'inline':
-                                        os.remove(fileop.inlinefile())
-                                    else:
-                                        bi = self.selected().find(fileop.ref)
-                                        assert(isinstance(self.selected()[bi], Blob))
-                                        self.selected()[bi].release()
-                                    if verbose:
-                                        announce("at %d, deleting %s" % (ei+1, fileop.path))
                         elif fileop.op in "RC":
                             if expunge.search(fileop.source):
                                 deletia.append(i)
@@ -1787,10 +1780,24 @@ class RepositoryList:
                                     deletia.append(i)
                                 matchers.append("^" + fileop.target + "$")
                                 expunge = digest(matchers)
-                    if deletia:
-                        deletia.reverse()
-                        for i in deletia:
-                            event.fileops.pop(i)
+                alterations.append(deletia)
+            # Second pass: perform actual fileop deletions
+            for (ei, deletia) in zip(selection, alterations):
+                event = self.selected()[ei]
+                deletia.reverse()
+                for i in deletia:
+                    fileop = event.fileops[i]
+                    # For D, we're done; removing it has no side effects 
+                    if fileop.op == 'M':
+                        if fileop.ref == 'inline':
+                            os.remove(fileop.inlinefile())
+                        else:
+                            bi = self.selected().find(fileop.ref)
+                            assert(isinstance(self.selected()[bi], Blob))
+                            self.selected()[bi].release()
+                        if verbose:
+                            announce("at %d, deleting %s" % (ei+1, fileop.path))
+                    event.fileops.pop(i)
         except re.error:
             raise FatalException("you confused the regular-expression processor.")
         # Now remove commits that no longer have fileops, and released blobs.
