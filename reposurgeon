@@ -697,8 +697,8 @@ class FatalException:
 
 class Repository:
     "Generic repository object."
-    def __init__(self):
-        self.name = None
+    def __init__(self, name=None):
+        self.name = name
         self.readtime = time.time()
         self.readsize = 0
         self.vcs = None
@@ -1628,11 +1628,9 @@ class RepositoryList:
         for commit in self.selected().commits():
             trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
-        early = Repository()
-        early.name = self.selected().name + "-early" 
+        early = Repository(self.selected().name + "-early")
         os.mkdir(early.subdir())
-        late = Repository()
-        late.name = self.selected().name + "-late" 
+        late = Repository(self.selected().name + "-late")
         os.mkdir(late.subdir())
         for event in self.selected():
             if isinstance(event, Reset):
@@ -1667,8 +1665,7 @@ class RepositoryList:
         "Merge multiple repos into a union repo."
         factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
         roots = map(lambda x: x.commits()[0], factors)
-        union = Repository()
-        union.name = "+".join(map(lambda r: r.name, factors))
+        union = Repository("+".join(map(lambda r: r.name, factors)))
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
