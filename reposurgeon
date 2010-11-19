@@ -317,12 +317,17 @@ class Blob:
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.timestamp = None
-        self.color = None
+        self.colors = []
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def blobfile(self):
         return self.repo.subdir() + "/blob-" + `id(self)`
+    def clone(self, repo):
+        "Clone a copy of this blob, pointing at the same file."
+        c = copy.copy(self)
+        os.link(self.blobfile(), c.blobfile())
+        return c
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -1597,7 +1602,7 @@ class RepositoryList:
                 if fileop.op == "M" and fileop.ref != "inline":
                     blob = self.selected().find(fileop.ref)
                     assert isinstance(self.selected()[blob], Blob)
-                    self.selected()[blob].color = color
+                    self.selected()[blob].colors.append(color)
         do_color(early, "early")
         do_color(late, "late")
         conflict = False
@@ -1632,8 +1637,11 @@ class RepositoryList:
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
             event.color = "early"        
-        assert all(map(lambda x: hasattr(x, "color") or isinstance(x, Reset), self.selected()))
+        assert all(map(lambda x: hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset), self.selected()))
         # Resets are tricky.  One may have both colors.
+        # Blobs can have both colors too, through references in
+        # commits on both sides of the cut, but we took care
+        # of that earlier.
         trackbranches = {"early": set([]), "late": set([])}
         for commit in self.selected().commits():
             trackbranches[commit.color].add(commit.branch)
@@ -1648,6 +1656,12 @@ class RepositoryList:
                     early.events.append(copy.copy(event))
                 if event.ref in trackbranches["late"]:
                     late.events.append(copy.copy(event))
+            elif isinstance(event, Blob):
+                if "early" in event.colors:
+                    early.events.append(event.clone(early))
+                if "late" in event.colors:
+                    late.events.append(event.clone(late))
+                event.release()
             else:
                 if event.color == "early":
                     if hasattr(event, "moveto"):
@@ -1661,8 +1675,10 @@ class RepositoryList:
                     # FIXME: Someday, color passthroughs that aren't fronted.
                     raise FatalException("coloring algorithm failed on %s" % event)
         for event in self.selected():
-            event.color = None
-        
+            if hasattr(event, "color"):
+                event.color = None
+            if hasattr(event, "colors"):
+                event.colors = []
         # Options and features may need to be copied to the late fragment.
         late.events = copy.deepcopy(early.front_events()) + late.events
         # Add the split results to the repo list. 
