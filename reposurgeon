@@ -325,9 +325,12 @@ class Blob:
         return self.repo.subdir() + "/blob-" + `id(self)`
     def moveto(self, repo):
         "Change the repo this blob is associated with."
-        oldloc = sef.blobfile()
+        oldloc = self.blobfile()
         self.repo = repo
-        os.rename(oldfile, self,blobfile())
+        newloc = self.blobfile()
+        if verbose >= DEBUG_SHUFFLE:
+            print >>sys.stderr,"blob rename calls os.rename(%s, %s)" % (oldloc, newloc)
+        os.rename(oldloc, newloc)
     def release(self):
         os.remove(self.blobfile())
         self.path = None             # Marked for deletion
@@ -1666,7 +1669,6 @@ class RepositoryList:
         roots = map(lambda x: x.commits()[0], factors)
         union = Repository()
         union.name = "+".join(map(lambda r: r.name, factors))
-        union.readtime = time.time()
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
@@ -1677,9 +1679,6 @@ class RepositoryList:
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
             for event in factor.events:
-                # Reparent all objects with pointers upwards to the union
-                if hasattr(event, "repo"):
-                    event.repo = union
                 # Disambiguate branches and tags
                 if i != 0:
                     prefix = factor.name + "-"
@@ -1720,9 +1719,10 @@ class RepositoryList:
                             fileop.ref = new
             # Merge in the events and blobs
             union.events += factor.events
-            for blobfile in os.listdir(factor.subdir()):
-                os.rename(os.path.join(factor.subdir(), blobfile),
-                          os.path.join(union.subdir(), blobfile))
+            # Reparent events and move files
+            for event in factor:
+                if hasattr(event, "moveto"):
+                    event.moveto(union)
             factor.events = []
             factor.cleanup()
             self.remove_by_name(factor.name)
