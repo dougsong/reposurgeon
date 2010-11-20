@@ -28,6 +28,11 @@ reposurgeon-$(VERS).tar.gz: $(SOURCES)
 version:
 	@echo $(VERS)
 
+pychecker:
+	ln -f reposurgeon reposurgeon.py
+	pychecker --only --limit 50 reposurgeon.py
+	rm -f reposurgeon.py
+
 check:
 	cd test; make --quiet
 

@@ -6,7 +6,7 @@
 #
 # Requires Python 2.5 or newer.
 #
-import sys, os, getopt, cStringIO, cmd, tempfile, subprocess
+import sys, os, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
@@ -667,7 +667,7 @@ class Commit:
         if self.parent_marks:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
-            st += "merge %s\n" % self.parent_marks[0]
+            st += "merge %s\n" % ancestor
         propkeys = self.properties.keys()
         propkeys.sort()
         for name in propkeys:
@@ -850,7 +850,7 @@ class Repository:
                                 if len(fields) < 3:
                                     self.error("malformed property line")
                                 elif len(fields) == 3:
-                                    self.properties[fields[1]] = True
+                                    commit.properties[fields[1]] = True
                                 else:
                                     name = fields[1]
                                     length = int(fields[2])
@@ -874,7 +874,7 @@ class Repository:
                             elif line[0] in ("C", "D", "R"):
                                 commit.fileops.append(FileOp(line, commit))
                             elif line == "filedeleteall\n":
-                                commit.fileops.append(FileOp("filedeleteall"), commit)
+                                commit.fileops.append(FileOp("filedeleteall", commit))
                             elif line[0] == "M":
                                 fileop = FileOp(line, commit)
                                 if commit.mark is None:
@@ -1306,18 +1306,17 @@ class Repository:
     def front_events(self):
         "Return options, features, and any other events with  a zero timestamp."
         return filter(lambda e: e.when() == 0, self.events)
-    def renumber(self, transform=lambda x: x):
+    def renumber(self):
         "Renumber the marks in a repo."
         marklist = []
         for event in self.events:
             if hasattr(event, "mark"):
-                mark = getattr(event, "mark")
-                if mark is None:
+                if event.mark is None:
                     continue
-                elif not mark.startswith(":"):
+                elif not event.mark.startswith(":"):
                     raise FatalException("field not in mark format")
                 else:
-                    marklist.append(mark)
+                    marklist.append(event.mark)
         for event in self.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
@@ -1642,7 +1641,8 @@ class RepositoryList:
                             conflict = True
                             break
         if conflict:
-            late.parent_marks.push(early.mark, where)
+	    # FIXME: We need to put this back where we got it, in case it's parent 0
+            late.parent_marks.append(early.mark)
             for event in self.repo:
                 if hasattr(event, "color"):
                     event.color = None
@@ -1913,7 +1913,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             cmd.Cmd.onecmd(self, line)
         except RecoverableException, e:
             complain(e.msg)
-    def postcmd(self, stop, line):
+    def postcmd(self, unused, line):
         if line == "EOF":
             return True
     def emptyline(self):
@@ -1930,7 +1930,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
         "Execute a shell command."
         if os.system(line):
             raise RecoverableException("'shell %s' returned error." % line)
-    def do_EOF(self, line):
+    def do_EOF(self, unused):
         "Terminate reposurgeon."
         print ""
         return True
@@ -2055,9 +2055,8 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
                 "P" : Passthrough,
                 }
             visible = set([])
-            modmode = None
             self.pop()
-            while self.peek() in tuple(typeletters.keys()):
+            while self.peek() in typeletters:
                 c = self.pop()
                 if c in typeletters:
                     visible.add(typeletters[c])
@@ -2193,7 +2192,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             print "eval_textsearch(%s)" % self.line
         self.line = self.line.lstrip()
         if not self.peek() == '/':
-            textsearch = None
+            return None
         elif '/' not in self.line[1:]:
             raise RecoverableException("malformed text search specifier")
         else:
