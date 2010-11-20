@@ -486,7 +486,7 @@ class FileOp:
         elif self.op == "deleteall":
             st = self.op
         else:
-            raise FatalException("unexpected fileop %s while writing" % opline)
+            raise FatalException("unexpected fileop %s while writing" % self.op)
         return st
 
 class Commit:
@@ -706,7 +706,7 @@ class Passthrough:
         "Dump this passthrough in import-stream format."
         return self.text
 
-class FatalException:
+class FatalException(Exception):
     "Unrecoverable error."
     def __init__(self, msg):
         self.msg = msg
@@ -1574,7 +1574,7 @@ def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(secs_since_epoch))
 
-class RecoverableException:
+class RecoverableException(Exception):
     def __init__(self, msg):
         self.msg = msg
 
@@ -1615,7 +1615,6 @@ class RepositoryList:
     def cut(self, early, late):
         "Attempt to topologically cut the selected repo."
         # Apply a graph-coloring algorithm to determine if the repo can be split
-        wherein = late.parent_marks.index(early.mark)
         late.parent_marks.remove(early.mark)
         def do_color(commit, color):
             commit.color = color
@@ -1723,13 +1722,13 @@ class RepositoryList:
                 # Disambiguate branches and tags
                 if i != 0:
                     prefix = factor.name + "-"
-                    for (type, attr) in ((Tag, "name"),):
-                        if isinstance(event, type):
+                    for (objtype, attr) in ((Tag, "name"),):
+                        if isinstance(event, objtype):
                             setattr(event, attr, prefix + getattr(event, attr))
                     suffix = "-" + factor.name
-                    for (type, attr) in ((Commit, "branch"),
+                    for (objtype, attr) in ((Commit, "branch"),
                                          (Reset, "ref")):
-                        if isinstance(event, type):
+                        if isinstance(event, objtype):
                             setattr(event, attr, getattr(event, attr) + suffix)
                 # Disambiguate all marks.
                 for fld in ("mark", "committish"):
@@ -2294,7 +2293,7 @@ developers only.
             announce("echo value must be an integer")
         if verbose:
             announce("echo %d" % self.echo)
-    def do_version(self, line):
+    def do_version(self, unused):
         "Report the program version and supported version-control systems."
         print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x.name, vcstypes))
     def do_resolve(self, line):
@@ -2313,7 +2312,7 @@ and report the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.
 """
-    def do_names(self, line):
+    def do_names(self, unused):
         "List all known symbolic names of branches and tags."
         for branch in self.selected().branchlist():
             print "branch %s" % branch
@@ -2334,7 +2333,7 @@ for exploring the selection-set language.
         "Dump your command list from this session so far."
         for line in self.history:
             print line
-    def do_coverage(self, line):
+    def do_coverage(self, unused):
         "Display the coverage-case set (developer instrumentation)."
         if not self.selected():
             complain("no repo has been chosen.")
@@ -2356,9 +2355,9 @@ for exploring the selection-set language.
                 complain("no repo has been chosen.")
                 return                
         for name in line.split():
-            this = self.repo_by_name(line)
+            this = self.repo_by_name(name)
             if not this:
-                raise RecoverableException("no such repo as %s" % line)
+                raise RecoverableException("no such repo as %s" % name)
         if this:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype), this.events))
@@ -2812,15 +2811,15 @@ only when they are the final ones on the commit's branch.
         commits = filter(lambda (i, e): isinstance(e, Commit),
                          enumerate(self.selected()))
         for i in range(len(commits)-1):
-            this = self.selected().events[commits[i][0]]
-            next = self.selected().events[commits[i+1][0]]
-            if not (isinstance(this, Commit) and isinstance(next, Commit)):
+            cthis = self.selected().events[commits[i][0]]
+            cnext = self.selected().events[commits[i+1][0]]
+            if not (isinstance(cthis, Commit) and isinstance(cnext, Commit)):
                 continue
-            elif this.branch != next.branch:
+            elif cthis.branch != cnext.branch:
                 continue
-            elif this.comment != next.comment:
+            elif cthis.comment != cnext.comment:
                 continue
-            elif this.committer.date.delta(next.committer.date) < timefuzz:
+            elif cthis.committer.date.delta(cnext.committer.date) < timefuzz:
                 eligible.append(commits[i][0])
         if verbose:
             announce("deletion set is %s" % map(lambda x: x+1, eligible))
@@ -2836,7 +2835,7 @@ last commit, in order.
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
 """
-    def do_renumber(self, line):
+    def do_renumber(self, unused):
         "Renumber the marks in the selected repo."
         if not self.selected():
             complain("no repo has been chosen.")
