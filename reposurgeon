@@ -1144,9 +1144,9 @@ class Repository:
         elif left.op == "R" and right.op == "R":
             if left.target == right.source:
                 left.target = right.target
-                return (True, source, None, None, 11)
+                return (True, left, None, None, 11)
             else:
-                return (False, source, right,
+                return (False, left, right,
                         "R %s %s is inconsistent with following operation" \
                         % (left.source, left.target), -6)
         # We could do R a b + C b c -> C a c + R a b, but why?
@@ -1214,7 +1214,7 @@ class Repository:
                                 print "During canonicalization:"
                                 commit.fileop_dump(ei)
                             if warn:
-                                self.warn(m, atline=False)
+                                self.warn(warn, atline=False)
                             coverage.add(case)
             if not mutated:
                 break
@@ -1233,7 +1233,7 @@ class Repository:
         for ei in selected:
             event = self.events[ei]
             if event.__class__ in (Reset, Tag, Passthrough):
-                self.events.pop(d)
+                self.events.pop(ei)
             elif isinstance(event, Blob):
                 raise FatalException("attempt to directly delete blob")
             elif isinstance(event, Commit):
@@ -1282,7 +1282,7 @@ class Repository:
                     if len(oplist) == 1:
                         continue
                     if not policy or policy == "complain" or verbose >= DEBUG_DELETE:
-                        print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (i+1, path)
+                        print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (ei+1, path)
                     func = getattr(self, 'policy_' + policy)
                     func(event, oplist)
                     if verbose >= DEBUG_DELETE:
@@ -1966,8 +1966,6 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             c = self.line[0]
             self.line = self.line[1:]
             return c
-    def push(c):
-        self.line = c + self.line[0]
     def eval_expression(self):
         if verbose >= DEBUG_LEXER:
             print "eval_expression(%s)" % self.line
@@ -2438,7 +2436,7 @@ output.
                     self.preferred = repotype
                     break
             else:
-                complain("known types are %s.") % " ".join(map(lambda x: x.name, vcstypes))
+                complain("known types are %s." % " ".join(map(lambda x: x.name, vcstypes)))
         if verbose:
             if not self.preferred:
                 announce("no preferred type has been set.")
@@ -2521,7 +2519,7 @@ currently chosen repo.
             complain("there is already a repo named %s" % line)
         else:
             self.selected().rename(line)
-    def help_rename():
+    def help_rename(self):
         print """
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
@@ -2672,7 +2670,7 @@ to standard output.
         # First, a validation pass
         for (i, message) in enumerate(update_list):
             if "Event-Number" not in message:
-                raise RepoSurgeonError("missing event number in update %d" % i)
+                raise RecoverableException("missing event number in update %d" % i)
             eventnum = int(message["Event-Number"]) - 1
             if eventnum < 0 or eventnum >= len(self.selected()):
                 raise FatalException("event number %d out of range in update %d" % (eventnum, i+1))
@@ -2804,7 +2802,7 @@ only when they are the final ones on the commit's branch.
             try:
                 timefuzz = int(line)
             except ValueError:
-                raise RepoSurgeonError("time-fuzz value must be an integer")
+                raise RecoverableException("time-fuzz value must be an integer")
         eligible = []
         # This is a crude search that ignores the repo graph structure;
         # properly speaking we should be chasing child links.  Screw
@@ -3011,7 +3009,7 @@ them.
             for child in event.children():
                 for (j, mark) in enumerate(child.parent_marks):
                     if mark == event.mark:
-                        child.parent_marks[j] == event2.mark
+                        child.parent_marks[j] = event2.mark
             # Fileop split happens here
             event2.fileops = event.fileops[splitpoint:]
             event.fileops = event.fileops[:splitpoint]
