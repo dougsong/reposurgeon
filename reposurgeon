@@ -1156,11 +1156,11 @@ class Repository:
         # First op C
         #
         elif pair == ("C", "D"):
-            if left.source == target.path:
+            if left.source == right.path:
                 # Copy followed by delete of the source is a rename.
                 left.op = "R"
                 return (True, left, None, None, 13)
-            elif left.target == target.path:
+            elif left.target == right.path:
                 # This delete undoes the copy
                 return (True, None, None, None, 14)
         elif pair == ("C", "R"):
