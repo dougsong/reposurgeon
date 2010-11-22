@@ -180,6 +180,8 @@ class Baton:
             self.stream = sys.stdout
         else:
             self.stream = None
+        self.count = 0
+        self.time = 0
     def __enter__(self):
         if self.stream:
             self.stream.write(self.prompt + "...")
@@ -190,6 +192,7 @@ class Baton:
         self.time = time.time()
         return self
     def twirl(self, ch=None):
+        "One twirl of the baton."
         if self.stream is None:
             return
         if os.isatty(self.stream.fileno()):
@@ -322,7 +325,7 @@ class Blob:
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def blobfile(self):
-        return self.repo.subdir() + "/blob-" + `id(self)`
+        return self.repo.subdir() + "/blob-" + repr(id(self))
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -376,7 +379,7 @@ class Tag:
         if self.name != newname:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in tag %d, Tag-Name is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), `self.name`, `newname`)
+                      % (int(msg["Event-Number"]), repr(self.name), repr(newname))
             self.name = newname
             modified = True
         if "Tagger" in msg:
@@ -403,7 +406,7 @@ class Tag:
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in tag %d, comment is modified '%s' -> '%s'" \
-                      % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
+                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment))
             modified = True
             self.comment = newcomment
         return modified
@@ -439,7 +442,7 @@ class FileOp:
         if opline.startswith("M"):
             m = FileOp.modify_re.match(opline)
             if not m:
-                raise FatalException("bad format of M line: %s" % `opline`)
+                raise FatalException("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
@@ -450,7 +453,7 @@ class FileOp:
         else:
             raise FatalException("unexpected fileop %s while parsing" % opline)
     def inlinefile(self):
-        return self.commit.repo.subdir() + "/inline-" + `id(self)`
+        return self.commit.repo.subdir() + "/inline-" + repr(id(self))
     def paths(self):
         "Return the set of all paths touched by this file op."
         if self.op in ("M", "D"):
@@ -540,7 +543,7 @@ class Commit:
         if self.authors:
             self.authors[0].email_out(msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
-                coauthor.email_out(msg, "Author" + `2+i`)
+                coauthor.email_out(msg, "Author" + repr(2+i))
         self.committer.email_out(msg, "Committer")
         empty_properties = []
         propkeys = self.properties.keys()
@@ -584,7 +587,7 @@ class Commit:
             modified = True
         if "Author" in msg:
             author_re = re.compile("Author[0-9]*:")
-            authorkeys = filter(lambda s: author_re.match(s), msg.keys())
+            authorkeys = filter(author_re.match, msg.keys())
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
             authorkeys.sort()
@@ -626,7 +629,7 @@ class Commit:
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
                 print >>sys.stderr,"reposurgeon: in commit %d, comment is modified '%s' -> '%s'" \
-                      % (int(msg["Event-Number"]), `self.comment`, `newcomment`)
+                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment))
             modified = True
             self.comment = newcomment
         return modified
@@ -730,19 +733,19 @@ class Repository:
         if name is None:
             name = self.name
         if not name:
-            return os.path.join(self.basedir, ".rs" + `os.getpid()`)
+            return os.path.join(self.basedir, ".rs" + repr(os.getpid()))
         else:
-            return os.path.join(self.basedir, ".rs" + `os.getpid()`+ "-" + name) 
+            return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
-            raise FatalException(msg + " at line " + `self.import_line`)
+            raise FatalException(msg + " at line " + repr(self.import_line))
         else:
             raise FatalException(msg)
     def warn(self, msg, atline=True):
         "Display a parse warning."
         if atline and self.import_line:
-            print "reposurgeon: " + msg + " at line " + `self.import_line`
+            print "reposurgeon: " + msg + " at line " + repr(self.import_line)
         else:
             print "reposurgeon: " + msg
     def size(self):
@@ -773,10 +776,9 @@ class Repository:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
-                ncommits = 0
                 def read_data(dp, line=None):
                     if not line:
-                        line = readline()
+                        line = ireadline()
                     if line.startswith("data <<"):
                         delim = line[7:]
                         while True:
@@ -792,12 +794,12 @@ class Repository:
                         except ValueError:
                             self.error("bad count in data")
                     else:
-                        self.error("malformed data header %s" % `line`)
-                    line = readline()
+                        self.error("malformed data header %s" % repr(line))
+                    line = ireadline()
                     if line != '\n':
                         pushback(line) # Data commands optionally end with LF
                     return dp
-                def readline():
+                def ireadline():
                     if linebuffers:
                         line = linebuffers.pop()
                     else:
@@ -807,14 +809,14 @@ class Repository:
                 def pushback(line):
                     linebuffers.append(line)
                 while True:
-                    line = readline()
+                    line = ireadline()
                     if not line:
                         break
                     elif not line.strip():
                         continue
                     elif line.startswith("blob"):
                         blob = Blob(self)
-                        line = readline()
+                        line = ireadline()
                         if line.startswith("mark"):
                             blob.mark = line[5:].strip()
                             read_data(open(blob.blobfile(), "w")).close()
@@ -828,9 +830,8 @@ class Repository:
                         commitbegin = self.import_line
                         commit = Commit(self)
                         commit.branch = line.split()[1]
-                        ncommits += 1
                         while True:
-                            line = readline()
+                            line = ireadline()
                             if not line:
                                 break
                             elif line.startswith("mark"):
@@ -943,7 +944,7 @@ class Repository:
                     elif line.startswith("reset"):
                         reset = Reset()
                         reset.ref = line[6:].strip()
-                        line = readline()
+                        line = ireadline()
                         if line.startswith("from"):
                             reset.committish = line[5:].strip()
                         else:
@@ -953,12 +954,12 @@ class Repository:
                     elif line.startswith("tag"):
                         tagger = None
                         tagname = line[4:].strip()
-                        line = readline()
+                        line = ireadline()
                         if line.startswith("from"):
                             referent = line[5:].strip()
                         else:
                             self.error("missing from after tag")
-                        line = readline()
+                        line = ireadline()
                         if line.startswith("tagger"):
                             try:
                                 tagger = Attribution(line[7:])
@@ -1035,7 +1036,7 @@ class Repository:
         try:
             # Can fail if the target directory exists.
             if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, `self.subdir()`, `self.subdir(newname)`))
+                self.warn("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
         except OSError, e:
@@ -1378,7 +1379,6 @@ def read_repo(source, preferred):
                 hitcount += 1
         if hitcount == 0:
             raise RecoverableException("couldn't find a repo under %s" % os.path.relpath(source))
-            return None
         elif hitcount > 1:
             raise RecoverableException("too many repos under %s" % os.path.relpath(source))
         elif verbose > 0:
@@ -1397,12 +1397,12 @@ def read_repo(source, preferred):
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname) as tp:
-                        repo.fast_import(tp, progress=showprogress);
+                        repo.fast_import(tp, progress=showprogress)
                 finally:
                     os.remove(tfname)
             else:
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(tp, progress=showprogress);
+                    repo.fast_import(tp, progress=showprogress)
         finally:
             os.chdir(here)
     return repo
@@ -1811,7 +1811,7 @@ class RepositoryList:
                                          (fileop.op,
                                           fileop.source,
                                           fileop.target))
-                                if fileop.op == "R" and file.source in matchers:
+                                if fileop.op == "R" and fileop.source in matchers:
                                     matchers.remove(fileop.source)
                                 matchers.append("^" + fileop.target + "$")
                                 expunge = digest(matchers)
@@ -1893,7 +1893,7 @@ class RepositoryList:
             for i in deletia:
                 self.repo.events.pop(i)
 
-class RepoSurgeon(cmd.Cmd,RepositoryList):
+class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -1972,9 +1972,9 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
         value = self.eval_disjunct()
         c = self.peek()
         if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
-            raise RecoverableException("trailing junk on selection: %s" % `self.line`)
+            raise RecoverableException("trailing junk on selection: %s" % repr(self.line))
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_expression(), left = %s" % (value, `self.line`)
+            print "%s <- eval_expression(), left = %s" % (value, repr(self.line))
         return value
     def eval_disjunct(self):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
@@ -1994,7 +1994,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             else:
                 break
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_disjunct(), left = %s" % (disjunct, `self.line`)
+            print "%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line))
         return disjunct
     def eval_conjunct(self):
         "Evaluate a conjunctive expression (& has higher precedence)" 
@@ -2014,7 +2014,7 @@ class RepoSurgeon(cmd.Cmd,RepositoryList):
             else:
                 break
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_conjunct(), left = %s" % (conjunct, `self.line`)
+            print "%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line))
         return conjunct
     def eval_term(self):
         if verbose >= DEBUG_LEXER:
@@ -2555,7 +2555,7 @@ current preserve list is displayed afterwards.
         if line:
             line = os.path.expanduser(line)
         if not line or line == '.':
-            line = os.getcwd();
+            line = os.getcwd()
         repo = read_repo(line, self.preferred)
         self.repolist.append(repo)
         self.select(repo)
