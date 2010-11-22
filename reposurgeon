@@ -1780,7 +1780,7 @@ class RepositoryList:
             if commit != roots[0] and not commit.parent_marks:
                 if not lastcommit:
                     raise FatalException("can't find previous commit to link")
-                if lastcommit.mark is None:
+                elif lastcommit.mark is None:
                     raise FatalException("can't link to commit with no mark")
                 commit.parent_marks.append(lastcommit.mark)
             lastcommit = commit
