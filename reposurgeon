@@ -444,6 +444,8 @@ class FileOp:
             if not m:
                 raise FatalException("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
+        elif opline[0] == "N":
+            (self.op, self.ref, self.committish) = shlex.split(opline)
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
         elif opline[0] in ("R", "C"):
@@ -460,6 +462,8 @@ class FileOp:
             return set([self.path])
         elif self.op in ("R", "C"):
             return set([self.source, self.target])
+        elif self.op == "N":
+            return set([])
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
         if self.op == "deleteall" or other.op == "deleteall":
@@ -478,6 +482,12 @@ class FileOp:
                 with open(self.inlinefile()) as fp:
                     content = fp.read()
                 st += "\ndata %d\n%s" % (len(content), content)
+        elif self.op == "N":
+            st = " ".join((self.op, self.ref, self.committish)) + "\n"
+            if self.ref == 'inline':
+                with open(self.inlinefile()) as fp:
+                    content = fp.read()
+                st += "data %d\n%s" % (len(content), content)
         elif self.op in "D":
             st = "D "
             if len(self.path.split()) > 1:
@@ -809,6 +819,29 @@ class Repository:
                     return line
                 def pushback(line):
                     linebuffers.append(line)
+                def parse_fileop_content(fileop):
+                    if fileop.ref[0] == ':':
+                        for obj in self.events:
+                            if isinstance(obj, Blob) and obj.mark == fileop.ref:
+                                obj.path = fileop.path
+                                # This is a blatant hack.
+                                # We need to impute a timestamp
+                                # to each blob for sorting after
+                                # merge operations. We want the
+                                # blobs to tuck in close behind
+                                # their first associated commits.
+                                # So we do this and trust the
+                                # stability of Python sort
+                                # (guaranteed since Python 2.4).
+                                if obj.timestamp is None:
+                                    obj.timestamp = commit.when()-1
+                                break
+                        else:
+                            self.error("no blob matches commit reference to %s" % fileop.ref)
+                    elif fileop.ref == 'inline':
+                        read_data(open(fileop.inlinefile(), "w")).close()
+                    else:
+                        self.error("unknown content type in filemodify")
                 while True:
                     line = ireadline()
                     if not line:
@@ -879,8 +912,6 @@ class Repository:
                                 commit.fileops.append(FileOp("filedeleteall", commit))
                             elif line[0] == "M":
                                 fileop = FileOp(line, commit)
-                                if commit.mark is None:
-                                    self.warn("unmarked commit")
                                 commit.fileops.append(fileop)
                                 if fileop.mode == "160000":
                                     # This is a submodule link.  The ref
@@ -894,28 +925,12 @@ class Repository:
                                     # try to collect data, just pass
                                     # it through.
                                     self.warn("symbolic link")
-                                elif fileop.ref[0] == ':':
-                                    for obj in self.events:
-                                        if isinstance(obj, Blob) and obj.mark == fileop.ref:
-                                            obj.path = fileop.path
-                                            # This is a blatant hack.
-                                            # We need to impute a timestamp
-                                            # to each blob for sorting after
-                                            # merge operations. We want the
-                                            # blobs to tuck in close behind
-                                            # their first associated commits.
-                                            # So we do this and trust the
-                                            # stability of Python sort
-                                            # (guaranteed since Python 2.4).
-                                            if obj.timestamp is None:
-                                                obj.timestamp = commit.when()-1
-                                            break
-                                    else:
-                                        self.error("no blob matches commit reference to %s" % fileop.ref)
-                                elif fileop.ref == 'inline':
-                                    read_data(open(fileop.inlinefile(), "w")).close()
                                 else:
-                                    self.error("unknown content type in filemodify")
+                                    parse_fileop_content(fileop)
+                            elif line[0] == "N":
+                                fileop = FileOp(line, commit)
+                                commit.fileops.append(fileop)
+                                parse_fileop_content(fileop)
                             # Handling of file ops ends.
                             elif line.isspace():
                                 # This handles slightly broken
@@ -940,6 +955,8 @@ class Repository:
                         if not (commit.mark and commit.committer):
                             self.import_line = commitbegin
                             self.error("missing required fields in commit")
+                        if commit.mark is None:
+                            self.warn("unmarked commit")
                         self.events.append(commit)
                         baton.twirl()
                     elif line.startswith("reset"):
