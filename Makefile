@@ -33,7 +33,7 @@ pychecker:
 	@-pychecker --only --limit 50 reposurgeon.py
 	@rm -f reposurgeon.py
 
-PYLINTOPTS = --disable-msg=C0103,C0111,C0301,C0302,C0322,C0324,C0323,R0902,R0903,R0904,R0912,R0913,R0913
+PYLINTOPTS = --disable-msg=C0103,C0111,C0301,C0302,C0322,C0324,C0323,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0141
 pylint:
 	pylint --output-format=parseable $(PYLINTOPTS) reposurgeon
 

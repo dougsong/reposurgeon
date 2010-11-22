@@ -712,6 +712,7 @@ class Passthrough:
 class FatalException(Exception):
     "Unrecoverable error."
     def __init__(self, msg):
+        Exception.__init__(self)
         self.msg = msg
 
 class Repository:
@@ -1322,19 +1323,19 @@ class Repository:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
                     old = getattr(event, fld)
-                    new = ":" + `1 + marklist.index(old)`
+                    new = ":" + repr(1 + marklist.index(old))
                     if verbose >= DEBUG_MERGE:
                         announce("renumbering %s -> %s in %s" % (old, new,fld))
                     setattr(event, fld, new)
             if isinstance(event, Commit):
                 for (i, old) in enumerate(event.parent_marks):
-                    new = ':' + `1 + marklist.index(old)`
+                    new = ':' + repr(1 + marklist.index(old))
                     if verbose >= DEBUG_MERGE:
                         announce("renumbering %s -> %s in parents" % (old, new))
                     event.parent_marks[i] = new
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = ":" + `1 + marklist.index(fileop.ref)`
+                        new = ":" + repr(1 + marklist.index(fileop.ref))
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
@@ -1537,32 +1538,33 @@ def do_or_die(cmd, legend=""):
 
 class popen_or_die:
     "Read or write from a subordinate process."
-    def __init__(self, cmd, legend="", mode="r"):
+    def __init__(self, command, legend="", mode="r"):
         assert mode in ("r", "w")
-        self.cmd = cmd
+        self.command = command
         self.legend = legend
         self.mode = mode
         if self.legend:
             self.legend = " "  + self.legend
+        self.fp = None
     def __enter__(self):
         if verbose >= DEBUG_COMMANDS:
             if self.mode == "r":
-                announce("reading from '%s'%s" % (self.cmd, self.legend))
+                announce("reading from '%s'%s" % (self.command, self.legend))
             else:
-                announce("writing to '%s'%s" % (self.cmd, self.legend))
+                announce("writing to '%s'%s" % (self.command, self.legend))
         try:
-            self.fp = os.popen(self.cmd, self.mode)
+            self.fp = os.popen(self.command, self.mode)
             return self.fp
         except (OSError, IOError), e:
             raise FatalException("execution of %s%s failed: %s" \
-                                 % (self.cmd, self.legend, e))
+                                 % (self.command, self.legend, e))
     def __exit__(self, extype, value, traceback):
         if extype:
             if verbose:
                 complain("exception %s in popen_or_die." % (extype,))
             raise extype, value, traceback
         if self.fp.close() is not None:
-            legend = "%s%s returned error" % (self.cmd, self.legend)
+            legend = "%s%s returned error" % (self.command, self.legend)
             if extype == FatalException:
                 value.msg += " and " + legend
             else:
@@ -1575,6 +1577,7 @@ def iso8601_from_unixtime(secs_since_epoch):
 
 class RecoverableException(Exception):
     def __init__(self, msg):
+        Exception.__init__(self)
         self.msg = msg
 
 class RepositoryList:
@@ -2037,7 +2040,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     if term == None:
                         term = self.eval_branchset()
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_term(), left = %s" % (term, `self.line`)
+            print "%s <- eval_term(), left = %s" % (term, repr(self.line))
         return term
     def eval_visibility(self):
         "Parse a visibility spec."
@@ -2063,16 +2066,16 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             # We need a special check here because these expressions
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
-                raise RecoverableException("garbled type mask at %s" % `self.line`)
+                raise RecoverableException("garbled type mask at %s" % repr(self.line))
             if verbose >= DEBUG_LEXER:
-                print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), `self.line`)
+                print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), repr(self.line))
             selected = []
             for (i, event) in enumerate(self.selected()):
                 if event.__class__ in visible:
                     selected.append(i)
             visibility = set(selected)
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_visibility(), left = %s" % (visibility, `self.line`)
+            print "%s <- eval_visibility(), left = %s" % (visibility, repr(self.line))
         return visibility
     def eval_polyrange(self):
         "Parse a polyrange specification (list of intervals)."
@@ -2159,7 +2162,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     if not matched:
                         raise RecoverableException("couldn't match a name at @%s" % self.line)
             if verbose >= DEBUG_LEXER:
-                announce("location list is %s with %s left" % (selection, `self.line`))
+                announce("location list is %s with %s left" % (selection, repr(self.line)))
             # Resolve spans
             resolved = []
             spanning = last = 0
@@ -2175,7 +2178,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     last = elt
             selection = resolved
             if verbose >= DEBUG_LEXER:
-                announce("resolved list is %s with %s left" % (selection, `self.line`))
+                announce("resolved list is %s with %s left" % (selection, repr(self.line)))
             # Sanity checks
             if spanning:
                 raise RecoverableException("incomplete range expression.")
@@ -2184,7 +2187,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     raise RecoverableException("event number %s out of range" % (elt+1))
             polyrange = set(selection)
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_polyrange(), left = %s" % (polyrange, `self.line`)
+            print "%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line))
         return polyrange
     def eval_textsearch(self):
         "Parse a text search specification."
@@ -2211,7 +2214,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                 # We don't do blobs because it would be too slow
                 # and not very useful.
             if verbose >= DEBUG_LEXER:
-                print "%s <- eval_textsearch(), left = %s" % (matchers, `self.line`)
+                print "%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line))
             return set(matchers)
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
@@ -2396,7 +2399,7 @@ currently chosen repository.
                 print "%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch) 
                 continue
             if isinstance(event, Tag):
-                print "%6d tag    %6s    %4s" % (i+1, event.committish, `event.name`,) 
+                print "%6d tag    %6s    %4s" % (i+1, event.committish, repr(event.name),) 
                 continue
             if isinstance(event, Reset):
                 print "%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref) 
@@ -2612,7 +2615,7 @@ is all events.
             return
         self.set_selection_set(line, range(len(self.selected())))
         for ei in self.selection:
-            sys.stdout.write(`ei+1` + ": " + (72 * "=") + "\n") 
+            sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n") 
             sys.stdout.write(str(self.selected()[ei]))
     def help_inspect(self):
         print """
@@ -2774,7 +2777,7 @@ blob, your editor will be called on the blob file.
             return
         line = self.set_selection_set(line, [])
         if line and not hasattr(self.selected(), "policy_" + line):
-            complain("no such deletion policy as " + `line`)
+            complain("no such deletion policy as " + repr(line))
             return
         self.selected().delete(self.selection, self.line)
     def help_delete(self):
@@ -3012,7 +3015,7 @@ them.
             event2.fileops = event.fileops[splitpoint:]
             event.fileops = event.fileops[:splitpoint]
             if verbose:
-                self.do_inspect(`where+1`+","+`where+2`)
+                self.do_inspect(repr(where+1) + "," + repr(where+2))
     def help_split(self):
         print """
 Split a specified commit in two, the opposite of coalesce.  The first argument
