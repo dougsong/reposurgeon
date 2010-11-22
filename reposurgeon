@@ -204,7 +204,7 @@ class Baton:
             self.stream.flush()
         self.count = self.count + 1
         return
-    def __exit__(self, extype, value, traceback):
+    def __exit__(self, extype, value_unused, traceback_unused):
         if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
         if extype == FatalException:
@@ -1423,7 +1423,7 @@ class CriticalRegion:
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
-    def __exit__(self, extype, value, traceback):
+    def __exit__(self, extype_unused, value_unused, traceback_unused):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
