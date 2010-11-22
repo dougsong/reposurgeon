@@ -29,9 +29,12 @@ version:
 	@echo $(VERS)
 
 pychecker:
-	ln -f reposurgeon reposurgeon.py
-	pychecker --only --limit 50 reposurgeon.py
-	rm -f reposurgeon.py
+	@ln -f reposurgeon reposurgeon.py
+	@-pychecker --only --limit 50 reposurgeon.py
+	@rm -f reposurgeon.py
+
+pylint:
+	pylint reposurgeon
 
 check:
 	cd test; make --quiet
