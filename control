@@ -11,4 +11,6 @@ Description: a tool for editing version-control repository history
 
 Homepage: http://www.catb.org/~esr/reposurgeon
 
+XBS-Logi: reposturgeon.png
+
 XBS-Project-Tag-List: version control, git, hg, bzr
