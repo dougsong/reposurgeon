@@ -4,7 +4,7 @@
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
 SOURCES = README NEWS COPYING reposurgeon reposurgeon.xml reposurgeon.1 Makefile
-SOURCES += control .shipper reposturgeon.gif
+SOURCES += control reposturgeon.png
 
 all: reposurgeon.1
 
@@ -17,12 +17,12 @@ reposurgeon.html: reposurgeon.xml
 clean:
 	rm -f  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
 	rm -fr .rs .rs* test/.rs test/.rs*
-	rm -f typescript test/typescript
+	rm -f typescript test/typescript *.pyc
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
 	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
 	@(cd ..; ln -s reposurgeon reposurgeon-$(VERS))
-	(cd ..; tar -czvf reposurgeon/reposurgeon-$(VERS).tar.gz `cat reposurgeon/MANIFEST`)
+	(cd ..; tar -czf reposurgeon/reposurgeon-$(VERS).tar.gz `cat reposurgeon/MANIFEST`)
 	@(cd ..; rm reposurgeon-$(VERS))
 
 version:
