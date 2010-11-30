@@ -5,6 +5,7 @@
      The 'stats' command can now take a list of repo names as arguments.
      The file extension ".fi" is now removed from the in-core names of
      repositories read from plain files
+     Fixed an embarrassing bug in the rebuild code
 
 0.8: 2010-11-19
      This is a beta. It is likely the next release will be 1.0.
