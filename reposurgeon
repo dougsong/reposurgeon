@@ -1458,9 +1458,17 @@ def rebuild_repo(repo, target, preferred):
     else:
         complain("no default destination for rebuild")
         return
-    if not preferred and repo.vcs:
-        preferred = repo.vcs
+    vcs = None
     if not preferred:
+        if repo.vcs:
+            vcs = repo.vcs
+    else:
+        for vcs in vcstypes:
+            if vcs.name.lower() == preferred.lower():
+                break
+        else:
+            complain("unknown VCS type")
+    if not vcs:
         complain("please prefer a repo type first")
 
     # Create a new empty directory to do the rebuild in
@@ -1475,21 +1483,21 @@ def rebuild_repo(repo, target, preferred):
     here = os.getcwd()
     try:
         os.chdir(staging)
-        if preferred.initializer:
-            do_or_die(preferred.initializer, "repository initialization")
+        if vcs.initializer:
+            do_or_die(vcs.initializer, "repository initialization")
         parameters = {"basename": os.path.basename(target)}
-        if "%(tempfile)s" in preferred.importer:
+        if "%(tempfile)s" in vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
                     repo.fast_export(range(len(repo)), tp, progress=verbose>0)
-                do_or_die(preferred.exporter % parameters, "import")
+                do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
-            with popen_or_die(preferred.importer % parameters, "import", mode="w") as tp:
+            with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), tp, progress=verbose>0)
-        do_or_die(preferred.checkout, "repository_checkout")
+        do_or_die(vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
 
