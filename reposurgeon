@@ -1020,6 +1020,9 @@ class Repository:
                         if isinstance(tevent, Commit) and t > s:
                             sevent.timestamp = tevent.when() - 1
                             break
+                elif isinstance(sevent, Blob):
+                    if sevent.path is None:
+                        self.complain("blob %s has no references" % sevent.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
