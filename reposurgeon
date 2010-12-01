@@ -144,7 +144,7 @@ vcstypes = [
     ]
 
 verbose         = 0
-DEBUG_SHUFFLE   = 2    # Debug directory handling
+DEBUG_SHUFFLE   = 2    # Debug file and directory handling
 DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 3    # Show commands as they are executed
 DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
@@ -338,6 +338,8 @@ class Blob:
     def clone(self, repo):
         "Clone a copy of this blob, pointing at the same file."
         c = copy.copy(self)
+        if verbose >= DEBUG_SHUFFLE:
+            print >>sys.stderr,"blob clone for %s (%s) calls os.link()" % (self.mark, self.path)
         os.link(self.blobfile(), c.blobfile())
         c.moveto(repo)
         return c
