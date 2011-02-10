@@ -10,7 +10,7 @@ import sys, os, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-version="0.9"
+version="1.0"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -773,9 +773,9 @@ class Repository:
         return lst
     def find(self, mark):
         "Find an object by mark"
-        for (i, e) in enumerate(self.events):
-            if hasattr(e, "mark") and mark == e.mark:
-                return i
+        for (ind, event) in enumerate(self.events):
+            if hasattr(event, "mark") and mark == event.mark:
+                return ind
         return None
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
@@ -1551,20 +1551,20 @@ def rebuild_repo(repo, target, preferred):
         os.chdir(here)
         nuke(staging, "reposurgeon: removing staging directory")
 
-def do_or_die(cmd, legend=""):
+def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
         legend = " "  + legend
     if verbose >= DEBUG_COMMANDS:
-        announce("executing '%s'%s" % (cmd, legend))
+        announce("executing '%s'%s" % (dcmd, legend))
     try:
-        retcode = subprocess.call(cmd, shell=True)
+        retcode = subprocess.call(dcmd, shell=True)
         if retcode < 0:
             raise FatalException("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
             raise FatalException("child returned %d." % retcode)
     except (OSError, IOError), e:
-        raise FatalException("execution of %s%s failed: %s" % (cmd, legend, e))
+        raise FatalException("execution of %s%s failed: %s" % (dcmd, legend, e))
 
 class popen_or_die:
     "Read or write from a subordinate process."
@@ -1585,9 +1585,9 @@ class popen_or_die:
         try:
             self.fp = os.popen(self.command, self.mode)
             return self.fp
-        except (OSError, IOError), e:
+        except (OSError, IOError), oe:
             raise FatalException("execution of %s%s failed: %s" \
-                                 % (self.command, self.legend, e))
+                                 % (self.command, self.legend, oe))
     def __exit__(self, extype, value, traceback):
         if extype:
             if verbose:
@@ -3115,8 +3115,8 @@ if __name__ == '__main__':
         finally:
             interpreter.cleanup()
         raise SystemExit, 0
-    except (RecoverableException, FatalException), e:
-        complain(e.msg)
+    except (RecoverableException, FatalException), xe:
+        complain(xe.msg)
         raise SystemExit, 1
     except KeyboardInterrupt:
         print ""

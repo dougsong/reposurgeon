@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+1.0: 2011-02-11
+     Pylint cleanup and release for production.
+
 0.9: 2010-11-30
      Can now handle 'N' file operations; they're passed through.
      The 'stats' command can now take a list of repo names as arguments.
