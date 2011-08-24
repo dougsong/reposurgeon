@@ -341,7 +341,7 @@ of the new repository is checked out.</para>
 </term>
 <listitem><para> Rebuild a repository from the state held by
 <command>reposurgeon</command>.  This command does not take a
-selection-set argument.  The single argument, if present argument
+selection-set argument.  The single argument, if present,
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import
 stream), it defaults to that directory.  If the target directory is
@@ -397,7 +397,7 @@ standard output.</para></listitem>
 </term>
 <listitem><para>
 Report size statistics and import/export method information about
-named repositories, or with no argument currently chosen repository.
+named repositories, or with no argument the currently chosen repository.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -764,7 +764,7 @@ and the list of version-control systems it directly supports.
 <term><command>verbose</command> 
         [<emphasis>n</emphasis>]
 </term>
-<listitem><para>'verbose 1' enables progress and messages,
+<listitem><para>'verbose 1' enables the progress meter and messages,
 'verbose 0' disables them. Higher levels of verbosity are available
 but intended for developers only.</para></listitem>
 </varlistentry>

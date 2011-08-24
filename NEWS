@@ -1,7 +1,9 @@
 			reposurgeon project news
 
-1.1: 2011-08-23
-     A minor fix and typo tweak from Edward Z. Yang,
+1.1: 2011-08-24
+     Fix a mis-coded notification message that would have crashed the 
+     program if it were ever issued, from Edward Z. Yang. Some typo
+     fixes and documentation improvements. 
 
 1.0: 2011-02-11
      Pylint cleanup and release for production.

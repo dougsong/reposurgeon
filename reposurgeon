@@ -10,7 +10,7 @@ import sys, os, cStringIO, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
-version="1.0"
+version="1.1"
 
 #
 # This code is intended to be hackable to support for special-purpose or
