@@ -14,7 +14,7 @@ version="1.0"
 
 #
 # This code is intended to be hackable to support for special-purpose or
-# custom operations, though it's even better if you ca come up with a new
+# custom operations, though it's even better if you can come up with a new
 # surgical primitive general enough to ship with the stock version.  For
 # either case, here's a guide to the architecture.
 #
@@ -1022,7 +1022,7 @@ class Repository:
                             break
                 elif isinstance(sevent, Blob):
                     if sevent.path is None:
-                        self.complain("blob %s has no references" % sevent.mark)
+                        complain("blob %s has no references" % sevent.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt

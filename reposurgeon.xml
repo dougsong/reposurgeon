@@ -114,7 +114,7 @@ list 29..71            ;; list summary index of events 20..71
 list /regression/      ;; list all commits and tags with comments containing 
                        ;; the string "regression"
 
-delete =t &amp; 1..:97     ;; delete tags from event 1 to mark 97
+delete =T &amp; 1..:97     ;; delete tags from event 1 to mark 97
 
 list *master           ;; List commits on the 'master' branch
 </programlisting>
