@@ -290,10 +290,12 @@ class Attribution:
     def __init__(self, person=None):
         self.name = self.email = self.date = None
         if person:
+            # Deal with a cvs2svn artifact
+            person = person.replace("(no author)", "no-author")
             # First, validity-check the email address
             (self.name, self.email) = email.utils.parseaddr(person)
             if not self.name or not self.email:
-                raise FatalException("can't recognize address in attribution")
+                raise FatalException("can't recognize address in attribution %s" % person)
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
             person = person.replace(" <", "|").replace("> ", "|")
