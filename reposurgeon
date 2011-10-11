@@ -389,7 +389,7 @@ class Tag:
         if "Tagger" in msg:
             (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
             if not newname or not newemail:
-                raise FatalException("can't recognize address in Tagger")
+                raise FatalException("can't recognize address in Tagger: %s" % msg['Tagger'])
             else:
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
@@ -581,8 +581,8 @@ class Commit:
             raise FatalException("update to commit %s is malformed" % idme)
         modified = False
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
-        if not newname or not newemail:
-            raise FatalException("can't recognize address in Committer")
+        if not newemail:
+            raise FatalException("can't recognize address in Committer: %s" % msg["Committer"])
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
