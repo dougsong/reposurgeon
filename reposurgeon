@@ -600,7 +600,7 @@ class Commit:
             self.committer.date = date
             modified = True
         if "Author" in msg:
-            author_re = re.compile("Author[0-9]*:")
+            author_re = re.compile("Author[0-9]*$")
             authorkeys = filter(author_re.match, msg.keys())
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
@@ -614,8 +614,8 @@ class Commit:
             # I just did it this way because it was easier.
             for (i, hdr) in enumerate(authorkeys):
                 (newname, newemail) = email.utils.parseaddr(msg[hdr])
-                if not newname or not newemail:
-                    raise FatalException("can't recognize address in %s" % hdr)
+                if not newemail:
+                    raise FatalException("can't recognize address in %s: %s" % (hdr, msg[hdr]))
                 else:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
@@ -623,13 +623,14 @@ class Commit:
                             print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
                                   % (int(msg["Event-Number"]))
                         modified = True
-                date = Date(msg[hdr + "-Date"])
-                if date != self.authors[i].date:
-                    if verbose >= DEBUG_EMAILIN:
-                        print >>sys.stderr,"reposurgeon: in event %d, %s-Date is modified" \
-                              % (int(msg["Event-Number"]), hdr)
-                    self.authors[i].date = date
-                    modified = True
+                if hdr + "-Date" in msg:
+                    date = Date(msg[hdr + "-Date"])
+                    if date != self.authors[i].date:
+                        if verbose >= DEBUG_EMAILIN:
+                            print >>sys.stderr,"reposurgeon: in event %d, %s-Date is modified" \
+                                  % (int(msg["Event-Number"]), hdr)
+                        self.authors[i].date = date
+                        modified = True
         newprops = {}
         for prophdr in filter(lambda s: s.startswith("Property-"), msg.keys()):
             propkey = prophdr[9:].lower()
@@ -1438,6 +1439,8 @@ class CriticalRegion:
     # value, but under Linux the signal calls start to trigger
     # runtime errors at this value and above.
     NSIG = 32
+    def __init__(self):
+        self.handlers = None	# Pacifies pylint
     def __enter__(self):
         "Begin critical region."
         if verbose:
@@ -3011,19 +3014,15 @@ them.
         "Split a commit."
         if not self.selected():
             raise RecoverableException("no repo has been chosen.")
-            return
         line = self.set_selection_set(line, [])
         if len(self.selection) != 1:
             raise RecoverableException("selection of a single commit required for this command")
-            return
         where = self.selection[0]
         event = self.selected()[where]
         if not isinstance(event, Commit):
             raise RecoverableException("fileop argument doesn't point at a commit")
-            return
         if not line.startswith("at"):
             raise RecoverableException("expected 'at'")
-            return
         else:
             line = line[2:].lstrip()
             try:
