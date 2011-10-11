@@ -111,7 +111,8 @@ edit                   ;; edit all editable objects
 
 list 29..71            ;; list summary index of events 20..71
 
-list /regression/      ;; list all commits and tags with comments containing 
+list /regression/      ;; list all commits and tags with comments or
+                       ;; committer headers or author headers containing 
                        ;; the string "regression"
 
 delete =T &amp; 1..:97     ;; delete tags from event 1 to mark 97
@@ -230,8 +231,8 @@ surrounded by forward slashes (to embed a forward slash in it, use a
 Python string escape such as \x2f).</para>
 
 <para>A text search matches against the comment fields of commits and
-annotated tags; it also matches against the text of passthrough
-objects.</para>
+annotated tags, or against their author/committer headers. 
+It matches against the text of passthrough objects.</para>
 </listitem>
 </varlistentry>
 </variablelist>

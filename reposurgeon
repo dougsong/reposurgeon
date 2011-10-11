@@ -2240,8 +2240,14 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             self.line = self.line[endat+1:]
             matchers = []
             for (i, e) in enumerate(self.selected()):
-                # This catches commits and tags
+                # This catches the text of commits and tags
                 if hasattr(e, "comment") and regex.search(e.comment):
+                    matchers.append(i)
+                # This matches against the contents of commit lines
+                elif hasattr(e, "committer") and regex.search(str(e.committer)):
+                    matchers.append(i)
+                # This matches against the contents of author lines
+                elif hasattr(e, "author") and regex.search(str(e.author)):
                     matchers.append(i)
                 # And this catches passthroughs
                 elif hasattr(e, "text") and regex.search(e.text):
