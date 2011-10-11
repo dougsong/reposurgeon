@@ -2778,19 +2778,19 @@ may change in a future release.
                 return
             # Fall through
         # Otherwise, mailboxize and edit the non-blobs in the selection
-        try:
-            (tfdesc, tfname) = tempfile.mkstemp()
-            with open(tfname, "w") as tfp:
-                for i in self.selection:
-                    event = self.selected()[i]
-                    if hasattr(event, "email_out"):
-                        tfp.write(event.email_out(i))
-            if os.system(editor + " " + tfname):
-                raise RecoverableException("%s returned a failure status" % editor)
-            else:
-                self.do_mailbox_in(tfname)
-        finally:
-            os.remove(tfname)
+        (tfdesc, tfname) = tempfile.mkstemp()
+        with open(tfname, "w") as tfp:
+            for i in self.selection:
+                event = self.selected()[i]
+                if hasattr(event, "email_out"):
+                    tfp.write(event.email_out(i))
+        if os.system(editor + " " + tfname):
+            raise RecoverableException("%s returned a failure status" % editor)
+        else:
+            self.do_mailbox_in(tfname)
+        # No try/finally here - we want the tempfile to survive on fatal error
+        # because it might have megabytes of metadata edits in it.
+        os.remove(tfname)
     def help_edit(self):
         print """
 Report the selection set of events to a tempfile as mailbox_out does,
