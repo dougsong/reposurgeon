@@ -610,7 +610,7 @@ class Commit:
             # Another potential minor bug: permuting the set of authors
             # will look like a modification, as old and new authors are
             # compaired pairwise rather than set equality being checked.
-            # Possibly a feature if one things order is significant, but
+            # Possibly a feature if one thinks order is significant, but
             # I just did it this way because it was easier.
             for (i, hdr) in enumerate(authorkeys):
                 (newname, newemail) = email.utils.parseaddr(msg[hdr])
