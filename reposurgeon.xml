@@ -347,7 +347,8 @@ repository read was from a repo directory (and not a git-import
 stream), it defaults to that directory.  If the target directory is
 nonempty its contents are backed up to a save directory.  Files and
 directories on the repository's preserve list are copied back from the
-backup directory.</para></listitem>
+backup directory after repo rebuild. The default preserve list
+is ['.git/config', '.git/hooks'].</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>preserve</command> 

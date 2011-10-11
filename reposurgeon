@@ -294,7 +294,7 @@ class Attribution:
             person = person.replace("(no author)", "no-author")
             # First, validity-check the email address
             (self.name, self.email) = email.utils.parseaddr(person)
-            if not self.name or not self.email:
+            if not self.email:
                 raise FatalException("can't recognize address in attribution %s" % person)
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
@@ -738,7 +738,7 @@ class Repository:
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
         self.import_line = 0
-        self.preserve_set = set([])
+        self.preserve_set = set(['.git/config', '.git/hooks'])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
     def cleanup(self):
