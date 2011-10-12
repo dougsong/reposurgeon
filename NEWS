@@ -6,6 +6,8 @@
      More useful error messages on edit failure.
      Fix typo bug that prevented editing of Author headers from working.
      Make text search match on author and committer headers as well as text.
+     Add 'obliterate' policy to delete.
+     Add 'tags' command.
 
 1.1: 2011-08-24
      Fix a mis-coded notification message that would have crashed the 

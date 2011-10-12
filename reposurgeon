@@ -546,10 +546,13 @@ class Commit:
             c.moveto(repo)
         return c
     def lister(self, eventnum, cols):
-        "Enable do_list() to report these."
+        "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
         return "%6d %s %-*s" % \
                       (eventnum+1, self.committer.date.iso8601()[:-5], cols-27, topline[:cols-27]) 
+    def tags(self, eventnum, cols):
+        "Enable do_list() to report lightweight tags."
+        return self.branch and "/tags/" in self.branch and "%6d %s" % (eventnum+1, self.branch) 
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1276,12 +1279,17 @@ class Repository:
                         # Reparent each child
                         child.parent_marks.remove(event.mark)
                         child.parent_marks += event.parent_marks
-                        # Push a copy of the parent's file ops to it
-                        # and mark it as needing resolution
-                        for fileop in event.fileops:
-                            fileop.commit = child
-                        child.fileops = copy.copy(event.fileops) + child.fileops
-                        child.pushed_to = True
+                        if "policy" == "obliterate":
+                            for fileop in event.fileops:
+                                if fileop.op != 'D':
+                                    print "warning: %s in obliterated commit." % fileop.op
+                        else:
+                            # Push a copy of the parent's file ops to it
+                            # and mark it as needing resolution
+                            for fileop in event.fileops:
+                                fileop.commit = child
+                            child.fileops = copy.copy(event.fileops) + child.fileops
+                            child.pushed_to = True
                 # Remove tags referring to this event. Its children will
                 # still own the blobs, though they may be removed by
                 # canonicalization.
@@ -1293,29 +1301,30 @@ class Repository:
             else:
                 raise FatalException("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
-        for (ei, event) in enumerate(self.events):
-            if not isinstance(event, Commit):
-                continue
-            elif event.pushed_to:
-                if verbose >= DEBUG_DELETE:
-                    print "Before canonicalization:"
-                    event.fileop_dump(ei)
-                self.case_coverage |= self.canonicalize(ei)
-                if verbose >= DEBUG_DELETE:
-                    print "After canonicalization:"
-                    event.fileop_dump(ei)
-                # Now apply policy in the mutiple-M case
-                for (path, oplist) in event.cliques().items():
-                    if len(oplist) == 1:
-                        continue
-                    if not policy or policy == "complain" or verbose >= DEBUG_DELETE:
-                        print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (ei+1, path)
-                    func = getattr(self, 'policy_' + policy)
-                    func(event, oplist)
+        if "policy" != "obliterate":
+            for (ei, event) in enumerate(self.events):
+                if not isinstance(event, Commit):
+                    continue
+                elif event.pushed_to:
                     if verbose >= DEBUG_DELETE:
-                        print "Commit %d, after applying policy:" % (ei +1,)
-                        for op in event.fileops:
-                            print str(op)
+                        print "Before canonicalization:"
+                        event.fileop_dump(ei)
+                    self.case_coverage |= self.canonicalize(ei)
+                    if verbose >= DEBUG_DELETE:
+                        print "After canonicalization:"
+                        event.fileop_dump(ei)
+                    # Now apply policy in the mutiple-M case
+                    for (path, oplist) in event.cliques().items():
+                        if len(oplist) == 1:
+                            continue
+                        if not policy or policy == "complain" or verbose >= DEBUG_DELETE:
+                            print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (ei+1, path)
+                        func = getattr(self, 'policy_' + policy)
+                        func(event, oplist)
+                        if verbose >= DEBUG_DELETE:
+                            print "Commit %d, after applying policy:" % (ei +1,)
+                            for op in event.fileops:
+                                print str(op)
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
@@ -1327,6 +1336,9 @@ class Repository:
         "Remove all but the last M."
         while len(oplist) > 1:
             commit.fileops.pop(oplist.pop(0))
+    def policy_obliterate(self, commit, oplist):
+        "Obliterate all fileops associated with the commit"
+        pass
     #
     # Delete machinery ends here
     #
@@ -2304,7 +2316,9 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         for i in self.selection:
             event = self.selected().events[i]
             if hasattr(event, method):
-                fp.write(getattr(event, method)(*((i,)+optargs)) + "\n")
+                summary = getattr(event, method)(*((i,)+optargs))
+                if summary:
+                    fp.write(summary + "\n")
         if outfile:
             fp.close()
     #
@@ -2466,6 +2480,16 @@ of the comment.  If there is a second argument, or the first is not
 recognized as a selection set, it will be taken as the name of the
 file to report to; no argument, or one of '-'; writes to standard
 output.
+"""
+    def do_tags(self, line):
+        "Generate a human-friendly listing of objects."
+        self.report_select(line, "tags", (screenwidth(),))
+    def help_tags(self):
+        print """
+Display lightweight tags: two fields, an event number and a tag name.  If
+there is a second argument, or the first is not recognized as a
+selection set, it will be taken as the name of the file to report to;
+no argument, or one of '-'; writes to standard output.
 """
     #
     # Housekeeping
