@@ -207,7 +207,7 @@ class Baton:
     def __exit__(self, extype, value_unused, traceback_unused):
         if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
-        if extype == FatalException:
+        if extype == Fatal:
             self.endmsg = "aborted by error"
         if self.stream:
             self.stream.write("...(%2.2f sec) %s.\n" \
@@ -270,7 +270,7 @@ class Date:
             # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
             pass
         # Date format not recognized
-        raise FatalException("'%s' is not a valid timestamp" % text)
+        raise Fatal("'%s' is not a valid timestamp" % text)
     def iso8601(self):
         "Format as an ISO8601 timestamp."
         return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.timestamp)) + self.timezone
@@ -295,14 +295,14 @@ class Attribution:
             # First, validity-check the email address
             (self.name, self.email) = email.utils.parseaddr(person)
             if not self.email:
-                raise FatalException("can't recognize address in attribution %s" % person)
+                raise Fatal("can't recognize address in attribution %s" % person)
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
             person = person.replace(" <", "|").replace("> ", "|")
             try:
                 self.date = Date(person.strip().split("|")[2])
             except (ValueError, IndexError):
-                raise FatalException("malformed attribution %s" % person)
+                raise Fatal("malformed attribution %s" % person)
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
@@ -376,7 +376,7 @@ class Tag:
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
         if "Tag-Name" not in msg or "Tagger" not in msg:
-            raise FatalException("update to tag %s is malformed" %
+            raise Fatal("update to tag %s is malformed" %
                                        self.name)
         modified = False
         newname = msg["Tag-Name"]
@@ -389,7 +389,7 @@ class Tag:
         if "Tagger" in msg:
             (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
             if not newname or not newemail:
-                raise FatalException("can't recognize address in Tagger: %s" % msg['Tagger'])
+                raise Fatal("can't recognize address in Tagger: %s" % msg['Tagger'])
             else:
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
@@ -446,7 +446,7 @@ class FileOp:
         if opline.startswith("M"):
             m = FileOp.modify_re.match(opline)
             if not m:
-                raise FatalException("bad format of M line: %s" % repr(opline))
+                raise Fatal("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
         elif opline[0] == "N":
             (self.op, self.ref, self.committish) = shlex.split(opline)
@@ -457,7 +457,7 @@ class FileOp:
         elif opline == "deleteall":
             self.op = "deleteall"
         else:
-            raise FatalException("unexpected fileop %s while parsing" % opline)
+            raise Fatal("unexpected fileop %s while parsing" % opline)
     def inlinefile(self):
         return self.commit.repo.subdir() + "/inline-" + repr(id(self))
     def paths(self):
@@ -503,7 +503,7 @@ class FileOp:
         elif self.op == "deleteall":
             st = self.op
         else:
-            raise FatalException("unexpected fileop %s while writing" % self.op)
+            raise Fatal("unexpected fileop %s while writing" % self.op)
         return st
 
 class Commit:
@@ -581,11 +581,11 @@ class Commit:
         "Update this commit from a parsed email message."
         if "Committer" not in msg or "Committer-Date" not in msg:
             idme = self.mark or "unmarked"
-            raise FatalException("update to commit %s is malformed" % idme)
+            raise Fatal("update to commit %s is malformed" % idme)
         modified = False
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newemail:
-            raise FatalException("can't recognize address in Committer: %s" % msg["Committer"])
+            raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
@@ -618,7 +618,7 @@ class Commit:
             for (i, hdr) in enumerate(authorkeys):
                 (newname, newemail) = email.utils.parseaddr(msg[hdr])
                 if not newemail:
-                    raise FatalException("can't recognize address in %s: %s" % (hdr, msg[hdr]))
+                    raise Fatal("can't recognize address in %s: %s" % (hdr, msg[hdr]))
                 else:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
@@ -727,7 +727,7 @@ class Passthrough:
         "Dump this passthrough in import-stream format."
         return self.text
 
-class FatalException(Exception):
+class Fatal(Exception):
     "Unrecoverable error."
     def __init__(self, msg):
         Exception.__init__(self)
@@ -758,9 +758,9 @@ class Repository:
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
-            raise FatalException(msg + " at line " + repr(self.import_line))
+            raise Fatal(msg + " at line " + repr(self.import_line))
         else:
-            raise FatalException(msg)
+            raise Fatal(msg)
     def warn(self, msg, atline=True):
         "Display a parse warning."
         if atline and self.import_line:
@@ -805,7 +805,7 @@ class Repository:
                             if dataline == delim:
                                 break
                             elif not dataline:
-                                raise FatalException("EOF while reading blob")
+                                raise Fatal("EOF while reading blob")
                     elif line.startswith("data"):
                         try:
                             count = int(line[5:])
@@ -1069,7 +1069,7 @@ class Repository:
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
         except OSError, e:
-            raise FatalException("repo rename %s -> %s failed: %s"
+            raise Fatal("repo rename %s -> %s failed: %s"
                                        % (self.subdir(), self.subdir(newname), e))
     def commits(self):
         "Return a list of the repository commit objects."
@@ -1208,7 +1208,7 @@ class Repository:
         #
         # Case not covered
         #
-        raise FatalException("can't compose op '%s' and '%s'" % (left, right))
+        raise Fatal("can't compose op '%s' and '%s'" % (left, right))
     def canonicalize(self, ei):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
@@ -1263,15 +1263,15 @@ class Repository:
         for ei in selected:
             event = self.events[ei]
             if isinstance(event, Blob):
-                raise RecoverableException("attempt to directly delete blob")
+                raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
                 if "policy" == "obliterate":
-                    announce = "commit %d to be obliterated has " % ei+1 
+                    announce = "commit %d to be obliterated has " % (ei+1) 
                     if '/' in event.branch:
-                        raise RecoverableException(announce + "non-head branch attribute %s" % event.branch)
+                        raise Recoverable(announce + "non-head branch attribute %s" % event.branch)
                     for fileop in event.fileops:
                         if fileop.op != 'D':
-                            raise RecoverableException(announce + "fileop %s." % fileop.op)
+                            raise Recoverable(announce + "fileop %s." % fileop.op)
                             return
         # Here are the deletions
         for ei in selected:
@@ -1307,7 +1307,7 @@ class Repository:
                 # And remove it
                 self.events.pop(ei)
             else:
-                raise FatalException("unexpected object in event array")
+                raise Fatal("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
         if "policy" != "obliterate":
             for (ei, event) in enumerate(self.events):
@@ -1361,7 +1361,7 @@ class Repository:
                 if event.mark is None:
                     continue
                 elif not event.mark.startswith(":"):
-                    raise FatalException("field not in mark format")
+                    raise Fatal("field not in mark format")
                 else:
                     marklist.append(event.mark)
         for event in self.events:
@@ -1404,7 +1404,7 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.fast_import(sys.stdin, progress=verbose>0)
     elif not os.path.exists(source):
-        raise RecoverableException("%s does not exist" % source)
+        raise Recoverable("%s does not exist" % source)
     elif not os.path.isdir(source):
         repo = Repository()
         repo.fast_import(open(source), progress=verbose>0)
@@ -1424,9 +1424,9 @@ def read_repo(source, preferred):
                 vcs = possible
                 hitcount += 1
         if hitcount == 0:
-            raise RecoverableException("couldn't find a repo under %s" % os.path.relpath(source))
+            raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
         elif hitcount > 1:
-            raise RecoverableException("too many repos under %s" % os.path.relpath(source))
+            raise Recoverable("too many repos under %s" % os.path.relpath(source))
         elif verbose > 0:
             announce("found %s repository" % vcs.name)
         repo = Repository()
@@ -1585,11 +1585,11 @@ def do_or_die(dcmd, legend=""):
     try:
         retcode = subprocess.call(dcmd, shell=True)
         if retcode < 0:
-            raise FatalException("child was terminated by signal %d." % -retcode)
+            raise Fatal("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
-            raise FatalException("child returned %d." % retcode)
+            raise Fatal("child returned %d." % retcode)
     except (OSError, IOError), e:
-        raise FatalException("execution of %s%s failed: %s" % (dcmd, legend, e))
+        raise Fatal("execution of %s%s failed: %s" % (dcmd, legend, e))
 
 class popen_or_die:
     "Read or write from a subordinate process."
@@ -1611,7 +1611,7 @@ class popen_or_die:
             self.fp = os.popen(self.command, self.mode)
             return self.fp
         except (OSError, IOError), oe:
-            raise FatalException("execution of %s%s failed: %s" \
+            raise Fatal("execution of %s%s failed: %s" \
                                  % (self.command, self.legend, oe))
     def __exit__(self, extype, value, traceback):
         if extype:
@@ -1620,17 +1620,17 @@ class popen_or_die:
             raise extype, value, traceback
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.command, self.legend)
-            if extype == FatalException:
+            if extype == Fatal:
                 value.msg += " and " + legend
             else:
-                raise FatalException(legend + ".")
+                raise Fatal(legend + ".")
         return False
 
 def iso8601_from_unixtime(secs_since_epoch):
     "Make an ISO8601 timestamp frm Unix time."
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(secs_since_epoch))
 
-class RecoverableException(Exception):
+class Recoverable(Exception):
     def __init__(self, msg):
         Exception.__init__(self)
         self.msg = msg
@@ -1751,7 +1751,7 @@ class RepositoryList:
                     late.events.append(event)
                 else:
                     # FIXME: Someday, color passthroughs that aren't fronted.
-                    raise FatalException("coloring algorithm failed on %s" % event)
+                    raise Fatal("coloring algorithm failed on %s" % event)
         for event in self.repo:
             if hasattr(event, "color"):
                 event.color = None
@@ -1795,7 +1795,7 @@ class RepositoryList:
                         if old is None:
                             continue
                         elif not old.startswith(":"):
-                            raise FatalException("field not in mark format")
+                            raise Fatal("field not in mark format")
                         else:
                             new = old + factor.name
                             if verbose >= DEBUG_MERGE:
@@ -1834,9 +1834,9 @@ class RepositoryList:
         for commit in union.commits():
             if commit != roots[0] and not commit.parent_marks:
                 if not lastcommit:
-                    raise FatalException("can't find previous commit to link")
+                    raise Fatal("can't find previous commit to link")
                 elif lastcommit.mark is None:
-                    raise FatalException("can't link to commit with no mark")
+                    raise Fatal("can't link to commit with no mark")
                 commit.parent_marks.append(lastcommit.mark)
             lastcommit = commit
         # Put the result on the load list
@@ -1922,7 +1922,7 @@ class RepositoryList:
                         newevent.fileops = keepers
                         event.deletehook = newevent
         except re.error:
-            raise FatalException("you confused the regexp processor!")
+            raise Fatal("you confused the regexp processor!")
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged_branches = expunged.branchlist()
@@ -1969,7 +1969,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         "Execute one command, fielding interrupts for recoverable exceptions."
         try:
             cmd.Cmd.onecmd(self, line)
-        except RecoverableException, e:
+        except Recoverable, e:
             complain(e.msg)
     def postcmd(self, unused, line):
         if line == "EOF":
@@ -1987,7 +1987,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
     def do_shell(self, line):
         "Execute a shell command."
         if os.system(line):
-            raise RecoverableException("'shell %s' returned error." % line)
+            raise Recoverable("'shell %s' returned error." % line)
     def do_EOF(self, unused):
         "Terminate reposurgeon."
         print ""
@@ -2030,7 +2030,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         value = self.eval_disjunct()
         c = self.peek()
         if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
-            raise RecoverableException("trailing junk on selection: %s" % repr(self.line))
+            raise Recoverable("trailing junk on selection: %s" % repr(self.line))
         if verbose >= DEBUG_LEXER:
             print "%s <- eval_expression(), left = %s" % (value, repr(self.line))
         return value
@@ -2083,7 +2083,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             term = self.eval_disjunct()
             self.line = self.line.lstrip()
             if self.peek() != '}':
-                raise RecoverableException("trailing junk on inner expression")
+                raise Recoverable("trailing junk on inner expression")
             else:
                 self.pop()
         else:
@@ -2121,7 +2121,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             # We need a special check here because these expressions
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
-                raise RecoverableException("garbled type mask at %s" % repr(self.line))
+                raise Recoverable("garbled type mask at %s" % repr(self.line))
             if verbose >= DEBUG_LEXER:
                 print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), repr(self.line))
             selected = []
@@ -2163,7 +2163,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                             selection.append(i)
                             break
                     else:
-                        raise RecoverableException("mark %s not found." % markref)
+                        raise Recoverable("mark %s not found." % markref)
                     continue
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
@@ -2181,7 +2181,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                         self.line = self.line[2:]
                         continue
                     else:
-                        raise RecoverableException("start of span is missing")
+                        raise Recoverable("start of span is missing")
                 if self.peek() == "@":
                     self.pop()
                     matched = False
@@ -2198,7 +2198,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                                     if event.branch == symbol:
                                         loc = i
                             if loc is None:
-                                raise RecoverableException("branch name %s points to hyperspace" % symbol)
+                                raise Recoverable("branch name %s points to hyperspace" % symbol)
                             else:
                                 matched = True
                                 selection.append(loc)
@@ -2213,9 +2213,9 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                                     matched = True
                                     selection.append(i)
                             else:
-                                raise RecoverableException("tag name %s points to hyperspace" % tag.name)
+                                raise Recoverable("tag name %s points to hyperspace" % tag.name)
                     if not matched:
-                        raise RecoverableException("couldn't match a name at @%s" % self.line)
+                        raise Recoverable("couldn't match a name at @%s" % self.line)
             if verbose >= DEBUG_LEXER:
                 announce("location list is %s with %s left" % (selection, repr(self.line)))
             # Resolve spans
@@ -2236,10 +2236,10 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                 announce("resolved list is %s with %s left" % (selection, repr(self.line)))
             # Sanity checks
             if spanning:
-                raise RecoverableException("incomplete range expression.")
+                raise Recoverable("incomplete range expression.")
             for elt in selection:
                 if elt < 0 or elt > len(self.selected())-1:
-                    raise RecoverableException("event number %s out of range" % (elt+1))
+                    raise Recoverable("event number %s out of range" % (elt+1))
             polyrange = set(selection)
         if verbose >= DEBUG_LEXER:
             print "%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line))
@@ -2252,7 +2252,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         if not self.peek() == '/':
             return None
         elif '/' not in self.line[1:]:
-            raise RecoverableException("malformed text search specifier")
+            raise Recoverable("malformed text search specifier")
         else:
             assert(self.pop() == '/')
             endat = self.line.index('/')
@@ -2304,7 +2304,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     self.line = self.line[len(os.path.basename(symbol)):]
                     break
             else:
-                raise RecoverableException("unknown branch name %s" % self.line)
+                raise Recoverable("unknown branch name %s" % self.line)
             return set(selection)
     #
     # Helpers
@@ -2422,7 +2422,7 @@ for exploring the selection-set language.
         for name in line.split():
             this = self.repo_by_name(name)
             if not this:
-                raise RecoverableException("no such repo as %s" % name)
+                raise Recoverable("no such repo as %s" % name)
         if this:
             def count(otype):
                 return len(filter(lambda x: isinstance(x,otype), this.events))
@@ -2744,13 +2744,13 @@ to standard output.
         # First, a validation pass
         for (i, message) in enumerate(update_list):
             if "Event-Number" not in message:
-                raise RecoverableException("missing event number in update %d" % i)
+                raise Recoverable("missing event number in update %d" % i)
             eventnum = int(message["Event-Number"]) - 1
             if eventnum < 0 or eventnum >= len(self.selected()):
-                raise FatalException("event number %d out of range in update %d" % (eventnum, i+1))
+                raise Fatal("event number %d out of range in update %d" % (eventnum, i+1))
             event = self.selected()[eventnum]
             if not hasattr(event, "email_in"):
-                raise FatalException("event %d cannot be modified" % (eventnum+1,))
+                raise Fatal("event %d cannot be modified" % (eventnum+1,))
         # Now apply the updates
         modified = []
         for update in update_list:
@@ -2826,7 +2826,7 @@ may change in a future release.
                 if hasattr(event, "email_out"):
                     tfp.write(event.email_out(i))
         if os.system(editor + " " + tfname):
-            raise RecoverableException("%s returned a failure status" % editor)
+            raise Recoverable("%s returned a failure status" % editor)
         else:
             self.do_mailbox_in(tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
@@ -2876,7 +2876,7 @@ only when they are the final ones on the commit's branch.
             try:
                 timefuzz = int(line)
             except ValueError:
-                raise RecoverableException("time-fuzz value must be an integer")
+                raise Recoverable("time-fuzz value must be an integer")
         eligible = []
         # This is a crude search that ignores the repo graph structure;
         # properly speaking we should be chasing child links.  Screw
@@ -3051,24 +3051,24 @@ them.
     def do_split(self, line):
         "Split a commit."
         if not self.selected():
-            raise RecoverableException("no repo has been chosen.")
+            raise Recoverable("no repo has been chosen.")
         line = self.set_selection_set(line, [])
         if len(self.selection) != 1:
-            raise RecoverableException("selection of a single commit required for this command")
+            raise Recoverable("selection of a single commit required for this command")
         where = self.selection[0]
         event = self.selected()[where]
         if not isinstance(event, Commit):
-            raise RecoverableException("fileop argument doesn't point at a commit")
+            raise Recoverable("fileop argument doesn't point at a commit")
         if not line.startswith("at"):
-            raise RecoverableException("expected 'at'")
+            raise Recoverable("expected 'at'")
         else:
             line = line[2:].lstrip()
             try:
                 splitpoint = int(line.split()[0]) - 1
             except ValueError:
-                raise RecoverableException("expected integer fileop index (1-origin)")
+                raise Recoverable("expected integer fileop index (1-origin)")
             if splitpoint not in range(1, len(event.fileops)):
-                raise RecoverableException("fileop index out of range")
+                raise Recoverable("fileop index out of range")
             # Actual implementation starts here
             self.selected().events.insert(where+1, event.clone())
             event2 = self.selected().events[where+1]
@@ -3109,7 +3109,7 @@ original commit.
         for name in line.split():
             repo = self.repo_by_name(name)
             if repo is None:
-                raise RecoverableException("no such repo as %s" % name)
+                raise Recoverable("no such repo as %s" % name)
             else:
                 factors.append(repo)
         self.merge(factors)
@@ -3154,7 +3154,7 @@ if __name__ == '__main__':
         finally:
             interpreter.cleanup()
         raise SystemExit, 0
-    except (RecoverableException, FatalException), xe:
+    except (Recoverable, Fatal), xe:
         complain(xe.msg)
         raise SystemExit, 1
     except KeyboardInterrupt:
