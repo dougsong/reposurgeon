@@ -234,6 +234,12 @@ Python string escape such as \x2f).</para>
 annotated tags, or against their author/committer headers. 
 It matches against the text of passthrough objects.</para>
 </listitem>
+<term><firstterm>refset</firstterm></term>
+<listitem>
+<para>The syntax '^' followed by an event number, or a mark literal
+beginning with ':', generates a range of all events that refer to that
+event. It is only useful on blobs.</para>
+</listitem>
 </varlistentry>
 </variablelist>
 

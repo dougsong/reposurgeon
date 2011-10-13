@@ -8,6 +8,7 @@
      Make text search match on author and committer headers as well as text.
      Add 'obliterate' policy to delete.
      Add 'tags' command.
+     Add '^' syntax for inspecting the reference sets of blobs.
      New 'cvspreen' operation for nuking junk commits from cvs2svn conversiopns.
 
 1.1: 2011-08-24

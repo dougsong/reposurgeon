@@ -2093,6 +2093,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     term = self.eval_textsearch()
                     if term == None:
                         term = self.eval_branchset()
+                        if term == None:
+                            term = self.eval_refset()
         if verbose >= DEBUG_LEXER:
             print "%s <- eval_term(), left = %s" % (term, repr(self.line))
         return term
@@ -2305,6 +2307,33 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             else:
                 raise Recoverable("unknown branch name %s" % self.line)
             return set(selection)
+    def eval_refset(self):
+        "Resolve a decorated blob name to the set of commits that refer to it."
+        if not self.peek() == '^':
+            return None
+        self.pop()
+        markref = self.peek() == ':'
+        if markref:
+            self.pop()
+        selection = []
+        match = re.match("[0-9]+", self.line)
+        if match is None:
+            return None
+        else:
+            ind = match.group()
+            self.line = self.line[len(ind):]
+            if markref:
+                mark = ind
+            else:
+                mark = self.selected.events[int(ind)-1].mark
+            ind = ":" + ind
+            print "Foo!", ind
+            for (i, event) in enumerate(self.selected().events):
+                if isinstance(event, Commit):
+                    for fileop in event.fileops:
+                        if fileop.op == 'M' and fileop.ref == ind:
+                            selection.append(i)
+        return set(selection)
     #
     # Helpers
     #
