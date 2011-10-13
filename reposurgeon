@@ -322,11 +322,13 @@ class Blob:
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.timestamp = None
+        self.refcount = 0
         self.colors = []
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
     def blobfile(self):
+        "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
     def moveto(self, repo):
         "Change the repo this blob is associated with."
@@ -345,13 +347,13 @@ class Blob:
         os.link(self.blobfile(), c.blobfile())
         c.moveto(repo)
         return c
-    def release(self):
-        os.remove(self.blobfile())
-        self.path = None             # Marked for deletion
     def __str__(self):
-        with open(self.blobfile()) as dp:
-            content = dp.read()
-        return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
+        if not os.path.exists(self.blobfile()):
+            return ''
+        else:
+            with open(self.blobfile()) as dp:
+                content = dp.read()
+            return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
 
 class Tag:
     "Represents an annotated tag."
@@ -832,6 +834,7 @@ class Repository:
                         for obj in self.events:
                             if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                 obj.path = fileop.path
+                                obj.refcount += 1
                                 # This is a blatant hack.
                                 # We need to impute a timestamp
                                 # to each blob for sorting after
@@ -1281,25 +1284,23 @@ class Repository:
             elif isinstance(event, Commit):
                 if policy == "cvspreen" and "/tags/" in event.branch:
                     event.parents()[0].branch = event.branch
-                if not event.children():
-                    # Tip revision.  Release all its blobs.
-                    for fileop in event.fileops:
-                        if fileop.op == "M":
-                            bi = self.find(fileop.ref)
-                            assert(isinstance(self.events[bi], Blob))
-                            self.events[bi].release()
-                else:
-                    for child in event.children():
-                        # Reparent each child
-                        child.parent_marks.remove(event.mark)
-                        child.parent_marks += event.parent_marks
-                        if "policy" not in ("obliterate", "cvspreen"):
-                            # Push a copy of the parent's file ops to it
-                            # and mark it as needing resolution
-                            for fileop in event.fileops:
-                                fileop.commit = child
-                            child.fileops = copy.copy(event.fileops) + child.fileops
-                            child.pushed_to = True
+                # Decrement refcount on its blobs.
+                for fileop in event.fileops:
+                    if fileop.op == "M":
+                        bi = self.find(fileop.ref)
+                        assert(isinstance(self.events[bi], Blob))
+                        self.events[bi].refcount -= 1
+                # Reparent each child
+                for child in event.children():
+                    child.parent_marks.remove(event.mark)
+                    child.parent_marks += event.parent_marks
+                    if "policy" not in ("obliterate", "cvspreen"):
+                        # Push a copy of the parent's file ops to it
+                        # and mark it as needing resolution
+                        for fileop in event.fileops:
+                            fileop.commit = child
+                        child.fileops = copy.copy(event.fileops) + child.fileops
+                        child.pushed_to = True
                 # Remove tags referring to this event. Its children will
                 # still own the blobs, though they may be removed by
                 # canonicalization.
@@ -1741,7 +1742,7 @@ class RepositoryList:
                     early.events.append(event.clone(early))
                 if "late" in event.colors:
                     late.events.append(event.clone(late))
-                event.release()
+                event.refcount -= 1
             else:
                 if event.color == "early":
                     if hasattr(event, "moveto"):
@@ -1919,7 +1920,7 @@ class RepositoryList:
                     blobs.reverse()
                     for blob in blobs:
                         blob.deletehook = blob.clone(expunged)
-                        blob.release()
+                        blob.refcount -= 1
                         newevent = event.clone(expunged)
                         newevent.fileops = keepers
                         event.deletehook = newevent
@@ -1945,7 +1946,7 @@ class RepositoryList:
                 delattr(event, "deletehook")
         self.repolist.append(expunged)
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.path)), self.repo.events)
+        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.refcount)), self.repo.events)
         deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
         if verbose:
             announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
