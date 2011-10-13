@@ -1346,6 +1346,9 @@ class Repository:
         "Remove all but the last M."
         while len(oplist) > 1:
             commit.fileops.pop(oplist.pop(0))
+    def policy_obliterate(self, commit, oplist):
+        "Remove all fileops."
+        pass
     #
     # Delete machinery ends here
     #
