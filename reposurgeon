@@ -2327,7 +2327,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             else:
                 mark = self.selected.events[int(ind)-1].mark
             ind = ":" + ind
-            print "Foo!", ind
             for (i, event) in enumerate(self.selected().events):
                 if isinstance(event, Commit):
                     for fileop in event.fileops:
@@ -3164,14 +3163,17 @@ type.
         if not self.selected():
             complain("no repo has been chosen.")
             return
+        repo = self.selected()
+        manufactured = "This commit was manufactured by cvs2svn to create tag"
+        # delete commits with no fileops remaining 
         deletion_set = []
-        for (ei, event) in enumerate(self.selected().events):
+        for (ei, event) in enumerate(repo.events):
             if isinstance(event, Commit):
                 if not event.fileops and len(event.parents()) == 1 and \
                    event.when() - event.parents()[0].when() < 10 and \
-                   "This commit was manufactured by cvs2svn to create tag" in event.comment:
+                   manufactured in event.comment:
                     deletion_set.append(ei)
-        self.selected().delete(deletion_set, "cvspreen")
+        repo.delete(deletion_set, "cvspreen")
         if verbose >= 1:
             print "%d commits obliterated." % len(deletion_set)
     def help_merge(self):
