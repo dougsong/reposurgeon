@@ -1279,6 +1279,8 @@ class Repository:
             if event.__class__ in (Reset, Tag, Passthrough):
                 self.events.pop(ei)
             elif isinstance(event, Commit):
+                if policy == "cvspreen":
+                    event.parents()[0].branch = event.branch
                 if not event.children():
                     # Tip revision.  Release all its blobs.
                     for fileop in event.fileops:
@@ -1291,7 +1293,7 @@ class Repository:
                         # Reparent each child
                         child.parent_marks.remove(event.mark)
                         child.parent_marks += event.parent_marks
-                        if "policy" != "obliterate":
+                        if "policy" not in ("obliterate", "cvspreen"):
                             # Push a copy of the parent's file ops to it
                             # and mark it as needing resolution
                             for fileop in event.fileops:
@@ -1309,7 +1311,7 @@ class Repository:
             else:
                 raise Fatal("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
-        if "policy" != "obliterate":
+        if "policy" not in ("obliterate", "cvspreen"):
             for (ei, event) in enumerate(self.events):
                 if not isinstance(event, Commit):
                     continue
@@ -1344,9 +1346,6 @@ class Repository:
         "Remove all but the last M."
         while len(oplist) > 1:
             commit.fileops.pop(oplist.pop(0))
-    def policy_obliterate(self, commit, oplist):
-        "Obliterate all fileops associated with the commit"
-        pass
     #
     # Delete machinery ends here
     #
@@ -3130,6 +3129,29 @@ Marks will be renumbered.
 The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
 type.
+"""
+    def do_cvspreen(self, line):
+        "Purge cruft created by cvspreen."
+        if not self.selected():
+            complain("no repo has been chosen.")
+            return
+        deletion_set = []
+        for (ei, event) in enumerate(self.selected().events):
+            if isinstance(event, Commit):
+                if not event.fileops and len(event.parents()) == 1 and \
+                   event.when() - event.parents()[0].when() < 10 and \
+                   "This commit was manufactured by cvs2svn to create tag" in event.comment:
+                    deletion_set.append(ei)
+        self.selected().delete(deletion_set, "cvspreen")
+        if verbose >= 1:
+            print "%d commits obliterated." % len(deletion_set)
+    def help_merge(self):
+        print """
+Purge cruft created by cvs2svn conversions.  This looks for dummy
+commits created by cvs2svn with one parent, stereotyped comments and
+no fileops that were created within 10 secons of their parent.  The
+branch attribute of the commit is given to the commit's parent and the
+commit itself deleted.
 """
 
 if __name__ == '__main__':

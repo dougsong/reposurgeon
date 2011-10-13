@@ -8,6 +8,7 @@
      Make text search match on author and committer headers as well as text.
      Add 'obliterate' policy to delete.
      Add 'tags' command.
+     New 'cvspreen' operation for nuking junk commits from cvs2svn conversiopns.
 
 1.1: 2011-08-24
      Fix a mis-coded notification message that would have crashed the 
