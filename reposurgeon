@@ -559,6 +559,7 @@ class Commit:
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
+        msg["Branch"] = self.branch
         if self.authors:
             self.authors[0].email_out(msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
@@ -581,10 +582,15 @@ class Commit:
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
+        idme = self.mark or "unmarked"
+        if "Branch" not in msg:
+            raise Fatal("update to commit %s is malformed" % idme)
         if "Committer" not in msg or "Committer-Date" not in msg:
-            idme = self.mark or "unmarked"
             raise Fatal("update to commit %s is malformed" % idme)
         modified = False
+        if self.branch != msg["Branch"]:
+            modified = True
+        self.branch = msg["Branch"]
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newemail:
             raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
