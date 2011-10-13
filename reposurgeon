@@ -3149,7 +3149,7 @@ type.
         print """
 Purge cruft created by cvs2svn conversions.  This looks for dummy
 commits created by cvs2svn with one parent, stereotyped comments and
-no fileops that were created within 10 secons of their parent.  The
+no fileops that were created within 10 seconds of their parent.  The
 branch attribute of the commit is given to the commit's parent and the
 commit itself deleted.
 """
