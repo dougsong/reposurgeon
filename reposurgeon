@@ -1259,13 +1259,25 @@ class Repository:
         selected.sort(lambda x, y: cmp(y, x))
         if verbose >= DEBUG_DELETE:
             print "Deletion list is %s" % map(lambda x: x+1, selected)
+        # Sanity checks
+        for ei in selected:
+            event = self.events[ei]
+            if isinstance(event, Blob):
+                raise RecoverableException("attempt to directly delete blob")
+            elif  isinstance(event, Commit):
+                if "policy" == "obliterate":
+                    announce = "commit %d to be obliterated has " % ei+1 
+                    if '/' in event.branch:
+                        raise RecoverableException(announce + "non-head branch attribute %s" % event.branch)
+                    for fileop in event.fileops:
+                        if fileop.op != 'D':
+                            raise RecoverableException(announce + "fileop %s." % fileop.op)
+                            return
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
             if event.__class__ in (Reset, Tag, Passthrough):
                 self.events.pop(ei)
-            elif isinstance(event, Blob):
-                raise FatalException("attempt to directly delete blob")
             elif isinstance(event, Commit):
                 if not event.children():
                     # Tip revision.  Release all its blobs.
@@ -1279,11 +1291,7 @@ class Repository:
                         # Reparent each child
                         child.parent_marks.remove(event.mark)
                         child.parent_marks += event.parent_marks
-                        if "policy" == "obliterate":
-                            for fileop in event.fileops:
-                                if fileop.op != 'D':
-                                    print "warning: %s in obliterated commit." % fileop.op
-                        else:
+                        if "policy" != "obliterate":
                             # Push a copy of the parent's file ops to it
                             # and mark it as needing resolution
                             for fileop in event.fileops:
