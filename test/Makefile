@@ -1,6 +1,7 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut
+all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut \
+		testrefs 
 	@echo "No diff output is good news."
 
 clean:
@@ -84,5 +85,11 @@ testcut:
 	@diff -u testcut.chk /tmp/regress
 	@rm -f /tmp/regress
 
-
-
+# Test refset syntax
+buildtestrefs:
+	@../reposurgeon "script multiblob.tst" >testrefs.chk
+testrefs:
+	@ echo "Test of the refset syntax."
+	@../reposurgeon "script cut.tst" >/tmp/regress
+	@diff -u testcut.chk /tmp/regress
+	@rm -f /tmp/regress
