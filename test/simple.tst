@@ -11,6 +11,7 @@ resolve @lightweight-sample
 resolve *annotated-sample
 resolve @annotated-sample
 resolve /regression/
+tags
 history
 verbose 1
 expunge 1..$ theory.txt
