@@ -1262,7 +1262,7 @@ class Repository:
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         if not policy:
-            policy = "complain"
+            policy = ["complain"]
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
@@ -1274,7 +1274,7 @@ class Repository:
             if isinstance(event, Blob):
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
-                if "policy" == "obliterate":
+                if "obliterate" in policy:
                     announce = "commit %d to be obliterated has " % (ei+1) 
                     if '/' in event.branch:
                         raise Recoverable(announce + "non-head branch attribute %s" % event.branch)
@@ -1288,7 +1288,7 @@ class Repository:
             if event.__class__ in (Reset, Tag, Passthrough):
                 self.events.pop(ei)
             elif isinstance(event, Commit):
-                if policy == "cvspreen" and "/tags/" in event.branch:
+                if "fixtags" in policy and "/tags/" in event.branch:
                     event.parents()[0].branch = event.branch
                 # Decrement refcount on its blobs.
                 for fileop in event.fileops:
@@ -1300,7 +1300,7 @@ class Repository:
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
                     child.parent_marks += event.parent_marks
-                    if "policy" not in ("obliterate", "cvspreen"):
+                    if "obliterate" not in policy:
                         # Push a copy of the parent's file ops to it
                         # and mark it as needing resolution
                         for fileop in event.fileops:
@@ -1318,7 +1318,7 @@ class Repository:
             else:
                 raise Fatal("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
-        if "policy" not in ("obliterate", "cvspreen"):
+        if "obliterate" not in policy:
             for (ei, event) in enumerate(self.events):
                 if not isinstance(event, Commit):
                     continue
@@ -1334,10 +1334,12 @@ class Repository:
                     for (path, oplist) in event.cliques().items():
                         if len(oplist) == 1:
                             continue
-                        if not policy or policy == "complain" or verbose >= DEBUG_DELETE:
+                        if not policy or "complain" in policy or verbose >= DEBUG_DELETE:
                             print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (ei+1, path)
-                        func = getattr(self, 'policy_' + policy)
-                        func(event, oplist)
+                        if "coalesce" in policy:
+                            "Remove all but the last M."
+                            while len(oplist) > 1:
+                                event.fileops.pop(oplist.pop(0))
                         if verbose >= DEBUG_DELETE:
                             print "Commit %d, after applying policy:" % (ei +1,)
                             for op in event.fileops:
@@ -1345,17 +1347,6 @@ class Repository:
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
-    # Deletion policy hooks
-    def policy_complain(self, commit, oplist):
-        "Bitch but nothing else." 
-        pass
-    def policy_coalesce(self, commit, oplist):
-        "Remove all but the last M."
-        while len(oplist) > 1:
-            commit.fileops.pop(oplist.pop(0))
-    def policy_obliterate(self, commit, oplist):
-        "Remove all fileops."
-        pass
     #
     # Delete machinery ends here
     #
@@ -2886,9 +2877,15 @@ blob, your editor will be called on the blob file.
             complain("no repo is loaded")
             return
         line = self.set_selection_set(line, [])
-        if line and not hasattr(self.selected(), "policy_" + line):
-            complain("no such deletion policy as " + repr(line))
-            return
+        if line:
+            for token in line.split():
+                if token not in ["complain",
+                                 "coalesce",
+                                 "obliterate",
+                                 "pushback",
+                                 "fixtags"]:
+                    complain("no such deletion modifier as " + token)
+                    return
         self.selected().delete(self.selection, self.line)
     def help_delete(self):
         print """
@@ -3169,7 +3166,7 @@ separated by '+'. It will have no source directory or preferred system
 type.
 """
     def do_cvspreen(self, line):
-        "Purge cruft created by cvspreen."
+        "Purge cruft created by cvs2svn."
         if not self.selected():
             complain("no repo has been chosen.")
             return
@@ -3197,7 +3194,7 @@ type.
                     deletion_set.append(ei)
                     continue
                 print "Manufactured commit %s survived" % event.mark
-        repo.delete(deletion_set, "cvspreen")
+        repo.delete(deletion_set, ["obliterate", "fixtags"])
         if verbose >= 1:
             print "%d commits obliterated." % len(deletion_set)
     def help_merge(self):
