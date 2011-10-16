@@ -234,6 +234,8 @@ Python string escape such as \x2f).</para>
 annotated tags, or against their author/committer headers. 
 It matches against the text of passthrough objects.</para>
 </listitem>
+</varlistentry>
+<varlistentry>
 <term><firstterm>refset</firstterm></term>
 <listitem>
 <para>The syntax '^' followed by an event number, or a mark literal
@@ -693,7 +695,6 @@ Marks will be renumbered.</para>
 separated by '+'. It will have no source directory or preferred system
 type.</para>
 </listitem>
-</varlistentry>
 </varlistentry>
 <varlistentry>
 <term><command>cvspreen</command>
