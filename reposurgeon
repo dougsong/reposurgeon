@@ -3174,15 +3174,29 @@ type.
             complain("no repo has been chosen.")
             return
         repo = self.selected()
-        # delete manufactured commits with no fileops
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
         for (ei, event) in enumerate(repo.events):
             if isinstance(event, Commit):
-                if not event.fileops and len(event.parents()) == 1 and \
-                   event.when() - event.parents()[0].when() < 10 and \
-                   manufactured in event.comment:
+                # Look at only manufactured commits
+                if len(event.parents()) != 1 or \
+                   event.when() - event.parents()[0].when() >= 10 or \
+                   not manufactured in event.comment:
+                    continue
+                # One kind of pathological generated commit is empty.
+                if len(event.fileops) == 0:
+                    print "Nuking empty manufactured commit %s" % event.mark 
                     deletion_set.append(ei)
+                    continue
+                # Another just nukes every file in sight
+                for fileop in event.fileops:
+                    if fileop.op != 'D':
+                        break
+                else:                    
+                    print "Nuking all-delete manufactured commit %s" % event.mark 
+                    deletion_set.append(ei)
+                    continue
+                print "Manufactured commit %s survived" % event.mark
         repo.delete(deletion_set, "cvspreen")
         if verbose >= 1:
             print "%d commits obliterated." % len(deletion_set)
