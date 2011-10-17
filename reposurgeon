@@ -3174,7 +3174,8 @@ type.
         line = self.set_selection_set(line, range(len(self.chosen())))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
-        for (ei, event) in enumerate(self.selection):
+        for ei in self.selection:
+            event = self.chosen().events[ei]
             if isinstance(event, Commit):
                 # Look at only manufactured commits
                 if len(event.parents()) != 1 or \

@@ -85,11 +85,11 @@ testcut:
 	@diff -u testcut.chk /tmp/regress
 	@rm -f /tmp/regress
 
-# Test refset syntax
+# Test refset syntax and cvs2svn fix
 buildtestrefs:
-	@../reposurgeon "script multiblob.tst" >testrefs.chk
+	@../reposurgeon "script multiblob.tst" >testrefs.chk 2>&1
 testrefs:
 	@ echo "Test of the refset syntax."
-	@../reposurgeon "script cut.tst" >/tmp/regress
+	@../reposurgeon "script cut.tst" >/tmp/regress 2>&1
 	@diff -u testcut.chk /tmp/regress
 	@rm -f /tmp/regress
