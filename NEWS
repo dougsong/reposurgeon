@@ -11,6 +11,8 @@
      Add '^' syntax for inspecting the reference sets of blobs.
      New 'cvspreen' operation for nuking junk commits from cvs2svn conversions.
      Make the branch attribute of commits editable.
+     Add "pushback", "tagforward", and "tagback" policy modifiers on deletes.
+     Default policy on failed canonicalization changes to throw an error. 
 
 1.1: 2011-08-24
      Fix a mis-coded notification message that would have crashed the 

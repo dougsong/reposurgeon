@@ -1,7 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut \
-		testrefs 
+all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut
 	@echo "No diff output is good news."
 
 clean:

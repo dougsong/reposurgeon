@@ -1338,13 +1338,19 @@ class Repository:
                             fileop.commit = parent
                         parent.fileops += copy.copy(event.fileops)
                         parent.pushed_to = True
-                # Remove tags referring to this event. Its children will
-                # still own the blobs, though they may be removed by
-                # canonicalization.
-                self.events = filter(lambda t: not (isinstance(t, Tag)
-                                                    and t.committish == event.mark),
-                                     self.events)
-                # And remove it
+                if "tagback" not in policy and "tagforward" not in policy:
+                    self.events = filter(lambda t: not (isinstance(t, Tag)
+                                                        and t.committish == event.mark),
+                                         self.events)
+                elif "tagforward" in policy:
+                    for tagger in self.events:
+                        if tagger.committish == event.mark:
+                            tagger.committish = event.children()[0].mark
+                elif "tagback" in policy:
+                    for tagger in self.events:
+                        if tagger.committish == event.mark:
+                            tagger.committish = event.parents()[0].mark
+                # And remove the deleted event
                 self.events.pop(ei)
             else:
                 raise Fatal("unexpected object in event array")
