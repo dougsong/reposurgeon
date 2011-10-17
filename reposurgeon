@@ -2046,6 +2046,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         if self.line == line:
             self.selection = default
         else:
+            # FIXME: We probably want to stop doing this
             self.selection.sort()
         return self.line
     def peek(self):
@@ -2063,6 +2064,16 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
+        if c == '?':
+            self.pop()
+            extension = []
+            for ei in value:
+                for parent in self.chosen().events[ei].parents():
+                    extension.append(self.chosen().find(parent.mark))
+                for child in self.chosen().events[ei].children():
+                    extension.append(self.chosen().find(child.mark))
+            value |= set(extension)
+            c = self.peek()
         if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
             raise Recoverable("trailing junk on selection: %s" % repr(self.line))
         if verbose >= DEBUG_LEXER:

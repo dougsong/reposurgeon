@@ -250,6 +250,9 @@ these are, respectively, set union and intersection. The | has lower
 precendence than intersection, but you may use curly brackets '{' and
 '}' to group expressions in case there is ambiguity.</para>
 
+<para>Finally, any set operation may be followed by '?'.  This extends
+the set to include the parents and children of all members.</para>
+
 <refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
 
 <para><command>reposurgeon</command> can hold multiple repository
