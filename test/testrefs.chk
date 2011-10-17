@@ -1,7 +1,0 @@
-read roundup.fi
-resolve ^:1
-[3, 41]
-cvspreen	# Expect one deleted commit
-reposurgeon: Nuking empty manufactured commit :17
-reposurgeon: commit 18 to be obliterated has non-head branch attribute refs/tags/start
-
