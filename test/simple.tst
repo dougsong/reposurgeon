@@ -11,6 +11,7 @@ resolve @lightweight-sample
 resolve *annotated-sample
 resolve @annotated-sample
 resolve /regression/
+resolve /Raymond/
 tags
 history
 verbose 1
