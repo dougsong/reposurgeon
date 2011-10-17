@@ -1268,8 +1268,6 @@ class Repository:
         return coverage
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
-        if not policy:
-            policy = ["complain"]
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
@@ -1295,8 +1293,23 @@ class Repository:
             if event.__class__ in (Reset, Tag, Passthrough):
                 self.events.pop(ei)
             elif isinstance(event, Commit):
-                if "fixtags" in policy and "/tags/" in event.branch:
-                    event.parents()[0].branch = event.branch
+                if "/tags/" in event.branch:
+                    identical = False
+                    if "tagback" in policy:
+                        identical = event.parents()[0].branch == event.branch
+                        if not identical:
+                            event.parents()[0].branch = event.branch
+                    elif "tagforward" in policy:
+                        identical = event.children()[0].branch == event.branch
+                        if not identical:
+                            event.children()[0].branch = event.branch
+                    else:
+                        if "pushback" in policy:
+                            identical = event.parents()[0].branch == event.branch
+                        else:
+                            identical = event.children()[0].branch == event.branch        
+                        if not identical:
+                            complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Decrement refcount on its blobs.
                 for fileop in event.fileops:
                     if fileop.op == "M":
@@ -1307,13 +1320,24 @@ class Repository:
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
                     child.parent_marks += event.parent_marks
-                    if "obliterate" not in policy:
-                        # Push a copy of the parent's file ops to it
-                        # and mark it as needing resolution
+                    if "obliterate" not in policy and "pushback" not in policy:
+                        # Prepend a copy of this event's file ops to
+                        # each child's list and mark the child as
+                        # needing resolution.
                         for fileop in event.fileops:
                             fileop.commit = child
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
+                # We might be trying to hand the event's fileops to parents.
+                if "pushback" in policy:
+                    for parent in event.parents():
+                        # Append a copy of this event's file ops to
+                        # each parent's list and mark the parent as needing
+                        # resolution.
+                        for fileop in event.fileops:
+                            fileop.commit = parent
+                        parent.fileops += copy.copy(event.fileops)
+                        parent.pushed_to = True
                 # Remove tags referring to this event. Its children will
                 # still own the blobs, though they may be removed by
                 # canonicalization.
@@ -1341,12 +1365,15 @@ class Repository:
                     for (path, oplist) in event.cliques().items():
                         if len(oplist) == 1:
                             continue
-                        if not policy or "complain" in policy or verbose >= DEBUG_DELETE:
-                            complain("commit %d has multiple Ms for %s" % (ei+1, path))
-                        if "coalesce" in policy:
+                        complaint = "commit %s has multiple Ms for %s" % (event.mark, path)
+                        if "complain" in policy or verbose >= DEBUG_DELETE:
+                            complain(complaint)
+                        elif "coalesce" in policy:
                             "Remove all but the last M."
                             while len(oplist) > 1:
                                 event.fileops.pop(oplist.pop(0))
+                        else:
+                            raise Recoverable(complaint)
                         if verbose >= DEBUG_DELETE:
                             print "Commit %d, after applying policy:" % (ei +1,)
                             for op in event.fileops:
@@ -2884,7 +2911,8 @@ blob, your editor will be called on the blob file.
                                  "coalesce",
                                  "obliterate",
                                  "pushback",
-                                 "fixtags"]:
+                                 "tagback",
+                                 "tagforward"]:
                     complain("no such deletion modifier as " + token)
                     return
         self.chosen().delete(self.selection, self.line)
@@ -3196,7 +3224,7 @@ type.
                     deletion_set.append(ei)
                     continue
                 announce("Manufactured commit %s survived" % event.mark)
-        self.chosen().delete(deletion_set, ["obliterate", "fixtags"])
+        self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
     def help_merge(self):
