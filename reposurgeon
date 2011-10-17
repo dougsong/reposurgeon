@@ -3170,10 +3170,10 @@ type.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        repo = self.chosen()
+        line = self.set_selection_set(line, range(len(self.chosen())))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
-        for (ei, event) in enumerate(repo.events):
+        for (ei, event) in enumerate(self.selection):
             if isinstance(event, Commit):
                 # Look at only manufactured commits
                 if len(event.parents()) != 1 or \
@@ -3194,7 +3194,7 @@ type.
                     deletion_set.append(ei)
                     continue
                 print "Manufactured commit %s survived" % event.mark
-        repo.delete(deletion_set, ["obliterate", "fixtags"])
+        chosen().delete(deletion_set, ["obliterate", "fixtags"])
         if verbose >= 1:
             print "%d commits obliterated." % len(deletion_set)
     def help_merge(self):
