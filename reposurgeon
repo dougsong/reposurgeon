@@ -1236,7 +1236,7 @@ class Repository:
                 lastdeleteall = i
         if lastdeleteall is not None:
             if verbose >= DEBUG_DELETE:
-                print "reposurgeon: removing all before rightmost deleteall"
+                announce("removing all before rightmost deleteall")
             commit.fileops = commit.fileops[lastdeleteall:]
         # Composition in the general case is trickier.
         while True:
@@ -1252,12 +1252,12 @@ class Repository:
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         if modified:
                             if verbose >= DEBUG_DELETE:
-                                print "Reduction case %d fired on %s" % (case, (i,j))
+                                announce("Reduction case %d fired on %s" % (case, (i,j)))
                             mutated = True
                             commit.fileops[i] = newa
                             commit.fileops[j] = newb
                             if verbose >= DEBUG_DELETE:
-                                print "During canonicalization:"
+                                announce("During canonicalization:")
                                 commit.fileop_dump(ei)
                             if warn:
                                 self.warn(warn, atline=False)
@@ -1274,7 +1274,7 @@ class Repository:
         selected = copy.copy(selected)
         selected.sort(lambda x, y: cmp(y, x))
         if verbose >= DEBUG_DELETE:
-            print "Deletion list is %s" % map(lambda x: x+1, selected)
+            announce("Deletion list is %s" % map(lambda x: x+1, selected))
         # Sanity checks
         for ei in selected:
             event = self.events[ei]
@@ -1331,11 +1331,11 @@ class Repository:
                     continue
                 elif event.pushed_to:
                     if verbose >= DEBUG_DELETE:
-                        print "Before canonicalization:"
+                        announce("Before canonicalization:")
                         event.fileop_dump(ei)
                     self.case_coverage |= self.canonicalize(ei)
                     if verbose >= DEBUG_DELETE:
-                        print "After canonicalization:"
+                        announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
                     for (path, oplist) in event.cliques().items():
@@ -2026,19 +2026,19 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             return c
     def eval_expression(self):
         if verbose >= DEBUG_LEXER:
-            print "eval_expression(%s)" % self.line
+            announce("eval_expression(%s)" % self.line)
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
         if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
             raise Recoverable("trailing junk on selection: %s" % repr(self.line))
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_expression(), left = %s" % (value, repr(self.line))
+            announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
     def eval_disjunct(self):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
         if verbose >= DEBUG_LEXER:
-            print "eval_disjunct(%s)" % self.line
+            announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         disjunct = set([])
         while True:
@@ -2053,12 +2053,12 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             else:
                 break
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line))
+            announce("%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line)))
         return disjunct
     def eval_conjunct(self):
         "Evaluate a conjunctive expression (& has higher precedence)" 
         if verbose >= DEBUG_LEXER:
-            print "eval_conjunct(%s)" % self.line
+            announce("eval_conjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         conjunct = set(range(0, len(self.chosen())))
         while True:
@@ -2073,11 +2073,11 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             else:
                 break
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line))
+            announce("%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line)))
         return conjunct
     def eval_term(self):
         if verbose >= DEBUG_LEXER:
-            print "eval_term(%s)" % self.line
+            announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
         if self.peek() == '{':
             self.pop()
@@ -2098,12 +2098,12 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                         if term == None:
                             term = self.eval_refset()
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_term(), left = %s" % (term, repr(self.line))
+            announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
     def eval_visibility(self):
         "Parse a visibility spec."
         if verbose >= DEBUG_LEXER:
-            print "eval_visibility(%s)" % self.line
+            announce("eval_visibility(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == "=":
             visibility = None
@@ -2126,19 +2126,19 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             if self.peek() not in "()|& ":
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             if verbose >= DEBUG_LEXER:
-                print "reposurgeon: visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), repr(self.line))
+                announce("visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), repr(self.line)))
             selected = []
             for (i, event) in enumerate(self.chosen()):
                 if event.__class__ in visible:
                     selected.append(i)
             visibility = set(selected)
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_visibility(), left = %s" % (visibility, repr(self.line))
+            announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
     def eval_polyrange(self):
         "Parse a polyrange specification (list of intervals)."
         if verbose >= DEBUG_LEXER:
-            print "eval_polyrange(%s)" % self.line
+            announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
         polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "@")
         if not self.peek() in polyrange_initials:
@@ -2245,12 +2245,12 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     raise Recoverable("event number %s out of range" % (elt+1))
             polyrange = set(selection)
         if verbose >= DEBUG_LEXER:
-            print "%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line))
+            announce("%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line)))
         return polyrange
     def eval_textsearch(self):
         "Parse a text search specification."
         if verbose >= DEBUG_LEXER:
-            print "eval_textsearch(%s)" % self.line
+            announce("eval_textsearch(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == '/':
             return None
@@ -2278,7 +2278,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                 # We don't do blobs because it would be too slow
                 # and not very useful.
             if verbose >= DEBUG_LEXER:
-                print "%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line))
+                announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return set(matchers)
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
@@ -3183,7 +3183,7 @@ type.
                     continue
                 # One kind of pathological generated commit is empty.
                 if len(event.fileops) == 0:
-                    print "Nuking empty manufactured commit %s" % event.mark 
+                    announce("Nuking empty manufactured commit %s"%event.mark) 
                     deletion_set.append(ei)
                     continue
                 # Another just nukes every file in sight
@@ -3191,13 +3191,13 @@ type.
                     if fileop.op != 'D':
                         break
                 else:                    
-                    print "Nuking all-delete manufactured commit %s" % event.mark 
+                    announce("Nuking all-delete manufactured commit %s" % event.mark)
                     deletion_set.append(ei)
                     continue
-                print "Manufactured commit %s survived" % event.mark
-        chosen().delete(deletion_set, ["obliterate", "fixtags"])
+                announce("Manufactured commit %s survived" % event.mark)
+        self.chosen().delete(deletion_set, ["obliterate", "fixtags"])
         if verbose >= 1:
-            print "%d commits obliterated." % len(deletion_set)
+            announce("%d commits obliterated." % len(deletion_set))
     def help_merge(self):
         print """
 Purge cruft created by cvs2svn conversions.  This looks for dummy
