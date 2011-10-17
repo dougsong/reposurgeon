@@ -221,3 +221,9 @@ commit 23, mark :32:
 commit 25, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1, 2, 3, 4, 6]
+resolve 1..$
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+delete :34 obliterate	# Test the code that checks for non-D fileops present.
+reposurgeon: commit 25 to be obliterated has fileop M.
+resolve 1..$
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]

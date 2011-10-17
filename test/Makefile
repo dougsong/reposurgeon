@@ -60,10 +60,10 @@ coalesce:
 
 # Test delete and canonicalization operations
 buildtestdelete:
-	../reposurgeon "script testrepo.tst" >testrepo.chk
+	../reposurgeon "script testrepo.tst" >testrepo.chk 2>&1
 testdelete:
 	@echo "Test of canonicalization-after-commit cases."
-	@../reposurgeon "script testrepo.tst" >/tmp/regress
+	@../reposurgeon "script testrepo.tst" >/tmp/regress 2>&1
 	@diff -u testrepo.chk /tmp/regress
 	@rm -f /tmp/regress
 

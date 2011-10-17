@@ -12,3 +12,6 @@ delete :25,:26
 coverage       # Expect this to show case 4 covered.
 delete :29,:30
 coverage       # Expect this to show case 6 covered.
+resolve 1..$
+delete :34 obliterate	# Test the code that checks for non-D fileops present.
+resolve 1..$
