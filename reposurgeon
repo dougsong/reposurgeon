@@ -171,6 +171,13 @@ def nuke(directory, legend):
     except OSError:
         pass
 
+def complain(msg):
+    sys.stdout.flush()
+    print >>sys.stderr, "reposurgeon:", msg
+
+def announce(msg):
+    print "reposurgeon:", msg
+
 class Baton:
     "Ship progress indications to stdout."
     def __init__(self, prompt, endmsg='done', enable=False):
@@ -336,14 +343,14 @@ class Blob:
         self.repo = repo
         newloc = self.blobfile()
         if verbose >= DEBUG_SHUFFLE:
-            print >>sys.stderr,"blob rename calls os.rename(%s, %s)" % (oldloc, newloc)
+            announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
         os.rename(oldloc, newloc)
         return self
     def clone(self, repo):
         "Clone a copy of this blob, pointing at the same file."
         c = copy.copy(self)
         if verbose >= DEBUG_SHUFFLE:
-            print >>sys.stderr,"blob clone for %s (%s) calls os.link()" % (self.mark, self.path)
+            announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
         os.link(self.blobfile(), c.blobfile())
         c.moveto(repo)
         return c
@@ -384,8 +391,8 @@ class Tag:
         newname = msg["Tag-Name"]
         if self.name != newname:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in tag %d, Tag-Name is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), repr(self.name), repr(newname))
+                announce("in tag %d, Tag-Name is modified %s -> %s" \
+                      % (int(msg["Event-Number"]), repr(self.name), repr(newname)))
             self.name = newname
             modified = True
         if "Tagger" in msg:
@@ -396,23 +403,23 @@ class Tag:
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
                     if verbose >= DEBUG_EMAILIN:
-                        print >>sys.stderr,"reposurgeon: in tag %d, Tagger is modified" \
-                              % (int(msg["Event-Number"]))
+                        announce("in tag %d, Tagger is modified" \
+                              % (int(msg["Event-Number"])))
                     modified = True
             date = Date(msg["Tagger-Date"])
             if date != self.tagger.date:
                 if verbose >= DEBUG_EMAILIN:
-                    print >>sys.stderr,"reposurgeon: in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
+                    announce("in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
                           % (int(msg["Event-Number"]),
                              self.tagger.date, date,
-                             self.tagger.date.delta(date))
+                             self.tagger.date.delta(date)))
                 self.tagger.date = date
                 modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in tag %d, comment is modified '%s' -> '%s'" \
-                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment))
+                announce("in tag %d, comment is modified '%s' -> '%s'" \
+                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
         return modified
@@ -598,16 +605,16 @@ class Commit:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
                 if verbose >= DEBUG_EMAILIN:
-                    print >>sys.stderr,"reposurgeon: in commit %d, Committer is modified" \
-                          % (int(msg["Event-Number"]))
+                    announce("in commit %d, Committer is modified" \
+                          % (int(msg["Event-Number"])))
                 modified = True
         date = Date(msg["Committer-Date"])
         if date != self.committer.date:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
+                announce("in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
                          self.committer.date, date,
-                         self.committer.date.delta(date))
+                         self.committer.date.delta(date)))
             self.committer.date = date
             modified = True
         if "Author" in msg:
@@ -631,15 +638,15 @@ class Commit:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
                         if verbose >= DEBUG_EMAILIN:
-                            print >>sys.stderr,"reposurgeon: in commit %d, Author is modified" \
-                                  % (int(msg["Event-Number"]))
+                            announce("in commit %d, Author is modified" \
+                                  % (int(msg["Event-Number"])))
                         modified = True
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if date != self.authors[i].date:
                         if verbose >= DEBUG_EMAILIN:
-                            print >>sys.stderr,"reposurgeon: in event %d, %s-Date is modified" \
-                                  % (int(msg["Event-Number"]), hdr)
+                            announce("in event %d, %s-Date is modified" \
+                                  % (int(msg["Event-Number"]), hdr))
                         self.authors[i].date = date
                         modified = True
         newprops = {}
@@ -654,8 +661,8 @@ class Commit:
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                print >>sys.stderr,"reposurgeon: in commit %d, comment is modified '%s' -> '%s'" \
-                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment))
+                announce("in commit %d, comment is modified '%s' -> '%s'" \
+                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
         return modified
@@ -1276,7 +1283,7 @@ class Repository:
             elif  isinstance(event, Commit):
                 if "obliterate" in policy:
                     announce = "commit %d to be obliterated has " % (ei+1) 
-                    if '/' in event.branch:
+                    if '/' in event.branch and not '/heads/' in event.branch:
                         raise Recoverable(announce + "non-head branch attribute %s" % event.branch)
                     for fileop in event.fileops:
                         if fileop.op != 'D':
@@ -1335,7 +1342,7 @@ class Repository:
                         if len(oplist) == 1:
                             continue
                         if not policy or "complain" in policy or verbose >= DEBUG_DELETE:
-                            print >>sys.stderr,"reposurgeon: commit %d has multiple Ms for %s" % (ei+1, path)
+                            complain("commit %d has multiple Ms for %s" % (ei+1, path))
                         if "coalesce" in policy:
                             "Remove all but the last M."
                             while len(oplist) > 1:
@@ -1391,12 +1398,6 @@ class Repository:
         return self.events[i]
     def __setitem__(self, i, v):
         self.events[i] = v
-
-def complain(msg):
-    print >>sys.stderr, "reposurgeon:", msg
-
-def announce(msg):
-    print "reposurgeon:", msg
 
 def read_repo(source, preferred):
     "Read a repository using fast-import."
