@@ -5,7 +5,7 @@
      Slightly more relaxed parsing of Committer/Author/Tagger headers.
      More useful error messages on edit failure.
      Fix typo bug that prevented editing of Author headers from working.
-     Make text search match on author and committer headers as well as text.
+     Make text search match on branch attribute and headers as well as text.
      Add 'obliterate' policy to delete.
      Add 'tags' command.
      Add '?' syntax for looking at adjacency cliques.

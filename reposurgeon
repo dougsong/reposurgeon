@@ -2307,18 +2307,10 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             self.line = self.line[endat+1:]
             matchers = []
             for (i, e) in enumerate(self.chosen()):
-                # This catches the text of commits and tags
-                if hasattr(e, "comment") and regex.search(e.comment):
-                    matchers.append(i)
-                # This matches against the contents of commit lines
-                elif hasattr(e, "committer") and regex.search(str(e.committer)):
-                    matchers.append(i)
-                # This matches against the contents of author lines
-                elif hasattr(e, "author") and regex.search(str(e.author)):
-                    matchers.append(i)
-                # And this catches passthroughs
-                elif hasattr(e, "text") and regex.search(e.text):
-                    matchers.append(i)
+                for searchable in ("author", "branch", "comment",
+                                   "committer", "committish", "text"):
+                    if hasattr(e, searchable) and regex.search(str(getattr(e, searchable))):
+                        matchers.append(i)
                 # We don't do blobs because it would be too slow
                 # and not very useful.
             if verbose >= DEBUG_LEXER:
