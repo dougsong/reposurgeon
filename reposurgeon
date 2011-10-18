@@ -1280,13 +1280,13 @@ class Repository:
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
                 if "obliterate" in policy:
-                    announce = "commit %d to be obliterated has " % (ei+1) 
+                    speak = "warning: commit %d to be obliterated has " % (ei+1) 
                     if '/' in event.branch and not '/heads/' in event.branch:
-                        raise Recoverable(announce + "non-head branch attribute %s" % event.branch)
+                        announce(speak + "non-head branch attribute %s" % event.branch)
                     for fileop in event.fileops:
                         if fileop.op != 'D':
-                            raise Recoverable(announce + "fileop %s." % fileop.op)
-                            return
+                            announce(speak + "non-delete fileops.")
+                            break;
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
@@ -1296,18 +1296,22 @@ class Repository:
                 if "/tags/" in event.branch:
                     identical = False
                     if "tagback" in policy:
-                        identical = event.parents()[0].branch == event.branch
-                        if not identical:
-                            event.parents()[0].branch = event.branch
+                        if event.parents():
+                            identical = event.parents()[0].branch == event.branch
+                            if not identical:
+                                event.parents()[0].branch = event.branch
                     elif "tagforward" in policy:
-                        identical = event.children()[0].branch == event.branch
-                        if not identical:
-                            event.children()[0].branch = event.branch
+                        if event.children():
+                            identical = event.children()[0].branch == event.branch
+                            if not identical:
+                                event.children()[0].branch = event.branch
                     else:
                         if "pushback" in policy:
-                            identical = event.parents()[0].branch == event.branch
+                            if event.parents():
+                                identical = event.parents()[0].branch == event.branch
                         else:
-                            identical = event.children()[0].branch == event.branch        
+                            if event.children():
+                                identical = event.children()[0].branch == event.branch        
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Decrement refcount on its blobs.
@@ -1343,13 +1347,13 @@ class Repository:
                                                         and t.committish == event.mark),
                                          self.events)
                 elif "tagforward" in policy:
-                    for tagger in self.events:
-                        if tagger.committish == event.mark:
-                            tagger.committish = event.children()[0].mark
+                    for event in self.events:
+                        if isinstance(event, Tag) and event.committish == event.mark:
+                            event.committish = event.children()[0].mark
                 elif "tagback" in policy:
-                    for tagger in self.events:
-                        if tagger.committish == event.mark:
-                            tagger.committish = event.parents()[0].mark
+                    for event in self.events:
+                        if isinstance(event, Tag) and event.committish == event.mark:
+                            event.committish = event.parents()[0].mark
                 # And remove the deleted event
                 self.events.pop(ei)
             else:
