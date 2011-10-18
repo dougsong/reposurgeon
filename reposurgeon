@@ -1096,6 +1096,11 @@ class Repository:
     #
     # Delete machinery begins here
     #
+    def __adjust_fileop(self, fileop, mod):
+        if fileop.op == "M":
+            bi = self.find(fileop.ref)
+            assert(isinstance(self.events[bi], Blob))
+            self.events[bi].refcount += mod
     def __ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestry chain."
         count = 0
@@ -1315,11 +1320,9 @@ class Repository:
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Decrement refcount on its blobs.
+                # They'll be re-incremented if the fileops move
                 for fileop in event.fileops:
-                    if fileop.op == "M":
-                        bi = self.find(fileop.ref)
-                        assert(isinstance(self.events[bi], Blob))
-                        self.events[bi].refcount -= 1
+                    self.__adjust_fileop(fileop, -1)
                 # Reparent each child
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
@@ -1330,6 +1333,7 @@ class Repository:
                         # needing resolution.
                         for fileop in event.fileops:
                             fileop.commit = child
+                            self.__adjust_fileop(fileop, 1)
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
                 # We might be trying to hand the event's fileops to parents.
@@ -1340,6 +1344,7 @@ class Repository:
                         # resolution.
                         for fileop in event.fileops:
                             fileop.commit = parent
+                            self.__adjust_fileop(fileop, 1)
                         parent.fileops += copy.copy(event.fileops)
                         parent.pushed_to = True
                 if "tagback" not in policy and "tagforward" not in policy:
@@ -1381,6 +1386,7 @@ class Repository:
                         elif "coalesce" in policy:
                             "Remove all but the last M."
                             while len(oplist) > 1:
+                                self.__adjust_fileop(event.fileops[oplist[0]])
                                 event.fileops.pop(oplist.pop(0))
                         else:
                             raise Recoverable(complaint)
