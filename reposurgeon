@@ -1627,10 +1627,11 @@ def rebuild_repo(repo, target, preferred):
                 for sub in repo.preserve_set:
                     src = os.path.join(savedir, sub)
                     dst = os.path.join(target, sub)
-                    if os.path.isdir(src):
-                        shutil.copytree(src, dst)
-                    else:
-                        shutil.copy2(src, dst)
+                    if os.path.exists(src):
+                        if os.path.isdir(src):
+                            shutil.copytree(src, dst)
+                        else:
+                            shutil.copy2(src, dst)
                 if verbose:
                     announce("preserved files restored.")
     finally:
