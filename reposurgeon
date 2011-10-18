@@ -1345,6 +1345,23 @@ class Repository:
                         for fileop in event.fileops:
                             fileop.commit = parent
                             self.__adjust_fileop(fileop, 1)
+                            # On a pushback (but not a push forward)
+                            # we might have moved the fileop so it's
+                            # now referred to before its actual
+                            # definition.  This will cause a fatal
+                            # error "mark not defined" on import.
+                            if fileop.op == 'M':
+                                swapblob = self.find(fileop.ref)
+                                swapcommit = self.find(parent.mark)
+                                if swapblob > swapcommit:
+                                    #print "Uh oh!", swapcommit, swapblob
+                                    saveblob = self.events[swapblob]
+                                    for i in range(swapblob-swapcommit):
+                                        countdown = swapblob-i
+                                        #print "Moving %d to %d" % (countdown-1, countdown)
+                                        self.events[countdown] = self.events[countdown-1]
+                                    #print "Moving %d to %d" % (swapblob, swapcommit)
+                                    self.events[swapcommit] = saveblob
                         parent.fileops += copy.copy(event.fileops)
                         parent.pushed_to = True
                 if "tagback" not in policy and "tagforward" not in policy:
