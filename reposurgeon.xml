@@ -235,14 +235,6 @@ annotated tags, or against their author/committer headers.
 It matches against the text of passthrough objects.</para>
 </listitem>
 </varlistentry>
-<varlistentry>
-<term><firstterm>refset</firstterm></term>
-<listitem>
-<para>The syntax '^' followed by an event number, or a mark literal
-beginning with ':', generates a range of all events that refer to that
-event. It is only useful on blobs.</para>
-</listitem>
-</varlistentry>
 </variablelist>
 
 <para>Set expressions may be combined with the operators | and &amp;;
@@ -250,8 +242,11 @@ these are, respectively, set union and intersection. The | has lower
 precendence than intersection, but you may use curly brackets '{' and
 '}' to group expressions in case there is ambiguity.</para>
 
-<para>Finally, any set operation may be followed by '?'.  This extends
-the set to include the parents and children of all members.</para>
+<para>Finally, any set operation may be followed by '?' to add the set
+members' neighbors and referents.  This extends the set to include the
+parents and children of all commits in the set, and the referents of
+any tags and resets in the set. Each blob reference in the set is
+replaced by all commits that refer to it.</para>
 
 <refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
 

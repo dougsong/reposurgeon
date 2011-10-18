@@ -1280,7 +1280,7 @@ class Repository:
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
                 if "obliterate" in policy:
-                    speak = "warning: commit %d to be obliterated has " % (ei+1) 
+                    speak = "warning: commit %s to be obliterated has " % event.mark 
                     if '/' in event.branch and not '/heads/' in event.branch:
                         announce(speak + "non-head branch attribute %s" % event.branch)
                     for fileop in event.fileops:
@@ -2070,13 +2070,26 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         c = self.peek()
         if c == '?':
             self.pop()
-            extension = []
+            add_list = []
+            remove_list = []
             for ei in value:
-                for parent in self.chosen().events[ei].parents():
-                    extension.append(self.chosen().find(parent.mark))
-                for child in self.chosen().events[ei].children():
-                    extension.append(self.chosen().find(child.mark))
-            value |= set(extension)
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    for parent in event.parents():
+                        add_list.append(self.chosen().find(parent.mark))
+                    for child in event.children():
+                        add_list.append(self.chosen().find(child.mark))
+                elif isinstance(event, Blob):
+                    remove_list.append(ei) # Don't select the blob itself
+                    for (i, event2) in enumerate(self.chosen().events):
+                        if isinstance(event2, Commit):
+                            for fileop in event2.fileops:
+                                if fileop.op == 'M' and fileop.ref==event.mark:
+                                    add_list.append(i)
+                elif isinstance(event, Tag) or isinstance(event, Reset):
+                    add_list.append(self.chosen().find(event.committish))
+            value |= set(add_list)
+            value -= set(remove_list)
             c = self.peek()
         if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
             raise Recoverable("trailing junk on selection: %s" % repr(self.line))
@@ -2143,8 +2156,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     term = self.eval_textsearch()
                     if term == None:
                         term = self.eval_branchset()
-                        if term == None:
-                            term = self.eval_refset()
         if verbose >= DEBUG_LEXER:
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
@@ -2349,32 +2360,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             else:
                 raise Recoverable("unknown branch name %s" % self.line)
             return set(selection)
-    def eval_refset(self):
-        "Resolve a decorated blob name to the set of commits that refer to it."
-        if not self.peek() == '^':
-            return None
-        self.pop()
-        markref = self.peek() == ':'
-        if markref:
-            self.pop()
-        selection = []
-        match = re.match("[0-9]+", self.line)
-        if match is None:
-            return None
-        else:
-            ind = match.group()
-            self.line = self.line[len(ind):]
-            if markref:
-                mark = ind
-            else:
-                mark = self.selected.events[int(ind)-1].mark
-            ind = ":" + ind
-            for (i, event) in enumerate(self.chosen().events):
-                if isinstance(event, Commit):
-                    for fileop in event.fileops:
-                        if fileop.op == 'M' and fileop.ref == ind:
-                            selection.append(i)
-        return set(selection)
     #
     # Helpers
     #

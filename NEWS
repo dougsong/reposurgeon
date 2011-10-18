@@ -8,8 +8,7 @@
      Make text search match on branch attribute and headers as well as text.
      Add 'obliterate' policy to delete.
      Add 'tags' command.
-     Add '?' syntax for looking at adjacency cliques.
-     Add '^' syntax for inspecting the reference sets of blobs.
+     Add '?' syntax for looking at neighbors and referents.
      New 'cvspreen' operation for nuking junk commits from cvs2svn conversions.
      Make the branch attribute of commits editable.
      Add "pushback", "tagforward", and "tagback" policy modifiers on deletes.
