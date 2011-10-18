@@ -2227,6 +2227,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     else:
                         raise Recoverable("mark %s not found." % markref)
                     continue
+                elif self.peek() == ':':
+                    raise Recoverable("malformed mark")
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
                     selection.append(len(self.chosen())-1)
