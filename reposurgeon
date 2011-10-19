@@ -103,7 +103,7 @@ class VCS:
 # %(tempfile)s in a command gets substituted with the name of a
 # tempile that the calling code will know to read or write from as
 # appropriate after the command is done.  If your exporter can simply
-# dump to stdout, or your importer reasd from stdin, leave out the
+# dump to stdout, or your importer read from stdin, leave out the
 # %(tempfile)s; reposurgeon will popen(3) the command, and it will
 # actually be slightly faster (especially on large repos) because it
 # won't have to wait for the tempfile I/O to complete.
@@ -2906,14 +2906,13 @@ may change in a future release.
                                 here.append(child.mark)
                         here += find_successor(child, path)
                     return here 
-                blobfile = singleton.blobfile()
                 for event in self.chosen().commits():
                     for fileop in event.fileops:
                         if fileop.op == 'M' and fileop.ref == singleton.mark:
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
                             break
-                os.system(editor + " " + blobfile)
+                os.system(editor + " " + singleton.blobfile())
                 return
             # Fall through
         # Otherwise, mailboxize and edit the non-blobs in the selection
