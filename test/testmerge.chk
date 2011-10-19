@@ -248,7 +248,7 @@ from :28
 D bar
 M 100644 :24 renamed1
 
-commit :34-bzr
+commit refs/heads/master-bzr
 mark :35
 committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
 data 14
@@ -260,7 +260,7 @@ data 41
 This is a test file in a dummy bzr repo.
 
 
-commit :1-bzr
+commit refs/heads/master-bzr
 mark :36
 committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
 data 32
