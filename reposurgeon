@@ -1061,7 +1061,11 @@ class Repository:
             try:
                 for ei in selection:
                     baton.twirl()
-                    fp.write(str(self.events[ei]))
+                    event = self.events[ei]
+                    if verbose >= DEBUG_MERGE:
+                        if hasattr(event, "mark"):
+                            announce("writing %s %s" % (event.mark, event.__class__.__name__))
+                    fp.write(str(event))
             except IOError, e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
@@ -1854,7 +1858,13 @@ class RepositoryList:
                     for (objtype, attr) in ((Commit, "branch"),
                                          (Reset, "ref")):
                         if isinstance(event, objtype):
-                            setattr(event, attr, getattr(event, attr) + suffix)
+                            if verbose >= DEBUG_MERGE:
+                                old = getattr(event, attr)
+                                announce("moving %s -> %s in %s.%s"
+                                         % (old, old + suffix,
+                                            objtype.__name__,
+                                            attr))
+                            setattr(event, attr, old + suffix)
                 # Disambiguate all marks.
                 for fld in ("mark", "committish"):
                     if hasattr(event, fld):
@@ -1866,8 +1876,10 @@ class RepositoryList:
                         else:
                             new = old + factor.name
                             if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in %s"
-                                         % (old, new, fld))
+                                announce("moving %s -> %s in %s.%s"
+                                         % (old, new,
+                                            event.__class__.__name__,
+                                            fld))
                             setattr(event, fld, new)
                 if isinstance(event, Commit):
                     for (j, old) in enumerate(event.parent_marks):

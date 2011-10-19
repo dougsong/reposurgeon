@@ -54,7 +54,7 @@ M 100644 :41 dummy_config.py
 
 delete :42 pushback
 inspect :39
-40: ========================================================================
+42: ========================================================================
 commit refs/tags/release-0-5-0
 mark :39
 author Richard Jones <richard@users.sourceforge.net> 995508979 +0000
