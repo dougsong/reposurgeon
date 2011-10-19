@@ -510,6 +510,7 @@ an error when thus occurs.</para>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
 forward to the first child rather than being deleted.</para>
 </listitem>
+</varlistentry>
 <varlistentry>
 <term>tagback</term>
 <listitem>
