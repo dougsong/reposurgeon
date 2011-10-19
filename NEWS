@@ -12,7 +12,6 @@
      Add '?' syntax for looking at neighbors and referents.
      New 'cvspreen' operation for nuking junk commits from cvs2svn conversions.
      Make the branch attribute of commits editable.
-     Default policy on failed canonicalization changes to throwing an error. 
 
 1.1: 2011-08-24
      Fix a mis-coded notification message that would have crashed the 

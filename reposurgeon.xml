@@ -474,8 +474,8 @@ deletion, and renaming and simplifies the operation sequence as much
 as it can without losing any information.</para>
 
 <para>After canonicalization, a file op list may still end up containing
-multiple M operations in the on the same file. Normally, the tool throws
-an error when thus occurs.</para>
+multiple M operations in the on the same file. Normally the tool utters a
+warning when this occurs but does not try to resolve it.</para>
 
 <para>The following modifiers change these policies:</para>
 
@@ -484,12 +484,6 @@ an error when thus occurs.</para>
 <term>obliterate</term>
 <listitem>
 <para>simply discards all file ops associated with deleted commit(s).</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>complain</term>
-<listitem>
-<para>Complain about them, but do nothing.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

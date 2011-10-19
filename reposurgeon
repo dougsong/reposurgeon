@@ -1405,16 +1405,13 @@ class Repository:
                     for (path, oplist) in event.cliques().items():
                         if len(oplist) == 1:
                             continue
-                        complaint = "commit %s has multiple Ms for %s" % (event.mark, path)
-                        if "complain" in policy or verbose >= DEBUG_DELETE:
-                            complain(complaint)
-                        elif "coalesce" in policy:
+                        if ("coalesce" not in policy and "obliterate" not in policy) or verbose >= DEBUG_DELETE:
+                            complain("commit %s has multiple Ms for %s" % (event.mark, path))
+                        if "coalesce" in policy:
                             "Remove all but the last M."
                             while len(oplist) > 1:
                                 self.__adjust_fileop(event.fileops[oplist[0]])
                                 event.fileops.pop(oplist.pop(0))
-                        else:
-                            raise Recoverable(complaint)
                         if verbose >= DEBUG_DELETE:
                             print "Commit %d, after applying policy:" % (ei +1,)
                             for op in event.fileops:
