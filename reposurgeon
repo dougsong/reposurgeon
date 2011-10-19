@@ -385,8 +385,7 @@ class Tag:
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
         if "Tag-Name" not in msg or "Tagger" not in msg:
-            raise Fatal("update to tag %s is malformed" %
-                                       self.name)
+            raise Fatal("update to tag %s is malformed" % self.name)
         modified = False
         newname = msg["Tag-Name"]
         if self.name != newname:
