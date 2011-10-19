@@ -810,7 +810,7 @@ class Repository:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
-                def read_data(dp, line=None):
+                def read_data(line=None):
                     if not line:
                         line = ireadline()
                     if line.startswith("data <<"):
@@ -824,7 +824,7 @@ class Repository:
                     elif line.startswith("data"):
                         try:
                             count = int(line[5:])
-                            dp.write(fp.read(count))
+                            data = fp.read(count)
                         except ValueError:
                             self.error("bad count in data")
                     else:
@@ -832,7 +832,7 @@ class Repository:
                     line = ireadline()
                     if line != '\n':
                         pushback(line) # Data commands optionally end with LF
-                    return dp
+                    return data
                 def ireadline():
                     if linebuffers:
                         line = linebuffers.pop()
@@ -863,7 +863,9 @@ class Repository:
                         else:
                             self.error("no blob matches commit reference to %s" % fileop.ref)
                     elif fileop.ref == 'inline':
-                        read_data(open(fileop.inlinefile(), "w")).close()
+                        wfp = open(fileop.inlinefile(), "w")
+                        wfp.write(read_data())
+                        wfp.close()
                     else:
                         self.error("unknown content type in filemodify")
                 while True:
@@ -877,7 +879,9 @@ class Repository:
                         line = ireadline()
                         if line.startswith("mark"):
                             blob.mark = line[5:].strip()
-                            read_data(open(blob.blobfile(), "w")).close()
+                            wfp = open(blob.blobfile(), "w")
+                            wfp.write(read_data())
+                            wfp.close()
                         else:
                             self.error("missing mark after blob")
                         self.events.append(blob)
@@ -924,9 +928,7 @@ class Repository:
                                         self.error("garbage length field on property line")
                                     commit.properties[name] = value
                             elif line.startswith("data"):
-                                dp = read_data(cStringIO.StringIO(), line)
-                                commit.comment = dp.getvalue()
-                                dp.close()
+                                commit.comment = read_data(line)
                             elif line.startswith("from") or line.startswith("merge"):
                                 commit.parent_marks.append(line.split()[1])
                             # Handling of file ops begins.
@@ -1010,9 +1012,8 @@ class Repository:
                         else:
                             self.warn("missing tagger after from in tag")
                             pushback(line)
-                        dp = read_data(cStringIO.StringIO())
                         self.events.append(Tag(tagname,
-                                               referent, tagger, dp.getvalue()))
+                                               referent, tagger, read_data()))
                         baton.twirl()
                     else:
                         # Simply pass through any line we don't understand.
