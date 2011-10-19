@@ -1065,7 +1065,7 @@ class Repository:
                     event = self.events[ei]
                     if verbose >= DEBUG_MERGE:
                         if hasattr(event, "mark"):
-                            announce("writing %s %s" % (event.mark, event.__class__.__name__))
+                            announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
             except IOError, e:
                 raise Fatal("export error: %s" % e)
@@ -1859,8 +1859,8 @@ class RepositoryList:
                     for (objtype, attr) in ((Commit, "branch"),
                                          (Reset, "ref")):
                         if isinstance(event, objtype):
+                            old = getattr(event, attr)
                             if verbose >= DEBUG_MERGE:
-                                old = getattr(event, attr)
                                 announce("moving %s -> %s in %s.%s"
                                          % (old, old + suffix,
                                             objtype.__name__,
