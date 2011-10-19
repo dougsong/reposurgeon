@@ -857,7 +857,8 @@ class Repository:
                                 # So we do this and trust the
                                 # stability of Python sort
                                 # (guaranteed since Python 2.4).
-                                if obj.timestamp is None:
+                                if obj.timestamp is None \
+                                       or obj.timestamp >= commit.when():
                                     obj.timestamp = commit.when()-1
                                 break
                         else:
