@@ -1,12 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/python -3
 #
 # reposurgeon - a repository surgeon.
 #
 # By ESR, October 2010.  BSD terms apply.
 #
-# Requires Python 2.5 or newer.
+# Requires Python 3.2 or newer
 #
-import sys, os, cStringIO, cmd, tempfile, subprocess
+import sys, os, io, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
@@ -173,10 +173,10 @@ def nuke(directory, legend):
 
 def complain(msg):
     sys.stdout.flush()
-    print >>sys.stderr, "reposurgeon:", msg
+    sys.stderr.write("reposurgeon: %s\n" % msg)
 
 def announce(msg):
-    print "reposurgeon:", msg
+    sys.stdout.write("reposurgeon: %s\n" % msg)
 
 class Baton:
     "Ship progress indications to stdout."
@@ -572,7 +572,7 @@ class Commit:
                 coauthor.email_out(msg, "Author" + repr(2+i))
         self.committer.email_out(msg, "Committer")
         empty_properties = []
-        propkeys = self.properties.keys()
+        propkeys = list(self.properties.keys())
         propkeys.sort()
         for name in propkeys:
             value = self.properties[name]
@@ -580,7 +580,7 @@ class Commit:
                 if value:
                     empty_properties.append(name)
             else:
-                hdr = "-".join(map(lambda s: s.capitalize(), name.split("-")))
+                hdr = "-".join([s.capitalize() for s in name.split("-")])
                 msg["Property-" + hdr] = value
         if empty_properties:
             msg["Empty-Properties"] = ",".join(empty_properties)
@@ -618,7 +618,7 @@ class Commit:
             modified = True
         if "Author" in msg:
             author_re = re.compile("Author[0-9]*$")
-            authorkeys = filter(author_re.match, msg.keys())
+            authorkeys = list(filter(author_re.match, list(msg.keys())))
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
             authorkeys.sort()
@@ -649,7 +649,7 @@ class Commit:
                         self.authors[i].date = date
                         modified = True
         newprops = {}
-        for prophdr in filter(lambda s: s.startswith("Property-"), msg.keys()):
+        for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
             newprops[propkey] = msg[prophdr]
         if "Empty-Properties" in msg:
@@ -667,10 +667,10 @@ class Commit:
         return modified
     def children(self):
         "Get a list of this commit's children."
-        return filter(lambda e:self.mark in e.parent_marks,self.repo.commits()) 
+        return [e for e in self.repo.commits() if self.mark in e.parent_marks] 
     def parents(self):
         "Get a list of this commit's parents."
-        return filter(lambda e:e.mark in self.parent_marks,self.repo.commits()) 
+        return [e for e in self.repo.commits() if e.mark in self.parent_marks] 
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = {}
@@ -682,10 +682,10 @@ class Commit:
         return cliques
     def fileop_dump(self, i):
         "Dump file ops without data or inlines; used for debugging only."
-        print "commit %d, mark %s:" % (i+1, self.mark)
+        print("commit %d, mark %s:" % (i+1, self.mark))
         for (i, op) in enumerate(self.fileops):
             if op is not None:
-                print "%d: %-20s" % (i, str(op))
+                print("%d: %-20s" % (i, str(op)))
     def __str__(self):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
@@ -703,7 +703,7 @@ class Commit:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % ancestor
-        propkeys = self.properties.keys()
+        propkeys = list(self.properties.keys())
         propkeys.sort()
         for name in propkeys:
             value = self.properties[name]
@@ -778,12 +778,12 @@ class Repository:
     def warn(self, msg, atline=True):
         "Display a parse warning."
         if atline and self.import_line:
-            print "reposurgeon: " + msg + " at line " + repr(self.import_line)
+            print("reposurgeon: " + msg + " at line " + repr(self.import_line))
         else:
-            print "reposurgeon: " + msg
+            print("reposurgeon: " + msg)
     def size(self):
         "Return the size of this import stream, for statistics display."
-        return sum(map(lambda e: len(str(e)), self.events))
+        return sum([len(str(e)) for e in self.events])
     def branchlist(self):
         "Return a list of branchnames in this repo."
         lst = []
@@ -1067,7 +1067,7 @@ class Repository:
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
-            except IOError, e:
+            except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
         "Add a path to the preserve set, to be copied back on rebuild."
@@ -1092,12 +1092,12 @@ class Repository:
                 self.warn("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
-        except OSError, e:
+        except OSError as e:
             raise Fatal("repo rename %s -> %s failed: %s"
                                        % (self.subdir(), self.subdir(newname), e))
     def commits(self):
         "Return a list of the repository commit objects."
-        return filter(lambda e: isinstance(e, Commit), self.events)
+        return [e for e in self.events if isinstance(e, Commit)]
     def earliest(self):
         "Return the date of earlist commit."
         return self.commits()[0].committer.date
@@ -1116,7 +1116,7 @@ class Repository:
             if fileop.op == "M" and fileop.path == path:
                 count = 1
                 break
-        return count + sum(map(lambda c: self.__ancestor_count(c, path), event.parents()))
+        return count + sum([self.__ancestor_count(c, path) for c in event.parents()])
     def __compose(self, event, left, right):
         "Compose two relevant fileops."
         # Here's what the fields in the return value mean:
@@ -1277,15 +1277,15 @@ class Repository:
                             coverage.add(case)
             if not mutated:
                 break
-        commit.fileops = filter(lambda x: x is not None, commit.fileops)
+        commit.fileops = [x for x in commit.fileops if x is not None]
         return coverage
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
-        selected.sort(lambda x, y: cmp(y, x))
+        selected.sort(reverse=True)
         if verbose >= DEBUG_DELETE:
-            announce("Deletion list is %s" % map(lambda x: x+1, selected))
+            announce("Deletion list is %s" % [x+1 for x in selected])
         # Sanity checks
         for ei in selected:
             event = self.events[ei]
@@ -1373,9 +1373,8 @@ class Repository:
                         parent.fileops += copy.copy(event.fileops)
                         parent.pushed_to = True
                 if "tagback" not in policy and "tagforward" not in policy:
-                    self.events = filter(lambda t: not (isinstance(t, Tag)
-                                                        and t.committish == event.mark),
-                                         self.events)
+                    self.events = [t for t in self.events if not (isinstance(t, Tag)
+                                                        and t.committish == event.mark)]
                 elif "tagforward" in policy:
                     for event in self.events:
                         if isinstance(event, Tag) and event.committish == event.mark:
@@ -1402,7 +1401,7 @@ class Repository:
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
-                    for (path, oplist) in event.cliques().items():
+                    for (path, oplist) in list(event.cliques().items()):
                         if len(oplist) == 1:
                             continue
                         if ("coalesce" not in policy and "obliterate" not in policy) or verbose >= DEBUG_DELETE:
@@ -1413,9 +1412,9 @@ class Repository:
                                 self.__adjust_fileop(event.fileops[oplist[0]])
                                 event.fileops.pop(oplist.pop(0))
                         if verbose >= DEBUG_DELETE:
-                            print "Commit %d, after applying policy:" % (ei +1,)
+                            print("Commit %d, after applying policy:" % (ei +1,))
                             for op in event.fileops:
-                                print str(op)
+                                print(str(op))
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
@@ -1424,7 +1423,7 @@ class Repository:
     #
     def front_events(self):
         "Return options, features, and any other events with  a zero timestamp."
-        return filter(lambda e: e.when() == 0, self.events)
+        return [e for e in self.events if e.when() == 0]
     def renumber(self):
         "Renumber the marks in a repo."
         marklist = []
@@ -1588,13 +1587,13 @@ def rebuild_repo(repo, target, preferred):
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 with open(tfname, "w") as tp:
-                    repo.fast_export(range(len(repo)), tp, progress=verbose>0)
+                    repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(range(len(repo)), tp, progress=verbose>0)
+                repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
         do_or_die(vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
@@ -1657,7 +1656,7 @@ def do_or_die(dcmd, legend=""):
             raise Fatal("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
             raise Fatal("child returned %d." % retcode)
-    except (OSError, IOError), e:
+    except (OSError, IOError) as e:
         raise Fatal("execution of %s%s failed: %s" % (dcmd, legend, e))
 
 class popen_or_die:
@@ -1679,14 +1678,14 @@ class popen_or_die:
         try:
             self.fp = os.popen(self.command, self.mode)
             return self.fp
-        except (OSError, IOError), oe:
+        except (OSError, IOError) as oe:
             raise Fatal("execution of %s%s failed: %s" \
                                  % (self.command, self.legend, oe))
     def __exit__(self, extype, value, traceback):
         if extype:
             if verbose:
                 complain("exception %s in popen_or_die." % (extype,))
-            raise extype, value, traceback
+            raise extype(value).with_traceback(traceback)
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.command, self.legend)
             if extype == Fatal:
@@ -1717,7 +1716,7 @@ class RepositoryList:
         self.repo = None
     def reponames(self):
         "Return a list of the names of all repositories."
-        return map(lambda r: r.name, self.repolist)
+        return [r.name for r in self.repolist]
     def uniquify(self, name):
         "Uniquify a repo name in the repo list."
         if name.endswith(".fi"):
@@ -1784,7 +1783,7 @@ class RepositoryList:
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
             event.color = "early"        
-        assert all(map(lambda x: hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset), self.repo))
+        assert all([hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo])
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
@@ -1836,9 +1835,9 @@ class RepositoryList:
         return True
     def merge(self, factors):
         "Merge multiple repos into a union repo."
-        factors.sort(lambda x, y: cmp(x.earliest(), y.earliest()))
-        roots = map(lambda x: x.commits()[0], factors)
-        union = Repository("+".join(map(lambda r: r.name, factors)))
+        factors.sort(key=lambda x: x.earliest())
+        roots = [x.commits()[0] for x in factors]
+        union = Repository("+".join([r.name for r in factors]))
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
@@ -1904,7 +1903,7 @@ class RepositoryList:
             #del factor
         # Renumber all events and sort by imputed timestamp
         union.renumber()
-        union.events.sort(lambda x,y: cmp(x.when(), y.when()))
+        union.events.sort(key=lambda x: x.when())
         # Sort out the root grafts. All but the first get glued to the
         # previous commit closest in time.
         lastcommit = None
@@ -1922,7 +1921,7 @@ class RepositoryList:
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
-            return re.compile("|".join(map(lambda s: "(?:" + s + ")", toklist)))
+            return re.compile("|".join(["(?:" + s + ")" for s in toklist]))
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -1933,7 +1932,7 @@ class RepositoryList:
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.fileops):
                         if verbose >= DEBUG_DELETE:
-                            print str(fileop)
+                            print(str(fileop))
                         if fileop.op in "DM":
                             if expunge.search(fileop.path):
                                 deletia.append(i)
@@ -2020,10 +2019,10 @@ class RepositoryList:
                 delattr(event, "deletehook")
         self.repolist.append(expunged)
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = map(lambda e: not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.refcount)), self.repo.events)
-        deletia = map(lambda x: x[0], filter(lambda (i, e): not e, enumerate(deletia)))
+        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.refcount)) for e in self.repo.events]
+        deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
         if verbose:
-            announce("deleting blobs and empty commits %s" % map(lambda x: x+1, deletia))
+            announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
             deletia.reverse()
             for i in deletia:
                 self.repo.events.pop(i)
@@ -2046,7 +2045,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         "Execute one command, fielding interrupts for recoverable exceptions."
         try:
             cmd.Cmd.onecmd(self, line)
-        except Recoverable, e:
+        except Recoverable as e:
             complain(e.msg)
     def postcmd(self, unused, line):
         if line == "EOF":
@@ -2067,7 +2066,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             raise Recoverable("'shell %s' returned error." % line)
     def do_EOF(self, unused):
         "Terminate reposurgeon."
-        print ""
+        print("")
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
@@ -2224,7 +2223,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             if self.peek() not in "()|& ":
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             if verbose >= DEBUG_LEXER:
-                announce("visibility set is %s with %s left" % (map(lambda x: x.__name__, visible), repr(self.line)))
+                announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
             selected = []
             for (i, event) in enumerate(self.chosen()):
                 if event.__class__ in visible:
@@ -2290,7 +2289,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     matched = False
                     # First, search branches
                     branchlist = self.chosen().branchlist()
-                    branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
+                    branchlist.sort(key=lambda x: len(x), reverse=True) # longest name first
                     for symbol in branchlist:
                         if self.line.startswith(os.path.basename(symbol)):
                             self.line = self.line[len(symbol):]
@@ -2306,8 +2305,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                                 matched = True
                                 selection.append(loc)
                     # Next, search tags
-                    taglist = filter(lambda e: isinstance(e, Tag), self.chosen().events)
-                    taglist.sort(lambda x, y: len(x.name)-len(y.name))
+                    taglist = [e for e in self.chosen().events if isinstance(e, Tag)]
+                    taglist.sort(key=lambda x: len(x.name), reverse=True)
                     for tag in taglist:
                         if self.line.startswith(tag.name):
                             self.line = self.line[len(tag.name):]
@@ -2329,7 +2328,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     spanning = True
                 else:
                     if spanning:
-                        resolved += range(last+1, elt+1)
+                        resolved += list(range(last+1, elt+1))
                         spanning = False
                     else:
                         resolved.append(elt)
@@ -2379,7 +2378,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         else:
             self.pop()
             branchlist = self.chosen().branchlist()
-            branchlist.sort(lambda x, y: len(x)-len(y)) # longest name first
+            branchlist.sort(key=lambda x: len(x), reverse=True) # longest name first
             selection = []
             for symbol in branchlist:
                 if self.line.startswith(os.path.basename(symbol)):
@@ -2409,7 +2408,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, method), enumerate(self.chosen())))
+        default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
         line = self.set_selection_set(line, default)
         outfile = line.strip()
         if outfile and outfile != '-':
@@ -2428,7 +2427,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
     # On-line help and instrumentation
     #
     def help_help(self):
-        print "Show help for a command. Follow with space and the command name."
+        print("Show help for a command. Follow with space and the command name.")
     def do_verbose(self, line):
         global verbose
         if line:
@@ -2439,12 +2438,12 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         if not line or verbose:
             announce("verbose %d" % verbose)
     def help_verbose(self):
-        print """
+        print("""
 Without an argument, this command requists a report of the verbosity
 kevel.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
 developers only.
-"""
+""")
     def do_echo(self, line):
         "Set or clear echoing commands before processing (for regression tests)"
         try:
@@ -2455,30 +2454,30 @@ developers only.
             announce("echo %d" % self.echo)
     def do_version(self, unused):
         "Report the program version and supported version-control systems."
-        print "reposurgeon " + version + " supporting " + " ".join(map(lambda x: x.name, vcstypes))
+        print("reposurgeon " + version + " supporting " + " ".join([x.name for x in vcstypes]))
     def do_resolve(self, line):
         "Display the set of event numbers generated by a section set."
         self.set_selection_set(line)
         if self.selection is None:
-            print "No selection"
+            print("No selection")
         elif type(self.selection) == type([]):
-            print map(lambda x: x+1, self.selection)
+            print([x+1 for x in self.selection])
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
     def help_resolve(self):
-        print """
+        print("""
 Does nothing but resolve a selection-set expression
 and report the resulting event-number set to standard
 output. Implemented mainly for recression testing, but may be useful
 for exploring the selection-set language.
-"""
+""")
     def do_names(self, unused):
         "List all known symbolic names of branches and tags."
         for branch in self.chosen().branchlist():
-            print "branch %s" % branch
+            print("branch %s" % branch)
         for event in self.chosen():
             if isinstance(event, Tag):
-                print "tag    %s" % event.name
+                print("tag    %s" % event.name)
     def do_script(self, line):
         "Read and execute commands from a named file."
         if not line:
@@ -2487,12 +2486,12 @@ for exploring the selection-set language.
         try:
             for cmdline in open(line):
                 interpreter.onecmd(interpreter.precmd(cmdline))
-        except IOError, e:
+        except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
     def do_history(self, line):
         "Dump your command list from this session so far."
         for line in self.history:
-            print line
+            print(line)
     def do_coverage(self, unused):
         "Display the coverage-case set (developer instrumentation)."
         if not self.chosen():
@@ -2503,7 +2502,7 @@ for exploring the selection-set language.
                 e.fileop_dump(i)
         coverage = list(self.chosen().case_coverage)
         coverage.sort()
-        print "Case coverage:", coverage
+        sys.stdout.write("Case coverage: %s\n" % coverage)
     #
     # Information-gathering
     #
@@ -2520,22 +2519,22 @@ for exploring the selection-set language.
                 raise Recoverable("no such repo as %s" % name)
         if this:
             def count(otype):
-                return len(filter(lambda x: isinstance(x,otype), this.events))
-            print "%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
+                return len([x for x in this.events if isinstance(x,otype)])
+            print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
                   (this.name, this.size() / 1000.0, len(this),
                    count(Blob), count(Commit), count(Tag), count(Reset),
-                   iso8601_from_unixtime(this.readtime))
+                   iso8601_from_unixtime(this.readtime)))
             if this.sourcedir:
-                print "  Loaded from", this.sourcedir
+                print("  Loaded from", this.sourcedir)
             if this.vcs:
-                print repr(this.vcs)
+                print(repr(this.vcs))
         else:
             complain("no repository has been chosen.")
     def help_stats(self):
-        print """
+        print("""
 Report size statistics and import/export method information of the
 currently chosen repository.
-"""
+""")
     def do_index(self, line):
         "Generate a summary listing of objects."
         if not self.chosen():
@@ -2546,54 +2545,54 @@ currently chosen repository.
         # get a default-set computation we don't want.  Second, for this
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
-        default = map(lambda x: x[0], filter(lambda (n, o): not isinstance(o, Blob), enumerate(self.chosen())))
+        default = [x[0] for x in [n_o1 for n_o1 in enumerate(self.chosen()) if not isinstance(n_o1[1], Blob)]]
         self.set_selection_set(line, default)
         for i in self.selection:
             event = self.chosen().events[i]
             if isinstance(event, Blob):
-                print "%6d blob   %6s    %s" % (i+1, event.mark,event.path)
+                print("%6d blob   %6s    %s" % (i+1, event.mark,event.path))
                 continue
             if isinstance(event, Commit):
-                print "%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch) 
+                print("%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch)) 
                 continue
             if isinstance(event, Tag):
-                print "%6d tag    %6s    %4s" % (i+1, event.committish, repr(event.name),) 
+                print("%6d tag    %6s    %4s" % (i+1, event.committish, repr(event.name),)) 
                 continue
             if isinstance(event, Reset):
-                print "%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref) 
+                print("%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref)) 
                 continue
             else:
-                print "?      -      %s" % (event,) 
+                print("?      -      %s" % (event,)) 
     def help_index(self):
-        print """
+        print("""
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
 it's the commit branch; for a blob it's the repository path of the
 file in the blob.
-"""
+""")
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister", (screenwidth(),))
     def help_list(self):
-        print """
+        print("""
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp, and the third the leading text
 of the comment.  If there is a second argument, or the first is not
 recognized as a selection set, it will be taken as the name of the
 file to report to; no argument, or one of '-'; writes to standard
 output.
-"""
+""")
     def do_tags(self, line):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "tags", (screenwidth(),))
     def help_tags(self):
-        print """
+        print("""
 Display lightweight tags: two fields, an event number and a tag name.  If
 there is a second argument, or the first is not recognized as a
 selection set, it will be taken as the name of the file to report to;
 no argument, or one of '-'; writes to standard output.
-"""
+""")
     #
     # Housekeeping
     #
@@ -2605,14 +2604,14 @@ no argument, or one of '-'; writes to standard output.
                     self.preferred = repotype
                     break
             else:
-                complain("known types are %s." % " ".join(map(lambda x: x.name, vcstypes)))
+                complain("known types are %s." % " ".join([x.name for x in vcstypes]))
         if verbose:
             if not self.preferred:
                 announce("no preferred type has been set.")
             else:
                 announce("%s is the preferred type." % self.preferred.name)
     def help_prefer(self):
-        print """
+        print("""
 Report or set (with argument) the preferred type of repository. This
 will have two effects.  First, if there are multiple repositories in a
 directory you do a read on, reposurgeon will read the preferred one
@@ -2623,14 +2622,14 @@ the preferred type.
 If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set it
 to the type of that repository.
-"""
+""")
     def do_choose(self, line):
         "Choose a named repo on which to operate."
         if not self.repolist:
             if verbose > 0:
                 complain("no repositories are loaded.")
                 return
-        self.repolist.sort(lambda x, y: cmp(x[1], y[1]))
+        self.repolist.sort(key=lambda x: x[1])
         if not line:
             for repo in self.repolist:
                 status =  '-'
@@ -2645,7 +2644,7 @@ to the type of that repository.
             else:
                 complain("no such repo as %s" % line)
     def help_choose(self):
-        print """
+        print("""
 Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
 repos loaded from standard input are 'unnamed'. The program will add
@@ -2655,7 +2654,7 @@ same source.
 With no argument, lists the names of the currently stored repositories
 and their load times.  The second column is '*' for the currently selected
 repository, '-' for others.
-"""
+""")
     def do_drop(self, line):
         "Drop a repo from reposurgeon's list."
         if not self.reponames():
@@ -2677,11 +2676,11 @@ repository, '-' for others.
             # Emit listing of remaining repos
             self.do_choose('')
     def help_drop(self):
-        print """
+        print("""
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo.
-"""
+""")
     def do_rename(self, line):
         "Rename a repository."
         if line in self.reponames():
@@ -2689,34 +2688,34 @@ currently chosen repo.
         else:
             self.chosen().rename(line)
     def help_rename(self):
-        print """
+        print("""
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
-"""
+""")
     def do_preserve(self, line):
         "Add files and subdirectories to the preserve set."
         for filename in line.split():
             self.chosen().preserve(filename)
         announce("preserving %s." % list(self.chosen().preservable()))
     def help_preserve(self):
-        print """
+        print("""
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
 list is displayed afterwards.
-"""
+""")
     def do_unpreserve(self, line):
         "Remove files and subdirectories from the preserve set."
         for filename in line.split():
             self.chosen().unpreserve(filename)
         announce("preserving %s." % list(self.chosen().preservable()))
     def help_unpreserve(self):
-        print """
+        print("""
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
 current preserve list is displayed afterwards.
-"""
+""")
     #
     # Serialization and de-serialization.
     #
@@ -2738,7 +2737,7 @@ current preserve list is displayed afterwards.
         if verbose:
             self.do_choose('')
     def help_read(self):
-        print """
+        print("""
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
  
@@ -2752,13 +2751,13 @@ fast-import stream.
 With an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).
-"""
+""")
     def do_write(self, line):
         "Stream out the results of repo surgery."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, range(len(self.chosen())))
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
         if not line:
             line = '-'
         if line == '-':
@@ -2770,27 +2769,27 @@ with command-line arguments).
             except OSError:
                 complain("open of %s for write failed.\n" % line)
     def help_write(self):
-        print """
+        print("""
 Dump a fast-import stream representing selected events to standard output
 (if second argument is empty or '-') or a file.  Fails if the argument exists
 and is a directory or anything other than a plain file. The default selection
 is all events.
-"""
+""")
     def do_inspect(self, line):
         "Dump raw events."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        self.set_selection_set(line, range(len(self.chosen())))
+        self.set_selection_set(line, list(range(len(self.chosen()))))
         for ei in self.selection:
             sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n") 
             sys.stdout.write(str(self.chosen()[ei]))
     def help_inspect(self):
-        print """
+        print("""
 Dump a fast-import stream representing selected events to standard output.
 Just like a write, except the progress meter is disabled and there is
 a header identifying the event before each commit.
-"""
+""")
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
         if not self.chosen():
@@ -2798,13 +2797,13 @@ a header identifying the event before each commit.
             return
         rebuild_repo(self.chosen(), line, self.preferred)
     def help_rebuild(self):
-        print """
+        print("""
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
-"""
+""")
     #
     # Editing commands
     #
@@ -2812,7 +2811,7 @@ its contents are backed up to a save directory.
         "Generate a mailbox file representing object metadata."
         self.report_select(line, "email_out")
     def help_mailbox_out(self):
-        print """
+        print("""
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
@@ -2820,7 +2819,7 @@ is, presently, blobs and resets).  If there is a second argument, or
 the first is not recognized as a selection set, it will be taken as
 the name of the file to report to; no argument, or one of '-'; writes
 to standard output.
-"""
+""")
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
         infile = line.strip()
@@ -2860,7 +2859,7 @@ to standard output.
                 announce("modified events are %s." % (modified,))
 
     def help_mailbox_in(self):
-        print """
+        print("""
 Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set.  If there is an argument it will be taken as the
@@ -2879,13 +2878,13 @@ before any individual event is updated.
 At present only the comment fields of commits and tags are updated from
 the mailbox contents; commit and tag metadata cannot be altered. This
 may change in a future release.
-"""
+""")
     def do_edit(self, line):
         "Edit metadata interactively."
         if not self.chosen():
             complain("no repo is loaded")
             return
-        default = map(lambda x: x[0], filter(lambda (n, o): hasattr(o, "email_out"), enumerate(self.chosen())))
+        default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
         line = self.set_selection_set(line, default)
         editor = line or os.getenv("EDITOR")
         if not editor:
@@ -2927,7 +2926,7 @@ may change in a future release.
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
     def help_edit(self):
-        print """
+        print("""
 Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
@@ -2936,7 +2935,7 @@ taken from the $EDITOR variable in your environment.
 Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
-"""
+""")
     def do_delete(self, line):
         "Delete events in the specified selection set."
         if not self.chosen():
@@ -2955,7 +2954,7 @@ blob, your editor will be called on the blob file.
                     return
         self.chosen().delete(self.selection, self.line)
     def help_delete(self):
-        print """
+        print("""
 Delete a selection set of commits (and their associated blobs, if
 any).  The default selection set for this command is empty.  Tags
 pointing at the commits are also removed.
@@ -2964,7 +2963,7 @@ Note that applying this command to a commit with a modify operation
 will *not* necessarily remove changes made by that commit from later
 versions.  It will have the effect of retracting the modifications
 only when they are the final ones on the commit's branch.
-"""
+""")
     def do_coalesce(self, line):
         "Coalesce events in the specified selection set."
         if not self.chosen():
@@ -2984,8 +2983,7 @@ only when they are the final ones on the commit's branch.
         # it; this operation only make sense for cleaning up
         # artifacts in linear stretches of history that have been
         # lifted from file-oriented VCSes like RCS and CVS.
-        commits = filter(lambda (i, e): isinstance(e, Commit),
-                         enumerate(self.chosen()))
+        commits = [i_e3 for i_e3 in enumerate(self.chosen()) if isinstance(i_e3[1], Commit)]
         for i in range(len(commits)-1):
             cthis = self.chosen().events[commits[i][0]]
             cnext = self.chosen().events[commits[i+1][0]]
@@ -2998,10 +2996,10 @@ only when they are the final ones on the commit's branch.
             elif cthis.committer.date.delta(cnext.committer.date) < timefuzz:
                 eligible.append(commits[i][0])
         if verbose:
-            announce("deletion set is %s" % map(lambda x: x+1, eligible))
+            announce("deletion set is %s" % [x+1 for x in eligible])
         self.chosen().delete(eligible, "coalesce")
     def help_coalesce(self):
-        print """
+        print("""
 Scan the selection set for runs of commits with identical
 comments close to each other in time (this is a common form of scar
 tissues in repository up-conversions from older file-oriented
@@ -3010,7 +3008,7 @@ last commit, in order.
 
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
-"""
+""")
     def do_renumber(self, unused):
         "Renumber the marks in the selected repo."
         if not self.chosen():
@@ -3018,17 +3016,17 @@ separation in seconds; the default is 90 seconds.
             return
         self.repo.renumber()
     def help_renumber(self):
-        print """
+        print("""
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
 ordering or gaps in the sequence.
-"""
+""")
     def do_timeoffset(self, line):
         "Apply a time offset to all dates in selected events."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, range(len(self.chosen())))
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
         if not line:
             complain("a signed time offset argument is required.")
             return
@@ -3070,7 +3068,7 @@ ordering or gaps in the sequence.
                     if len(args) > 1:
                         author.timezone = args[1]
     def help_timeoffset(self):
-        print """
+        print("""
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
 The leading sign is required to distingush it from a selection expression.
@@ -3078,7 +3076,7 @@ The leading sign is required to distingush it from a selection expression.
 Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
-"""
+""")
     def do_cut(self, line):
         "Attempt to topologically partition the repo."
         if not self.chosen():
@@ -3113,7 +3111,7 @@ an offset literal of +0 or -0.
         if verbose:
             self.do_choose("")
     def help_cut(self):
-        print """
+        print("""
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
@@ -3123,16 +3121,16 @@ commit must follow.
 This operation may fail if the commit graph remains connected
 through another path; the tool will detect this. If the repo was named
 'foo', the cut segments will be named 'foo-early' and 'foo-late'.
-"""
+""")
     def do_expunge(self, line):
         "Expunge files from the chosen repository."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, range(len(self.chosen())))
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
         self.expunge(self.selection, line.split())
     def help_expunge(self):
-        print """
+        print("""
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.
@@ -3148,7 +3146,7 @@ deleted and a warning issued.
 After file expunges have been performed, any commits with no
 remaining file operations will be deleted, and any tags pointing to
 them.
-"""
+""")
     def do_split(self, line):
         "Split a commit."
         if not self.chosen():
@@ -3168,7 +3166,7 @@ them.
                 splitpoint = int(line.split()[0]) - 1
             except ValueError:
                 raise Recoverable("expected integer fileop index (1-origin)")
-            if splitpoint not in range(1, len(event.fileops)):
+            if splitpoint not in list(range(1, len(event.fileops))):
                 raise Recoverable("fileop index out of range")
             # Actual implementation starts here
             self.chosen().events.insert(where+1, event.clone())
@@ -3187,7 +3185,7 @@ them.
             if verbose:
                 self.do_inspect(repr(where+1) + "," + repr(where+2))
     def help_split(self):
-        print """
+        print("""
 Split a specified commit in two, the opposite of coalesce.  The first argument
 is required to be a commit location; the separating keyword 'at' must follow,
 then an integer 1-origin index of a file operation within the commit.
@@ -3202,7 +3200,7 @@ Finally, some file operations - starting at the one indexed by the split
 argument - are moved forward from the original commit into the new one.
 Legal indices are 2-n, where n is the number of file operations in the
 original commit.
-"""
+""")
     def do_merge(self, line):
         "Merge repos together."
         self.unchoose()
@@ -3217,7 +3215,7 @@ original commit.
         if verbose:
             self.do_choose('')
     def help_merge(self):
-        print """
+        print("""
 Merge repositories. Name any number of loaded repositories; they will
 be merged into one union repo and removed from the load list.  The
 union repo will be selected.
@@ -3231,13 +3229,13 @@ Marks will be renumbered.
 The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
 type.
-"""
+""")
     def do_cvspreen(self, line):
         "Purge cruft created by cvs2svn."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, range(len(self.chosen())))
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
         for ei in self.selection:
@@ -3266,13 +3264,13 @@ type.
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
     def help_merge(self):
-        print """
+        print("""
 Purge cruft created by cvs2svn conversions.  This looks for dummy
 commits created by cvs2svn with one parent, stereotyped comments and
 no fileops that were created within 10 seconds of their parent.  The
 branch attribute of the commit is given to the commit's parent and the
 commit itself deleted.
-"""
+""")
 
 if __name__ == '__main__':
     try:
@@ -3295,10 +3293,10 @@ if __name__ == '__main__':
                         cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
         finally:
             interpreter.cleanup()
-        raise SystemExit, 0
-    except (Recoverable, Fatal), xe:
+        raise SystemExit(0)
+    except (Recoverable, Fatal) as xe:
         complain(xe.msg)
-        raise SystemExit, 1
+        raise SystemExit(1)
     except KeyboardInterrupt:
-        print ""
+        print("")
 # end
