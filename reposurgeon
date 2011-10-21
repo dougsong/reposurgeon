@@ -4,7 +4,7 @@
 #
 # By ESR, October 2010.  BSD terms apply.
 #
-# Requires Python 3.2 or newer
+# Requires Python 2.7.2 or newer, running in Python 3 mode.
 #
 import sys, os, io, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
