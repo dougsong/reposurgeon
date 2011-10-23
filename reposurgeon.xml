@@ -716,7 +716,7 @@ type.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>cvspreen</command>
+<term><command>cvslift</command>
 </term>
 <listitem>
 <para>

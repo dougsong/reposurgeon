@@ -3230,7 +3230,7 @@ The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
 type.
 """)
-    def do_cvspreen(self, line):
+    def do_cvslift(self, line):
         "Purge cruft created by cvs2svn."
         if not self.chosen():
             complain("no repo has been chosen.")
