@@ -1376,13 +1376,13 @@ class Repository:
                     self.events = [t for t in self.events if not (isinstance(t, Tag)
                                                         and t.committish == event.mark)]
                 elif "tagforward" in policy:
-                    for event in self.events:
-                        if isinstance(event, Tag) and event.committish == event.mark:
-                            event.committish = event.children()[0].mark
+                    for t in self.events:
+                        if isinstance(t, Tag) and t.committish == event.mark:
+                            t.committish = event.children()[0].mark
                 elif "tagback" in policy:
-                    for event in self.events:
-                        if isinstance(event, Tag) and event.committish == event.mark:
-                            event.committish = event.parents()[0].mark
+                    for t in self.events:
+                        if isinstance(t, Tag) and t.committish == event.mark:
+                            t.committish = event.parents()[0].mark
                 # And remove the deleted event
                 self.events.pop(ei)
             else:
@@ -3246,6 +3246,13 @@ type.
                    event.when() - event.parents()[0].when() >= 10 or \
                    not manufactured in event.comment:
                     continue
+                # Generate appropriate tag
+                m = re.search("create tag '([^']*)'", event.comment)
+                if m:
+                    self.chosen().events.append(Tag(name=m.group(1),
+                                                    committish=event.mark,
+                                                    tagger=copy.copy(event.committer),
+                                                    content="Tag deduced from bogus cvs2svn-generated commit."))
                 # One kind of pathological generated commit is empty.
                 if len(event.fileops) == 0:
                     announce("Nuking empty manufactured commit %s"%event.mark) 
