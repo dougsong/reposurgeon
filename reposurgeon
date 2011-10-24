@@ -3252,7 +3252,7 @@ type.
                     self.chosen().events.append(Tag(name=m.group(1),
                                                     committish=event.mark,
                                                     tagger=copy.copy(event.committer),
-                                                    content="Tag deduced from bogus cvs2svn-generated commit."))
+                                                    content="Tag deduced from bogus cvs2svn-generated commit.\n"))
                 # One kind of pathological generated commit is empty.
                 if len(event.fileops) == 0:
                     announce("Nuking empty manufactured commit %s"%event.mark) 
