@@ -1409,7 +1409,7 @@ class Repository:
                         if "coalesce" in policy:
                             "Remove all but the last M."
                             while len(oplist) > 1:
-                                self.__adjust_fileop(event.fileops[oplist[0]])
+                                self.__adjust_fileop(event.fileops[oplist[0]], -1)
                                 event.fileops.pop(oplist.pop(0))
                         if verbose >= DEBUG_DELETE:
                             print("Commit %d, after applying policy:" % (ei +1,))
@@ -3266,10 +3266,9 @@ type.
                     if fileop.op != 'D':
                         break
                 else:
-                    if not event.children:
-                        announce("Nuking all-delete manufactured tip commit %s" % event.mark)
-                        deletion_set.append(ei)
-                        continue
+                    announce("Nuking all-delete manufactured commit %s" % event.mark)
+                    deletion_set.append(ei)
+                    continue
                 announce("Manufactured commit %s survived" % event.mark)
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
