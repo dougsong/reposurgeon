@@ -3262,10 +3262,11 @@ type.
                 for fileop in event.fileops:
                     if fileop.op != 'D':
                         break
-                else:                    
-                    announce("Nuking all-delete manufactured commit %s" % event.mark)
-                    deletion_set.append(ei)
-                    continue
+                else:
+                    if not event.children:
+                        announce("Nuking all-delete manufactured tip commit %s" % event.mark)
+                        deletion_set.append(ei)
+                        continue
                 announce("Manufactured commit %s survived" % event.mark)
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
