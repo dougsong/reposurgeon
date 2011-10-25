@@ -1747,6 +1747,7 @@ class RepositoryList:
     def cut(self, early, late):
         "Attempt to topologically cut the selected repo."
         # Apply a graph-coloring algorithm to determine if the repo can be split
+        ri = late.parent_marks.index(early.mark)
         late.parent_marks.remove(early.mark)
         def do_color(commit, color):
             commit.color = color
@@ -1774,8 +1775,7 @@ class RepositoryList:
                             conflict = True
                             break
         if conflict:
-	    # FIXME: We need to put this back where we got it, in case it's parent 0
-            late.parent_marks.append(early.mark)
+            late.parent_marks.insert(ri, early.mark)
             for event in self.repo:
                 if hasattr(event, "color"):
                     event.color = None
