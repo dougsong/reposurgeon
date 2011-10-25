@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<link rev="made" href="mailto:esr@snark.thyrsus.com" />
+<link rel="stylesheet" href="/~esr/sitestyle.css" type="text/css" media='all'/>
+<link rel="stylesheet" href="/~esr/sitestyle-print.css" type="text/css" media='print'/>
+<meta name="description" content="" />
+<meta name="keywords" content="" />
+<meta name="MSSmartTagsPreventParsing" content="TRUE" />
+<a href='http://www.anti-leech.com/spam/spambot_stopper.php'></a>
+<title>DVCS migration: supporting git and hg access from one repo</title>
+</head>
+<body>
+
+<div id="Header">
+<table width="100%" cellpadding="0" summary="Canned page header">
+<tr>
+<td>
+<script language="JavaScript">
+<!-- 
+document.writeln(document.title);
+ // -->
+</script>
+</td>
+<td align="right">
+<script language="JavaScript" src="/~esr/datestamp.js" type='text/javascript'></script>
+</td>
+</tr>
+</table>
+</div>
+
+<div id="Menu">
+	<hr/>
+	<a href="/~esr" title="My home page">Home Page</a><br />
+	<a href="/~esr/whatsnew.html" title="What's new on this site">What's New</a><br />
+	<a href="/~esr/sitemap.html" title="Map of the site">Site Map</a><br />
+	<a href="/~esr/software.html" title="Software I maintain">Software</a><br />
+	<a href="/~esr/projects.html" title="My projects">Projects</a><br />
+	<a href="/~esr/faqs/" title="My FAQ documents">HOWTOs</a><br />
+	<a href="/~esr/writings/" title="Essays and ruminations">Essays</a><br />
+	<a href="/~esr/personal.html" title="Portrait of the author">Personal</a><br />
+	<a href="http://www.ibiblio.org/esrblog/">Weblog</a><br/>	
+	<a href="/~esr/netfreedom/">Freedom!</a><br />
+	<a href="/~esr/guns/">Firearms!</a><br />
+	<hr/>
+</div>
+
+<div id="Content">
+
+<h1 id="overview">Overview</h1>
+
+<p>Distributed version control systems (DVCSes) are powerful and
+liberating tools for software developers, but projects aiming to
+choose one of the major contenders can find themselves mired in
+contention and politics.  The most common such controversy is whether
+to use git or hg (aka Mercurial).  With a little planning it's
+possible to have it both ways, allowing developers to use either git
+or hg to work with the same repository.</p>
+
+<p>This page is a guide to up-converting your repository, finding the
+tools you need, and adopting practices that will reduce process and
+political friction to a minimum.</p>
+
+<p>The technical fact central to the strategy I'm going to describe is
+that as of late 2011 an hg plugin already exists to allow seamless
+access to a git repository - but the reverse is not true.  So we'll
+explain how to create a git repository and then line up the tools to
+access it in several different ways.</p>
+
+<p>But tools aren't the end of the story. Your developers will need
+some education in good practice to get the most out of the tools.
+I'll cover that aspect as well.</p>
+
+<h1 id="conversion">Step One: Conversion</h1>
+
+<p>Your first step will be converting your repository to git. In 90%
+of cases you'll be converting from CVS or Subversion, and those are
+the cases we'll cover here.  If you're using something older or
+weirder, you're on your own for this step.</p>
+
+<p>Before you can do your conversion, you'll need to put together an
+authors file.  Subversion and CVS identify users by a local Unix login
+name; DVCSes use pairs of fullnames email addresses. The authors file
+will specify a full name and email address for each local user ID in
+your repo.</p>
+
+<h2 id="cvs_to_git">CVS to git</h2> 
+
+<p>If you are using CVS, you have (at least) two conversion options.
+One is to use the cvsimport plugin of git itself.  Use the -A option
+of <code>git cvsimport</code> to pass it your authors file. You can <a
+href="http://feeding.cloud.geek.nz/2009/08/migrating-sahana-from-cvs-to-git.html">read
+a description</a> of a migration using git cvsimport.</p>
+
+<p>You can use <a
+href="http://cvs2svn.tigris.org/cvs2svn.html">cvs2svn</a> to convert
+from CVS to Subversion, then from Subversion to git. I've done this,
+and it worked - but see the description of cvs2svn artifacts later on.
+Use the -A option of <code>git cvsimport</code> to pass it your
+authors file.</p>
+
+<p>There is a <a
+href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
+from cvs2svn. I have not had occasion to try this tool myself; I did
+my last lift from CVS before it existed. It's likely to be effective,
+though, because the hard part - deducing changesets from CVS's
+per-file commits - is shared with cvs2svn, which has probably been
+more extensively battle-tested than any other CVS converter out
+there. I don't know how you pass it your authors file, though, as it
+doesn't seem to have that option.</p>
+
+<h2 id="svn_to_git">Subversion to git</h2>
+
+<p>For Subversion to git lifting, you have no fewer than three options
+with two of them easily confused.  The easiest choice, and the one I
+normally use, is git-svn.  This is a plugin for git that supports
+working with Subversion servers; "git svn clone" will pull the
+contents of a Subversion server (specified by Subversion URL) into a
+local git repository.</p>
+
+<p>git-svn has a lot of options, most of them having to do with its
+use as a gateway to a live Subversion server.  For doing a one-time
+repo conversion, here are the only two you usually need to know
+about</p>
+
+<dl>
+<dt>-A (or &ndash;&ndash;authors-file)</dt>
+<dd><p>Specify your authors file.</p>
+
+<dt>&ndash;&ndash;stdlayout</dt>
+<dd><p>Inform git-svn that your project has a standard
+trunk/tags/branches layout. git-svn will use this to create
+corresponding git tags and branches.</p>
+</dd>
+
+<p>Because git-svn is designed for live gatewaying, what it does with
+tags and branches is not quite what you want for a one-time conversion
+to a standalone git repo. It imports all branches and tags as remote
+svn branches, and creates a remote branch named 'trunk', which you
+won't need.  The following steps will fix this up:
+
+<ol>
+<li>Delete .git/refs/remotes/origin/tags/trunk</li>
+<li>Move the other files in .git/refs/remotes/origin/tags to .git/refs/tags</li>
+<li>Remove the .git/refs/remotes/origin/tags directory.</li>
+<li>Move remaining files in .git/refs/remotes/origin/ to .git/refs/heads</li>
+</ol>
+
+<div>&nbsp;</div>
+
+<p>There are also two different projects named <code>svn2git</code>,
+one at <a href="https://github.com/nirvdrum/svn2git">GitHub</a> and
+one at <a href="https://gitorious.org/svn2git/">Gitorious</a>.</p>
+
+<p>The GitHub one is a thin wrapper around <code>git-svn</code> that,
+according to its documentation, does something quite like the fixup
+described above. But it turns the remote tags into actual tag objects
+rather than "lightweight" tags (which are really just a kind of
+branch).  If you have a Ruby interpreter installed it is possibly
+worth experimenting with.</p>
+
+<p>The Gitorious one is undocumented and written in C++, which are
+both good reasons to avoid it (C++ being overkill for a job naturally
+done by a scripting language). I mention it only because you might
+trip over it while looking for the GitHub version.</p>
+
+<h1 id="cleanup">Step Two: Cleanup</h1>
+
+<p>You should now have a git repository, but it is likely to have a
+lot of cruft and conversion artifacts in it.  Here are some common
+forms of cruft:</p>
+
+<dl>
+<dt><em style="bold">Metadata inserted by <code>git-svn</code>.</em></dt>
+<dd><code>git-svn</code> inserts lines at the end of eacgh commit
+comment that refer back to the Subversion commit it is derived.  This
+is necessary for live-gatewaying, and useful during one-shot
+conversions, but you will probably not want it in the final repo.</dd>
+
+<dt>Commits generated by <code>cvs2svn</code> to carry tag information.</dt>  
+<dd>These may be present even if you are not converting from CVS; they
+lurk in the history of a lot of Subversion projects.  Sometimes these
+junk commits are empty (no file operations associated with them at
+all); sometimes they're translated as long lists of spurious delete
+fileops, and sometimes they have actual file content (often referring
+randomly to file versions far older than the junk commit). Older versions
+of <code>cvs2svn</code> seem to have generated all kinds of meaningless
+crud into these.</dd>
+
+<dt>Subversion commit references</dt>
+<dd>Often these will be in the form 'r' followed by a string of digits
+referring to a Subversion commit number. But not always; humans come
+up with lots of ambiguous ways to write these.  A clean conversion 
+</dl>
+
+
+
+
+Second: (optionally) use <a href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> to clean up conversion artifacts and other cruft.  The 'cvslift' command removes most cvs2svn artifacts; you will probably also want to use 'edit' change commit references in comments to a VCS-independent form such as a commit timestamp.  You may also want to massage multi-line commit comments into the conventional git/hg form of summary line followed by blank line followed by details.
+
+Third: Explain to your committers how to pull from and push to the repository using the tools of their choice.  I'll go into more detail about this after I finish the overview of procedure.
+
+Fourth: Educate your committers about good commenting practices.  Basically, this means (1) writing comments in DVCS style (summary line, then optionally a blank line followed by narrative paragraphs), and (2) not using either git or hg-specific forms of commit IDs (such as hex hash IDs) in comments. It's better to identify commits by committer, summary line, and timestamp.
+
+
+
+</div>
+<hr />
+</body>
+</html>
+
