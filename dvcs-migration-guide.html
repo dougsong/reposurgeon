@@ -82,9 +82,13 @@ weirder, you're on your own for this step.</p>
 
 <p>Before you can do your conversion, you'll need to put together an
 authors file.  Subversion and CVS identify users by a local Unix login
-name; DVCSes use pairs of fullnames email addresses. The authors file
-will specify a full name and email address for each local user ID in
-your repo.</p>
+name; DVCSes use pairs of fullnames and email addresses. The authors file
+should specify a full name and email address for each local user ID in
+your repo. Each line should be in the following form:</p>
+
+<pre>
+foonly = Fred Foonly &lt;foonly@foobar.com&gt;
+</pre>
 
 <h2 id="cvs_to_git">CVS to git</h2> 
 
@@ -98,8 +102,8 @@ a description</a> of a migration using git cvsimport.</p>
 href="http://cvs2svn.tigris.org/cvs2svn.html">cvs2svn</a> to convert
 from CVS to Subversion, then from Subversion to git. I've done this,
 and it worked - but see the description of cvs2svn artifacts later on.
-Use the -A option of <code>git cvsimport</code> to pass it your
-authors file.</p>
+Use the -A option of <code>cvs2svn<code> (which works just like -A in
+<code>git cvsimport</code>) to pass it your authors file.</p>
 
 <p>There is a <a
 href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
@@ -300,4 +304,9 @@ whole sequences of changes at a glance.</p>
 <hr />
 </body>
 </html>
+<!--
+Local Variables:
+compile-command: "(cd ~/WWW; upload dvcs-migration-guide.html)"
+End:
+-->
 
