@@ -147,7 +147,7 @@ vcstypes = [
         initializer="hg init",
         importer="hg fastimport %(tempfile)s",
         checkout="hg checkout",
-        preserve=set([".hg/hgrc", ".hgtags"])),
+        preserve=set([".hg/hgrc"])),
     ]
 
 verbose         = 0
