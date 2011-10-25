@@ -355,7 +355,8 @@ stream), it defaults to that directory.  If the target directory is
 nonempty its contents are backed up to a save directory.  Files and
 directories on the repository's preserve list are copied back from the
 backup directory after repo rebuild. The default preserve list
-is ['.git/config', '.git/hooks'].</para></listitem>
+depends on the repository type, and can be displayed with the
+<command>stats</command>.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>preserve</command> 
@@ -720,7 +721,7 @@ type.</para>
 </term>
 <listitem>
 <para>
-Purge cruft created by cvs2svn conversions.  Takes a selectio-set argument,
+Purge cruft created by cvs2svn conversions.  Takes a selection-set argument,
 but the default to the entire selected repo is probably what you want.</para>
 
 <para>This looks for dummy commits created by cvs2svn with one parent

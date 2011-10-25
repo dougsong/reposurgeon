@@ -66,7 +66,8 @@ class VCS:
                  styleflags,
                  initializer,
                  importer,
-                 checkout):
+                 checkout,
+                 preserve):
         self.name = name
         self.subdirectory = subdirectory
         self.exporter = exporter
@@ -74,13 +75,15 @@ class VCS:
         self.initializer = initializer
         self.importer = importer
         self.checkout = checkout
+        self.preserve = preserve
     def __repr__(self):
         return "  Subdirectory: " + self.subdirectory + "\n" \
              + "      Exporter: " + self.exporter + "\n" \
              + "  Export-Style: " + repr(self.styleflags) + "\n" \
              + "   Initializer: " + str(self.initializer) + "\n" \
              + "      Importer: " + self.importer + "\n" \
-             + "      Checkout: " + str(self.checkout) + "\n"
+             + "      Checkout: " + str(self.checkout) + "\n" \
+             + "      Preserve: " + str(self.preserve) + "\n"
 
 # All knowledge about specific version-control systems lives in the
 # following class list.  The members are, respectively:
@@ -123,7 +126,8 @@ vcstypes = [
         styleflags=("nl-after-commit",),
         initializer="git init",
         importer="git fast-import",
-        checkout="git checkout"),
+        checkout="git checkout",
+        preserve=set(['.git/config', '.git/hooks'])),
     # The bzr import/export methods require the bzr-fast-import plugin.
     VCS(name="bzr",
         subdirectory=".bzr",
@@ -131,7 +135,8 @@ vcstypes = [
         styleflags=("export-progress", "nl-after-comment",),
         initializer=None,
         importer="bzr fast-import -",
-        checkout="bzr checkout"),
+        checkout="bzr checkout",
+        preserve=set([])),
     # The hg export-import methods are not part of stock hg
     # Export is tested and works; import is flaky.
     VCS(name="hg",
@@ -140,7 +145,8 @@ vcstypes = [
         styleflags=("nl-after-comment", "nl-after-commit", "export-progress"),
         initializer="hg init",
         importer="hg fastimport %(tempfile)s",
-        checkout="hg checkout"),
+        checkout="hg checkout",
+        preserve=set([".hg/hgrc", ".hgtags"])),
     ]
 
 verbose         = 0
@@ -756,7 +762,7 @@ class Repository:
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
         self.import_line = 0
-        self.preserve_set = set(['.git/config', '.git/hooks'])
+        self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
     def cleanup(self):
@@ -1498,6 +1504,7 @@ def read_repo(source, preferred):
             announce("found %s repository" % vcs.name)
         repo = Repository()
         repo.vcs = vcs
+        repo.preserve_set = vcs.preserve
         repo.sourcedir = source
         showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
         context = {"basename": os.path.basename(repo.sourcedir)}
