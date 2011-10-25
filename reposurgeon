@@ -2965,6 +2965,7 @@ blob, your editor will be called on the blob file.
             complain("no repo is loaded")
             return
         line = self.set_selection_set(line, [])
+        line = str(line)   # pacify pylint by forcing string type
         if line:
             for token in line.split():
                 if token not in ["complain",
@@ -3060,6 +3061,7 @@ ordering or gaps in the sequence.
         elif not line[0] in ('-', '+'):
             complain("time offset argument must begin with + or -.")
             return
+        line = str(line)   # pacify pylint by forcing string type
         args = line.split()
         h = m = "0"
         if args[0].count(":") == 0:
@@ -3155,6 +3157,7 @@ through another path; the tool will detect this. If the repo was named
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = str(line)   # pacify pylint by forcing string type
         self.expunge(self.selection, line.split())
     def help_expunge(self):
         print("""
@@ -3185,11 +3188,13 @@ them.
         event = self.chosen()[where]
         if not isinstance(event, Commit):
             raise Recoverable("fileop argument doesn't point at a commit")
+        line = str(line)   # pacify pylint by forcing string type
         if not line.startswith("at"):
             raise Recoverable("expected 'at'")
         else:
             line = line[2:].lstrip()
             try:
+                line = str(line)   # pacify pylint by forcing string type
                 splitpoint = int(line.split()[0]) - 1
             except ValueError:
                 raise Recoverable("expected integer fileop index (1-origin)")
