@@ -2066,7 +2066,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         except Recoverable as e:
             complain(e.msg)
     def postcmd(self, unused, line):
-        assert unused is not None   # pacify pylint
+        assert unused is not []   # pacify pylint
         if line == "EOF":
             return True
     def emptyline(self):
