@@ -34,8 +34,9 @@ version="1.3"
 # to the event list that preserves correctness invariants, you
 # reserialize.  The "do stuff" is mostly not in the core classes, but
 # there is one major exception.  The primitive to delete a commit and
-# shuffle its fileops forwards is seriously intertwined with the core
-# classes and actually makes up almost 50% of Repository by line count.
+# shuffle its fileops forwards or backwards is seriously intertwined
+# with the core classes and actually makes up almost 50% of Repository
+# by line count.
 #
 # The rest of the surgical code lives outside the core classes. Most
 # of it lives in the RepoSurgeon class (the command interpreter) or
