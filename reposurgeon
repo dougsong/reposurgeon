@@ -280,7 +280,7 @@ class Date:
             return
         except ValueError:
             # time.strptime() throws this
-            # "time data 'XXXX' does not match format '%Y-%m-%dT%H:%M:%S'" 
+            # "time data 'xxxxxx' does not match format '%Y-%m-%dT%H:%M:%S'" 
             pass
         # Date format not recognized
         raise Fatal("'%s' is not a valid timestamp" % text)
@@ -2054,6 +2054,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         self.prompt = "reposurgeon% "
         self.preferred = None
         self.selection = []
+        self.line = ""
         self.history = []
     #
     # Housekeeping hooks.
