@@ -3287,7 +3287,7 @@ type.
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
-    def help_merge(self):
+    def help_cvslift(self):
         print("""
 Purge cruft created by cvs2svn conversions.  This looks for dummy
 commits created by cvs2svn with one parent that were created within 10
