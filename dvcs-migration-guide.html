@@ -237,22 +237,64 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
-<h1 id="client-tools">Client Tools</h1>
+<h1 id="client-tools">Step Three: Client Tools</h1>
 
+<p>Developers who are already git fans and know how to use a git
+client will, of course, have no partiticular trouble using a git
+repository.</p>
 
+<p>Developers who like hg can use the <a
+href="http://hg-git.github.com/">hg-git mercurial plugin</a>. There is
+an Ubuntu package "mercurial-git" for this, and other distributions
+are likely to carry it as well.</p>
 
-<!--
-Third: Explain to your committers how to pull from and push to the
-repository using the tools of their choice.  I'll go into more detail
-about this after I finish the overview of procedure.
+<p>Windows users accustomed to working through TortoiseSVN can move to
+<a href="http://code.google.com/p/tortoisegit/">TortoiseGIT</a>.</p>
 
-Fourth: Educate your committers about good commenting practices.
-Basically, this means (1) writing comments in DVCS style (summary
-line, then optionally a blank line followed by narrative paragraphs),
-and (2) not using either git or hg-specific forms of commit IDs (such
-as hex hash IDs) in comments. It's better to identify commits by
-committer, summary line, and timestamp.
--->
+<h1 id="practice">Step Four: Good Practice</h1>
+
+<p>Since the object of this exercise is to support both git and hg
+fans, both groups need to use the repo in a way that doesn't assume
+other will understand artifacts (like commit hashes) that are specific
+to either VCS.</p>
+
+<p>Being careful about this has an additional benefit.  Someday your
+project may need to change VCSes yet again; on that day, it will be
+extremely helpful if nobody has to try to convert years' or decades' 
+worth of VCS-specific magic cookies in the history.</p>
+
+<p>Educate your developers in the following good practices:</p>
+
+<h2 id="references">Commit references</h2>
+
+<p>The combination of a committer name/address (or unambiguous part of
+one) with a timestamp is a good way to refer to a commit without being 
+VCS-specific.  Thus, instead of "commit 304a53c2", "Fred Foonly's
+commit at 2011-10-25T15:11:09Z"</p>
+
+<p>Sometimes it's enough to quote the summary line of a commit. So,
+instead of "Back out most of commit 304a53c2", you might write 
+"Back out 'Attempted divide-by-zero fix'.".</p>
+
+<p>When appropriate. "my last commit" is simple and effective.</p>
+
+<h2 id="comment-format">Comment summary lines</h2>
+
+<p>As previously noted, git and hg both want comments to begin with a
+summary line that can stand alone as a short description of the
+change; this may optionally be followed by a aeparating blank line
+and details in whatever form the commenter likes.</p>
+
+<p>Try to end summary lines with a period.  Ending punctuation other
+than a period should be used to indicate that the summary line is
+incomplete and continues after the separator; "..." is conventional.
+
+<p>For best results, stay within 72 characters per line.  Don't go
+over 80.</p>
+
+<p>Good comment practice produces more readable output from <code>git
+log</code> and <code>hg log</code>, and makes it easy to take in
+whole sequences of changes at a glance.</p>
 
 </div>
 <hr />
