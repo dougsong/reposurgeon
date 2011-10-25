@@ -2898,10 +2898,6 @@ Event updates are atomic; if reposurgeon throws an error while in this
 command events updated before the error will keep their changed state,
 but no event will be partially modified. Event numbers are validated
 before any individual event is updated.
-
-At present only the comment fields of commits and tags are updated from
-the mailbox contents; commit and tag metadata cannot be altered. This
-may change in a future release.
 """)
     def do_edit(self, line):
         "Edit metadata interactively."

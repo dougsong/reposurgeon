@@ -356,7 +356,7 @@ nonempty its contents are backed up to a save directory.  Files and
 directories on the repository's preserve list are copied back from the
 backup directory after repo rebuild. The default preserve list
 depends on the repository type, and can be displayed with the
-<command>stats</command>.</para></listitem>
+<command>stats</command> command.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>preserve</command> 
