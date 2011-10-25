@@ -6,7 +6,7 @@
 #
 # Requires Python 2.7.2 or newer, running in Python 3 mode.
 #
-import sys, os, io, cmd, tempfile, subprocess
+import sys, os, cmd, tempfile, subprocess
 import readline, time, calendar, re, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 
@@ -1305,7 +1305,7 @@ class Repository:
                     for fileop in event.fileops:
                         if fileop.op != 'D':
                             announce(speak + "non-delete fileops.")
-                            break;
+                            break
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
@@ -1413,7 +1413,7 @@ class Repository:
                         if ("coalesce" not in policy and "obliterate" not in policy) or verbose >= DEBUG_DELETE:
                             complain("commit %s has multiple Ms for %s" % (event.mark, path))
                         if "coalesce" in policy:
-                            "Remove all but the last M."
+                            # Remove all but the last M.
                             while len(oplist) > 1:
                                 self.__adjust_fileop(event.fileops[oplist[0]], -1)
                                 event.fileops.pop(oplist.pop(0))
@@ -2303,7 +2303,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     matched = False
                     # First, search branches
                     branchlist = self.chosen().branchlist()
-                    branchlist.sort(key=lambda x: len(x), reverse=True) # longest name first
+                    branchlist.sort(key=len, reverse=True) # longest name first
                     for symbol in branchlist:
                         if self.line.startswith(os.path.basename(symbol)):
                             self.line = self.line[len(symbol):]
@@ -2392,7 +2392,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         else:
             self.pop()
             branchlist = self.chosen().branchlist()
-            branchlist.sort(key=lambda x: len(x), reverse=True) # longest name first
+            branchlist.sort(key=len, reverse=True) # longest name first
             selection = []
             for symbol in branchlist:
                 if self.line.startswith(os.path.basename(symbol)):
