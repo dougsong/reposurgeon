@@ -205,7 +205,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
 data 27
 Beginning of design notes.
-from :4
 M 100644 :5 theory.txt
 
 blob
@@ -298,7 +297,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 data 27
 Upate theory of operation.
-from :21
 M 100644 :22 theory.txt
 
 blob
@@ -356,7 +354,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 data 22
 Document limitations.
-from :25
 M 100644 :27 theory.txt
 
 blob
@@ -412,7 +409,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 data 53
 git-fast-export captures lightweight tags after all.
-from :49
 M 100644 :50 theory.txt
 
 
