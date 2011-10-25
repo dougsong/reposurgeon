@@ -566,6 +566,7 @@ class Commit:
                       (eventnum+1, self.committer.date.iso8601()[:-5], cols-27, topline[:cols-27]) 
     def tags(self, eventnum, cols):
         "Enable do_list() to report lightweight tags."
+        assert cols > -1    # pacify pylint
         return self.branch and "/tags/" in self.branch and "%6d %s" % (eventnum+1, self.branch) 
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
@@ -1514,6 +1515,7 @@ def read_repo(source, preferred):
             if "%(tempfile)s" in repo.vcs.exporter:
                 try:
                     (tfdesc, tfname) = tempfile.mkstemp()
+                    assert tfdesc > -1    # pacify pylint
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname) as tp:
@@ -1593,6 +1595,7 @@ def rebuild_repo(repo, target, preferred):
         if "%(tempfile)s" in vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
+                assert tfdesc > -1    # pacify pylint
                 with open(tfname, "w") as tp:
                     repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
                 do_or_die(vcs.exporter % parameters, "import")
@@ -2080,6 +2083,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             raise Recoverable("'shell %s' returned error." % line)
     def do_EOF(self, unused):
         "Terminate reposurgeon."
+        assert unused is not None   # pacify pylint
         print("")
         return True
     def cleanup(self):
@@ -2927,6 +2931,7 @@ may change in a future release.
             # Fall through
         # Otherwise, mailboxize and edit the non-blobs in the selection
         (tfdesc, tfname) = tempfile.mkstemp()
+        assert tfdesc > -1    # pacify pylint
         with open(tfname, "w") as tfp:
             for i in self.selection:
                 event = self.chosen()[i]
@@ -3028,6 +3033,7 @@ separation in seconds; the default is 90 seconds.
 """)
     def do_renumber(self, unused):
         "Renumber the marks in the selected repo."
+        assert unused is not None    # pacify pylint
         if not self.chosen():
             complain("no repo has been chosen.")
             return
