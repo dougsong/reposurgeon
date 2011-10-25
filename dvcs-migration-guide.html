@@ -192,19 +192,63 @@ crud into these.</dd>
 <dt>Subversion commit references</dt>
 <dd>Often these will be in the form 'r' followed by a string of digits
 referring to a Subversion commit number. But not always; humans come
-up with lots of ambiguous ways to write these.  A clean conversion 
+up with lots of ambiguous ways to write these.  A clean conversion
+should turn them into them to VCS-indpendent commit references, which 
+I'll describe later in this document.</dd>
+
+<dt>Multiline contents with no summary</dt>
+<dd>git and hg both encourage comments to begin with a summary line
+that can stand alone as a short description of the change; this
+practice produces more readable output from <code>git log</code>
+and <code>hg log</code>. For a really high-quality conversion, 
+multiline comments should be edited into this form.</dd>
 </dl>
 
+<p>You can use <a
+href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> to clean
+up all these sorts of problems; it's specifically designed for this
+job. The remainder of this section explains <code>reposurgeon</code> 
+commands for common problems; the tool has a lot of additional power
+for dealing with unusual situations</p>
 
+<p>The 'cvslift' command removes most cvs2svn artifacts.
+Specifically, it makes all junk commits generated to carry tags into
+actual git tag objects. Then it removes all those that are either
+empty or have fileop lists consisting entirely of deletes.</p>
 
+<p>The 'edit' command is useful for changing commit references in
+comments to a VCS-independent form. This is where you may be glad for
+the magic-cookie lines <code>git-svn</code> patches into comments;
+you'll find the Subversion commit number in them following '@'. When
+you've done all that. 'edit' is also useful for deleting those git-svn
+lines once you're done resoving references.</p>
 
-Second: (optionally) use <a href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> to clean up conversion artifacts and other cruft.  The 'cvslift' command removes most cvs2svn artifacts; you will probably also want to use 'edit' change commit references in comments to a VCS-independent form such as a commit timestamp.  You may also want to massage multi-line commit comments into the conventional git/hg form of summary line followed by blank line followed by details.
+<p>The 'edit' command is also good for (1) fixing up up multiline
+comments and (2) tweaking the comments on the tag objects generated
+by the 'cvslift' step.</p>
 
-Third: Explain to your committers how to pull from and push to the repository using the tools of their choice.  I'll go into more detail about this after I finish the overview of procedure.
+<p>The command <code>list /cvs2svn/</code> will show you all remaining
+<code>cvs2svn</code> artifacts.  Some can be deleted; a clue to look
+for is junk commits generated to carry a tag at branch tips that have
+one or two M fileops referring to a blob much earlier than the commit.
+Very occasionally the generated commits will have real fileops on
+them; all you can do in this case is note conversion damage in the
+comment and move on.</p>
 
-Fourth: Educate your committers about good commenting practices.  Basically, this means (1) writing comments in DVCS style (summary line, then optionally a blank line followed by narrative paragraphs), and (2) not using either git or hg-specific forms of commit IDs (such as hex hash IDs) in comments. It's better to identify commits by committer, summary line, and timestamp.
+<h1 id="client-tools">Client Tools
 
+<--
+Third: Explain to your committers how to pull from and push to the
+repository using the tools of their choice.  I'll go into more detail
+about this after I finish the overview of procedure.
 
+Fourth: Educate your committers about good commenting practices.
+Basically, this means (1) writing comments in DVCS style (summary
+line, then optionally a blank line followed by narrative paragraphs),
+and (2) not using either git or hg-specific forms of commit IDs (such
+as hex hash IDs) in comments. It's better to identify commits by
+committer, summary line, and timestamp.
+-->
 
 </div>
 <hr />
