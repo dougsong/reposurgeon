@@ -2026,11 +2026,11 @@ class RepositoryList:
         expunged_marks = set([event.mark for event in expunged.events if hasattr(event, "mark")])
         for event in expunged.events:
             if hasattr(event, "parent_marks"):
-                event.parent_marks = filter(lambda e: e in expunged_marks, event.parent_marks)
+                event.parent_marks = [e for e in event.parent_marks if e in expunged_marks]
         keeper_marks = set([event.mark for event in self.repo.events if hasattr(event, "mark")])
         for event in self.repo.events:
             if hasattr(event, "parent_marks"):
-                event.parent_marks = filter(lambda e: e in keeper_marks, event.parent_marks)
+                event.parent_marks = [e for e in event.parent_marks if e in keeper_marks]
         self.repolist.append(expunged)
         # Now remove commits that no longer have fileops, and released blobs.
         deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.refcount)) for e in self.repo.events]
