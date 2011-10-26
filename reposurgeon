@@ -1765,12 +1765,10 @@ class RepositoryList:
         do_color(late, "late")
         conflict = False
         keepgoing = True
-        visited = [False] * len(self.repo.commits())
         while keepgoing and not conflict:
             keepgoing = False
             for (i, event) in enumerate(self.repo.commits()):
-                if event.color and not visited[i]:
-                    visited[i] = True
+                if event.color:
                     for neighbor in event.parents() + event.children():
                         if neighbor.color == None:
                             do_color(neighbor, event.color)
@@ -1802,7 +1800,10 @@ class RepositoryList:
         # of that earlier.
         trackbranches = {"early": set([]), "late": set([])}
         for commit in self.repo.commits():
-            trackbranches[commit.color].add(commit.branch)
+            if commit.color is None:
+                complain("%s is uncolored!" % commit.mark)
+            else:
+                trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
         early = Repository(self.repo.name + "-early")
         os.mkdir(early.subdir())
