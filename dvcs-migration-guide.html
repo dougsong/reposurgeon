@@ -241,6 +241,12 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
+<p>Experiments with reposurgeon suggest that <code>git import</code>
+doesn't try to pack or otherwise optimize for space when it populates
+a repo from a dump file; this produces large repositories.  Running
+<code>gt repack</code> and <code>git gc --aggressive</code> can slim
+them down quite a lot.</p>
+
 <h1 id="client-tools">Step Three: Client Tools</h1>
 
 <p>Developers who are already git fans and know how to use a git
