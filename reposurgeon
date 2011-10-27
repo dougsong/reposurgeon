@@ -1762,7 +1762,7 @@ class RepositoryList:
         keepgoing = True
         while keepgoing and not conflict:
             keepgoing = False
-            for (i, event) in enumerate(self.repo.commits()):
+            for event in self.repo.commits():
                 if event.color:
                     for neighbor in event.parents() + event.children():
                         if neighbor.color == None:
