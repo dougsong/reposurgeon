@@ -154,10 +154,9 @@ commit refs/remotes/svn/gsoc-2009
 mark :557
 author Stefan Seefeld <stefan@users.sourceforge.net> 1243903091 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1243903091 +0000
-data 155
+data 25
 Set up GSoC 2009 branch.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4214 57a73879-2fb5-44c3-a270-3262357dd7e2
+property svn 4 4214
 
 blob
 mark :558
@@ -10477,11 +10476,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :612
 author Stefan Seefeld <stefan@users.sourceforge.net> 1243903317 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1243903317 +0000
-data 164
+data 34
 Add new tracker template sandbox.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4215 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :557
+property svn 4 4215
 M 100644 :558 share/roundup/templates/devel/TEMPLATE-INFO.txt
 M 100644 :559 share/roundup/templates/devel/config.ini
 M 100644 :560 share/roundup/templates/devel/detectors/messagesummary.py
@@ -10727,11 +10725,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :614
 author Stefan Seefeld <stefan@users.sourceforge.net> 1244859175 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1244859175 +0000
-data 158
+data 28
 Allow options '-t' and '-b'
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4216 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :612
+property svn 4 4216
 M 100644 :613 demo.py
 
 blob
@@ -12094,11 +12091,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :618
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204127 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204127 +0000
-data 148
+data 18
 Merge from trunk.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4223 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :614
+property svn 4 4223
 D detectors/creator_resolution.py
 D detectors/emailauditor.py
 D detectors/newissuecopy.py
@@ -12521,11 +12517,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :620
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204199 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204199 +0000
-data 150
+data 20
 Fix validity issue.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4224 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :618
+property svn 4 4224
 M 100644 :619 share/roundup/templates/devel/html/page.html
 
 blob
@@ -12654,11 +12649,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :622
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204254 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204254 +0000
-data 152
+data 22
 Small validity fixes.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4225 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :620
+property svn 4 4225
 M 100644 :621 share/roundup/templates/devel/html/user.help.html
 
 blob
@@ -13037,11 +13031,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :624
 author Pygi <pygi@users.sourceforge.net> 1246301988 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246301988 +0000
-data 181
+data 51
 Implemented schema changes for svn-roundup support
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4234 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :622
+property svn 4 4234
 M 100644 :623 share/roundup/templates/devel/schema.py
 
 blob
@@ -13437,11 +13430,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :626
 author Pygi <pygi@users.sourceforge.net> 1246304657 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246304657 +0000
-data 162
+data 32
 Import notify-roundup.py script
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4235 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :624
+property svn 4 4235
 M 100755 :625 scripts/notify-roundup.py
 
 blob
@@ -13837,11 +13829,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :628
 author Pygi <pygi@users.sourceforge.net> 1246304709 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246304709 +0000
-data 178
+data 48
 Fixed notify-roundup to work with devel tracker
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4236 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :626
+property svn 4 4236
 M 100755 :627 scripts/notify-roundup.py
 
 blob
@@ -14237,32 +14228,29 @@ commit refs/remotes/svn/gsoc-2009
 mark :630
 author Pygi <pygi@users.sourceforge.net> 1246309197 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246309197 +0000
-data 201
+data 71
 Blind attempt at fixing issue where we dont respect item-class support
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4237 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :628
+property svn 4 4237
 M 100755 :629 scripts/notify-roundup.py
 
 commit refs/remotes/svn/gsoc-2009
 mark :631
 author Pygi <pygi@users.sourceforge.net> 1246532948 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246532948 +0000
-data 182
+data 52
 Create notify-roundup directory for related scripts
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4241 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :630
+property svn 4 4241
 
 commit refs/remotes/svn/gsoc-2009
 mark :632
 author Pygi <pygi@users.sourceforge.net> 1246533309 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533309 +0000
-data 172
+data 42
 Move notify-roundup.py to appropriate dir
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4242 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :631
+property svn 4 4242
 R "scripts/notify-roundup.py" "scripts/notify-roundup/notify-roundup.py"
 
 blob
@@ -14316,11 +14304,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :634
 author Pygi <pygi@users.sourceforge.net> 1246533349 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533349 +0000
-data 172
+data 42
 Added sample notify-roundup configuration
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4243 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :632
+property svn 4 4243
 M 100644 :633 scripts/notify-roundup/notify-roundup.ini
 
 blob
@@ -14372,11 +14359,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :636
 author Pygi <pygi@users.sourceforge.net> 1246533407 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533407 +0000
-data 193
+data 63
 Added sample notify-roundup configuration without my config :P
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4244 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :634
+property svn 4 4244
 M 100644 :635 scripts/notify-roundup/notify-roundup.ini
 
 blob
@@ -14428,22 +14414,20 @@ commit refs/remotes/svn/gsoc-2009
 mark :638
 author Pygi <pygi@users.sourceforge.net> 1246533440 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533440 +0000
-data 172
+data 42
 Adapt configuration file to devel tracker
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4245 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :636
+property svn 4 4245
 M 100644 :637 scripts/notify-roundup/notify-roundup.ini
 
 commit refs/remotes/svn/gsoc-2009
 mark :639
 author Pygi <pygi@users.sourceforge.net> 1246533591 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533591 +0000
-data 152
+data 22
 Created detectors dir
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4246 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :638
+property svn 4 4246
 
 blob
 mark :640
@@ -14535,22 +14519,20 @@ commit refs/remotes/svn/gsoc-2009
 mark :641
 author Pygi <pygi@users.sourceforge.net> 1246533624 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533624 +0000
-data 146
+data 16
 Add svn auditor
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4247 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :639
+property svn 4 4247
 M 100644 :640 scripts/notify-roundup/detectors/svnauditor.py
 
 commit refs/remotes/svn/gsoc-2009
 mark :642
 author Pygi <pygi@users.sourceforge.net> 1246533702 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533702 +0000
-data 158
+data 28
 Create extensions directory
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4248 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :641
+property svn 4 4248
 
 blob
 mark :643
@@ -14615,22 +14597,20 @@ commit refs/remotes/svn/gsoc-2009
 mark :644
 author Pygi <pygi@users.sourceforge.net> 1246533786 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533786 +0000
-data 186
+data 56
 Add revision_info.py that allows revisions info display
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4249 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :642
+property svn 4 4249
 M 100644 :643 scripts/notify-roundup/extensions/revision_info.py
 
 commit refs/remotes/svn/gsoc-2009
 mark :645
 author Pygi <pygi@users.sourceforge.net> 1246533838 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533838 +0000
-data 153
+data 23
 Created html directory
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4250 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :644
+property svn 4 4250
 
 blob
 mark :646
@@ -14671,11 +14651,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :647
 author Pygi <pygi@users.sourceforge.net> 1246533871 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533871 +0000
-data 174
+data 44
 Add html template for showing revision info
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4251 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :645
+property svn 4 4251
 M 100644 :646 scripts/notify-roundup/html/svn_rev.item.html
 
 blob
@@ -14770,11 +14749,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :649
 author Pygi <pygi@users.sourceforge.net> 1246534198 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246534198 +0000
-data 159
+data 29
 Attempt at fixing svnauditor
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4252 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :647
+property svn 4 4252
 M 100644 :648 scripts/notify-roundup/detectors/svnauditor.py
 
 blob
@@ -14872,11 +14850,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :651
 author Pygi <pygi@users.sourceforge.net> 1246534392 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246534392 +0000
-data 168
+data 38
 Forgot to import ConfigParser, fix it
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4253 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :649
+property svn 4 4253
 M 100644 :650 scripts/notify-roundup/detectors/svnauditor.py
 
 blob
@@ -14976,11 +14953,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :653
 author Pygi <pygi@users.sourceforge.net> 1246535343 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246535343 +0000
-data 157
+data 27
 I think Ive finally got it
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4254 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :651
+property svn 4 4254
 M 100644 :652 scripts/notify-roundup/detectors/svnauditor.py
 
 blob
@@ -15022,11 +14998,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :655
 author Pygi <pygi@users.sourceforge.net> 1246537172 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246537172 +0000
-data 161
+data 31
 Fix svn_rev.item html template
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4255 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :653
+property svn 4 4255
 M 100644 :654 scripts/notify-roundup/html/svn_rev.item.html
 
 blob
@@ -15483,11 +15458,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :658
 author Pygi <pygi@users.sourceforge.net> 1246538668 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246538668 +0000
-data 206
+data 76
 Modified user.item to allow Subversion login, and still working on bug.item
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4256 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :655
+property svn 4 4256
 M 100644 :656 scripts/notify-roundup/html/bug.item.html
 M 100644 :657 scripts/notify-roundup/html/user.item.html
 
@@ -15774,22 +15748,20 @@ commit refs/remotes/svn/gsoc-2009
 mark :660
 author Pygi <pygi@users.sourceforge.net> 1246541310 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246541310 +0000
-data 189
+data 59
 Fixed bug.item html template to work with subversion links
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4257 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :658
+property svn 4 4257
 M 100644 :659 scripts/notify-roundup/html/bug.item.html
 
 commit refs/remotes/svn/gsoc-2009
 mark :661
 author Pygi <pygi@users.sourceforge.net> 1246544192 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246544192 +0000
-data 169
+data 39
 Added doc directory for notify-roundup
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4258 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :660
+property svn 4 4258
 
 blob
 mark :662
@@ -15852,22 +15824,20 @@ commit refs/remotes/svn/gsoc-2009
 mark :663
 author Pygi <pygi@users.sourceforge.net> 1246545609 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246545609 +0000
-data 173
+data 43
 Check-in first revision of how-to document
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4259 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :661
+property svn 4 4259
 M 100644 :662 scripts/notify-roundup/doc/README
 
 commit refs/remotes/svn/gsoc-2009
 mark :664
 author Pygi <pygi@users.sourceforge.net> 1246556736 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246556736 +0000
-data 164
+data 34
 Added beta notify development dir
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4260 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :663
+property svn 4 4260
 M 100644 :652 scripts/beta-notify/detectors/svnauditor.py
 M 100644 :662 scripts/beta-notify/doc/README
 M 100644 :643 scripts/beta-notify/extensions/revision_info.py
@@ -15933,11 +15903,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :666
 author Pygi <pygi@users.sourceforge.net> 1246556873 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246556873 +0000
-data 172
+data 42
 Add vcs-abstraction in notify-roundup.ini
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4261 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :664
+property svn 4 4261
 M 100644 :665 scripts/beta-notify/notify-roundup.ini
 
 blob
@@ -16399,11 +16368,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :669
 author Pygi <pygi@users.sourceforge.net> 1246557447 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557447 +0000
-data 158
+data 28
 Did some work on hg support
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4262 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :666
+property svn 4 4262
 M 100644 :667 scripts/beta-notify/notify-roundup.ini
 M 100755 :668 scripts/beta-notify/notify-roundup.py
 
@@ -16411,21 +16379,19 @@ commit refs/remotes/svn/gsoc-2009b
 mark :670
 author Pygi <pygi@users.sourceforge.net> 1246557683 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557683 +0000
-data 174
+data 43
 Branched gsoc-2009 for some major rewrites
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4263 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :669
+property svn 4 4263
 
 commit refs/remotes/svn/gsoc-2009b
 mark :671
 author Pygi <pygi@users.sourceforge.net> 1246557732 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557732 +0000
-data 175
+data 44
 Removed old notify-roundup from beta branch
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4264 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :670
+property svn 4 4264
 D scripts/notify-roundup/detectors/svnauditor.py
 D scripts/notify-roundup/doc/README
 D scripts/notify-roundup/extensions/revision_info.py
@@ -16439,11 +16405,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :672
 author Pygi <pygi@users.sourceforge.net> 1246557766 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557766 +0000
-data 167
+data 36
 Moved beta-notify to notify-roundup
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4265 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :671
+property svn 4 4265
 R "scripts/beta-notify/detectors/svnauditor.py" "scripts/notify-roundup/detectors/svnauditor.py"
 R "scripts/beta-notify/doc/README" "scripts/notify-roundup/doc/README"
 R "scripts/beta-notify/extensions/revision_info.py" "scripts/notify-roundup/extensions/revision_info.py"
@@ -16829,22 +16794,20 @@ commit refs/remotes/svn/gsoc-2009b
 mark :674
 author Pygi <pygi@users.sourceforge.net> 1246558072 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558072 +0000
-data 165
+data 34
 Changed schema to be vcs agnostic
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4266 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :672
+property svn 4 4266
 M 100644 :673 share/roundup/templates/devel/schema.py
 
 commit refs/remotes/svn/gsoc-2009b
 mark :675
 author Pygi <pygi@users.sourceforge.net> 1246558198 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558198 +0000
-data 153
+data 22
 Renamed html template
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4267 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :674
+property svn 4 4267
 R "scripts/notify-roundup/html/svn_rev.item.html" "scripts/notify-roundup/html/vcs_rev.item.html"
 
 blob
@@ -16929,11 +16892,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :677
 author Pygi <pygi@users.sourceforge.net> 1246558325 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558325 +0000
-data 177
+data 46
 Removed for-me useless comments in svnauditor
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4268 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :675
+property svn 4 4268
 M 100644 :676 scripts/notify-roundup/detectors/svnauditor.py
 
 blob
@@ -17018,22 +16980,20 @@ commit refs/remotes/svn/gsoc-2009b
 mark :679
 author Pygi <pygi@users.sourceforge.net> 1246558439 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558439 +0000
-data 166
+data 35
 Port svnauditor to be vcs-agnostic
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4269 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :677
+property svn 4 4269
 M 100644 :678 scripts/notify-roundup/detectors/svnauditor.py
 
 commit refs/remotes/svn/gsoc-2009b
 mark :680
 author Pygi <pygi@users.sourceforge.net> 1246558546 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558546 +0000
-data 149
+data 18
 Rename svnauditor
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4270 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :679
+property svn 4 4270
 R "scripts/notify-roundup/detectors/svnauditor.py" "scripts/notify-roundup/detectors/vcsauditor.py"
 
 blob
@@ -17319,11 +17279,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :682
 author Pygi <pygi@users.sourceforge.net> 1246558723 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558723 +0000
-data 171
+data 40
 Ported bug.item.html to be VCS agnostic
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4271 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :680
+property svn 4 4271
 M 100644 :681 scripts/notify-roundup/html/bug.item.html
 
 blob
@@ -17756,11 +17715,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :684
 author Pygi <pygi@users.sourceforge.net> 1246978581 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978581 +0000
-data 148
+data 17
 Did some hg work
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4273 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :682
+property svn 4 4273
 M 100755 :683 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -18202,11 +18160,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :686
 author Pygi <pygi@users.sourceforge.net> 1246978888 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978888 +0000
-data 149
+data 18
 Trying some fixes
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4274 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :684
+property svn 4 4274
 M 100755 :685 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -18648,11 +18605,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :688
 author Pygi <pygi@users.sourceforge.net> 1246978981 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978981 +0000
-data 161
+data 30
 Trying some fixes - and again
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4275 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :686
+property svn 4 4275
 M 100755 :687 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -19094,11 +19050,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :690
 author Pygi <pygi@users.sourceforge.net> 1246979050 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979050 +0000
-data 144
+data 13
 Fixed a typo
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4276 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :688
+property svn 4 4276
 M 100755 :689 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -19540,11 +19495,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :692
 author Pygi <pygi@users.sourceforge.net> 1246979128 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979128 +0000
-data 153
+data 22
 Fixed a typo again...
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4277 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :690
+property svn 4 4277
 M 100755 :691 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -19985,11 +19939,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :694
 author Pygi <pygi@users.sourceforge.net> 1246979796 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979796 +0000
-data 171
+data 40
 some more porting to vcs agnostic stuff
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4278 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :692
+property svn 4 4278
 M 100755 :693 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -20430,11 +20383,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :696
 author Pygi <pygi@users.sourceforge.net> 1246980311 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246980311 +0000
-data 148
+data 17
 Does it work now
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4279 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :694
+property svn 4 4279
 M 100755 :695 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -20874,11 +20826,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :698
 author Pygi <pygi@users.sourceforge.net> 1246982979 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246982979 +0000
-data 151
+data 20
 More work more work
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4280 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :696
+property svn 4 4280
 M 100755 :697 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -21318,11 +21269,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :700
 author Pygi <pygi@users.sourceforge.net> 1246983236 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983236 +0000
-data 151
+data 20
 More work more work
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4281 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :698
+property svn 4 4281
 M 100755 :699 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -21762,11 +21712,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :702
 author Pygi <pygi@users.sourceforge.net> 1246983416 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983416 +0000
-data 151
+data 20
 More work more work
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4282 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :700
+property svn 4 4282
 M 100755 :701 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -22207,11 +22156,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :704
 author Pygi <pygi@users.sourceforge.net> 1246983524 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983524 +0000
-data 146
+data 15
 temporary hack
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4283 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :702
+property svn 4 4283
 M 100755 :703 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -22652,11 +22600,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :706
 author Pygi <pygi@users.sourceforge.net> 1246983572 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983572 +0000
-data 146
+data 15
 temporary hack
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4284 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :704
+property svn 4 4284
 M 100755 :705 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -23099,11 +23046,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :708
 author Pygi <pygi@users.sourceforge.net> 1246983711 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983711 +0000
-data 146
+data 15
 temporary hack
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4285 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :706
+property svn 4 4285
 M 100755 :707 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -23546,11 +23492,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :710
 author Pygi <pygi@users.sourceforge.net> 1246983998 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983998 +0000
-data 146
+data 15
 forgot to port
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4286 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :708
+property svn 4 4286
 M 100755 :709 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -23997,11 +23942,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :712
 author Pygi <pygi@users.sourceforge.net> 1246984088 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984088 +0000
-data 146
+data 15
 forgot to port
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4287 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :710
+property svn 4 4287
 M 100755 :711 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -24450,11 +24394,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :714
 author Pygi <pygi@users.sourceforge.net> 1246984120 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984120 +0000
-data 135
+data 4
 heh
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4288 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :712
+property svn 4 4288
 M 100755 :713 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -24903,11 +24846,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :716
 author Pygi <pygi@users.sourceforge.net> 1246984784 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984784 +0000
-data 154
+data 23
 more porting and hacks
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4289 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :714
+property svn 4 4289
 M 100755 :715 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -25357,11 +25299,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :718
 author Pygi <pygi@users.sourceforge.net> 1246984864 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984864 +0000
-data 138
+data 7
 bugfix
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4290 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :716
+property svn 4 4290
 M 100755 :717 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -25812,11 +25753,10 @@ commit refs/remotes/svn/gsoc-2009b
 mark :720
 author Pygi <pygi@users.sourceforge.net> 1246984999 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984999 +0000
-data 138
+data 7
 bugfix
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4291 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :718
+property svn 4 4291
 M 100755 :719 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -26268,23 +26208,21 @@ commit refs/remotes/svn/gsoc-2009b
 mark :722
 author Pygi <pygi@users.sourceforge.net> 1246985492 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246985492 +0000
-data 140
+data 9
 it works
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009b@4292 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :720
+property svn 4 4292
 M 100755 :721 scripts/notify-roundup/notify-roundup.py
 
 commit refs/remotes/svn/gsoc-2009
 mark :723
 author Pygi <pygi@users.sourceforge.net> 1246997990 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246997990 +0000
-data 141
+data 11
 merge done
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4294 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :669
 merge :722
+property svn 4 4294
 R "scripts/beta-notify/detectors/svnauditor.py" "scripts/notify-roundup/detectors/vcsauditor.py"
 M 100644 :678 scripts/notify-roundup/detectors/vcsauditor.py
 D scripts/beta-notify/doc/README
@@ -26305,11 +26243,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :724
 author Pygi <pygi@users.sourceforge.net> 1246998087 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246998087 +0000
-data 143
+data 13
 Added hg dir
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4295 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :723
+property svn 4 4295
 
 blob
 mark :725
@@ -26327,11 +26264,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :726
 author Pygi <pygi@users.sourceforge.net> 1246998473 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246998473 +0000
-data 166
+data 36
 Added initial hg post-commit script
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4296 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :724
+property svn 4 4296
 M 100755 :725 scripts/notify-roundup/hg/notify-roundup.sh
 
 blob
@@ -26395,11 +26331,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :728
 author Pygi <pygi@users.sourceforge.net> 1246999816 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246999816 +0000
-data 148
+data 18
 Initial hg readme
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4297 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :726
+property svn 4 4297
 M 100644 :727 scripts/notify-roundup/doc/README.hg
 
 blob
@@ -26464,11 +26399,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :730
 author Pygi <pygi@users.sourceforge.net> 1247000517 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247000517 +0000
-data 173
+data 43
 some more limitations of hg implementation
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4298 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :728
+property svn 4 4298
 M 100644 :729 scripts/notify-roundup/doc/README.hg
 
 blob
@@ -27054,11 +26988,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :734
 author Pygi <pygi@users.sourceforge.net> 1247086451 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247086451 +0000
-data 184
+data 54
 Fixed a lot of problems with hg notify implementation
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4299 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :730
+property svn 4 4299
 M 100644 :731 scripts/notify-roundup/doc/README.hg
 M 100644 :732 scripts/notify-roundup/notify-roundup.ini
 M 100755 :733 scripts/notify-roundup/notify-roundup.py
@@ -27214,11 +27147,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :738
 author Stefan Seefeld <stefan@users.sourceforge.net> 1247347241 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1247347241 +0000
-data 161
+data 31
 Enhance revision diff display.
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4301 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :734
+property svn 4 4301
 M 100644 :735 scripts/notify-roundup/extensions/revision_info.py
 C "scripts/notify-roundup/html/vcs_rev.item.html" "scripts/notify-roundup/html/vcs_rev.diff.html"
 M 100644 :736 scripts/notify-roundup/html/vcs_rev.diff.html
@@ -27702,11 +27634,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :740
 author Pygi <pygi@users.sourceforge.net> 1247489514 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247489514 +0000
-data 175
+data 45
 Implemented WIP bzr revision author fetching
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4302 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :738
+property svn 4 4302
 M 100755 :739 scripts/notify-roundup/notify-roundup.py
 
 blob
@@ -27886,11 +27817,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :742
 author Pygi <pygi@users.sourceforge.net> 1247496982 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247496982 +0000
-data 151
+data 21
 Fixed user html page
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4303 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :740
+property svn 4 4303
 M 100644 :741 scripts/notify-roundup/html/user.item.html
 
 blob
@@ -28444,42 +28374,38 @@ commit refs/remotes/svn/gsoc-2009
 mark :744
 author Pygi <pygi@users.sourceforge.net> 1247506681 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506681 +0000
-data 170
+data 40
 Implemented partial git and bzr support
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4305 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :742
+property svn 4 4305
 M 100755 :743 scripts/notify-roundup/notify-roundup.py
 
 commit refs/remotes/svn/gsoc-2009
 mark :745
 author Pygi <pygi@users.sourceforge.net> 1247506739 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506739 +0000
-data 152
+data 22
 Created bzr directory
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4306 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :744
+property svn 4 4306
 
 commit refs/remotes/svn/gsoc-2009
 mark :746
 author Pygi <pygi@users.sourceforge.net> 1247506794 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506794 +0000
-data 146
+data 16
 Created git dir
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4307 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :745
+property svn 4 4307
 
 commit refs/remotes/svn/gsoc-2009
 mark :747
 author Pygi <pygi@users.sourceforge.net> 1247507552 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247507552 +0000
-data 151
+data 21
 removed sh extension
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4308 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :746
+property svn 4 4308
 R "scripts/notify-roundup/hg/notify-roundup.sh" "scripts/notify-roundup/hg/notify-roundup"
 
 blob
@@ -28505,11 +28431,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :749
 author Pygi <pygi@users.sourceforge.net> 1247507638 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247507638 +0000
-data 159
+data 29
 Added git post-commit script
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4309 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :747
+property svn 4 4309
 M 100755 :748 scripts/notify-roundup/git/post-commit
 
 blob
@@ -28542,11 +28467,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :751
 author Pygi <pygi@users.sourceforge.net> 1247509467 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247509467 +0000
-data 174
+data 44
 Implemented provisional bzr postcommit hook
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4310 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :749
+property svn 4 4310
 M 100755 :750 scripts/notify-roundup/bzr/roundup_bzr.py
 
 blob
@@ -28925,11 +28849,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :753
 author Pygi <pygi@users.sourceforge.net> 1247516317 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247516317 +0000
-data 158
+data 28
 Revision should be a string
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4311 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :751
+property svn 4 4311
 M 100644 :752 share/roundup/templates/devel/schema.py
 
 blob
@@ -29577,11 +29500,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :756
 author Pygi <pygi@users.sourceforge.net> 1247516494 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247516494 +0000
-data 181
+data 51
 Now that we have string as a revision, its al cool
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4312 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :753
+property svn 4 4312
 M 100644 :754 scripts/notify-roundup/extensions/revision_info.py
 M 100755 :755 scripts/notify-roundup/notify-roundup.py
 
@@ -29679,11 +29601,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :758
 author Pygi <pygi@users.sourceforge.net> 1247517156 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247517156 +0000
-data 173
+data 43
 Renamed revision info to svn_revision_info
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4313 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :756
+property svn 4 4313
 R "scripts/notify-roundup/extensions/revision_info.py" "scripts/notify-roundup/extensions/svn_revision_info.py"
 M 100644 :757 scripts/notify-roundup/extensions/svn_revision_info.py
 
@@ -29691,11 +29612,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :759
 author Pygi <pygi@users.sourceforge.net> 1247517230 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247517230 +0000
-data 160
+data 30
 Created hg revision info file
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4314 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :758
+property svn 4 4314
 M 100644 :287 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -29755,11 +29675,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :761
 author Pygi <pygi@users.sourceforge.net> 1247838545 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838545 +0000
-data 165
+data 35
 Done some work on hg revision info
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4320 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :759
+property svn 4 4320
 M 100644 :760 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -29819,11 +29738,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :763
 author Pygi <pygi@users.sourceforge.net> 1247838637 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838637 +0000
-data 146
+data 16
 Fixed silly bug
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4321 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :761
+property svn 4 4321
 M 100644 :762 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -29883,11 +29801,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :765
 author Pygi <pygi@users.sourceforge.net> 1247838753 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838753 +0000
-data 145
+data 15
 fixed identing
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4322 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :763
+property svn 4 4322
 M 100644 :764 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -29922,11 +29839,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :767
 author Pygi <pygi@users.sourceforge.net> 1247839731 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247839731 +0000
-data 163
+data 33
 Ported vcs_rev.item to vcs stuff
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4323 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :765
+property svn 4 4323
 M 100644 :766 scripts/notify-roundup/html/vcs_rev.item.html
 
 blob
@@ -30099,11 +30015,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :770
 author Pygi <pygi@users.sourceforge.net> 1247841486 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247841486 +0000
-data 169
+data 39
 some more attempts at making this work
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4324 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :767
+property svn 4 4324
 M 100644 :768 scripts/notify-roundup/extensions/hg_revision_info.py
 M 100644 :769 scripts/notify-roundup/extensions/svn_revision_info.py
 
@@ -30202,11 +30117,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :772
 author Pygi <pygi@users.sourceforge.net> 1247841539 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247841539 +0000
-data 157
+data 27
 logging doesnt belong here
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4325 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :770
+property svn 4 4325
 M 100644 :771 scripts/notify-roundup/extensions/svn_revision_info.py
 
 blob
@@ -30287,11 +30201,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :774
 author Pygi <pygi@users.sourceforge.net> 1247843818 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247843818 +0000
-data 149
+data 19
 it works, it works
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4326 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :772
+property svn 4 4326
 M 100644 :773 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -30372,11 +30285,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :776
 author Pygi <pygi@users.sourceforge.net> 1247856684 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247856684 +0000
-data 178
+data 48
 fixed a bug where we had double modified action
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4327 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :774
+property svn 4 4327
 M 100644 :775 scripts/notify-roundup/extensions/hg_revision_info.py
 
 blob
@@ -36297,11 +36209,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :785
 author Pygi <pygi@users.sourceforge.net> 1248410105 +0000
 committer Pygi <pygi@users.sourceforge.net> 1248410105 +0000
-data 166
+data 36
 Some preparations for 3.0 migration
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4334 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :776
+property svn 4 4334
 M 100644 :777 roundup/admin.py
 M 100644 :778 roundup/hyperdb.py
 M 100644 :779 roundup/init.py
@@ -37856,11 +37767,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :787
 author Pygi <pygi@users.sourceforge.net> 1248410908 +0000
 committer Pygi <pygi@users.sourceforge.net> 1248410908 +0000
-data 155
+data 25
 Fixed some stuf for 2to3
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4335 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :785
+property svn 4 4335
 M 100644 :786 roundup/admin.py
 
 blob
@@ -38440,11 +38350,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :791
 author Pygi <pygi@users.sourceforge.net> 1250322191 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250322191 +0000
-data 156
+data 26
 Added patch stuff support
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4348 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :787
+property svn 4 4348
 M 100644 :788 share/roundup/templates/devel/html/bug.item.html
 M 100644 :789 share/roundup/templates/devel/html/patch.index.html
 M 100644 :790 share/roundup/templates/devel/html/patch.item.html
@@ -38859,11 +38768,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :794
 author Pygi <pygi@users.sourceforge.net> 1250322225 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250322225 +0000
-data 163
+data 33
 Added some hg patch apply things
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4349 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :791
+property svn 4 4349
 M 100644 :792 scripts/notify-roundup/extensions/hg_apply_patch.py
 M 100644 :793 share/roundup/templates/devel/schema.py
 
@@ -38925,11 +38833,10 @@ commit refs/remotes/svn/gsoc-2009
 mark :796
 author Pygi <pygi@users.sourceforge.net> 1250323474 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250323474 +0000
-data 154
+data 24
 Some more work comitted
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4350 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :794
+property svn 4 4350
 M 100644 :795 scripts/notify-roundup/extensions/hg_apply_patch.py
 
 blob
@@ -38987,10 +38894,9 @@ commit refs/remotes/svn/gsoc-2009
 mark :798
 author Pygi <pygi@users.sourceforge.net> 1250324300 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250324300 +0000
-data 135
+data 5
 Oops
-
-git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4351 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :796
+property svn 4 4351
 M 100644 :797 scripts/notify-roundup/extensions/hg_apply_patch.py
 
