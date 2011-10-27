@@ -3364,7 +3364,8 @@ Interpret final comment lines of commits beginning with 'git-svn-id:'
 as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Takes a selection set of events to
-modify, defaulting to all events.
+modify, defaulting to all events. The modifier 'strip' suppresses
+saving the 'svn' property.
 """)
 
 if __name__ == '__main__':
