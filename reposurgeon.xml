@@ -716,6 +716,15 @@ separated by '+'. It will have no source directory or preferred system
 type.</para>
 </listitem>
 </varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2 id='artifact-removal'><title>ARTIFACT REMOVAL</title>
+
+<para>Some commands automate fixing various kinds of conversion
+artifacts, such as .</para>
+
+<variablelist>
 <varlistentry>
 <term><command>cvslift</command>
 </term>
@@ -749,8 +758,7 @@ user ID, followed by a '=' (possibly surrounded by whitespace) followed by
 a full name and email address.  Email addresses in committer and author
 metdata for which the local ID matches between &lt; and @ are replaced according
 to the mapping.  Takes a selection set of events to modify, defaulting to
-all events.
-</para>
+all events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -762,6 +770,11 @@ all events.
 Subversion commit ID is extracted and made the value of a per-commit
 property named 'svn', which becomes visible and editable. Takes a
 selection set of events to modify, defaulting to all events.</para>
+
+<para>The command modifier "strip" suppresses saving the 'svn' 
+property.  Stock git (at least as of version 1.7.3.2) will choke on
+the property extension commands generated if you try to export with
+these properties attached.</para>
 </listitem>
 </varlistentry>
 </variablelist>
