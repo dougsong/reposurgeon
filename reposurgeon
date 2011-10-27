@@ -3325,7 +3325,8 @@ the commit's parent and the commit itself deleted.
             raise Recoverable("couldn't open author-map file")
         except ValueError:
             raise Recoverable("bad author map syntax")
-        for event in self.chosen().events:
+        for ei in self.selection:
+            event = self.chosen().events[ei]
             if isinstance(event, Commit):
                 event.committer.remap(authormap)
                 for author in event.authors:
@@ -3342,6 +3343,30 @@ a full name and email address.  Email addresses in committer and author
 metdata for which the local ID matches between < and @ are replaced according
 to the mapping.  Takes a selection set of events to modify, defaulting to
 all events.
+""")
+    def do_gitsvnlift(self, line):
+        "Interpret and strip git-svn ID lines."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        self.set_selection_set(line, list(range(len(self.chosen()))))
+        for ei in self.selection:
+            event = self.chosen().events[ei]
+            if isinstance(event, Commit):
+                m = re.search("\ngit-svn-id:.*\n", event.comment)
+                if m:
+                    gitsvn = event.comment[m.start():m.end()]
+                    event.comment = event.comment[:m.start()]
+                    (_, after) = gitsvn.split("@")
+                    fields = after.split()
+                    event.properties.append(("svn", fields[0]))
+    def help_gitsvnlift(self):
+        print("""
+Interpret final comment lines of commits beginning with 'git-svn-id:'
+as git-svn magic cookies and remove them.  The Subversion commit ID is
+extracted and made the value of a per-commit property named 'svn',
+which becomes visible and editable. Takes a selection set of events to
+modify, defaulting to all events.
 """)
 
 if __name__ == '__main__':
