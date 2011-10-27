@@ -3238,6 +3238,8 @@ original commit.
                 raise Recoverable("no such repo as %s" % name)
             else:
                 factors.append(repo)
+        if not factors or len(factors) < 2: 
+            raise Recoverable("merge requires repo name arguments")
         self.merge(factors)
         if verbose:
             self.do_choose('')
