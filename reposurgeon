@@ -540,7 +540,7 @@ class Commit:
         self.parent_marks = []       # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
-        self.properties = {}         # commit properties (extension)
+        self.properties = []         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
     def when(self):
@@ -587,19 +587,9 @@ class Commit:
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, "Author" + repr(2+i))
         self.committer.email_out(msg, "Committer")
-        empty_properties = []
-        propkeys = list(self.properties.keys())
-        propkeys.sort()
-        for name in propkeys:
-            value = self.properties[name]
-            if value in (True, False):
-                if value:
-                    empty_properties.append(name)
-            else:
-                hdr = "-".join([s.capitalize() for s in name.split("-")])
-                msg["Property-" + hdr] = value
-        if empty_properties:
-            msg["Empty-Properties"] = ",".join(empty_properties)
+        for (name, value) in self.properties:
+            hdr = "-".join([s.capitalize() for s in name.split("-")])
+            msg["Property-" + hdr] = str(value)
         msg.set_payload(self.comment)
         return str(msg)
     def email_in(self, msg):
@@ -664,13 +654,15 @@ class Commit:
                                   % (int(msg["Event-Number"]), hdr))
                         self.authors[i].date = date
                         modified = True
-        newprops = {}
+        newprops = []
         for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
-            newprops[propkey] = msg[prophdr]
-        if "Empty-Properties" in msg:
-            for token in msg["Empty-Properties"].split(","):
-                self.properties[token.strip()] = True
+            propval = msg[prophdr]
+            if propval == "True":
+                propval = True
+            elif propval == "False":
+                propval = False
+            newprops.append((propkey, propval))
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload().strip() + "\n"
@@ -719,10 +711,7 @@ class Commit:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % ancestor
-        propkeys = list(self.properties.keys())
-        propkeys.sort()
-        for name in propkeys:
-            value = self.properties[name]
+        for (name, value) in self.properties:
             if value in (True, False):
                 if value:
                     st += "property %s\n" % name
@@ -929,7 +918,7 @@ class Repository:
                                 if len(fields) < 3:
                                     self.error("malformed property line")
                                 elif len(fields) == 3:
-                                    commit.properties[fields[1]] = True
+                                    commit.properties.append((fields[1], True))
                                 else:
                                     name = fields[1]
                                     length = int(fields[2])
@@ -942,7 +931,7 @@ class Repository:
                                         value = value[:-1] # Trim '\n'
                                     else:
                                         self.error("garbage length field on property line")
-                                    commit.properties[name] = value
+                                    commit.properties.append((name, value))
                             elif line.startswith("data"):
                                 commit.comment = read_data(line)
                             elif line.startswith("from") or line.startswith("merge"):
@@ -987,7 +976,7 @@ class Repository:
                             else:
                                 # Dodgy bzr autodetection hook...
                                 if not self.vcs:
-                                    if "branch-nick" in commit.properties:
+                                    if "branch-nick" in dict(commit.properties):
                                         for vcs in vcstypes:
                                             if vcs.name == "bzr":
                                                 self.vcs = vcs
