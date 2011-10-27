@@ -589,7 +589,9 @@ class Commit:
         self.committer.email_out(msg, "Committer")
         for (name, value) in self.properties:
             hdr = "-".join([s.capitalize() for s in name.split("-")])
-            msg["Property-" + hdr] = str(value)
+            value = value.replace("\n", r"\n")
+            value = value.replace("\t", r"\t")
+            msg["Property-" + hdr] = value
         msg.set_payload(self.comment)
         return str(msg)
     def email_in(self, msg):
@@ -662,6 +664,9 @@ class Commit:
                 propval = True
             elif propval == "False":
                 propval = False
+            else:
+                propval = propval.replace(r"\n", "\n")
+                propval = propval.replace(r"\t", "\t")
             newprops.append((propkey, propval))
         modified |= (newprops != self.properties)
         self.properties = newprops
