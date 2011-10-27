@@ -1,3 +1,4 @@
+## Test of canonicalization-after-commit cases
 !echo This exercises many delete cases in the test repo
 echo 1
 read testrepo.fi

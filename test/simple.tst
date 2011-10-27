@@ -1,3 +1,4 @@
+## Tests of selection-set syntax, tags, history, and expunge
 echo 1
 read simple.fi
 index

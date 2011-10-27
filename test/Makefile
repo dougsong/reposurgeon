@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce testdelete testmerge testcut
+all: clean roundtrip mailboxing regress coalesce testmerge
 	@echo "No diff output is good news."
 
 clean:
@@ -27,7 +27,7 @@ mailboxing:
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
-TESTLOADS = simple roundup gsoc
+TESTLOADS = simple roundup gsoc cut testrepo
 buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
@@ -35,7 +35,7 @@ buildregress:
 	done
 regress:
 	@for file in $(TESTLOADS); do \
-	    echo "Regression test using $${file}.tst"; \
+	    grep '##' $${file}.tst; \
 	    ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
@@ -57,15 +57,6 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
-# Test delete and canonicalization operations
-buildtestdelete:
-	../reposurgeon "script testrepo.tst" >testrepo.chk 2>&1
-testdelete:
-	@echo "Test of canonicalization-after-commit cases."
-	@../reposurgeon "script testrepo.tst" >/tmp/regress 2>&1
-	@diff -u testrepo.chk /tmp/regress
-	@rm -f /tmp/regress
-
 # Test merge
 buildtestmerge:
 	../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr testrepo" "write testmerge.chk"
@@ -73,14 +64,5 @@ testmerge:
 	@ echo "Test of the merge feature"
 	@../reposurgeon "read bzr.fi" "read testrepo.fi" "merge bzr testrepo" "write -" >/tmp/regress
 	@diff -u testmerge.chk /tmp/regress
-	@rm -f /tmp/regress
-
-# Test cut and renumber operations
-buildtestcut:
-	../reposurgeon "script cut.tst" >testcut.chk
-testcut:
-	@ echo "Test of the cut feature"
-	@../reposurgeon "script cut.tst" >/tmp/regress
-	@diff -u testcut.chk /tmp/regress
 	@rm -f /tmp/regress
 

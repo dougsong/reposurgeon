@@ -131,6 +131,7 @@ tags
    114 refs/tags/annotated-sample
 history
 script simple.tst
+## Tests of selection-set syntax, tags, history, and expunge
 echo 1
 read simple.fi
 index
