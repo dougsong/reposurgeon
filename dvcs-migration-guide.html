@@ -130,10 +130,10 @@ repo conversion, here are the only two you usually need to know
 about</p>
 
 <dl>
-<dt>-A (or &ndash;&ndash;authors-file)</dt>
+<dt>-A (or &#45;&#45;authors-file)</dt>
 <dd><p>Specify your authors file.</p>
 
-<dt>&ndash;&ndash;stdlayout</dt>
+<dt>&#45;&#45;stdlayout</dt>
 <dd><p>Inform git-svn that your project has a standard
 trunk/tags/branches layout. git-svn will use this to create
 corresponding git tags and branches.</p>
@@ -244,8 +244,8 @@ comment and move on.</p>
 <p>Experiments with reposurgeon suggest that <code>git import</code>
 doesn't try to pack or otherwise optimize for space when it populates
 a repo from a dump file; this produces large repositories.  Running
-<code>gt repack</code> and <code>git gc --aggressive</code> can slim
-them down quite a lot.</p>
+<code>gt repack</code> and <code>git gc
+&#45;&#45;aggressive</code> can slim them down quite a lot.</p>
 
 <h1 id="client-tools">Step Three: Client Tools</h1>
 
@@ -253,13 +253,23 @@ them down quite a lot.</p>
 client will, of course, have no partiticular trouble using a git
 repository.</p>
 
+<p>Windows users accustomed to working through TortoiseSVN can move to
+<a href="http://code.google.com/p/tortoisegit/">TortoiseGIT</a>.</p>
+
 <p>Developers who like hg can use the <a
 href="http://hg-git.github.com/">hg-git mercurial plugin</a>. There is
 an Ubuntu package "mercurial-git" for this, and other distributions
 are likely to carry it as well.</p>
 
-<p>Windows users accustomed to working through TortoiseSVN can move to
-<a href="http://code.google.com/p/tortoisegit/">TortoiseGIT</a>.</p>
+<p>There are some hg-git limitations to be aware of. In order
+to simulate git behavior, hg-git keeps some local state in the
+.hg directories; a map from git branch names to Mercurial commits,
+a list of Mercurial bookmarks describing git branches (which
+have bookmark-like behavior different from a Mercurial named branch) and a
+file mapping git SHA1 hashes to hg SHA1 hashes (both systems 
+use them as commit IDs).  The problem is that hg doesn't
+copy any of this local state when it clones a repo, so clones
+of hg-git repos lose their branches and tags.</p>
 
 <h1 id="practice">Step Four: Good Practice</h1>
 
