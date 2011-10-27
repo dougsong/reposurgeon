@@ -738,6 +738,13 @@ re-pointed at the parent. The commit itself is unconditionally
 deleted.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>authormap</command>
+</term>
+<listitem>
+<para></para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
