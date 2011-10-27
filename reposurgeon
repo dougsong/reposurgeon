@@ -1487,7 +1487,7 @@ def read_repo(source, preferred):
         repo.fast_import(open(source), progress=verbose>0)
     else:
         if verbose >= DEBUG_SHUFFLE:
-            if preferred.name:
+            if preferred:
                 announce("looking for a %s repo..." % preferred.name)
             else:
                 announce("reposurgeon: looking for any repo...")
@@ -1565,20 +1565,10 @@ def rebuild_repo(repo, target, preferred):
     if target:
         target = os.path.abspath(target)
     else:
-        complain("no default destination for rebuild")
-        return
-    vcs = None
-    if not preferred:
-        if repo.vcs:
-            vcs = repo.vcs
-    else:
-        for vcs in vcstypes:
-            if vcs.name.lower() == preferred.lower():
-                break
-        else:
-            complain("unknown VCS type")
+        raise Recoverable("no default destination for rebuild")
+    vcs = preferred or repo.vcs
     if not vcs:
-        complain("please prefer a repo type first")
+        raise Recoverable("please prefer a repo type first")
 
     # Create a new empty directory to do the rebuild in
     staging = target + "-stage" + str(os.getpid())
@@ -1698,7 +1688,9 @@ class popen_or_die:
         if extype:
             if verbose:
                 complain("exception %s in popen_or_die." % (extype,))
-            raise extype(value).with_traceback(traceback)
+            # This is what we want, but it's only in true Python 3.x
+            #raise extype(value).with_traceback(traceback)
+            raise extype, value, traceback
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.command, self.legend)
             if extype == Fatal:
@@ -2758,7 +2750,7 @@ current preserve list is displayed afterwards.
         self.choose(repo)
         if self.chosen():
             if self.chosen().vcs:
-                self.preferred = self.chosen().vcs.name
+                self.preferred = self.chosen().vcs
             name = self.uniquify(os.path.basename(self.chosen().sourcedir or line or "unnamed"))
             self.chosen().rename(name)
         if verbose:
