@@ -3356,7 +3356,8 @@ all events.
                     event.comment = event.comment[:m.start()]
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
-                    event.properties.append(("svn", fields[0]))
+                    if "strip" not in line:
+                        event.properties.append(("svn", fields[0]))
     def help_gitsvnlift(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
