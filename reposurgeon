@@ -322,6 +322,13 @@ class Attribution:
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
         msg[hdr + "-Date"] = self.date.rfc822()
+    def remap(self, authors):
+        "Remap the attribution name."
+        for (local, (name, mail)) in authors.items():
+            if local + "@" in self.email:
+                self.name = name
+                self.email = mail
+                break
     def __eq__(self, other):
         "Compare attributions after canonicalization."
         return (self.name == other.name
@@ -3309,6 +3316,43 @@ commits created by cvs2svn with one parent that were created within 10
 seconds of the parent, have stereotyped comments and either no fileops
 or all delete fileops.  The branch attribute of the commit is given to
 the commit's parent and the commit itself deleted.
+""")
+    def do_authormap(self, line):
+        "Apply an author-mapping file."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        authormap = {}
+        try:
+            with open(line.strip()) as fp:
+                for line in fp:
+                    (local, netwide) = line.strip().split('=')
+                    (name, mail) = email.utils.parseaddr(netwide.strip())
+                    if not mail:
+                        raise Fatal("can't recognize address in '%s'" % netwide)
+                    authormap[local.strip()] = (name, mail)
+        except IOError:
+            raise Recoverable("couldn't open author-map file")
+        except ValueError:
+            raise Recoverable("bad author map syntax")
+        for event in self.chosen().events:
+            if isinstance(event, Commit):
+                event.committer.remap(authormap)
+                for author in event.authors:
+                    author.remap(authormap)
+            elif isinstance(event, Tag):
+                event.tagger.remap(authormap)
+    def help_authormap(self):
+        print("""
+Apply an author mapping file.  May be useful if you are editing a repo or
+dump created by git-svn invoked without an authors file; it applies such a
+file. The file is expected to consist of lines: each beginning with a local
+user ID, followed by a '=' (possibly surrounded by whitespace) followed by
+a full name and email address.  Email addresses in committer and author
+metdata for which the local ID matches between < and @ are replaced according
+to the mapping.  Takes a selection set of events to modify, defaulting to
+all events.
 """)
 
 if __name__ == '__main__':
