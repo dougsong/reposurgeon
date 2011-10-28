@@ -29,21 +29,22 @@
 operations that version-control systems don't want to let you do, such
 as (a) editing past comments and metadata, (b) excising commits, (c)
 coalescing and splitting commits, (d) removing files and subtrees from
-repo history, and (e) cutting a repo in two by cutting a parent-child
-link, preserving the branch structure of both child repos.</para>
+repo history, (e) merging two or more repos, and (f) cutting a repo in
+two by cutting a parent-child link, preserving the branch structure of
+both child repos.</para>
 
-<para>The original motivation for
-<command>reposurgeon</command> was to clean up artifacts
-created by repository conversions. It was foreseen that the tool would
-also have applications when code needs to be removed from repositories
-for legal or policy reasons.</para>
+<para>The original motivation for <command>reposurgeon</command> was
+to clean up artifacts created by repository conversions, and it has
+some special-purpose commands for this purpose. It was foreseen that
+the tool would also have applications when code needs to be removed
+from repositories for legal or policy reasons.</para>
 
-<para>To keep <command>reposurgeon</command> simple and
-flexible, it does not do its own repository reading and writing.
-Instead, it relies on being able to parse and emit the command
-streams created by git-fast-export and read by git-fast-import.  This
-means that it can be used on any version-control system that that has
-both fast-export and fast-import utilities.  This set includes git
+<para>To keep <command>reposurgeon</command> simple and flexible, it
+does not do its own repository reading and writing.  Instead, it
+relies on being able to parse and emit the command streams created by
+git-fast-export and read by git-fast-import.  This means that it can
+be used on any version-control system that that has both fast-export
+and fast-import utilities.  At time of writing this set includes git
 itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
@@ -544,7 +545,7 @@ commit must follow.</para>
 <para>This operation may fail if the commit graph remains connected
 through another path; the tool will detect this.</para>
 
-<para>On success, original repo will be dropped, and there will be no
+<para>On success, the original repo will be dropped, and there will be no
 repo still chosen, but two repos will appear in the in-core list. If
 the repo was named 'foo', the cut segments will be named 'foo-early'
 and 'foo-late'. Option and feature events at the beginning of the
@@ -736,8 +737,8 @@ list.</para>
 
 <refsect2 id='artifact-removal'><title>ARTIFACT REMOVAL</title>
 
-<para>Some commands automate fixing various kinds of conversion
-artifacts, such as .</para>
+<para>Some commands automate fixing various kinds of artifacts
+associated with repository conversions from order systems.</para>
 
 <variablelist>
 <varlistentry>
@@ -918,10 +919,11 @@ and executes it as a command.</para></listitem>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
 
-<para>Guarantee: Editing with reposurgeon never changes the hash of a
-commit object unless (a) you edit the commit, or (b) it is a
-descendant of an edited commit in a VCS that includes parent hashes in
-the input of a child object's hash (git and hg both do this).</para>
+<para>Guarantee: Editing with <command>reposurgeon</command> never
+changes the hash of a commit object unless (a) you edit the commit, or
+(b) it is a descendant of an edited commit in a VCS that includes
+parent hashes in the input of a child object's hash (git and hg both
+do this).</para>
 
 <para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
