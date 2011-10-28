@@ -257,11 +257,8 @@ the hosting software created for you.  Here's how to cope:</p>
 <li><p>Do your surgery on a copy of the repo with its .git/config
 pointing to the public location.</p></li>
 
-<li><p>Warn the public repo's users that it is breiefly going out 
+<li><p>Warn the public repo's users that it is briefly going out 
 of service and they will need to re-clone it afterwards!</em></p></li>
-
-<li><p>ssh to the host.  Find the repo directory.  Move it to a
-temporary name so 
 
 Re-initialize the public repo. You'll need ssh addess to the bare repo
 directory on the host - let's suppose it's 'myproject'. Pop up to the
@@ -281,10 +278,10 @@ enclosing directory), and (b) so no user can update the repo while
 you're clearing it (mv is atomic)</p></li>
 
 <li><p>From your modified local repo, run <code>git push</code> to
-push the new history up to the repo. Alternatively, if the public repo
-is not locked against non fast-forward updates, you may be able to
-skip re-initializing it and just do this: <code> git push -f origin
-HEAD:master</code></p>
+push the new history up to the public repo. Alternatively, if the
+public repo is not locked against non fast-forward updates, you may be
+able to skip re-initializing it and just do this: <code> git push -f
+origin HEAD:master</code></p>
 </li>
 
 <li><p>Inform the public repo's users that it is available and remind
