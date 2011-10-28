@@ -1467,6 +1467,55 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
+    def uniquify(self, color):
+        "Disambiguate branches, tags, and marks using the specified label."
+        for event in self.events:
+            # Disambiguate all tags.
+            for (objtype, attr) in ((Tag, "name"),):
+                if isinstance(event, objtype):
+                    setattr(event, attr, color + "-" + getattr(event, attr))
+            # Disambiguate all branches and refs.
+            for (objtype, attr) in ((Commit, "branch"),
+                                 (Reset, "ref")):
+                if isinstance(event, objtype):
+                    old = getattr(event, attr)
+                    if verbose >= DEBUG_MERGE:
+                        announce("moving %s -> %s in %s.%s"
+                                 % (old, old + suffix,
+                                    objtype.__name__,
+                                    attr))
+                    setattr(event, attr, old + "-" + color)
+            # Disambiguate defining marks.
+            for fld in ("mark", "committish"):
+                if hasattr(event, fld):
+                    old = getattr(event, fld)
+                    if old is None:
+                        continue
+                    elif not old.startswith(":"):
+                        raise Fatal("field not in mark format")
+                    else:
+                        new = old + "-" + color
+                        if verbose >= DEBUG_MERGE:
+                            announce("moving %s -> %s in %s.%s"
+                                     % (old, new,
+                                        event.__class__.__name__,
+                                        fld))
+                        setattr(event, fld, new)
+            # Now marks in fileops
+            if isinstance(event, Commit):
+                for (j, old) in enumerate(event.parent_marks):
+                    new = old + "-" + color
+                    if verbose >= DEBUG_MERGE:
+                        announce("moving %s -> %s in parents" % (old, new))
+                    event.parent_marks[j] = new
+                for fileop in event.fileops:
+                    if fileop.op == "M" and fileop.ref.startswith(":"):
+                        new = fileop.ref + color
+                        if verbose >= DEBUG_MERGE:
+                            announce("moving %s -> %s in fileop"
+                                     % (fileop.ref, new))
+                        fileop.ref = new
+        return
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1866,53 +1915,8 @@ class RepositoryList:
             union.import_line += factor.import_line
             union.preserve_set |= factor.preserve_set
             union.case_coverage |= factor.case_coverage
-            for event in factor.events:
-                # Disambiguate branches and tags
-                if i != 0:
-                    prefix = factor.name + "-"
-                    for (objtype, attr) in ((Tag, "name"),):
-                        if isinstance(event, objtype):
-                            setattr(event, attr, prefix + getattr(event, attr))
-                    suffix = "-" + factor.name
-                    for (objtype, attr) in ((Commit, "branch"),
-                                         (Reset, "ref")):
-                        if isinstance(event, objtype):
-                            old = getattr(event, attr)
-                            if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in %s.%s"
-                                         % (old, old + suffix,
-                                            objtype.__name__,
-                                            attr))
-                            setattr(event, attr, old + suffix)
-                # Disambiguate all marks.
-                for fld in ("mark", "committish"):
-                    if hasattr(event, fld):
-                        old = getattr(event, fld)
-                        if old is None:
-                            continue
-                        elif not old.startswith(":"):
-                            raise Fatal("field not in mark format")
-                        else:
-                            new = old + factor.name
-                            if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in %s.%s"
-                                         % (old, new,
-                                            event.__class__.__name__,
-                                            fld))
-                            setattr(event, fld, new)
-                if isinstance(event, Commit):
-                    for (j, old) in enumerate(event.parent_marks):
-                        new = old + factor.name
-                        if verbose >= DEBUG_MERGE:
-                            announce("moving %s -> %s in parents" % (old, new))
-                        event.parent_marks[j] = new
-                    for fileop in event.fileops:
-                        if fileop.op == "M" and fileop.ref.startswith(":"):
-                            new = fileop.ref + factor.name
-                            if verbose >= DEBUG_MERGE:
-                                announce("moving %s -> %s in fileop"
-                                         % (fileop.ref, new))
-                            fileop.ref = new
+            if i != 0:
+                factor.uniquify(factor.name)
             # Merge in the events and blobs
             union.events += factor.events
             # Reparent events and move files
@@ -1952,6 +1956,9 @@ class RepositoryList:
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)
+    def graft(self, graft_repo, graft_point):
+        graft_repo.uniquify(graft_repo.name)
+        # More to be done here
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
