@@ -1510,7 +1510,7 @@ class Repository:
                     event.parent_marks[j] = new
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = fileop.ref + color
+                        new = fileop.ref + "-" + color
                         if verbose >= DEBUG_MERGE:
                             announce("moving %s -> %s in fileop"
                                      % (fileop.ref, new))

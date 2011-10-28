@@ -918,6 +918,11 @@ and executes it as a command.</para></listitem>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
 
+<para>Guarantee: Editing with reposurgeon never changes the hash of a
+commit object unless (a) you edit the commit, or (b) it is a
+descendant of an edited commit in a VCS that includes parent hashes in
+the input of a child object's hash (git and hg both do this).</para>
+
 <para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
 history, not its entire content history. Blobs are stored on disk.</para>
