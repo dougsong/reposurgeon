@@ -716,6 +716,21 @@ separated by '+'. It will have no source directory or preferred system
 type.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>graft</command>
+        <emphasis>commit-id</emphasis>
+        <emphasis>reponame</emphasis>.
+</term>
+<listitem>
+<para>For when merge doesn't give you enough control.  The selection set
+must be of size 1, identifying a single commit in the currently
+selected repo.  A following argument must be a repository name.
+Labels and branches in the named repo are prefixed with its name; then
+it is grafted to the selected one. Its root becomes a child of the
+specified commit.  Finally the named repo is removed from the load
+list.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
