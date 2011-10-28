@@ -1571,13 +1571,20 @@ def rebuild_repo(repo, target, preferred):
         raise Recoverable("please prefer a repo type first")
 
     # Create a new empty directory to do the rebuild in
-    staging = target + "-stage" + str(os.getpid())
-    assert(os.path.isabs(target) and os.path.isabs(staging))
-    try:
-        os.mkdir(staging)
-    except OSError:
-        complain("staging directory creation failed")
-        return
+    if not os.path.exists(target):
+        staging = target
+        try:
+            os.mkdir(target)
+        except OSError:
+            raise Recoverable("target directory creation failed")
+    else:
+        staging = target + "-stage" + str(os.getpid())
+        assert(os.path.isabs(target) and os.path.isabs(staging))
+        try:
+            os.mkdir(staging)
+        except OSError:
+            raise Recoverable("staging directory creation failed")
+
     # Try the rebuild in the empty staging directory 
     here = os.getcwd()
     try:
@@ -1613,39 +1620,41 @@ def rebuild_repo(repo, target, preferred):
         os.mkdir(savedir)
         assert(os.path.abspath(savedir))
 
-        # This is a critical region.  Ignore all signals until we're done.
-        with CriticalRegion():
-            # Move the unmodified repo contents in target to the
-            # backup directory.  Then move the staging contents to the
-            # target directory.  Finally, restore designated files
-            # from backup to target.
-            for sub in os.listdir(target):
-                os.rename(os.path.join(target, sub),
-                          os.path.join(savedir, sub))
-            if verbose:
-                announce("repo backed up to %s." % os.path.relpath(savedir))
-            for sub in os.listdir(staging):
-                os.rename(os.path.join(staging, sub),
-                          os.path.join(target, sub))
-            if verbose:
-                announce("modified repo moved to %s." % os.path.relpath(target))
-            if not repo.preserve_set:
+        if staging != target:
+            # This is a critical region.  Ignore all signals until we're done.
+            with CriticalRegion():
+                # Move the unmodified repo contents in target to the
+                # backup directory.  Then move the staging contents to the
+                # target directory.  Finally, restore designated files
+                # from backup to target.
+                for sub in os.listdir(target):
+                    os.rename(os.path.join(target, sub),
+                              os.path.join(savedir, sub))
                 if verbose:
-                    announce("no preservations.")
-            else:
-                for sub in repo.preserve_set:
-                    src = os.path.join(savedir, sub)
-                    dst = os.path.join(target, sub)
-                    if os.path.exists(src):
-                        if os.path.isdir(src):
-                            shutil.copytree(src, dst)
-                        else:
-                            shutil.copy2(src, dst)
+                    announce("repo backed up to %s." % os.path.relpath(savedir))
+                for sub in os.listdir(staging):
+                    os.rename(os.path.join(staging, sub),
+                              os.path.join(target, sub))
                 if verbose:
-                    announce("preserved files restored.")
+                    announce("modified repo moved to %s." % os.path.relpath(target))
+                if not repo.preserve_set:
+                    if verbose:
+                        announce("no preservations.")
+                else:
+                    for sub in repo.preserve_set:
+                        src = os.path.join(savedir, sub)
+                        dst = os.path.join(target, sub)
+                        if os.path.exists(src):
+                            if os.path.isdir(src):
+                                shutil.copytree(src, dst)
+                            else:
+                                shutil.copy2(src, dst)
+                    if verbose:
+                        announce("preserved files restored.")
     finally:
         os.chdir(here)
-        nuke(staging, "reposurgeon: removing staging directory")
+        if staging != target:
+            nuke(staging, "reposurgeon: removing staging directory")
 
 def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
