@@ -1847,6 +1847,11 @@ class RepositoryList:
         roots = [x.commits()[0] for x in factors]
         union = Repository("+".join([r.name for r in factors]))
         os.mkdir(union.subdir())
+        # Strip feature events off the front of the factors;
+        # they have to stay in front
+        for factor in factors:
+            while factor[0].when() == 0:
+                union.events.append(factor.events.pop(0))
         for (i, factor) in enumerate(factors):
             # Only vcstype, sourcedir, and basedir are not copied here
             union.import_line += factor.import_line
@@ -1911,18 +1916,30 @@ class RepositoryList:
             #del factor
         # Renumber all events and sort by imputed timestamp
         union.renumber()
-        union.events.sort(key=lambda x: x.when())
-        # Sort out the root grafts. All but the first get glued to the
-        # previous commit closest in time.
-        lastcommit = None
-        for commit in union.commits():
-            if commit != roots[0] and not commit.parent_marks:
-                if not lastcommit:
-                    raise Fatal("can't find previous commit to link")
-                elif lastcommit.mark is None:
-                    raise Fatal("can't link to commit with no mark")
-                commit.parent_marks.append(lastcommit.mark)
-            lastcommit = commit
+        # Sort out the root grafts. The way we used to do this involved
+        # sorting the union commits by timestamp, but this fails because
+        # in real-world repos timestamp order may not coincide with mark
+        # order - leading to "mark not defined" errors from the importer at
+        # rebuild time.  This method gives less intuitive results but at
+        # least means we never need to reorder.
+        commits = union.commits()
+        for root in roots[1:]:
+            most_recent = None
+            for (i, event) in enumerate(commits):
+                if root.when() >= event.when():
+                    continue
+                elif not most_recent or event.when() < most_recent.when():
+                    most_recent = commits[i-1]
+                    break
+            if most_recent is None:
+                # Should never fire bacause we sorted the factors array
+                # so root[0] is the oldest commit and the first in union.
+                raise Fatal("should never happen!")
+            elif most_recent.mark is None:
+                # This should never happen either.
+                raise Fatal("can't link to commit with no mark")
+            else:
+                root.parent_marks.append(most_recent.mark)
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)

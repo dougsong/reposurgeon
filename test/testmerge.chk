@@ -248,31 +248,6 @@ from :28
 D bar
 M 100644 :24 renamed1
 
-commit refs/heads/master-bzr
-mark :35
-committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
-data 14
-First commit.
-from :29
-property branch-nick 12 bzr-testrepo
-M 644 inline README
-data 41
-This is a test file in a dummy bzr repo.
-
-
-commit refs/heads/master-bzr
-mark :36
-committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
-data 32
-Second commit, tasting editing.
-from :35
-property branch-nick 12 bzr-testrepo
-M 644 inline README
-data 43
-This is a modification of that test file.
-
-
-
 commit refs/heads/master
 mark :30
 author Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
@@ -317,4 +292,29 @@ M 100644 :33 README
 
 reset refs/heads/master
 from :34
+
+commit refs/heads/master-bzr
+mark :35
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+from :29
+property branch-nick 12 bzr-testrepo
+M 644 inline README
+data 41
+This is a test file in a dummy bzr repo.
+
+
+commit refs/heads/master-bzr
+mark :36
+committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
+data 32
+Second commit, tasting editing.
+from :35
+property branch-nick 12 bzr-testrepo
+M 644 inline README
+data 43
+This is a modification of that test file.
+
+
 

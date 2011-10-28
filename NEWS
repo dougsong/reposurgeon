@@ -3,7 +3,8 @@
 1.4: 
      Code is pylint clean.
      Fixed a bug in the cut coloring algorithm.
-     Added 'authormap' and 'gitsvnlift' command.
+     Added 'authormap' and 'gitsvnlift' commands.
+     Merge operation is no longer confused by out-of-timestamp-order commits.
 
 1.3: 2011-10-25
      Code moved to Python 3.
