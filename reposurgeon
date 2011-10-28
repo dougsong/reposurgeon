@@ -1479,12 +1479,13 @@ class Repository:
                                  (Reset, "ref")):
                 if isinstance(event, objtype):
                     old = getattr(event, attr)
+                    new = old + "-" + color
                     if verbose >= DEBUG_MERGE:
                         announce("moving %s -> %s in %s.%s"
-                                 % (old, old + suffix,
+                                 % (old, new,
                                     objtype.__name__,
                                     attr))
-                    setattr(event, attr, old + "-" + color)
+                    setattr(event, attr, new)
             # Disambiguate defining marks.
             for fld in ("mark", "committish"):
                 if hasattr(event, fld):
