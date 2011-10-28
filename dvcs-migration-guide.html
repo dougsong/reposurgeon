@@ -208,7 +208,7 @@ and <code>hg log</code>. For a really high-quality conversion,
 multiline comments should be edited into this form.</dd>
 </dl>
 
-<div>&nbsp;</div>
+<h2 id="reposurgeon">Using reposurgeon</h2>
 
 <p>You can use <a
 href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> to clean
@@ -246,6 +246,50 @@ doesn't try to pack or otherwise optimize for space when it populates
 a repo from a dump file; this produces large repositories.  Running
 <code>gt repack</code> and <code>git gc
 &#45;&#45;aggressive</code> can slim them down quite a lot.</p>
+
+<h2 id="reposurgeon">Recovering from error</h2>
+
+<p>Occasionally you'll discover problems with a conversion after you've
+pushed it to a project's hosting site, typically to a bare repo that
+the hosting software created for you.  Here's how to cope:</p>
+
+<ol>
+<li><p>Do your surgery on a copy of the repo with its .git/config
+pointing to the public location.</p></li>
+
+<li><p>Warn the public repo's users that it is breiefly going out 
+of service and they will need to re-clone it afterwards!</em></p></li>
+
+<li><p>ssh to the host.  Find the repo directory.  Move it to a
+temporary name so 
+
+Re-initialize the public repo. You'll need ssh addess to the bare repo
+directory on the host - let's suppose it's 'myproject'. Pop up to the
+enclosing directory and do this:
+
+<pre><code>
+    mv myproject myproject-save
+    rm -fr myproject/save/*
+    git init &#45;&#45;bare myproject-save
+    mv myproject-save myproject
+</code></pre>
+<div>&nbsp;</div>
+
+The point of doing it this way is (a) so you never actually remove
+myproject (on many hosts you will not have create permissions in the
+enclosing directory), and (b) so no user can update the repo while 
+you're clearing it (mv is atomic)</p></li>
+
+<li><p>From your modified local repo, run <code>git push</code> to
+push the new history up to the repo. Alternatively, if the public repo
+is not locked against non fast-forward updates, you may be able to
+skip re-initializing it and just do this: <code> git push -f origin
+HEAD:master</code></p>
+</li>
+
+<li><p>Inform the public repo's users that it is available and remind
+them that they will need to re-clone it.</p></li>
+</ol>
 
 <h1 id="client-tools">Step Three: Client Tools</h1>
 
