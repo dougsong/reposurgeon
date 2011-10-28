@@ -3325,6 +3325,34 @@ type.
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
+    def do_graft(self, line):
+        "Graft a named repo onto the selected one."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, [])
+        if len(self.selection) == 1:
+            graft_point = self.selection[0]
+        else:
+            raise Recoverable("a singleton selection set is required.")
+        if not self.repolist:
+            raise Recoverable("no repositories are loaded.")
+        if line in self.reponames():
+            graft_repo = self.repo_by_name(line)
+        else:
+            raise Recoverable("no such repo as %s" % line)
+        # OK, we've got the two repos and the graft point.  Do it.
+        self.chosen().graft(graft_repo, graft_point)
+    def help_graft(self):
+        print("""
+For when merge doesn't give you enough control.  The selection set
+must be of size 1, identifying a single commit in the currently
+selected repo.  A following argument must be a repository name.
+Labels and branches in the named repo are prefixed with its name; then
+it is grafted to the selected one. Its root becomes a child of the
+specified commit.  Finally the named repo is removed from the choose
+list.
+""")
     def help_cvslift(self):
         print("""
 Purge cruft created by cvs2svn conversions.  This looks for dummy
