@@ -27,7 +27,7 @@ mailboxing:
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
-TESTLOADS = simple roundup gsoc cut testrepo testmerge
+TESTLOADS = simple roundup gsoc cut testrepo testmerge graft
 buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
