@@ -5,6 +5,7 @@
      Fixed a bug in the cut coloring algorithm.
      Added 'graft', 'authormap', and 'gitsvnlift' commands.
      Merge operation is no longer confused by out-of-timestamp-order commits.
+     Restore capability to coalesce empt log messages
 
 1.3: 2011-10-25
      Code moved to Python 3.
