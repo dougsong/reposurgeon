@@ -1516,6 +1516,24 @@ class Repository:
                                      % (fileop.ref, new))
                         fileop.ref = new
         return
+    def absorb(self, other):
+        # Only vcstype, sourcedir, and basedir are not copied here
+        self.import_line += other.import_line
+        self.preserve_set |= other.preserve_set
+        self.case_coverage |= other.case_coverage
+        # Strip feature events off the front, they have to stay in front.
+        while other[0].when() == 0:
+            front = [x for x in self.events if x.when() == 0]
+            self.events.insert(len(front), other.events.pop(0))
+        # Merge in the non-feature events and blobs
+        self.events += other.events
+        # Reparent events and move files
+        for event in other:
+            if hasattr(event, "moveto"):
+                event.moveto(self)
+        other.events = []
+        other.cleanup()
+        #del other
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1905,29 +1923,12 @@ class RepositoryList:
         roots = [x.commits()[0] for x in factors]
         union = Repository("+".join([r.name for r in factors]))
         os.mkdir(union.subdir())
-        # Strip feature events off the front of the factors;
-        # they have to stay in front
-        for factor in factors:
-            while factor[0].when() == 0:
-                union.events.append(factor.events.pop(0))
         for (i, factor) in enumerate(factors):
-            # Only vcstype, sourcedir, and basedir are not copied here
-            union.import_line += factor.import_line
-            union.preserve_set |= factor.preserve_set
-            union.case_coverage |= factor.case_coverage
             if i != 0:
                 factor.uniquify(factor.name)
-            # Merge in the events and blobs
-            union.events += factor.events
-            # Reparent events and move files
-            for event in factor:
-                if hasattr(event, "moveto"):
-                    event.moveto(union)
-            factor.events = []
-            factor.cleanup()
+            union.absorb(factor)
             self.remove_by_name(factor.name)
-            #del factor
-        # Renumber all events and sort by imputed timestamp
+        # Renumber all events
         union.renumber()
         # Sort out the root grafts. The way we used to do this involved
         # sorting the union commits by timestamp, but this fails because
@@ -1957,7 +1958,13 @@ class RepositoryList:
         self.repolist.append(union)
         self.choose(union)
     def graft(self, graft_repo, graft_point):
+        where = self.events[graft_point]
+        if not isinstance(where, Commit):
+            raise Recoverable("%s in %s is not a commit." % \
+                              (where.mark, self.name))
+        # Errors aren't recoverable after this call
         graft_repo.uniquify(graft_repo.name)
+        graft.repo[0].parent_marks.append(where.mark)
         # More to be done here
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
