@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-1.4: 
+1.4: 2011-10-28
      Code is pylint clean.
      Fixed a bug in the cut coloring algorithm.
      Added 'graft', 'authormap', and 'gitsvnlift' commands.
