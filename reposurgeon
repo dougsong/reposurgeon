@@ -1534,6 +1534,17 @@ class Repository:
         other.events = []
         other.cleanup()
         #del other
+    def graft(self, graft_repo, graft_point):
+        "Graft a repo on to this one at a specified point."
+        where = self.events[graft_point]
+        if not isinstance(where, Commit):
+            raise Recoverable("%s in %s is not a commit." % \
+                              (where.mark, self.name))
+        # Errors aren't recoverable after this
+        graft_repo.uniquify(graft_repo.name)
+        graft_repo.commits()[0].parent_marks.append(where.mark)
+        self.absorb(graft_repo)
+        self.renumber()
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -1957,17 +1968,6 @@ class RepositoryList:
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)
-    def graft(self, graft_repo, graft_point):
-        "Graft a repo on to this one at a specified point."
-        where = self.events[graft_point]
-        if not isinstance(where, Commit):
-            raise Recoverable("%s in %s is not a commit." % \
-                              (where.mark, self.name))
-        # Errors aren't recoverable after this
-        graft_repo.uniquify(graft_repo.name)
-        graft.repo[0].parent_marks.append(where.mark)
-        self.chosen().absorb(graft_repo)
-        self.remove_by_name(line)
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
@@ -3359,6 +3359,7 @@ type.
             raise Recoverable("no such repo as %s" % line)
         # OK, we've got the two repos and the graft point.  Do it.
         self.chosen().graft(graft_repo, graft_point)
+        self.remove_by_name(graft_repo.name)
     def help_graft(self):
         print("""
 For when merge doesn't give you enough control.  The selection set
