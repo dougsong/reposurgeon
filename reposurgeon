@@ -2588,7 +2588,7 @@ for exploring the selection-set language.
                    count(Blob), count(Commit), count(Tag), count(Reset),
                    iso8601_from_unixtime(this.readtime)))
             if this.sourcedir:
-                print("  Loaded from", this.sourcedir)
+                print("  Loaded from " + this.sourcedir)
             if this.vcs:
                 print(repr(this.vcs))
         else:
