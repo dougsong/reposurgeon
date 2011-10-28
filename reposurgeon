@@ -1527,7 +1527,7 @@ class Repository:
             self.events.insert(len(front), other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
-        # Reparent events and move files
+        # Transplant in fileops, blobs, and other impedimenta
         for event in other:
             if hasattr(event, "moveto"):
                 event.moveto(self)
@@ -1958,14 +1958,16 @@ class RepositoryList:
         self.repolist.append(union)
         self.choose(union)
     def graft(self, graft_repo, graft_point):
+        "Graft a repo on to this one at a specified point."
         where = self.events[graft_point]
         if not isinstance(where, Commit):
             raise Recoverable("%s in %s is not a commit." % \
                               (where.mark, self.name))
-        # Errors aren't recoverable after this call
+        # Errors aren't recoverable after this
         graft_repo.uniquify(graft_repo.name)
         graft.repo[0].parent_marks.append(where.mark)
-        # More to be done here
+        self.chosen().absorb(graft_repo)
+        self.remove_by_name(line)
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
