@@ -782,15 +782,18 @@ all events.</para>
 </term>
 <listitem>
 <para>Interpret final comment lines of commits beginning with
-'git-svn-id:' as git-svn magic cookies and remove them.  The
+'git-svn-id:' as git-svn magic cookies and remove them.  If present, the
 Subversion commit ID is extracted and made the value of a per-commit
 property named 'svn', which becomes visible and editable. Takes a
 selection set of events to modify, defaulting to all events.</para>
 
 <para>The command modifier "strip" suppresses saving the 'svn' 
-property.  Stock git (at least as of version 1.7.3.2) will choke on
-the property extension commands generated if you try to export with
-these properties attached.</para>
+property. This option was required for older versions of this tool that
+did not automatically suppress writing properties to importrs that
+couldn't handle them: it has been retained for backwards compstibility.</para>
+
+<para>Additionally, this command produces a listing of events that 
+contain possible Subversion commit references in text or comments.</para> 
 </listitem>
 </varlistentry>
 </variablelist>
@@ -972,6 +975,10 @@ information to full email addresses.  Trying to handle that entirely
 inside this tool would be excessively messy, so we don't. Instead we
 let the user transform repo-command streams and cope with the
 export/import separately.</para>
+
+<para>Limitation: Stock git (at least as of version 1.7.3.2) will choke on
+property extension commands. Accordingly, <command>reposurgeon</command> 
+omits them when rebuilding a repo with git type.</para>
 
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
