@@ -137,6 +137,13 @@ about</p>
 <dd><p>Inform git-svn that your project has a standard
 trunk/tags/branches layout. git-svn will use this to create
 corresponding git tags and branches.</p>
+
+<dt>&#45;&#45;no-metadata</dt>
+<dd><p>Normally each comment in the conversion will contain a metadata
+line pointing back to the Subversion commit it was generated
+from. This flag suppresses that.  Because recent versions of
+reposurgeon can parse this metadata and then strip it out, you 
+probably do not want to use this option.</p>
 </dd>
 
 <p>Because git-svn is designed for live gatewaying, what it does with
@@ -178,7 +185,7 @@ forms of cruft:</p>
 
 <dl>
 <dt><em style="bold">Metadata inserted by <code>git-svn</code>.</em></dt>
-<dd><code>git-svn</code> inserts lines at the end of eacgh commit
+<dd><code>git-svn</code> inserts lines at the end of each commit
 comment that refer back to the Subversion commit it is derived.  This
 is necessary for live-gatewaying, and useful during one-shot
 conversions, but you will probably not want it in the final repo.</dd>
@@ -221,6 +228,11 @@ for dealing with unusual situations</p>
 Specifically, it makes all junk commits generated to carry tags into
 actual git tag objects. Then it removes all those that are either
 empty or have fileop lists consisting entirely of deletes.</p>
+
+<p>The 'gitsvnlift' command parses git-svn metadata lines and makes
+the Subversion revision number from them a property of the commit.
+You will probably want to do <code>gitsvnlift strip</code> at
+some point in the cleanup.</p>
 
 <p>The 'edit' command is useful for changing commit references in
 comments to a VCS-independent form. This is where you may be glad for
