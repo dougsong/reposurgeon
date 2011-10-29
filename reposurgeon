@@ -706,7 +706,7 @@ class Commit:
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print("%d: %-20s" % (i, str(op)))
-    def __str__(self):
+    def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
         if self.mark:
@@ -723,7 +723,7 @@ class Commit:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % ancestor
-        if not self.repo or not self.repo.vcs or self.repo.vcs.properties:
+        if write_properties:
             for (name, value) in self.properties:
                 if value in (True, False):
                     if value:
@@ -735,6 +735,8 @@ class Commit:
         if "nl-after-commit" in self.repo.export_style():
             st += "\n"
         return st
+    def __str__(self):
+        return self.dump(write_properties=not self.repo or not self.repo.vcs or self.repo.vcs.properties)
 
 class Passthrough:
     "Represents a passthrough line."
@@ -2842,10 +2844,11 @@ with command-line arguments).
                 complain("open of %s for write failed.\n" % line)
     def help_write(self):
         print("""
-Dump a fast-import stream representing selected events to standard output
-(if second argument is empty or '-') or a file.  Fails if the argument exists
-and is a directory or anything other than a plain file. The default selection
-is all events.
+Dump a fast-import stream representing selected events to standard
+output (if second argument is empty or '-') or a file. Property
+extensions will be omitted if the importer for the selected repo cannot
+digest them. Fails if the argument exists and is a directory or
+anything other than a plain file. The default selection is all events.
 """)
     def do_inspect(self, line):
         "Dump raw events."
@@ -2855,12 +2858,13 @@ is all events.
         self.set_selection_set(line, list(range(len(self.chosen()))))
         for ei in self.selection:
             sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n") 
-            sys.stdout.write(str(self.chosen()[ei]))
+            sys.stdout.write(self.chosen()[ei].dump(write_properties=True))
     def help_inspect(self):
         print("""
 Dump a fast-import stream representing selected events to standard output.
-Just like a write, except the progress meter is disabled and there is
-a header identifying the event before each commit.
+Just like a write, except (1) the progress meter is disabled, (2) properties
+are always dumped, and (3) there is an identifying header before each event
+dump.
 """)
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
