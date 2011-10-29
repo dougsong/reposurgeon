@@ -2,6 +2,7 @@
 
 1.5:
      Suppress writing out properties if the importer won't handle them.
+     gitsvnlift lists of events with possible SVN refs in comments.
 
 1.4: 2011-10-28
      Code is pylint clean.

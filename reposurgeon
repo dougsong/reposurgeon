@@ -3442,6 +3442,26 @@ all events.
                     fields = after.split()
                     if "strip" not in line:
                         event.properties.append(("svn", fields[0]))
+        idhits = []
+        for ei in self.selection:
+            event = self.chosen().events[ei]
+            if hasattr(event, "comment"):
+                text = event.comment
+            elif hasattr(event, "text"):
+                text = event.text
+            else:
+                continue
+            for pattern in (r"\Wr[0-9]\W", r"SVN.*\W[0-9]\W", "Subversion"):
+                if re.search(pattern, text):
+                    idhits.append(ei)
+        if idhits:
+            announce("Possible Subversion commit references follow:")
+            for ei in idhits:
+                event = self.chosen().events[ei]
+                if hasattr(event, "lister"):
+                    summary = event.lister(ei, screenwidth())
+                    if summary:
+                        sys.stdout.write(summary + "\n")
     def help_gitsvnlift(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
@@ -3449,7 +3469,8 @@ as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
-saving the 'svn' property.
+saving the 'svn' property. Produces a listing of events that may have
+Subversion commit references in them.
 """)
 
 if __name__ == '__main__':
