@@ -291,6 +291,9 @@ argument is empty or '-' or a named file otherwise.  Fails if the
 argument exists and is a directory or anything other than a plain
 file.</para>
 
+<para>Property extensions will be be omitted from the output if the
+importer for the selected repo cannot digest them.</para>
+
 <para>Note: to examine small groups of commits without the progress
 meter, use <command>inspect</command>.</para>
 </listitem>
@@ -425,7 +428,9 @@ named repositories, or with no argument the currently chosen repository.
 </term>
 <listitem><para>
 Dump a fast-import stream representing selected events to standard output.
-Just like a write, except the progress meter is disabled.
+Just like a write, except (1) the progress meter is disabled, (2) properties
+are always dumped, and (3) there is an identifying header before each event
+dump.
 </para></listitem>
 </varlistentry>
 </variablelist>
