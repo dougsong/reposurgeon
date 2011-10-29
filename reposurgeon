@@ -110,7 +110,7 @@ class VCS:
 # we need to be prepared to cope with that.
 #
 # %(tempfile)s in a command gets substituted with the name of a
-# tempile that the calling code will know to read or write from as
+726# tempile that the calling code will know to read or write from as
 # appropriate after the command is done.  If your exporter can simply
 # dump to stdout, or your importer read from stdin, leave out the
 # %(tempfile)s; reposurgeon will popen(3) the command, and it will
@@ -723,12 +723,13 @@ class Commit:
             st += "from %s\n" % self.parent_marks[0]
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % ancestor
-        for (name, value) in self.properties:
-            if value in (True, False):
-                if value:
-                    st += "property %s\n" % name
-            else:
-                st += "property %s %d %s\n" % (name, len(value), value)
+        if not self.repo or not self.repo.vcs or self.repo.vcs.properties:
+            for (name, value) in self.properties:
+                if value in (True, False):
+                    if value:
+                        st += "property %s\n" % name
+                else:
+                    st += "property %s %d %s\n" % (name, len(value), value)
         for op in self.fileops:
             st += str(op) + "\n"
         if "nl-after-commit" in self.repo.export_style():
