@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+1.5:
+     Suppress writing out properties if the importer won't handle them.
+
 1.4: 2011-10-28
      Code is pylint clean.
      Fixed a bug in the cut coloring algorithm.

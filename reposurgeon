@@ -65,6 +65,7 @@ class VCS:
                  subdirectory,
                  exporter,
                  styleflags,
+                 properties,
                  initializer,
                  importer,
                  checkout,
@@ -73,6 +74,7 @@ class VCS:
         self.subdirectory = subdirectory
         self.exporter = exporter
         self.styleflags = styleflags
+        self.properties = properties
         self.initializer = initializer
         self.importer = importer
         self.checkout = checkout
@@ -81,6 +83,7 @@ class VCS:
         return "  Subdirectory: " + self.subdirectory + "\n" \
              + "      Exporter: " + self.exporter + "\n" \
              + "  Export-Style: " + repr(self.styleflags) + "\n" \
+             + "   Properties:  " + repr(self.styleflags) + "\n" \
              + "   Initializer: " + str(self.initializer) + "\n" \
              + "      Importer: " + self.importer + "\n" \
              + "      Checkout: " + str(self.checkout) + "\n" \
@@ -96,6 +99,7 @@ class VCS:
 #     "nl-after-comment" = inserts an extra NL after each comment
 #     "export-progress" = exporter generates its own progress messages,
 #                         no need for baton prompt.
+# * Flag specifying whether it handles per-commit properties on import
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
@@ -126,6 +130,7 @@ vcstypes = [
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags=("nl-after-commit",),
+        properties=False,
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout",
@@ -135,6 +140,7 @@ vcstypes = [
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
         styleflags=("export-progress", "nl-after-comment",),
+        properties=True,
         initializer=None,
         importer="bzr fast-import -",
         checkout="bzr checkout",
@@ -145,6 +151,7 @@ vcstypes = [
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
         styleflags=("nl-after-comment", "nl-after-commit", "export-progress"),
+        properties=False,
         initializer="hg init",
         importer="hg fastimport %(tempfile)s",
         checkout="hg checkout",
