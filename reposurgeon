@@ -3445,27 +3445,7 @@ all events.
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
                     if "strip" not in line:
-                        event.properties.append(("svn", fields[0]))
-        idhits = []
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if hasattr(event, "comment"):
-                text = event.comment
-            elif hasattr(event, "text"):
-                text = event.text
-            else:
-                continue
-            for pattern in (r"\Wr[0-9]\W", r"(SVN|Subversion|rev).*\W[0-9]\W"):
-                if re.search(pattern, text):
-                    idhits.append(ei)
-        if idhits:
-            announce("Possible Subversion commit references follow:")
-            for ei in idhits:
-                event = self.chosen().events[ei]
-                if hasattr(event, "lister"):
-                    summary = event.lister(ei, screenwidth())
-                    if summary:
-                        sys.stdout.write(summary + "\n")
+                        event.properties.append(("svn", fields[0])) 
     def help_gitsvnlift(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
@@ -3475,6 +3455,46 @@ which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property. Produces a listing of events that may have
 Subversion commit references in them.
+""")
+    def do_revlist(self, line):
+        "Look for things that might be CVS or Subversion revision references."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        self.set_selection_set(line, list(range(len(self.chosen()))))        
+        idhits = []
+        for ei in self.selection:
+            event = self.chosen().events[ei]
+            if hasattr(event, "comment"):
+                text = event.comment
+            elif hasattr(event, "text"):
+                text = event.text
+            else:
+                continue
+            refstyles = (
+                # Subversion references
+                r"\Wr([0-9]+)\W",
+                r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
+                # CVS references
+                r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
+                # Possible bare CVS references
+                r"[0-9]+\.[0-9]+\.[0-9]+",
+                )
+            for pattern in refstyles:
+                if re.search(pattern, text):
+                    if ei not in idhits:
+                        idhits.append(ei)
+        if idhits:
+            for ei in idhits:
+                event = self.chosen().events[ei]
+                if hasattr(event, "lister"):
+                    summary = event.lister(ei, screenwidth())
+                    if summary:
+                        sys.stdout.write(summary + "\n")
+    def help_revlist(self):
+        print("""
+Produces a listing of events that may have Subversion or CVS commit
+references in them.
 """)
 
 if __name__ == '__main__':
