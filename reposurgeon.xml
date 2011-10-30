@@ -433,6 +433,14 @@ are always dumped, and (3) there is an identifying header before each event
 dump.
 </para></listitem>
 </varlistentry>
+<varlistentry>
+<term><command>revlist</command>
+</term>
+<listitem>
+<para>Seach commit comments for strings that might be CVS- or Subversion-style
+revision identifiers.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
@@ -794,11 +802,8 @@ selection set of events to modify, defaulting to all events.</para>
 
 <para>The command modifier "strip" suppresses saving the 'svn' 
 property. This option was required for older versions of this tool that
-did not automatically suppress writing properties to importrs that
+did not automatically suppress writing properties to importers that
 couldn't handle them: it has been retained for backwards compstibility.</para>
-
-<para>Additionally, this command produces a listing of events that 
-contain possible Subversion commit references in text or comments.</para> 
 </listitem>
 </varlistentry>
 </variablelist>

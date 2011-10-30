@@ -2,7 +2,7 @@
 
 1.5:
      Suppress writing out properties if the importer won't handle them.
-     gitsvnlift lists events with possible SVN refs in comments.
+     revlist lists events with possible SVN or CVS rev IDs in comments.
 
 1.4: 2011-10-28
      Code is pylint clean.
