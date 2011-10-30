@@ -930,10 +930,10 @@ and executes it as a command.</para></listitem>
 <para>The combination of a committer email address with a ISO8601
 timestamp is a good way to refer to a commit without being
 VCS-specific.  Thus, instead of "commit 304a53c2",
-"2011-10-25T15:11:09Z/fred@foonly.com". It is best that you
+"2011-10-25T15:11:09Z!fred@foonly.com". It is best that you
 <emphasis>not vary from this format</emphasis>, even in trivial ways
-like omitting the Z or changing the T. Making these cookies uniform
-and machine-parseable will have good consequences for future
+like omitting the 'Z' or changing the 'T' or '!'. Making these cookies
+uniform and machine-parseable will have good consequences for future
 repository-browsing tools.</para>
 
 <para>Sometimes, in converting a repository, you may need to insert an
