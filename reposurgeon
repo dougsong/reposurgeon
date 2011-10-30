@@ -3455,7 +3455,7 @@ all events.
                 text = event.text
             else:
                 continue
-            for pattern in (r"\Wr[0-9]\W", r"SVN.*\W[0-9]\W", "Subversion"):
+            for pattern in (r"\Wr[0-9]\W", r"(SVN|Subversion|rev).*\W[0-9]\W"):
                 if re.search(pattern, text):
                     idhits.append(ei)
         if idhits:
