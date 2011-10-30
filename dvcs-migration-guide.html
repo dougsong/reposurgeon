@@ -259,6 +259,31 @@ a repo from a dump file; this produces large repositories.  Running
 <code>gt repack</code> and <code>git gc
 &#45;&#45;aggressive</code> can slim them down quite a lot.</p>
 
+<h2 id="conversion-comments">Conversion comments</h2>
+
+<p>Sometimes, in converting a repository, you may need to insert an
+explanatory comment - for example, if metadata has been garbled or
+missing and you need to point to that fact.</p>
+
+<p>It's helpful for repository-browsing tools if there is a uniform
+syntax for this that is highly unlikely to show up in repository
+comments.  I recommend enclosing translation notes in [[ ]].  This 
+has the advantage of being visually similar to the [ ] traditionally
+used for editorial comments in text.</p>
+
+<p> It is good practice to include, in the root commit of the
+repository, a note dating and attributing the conversion work and
+explaining these conventions.  Example:</p>
+
+<blockquote>
+[[This repository was converted from Subversion to git on 2011-10-24
+by Eric S. Raymond <esr@thyrsus.com>.  Here and elsewhere, conversion
+notes are enclosed in double square brackets. Junk commits generated
+by cvs2svn have been removed, commit references have been mapped into
+a uniform VCS-independent syntax, and some comments edited into
+summary-plus-continuation form.]]
+<blockquote>
+
 <h2 id="recovery">Recovering from error</h2>
 
 <p>Occasionally you'll discover problems with a conversion after you've
@@ -347,10 +372,13 @@ worth of VCS-specific magic cookies in the history.</p>
 
 <h2 id="references">Commit references</h2>
 
-<p>The combination of a committer name/address (or unambiguous part of
-one) with a timestamp is a good way to refer to a commit without being 
-VCS-specific.  Thus, instead of "commit 304a53c2", "Fred Foonly's
-commit at 2011-10-25T15:11:09Z"</p>
+<p>The combination of a committer email address (or unambiguous part
+of one) with a ISO8601 timestamp is a good way to refer to a commit
+without being VCS-specific.  Thus, instead of "commit 304a53c2",
+"2011-10-25T15:11:09Z/fred@foonly.com". I recommend that you <em>not
+vary from this format</em>, even in trivial ways like omitting the Z
+or changing the T. Making thes cookies uniform and machine-parseable
+will have good consequences for future repository -browsing tools.</p>
 
 <p>Sometimes it's enough to quote the summary line of a commit. So,
 instead of "Back out most of commit 304a53c2", you might write 
