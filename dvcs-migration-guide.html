@@ -372,13 +372,13 @@ worth of VCS-specific magic cookies in the history.</p>
 
 <h2 id="references">Commit references</h2>
 
-<p>The combination of a committer email address (or unambiguous part
-of one) with a ISO8601 timestamp is a good way to refer to a commit
-without being VCS-specific.  Thus, instead of "commit 304a53c2",
+<p>The combination of a committer email address with a ISO8601
+timestamp is a good way to refer to a commit without being
+VCS-specific.  Thus, instead of "commit 304a53c2",
 "2011-10-25T15:11:09Z/fred@foonly.com". I recommend that you <em>not
 vary from this format</em>, even in trivial ways like omitting the Z
 or changing the T. Making these cookies uniform and machine-parseable
-will have good consequences for future repository -browsing tools.</p>
+will have good consequences for future repository-browsing tools.</p>
 
 <p>Sometimes it's enough to quote the summary line of a commit. So,
 instead of "Back out most of commit 304a53c2", you might write 
