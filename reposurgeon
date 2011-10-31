@@ -780,6 +780,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
+        self.cvs_map = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1082,16 +1083,18 @@ class Repository:
             # pairs to imputed dates.  Then, for each element of the
             # map, all but the earliest blob containing it has it as a
             # fossil which should be removed.
-            cvs_map = {}
             for event in self.events:
                 if isinstance(event, Blob) and event.cvs:
-                    if event.cvs not in cvs_map:
-                        cvs_map[event.cvs] = []
-                    cvs_map[event.cvs].append(event)
-            for (cvspair, blobs) in cvs_map.items():
+                    if event.cvs not in self.cvs_map:
+                        self.cvs_map[event.cvs] = []
+                    self.cvs_map[event.cvs].append(event)
+            for (cvsdata, blobs) in self.cvs_map.items():
                 blobs.sort(key=lambda b: b.timestamp)
                 for blob in blobs[1:]:
                     blob.cvs = None
+            # We finish up with a map from CVS data to unique blobs
+            for cvsdata in self.cvs_map:
+                self.cvs_map[cvsdata] = self.cvs_map[cvsdata][0]
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
