@@ -780,7 +780,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.cvs_map = {}
+        self.cvsmap = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1085,13 +1085,32 @@ class Repository:
             # fossil which should be removed.
             for event in self.events:
                 if isinstance(event, Blob) and event.cvs:
-                    if event.cvs not in self.cvs_map:
-                        self.cvs_map[event.cvs] = []
-                    self.cvs_map[event.cvs].append(event)
-            for (cvsdata, blobs) in self.cvs_map.items():
+                    if event.cvs not in self.cvsmap:
+                        self.cvsmap[event.cvs] = []
+                    self.cvsmap[event.cvs].append(event)
+            for (cvsdata, blobs) in self.cvsmap.items():
                 blobs.sort(key=lambda b: b.timestamp)
                 for blob in blobs[1:]:
                     blob.cvs = None
+            # Prepare a map from pathname/CVS-revision pairs to lists of
+            # commits that reference the blob containing that CVS revision.
+            self.cvsmap = {}
+            for cvsdata in self.cvsmap:
+                blob = self.cvsmap[cvsdata] = self.cvsmap[cvsdata][0]
+                # Sanity-check that the CVS header name matches the
+                # path in the file reference for which the blob is data.
+                for commit in blob.backreferences:
+                    for fileop in commit.fileops:
+                        if fileop.op == 'M' and fileop.ref == blob.mark:
+                            if not os.path.basename(fileop.path).endswith(cvsdata[0]):
+                                # Usually the harmless result of a
+                                # file move or copy that cvs2svn or
+                                # git-svn didn't pick up on.
+                                complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
+                                         % (fileop.path, commit.mark, cvsdata[0], blob.mark))
+                                if not (fileop.path,blob.cvs[1]) in self.cvsmap:
+                                    self.cvsmap[(fileop.path, blob.cvs[1])] = []
+                                self.cvsmap[(fileop.path,blob.cvs[1])].append(commit.mark)         
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1508,6 +1527,8 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
+        for (key, value) in self.cvsmap.items():
+             self.cvsmap[key] = [":" + repr(1+marklist.index(x)) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -3549,7 +3570,7 @@ references in them.
                         blob = self.chosen().find(fileop.ref)
                         assert isinstance(self.repo[blob], Blob)
                         if self.repo[blob].cvs:
-                            commit_cvs.append(self.repo[blob].cvs)
+                            commit_cvs.append((fileop.path, self.repo[blob].cvs))
                 if commit_cvs:
                     print "%d\t%s" % (ei+1, commit_cvs)
     def help_revmap(self):
