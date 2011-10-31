@@ -351,7 +351,7 @@ class Blob:
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.timestamp = None
-        self.refcount = 0
+        self.references = []
         self.colors = []
         self.cvs = None
     def when(self):
@@ -868,7 +868,7 @@ class Repository:
                         for obj in self.events:
                             if isinstance(obj, Blob) and obj.mark == fileop.ref:
                                 obj.path = fileop.path
-                                obj.refcount += 1
+                                obj.references.append(commit)
                                 # This is a blatant hack.
                                 # We need to impute a timestamp
                                 # to each blob for sorting after
@@ -1095,7 +1095,7 @@ class Repository:
             # We now have a map from CVS data to unique blobs.
             for cvsdata in self.cvs_map:
                 blob = self.cvs_map[cvsdata] = self.cvs_map[cvsdata][0]
-                if blob.refcount == 1:
+                if len(blob.references) == 1:
                     if not blob.path.endswith(cvsdata[0]):
                         complain("mismatched CVS header path ('%s' vs '%s') in %s"
                                  % (blob.path, cvsdata[0], blob.mark))
@@ -1159,11 +1159,16 @@ class Repository:
     #
     # Delete machinery begins here
     #
-    def __adjust_fileop(self, fileop, mod):
+    def __acquire_fileop(self, fileop, commit):
         if fileop.op == "M":
             bi = self.find(fileop.ref)
             assert(isinstance(self.events[bi], Blob))
-            self.events[bi].refcount += mod
+            self.events[bi].references.append(commit)
+    def __release_fileop(self, fileop, commit):
+        if fileop.op == "M":
+            bi = self.find(fileop.ref)
+            assert(isinstance(self.events[bi], Blob))
+            self.events[bi].references.remove(commit)
     def __ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestry chain."
         count = 0
@@ -1382,10 +1387,10 @@ class Repository:
                                 identical = event.children()[0].branch == event.branch        
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
-                # Decrement refcount on its blobs.
-                # They'll be re-incremented if the fileops move
+                # Cut its blobs loose.
+                # They'll be re-attached if the fileops move
                 for fileop in event.fileops:
-                    self.__adjust_fileop(fileop, -1)
+                    self.__release_fileop(fileop, event)
                 # Reparent each child
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
@@ -1396,7 +1401,7 @@ class Repository:
                         # needing resolution.
                         for fileop in event.fileops:
                             fileop.commit = child
-                            self.__adjust_fileop(fileop, 1)
+                            self.__acquire_fileop(fileop, child)
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
                 # We might be trying to hand the event's fileops to parents.
@@ -1407,7 +1412,7 @@ class Repository:
                         # resolution.
                         for fileop in event.fileops:
                             fileop.commit = parent
-                            self.__adjust_fileop(fileop, 1)
+                            self.__acquire_fileop(fileop, parent)
                             # On a pushback (but not a push forward)
                             # we might have moved the fileop so it's
                             # now referred to before its actual
@@ -1464,7 +1469,7 @@ class Repository:
                         if "coalesce" in policy:
                             # Remove all but the last M.
                             while len(oplist) > 1:
-                                self.__adjust_fileop(event.fileops[oplist[0]], -1)
+                                self.__release_fileop(event.fileops[oplist[0]], event)
                                 event.fileops.pop(oplist.pop(0))
                         if verbose >= DEBUG_DELETE:
                             print("Commit %d, after applying policy:" % (ei +1,))
@@ -1949,7 +1954,6 @@ class RepositoryList:
                     early.events.append(event.clone(early))
                 if "late" in event.colors:
                     late.events.append(event.clone(late))
-                event.refcount -= 1
             else:
                 if event.color == "early":
                     if hasattr(event, "moveto"):
@@ -1967,6 +1971,13 @@ class RepositoryList:
                 event.color = None
             if hasattr(event, "colors"):
                 event.colors = []
+        # Clean up references
+        for event in early.events:
+            if isinstance(event, Blob):
+                event.references = [x for x in event.references if x.color == 'early']
+        for event in late.events:
+            if isinstance(event, Blob):
+                event.references = [x for x in event.references if x.color == 'late']
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
         # Add the split results to the repo list. 
@@ -2089,7 +2100,7 @@ class RepositoryList:
                     blobs.reverse()
                     for blob in blobs:
                         blob.deletehook = blob.clone(expunged)
-                        blob.refcount -= 1
+                        blob.references.remove(event)
                         newevent = event.clone(expunged)
                         newevent.fileops = keepers
                         event.deletehook = newevent
@@ -2123,7 +2134,7 @@ class RepositoryList:
                 event.parent_marks = [e for e in event.parent_marks if e in keeper_marks]
         self.repolist.append(expunged)
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.refcount)) for e in self.repo.events]
+        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.references)) for e in self.repo.events]
         deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
