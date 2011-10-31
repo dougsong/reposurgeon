@@ -3546,8 +3546,7 @@ as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
-saving the 'svn' property. Produces a listing of events that may have
-Subversion commit references in them.
+saving the 'svn' property.
 """)
     def do_revlist(self, line):
         "Look for things that might be CVS or Subversion revision references."
