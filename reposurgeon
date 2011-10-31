@@ -785,6 +785,7 @@ class Repository:
         self.case_coverage = set([])
         self.basedir = os.getcwd()
         self.cookiemap = {}
+        self.svnrevs = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1511,6 +1512,7 @@ class Repository:
     def renumber(self):
         "Renumber the marks in a repo."
         marklist = []
+        def remark(m): return ":" + repr(1 + marklist.index(m))
         for event in self.events:
             if hasattr(event, "mark"):
                 if event.mark is None:
@@ -1523,7 +1525,7 @@ class Repository:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
                     old = getattr(event, fld)
-                    new = ":" + repr(1 + marklist.index(old))
+                    new = remark(old)
                     if verbose >= DEBUG_MERGE:
                         announce("renumbering %s -> %s in %s.%s" % (old, new,
                                                                     event.__class__.__name__,
@@ -1531,18 +1533,20 @@ class Repository:
                     setattr(event, fld, new)
             if isinstance(event, Commit):
                 for (i, old) in enumerate(event.parent_marks):
-                    new = ':' + repr(1 + marklist.index(old))
+                    new = remark(old)
                     if verbose >= DEBUG_MERGE:
                         announce("renumbering %s -> %s in parents" % (old, new))
                     event.parent_marks[i] = new
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = ":" + repr(1 + marklist.index(fileop.ref))
+                        new = remark(fileop.ref)
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
         for (key, value) in self.cookiemap.items():
-             self.cookiemap[key] = [":" + repr(1+marklist.index(x)) for x in value]
+             self.cookiemap[key] = [remark(x) for x in value]
+        for (key, value) in self.svnrevs.items():
+             self.svnrevs[key] = [remark(x) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -3537,6 +3541,7 @@ all events.
                     event.comment = event.comment[:m.start()]
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
+                    self.chosen().svnrevs[fields[0]] = event.mark
                     if "strip" not in line:
                         event.properties.append(("svn", fields[0])) 
     def help_gitsvnlift(self):
