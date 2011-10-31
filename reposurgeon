@@ -357,7 +357,7 @@ class Blob:
         self.timestamp = None
         self.backreferences = []
         self.colors = []
-        self.cvs = None
+        self.cookie = None
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
@@ -784,7 +784,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.cvsmap = {}
+        self.cookiemap = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -913,14 +913,17 @@ class Repository:
                             blob.mark = line[5:].strip()
                             wfp = open(blob.blobfile(), "w")
                             blobcontent = read_data()
-                            # Parse CVS $Id: headers
-                            for m in re.finditer(r"\$Id*:[^$]*\$",
+                            # Parse CVS and Subversion $-headers
+                            # There'd better not be more than one of these.
+                            for m in re.finditer(r"\$Id *:[^$]*\$",
                                                  blobcontent):
                                 fields = m.group(0).split()
                                 # Save file basename and CVS version
-                                # There'd better not be more than one of these.
                                 if fields[1].endswith(",v"):
-                                    blob.cvs = (fields[1][:-2], fields[2])
+                                    blob.cookie = (fields[1][:-2], fields[2])
+                            for m in re.finditer(r"\$Revision *: *([^$]*)\$",
+                                                 blobcontent):
+                                blob.cookie = (None, m.group(0).strip())
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -1095,17 +1098,17 @@ class Repository:
             # fossil which should be removed.
             stagemap = {}
             for event in self.events:
-                if isinstance(event, Blob) and event.cvs:
-                    if event.cvs not in stagemap:
-                        stagemap[event.cvs] = []
-                    stagemap[event.cvs].append(event)
+                if isinstance(event, Blob) and event.cookie:
+                    if event.cookie not in stagemap:
+                        stagemap[event.cookie] = []
+                    stagemap[event.cookie].append(event)
             for (cvsdata, blobs) in stagemap.items():
                 blobs.sort(key=lambda b: b.timestamp)
                 for blob in blobs[1:]:
-                    blob.cvs = None
+                    blob.cookie = None
             # Prepare a map from pathname/CVS-revision pairs to lists of
             # commits that reference the blob containing that CVS revision.
-            self.cvsmap = {}
+            self.cookiemap = {}
             for cvsdata in stagemap:
                 blob = stagemap[cvsdata] = stagemap[cvsdata][0]
                 # Sanity-check that the CVS header name matches the
@@ -1113,15 +1116,15 @@ class Repository:
                 for commit in blob.backreferences:
                     for fileop in commit.fileops:
                         if fileop.op == 'M' and fileop.ref == blob.mark:
-                            if not os.path.basename(fileop.path).endswith(cvsdata[0]):
+                            if cvsdata[0] and not os.path.basename(fileop.path).endswith(cvsdata[0]):
                                 # Usually the harmless result of a
                                 # file move or copy that cvs2svn or
                                 # git-svn didn't pick up on.
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                            if not (fileop.path,blob.cvs[1]) in self.cvsmap:
-                                    self.cvsmap[(fileop.path, blob.cvs[1])] = []
-                            self.cvsmap[(fileop.path,blob.cvs[1])].append(commit.mark)
+                            if not (fileop.path,blob.cookie[1]) in self.cookiemap:
+                                    self.cookiemap[(fileop.path, blob.cookie[1])] = []
+                            self.cookiemap[(fileop.path,blob.cookie[1])].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1538,8 +1541,8 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
-        for (key, value) in self.cvsmap.items():
-             self.cvsmap[key] = [":" + repr(1+marklist.index(x)) for x in value]
+        for (key, value) in self.cookiemap.items():
+             self.cookiemap[key] = [":" + repr(1+marklist.index(x)) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -3403,7 +3406,7 @@ type.
                     m = cvs_cookie.search(event.comment)
                     if not m:
                         break
-                    possible = self.chosen().cvsmap.get(tuple(m.groups()))
+                    possible = self.chosen().cookiemap.get(tuple(m.groups()))
                     if possible is None:
                         complain("no commit matches " + m.group(0))
                         break
@@ -3600,8 +3603,8 @@ references in them.
                     if fileop.op == "M":
                         blob = self.chosen().find(fileop.ref)
                         assert isinstance(self.repo[blob], Blob)
-                        if self.repo[blob].cvs:
-                            commit_cvs.append((fileop.path, self.repo[blob].cvs))
+                        if self.repo[blob].cookie:
+                            commit_cvs.append((fileop.path, self.repo[blob].cookie))
                 if commit_cvs:
                     print "%d\t%s" % (ei+1, commit_cvs)
     def help_revmap(self):
