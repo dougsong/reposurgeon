@@ -1076,6 +1076,22 @@ class Repository:
                 elif isinstance(sevent, Blob):
                     if sevent.path is None:
                         complain("blob %s has no references" % sevent.mark)
+            # The goal here is to throw away CVS header information still
+            # fossilized into $Id$ headers after Subversion
+            # conversion.  So, build a map from (filename, cvs-version)
+            # pairs to imputed dates.  Then, for each element of the
+            # map, all but the earliest blob containing it has it as a
+            # fossil which should be removed.
+            cvs_map = {}
+            for event in self.events:
+                if isinstance(event, Blob) and event.cvs:
+                    if event.cvs not in cvs_map:
+                        cvs_map[event.cvs] = []
+                    cvs_map[event.cvs].append(event)
+            for (cvspair, blobs) in cvs_map.items():
+                blobs.sort(key=lambda b: b.timestamp)
+                for blob in blobs[1:]:
+                    blob.cvs = None
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1566,6 +1582,7 @@ class Repository:
         graft_repo.commits()[0].parent_marks.append(where.mark)
         self.absorb(graft_repo)
         self.renumber()
+
     # Container emulation methods
     def __len__(self):
         return len(self.events)
@@ -3511,7 +3528,7 @@ references in them.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        self.set_selection_set(line, list(range(len(self.chosen()))))        
+        self.set_selection_set(line, list(range(len(self.chosen()))))
         for ei in self.selection:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):
