@@ -1092,9 +1092,15 @@ class Repository:
                 blobs.sort(key=lambda b: b.timestamp)
                 for blob in blobs[1:]:
                     blob.cvs = None
-            # We finish up with a map from CVS data to unique blobs
+            # We now have a map from CVS data to unique blobs.
             for cvsdata in self.cvs_map:
-                self.cvs_map[cvsdata] = self.cvs_map[cvsdata][0]
+                blob = self.cvs_map[cvsdata] = self.cvs_map[cvsdata][0]
+                if blob.refcount == 1:
+                    if not blob.path.endswith(cvsdata[0]):
+                        complain("mismatched CVS header path ('%s' vs '%s') in %s"
+                                 % (blob.path, cvsdata[0], blob.mark))
+                    else:
+                        blob.cvs = blob.cvs[1]
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
