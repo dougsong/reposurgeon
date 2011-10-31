@@ -820,7 +820,7 @@ selection set of events to modify, defaulting to all events.</para>
 <para>The command modifier "strip" suppresses saving the 'svn' 
 property. This option was required for older versions of this tool that
 did not automatically suppress writing properties to importers that
-couldn't handle them: it has been retained for backwards compstibility.</para>
+couldn't handle them: it has been retained for backwards compatibility.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -948,6 +948,12 @@ and executes it as a command.</para></listitem>
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>
+
+<para>After converting a CVS or SVN repository, check for and remove
+$-cookies in the head revision(s) of the files. The full Subversion
+set is $Date:, $Revision:, $Author:, $HeadURL and $Id:. CVS uses
+$Author:, $Date:, $Header:, $Id:, $Log:, $Revision:, also (rarely)
+$Locker:, $Name:, $RCSfile:, $Source:, and $State:.</para>
 
 <para>The combination of a committer email address with a ISO8601
 timestamp is a good way to refer to a commit without being
