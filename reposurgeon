@@ -296,6 +296,8 @@ class Date:
     def iso8601(self):
         "Format as an ISO8601 timestamp."
         return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.timestamp)) + self.timezone
+    def rfc3339(self):
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.timestamp))
     def rfc822(self):
         "Format as an RFC822 timestamp."
         return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(self.timestamp)) + " " + self.timezone
@@ -337,7 +339,7 @@ class Attribution:
                 self.email = mail
                 break
     def action_stamp(self):
-        return self.date.iso8601() + "!" + self.email
+        return self.date.rfc3339() + "!" + self.email
     def __eq__(self, other):
         "Compare attributions after canonicalization."
         return (self.name == other.name
@@ -816,10 +818,16 @@ class Repository:
                 lst.append(commit.branch)
         return lst
     def find(self, mark):
-        "Find an object by mark"
+        "Find an object index by mark"
         for (ind, event) in enumerate(self.events):
             if hasattr(event, "mark") and mark == event.mark:
                 return ind
+        return None
+    def objfind(self, mark):
+        "Find an object by mark"
+        for (ind, event) in enumerate(self.events):
+            if hasattr(event, "mark") and mark == event.mark:
+                return self.events[ind]
         return None
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
@@ -1085,20 +1093,21 @@ class Repository:
             # pairs to imputed dates.  Then, for each element of the
             # map, all but the earliest blob containing it has it as a
             # fossil which should be removed.
+            stagemap = {}
             for event in self.events:
                 if isinstance(event, Blob) and event.cvs:
-                    if event.cvs not in self.cvsmap:
-                        self.cvsmap[event.cvs] = []
-                    self.cvsmap[event.cvs].append(event)
-            for (cvsdata, blobs) in self.cvsmap.items():
+                    if event.cvs not in stagemap:
+                        stagemap[event.cvs] = []
+                    stagemap[event.cvs].append(event)
+            for (cvsdata, blobs) in stagemap.items():
                 blobs.sort(key=lambda b: b.timestamp)
                 for blob in blobs[1:]:
                     blob.cvs = None
             # Prepare a map from pathname/CVS-revision pairs to lists of
             # commits that reference the blob containing that CVS revision.
             self.cvsmap = {}
-            for cvsdata in self.cvsmap:
-                blob = self.cvsmap[cvsdata] = self.cvsmap[cvsdata][0]
+            for cvsdata in stagemap:
+                blob = stagemap[cvsdata] = stagemap[cvsdata][0]
                 # Sanity-check that the CVS header name matches the
                 # path in the file reference for which the blob is data.
                 for commit in blob.backreferences:
@@ -1110,9 +1119,9 @@ class Repository:
                                 # git-svn didn't pick up on.
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                                if not (fileop.path,blob.cvs[1]) in self.cvsmap:
+                            if not (fileop.path,blob.cvs[1]) in self.cvsmap:
                                     self.cvsmap[(fileop.path, blob.cvs[1])] = []
-                                self.cvsmap[(fileop.path,blob.cvs[1])].append(commit.mark)         
+                            self.cvsmap[(fileop.path,blob.cvs[1])].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -3383,8 +3392,7 @@ type.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
-        # Example: [[src/foobar.c:1.17]]
-        cvs_cookie = re.compile(re.escape("[[") + r"([^:\]]+):([\]]+)" + re.escape("]]"))
+        cvs_cookie = re.compile(re.escape("[[") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
         for ei in self.selection:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):
@@ -3395,14 +3403,15 @@ type.
                     m = cvs_cookie.search(event.comment)
                     if not m:
                         break
-                    possible = self.chosen.cvsmap.get(tuple(m.groups()))
-                    if len(possible) == 0:
+                    possible = self.chosen().cvsmap.get(tuple(m.groups()))
+                    if possible is None:
                         complain("no commit matches " + m.group(0))
                         break
                     elif len(possible) == 1:
+                        commit = self.chosen().objfind(possible[0])
                         event.comment = event.comment[:m.start()] \
-                                        + possible[0].committer.action_stamp() \
-                                        + event.comment[-m.end():]
+                                        + commit.committer.action_stamp() \
+                                        + event.comment[m.end():]
                     else:
                         complain("more than one commit matches " + m.group(0))
                         break
