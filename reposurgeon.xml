@@ -437,8 +437,11 @@ dump.
 <term><command>revlist</command>
 </term>
 <listitem>
-<para>Seach commit comments for strings that might be CVS- or Subversion-style
-revision identifiers.</para>
+<para>Seach commit comments for strings that might be CVS- or
+Subversion-style revision identifiers. This will be useful when you
+want to replace them with equivalent cookies that can automatically be
+translated into VCS-independent action stamps.  See the description of
+the <command>cvslift</command> for discussion.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -774,6 +777,20 @@ created to represent a tag, the branch attribute of the commit) is
 given to the commit's parent and the generated tag object is
 re-pointed at the parent. The commit itself is unconditionally
 deleted.</para>
+
+<para>This command also resolves CVS cookies in comments into action
+stamps.  A CVS cookie is a comment substring of the form
+[[filename:revision]] (example: [[src/README:1.23]] with the revision
+matching a CVS $Id$ header embedded in blob data for the filename. The
+corresponding action stamp is a timestamp/email combination uniquely
+identifying the commit associated with that blob, as described in
+<xref linkend='style'/>.</para>
+
+<para>You can use the cookie resolver to clean up stray CVS revision
+references in comments. Find them with the <command>revlist</command>,
+then replace them with equivalent cookies, then run
+<command>cvslift</command>.  to turn the cookies into action stamps
+without having to do the lookup by hand.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

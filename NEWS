@@ -3,6 +3,7 @@
 1.5:
      Suppress writing out properties if the importer won't handle them.
      revlist lists events with possible SVN or CVS rev IDs in comments.
+     cvslift transforms CVS revision-reference cookies into action stamps.
 
 1.4: 2011-10-28
      Code is pylint clean.
