@@ -336,6 +336,8 @@ class Attribution:
                 self.name = name
                 self.email = mail
                 break
+    def action_stamp(self):
+        return self.date.iso8601() + "!" + self.email
     def __eq__(self, other):
         "Compare attributions after canonicalization."
         return (self.name == other.name
@@ -3374,17 +3376,37 @@ separated by '+'. It will have no source directory or preferred system
 type.
 """)
     def do_cvslift(self, line):
-        "Purge cruft created by cvs2svn."
+        "Purge cruft created by cvs2svn and re-map CVS references."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
+        # Example: [[src/foobar.c:1.17]]
+        cvs_cookie = re.compile(re.escape("[[") + r"([^:\]]+):([\]]+)" + re.escape("]]"))
         for ei in self.selection:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):
-                # Look at only manufactured commits
+                # Perform CVS cookie substitutions.
+                # Minor bug: if there are multiple cookies, the first one
+                # without a unique match aborts all later substitutions.
+                while True:
+                    m = cvs_cookie.search(event.comment)
+                    if not m:
+                        break
+                    possible = self.chosen.cvsmap.get(tuple(m.groups()))
+                    if len(possible) == 0:
+                        complain("no commit matches " + m.group(0))
+                        break
+                    elif len(possible) == 1:
+                        event.comment = event.comment[:m.start()] \
+                                        + possible[0].committer.action_stamp() \
+                                        + event.comment[-m.end():]
+                    else:
+                        complain("more than one commit matches " + m.group(0))
+                        break
+                # For the rest, look at only manufactured commits
                 if len(event.parents()) != 1 or \
                    event.when() - event.parents()[0].when() >= 10 or \
                    not manufactured in event.comment:
