@@ -3451,6 +3451,52 @@ type.
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
+    def help_cvslift(self):
+        print("""
+Purge cruft created by cvs2svn conversions.  This looks for dummy
+commits created by cvs2svn with one parent that were created within 10
+seconds of the parent, have stereotyped comments and either no fileops
+or all delete fileops.  The branch attribute of the commit is given to
+the commit's parent and the commit itself deleted.  Also, expand CVS
+reference cookies of the form [[filename:revision]] into action stamps.
+""")
+    def do_svnlift(self, line):
+        "Re-map Subversion references."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        svn_cookie = re.compile(re.escape("[[") + r"([0-9]+)" + re.escape("]]"))
+        for ei in self.selection:
+            event = repo.events[ei]
+            if isinstance(event, Commit):
+                # Perform SVN cookie substitutions.
+                # Minor bug: if there are multiple cookies, the first one
+                # without a unique match aborts all later substitutions.
+                while True:
+                    m = svn_cookie.search(event.comment)
+                    if not m:
+                        break
+                    possible = repo.svnrevs.get(tuple(m.group(1)))
+                    if possible is None:
+                        complain("no commit matches " + m.group(1))
+                        break
+                    elif len(possible) == 1:
+                        commit = repo.objfind(possible[0])
+                        event.comment = event.comment[:m.start()] \
+                                        + commit.committer.action_stamp() \
+                                        + event.comment[m.end():]
+                    else:
+                        complain("more than one commit matches " + m.group(1))
+                        break
+    def help_svnlift(self):
+        print("""
+Transform commit-reference cookies from Subversion into action stamps.
+This commant expects cookies consisting f the leading string '[[r',
+followed by decimal digits, followed by ']]'. An action stamp pointing
+at the corresponding commit is substituted.
+""")
     def do_graft(self, line):
         "Graft a named repo onto the selected one."
         if not self.chosen():
@@ -3479,14 +3525,6 @@ Labels and branches in the named repo are prefixed with its name; then
 it is grafted to the selected one. Its root becomes a child of the
 specified commit.  Finally the named repo is removed from the load
 list.
-""")
-    def help_cvslift(self):
-        print("""
-Purge cruft created by cvs2svn conversions.  This looks for dummy
-commits created by cvs2svn with one parent that were created within 10
-seconds of the parent, have stereotyped comments and either no fileops
-or all delete fileops.  The branch attribute of the commit is given to
-the commit's parent and the commit itself deleted.
 """)
     def do_authormap(self, line):
         "Apply an author-mapping file."
