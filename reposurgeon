@@ -353,6 +353,7 @@ class Blob:
         self.timestamp = None
         self.refcount = 0
         self.colors = []
+        self.cvs = None
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
@@ -900,7 +901,16 @@ class Repository:
                         if line.startswith("mark"):
                             blob.mark = line[5:].strip()
                             wfp = open(blob.blobfile(), "w")
-                            wfp.write(read_data())
+                            blobcontent = read_data()
+                            # Parse CVS $Id: headers
+                            for m in re.finditer(r"\$Id*:[^$]*\$",
+                                                 blobcontent):
+                                fields = m.group(0).split()
+                                # Save file basename and CVS version
+                                # There'd better not be more than one of these.
+                                if fields[1].endswith(",v"):
+                                    blob.cvs = (fields[1][:-2], fields[2])
+                            wfp.write(blobcontent)
                             wfp.close()
                         else:
                             self.error("missing mark after blob")
@@ -3495,6 +3505,28 @@ Subversion commit references in them.
         print("""
 Produces a listing of events that may have Subversion or CVS commit
 references in them.
+""")
+    def do_revmap(self, line):
+        "Look for what might be CVS or Subversion revision references in blobs."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        self.set_selection_set(line, list(range(len(self.chosen()))))        
+        for ei in self.selection:
+            event = self.chosen().events[ei]
+            if isinstance(event, Commit):
+                commit_cvs = []
+                for (i, fileop) in enumerate(event.fileops):
+                    if fileop.op == "M":
+                        blob = self.chosen().find(fileop.ref)
+                        assert isinstance(self.repo[blob], Blob)
+                        if self.repo[blob].cvs:
+                            commit_cvs.append(self.repo[blob].cvs)
+                if commit_cvs:
+                    print "%d\t%s" % (ei+1, commit_cvs)
+    def help_revmap(self):
+        print("""
+Produces a map of possible CVS and Subversion references in selected commits.  
 """)
 
 if __name__ == '__main__':
