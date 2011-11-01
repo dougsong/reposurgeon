@@ -802,7 +802,7 @@ without having to do the lookup by hand.</para>
 <listitem>
 <para>This command resolves Subversion cookies in comments into action
 stamps.  A Subversion cookie is a comment substring of the form
-[[rNNNNN]] (example: [[r2355]] with the revision deduced from git-svn
+[[SVN:NNNNN]] (example: [[SVN:2355]] with the revision deduced from git-svn
 metadata or matching a $Revision$ header embedded in blob data for the
 filename. The corresponding action stamp is a timestamp/email
 combination uniquely identifying the commit associated with that revision,
