@@ -3502,6 +3502,7 @@ at the corresponding commit is substituted when possible.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         cvs_cookie = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
         svn_cookie = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
+        hits = 0
         for ei in self.selection:
             event = repo.events[ei]
             if isinstance(event, Commit):
@@ -3521,6 +3522,7 @@ at the corresponding commit is substituted when possible.
                         event.comment = event.comment[:m.start()] \
                                         + commit.committer.action_stamp() \
                                         + event.comment[m.end():]
+                        hits += 1
                     else:
                         complain("more than one commit matches " + m.group(0))
                         break
@@ -3540,6 +3542,8 @@ at the corresponding commit is substituted when possible.
                         event.comment = event.comment[:m.start()] \
                                         + repo.objfind(possible).committer.action_stamp() \
                                         + event.comment[m.end():]
+                        hits += 1
+        announce("%d references resolved." % hits)
                         
     def help_graft(self):
         print("""
@@ -3624,7 +3628,7 @@ saving the 'svn' property.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        # Undocumented - inverse of dump
+        # Undocumented - load svnid attribution pairs
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "load" in rest:
             revdict = {}
@@ -3650,7 +3654,7 @@ saving the 'svn' property.
                         (_, after) = gitsvn.split("@")
                         fields = after.split()
                         self.chosen().svnrevs[fields[0]] = event.mark
-                        if "strip" not in line:
+                        if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
         # Undocumented: dump svnid:attribution pairs
         if "dump" in line:
