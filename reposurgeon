@@ -3088,8 +3088,8 @@ before any individual event is updated.
             complain("no repo is loaded")
             return
         default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
-        self.set_selection_set(line, default)
-        self.edit(self.selection, line)
+        rest = self.set_selection_set(line, default)
+        self.edit(self.selection, rest)
     def help_edit(self):
         print("""
 Report the selection set of events to a tempfile as mailbox_out does,
@@ -3632,7 +3632,7 @@ saving the 'svn' property.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        self.set_selection_set(line, list(range(len(self.chosen()))))        
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         idhits = []
         for ei in self.selection:
             event = self.chosen().events[ei]
@@ -3656,8 +3656,8 @@ saving the 'svn' property.
                     if ei not in idhits:
                         idhits.append(ei)
         if idhits:
-            if "edit" in line:
-                self.edit(idhits, line)
+            if rest.startswith("edit"):
+                self.edit(idhits, rest[4:].strip())
             else:
                 for ei in idhits:
                     event = self.chosen().events[ei]
