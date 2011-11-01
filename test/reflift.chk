@@ -1,4 +1,8 @@
-reposurgeon: 2 references resolved.
+reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1244859175 +0000
+reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204127 +0000
+reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
+reposurgeon: nothing matches Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+reposurgeon: 3 references resolved.
 2: ========================================================================
 commit refs/tags/0.8.0-b1
 mark :9022
@@ -7,6 +11,7 @@ committer Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 data 101
 updated to roundup.pot at 2004-07-03T13:51:03Z!a1s@users.sourceforge.net use better term for "issue"
 from :9020
+property svn 4 9022
 M 100644 :9021 locale/ru.po
 
 10: ========================================================================
@@ -25,9 +30,9 @@ commit refs/tags/lightweight-sample
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
-data 77
+data 111
 The adventure begins.
 
-Example subversion cookie from map file [[SVN:9022]].
+Example subversion cookie from map file 2004-07-03T13:51:03Z!a1s@users.sourceforge.net.
 M 100644 :1 rs
 
