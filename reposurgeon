@@ -3593,7 +3593,15 @@ all events.
                     fields = after.split()
                     self.chosen().svnrevs[fields[0]] = event.mark
                     if "strip" not in line:
-                        event.properties.append(("svn", fields[0])) 
+                        event.properties.append(("svn", fields[0]))
+        # Undocumented: dump svnid:attribution pairs
+        if "dump" in line:
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    for (k, v) in event.properties:
+                        if k == 'svn':
+                            print "%s:%s" % (v, str(event.committer)) 
     def help_gitsvnlift(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
