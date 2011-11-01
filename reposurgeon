@@ -3638,6 +3638,7 @@ saving the 'svn' property.
                     lookup = revdict.get(str(event.committer))
                     if lookup:
                         event.properties.append(("svn", lookup))
+                        self.chosen().svnrevs[lookup] = [event.mark]
                     else:
                         complain("nothing matches %s" % str(event.committer))
         else:
