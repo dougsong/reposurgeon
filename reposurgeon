@@ -29,8 +29,7 @@ version="1.4"
 #  +-------------+    +---------+    +-------------+
 #  | Deserialize |--->| Operate |--->| Reserialize |
 #  +-------------+    +---------+    +-------------+
-#
-# The general theory of reposurgeon is: you deserialize, you do stuff
+## The general theory of reposurgeon is: you deserialize, you do stuff
 # to the event list that preserves correctness invariants, you
 # reserialize.  The "do stuff" is mostly not in the core classes, but
 # there is one major exception.  The primitive to delete a commit and
@@ -2581,8 +2580,33 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     fp.write(summary + "\n")
         if outfile:
             fp.close()
-    def edit(self, selection):
-        # Otherwise, mailboxize and edit the non-blobs in the selection
+    def edit(self, selection, line):
+        # Mailboxize and edit the non-blobs in the selection
+        editor = line.strip() or os.getenv("EDITOR")
+        if not editor:
+            complain("you have not specified an editor and $EDITOR is not set")
+            return
+        # Special case: user selected a single blob
+        if len(self.selection) == 1:
+            singleton = self.chosen()[self.selection[0]]
+            if isinstance(singleton, Blob):
+                def find_successor(event, path):
+                    here = []
+                    for child in event.children():
+                        for fileop in child.fileops:
+                            if fileop.op == "M" and fileop.path == path:
+                                here.append(child.mark)
+                        here += find_successor(child, path)
+                    return here 
+                for event in self.chosen().commits():
+                    for fileop in event.fileops:
+                        if fileop.op == 'M' and fileop.ref == singleton.mark:
+                            if len(find_successor(event, fileop.path)) > 0:
+                                complain("beware: not the last 'M %s' on its branch" % fileop.path)
+                            break
+                os.system(editor + " " + singleton.blobfile())
+                return
+            # Fall through
         (tfdesc, tfname) = tempfile.mkstemp()
         assert tfdesc > -1    # pacify pylint
         with open(tfname, "w") as tfp:
@@ -3064,33 +3088,8 @@ before any individual event is updated.
             complain("no repo is loaded")
             return
         default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
-        line = self.set_selection_set(line, default)
-        editor = line or os.getenv("EDITOR")
-        if not editor:
-            complain("you have not specified an editor and $EDITOR is not set")
-            return
-        # Special case: user selected a single blob
-        if len(self.selection) == 1:
-            singleton = self.chosen()[self.selection[0]]
-            if isinstance(singleton, Blob):
-                def find_successor(event, path):
-                    here = []
-                    for child in event.children():
-                        for fileop in child.fileops:
-                            if fileop.op == "M" and fileop.path == path:
-                                here.append(child.mark)
-                        here += find_successor(child, path)
-                    return here 
-                for event in self.chosen().commits():
-                    for fileop in event.fileops:
-                        if fileop.op == 'M' and fileop.ref == singleton.mark:
-                            if len(find_successor(event, fileop.path)) > 0:
-                                complain("beware: not the last 'M %s' on its branch" % fileop.path)
-                            break
-                os.system(editor + " " + singleton.blobfile())
-                return
-            # Fall through
-        self.edit(self.selection)
+        self.set_selection_set(line, default)
+        self.edit(self.selection, line)
     def help_edit(self):
         print("""
 Report the selection set of events to a tempfile as mailbox_out does,
@@ -3596,7 +3595,6 @@ all events.
                     lookup = revdict.get(str(event.committer))
                     if lookup:
                         event.properties.append(("svn", lookup))
-                        print "Got it"
                     else:
                         complain("nothing matches %s" % str(event.committer))
         else:
@@ -3658,14 +3656,15 @@ saving the 'svn' property.
                     if ei not in idhits:
                         idhits.append(ei)
         if idhits:
-            for ei in idhits:
-                event = self.chosen().events[ei]
-                if hasattr(event, "lister"):
-                    summary = event.lister(ei, screenwidth())
-                    if summary:
-                        sys.stdout.write(summary + "\n")
             if "edit" in line:
-                self.edit(idhits)
+                self.edit(idhits, line)
+            else:
+                for ei in idhits:
+                    event = self.chosen().events[ei]
+                    if hasattr(event, "lister"):
+                        summary = event.lister(ei, screenwidth())
+                        if summary:
+                            sys.stdout.write(summary + "\n")
     def help_revlist(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
