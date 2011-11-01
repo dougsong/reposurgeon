@@ -36,8 +36,8 @@ buildregress:
 regress:
 	@for file in $(TESTLOADS); do \
 	    echo -n $${file} " "; grep '##' $${file}.tst; \
-	    ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
-	    diff -u $${file}.chk /tmp/regress; \
+	    if ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
+	    then diff -u $${file}.chk /tmp/regress; fi \
 	done
 	@rm -f /tmp/regress
 
