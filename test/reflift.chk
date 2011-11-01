@@ -20,3 +20,14 @@ from :618
 property svn 4 4224
 M 100644 :619 share/roundup/templates/devel/html/page.html
 
+13: ========================================================================
+commit refs/tags/lightweight-sample
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+data 77
+The adventure begins.
+
+Example subversion cookie from map file [[SVN:9022]].
+M 100644 :1 rs
+

@@ -4704,3 +4704,21 @@ git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gso
 from :618
 M 100644 :619 share/roundup/templates/devel/html/page.html
 
+blob
+mark :1
+data 53
+#!/ysr/bin/env python
+#
+# rs - a repository surgeon.
+
+reset refs/tags/lightweight-sample
+commit refs/tags/lightweight-sample
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+data 77
+The adventure begins.
+
+Example subversion cookie from map file [[SVN:9022]].
+M 100644 :1 rs
+
