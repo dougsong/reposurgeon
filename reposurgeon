@@ -3709,29 +3709,6 @@ references in them. With the modifier 'edit', edit this set.
                         if summary:
                             sys.stdout.write(summary + "\n")
 
-    def help_revmap(self):
-        print("""
-Produces a map of possible CVS and Subversion references in selected commits.  
-""")
-    def do_revmap(self, line):
-        "Look for what might be CVS or Subversion revision references in blobs."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        self.set_selection_set(line, list(range(len(self.chosen()))))
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if isinstance(event, Commit):
-                commit_cvs = []
-                for (i, fileop) in enumerate(event.fileops):
-                    if fileop.op == "M":
-                        blob = self.chosen().find(fileop.ref)
-                        assert isinstance(self.repo[blob], Blob)
-                        if self.repo[blob].cookie:
-                            commit_cvs.append((fileop.path, self.repo[blob].cookie))
-                if commit_cvs:
-                    print "%d\t%s" % (ei+1, commit_cvs)
-
 if __name__ == '__main__':
     try:
         interpreter = RepoSurgeon()
