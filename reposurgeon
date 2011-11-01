@@ -3504,23 +3504,26 @@ at the corresponding commit is substituted when possible.
             return
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        cvs_re = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
-        svn_re = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
         hits = 0
-        for (regexp, refmap, extractor) in ((cvs_re,
+        for (regexp, refmap, extractor) in (("CVS",
+                                             r"([^:\]]+):([0-9.]+)",
                                              self.chosen.cookiemap,
                                              lambda m: tuple(m.groups())),
-                                            (svn_re,
+                                            ("SVN",
+                                             "([0-9]+)",
                                              self.chosen.svnrevs,
                                              lambda m: m.group(0)),
                                             ):
+            match_re = re.compile(re.escape("[[%:" % name) \
+                                  + body \
+                                  + re.escape("]]"))
             for ei in self.selection:
                 event = repo.events[ei]
                 if isinstance(event, Commit):
                     # Minor bug: if there are multiple cookies, the first one
                     # without a unique match aborts all later substitutions.
                     while True:
-                        m = regegexp.search(event.comment)
+                        m = match_re.search(event.comment)
                         if not m:
                             break
                         payload = extractor(m)
