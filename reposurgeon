@@ -924,7 +924,9 @@ class Repository:
                                     blob.cookie = (fields[1][:-2], fields[2])
                                 else:
                                     # Subversion revision
-                                    self.svnrevs[fields[1]] = commit.mark
+                                    if fields[1] not in self.svnrevs:
+                                        self.svnrevs[fields[1]] = []
+                                    self.svnrevs[fields[1]].append(commit.mark)
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
@@ -933,7 +935,9 @@ class Repository:
                                     blob.cookie = (None, rev)
                                 else:
                                     # Subversion revision
-                                    self.svnrevs[rev] = commit.mark
+                                    if rev not in self.svnrevs:
+                                        self.svnrevs[rev] = []
+                                    self.svnrevs[rev].append(commit.mark)
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -3500,48 +3504,39 @@ at the corresponding commit is substituted when possible.
             return
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        cvs_cookie = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
-        svn_cookie = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
+        cvs_re = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
+        svn_re = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
         hits = 0
-        for ei in self.selection:
-            event = repo.events[ei]
-            if isinstance(event, Commit):
-                # Perform CVS cookie substitutions.
-                # Minor bug: if there are multiple cookies, the first one
-                # without a unique match aborts all later substitutions.
-                while True:
-                    m = cvs_cookie.search(event.comment)
-                    if not m:
-                        break
-                    possible = self.chosen().cookiemap.get(tuple(m.groups()))
-                    if possible is None:
-                        complain("no commit matches " + m.group(0))
-                        break
-                    elif len(possible) == 1:
-                        commit = self.chosen().objfind(possible[0])
-                        event.comment = event.comment[:m.start()] \
-                                        + commit.committer.action_stamp() \
-                                        + event.comment[m.end():]
-                        hits += 1
-                    else:
-                        complain("more than one commit matches " + m.group(0))
-                        break
-                # Perform SVN cookie substitutions.
-                # Minor bug: if there are multiple cookies, the first one
-                # without a unique match aborts all later substitutions.
-                while True:
-                    m = svn_cookie.search(event.comment)
-                    if not m:
-                        break
-                    possible = repo.svnrevs.get(m.group(1))
-                    if possible is None:
-                        complain("no commit matches " + m.group(1))
-                        break
-                    else:
-                        commit = repo.objfind(possible[0])
-                        event.comment = event.comment[:m.start()] \
-                                        + repo.objfind(possible).committer.action_stamp() \
-                                        + event.comment[m.end():]
+        for (regexp, refmap, extractor) in ((cvs_re,
+                                             self.chosen.cookiemap,
+                                             lambda m: tuple(m.groups())),
+                                            (svn_re,
+                                             self.chosen.svnrevs,
+                                             lambda m: m.group(0)),
+                                            ):
+            for ei in self.selection:
+                event = repo.events[ei]
+                if isinstance(event, Commit):
+                    # Minor bug: if there are multiple cookies, the first one
+                    # without a unique match aborts all later substitutions.
+                    while True:
+                        m = regegexp.search(event.comment)
+                        if not m:
+                            break
+                        payload = extractor(m)
+                        possible = refmap.get(payload)
+                        if possible is None:
+                            complain("no commit matches " + repr(payload))
+                            break
+                        elif len(possible) == 1:
+                            commit = self.chosen().objfind(possible[0])
+                            event.comment = event.comment[:m.start()] \
+                                            + commit.committer.action_stamp() \
+                                            + event.comment[m.end():]
+                            hits += 1
+                        else:
+                            complain("more than one commit matches " + repr(payload))
+                            break
                         hits += 1
         announce("%d references resolved." % hits)
                         
@@ -3653,7 +3648,9 @@ saving the 'svn' property.
                         event.comment = event.comment[:m.start()]
                         (_, after) = gitsvn.split("@")
                         fields = after.split()
-                        self.chosen().svnrevs[fields[0]] = event.mark
+                        if fields[0] not in self.svnrevs:
+                            svnrevs[fields[0]] = []
+                        self.chosen().svnrevs[fields[0]].append(event.mark)
                         if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
         # Undocumented: dump svnid:attribution pairs
