@@ -3481,7 +3481,7 @@ reference cookies of the form [[filename:revision]] into action stamps.
             return
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        svn_cookie = re.compile(re.escape("[[") + r"([0-9]+)" + re.escape("]]"))
+        svn_cookie = re.compile(re.escape("[[r") + "([0-9]+)" + re.escape("]]"))
         for ei in self.selection:
             event = repo.events[ei]
             if isinstance(event, Commit):
@@ -3492,18 +3492,16 @@ reference cookies of the form [[filename:revision]] into action stamps.
                     m = svn_cookie.search(event.comment)
                     if not m:
                         break
-                    possible = repo.svnrevs.get(tuple(m.group(1)))
+                    possible = repo.svnrevs.get(m.group(1))
                     if possible is None:
                         complain("no commit matches " + m.group(1))
                         break
-                    elif len(possible) == 1:
+                    else:
                         commit = repo.objfind(possible[0])
                         event.comment = event.comment[:m.start()] \
-                                        + commit.committer.action_stamp() \
+                                        + repo.objfind(possible).committer.action_stamp() \
                                         + event.comment[m.end():]
-                    else:
-                        complain("more than one commit matches " + m.group(1))
-                        break
+                        
     def help_svnlift(self):
         print("""
 Transform commit-reference cookies from Subversion into action stamps.
