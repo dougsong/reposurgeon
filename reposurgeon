@@ -3588,7 +3588,7 @@ all events.
         if "load" in rest:
             revdict = {}
             for line in open(rest.split()[1]):
-                (rev, stamp) = line.split(":")
+                (rev, stamp) = line.strip().split(":")
                 revdict[stamp] = rev
             for ei in self.selection:
                 event = self.chosen().events[ei]
@@ -3596,8 +3596,9 @@ all events.
                     lookup = revdict.get(str(event.committer))
                     if lookup:
                         event.properties.append(("svn", lookup))
+                        print "Got it"
                     else:
-                        complain("nothing matches %s" % repr(event.committer))
+                        complain("nothing matches %s" % str(event.committer))
         else:
             for ei in self.selection:
                 event = self.chosen().events[ei]
