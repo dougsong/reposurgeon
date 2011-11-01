@@ -3505,17 +3505,17 @@ at the corresponding commit is substituted when possible.
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         hits = 0
-        for (regexp, refmap, extractor) in (("CVS",
+        for (name, regexp, refmap, extractor) in (("CVS",
                                              r"([^:\]]+):([0-9.]+)",
-                                             self.chosen.cookiemap,
+                                             self.chosen().cookiemap,
                                              lambda m: tuple(m.groups())),
                                             ("SVN",
                                              "([0-9]+)",
-                                             self.chosen.svnrevs,
-                                             lambda m: m.group(0)),
+                                             self.chosen().svnrevs,
+                                             lambda m: m.group(1)),
                                             ):
-            match_re = re.compile(re.escape("[[%:" % name) \
-                                  + body \
+            match_re = re.compile(re.escape("[[%s:" % name) \
+                                  + regexp \
                                   + re.escape("]]"))
             for ei in self.selection:
                 event = repo.events[ei]
@@ -3540,7 +3540,6 @@ at the corresponding commit is substituted when possible.
                         else:
                             complain("more than one commit matches " + repr(payload))
                             break
-                        hits += 1
         announce("%d references resolved." % hits)
                         
     def help_graft(self):
@@ -3651,8 +3650,8 @@ saving the 'svn' property.
                         event.comment = event.comment[:m.start()]
                         (_, after) = gitsvn.split("@")
                         fields = after.split()
-                        if fields[0] not in self.svnrevs:
-                            svnrevs[fields[0]] = []
+                        if fields[0] not in self.chosen().svnrevs:
+                            self.chosen().svnrevs[fields[0]] = []
                         self.chosen().svnrevs[fields[0]].append(event.mark)
                         if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
