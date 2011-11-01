@@ -443,6 +443,8 @@ want to replace them with equivalent cookies that can automatically be
 translated into VCS-independent action stamps.  See the description of
 the <command>cvslift</command> and <command>svnlift</command> for
 discussion.</para>
+<para>With the modifier 'edit', edit the set where revision IDs are
+found.</para>
 </listitem>
 </varlistentry>
 </variablelist>

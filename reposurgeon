@@ -2581,6 +2581,22 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     fp.write(summary + "\n")
         if outfile:
             fp.close()
+    def edit(self, selection):
+        # Otherwise, mailboxize and edit the non-blobs in the selection
+        (tfdesc, tfname) = tempfile.mkstemp()
+        assert tfdesc > -1    # pacify pylint
+        with open(tfname, "w") as tfp:
+            for i in selection:
+                event = self.chosen()[i]
+                if hasattr(event, "email_out"):
+                    tfp.write(event.email_out(i))
+        if os.system(editor + " " + tfname):
+            raise Recoverable("%s returned a failure status" % editor)
+        else:
+            self.do_mailbox_in(tfname)
+        # No try/finally here - we want the tempfile to survive on fatal error
+        # because it might have megabytes of metadata edits in it.
+        os.remove(tfname)
     #
     # On-line help and instrumentation
     #
@@ -3074,21 +3090,7 @@ before any individual event is updated.
                 os.system(editor + " " + singleton.blobfile())
                 return
             # Fall through
-        # Otherwise, mailboxize and edit the non-blobs in the selection
-        (tfdesc, tfname) = tempfile.mkstemp()
-        assert tfdesc > -1    # pacify pylint
-        with open(tfname, "w") as tfp:
-            for i in self.selection:
-                event = self.chosen()[i]
-                if hasattr(event, "email_out"):
-                    tfp.write(event.email_out(i))
-        if os.system(editor + " " + tfname):
-            raise Recoverable("%s returned a failure status" % editor)
-        else:
-            self.do_mailbox_in(tfname)
-        # No try/finally here - we want the tempfile to survive on fatal error
-        # because it might have megabytes of metadata edits in it.
-        os.remove(tfname)
+        self.edit(self.selection)
     def help_edit(self):
         print("""
 Report the selection set of events to a tempfile as mailbox_out does,
@@ -3581,19 +3583,34 @@ all events.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        self.set_selection_set(line, list(range(len(self.chosen()))))
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if isinstance(event, Commit):
-                m = re.search("\ngit-svn-id:.*\n", event.comment)
-                if m:
-                    gitsvn = event.comment[m.start():m.end()]
-                    event.comment = event.comment[:m.start()]
-                    (_, after) = gitsvn.split("@")
-                    fields = after.split()
-                    self.chosen().svnrevs[fields[0]] = event.mark
-                    if "strip" not in line:
-                        event.properties.append(("svn", fields[0]))
+        # Undocumented - inverse of dump
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        if "load" in rest:
+            revdict = {}
+            for line in open(rest.split()[1]):
+                (rev, stamp) = line.split(":")
+                revdict[stamp] = rev
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    lookup = revdict.get(str(event.committer))
+                    if lookup:
+                        event.properties.append(("svn", lookup))
+                    else:
+                        complain("nothing matches %s" % repr(event.committer))
+        else:
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    m = re.search("\ngit-svn-id:.*\n", event.comment)
+                    if m:
+                        gitsvn = event.comment[m.start():m.end()]
+                        event.comment = event.comment[:m.start()]
+                        (_, after) = gitsvn.split("@")
+                        fields = after.split()
+                        self.chosen().svnrevs[fields[0]] = event.mark
+                        if "strip" not in line:
+                            event.properties.append(("svn", fields[0]))
         # Undocumented: dump svnid:attribution pairs
         if "dump" in line:
             for ei in self.selection:
@@ -3646,10 +3663,12 @@ saving the 'svn' property.
                     summary = event.lister(ei, screenwidth())
                     if summary:
                         sys.stdout.write(summary + "\n")
+            if "edit" in line:
+                self.edit(idhits)
     def help_revlist(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
-references in them.
+references in them. With the modifier 'edit', edit this set.
 """)
     def do_revmap(self, line):
         "Look for what might be CVS or Subversion revision references in blobs."
