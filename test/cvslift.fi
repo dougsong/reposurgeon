@@ -2714,8 +2714,8 @@ commit refs/tags/0.8.0-b1
 mark :9022
 author Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 committer Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
-data 75
-updated to roundup.pot at [[locale/ru.po:1.6]] use better term for "issue"
+data 79
+updated to roundup.pot at [[CVS:locale/ru.po:1.6]] use better term for "issue"
 from :9020
 M 100644 :9021 locale/ru.po
 

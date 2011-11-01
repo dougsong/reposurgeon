@@ -3414,7 +3414,7 @@ type.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
-        cvs_cookie = re.compile(re.escape("[[") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
+        cvs_cookie = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
         for ei in self.selection:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):

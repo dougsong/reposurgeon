@@ -783,11 +783,11 @@ deleted.</para>
 
 <para>This command also resolves CVS cookies in comments into action
 stamps.  A CVS cookie is a comment substring of the form
-[[filename:revision]] (example: [[src/README:1.23]] with the revision
-matching a CVS $Id$ or $Revision$ header embedded in blob data for the
-filename. The corresponding action stamp is a timestamp/email
-combination uniquely identifying the commit associated with that blob,
-as described in <xref linkend='style'/>.</para>
+[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
+revision matching a CVS $Id$ or $Revision$ header embedded in blob
+data for the filename. The corresponding action stamp is a
+timestamp/email combination uniquely identifying the commit associated
+with that blob, as described in <xref linkend='style'/>.</para>
 
 <para>You can use the cookie resolver to clean up stray CVS revision
 references in comments. Find them with the <command>revlist</command>,
