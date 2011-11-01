@@ -3482,7 +3482,7 @@ reference cookies of the form [[filename:revision]] into action stamps.
             return
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        svn_cookie = re.compile(re.escape("[[r") + "([0-9]+)" + re.escape("]]"))
+        svn_cookie = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
         for ei in self.selection:
             event = repo.events[ei]
             if isinstance(event, Commit):

@@ -1976,8 +1976,8 @@ commit refs/remotes/svn/gsoc-2009
 mark :620
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 committer stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
-data 195
-Fix validity issue.  This is a test Subversion cookie: [[r4216]]
+data 198
+Fix validity issue.  This is a test Subversion cookie: [[SVN:4216]]
 
 git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4224 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :618
