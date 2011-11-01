@@ -1,5 +1,5 @@
 ## Test resolution of CVS reference cookies
-read cvslift.fi
-cvslift
+read cvspurge.fi
+reflift
 write
 

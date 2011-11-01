@@ -441,8 +441,7 @@ dump.
 Subversion-style revision identifiers. This will be useful when you
 want to replace them with equivalent cookies that can automatically be
 translated into VCS-independent action stamps.  See the description of
-the <command>cvslift</command> and <command>svnlift</command> for
-discussion.</para>
+the <command>reflift</command> for discussion.</para>
 <para>With the modifier 'edit', edit the set where revision IDs are
 found.</para>
 </listitem>
@@ -761,7 +760,7 @@ associated with repository conversions from order systems.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>cvslift</command>
+<term><command>cvspurge</command>
 </term>
 <listitem>
 <para>
@@ -780,39 +779,32 @@ created to represent a tag, the branch attribute of the commit) is
 given to the commit's parent and the generated tag object is
 re-pointed at the parent. The commit itself is unconditionally
 deleted.</para>
-
-<para>This command also resolves CVS cookies in comments into action
-stamps.  A CVS cookie is a comment substring of the form
-[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
-revision matching a CVS $Id$ or $Revision$ header embedded in blob
-data for the filename. The corresponding action stamp is a
-timestamp/email combination uniquely identifying the commit associated
-with that blob, as described in <xref linkend='style'/>.</para>
-
-<para>You can use the cookie resolver to clean up stray CVS revision
-references in comments. Find them with the <command>revlist</command>,
-then replace them with equivalent cookies, then run
-<command>cvslift</command>.  to turn the cookies into action stamps
-without having to do the lookup by hand.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>svnlift</command>
+<term><command>reflift</command>
 </term>
 <listitem>
-<para>This command resolves Subversion cookies in comments into action
-stamps.  A Subversion cookie is a comment substring of the form
+<para>This command resolves Subversion and CVS cookies in comments into action
+stamps. An action stamp is a timestamp/email combination uniquely
+identifying the commit associated with that blob, as described in
+<xref linkend='style'/>.</para>
+
+<para>A Subversion cookie is a comment substring of the form
 [[SVN:NNNNN]] (example: [[SVN:2355]] with the revision deduced from git-svn
 metadata or matching a $Revision$ header embedded in blob data for the
-filename. The corresponding action stamp is a timestamp/email
-combination uniquely identifying the commit associated with that revision,
-as described in <xref linkend='style'/>.</para>
+filename.</para>
 
-<para>You can use the cookie resolver to clean up stray Subversion revision
-references in comments. Find them with the <command>revlist</command>,
-then replace them with equivalent cookies, then run
-<command>svnlift</command>.  to turn the cookies into action stamps
-without having to do the lookup by hand.</para>
+<para>A CVS cookie is a comment substring of the form
+[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
+revision matching a CVS $Id$ or $Revision$ header embedded in blob
+data for the filename.</para>
+
+<para>You can use the this command to clean up stray CVS and
+Subversion revision references in comments. Find them with the
+<command>revlist</command>, then replace them with equivalent cookies,
+then run <command>reflift</command>.  to turn the cookies into action
+stamps without having to do the lookup by hand.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
