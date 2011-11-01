@@ -921,10 +921,20 @@ class Repository:
                                 fields = m.group(0).split()
                                 # Save file basename and CVS version
                                 if fields[1].endswith(",v"):
+                                    # CVS revision
                                     blob.cookie = (fields[1][:-2], fields[2])
+                                else:
+                                    # Subversion revision
+                                    self.svnrefs[fields[1]] = commit.mark
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
-                                blob.cookie = (None, m.group(0).strip())
+                                rev = m.group(0).strip()
+                                if '.' in rev:
+                                    # CVS revision
+                                    blob.cookie = (None, rev)
+                                else:
+                                    # Subversion revision
+                                    self.svnrefs[rev] = commit.mark
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
