@@ -2944,8 +2944,12 @@ anything other than a plain file. The default selection is all events.
             return
         self.set_selection_set(line, list(range(len(self.chosen()))))
         for ei in self.selection:
-            sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n") 
-            sys.stdout.write(self.chosen()[ei].dump(write_properties=True))
+            event = self.chosen().events[ei]
+            sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n")
+            if isinstance(event, Commit):
+                sys.stdout.write(event.dump(write_properties=True))
+            else:
+                sys.stdout.write(str(event))
     def help_inspect(self):
         print("""
 Dump a fast-import stream representing selected events to standard output.
