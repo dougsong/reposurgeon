@@ -3436,16 +3436,15 @@ type.
         if verbose:
             self.do_choose('')
 
-    def help_cvslift(self):
+    def help_cvspurge(self):
         print("""
 Purge cruft created by cvs2svn conversions.  This looks for dummy
 commits created by cvs2svn with one parent that were created within 10
 seconds of the parent, have stereotyped comments and either no fileops
 or all delete fileops.  The branch attribute of the commit is given to
-the commit's parent and the commit itself deleted.  Also, expand CVS
-reference cookies of the form [[filename:revision]] into action stamps.
+the commit's parent and the commit itself deleted.  Also,
 """)
-    def do_cvslift(self, line):
+    def do_cvspurge(self, line):
         "Purge cruft created by cvs2svn and re-map CVS references."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -3453,30 +3452,10 @@ reference cookies of the form [[filename:revision]] into action stamps.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         manufactured = "This commit was manufactured by cvs2svn to create"
         deletion_set = []
-        cvs_cookie = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
         for ei in self.selection:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):
-                # Perform CVS cookie substitutions.
-                # Minor bug: if there are multiple cookies, the first one
-                # without a unique match aborts all later substitutions.
-                while True:
-                    m = cvs_cookie.search(event.comment)
-                    if not m:
-                        break
-                    possible = self.chosen().cookiemap.get(tuple(m.groups()))
-                    if possible is None:
-                        complain("no commit matches " + m.group(0))
-                        break
-                    elif len(possible) == 1:
-                        commit = self.chosen().objfind(possible[0])
-                        event.comment = event.comment[:m.start()] \
-                                        + commit.committer.action_stamp() \
-                                        + event.comment[m.end():]
-                    else:
-                        complain("more than one commit matches " + m.group(0))
-                        break
-                # For the rest, look at only manufactured commits
+                # Look at only manufactured commits
                 if len(event.parents()) != 1 or \
                    event.when() - event.parents()[0].when() >= 10 or \
                    not manufactured in event.comment:
@@ -3506,24 +3485,45 @@ reference cookies of the form [[filename:revision]] into action stamps.
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
 
-    def help_svnlift(self):
+    def help_reflift(self):
         print("""
-Transform commit-reference cookies from Subversion into action stamps.
-This commant expects cookies consisting f the leading string '[[r',
-followed by decimal digits, followed by ']]'. An action stamp pointing
-at the corresponding commit is substituted.
+Transform commit-reference cookies from CVS and Subversion into action
+stamps.  This command expects cookies consisting f the leading string
+'[[', followed by a VCS identifier (currently SVN or CVS) followed by
+VCS-dependent information, followed by ']]'. An action stamp pointing
+at the corresponding commit is substituted when possible.
 """)
-    def do_svnlift(self, line):
+    def do_reflift(self, line):
         "Re-map Subversion references."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        cvs_cookie = re.compile(re.escape("[[CVS:") + r"([^:\]]+):([0-9.]+)" + re.escape("]]"))
         svn_cookie = re.compile(re.escape("[[SVN:") + "([0-9]+)" + re.escape("]]"))
         for ei in self.selection:
             event = repo.events[ei]
             if isinstance(event, Commit):
+                # Perform CVS cookie substitutions.
+                # Minor bug: if there are multiple cookies, the first one
+                # without a unique match aborts all later substitutions.
+                while True:
+                    m = cvs_cookie.search(event.comment)
+                    if not m:
+                        break
+                    possible = self.chosen().cookiemap.get(tuple(m.groups()))
+                    if possible is None:
+                        complain("no commit matches " + m.group(0))
+                        break
+                    elif len(possible) == 1:
+                        commit = self.chosen().objfind(possible[0])
+                        event.comment = event.comment[:m.start()] \
+                                        + commit.committer.action_stamp() \
+                                        + event.comment[m.end():]
+                    else:
+                        complain("more than one commit matches " + m.group(0))
+                        break
                 # Perform SVN cookie substitutions.
                 # Minor bug: if there are multiple cookies, the first one
                 # without a unique match aborts all later substitutions.
