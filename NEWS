@@ -4,7 +4,8 @@
      Suppress writing out properties if the importer won't handle them.
      revlist lists events with possible SVN or CVS rev IDs in comments.
      reflift transforms CVS & SVN revision-reference cookies into action stamps.
-     cvslift -> cvspurge
+     cvslift -> cvspurge (it no longer does ID lifting)
+     gitsvnlift -> gitsvnparse (it no longer does ID lifting)
 
 1.4: 2011-10-28
      Code is pylint clean.
