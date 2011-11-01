@@ -3611,7 +3611,7 @@ all events.
             elif isinstance(event, Tag):
                 event.tagger.remap(authormap)
 
-    def help_gitsvnlift(self):
+    def help_gitsvnparse(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
 as git-svn magic cookies and remove them.  The Subversion commit ID is
@@ -3620,7 +3620,7 @@ which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property.
 """)
-    def do_gitsvnlift(self, line):
+    def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
         if not self.chosen():
             complain("no repo has been chosen.")

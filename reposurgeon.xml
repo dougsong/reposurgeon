@@ -822,7 +822,7 @@ all events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>gitsvnlift</command>
+<term><command>gitsvnparse</command>
 </term>
 <listitem>
 <para>Interpret final comment lines of commits beginning with
