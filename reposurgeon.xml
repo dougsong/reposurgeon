@@ -451,7 +451,7 @@ dump.
 Subversion-style revision identifiers. This will be useful when you
 want to replace them with equivalent cookies that can automatically be
 translated into VCS-independent action stamps.  See the description of
-the <command>reflift</command> for discussion.</para>
+the <command>reflift</command> command for discussion.</para>
 <para>With the modifier 'edit', edit the set where revision IDs are
 found.</para>
 </listitem>
@@ -801,7 +801,7 @@ identifying the commit associated with that blob, as described in
 <xref linkend='style'/>.</para>
 
 <para>A Subversion cookie is a comment substring of the form
-[[SVN:NNNNN]] (example: [[SVN:2355]] with the revision deduced from git-svn
+[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
 metadata or matching a $Revision$ header embedded in blob data for the
 filename.</para>
 
@@ -815,6 +815,11 @@ Subversion revision references in comments. Find them with the
 <command>revlist</command>, then replace them with equivalent cookies,
 then run <command>reflift</command>.  to turn the cookies into action
 stamps without having to do the lookup by hand.</para>
+
+<para>It is not guaranteed that every such reference will be resolved,
+or even that any at all will be. Generally, if the repo contains git-svn
+headers and <command>gitsvnparse</command> has been called, every SVN
+cookie will resolve. CVS references are less likely to be resolvable.</para>  
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -990,21 +995,22 @@ $Locker:, $Name:, $RCSfile:, $Source:, and $State:.</para>
 <para>The combination of a committer email address with a ISO8601
 timestamp is a good way to refer to a commit without being
 VCS-specific.  Thus, instead of "commit 304a53c2",
-"2011-10-25T15:11:09Z!fred@foonly.com". It is best that you
-<emphasis>not vary from this format</emphasis>, even in trivial ways
-like omitting the 'Z' or changing the 'T' or '!'. Making these cookies
-uniform and machine-parseable will have good consequences for future
+"2011-10-25T15:11:09Z!fred@foonly.com". This is the format that
+reflift generates when it can resolve an SVN or CVS reference in a
+comment. It is best that you <emphasis>not vary from this
+format</emphasis>, even in trivial ways like omitting the 'Z' or
+changing the 'T' or '!'. Making these cookies uniform and
+machine-parseable will have good consequences for future
 repository-browsing tools.</para>
 
 <para>Sometimes, in converting a repository, you may need to insert an
 explanatory comment - for example, if metadata has been garbled or
-missing and you need to point to that fact.</para>
-
-<para>It's helpful for repository-browsing tools if there is a uniform
-syntax for this that is highly unlikely to show up in repository
-comments.  I recommend enclosing translation notes in [[ ]].  This 
-has the advantage of being visually similar to the [ ] traditionally
-used for editorial comments in text.</para>
+missing and you need to point to that fact. It's helpful for
+repository-browsing tools if there is a uniform syntax for this that
+is highly unlikely to show up in repository comments.  I recommend
+enclosing translation notes in [[ ]].  This has the advantage of being
+visually similar to the [ ] traditionally used for editorial comments
+in text.</para>
 
 <para>It is good practice to include, in the comment for the root
 commit of the repository, a note dating and attributing the conversion
