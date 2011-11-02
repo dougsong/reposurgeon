@@ -37,7 +37,8 @@ regress:
 	@for file in $(TESTLOADS); do \
 	    echo -n $${file} " "; grep '##' $${file}.tst; \
 	    if ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
-	    then diff -u $${file}.chk /tmp/regress; fi \
+	    then diff -u $${file}.chk /tmp/regress; \
+	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
 
