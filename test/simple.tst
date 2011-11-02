@@ -13,6 +13,7 @@ resolve *annotated-sample
 resolve @annotated-sample
 resolve /regression/
 resolve /Raymond/
+resolve [Makefile]
 tags
 history
 verbose 1

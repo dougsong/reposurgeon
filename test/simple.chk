@@ -80,6 +80,8 @@ resolve /regression/
 [50, 58, 120, 131]
 resolve /Raymond/
 [3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
+resolve [Makefile]
+[67, 70, 72, 76, 78]
 tags
      3 refs/tags/lightweight-sample
      5 refs/tags/lightweight-sample
@@ -146,6 +148,7 @@ resolve *annotated-sample
 resolve @annotated-sample
 resolve /regression/
 resolve /Raymond/
+resolve [Makefile]
 tags
 history
 verbose 1

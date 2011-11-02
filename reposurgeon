@@ -2355,6 +2355,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     term = self.eval_textsearch()
                     if term == None:
                         term = self.eval_branchset()
+                        if term == None:
+                            term = self.eval_pathset()
         if verbose >= DEBUG_LEXER:
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
@@ -2533,6 +2535,24 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             if verbose >= DEBUG_LEXER:
                 announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return set(matchers)
+    def eval_pathset(self):
+        "Resolve a path name to the set of commits that refer to it."
+        if self.peek() != "[":
+            return None
+        elif self.line.find("]") == -1:
+            raise Recoverable("malformed path wildcard")
+        else:
+            self.pop()
+            i = self.line.find("]")
+            path = self.line[:i]
+            self.line = self.line[i+1:]
+            selection = []
+            for (ei, event) in enumerate(self.chosen().events):
+                if isinstance(event, Commit):
+                    for fileop in event.fileops:
+                        if path in fileop.paths():
+                            selection.append(ei)
+            return set(selection)
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
         if self.peek() != "*":
