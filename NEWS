@@ -7,6 +7,7 @@
      cvslift -> cvspurge (it no longer does ID lifting)
      gitsvnlift -> gitsvnparse (it no longer does ID lifting)
      'checkout' command allows filling a specified directory with a revision. 
+     'diff' commant allows examining diffs between commits.
      New [ ] syntax for selecting commits containing a specified path.
 
 1.4: 2011-10-28
