@@ -19,6 +19,9 @@ history
 verbose 1
 expunge 1..$ theory.txt
 verbose 0
+checkout 116 foobar
+!ls foobar
+!rm -fr foobar
 choose simple-expunges
 write
 
