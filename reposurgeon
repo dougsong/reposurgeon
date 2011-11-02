@@ -733,6 +733,7 @@ class Commit:
         if not directory:
             directory = os.path.join(self.repo.subdir(), self.mark)
         try:
+            sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
             for (path, mark) in self.__manifest().items():
                 fullpath = os.path.join(directory, path)
