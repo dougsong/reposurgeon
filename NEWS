@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-1.5:
+1.5: 2011-11-02
      Suppress writing out properties if the importer won't handle them.
      'references' lists events with possible SVN or CVS rev IDs in comments.
      'references lift' turns CVS & SVN reference cookies into action stamps.

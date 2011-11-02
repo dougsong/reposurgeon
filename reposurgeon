@@ -11,7 +11,7 @@ import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
 
-version="1.4"
+version="1.5"
 
 #
 # This code is intended to be hackable to support for special-purpose or
