@@ -3811,7 +3811,8 @@ must resolve to exactly two commits.
             raise Recoverable("a pair of commits is required.")
         dir1 = bounds[0].checkout()
         dir2 = bounds[1].checkout()
-        command = "diff -u %s %s" % (dir1, dir2)
+        command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
+                  (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
 
 if __name__ == '__main__':

@@ -168,9 +168,9 @@ reposurgeon
 reposurgeon.xml
 test
 !rm -fr foobar
-diff -u /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/reposurgeon /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/reposurgeon
---- /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/reposurgeon	2011-11-02 17:00:26.190217204 -0400
-+++ /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/reposurgeon	2011-11-02 17:00:26.190217204 -0400
+diff -r --label 'commit :108' --label 'commit :110' -u commit :108 commit :110
+--- commit :108
++++ commit :110
 @@ -575,13 +575,13 @@
          if self.verbose >= 2:
              print "eval_visibility(%s)" % self.line
@@ -202,7 +202,6 @@ diff -u /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/reposurgeon 
                  # First, literal command numbers (1-origin)
                  match = re.match("[0-9]+", self.line)
                  if match:
-Common subdirectories: /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/test and /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/test
 diff 101,103
 choose simple-expunges
 write
