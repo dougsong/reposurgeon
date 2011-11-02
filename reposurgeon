@@ -3665,11 +3665,11 @@ substituted when possible.
                     (("CVS",
                       r"([^:\]]+):([0-9.]+)",
                       lambda m: tuple(m.groups()),
-                      lambda p: self.chosen().cookiemap.get(p)),
+                      lambda p: repo.cookiemap.get(p)),
                      ("SVN",
                       "([0-9]+)",
                       lambda m: m.group(1),
-                      lambda p: self.chosen().svnrevs.get(p)),
+                      lambda p: repo.svnrevs.get(p)),
                      ):
                 match_re = re.compile(re.escape("[[%s:" % name) \
                                       + regexp \
@@ -3689,7 +3689,7 @@ substituted when possible.
                                 complain("no commit matches " + repr(payload))
                                 break
                             elif len(possible) == 1:
-                                commit = self.chosen().objfind(possible[0])
+                                commit = repo.objfind(possible[0])
                                 event.comment = event.comment[:m.start()] \
                                                 + commit.committer.action_stamp() \
                                                 + event.comment[m.end():]
@@ -3702,7 +3702,7 @@ substituted when possible.
             # No modifier, just list io edit
             idhits = []
             for ei in self.selection:
-                event = self.chosen().events[ei]
+                event = repo.events[ei]
                 if hasattr(event, "comment"):
                     text = event.comment
                 elif hasattr(event, "text"):
@@ -3727,7 +3727,7 @@ substituted when possible.
                     self.edit(idhits, rest[4:].strip())
                 else:
                     for ei in idhits:
-                        event = self.chosen().events[ei]
+                        event = repo.events[ei]
                         if hasattr(event, "lister"):
                             summary = event.lister(ei, screenwidth())
                             if summary:
