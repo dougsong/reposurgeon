@@ -7,8 +7,9 @@
 # Requires Python 2.7.2 or newer, running in Python 3 mode.
 #
 import sys, os, cmd, tempfile, subprocess
-import readline, time, calendar, re, signal, shutil, copy, shlex
+import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
+import re, sre_constants
 
 version="1.4"
 
@@ -2557,7 +2558,10 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         else:
             assert(self.pop() == '/')
             endat = self.line.index('/')
-            regex = re.compile(self.line[:endat])
+            try:
+                regex = re.compile(self.line[:endat])
+            except sre_constants.error:
+                raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = []
             for (i, e) in enumerate(self.chosen()):
