@@ -3790,6 +3790,30 @@ set must resolve to a singleton commit.
             raise Recoverable("a singleton selection set is required.")
         commit.checkout(rest)
 
+    def help_diff(self):
+        print("""
+Display the difference between commits. Takes a selection-set argument which
+must resolve to exactly two commits.
+""")
+    def do_diff(self, line):
+        "Display a diff between versions."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        bounds = list(self.selection)
+        bounds.sort()
+        bounds = tuple([repo.events[i] for i in bounds])
+        if len(self.selection) != 2 or \
+               not isinstance(bounds[0], Commit) or \
+               not isinstance(bounds[1], Commit):
+            raise Recoverable("a pair of commits is required.")
+        dir1 = bounds[0].checkout()
+        dir2 = bounds[1].checkout()
+        command = "diff -u %s %s" % (dir1, dir2)
+        os.system(command)
+
 if __name__ == '__main__':
     try:
         interpreter = RepoSurgeon()

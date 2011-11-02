@@ -168,6 +168,42 @@ reposurgeon
 reposurgeon.xml
 test
 !rm -fr foobar
+diff -u /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/reposurgeon /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/reposurgeon
+--- /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/reposurgeon	2011-11-02 17:00:26.190217204 -0400
++++ /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/reposurgeon	2011-11-02 17:00:26.190217204 -0400
+@@ -575,13 +575,13 @@
+         if self.verbose >= 2:
+             print "eval_visibility(%s)" % self.line
+         self.line = self.line.lstrip()
+-        if not self.peek() in "+-=":
++        if not self.peek() in ("+", "-", "="):
+             visibility = None
+         else:
+             Unknown = type("")
+             visible = set([Commit, Tag, Branch, Unknown])
+             modmode = None
+-            while self.peek() in "+-=Bctbu":
++            while self.peek() in ("+", "-", "=", "B", "c", "t", "b", "u"):
+                 c = self.pop()
+                 if c == "+":
+                     modmode = '+'
+@@ -637,11 +637,12 @@
+         if self.verbose >= 2:
+             print "eval_polyrange(%s)" % self.line
+         self.line = self.line.lstrip()
+-        if not self.peek() in ":0123456789$":
++        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$")
++        if not self.peek() in polyrange_initials:
+             polyrange = None
+         else:
+             selection = []
+-            while self.peek() in ":0123456789.,$":
++            while self.peek() in polyrange_initials + (".", ","):
+                 # First, literal command numbers (1-origin)
+                 match = re.match("[0-9]+", self.line)
+                 if match:
+Common subdirectories: /home/esr/public_html/reposurgeon/test/.rs25311-simple/:108/test and /home/esr/public_html/reposurgeon/test/.rs25311-simple/:110/test
+diff 101,103
 choose simple-expunges
 write
 blob

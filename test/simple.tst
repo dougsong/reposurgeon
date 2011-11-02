@@ -22,6 +22,7 @@ verbose 0
 checkout 116 foobar
 !ls foobar
 !rm -fr foobar
+diff 101,103
 choose simple-expunges
 write
 

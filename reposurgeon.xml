@@ -885,6 +885,32 @@ out git-svn metadata lines when given the 'strip' modifier.</para>
 </variablelist>
 </refsect2>
 
+
+<refsect2 id='examining tree-states'><title>EXAMINING TREE STATES</title>
+
+<variablelist>
+<varlistentry>
+<term><command>checkout</command>
+        <emphasis>directory</emphasis>
+</term>
+<listitem>
+<para>Takes a selection set which must resolve to a single commit, and
+a second argument. The second argument is interpreted as a directory
+name.  The state of the code tree at that commit is materialized beneath
+the directory.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>diff</command>
+</term>
+<listitem>
+<para>Display the difference between commits. Takes a selection-set
+argument which must resolve to exactly two commits.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</refsect2>
+
 <refsect2 id='housekeeping'><title>HOUSEKEEPING</title>
 
 <para>These are backed up by the following housekeeping commands, none of 
@@ -1000,17 +1026,6 @@ and executes it as a command.</para></listitem>
 </term>
 <listitem>
 <para>List the commands you have entered this session.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term><command>checkout</command>
-        <emphasis>directory</emphasis>
-</term>
-<listitem>
-<para>Takes a selection set which must resolve to a single commit, and
-a second argument. The second argument is interpreted as a directory
-name.  The state of the code tree at that commit is materialized beneath
-the directory.</para>
 </listitem>
 </varlistentry>
 </variablelist>
