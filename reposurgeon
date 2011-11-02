@@ -710,6 +710,27 @@ class Commit:
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print("%d: %-20s" % (i, str(op)))
+    def __manifest(self):
+        "Return a map from paths to marks for files existing at this commit."
+        ancestors = {}
+        for commit in self.parents():
+            ancestors.update(commit.__manifest())
+        for fileop in self.fileops:
+            if fileop.op == 'M':
+                ancestors[fileop.path] = fileop.ref
+            elif fileop.op == 'D':
+                if fileop.path in ancestors:
+                    del ancestors[fileop.path]
+            elif fileop.op == 'C':
+                ancestors[fileop.target] = ancestors[fileop.source]
+            elif fileop.op == 'R':
+                ancestors[fileop.target] = ancestors[fileop.source]
+                if fileop.source in ancestors:
+                    del ancestors[fileop.source]
+        return ancestors
+    def checkout(self):
+        "Make a directory with links to files in a specified checkout."
+        print self.__manifest()
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
@@ -3732,6 +3753,26 @@ substituted when possible.
                             summary = event.lister(ei, screenwidth())
                             if summary:
                                 sys.stdout.write(summary + "\n")
+
+    def help_checkout(self):
+        print("""
+Check out files for a specified commit into a directory.  The selection
+set must resolve to a singleton commit. 
+""")
+    def do_checkout(self, line):
+        "Check out files for a specified commit into a directory."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        if len(self.selection) == 1:
+            commit = repo.events[self.selection[0]]
+            if not isinstance(commit, Commit):
+                raise Recoverable("not a commit.")
+        else:
+            raise Recoverable("a singleton selection set is required.")
+        commit.checkout()
 
 if __name__ == '__main__':
     try:
