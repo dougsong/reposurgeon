@@ -3660,14 +3660,14 @@ substituted when possible.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "lift" in rest:
             hits = 0
-            for (name, regexp, refmap, extractor) in (("CVS",
+            for (name, regexp, extractor, getter) in (("CVS",
                                                  r"([^:\]]+):([0-9.]+)",
-                                                 self.chosen().cookiemap,
-                                                 lambda m: tuple(m.groups())),
+                                                 lambda m: tuple(m.groups()),
+                                                 lambda p: self.chosen().cookiemap).get(p),
                                                 ("SVN",
                                                  "([0-9]+)",
-                                                 self.chosen().svnrevs,
-                                                 lambda m: m.group(1)),
+                                                 lambda m: m.group(1),
+                                                 lambda p: self.chosen().svnrevs).get(p),
                                                 ):
                 match_re = re.compile(re.escape("[[%s:" % name) \
                                       + regexp \
@@ -3682,7 +3682,7 @@ substituted when possible.
                             if not m:
                                 break
                             payload = extractor(m)
-                            possible = refmap.get(payload)
+                            possible = getter(payload)
                             if possible is None:
                                 complain("no commit matches " + repr(payload))
                                 break
