@@ -2,6 +2,6 @@
 read reflift.fi
 gitsvnparse
 gitsvnparse load svnlift.map
-reflift
+references lift
 inspect :9022,:620,:2
 

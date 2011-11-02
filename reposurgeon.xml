@@ -443,19 +443,6 @@ are always dumped, and (3) there is an identifying header before each event
 dump.
 </para></listitem>
 </varlistentry>
-<varlistentry>
-<term><command>revlist</command>
-</term>
-<listitem>
-<para>Seach commit comments for strings that might be CVS- or
-Subversion-style revision identifiers. This will be useful when you
-want to replace them with equivalent cookies that can automatically be
-translated into VCS-independent action stamps.  See the description of
-the <command>reflift</command> command for discussion.</para>
-<para>With the modifier 'edit', edit the set where revision IDs are
-found.</para>
-</listitem>
-</varlistentry>
 </variablelist>
 </refsect2>
 
@@ -763,6 +750,77 @@ list.</para>
 </variablelist>
 </refsect2>
 
+<refsect2 id="referencr-lifting"><title>REFERENCE LIFTING</title>
+
+<variablelist>
+<varlistentry>
+<term><command>gitsvnparse</command>
+</term>
+<listitem>
+<para>Interpret final comment lines of commits beginning with
+'git-svn-id:' as git-svn magic cookies and remove them.  If present, the
+Subversion commit ID is extracted and made the value of a per-commit
+property named 'svn', which becomes visible and editable. Takes a
+selection set of events to modify, defaulting to all events.</para>
+
+<para>The command modifier "strip" suppresses saving the 'svn'
+property. This option was required for older versions of this tool
+that did not automatically suppress writing properties to importers
+that couldn't handle them: it has been retained for backwards
+compatibility.</para>
+
+<para>The "dump" modifier emits git-svn-id information to a file
+(named by the second argument) one line per revision, with each line
+consisting of the revision followed by a colon followed by the
+committer header of the revision.  With the "load" modifier, ignore the
+selection set and treat the second argument as a dump file to be
+loaded, setting 'svn' properties from it.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>references</command>
+</term>
+<listitem>
+<para>Search commit comments for strings that might be CVS- or
+Subversion-style revision identifiers. This will be useful when you
+want to replace them with equivalent cookies that can automatically be
+translated into VCS-independent action stamps.  See the description of
+the <command>reflift</command> command for discussion.</para>
+<para>With the modifier 'edit', edit the set where revision IDs are
+found.</para>
+
+<para>With the modifier "lift", attempt to resolve Subversion and CVS
+cookies in comments into action stamps. An action stamp is a
+timestamp/email combination uniquely identifying the commit associated
+with that blob, as described in <xref linkend='style'/>.</para>
+
+<para>A Subversion cookie is a comment substring of the form
+[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
+metadata or matching a $Revision$ header embedded in blob data for the
+filename.</para>
+
+<para>A CVS cookie is a comment substring of the form
+[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
+revision matching a CVS $Id$ or $Revision$ header embedded in blob
+data for the filename.</para>
+
+<para>You can use the this command to clean up stray CVS and
+Subversion revision references in comments. Find them with the
+<command>references</command>, then replace them with equivalent
+cookies, then run <command>references lift</command>.  to turn the
+cookies into action stamps without having to do the lookup by
+hand.</para>
+
+<para>It is not guaranteed that every such reference will be resolved,
+or even that any at all will be. Generally, if the repo contains git-svn
+headers and <command>gitsvnparse</command> has been called, every SVN
+cookie will resolve. CVS references are less likely to be resolvable.</para>  
+</listitem>
+</varlistentry>
+</variablelist>
+
+</refsect2>
+
 <refsect2 id='artifact-removal'><title>ARTIFACT REMOVAL</title>
 
 <para>Some commands automate fixing various kinds of artifacts
@@ -792,37 +850,6 @@ deleted.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>reflift</command>
-</term>
-<listitem>
-<para>This command resolves Subversion and CVS cookies in comments into action
-stamps. An action stamp is a timestamp/email combination uniquely
-identifying the commit associated with that blob, as described in
-<xref linkend='style'/>.</para>
-
-<para>A Subversion cookie is a comment substring of the form
-[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
-metadata or matching a $Revision$ header embedded in blob data for the
-filename.</para>
-
-<para>A CVS cookie is a comment substring of the form
-[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
-revision matching a CVS $Id$ or $Revision$ header embedded in blob
-data for the filename.</para>
-
-<para>You can use the this command to clean up stray CVS and
-Subversion revision references in comments. Find them with the
-<command>revlist</command>, then replace them with equivalent cookies,
-then run <command>reflift</command>.  to turn the cookies into action
-stamps without having to do the lookup by hand.</para>
-
-<para>It is not guaranteed that every such reference will be resolved,
-or even that any at all will be. Generally, if the repo contains git-svn
-headers and <command>gitsvnparse</command> has been called, every SVN
-cookie will resolve. CVS references are less likely to be resolvable.</para>  
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><command>authormap</command>
 </term>
 <listitem>
@@ -837,27 +864,11 @@ all events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>gitsvnparse</command>
+<term><command>gitsvnparse strip</command>
 </term>
 <listitem>
-<para>Interpret final comment lines of commits beginning with
-'git-svn-id:' as git-svn magic cookies and remove them.  If present, the
-Subversion commit ID is extracted and made the value of a per-commit
-property named 'svn', which becomes visible and editable. Takes a
-selection set of events to modify, defaulting to all events.</para>
-
-<para>The command modifier "strip" suppresses saving the 'svn'
-property. This option was required for older versions of this tool
-that did not automatically suppress writing properties to importers
-that couldn't handle them: it has been retained for backwards
-compatibility.</para>
-
-<para>The "dump" modifier emits git-svn-id information to a file
-(named by the second argument) one line per revision, with each line
-consisting of the revision followed by a colon followed by the
-committer header of the revision.  With the "load" modifier, ignore the
-selection set and treat the second argument as a dump file to be
-loaded, setting 'svn' properties from it.</para>
+<para>The <command>gitsvnparse</command> (previously described) will strip
+out git-svn metadata lines when given the 'strip' modifier.</para>
 </listitem>
 </varlistentry>
 </variablelist>

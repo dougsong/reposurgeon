@@ -3508,59 +3508,6 @@ the commit's parent and the commit itself deleted.  Also,
         self.chosen().delete(deletion_set, ["obliterate", "tagback"])
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
-
-    def help_reflift(self):
-        print("""
-Transform commit-reference cookies from CVS and Subversion into action
-stamps.  This command expects cookies consisting f the leading string
-'[[', followed by a VCS identifier (currently SVN or CVS) followed by
-VCS-dependent information, followed by ']]'. An action stamp pointing
-at the corresponding commit is substituted when possible.
-""")
-    def do_reflift(self, line):
-        "Re-map Subversion references."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        hits = 0
-        for (name, regexp, refmap, extractor) in (("CVS",
-                                             r"([^:\]]+):([0-9.]+)",
-                                             self.chosen().cookiemap,
-                                             lambda m: tuple(m.groups())),
-                                            ("SVN",
-                                             "([0-9]+)",
-                                             self.chosen().svnrevs,
-                                             lambda m: m.group(1)),
-                                            ):
-            match_re = re.compile(re.escape("[[%s:" % name) \
-                                  + regexp \
-                                  + re.escape("]]"))
-            for ei in self.selection:
-                event = repo.events[ei]
-                if isinstance(event, Commit):
-                    # Minor bug: if there are multiple cookies, the first one
-                    # without a unique match aborts all later substitutions.
-                    while True:
-                        m = match_re.search(event.comment)
-                        if not m:
-                            break
-                        payload = extractor(m)
-                        possible = refmap.get(payload)
-                        if possible is None:
-                            complain("no commit matches " + repr(payload))
-                            break
-                        elif len(possible) == 1:
-                            commit = self.chosen().objfind(possible[0])
-                            event.comment = event.comment[:m.start()] \
-                                            + commit.committer.action_stamp() \
-                                            + event.comment[m.end():]
-                            hits += 1
-                        else:
-                            complain("more than one commit matches " + repr(payload))
-                            break
-        announce("%d references resolved." % hits)
                         
     def help_graft(self):
         print("""
@@ -3693,49 +3640,96 @@ and treat the second argument as a dump file to be loaded, setting
                             if k == 'svn':
                                 wfp.write("%s:%s\n" % (v, str(event.committer)))
 
-    def help_revlist(self):
+    def help_references(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
 references in them. With the modifier 'edit', edit this set.
+
+With the modifier 'lift', transform commit-reference cookies from CVS
+and Subversion into action stamps.  This command expects cookies
+consisting of the leading string '[[', followed by a VCS identifier
+(currently SVN or CVS) followed by VCS-dependent information, followed
+by ']]'. An action stamp pointing at the corresponding commit is
+substituted when possible.
 """)
-    def do_revlist(self, line):
+    def do_references(self, line):
         "Look for things that might be CVS or Subversion revision references."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        idhits = []
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if hasattr(event, "comment"):
-                text = event.comment
-            elif hasattr(event, "text"):
-                text = event.text
-            else:
-                continue
-            refstyles = (
-                # Subversion references
-                r"\Wr([0-9]+)\W",
-                r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
-                # CVS references
-                r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
-                # Possible bare CVS references
-                r"[0-9]+\.[0-9]+\.[0-9]+",
-                )
-            for pattern in refstyles:
-                if re.search(pattern, text):
-                    if ei not in idhits:
-                        idhits.append(ei)
-        if idhits:
-            if rest.startswith("edit"):
-                self.edit(idhits, rest[4:].strip())
-            else:
-                for ei in idhits:
-                    event = self.chosen().events[ei]
-                    if hasattr(event, "lister"):
-                        summary = event.lister(ei, screenwidth())
-                        if summary:
-                            sys.stdout.write(summary + "\n")
+        if "lift" in rest:
+            hits = 0
+            for (name, regexp, refmap, extractor) in (("CVS",
+                                                 r"([^:\]]+):([0-9.]+)",
+                                                 self.chosen().cookiemap,
+                                                 lambda m: tuple(m.groups())),
+                                                ("SVN",
+                                                 "([0-9]+)",
+                                                 self.chosen().svnrevs,
+                                                 lambda m: m.group(1)),
+                                                ):
+                match_re = re.compile(re.escape("[[%s:" % name) \
+                                      + regexp \
+                                      + re.escape("]]"))
+                for ei in self.selection:
+                    event = repo.events[ei]
+                    if isinstance(event, Commit):
+                        # Minor bug: if there are multiple cookies, the first one
+                        # without a unique match aborts all later substitutions.
+                        while True:
+                            m = match_re.search(event.comment)
+                            if not m:
+                                break
+                            payload = extractor(m)
+                            possible = refmap.get(payload)
+                            if possible is None:
+                                complain("no commit matches " + repr(payload))
+                                break
+                            elif len(possible) == 1:
+                                commit = self.chosen().objfind(possible[0])
+                                event.comment = event.comment[:m.start()] \
+                                                + commit.committer.action_stamp() \
+                                                + event.comment[m.end():]
+                                hits += 1
+                            else:
+                                complain("more than one commit matches " + repr(payload))
+                                break
+            announce("%d references resolved." % hits)
+        else:
+            # No modifier, just list io edit
+            idhits = []
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if hasattr(event, "comment"):
+                    text = event.comment
+                elif hasattr(event, "text"):
+                    text = event.text
+                else:
+                    continue
+                refstyles = (
+                    # Subversion references
+                    r"\Wr([0-9]+)\W",
+                    r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
+                    # CVS references
+                    r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
+                    # Possible bare CVS references
+                    r"[0-9]+\.[0-9]+\.[0-9]+",
+                    )
+                for pattern in refstyles:
+                    if re.search(pattern, text):
+                        if ei not in idhits:
+                            idhits.append(ei)
+            if idhits:
+                if rest.startswith("edit"):
+                    self.edit(idhits, rest[4:].strip())
+                else:
+                    for ei in idhits:
+                        event = self.chosen().events[ei]
+                        if hasattr(event, "lister"):
+                            summary = event.lister(ei, screenwidth())
+                            if summary:
+                                sys.stdout.write(summary + "\n")
 
 if __name__ == '__main__':
     try:
