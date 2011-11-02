@@ -118,6 +118,8 @@ list /regression/      ;; list all commits and tags with comments or
 
 delete =T &amp; 1..:97     ;; delete tags from event 1 to mark 97
 
+inspect [Makefile]     ;; Inspect all commits with a file op touching Makefile
+
 list *master           ;; List commits on the 'master' branch
 </programlisting>
 
@@ -234,6 +236,14 @@ Python string escape such as \x2f).</para>
 <para>A text search matches against the comment fields of commits and
 annotated tags, or against their author/committer headers. 
 It matches against the text of passthrough objects.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>paths</firstterm></term>
+<listitem><para>A path name enclosed in [] resolves to the set of
+all commits with a fileop that touches that file path - modifies
+that change it, deletes that remove it, renames and copies that have 
+it as a source or target.</para>
 </listitem>
 </varlistentry>
 </variablelist>

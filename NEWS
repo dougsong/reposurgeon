@@ -6,6 +6,7 @@
      reflift transforms CVS & SVN revision-reference cookies into action stamps.
      cvslift -> cvspurge (it no longer does ID lifting)
      gitsvnlift -> gitsvnparse (it no longer does ID lifting)
+     New [ ] syntax for selecting commits containing a specified path.
 
 1.4: 2011-10-28
      Code is pylint clean.
