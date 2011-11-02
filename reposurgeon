@@ -3639,13 +3639,20 @@ extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property.
+
+The 'dump' modifier emits git-svn-id information to a file (named by
+the second argument) one line per revision, with each line consisting
+of the revision followed by a colon followed by the committer header
+of the revision.  With the 'load' modifier, ignore the selection set
+and treat the second argument as a dump file to be loaded, setting
+'svn' properties from it.
 """)
     def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        # Undocumented - load svnid attribution pairs
+        # Load svnid:attribution pairs from a map file.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "load" in rest:
             revdict = {}
@@ -3676,14 +3683,15 @@ saving the 'svn' property.
                         self.chosen().svnrevs[fields[0]].append(event.mark)
                         if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
-        # Undocumented: dump svnid:attribution pairs
+        # Dump svnid:attribution pairs to a map file
         if "dump" in line:
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit):
-                    for (k, v) in event.properties:
-                        if k == 'svn':
-                            print "%s:%s" % (v, str(event.committer)) 
+            with open(rest.split()[1], "w") as wfp:
+                for ei in self.selection:
+                    event = self.chosen().events[ei]
+                    if isinstance(event, Commit):
+                        for (k, v) in event.properties:
+                            if k == 'svn':
+                                wfp.write("%s:%s\n" % (v, str(event.committer)))
 
     def help_revlist(self):
         print("""
