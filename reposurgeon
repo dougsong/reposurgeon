@@ -2286,7 +2286,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         else:
             # FIXME: We probably want to stop doing this
             self.selection.sort()
-        return self.line
+        return self.line.lstrip()
     def peek(self):
         return self.line and self.line[0]
     def pop(self):
