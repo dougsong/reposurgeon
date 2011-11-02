@@ -750,7 +750,37 @@ list.</para>
 </variablelist>
 </refsect2>
 
-<refsect2 id="referencr-lifting"><title>REFERENCE LIFTING</title>
+<refsect2 id="reference-lifting"><title>REFERENCE LIFTING</title>
+
+<para>This group of commands is meant for fixing up references in commits
+that are in the format of older version control systems.  The general
+workflow is this: first, go over the comment history and change all
+old-fashioned commit references into machine-parseable cookies.  Then,
+automatically turn the machine-parseable cookie into action stamps.
+The point of dividing the process this way is that the first part is
+hard for a machine to get right, while the second part is prone to errors
+when a human does it.</para>
+
+<para>A Subversion cookie is a comment substring of the form
+[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
+metadata or matching a $Revision$ header embedded in blob data for the
+filename.</para>
+
+<para>A CVS cookie is a comment substring of the form
+[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
+revision matching a CVS $Id$ or $Revision$ header embedded in blob
+data for the filename.</para>
+
+<para>An action stamp is an RFC3339timestamp, followed by a '!',
+followed by a committer email address; it refers to a commit without
+being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
+"2011-10-25T15:11:09Z!fred@foonly.com".</para>
+
+<para>Find possible CVS and Subversion references with the
+<command>references</command>, then replace them with equivalent
+cookies, then run <command>references lift</command> to turn the
+cookies into action stamps without having to do the lookup by
+hand.</para>
 
 <variablelist>
 <varlistentry>
@@ -784,32 +814,13 @@ loaded, setting 'svn' properties from it.</para>
 <para>Search commit comments for strings that might be CVS- or
 Subversion-style revision identifiers. This will be useful when you
 want to replace them with equivalent cookies that can automatically be
-translated into VCS-independent action stamps.  See the description of
-the <command>reflift</command> command for discussion.</para>
-<para>With the modifier 'edit', edit the set where revision IDs are
-found.</para>
+translated into VCS-independent action stamps. With the modifier
+'edit', edit the set where revision IDs are found.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps. An action stamp is a
 timestamp/email combination uniquely identifying the commit associated
 with that blob, as described in <xref linkend='style'/>.</para>
-
-<para>A Subversion cookie is a comment substring of the form
-[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
-metadata or matching a $Revision$ header embedded in blob data for the
-filename.</para>
-
-<para>A CVS cookie is a comment substring of the form
-[[CVS:filename:revision]] (example: [[CVS:src/README:1.23]] with the
-revision matching a CVS $Id$ or $Revision$ header embedded in blob
-data for the filename.</para>
-
-<para>You can use the this command to clean up stray CVS and
-Subversion revision references in comments. Find them with the
-<command>references</command>, then replace them with equivalent
-cookies, then run <command>references lift</command>.  to turn the
-cookies into action stamps without having to do the lookup by
-hand.</para>
 
 <para>It is not guaranteed that every such reference will be resolved,
 or even that any at all will be. Generally, if the repo contains git-svn
@@ -1003,15 +1014,12 @@ set is $Date:, $Revision:, $Author:, $HeadURL and $Id:. CVS uses
 $Author:, $Date:, $Header:, $Id:, $Log:, $Revision:, also (rarely)
 $Locker:, $Name:, $RCSfile:, $Source:, and $State:.</para>
 
-<para>The combination of a committer email address with a ISO8601
-timestamp is a good way to refer to a commit without being
-VCS-specific.  Thus, instead of "commit 304a53c2",
-"2011-10-25T15:11:09Z!fred@foonly.com". This is the format that
-reflift generates when it can resolve an SVN or CVS reference in a
-comment. It is best that you <emphasis>not vary from this
-format</emphasis>, even in trivial ways like omitting the 'Z' or
-changing the 'T' or '!'. Making these cookies uniform and
-machine-parseable will have good consequences for future
+<para>When you need to specify a commit, use the action-stamp format
+that <command>references lift</command> generates when it can resolve
+an SVN or CVS reference in a comment. It is best that you
+<emphasis>not vary from this format</emphasis>, even in trivial ways
+like omitting the 'Z' or changing the 'T' or '!'. Making action stamps
+uniform and machine-parseable will have good consequences for future
 repository-browsing tools.</para>
 
 <para>Sometimes, in converting a repository, you may need to insert an
