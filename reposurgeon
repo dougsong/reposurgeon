@@ -2524,7 +2524,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             matchers = []
             for (i, e) in enumerate(self.chosen()):
                 for searchable in ("author", "branch", "comment",
-                                   "committer", "committish", "text"):
+                                   "committer", "committish", "text",
+                                   "tagger", "name"):
                     if hasattr(e, searchable) and regex.search(str(getattr(e, searchable))):
                         matchers.append(i)
                 # We don't do blobs because it would be too slow
