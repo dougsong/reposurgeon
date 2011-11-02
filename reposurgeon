@@ -3699,7 +3699,7 @@ substituted when possible.
                                 break
             announce("%d references resolved." % hits)
         else:
-            # No modifier, just list io edit
+            # No modifier, just list or edit
             idhits = []
             for ei in self.selection:
                 event = repo.events[ei]
