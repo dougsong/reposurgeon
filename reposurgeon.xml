@@ -886,7 +886,7 @@ out git-svn metadata lines when given the 'strip' modifier.</para>
 </refsect2>
 
 
-<refsect2 id='examining tree-states'><title>EXAMINING TREE STATES</title>
+<refsect2 id='examining-tree-states'><title>EXAMINING TREE STATES</title>
 
 <variablelist>
 <varlistentry>
