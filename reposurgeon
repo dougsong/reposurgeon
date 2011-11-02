@@ -1172,7 +1172,7 @@ class Repository:
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
                             if not (fileop.path,blob.cookie[1]) in self.cookiemap:
-                                    self.cookiemap[(fileop.path, blob.cookie[1])] = []
+                                self.cookiemap[(fileop.path, blob.cookie[1])] = []
                             self.cookiemap[(fileop.path,blob.cookie[1])].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
@@ -1592,9 +1592,9 @@ class Repository:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
         for (key, value) in self.cookiemap.items():
-             self.cookiemap[key] = [remark(x) for x in value]
+            self.cookiemap[key] = [remark(x) for x in value]
         for (key, value) in self.svnrevs.items():
-             self.svnrevs[key] = [remark(x) for x in value]
+            self.svnrevs[key] = [remark(x) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -3806,7 +3806,7 @@ must resolve to exactly two commits.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        self.set_selection_set(line, list(range(len(self.chosen()))))
         bounds = list(self.selection)
         bounds.sort()
         bounds = tuple([repo.events[i] for i in bounds])
