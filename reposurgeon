@@ -728,9 +728,21 @@ class Commit:
                 if fileop.source in ancestors:
                     del ancestors[fileop.source]
         return ancestors
-    def checkout(self):
+    def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
-        print self.__manifest()
+        if not directory:
+            directory = os.path.join(self.repo.subdir(), self.mark)
+        try:
+            os.mkdir(directory)
+            for (path, mark) in self.__manifest().items():
+                fullpath = os.path.join(directory, path)
+                fulldir = os.path.dirname(fullpath)
+                if not os.path.exists(fulldir):
+                    os.makedirs(fulldir)
+                os.link(self.repo.objfind(mark).blobfile(), fullpath)
+        except OSError:
+            raise Recoverable("could not create checkout directory or files.")
+        return directory
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
@@ -2243,6 +2255,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         return line
     def do_shell(self, line):
         "Execute a shell command."
+        sys.stdout.flush()
+        sys.stderr.flush()
         if os.system(line):
             raise Recoverable("'shell %s' returned error." % line)
     def do_EOF(self, unused):
@@ -3757,7 +3771,7 @@ substituted when possible.
     def help_checkout(self):
         print("""
 Check out files for a specified commit into a directory.  The selection
-set must resolve to a singleton commit. 
+set must resolve to a singleton commit.
 """)
     def do_checkout(self, line):
         "Check out files for a specified commit into a directory."
@@ -3766,13 +3780,15 @@ set must resolve to a singleton commit.
             return
         repo = self.chosen()
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        if not rest:
+            raise Recoverable("no target directory specified.")
         if len(self.selection) == 1:
             commit = repo.events[self.selection[0]]
             if not isinstance(commit, Commit):
                 raise Recoverable("not a commit.")
         else:
             raise Recoverable("a singleton selection set is required.")
-        commit.checkout()
+        commit.checkout(rest)
 
 if __name__ == '__main__':
     try:

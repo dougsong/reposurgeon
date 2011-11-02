@@ -1002,6 +1002,17 @@ and executes it as a command.</para></listitem>
 <para>List the commands you have entered this session.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>checkout</command>
+        <emphasis>directory</emphasis>
+</term>
+<listitem>
+<para>Takes a selection set which must resolve to a single commit, and
+a second argument. The second argument is interpreted as a directory
+name.  The state of the code tree at that commit is materialized beneath
+the directory.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 </refsect1>
