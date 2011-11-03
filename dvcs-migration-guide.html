@@ -150,14 +150,17 @@ probably do not want to use this option.</p>
 tags and branches is not quite what you want for a one-time conversion
 to a standalone git repo. It imports all branches and tags as remote
 svn branches, and creates a remote branch named 'trunk', which you
-won't need.  The following steps will fix this up:
+won't need.  The following steps will fix this up:</p>
 
 <ol>
-<li>Delete .git/refs/remotes/origin/tags/trunk</li>
-<li>Move the other files in .git/refs/remotes/origin/tags to .git/refs/tags</li>
+<li>Move the files in .git/refs/remotes/origin/tags to .git/refs/tags</li>
 <li>Remove the .git/refs/remotes/origin/tags directory.</li>
 <li>Move remaining files in .git/refs/remotes/origin/ to .git/refs/heads</li>
 </ol>
+
+<p>If you have version 1.6 or later of reposurgeon, you don't need to
+do this step manually, because the command
+<command>gitsvnparse</command> will do it for you.</p>
 
 <div>&nbsp;</div>
 
@@ -224,12 +227,15 @@ job. The remainder of this section explains <code>reposurgeon</code>
 commands for common problems; the tool has a lot of additional power
 for dealing with unusual situations</p>
 
-<p>The 'cvslift' command removes most cvs2svn artifacts.
+<p>(The descriptions below apply to reposurgeon 1.6 and later.
+The command set was significantly different in earlier versions.)</p>
+
+<p>The 'cvspurge' command removes most cvs2svn artifacts.
 Specifically, it makes all junk commits generated to carry tags into
 actual git tag objects. Then it removes all those that are either
 empty or have fileop lists consisting entirely of deletes.</p>
 
-<p>The 'gitsvnlift' command parses git-svn metadata lines and makes
+<p>The 'gitsvnparse' command parses git-svn metadata lines and makes
 the Subversion revision number from them a property of the commit.
 You will probably want to do <code>gitsvnlift strip</code> at
 some point in the cleanup.</p>
@@ -252,6 +258,10 @@ one or two M fileops referring to a blob much earlier than the commit.
 Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
+
+<p>Also, read the documentation of the <command>references</command>; 
+reposurgeon has facilities for fixing up Subversion and CVS changeset 
+references in comments so they're still meaningful.</p>
 
 <p>Experiments with reposurgeon suggest that <code>git import</code>
 doesn't try to pack or otherwise optimize for space when it populates
