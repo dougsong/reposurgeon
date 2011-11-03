@@ -21,7 +21,7 @@
      Restore capability to coalesce empty log messages
 
 1.3: 2011-10-25
-     Code moved to Python 3.
+     Code moved to Python 3 compatibility with 2to3.
      cvspreen -> cvslift
      cvslift generates tag objects corresponding to cvs2svn-generated tags.
      Don't coalesce comments that read '*** empty log message ***'
