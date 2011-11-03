@@ -168,7 +168,7 @@ do this step manually, because the command
 one at <a href="https://github.com/nirvdrum/svn2git">GitHub</a> and
 one at <a href="https://gitorious.org/svn2git/">Gitorious</a>.</p>
 
-<p>The GitHub one is a thin wrapper around <code>git-svn</code> that,
+<p>The GitHub one is a thin wrapper around git-svn that,
 according to its documentation, does something quite like the fixup
 described above. But it turns the remote tags into actual tag objects
 rather than "lightweight" tags (which are really just a kind of
@@ -187,7 +187,7 @@ lot of cruft and conversion artifacts in it.  Here are some common
 forms of cruft:</p>
 
 <dl>
-<dt><em style="bold">Metadata inserted by <code>git-svn</code>.</em></dt>
+<dt><em style="bold">Metadata inserted by git-svn.</em></dt>
 <dd><code>git-svn</code> inserts lines at the end of each commit
 comment that refer back to the Subversion commit it is derived.  This
 is necessary for live-gatewaying, and useful during one-shot
@@ -230,26 +230,27 @@ for dealing with unusual situations</p>
 <p>(The descriptions below apply to reposurgeon 1.6 and later.
 The command set was significantly different in earlier versions.)</p>
 
-<p>The 'cvspurge' command removes most cvs2svn artifacts.
+<p>The <code>cvspurge</code> command removes most cvs2svn artifacts.
 Specifically, it makes all junk commits generated to carry tags into
 actual git tag objects. Then it removes all those that are either
 empty or have fileop lists consisting entirely of deletes.</p>
 
-<p>The 'gitsvnparse' command parses git-svn metadata lines and makes
-the Subversion revision number from them a property of the commit.
-You will probably want to do <code>gitsvnlift strip</code> at
+<p>The <code>gitsvnparse</code> command parses git-svn metadata lines
+and makes the Subversion revision number from them a property of the
+commit.  You will probably want to do <code>gitsvnlift strip</code> at
 some point in the cleanup.</p>
 
-<p>The 'edit' command is useful for changing commit references in
-comments to a VCS-independent form. This is where you may be glad for
-the magic-cookie lines <code>git-svn</code> patches into comments;
-you'll find the Subversion commit number in them following '@'. When
-you've done all that. 'edit' is also useful for deleting those git-svn
-lines once you're done resoving references.</p>
+<p>The <code>edit</code> command is useful for changing commit
+references in comments to a VCS-independent form. This is where you
+may be glad for the magic-cookie lines git-svn patches
+into comments; you'll find the Subversion commit number in them
+following '@'. When you've done all that. <code>edit</code> is also
+useful for deleting those git-svn lines once you're done resoving
+references.</p>
 
-<p>The 'edit' command is also good for (1) fixing up up multiline
+<p>The <code>edit</code> command is also good for (1) fixing up up multiline
 comments and (2) tweaking the comments on the tag objects generated
-by the 'cvslift' step.</p>
+by the <code>cvslift</code> step.</p>
 
 <p>The command <code>list /cvs2svn/</code> will show you all remaining
 <code>cvs2svn</code> artifacts.  Some can be deleted; a clue to look
@@ -259,7 +260,7 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
-<p>Also, read the documentation of the <command>references</command>; 
+<p>Also, read the documentation of the <code>references</code> command; 
 reposurgeon has facilities for fixing up Subversion and CVS changeset 
 references in comments so they're still meaningful.</p>
 
@@ -292,7 +293,7 @@ notes are enclosed in double square brackets. Junk commits generated
 by cvs2svn have been removed, commit references have been mapped into
 a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]
-<blockquote>
+</blockquote>
 
 <h2 id="recovery">Recovering from error</h2>
 
