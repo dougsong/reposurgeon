@@ -1909,7 +1909,11 @@ class popen_or_die:
             if sys.version_info.major >= 3:
                 raise extype(value).with_traceback(traceback)
             else:
-                raise extype, value, traceback
+                try:
+                    # Python 3.2 chokes on this syntax.
+                    raise extype, value, traceback
+                except SyntaxError:
+                    pass
         if self.fp.close() is not None:
             legend = "%s%s returned error" % (self.command, self.legend)
             if extype == Fatal:
