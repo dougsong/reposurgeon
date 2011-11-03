@@ -11,7 +11,7 @@ import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
 
-version="1.5"
+version="1.6"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -30,7 +30,8 @@ version="1.5"
 #  +-------------+    +---------+    +-------------+
 #  | Deserialize |--->| Operate |--->| Reserialize |
 #  +-------------+    +---------+    +-------------+
-## The general theory of reposurgeon is: you deserialize, you do stuff
+#
+# The general theory of reposurgeon is: you deserialize, you do stuff
 # to the event list that preserves correctness invariants, you
 # reserialize.  The "do stuff" is mostly not in the core classes, but
 # there is one major exception.  The primitive to delete a commit and
@@ -110,7 +111,7 @@ class VCS:
 # we need to be prepared to cope with that.
 #
 # %(tempfile)s in a command gets substituted with the name of a
-726# tempile that the calling code will know to read or write from as
+# tempile that the calling code will know to read or write from as
 # appropriate after the command is done.  If your exporter can simply
 # dump to stdout, or your importer read from stdin, leave out the
 # %(tempfile)s; reposurgeon will popen(3) the command, and it will
