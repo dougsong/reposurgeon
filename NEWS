@@ -2,6 +2,7 @@
 
 1.6:
      Fix Python 3.2 compatibility problem pointed out by Mike Swanson.
+     gitsvnparse moves remote branches/tags to local ones like (svn2git).
 
 1.5: 2011-11-02
      Suppress writing out properties if the importer won't handle them.

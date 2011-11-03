@@ -15,7 +15,7 @@ property svn 4 9022
 M 100644 :9021 locale/ru.po
 
 10: ========================================================================
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :620
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 committer stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
