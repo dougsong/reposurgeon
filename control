@@ -9,7 +9,7 @@ Description: a tool for editing version-control repository history
  commits.  It works with any version control system that can export and 
  import git fast-import streams, including git and hg and bzr.
 
-XBS-Destinations: freshmeat
+XBS-Destinations: freecode
 
 Homepage: http://www.catb.org/~esr/reposurgeon
 
