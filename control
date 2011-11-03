@@ -13,6 +13,6 @@ XBS-Destinations: freecode
 
 Homepage: http://www.catb.org/~esr/reposurgeon
 
-XBS-Logi: reposturgeon.png
+XBS-Logo: reposturgeon.png
 
 XBS-Project-Tag-List: version control, git, hg, bzr
