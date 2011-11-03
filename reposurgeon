@@ -1904,7 +1904,7 @@ class popen_or_die:
     def __exit__(self, extype, value, traceback):
         if extype:
             if verbose:
-                complain("exception %s in popen_or_die." % (extype,))
+                complain("fatal exception in popen_or_die." % (extype))
             # This is what we want, but it's only in true Python 3.x
             if sys.version_info.major >= 3:
                 raise extype(value).with_traceback(traceback)
@@ -3662,7 +3662,10 @@ and treat the second argument as a dump file to be loaded, setting
         else:
             for ei in self.selection:
                 event = self.chosen().events[ei]
-                if isinstance(event, Commit):
+                if isinstance(event, Reset):
+                    event.ref = event.ref.replace("refs/remotes/svn/",
+                                                      "refs/heads/")
+                elif isinstance(event, Commit):
                     m = re.search("\ngit-svn-id:.*\n", event.comment)
                     if m:
                         gitsvn = event.comment[m.start():m.end()]
@@ -3674,6 +3677,12 @@ and treat the second argument as a dump file to be loaded, setting
                         self.chosen().svnrevs[fields[0]].append(event.mark)
                         if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
+                    # Things that were remote branches in the git-svn pull
+                    # need to become local now.
+                    event.branch=event.branch.replace("refs/remotes/svn/tags/",
+                                                      "refs/tags/")
+                    event.branch=event.branch.replace("refs/remotes/svn/",
+                                                      "refs/heads/")
         # Dump svnid:attribution pairs to a map file
         if "dump" in line:
             with open(rest.split()[1], "w") as wfp:

@@ -787,11 +787,16 @@ hand.</para>
 <term><command>gitsvnparse</command>
 </term>
 <listitem>
-<para>Interpret final comment lines of commits beginning with
-'git-svn-id:' as git-svn magic cookies and remove them.  If present, the
-Subversion commit ID is extracted and made the value of a per-commit
-property named 'svn', which becomes visible and editable. Takes a
-selection set of events to modify, defaulting to all events.</para>
+<para>Takes a selection set of events to modify, defaulting to all
+events.</para>
+
+<para>Without modifiers, interpret final comment lines of commits
+beginning with 'git-svn-id:' as git-svn magic cookies and remove them.
+If present, the Subversion commit ID is extracted and made the value
+of a per-commit property named 'svn', which becomes visible and
+editable. Also, change refs/remotes/svn branch and lightweight tag
+names to corresponding local ones (replicating what svn2git does to
+clean up the repository).</para>
 
 <para>The command modifier "strip" suppresses saving the 'svn'
 property. This option was required for older versions of this tool

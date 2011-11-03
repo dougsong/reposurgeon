@@ -150,7 +150,7 @@ blob
 mark :287
 data 0
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :557
 author Stefan Seefeld <stefan@users.sourceforge.net> 1243903091 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1243903091 +0000
@@ -10472,7 +10472,7 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 # vim: set filetype=python sts=4 sw=4 et si :
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :612
 author Stefan Seefeld <stefan@users.sourceforge.net> 1243903317 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1243903317 +0000
@@ -10721,7 +10721,7 @@ if __name__ == '__main__':
 
 # vim: set filetype=python sts=4 sw=4 et si :
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :614
 author Stefan Seefeld <stefan@users.sourceforge.net> 1244859175 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1244859175 +0000
@@ -12087,7 +12087,7 @@ class RoundupDispatcher(SimpleXMLRPCDispatcher):
         return retn
     
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :618
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204127 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204127 +0000
@@ -12513,7 +12513,7 @@ See user.item.html in the classic template for examples.
     tal:attributes="id name; name string:@confirm@$name; readonly not:edit_ok" value=""/>
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :620
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204199 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204199 +0000
@@ -12645,7 +12645,7 @@ text_field.value=original_field;
 </tal:block>
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :622
 author Stefan Seefeld <stefan@users.sourceforge.net> 1245204254 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1245204254 +0000
@@ -13027,7 +13027,7 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 # vim: set filetype=python sts=4 sw=4 et si :
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :624
 author Pygi <pygi@users.sourceforge.net> 1246301988 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246301988 +0000
@@ -13426,7 +13426,7 @@ if __name__ == '__main__':
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :626
 author Pygi <pygi@users.sourceforge.net> 1246304657 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246304657 +0000
@@ -13825,7 +13825,7 @@ if __name__ == '__main__':
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :628
 author Pygi <pygi@users.sourceforge.net> 1246304709 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246304709 +0000
@@ -14224,7 +14224,7 @@ if __name__ == '__main__':
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :630
 author Pygi <pygi@users.sourceforge.net> 1246309197 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246309197 +0000
@@ -14234,7 +14234,7 @@ from :628
 property svn 4 4237
 M 100755 :629 scripts/notify-roundup.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :631
 author Pygi <pygi@users.sourceforge.net> 1246532948 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246532948 +0000
@@ -14243,7 +14243,7 @@ Create notify-roundup directory for related scripts
 from :630
 property svn 4 4241
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :632
 author Pygi <pygi@users.sourceforge.net> 1246533309 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533309 +0000
@@ -14300,7 +14300,7 @@ admin = roundup-admin@localhost
 ;* = unknown
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :634
 author Pygi <pygi@users.sourceforge.net> 1246533349 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533349 +0000
@@ -14355,7 +14355,7 @@ richard = rjones
 ;* = unknown
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :636
 author Pygi <pygi@users.sourceforge.net> 1246533407 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533407 +0000
@@ -14410,7 +14410,7 @@ richard = rjones
 ;* = unknown
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :638
 author Pygi <pygi@users.sourceforge.net> 1246533440 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533440 +0000
@@ -14420,7 +14420,7 @@ from :636
 property svn 4 4245
 M 100644 :637 scripts/notify-roundup/notify-roundup.ini
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :639
 author Pygi <pygi@users.sourceforge.net> 1246533591 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533591 +0000
@@ -14515,7 +14515,7 @@ def init(db):
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :641
 author Pygi <pygi@users.sourceforge.net> 1246533624 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533624 +0000
@@ -14525,7 +14525,7 @@ from :639
 property svn 4 4247
 M 100644 :640 scripts/notify-roundup/detectors/svnauditor.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :642
 author Pygi <pygi@users.sourceforge.net> 1246533702 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533702 +0000
@@ -14593,7 +14593,7 @@ if __name__ == '__main__':
     print getRevision(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :644
 author Pygi <pygi@users.sourceforge.net> 1246533786 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533786 +0000
@@ -14603,7 +14603,7 @@ from :642
 property svn 4 4249
 M 100644 :643 scripts/notify-roundup/extensions/revision_info.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :645
 author Pygi <pygi@users.sourceforge.net> 1246533838 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533838 +0000
@@ -14647,7 +14647,7 @@ data 836
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :647
 author Pygi <pygi@users.sourceforge.net> 1246533871 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246533871 +0000
@@ -14745,7 +14745,7 @@ def init(db):
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :649
 author Pygi <pygi@users.sourceforge.net> 1246534198 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246534198 +0000
@@ -14846,7 +14846,7 @@ def init(db):
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :651
 author Pygi <pygi@users.sourceforge.net> 1246534392 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246534392 +0000
@@ -14949,7 +14949,7 @@ def init(db):
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :653
 author Pygi <pygi@users.sourceforge.net> 1246535343 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246535343 +0000
@@ -14994,7 +14994,7 @@ data 836
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :655
 author Pygi <pygi@users.sourceforge.net> 1246537172 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246537172 +0000
@@ -15454,7 +15454,7 @@ anybody@everywhere.net
 
 </tal:doc>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :658
 author Pygi <pygi@users.sourceforge.net> 1246538668 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246538668 +0000
@@ -15744,7 +15744,7 @@ data 10955
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :660
 author Pygi <pygi@users.sourceforge.net> 1246541310 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246541310 +0000
@@ -15754,7 +15754,7 @@ from :658
 property svn 4 4257
 M 100644 :659 scripts/notify-roundup/html/bug.item.html
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :661
 author Pygi <pygi@users.sourceforge.net> 1246544192 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246544192 +0000
@@ -15820,7 +15820,7 @@ Current limitations
 
 We are aware of the those limitations, and have plans to alleviate them in the future.
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :663
 author Pygi <pygi@users.sourceforge.net> 1246545609 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246545609 +0000
@@ -15830,7 +15830,7 @@ from :661
 property svn 4 4259
 M 100644 :662 scripts/notify-roundup/doc/README
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :664
 author Pygi <pygi@users.sourceforge.net> 1246556736 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246556736 +0000
@@ -15899,7 +15899,7 @@ richard = rjones
 ;* = unknown
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :666
 author Pygi <pygi@users.sourceforge.net> 1246556873 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246556873 +0000
@@ -16364,7 +16364,7 @@ if __name__ == '__main__':
 #   - Initial version released
 #
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :669
 author Pygi <pygi@users.sourceforge.net> 1246557447 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557447 +0000
@@ -16375,7 +16375,7 @@ property svn 4 4262
 M 100644 :667 scripts/beta-notify/notify-roundup.ini
 M 100755 :668 scripts/beta-notify/notify-roundup.py
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :670
 author Pygi <pygi@users.sourceforge.net> 1246557683 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557683 +0000
@@ -16384,7 +16384,7 @@ Branched gsoc-2009 for some major rewrites
 from :669
 property svn 4 4263
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :671
 author Pygi <pygi@users.sourceforge.net> 1246557732 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557732 +0000
@@ -16401,7 +16401,7 @@ D scripts/notify-roundup/html/user.item.html
 D scripts/notify-roundup/notify-roundup.ini
 D scripts/notify-roundup/notify-roundup.py
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :672
 author Pygi <pygi@users.sourceforge.net> 1246557766 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246557766 +0000
@@ -16790,7 +16790,7 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 # vim: set filetype=python sts=4 sw=4 et si :
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :674
 author Pygi <pygi@users.sourceforge.net> 1246558072 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558072 +0000
@@ -16800,7 +16800,7 @@ from :672
 property svn 4 4266
 M 100644 :673 share/roundup/templates/devel/schema.py
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :675
 author Pygi <pygi@users.sourceforge.net> 1246558198 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558198 +0000
@@ -16888,7 +16888,7 @@ def init(db):
 
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :677
 author Pygi <pygi@users.sourceforge.net> 1246558325 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558325 +0000
@@ -16976,7 +16976,7 @@ def init(db):
 
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :679
 author Pygi <pygi@users.sourceforge.net> 1246558439 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558439 +0000
@@ -16986,7 +16986,7 @@ from :677
 property svn 4 4269
 M 100644 :678 scripts/notify-roundup/detectors/svnauditor.py
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :680
 author Pygi <pygi@users.sourceforge.net> 1246558546 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558546 +0000
@@ -17275,7 +17275,7 @@ data 10948
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :682
 author Pygi <pygi@users.sourceforge.net> 1246558723 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246558723 +0000
@@ -17711,7 +17711,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :684
 author Pygi <pygi@users.sourceforge.net> 1246978581 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978581 +0000
@@ -18156,7 +18156,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :686
 author Pygi <pygi@users.sourceforge.net> 1246978888 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978888 +0000
@@ -18601,7 +18601,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :688
 author Pygi <pygi@users.sourceforge.net> 1246978981 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246978981 +0000
@@ -19046,7 +19046,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :690
 author Pygi <pygi@users.sourceforge.net> 1246979050 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979050 +0000
@@ -19491,7 +19491,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :692
 author Pygi <pygi@users.sourceforge.net> 1246979128 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979128 +0000
@@ -19935,7 +19935,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :694
 author Pygi <pygi@users.sourceforge.net> 1246979796 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246979796 +0000
@@ -20379,7 +20379,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :696
 author Pygi <pygi@users.sourceforge.net> 1246980311 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246980311 +0000
@@ -20822,7 +20822,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :698
 author Pygi <pygi@users.sourceforge.net> 1246982979 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246982979 +0000
@@ -21265,7 +21265,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :700
 author Pygi <pygi@users.sourceforge.net> 1246983236 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983236 +0000
@@ -21708,7 +21708,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :702
 author Pygi <pygi@users.sourceforge.net> 1246983416 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983416 +0000
@@ -22152,7 +22152,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :704
 author Pygi <pygi@users.sourceforge.net> 1246983524 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983524 +0000
@@ -22596,7 +22596,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :706
 author Pygi <pygi@users.sourceforge.net> 1246983572 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983572 +0000
@@ -23042,7 +23042,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :708
 author Pygi <pygi@users.sourceforge.net> 1246983711 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983711 +0000
@@ -23488,7 +23488,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :710
 author Pygi <pygi@users.sourceforge.net> 1246983998 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246983998 +0000
@@ -23938,7 +23938,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :712
 author Pygi <pygi@users.sourceforge.net> 1246984088 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984088 +0000
@@ -24390,7 +24390,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :714
 author Pygi <pygi@users.sourceforge.net> 1246984120 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984120 +0000
@@ -24842,7 +24842,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :716
 author Pygi <pygi@users.sourceforge.net> 1246984784 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984784 +0000
@@ -25295,7 +25295,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :718
 author Pygi <pygi@users.sourceforge.net> 1246984864 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984864 +0000
@@ -25749,7 +25749,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :720
 author Pygi <pygi@users.sourceforge.net> 1246984999 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246984999 +0000
@@ -26204,7 +26204,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009b
+commit refs/heads/gsoc-2009b
 mark :722
 author Pygi <pygi@users.sourceforge.net> 1246985492 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246985492 +0000
@@ -26214,7 +26214,7 @@ from :720
 property svn 4 4292
 M 100755 :721 scripts/notify-roundup/notify-roundup.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :723
 author Pygi <pygi@users.sourceforge.net> 1246997990 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246997990 +0000
@@ -26239,7 +26239,7 @@ M 100644 :667 scripts/notify-roundup/notify-roundup.ini
 M 100755 :721 scripts/notify-roundup/notify-roundup.py
 M 100644 :673 share/roundup/templates/devel/schema.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :724
 author Pygi <pygi@users.sourceforge.net> 1246998087 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246998087 +0000
@@ -26260,7 +26260,7 @@ CMD="/usr/bin/hg log `/bin/pwd` --rev=tip"
 REV=`$CMD | grep changeset`
 PYTHONPATH=/path/to/your/roundup/instance "$PYTHON" "$NOTIFY" "$CONFIG" "$REPOS" "$REV"
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :726
 author Pygi <pygi@users.sourceforge.net> 1246998473 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246998473 +0000
@@ -26327,7 +26327,7 @@ Current limitations and bugs
 
 We are aware of the those limitations, and have plans to alleviate them in the future.
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :728
 author Pygi <pygi@users.sourceforge.net> 1246999816 +0000
 committer Pygi <pygi@users.sourceforge.net> 1246999816 +0000
@@ -26395,7 +26395,7 @@ Current limitations and bugs
 
 We are aware of the those limitations, and have plans to alleviate them in the future.
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :730
 author Pygi <pygi@users.sourceforge.net> 1247000517 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247000517 +0000
@@ -26984,7 +26984,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :734
 author Pygi <pygi@users.sourceforge.net> 1247086451 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247086451 +0000
@@ -27143,7 +27143,7 @@ data 791
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :738
 author Stefan Seefeld <stefan@users.sourceforge.net> 1247347241 +0000
 committer Stefan Seefeld <stefan@users.sourceforge.net> 1247347241 +0000
@@ -27630,7 +27630,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :740
 author Pygi <pygi@users.sourceforge.net> 1247489514 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247489514 +0000
@@ -27813,7 +27813,7 @@ anybody@everywhere.net
 
 </tal:doc>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :742
 author Pygi <pygi@users.sourceforge.net> 1247496982 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247496982 +0000
@@ -28370,7 +28370,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :744
 author Pygi <pygi@users.sourceforge.net> 1247506681 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506681 +0000
@@ -28380,7 +28380,7 @@ from :742
 property svn 4 4305
 M 100755 :743 scripts/notify-roundup/notify-roundup.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :745
 author Pygi <pygi@users.sourceforge.net> 1247506739 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506739 +0000
@@ -28389,7 +28389,7 @@ Created bzr directory
 from :744
 property svn 4 4306
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :746
 author Pygi <pygi@users.sourceforge.net> 1247506794 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247506794 +0000
@@ -28398,7 +28398,7 @@ Created git dir
 from :745
 property svn 4 4307
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :747
 author Pygi <pygi@users.sourceforge.net> 1247507552 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247507552 +0000
@@ -28427,7 +28427,7 @@ PYTHONPATH=/path/to/your/roundup/instance "$PYTHON" "$NOTIFY" "$CONFIG" "$REPOS"
 
 : Nothing
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :749
 author Pygi <pygi@users.sourceforge.net> 1247507638 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247507638 +0000
@@ -28463,7 +28463,7 @@ branch.Branch.hooks.install_named_hook('post_commit', post_commit_hook,
                                  'Bazaar -> Roundup integration hook')
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :751
 author Pygi <pygi@users.sourceforge.net> 1247509467 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247509467 +0000
@@ -28845,7 +28845,7 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 # vim: set filetype=python sts=4 sw=4 et si :
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :753
 author Pygi <pygi@users.sourceforge.net> 1247516317 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247516317 +0000
@@ -29496,7 +29496,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :756
 author Pygi <pygi@users.sourceforge.net> 1247516494 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247516494 +0000
@@ -29597,7 +29597,7 @@ if __name__ == '__main__':
     print revision_info(path, revision)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :758
 author Pygi <pygi@users.sourceforge.net> 1247517156 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247517156 +0000
@@ -29608,7 +29608,7 @@ property svn 4 4313
 R "scripts/notify-roundup/extensions/revision_info.py" "scripts/notify-roundup/extensions/svn_revision_info.py"
 M 100644 :757 scripts/notify-roundup/extensions/svn_revision_info.py
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :759
 author Pygi <pygi@users.sourceforge.net> 1247517230 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247517230 +0000
@@ -29671,7 +29671,7 @@ def info(path, revision)
 def init(instance):
     instance.registerUtil('revision_info', info)
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :761
 author Pygi <pygi@users.sourceforge.net> 1247838545 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838545 +0000
@@ -29734,7 +29734,7 @@ def info(path, revision):
 def init(instance):
     instance.registerUtil('revision_info', info)
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :763
 author Pygi <pygi@users.sourceforge.net> 1247838637 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838637 +0000
@@ -29797,7 +29797,7 @@ def info(path, revision):
 def init(instance):
     instance.registerUtil('revision_info', info)
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :765
 author Pygi <pygi@users.sourceforge.net> 1247838753 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247838753 +0000
@@ -29835,7 +29835,7 @@ data 791
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :767
 author Pygi <pygi@users.sourceforge.net> 1247839731 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247839731 +0000
@@ -30011,7 +30011,7 @@ if __name__ == '__main__':
     print revision_info(path, revision)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :770
 author Pygi <pygi@users.sourceforge.net> 1247841486 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247841486 +0000
@@ -30113,7 +30113,7 @@ if __name__ == '__main__':
     print revision_info(path, revision)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :772
 author Pygi <pygi@users.sourceforge.net> 1247841539 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247841539 +0000
@@ -30197,7 +30197,7 @@ def init(instance):
     instance.registerUtil('revision_info', info)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :774
 author Pygi <pygi@users.sourceforge.net> 1247843818 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247843818 +0000
@@ -30281,7 +30281,7 @@ def init(instance):
     instance.registerUtil('revision_info', info)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :776
 author Pygi <pygi@users.sourceforge.net> 1247856684 +0000
 committer Pygi <pygi@users.sourceforge.net> 1247856684 +0000
@@ -36205,7 +36205,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :785
 author Pygi <pygi@users.sourceforge.net> 1248410105 +0000
 committer Pygi <pygi@users.sourceforge.net> 1248410105 +0000
@@ -37763,7 +37763,7 @@ if __name__ == '__main__':
 
 # vim: set filetype=python sts=4 sw=4 et si :
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :787
 author Pygi <pygi@users.sourceforge.net> 1248410908 +0000
 committer Pygi <pygi@users.sourceforge.net> 1248410908 +0000
@@ -38346,7 +38346,7 @@ data 6465
 
 </tal:block>
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :791
 author Pygi <pygi@users.sourceforge.net> 1250322191 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250322191 +0000
@@ -38764,7 +38764,7 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 # vim: set filetype=python sts=4 sw=4 et si :
 
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :794
 author Pygi <pygi@users.sourceforge.net> 1250322225 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250322225 +0000
@@ -38829,7 +38829,7 @@ def info(path, revision):
 def init(instance):
     instance.registerUtil('apply_patch', info)
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :796
 author Pygi <pygi@users.sourceforge.net> 1250323474 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250323474 +0000
@@ -38890,7 +38890,7 @@ def info(path, revision):
 def init(instance):
     instance.registerUtil('apply_patch', info)
 
-commit refs/remotes/svn/gsoc-2009
+commit refs/heads/gsoc-2009
 mark :798
 author Pygi <pygi@users.sourceforge.net> 1250324300 +0000
 committer Pygi <pygi@users.sourceforge.net> 1250324300 +0000
