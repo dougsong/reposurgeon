@@ -283,7 +283,7 @@ with command-line arguments).</para>
 <para>If the directory is a git repository and contains a 
 <filename>.git/cvsauthors</filename> file (such as is left in in place
 by <command>git cvsimport -A</command>) that file will be read in as
-if it had been given to the <command>authormap</command>.</para>
+if it had been given to the <command>authormap read</command>.</para>
 
 <para>The just-read-in repo is added to the list of loaded repositories and
 becomes the current one, selected for surgery. If it was read from a
@@ -460,7 +460,7 @@ to support.</para>
 <varlistentry>
 <term><command>delete</command>
         [<emphasis>selection-set</emphasis>]
-        [<emphasis>policy</emphasis>]
+        [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
 <para>Delete a selection set of commits. The default selection set for
@@ -819,6 +819,8 @@ loaded, setting 'svn' properties from it.</para>
 </varlistentry>
 <varlistentry>
 <term><command>references</command>
+          [<emphasis>selection-set</emphasis>]
+          [<command>lift</command>]
 </term>
 <listitem>
 <para>Search commit comments for strings that might be CVS- or
@@ -850,6 +852,7 @@ associated with repository conversions from order systems.</para>
 <variablelist>
 <varlistentry>
 <term><command>cvspurge</command>
+          [<emphasis>selection-set</emphasis>]              
 </term>
 <listitem>
 <para>
@@ -872,6 +875,8 @@ deleted.</para>
 </varlistentry>
 <varlistentry>
 <term><command>authormap</command>
+          [<emphasis>selection-set</emphasis>]
+          [<command>filename</command>]
 </term>
 <listitem>
 <para>Apply an author mapping file.  May be useful if you are editing
@@ -882,8 +887,8 @@ by whitespace) followed by a full name and email address.  Email
 addresses in committer and author metdata for which the local ID
 matches between &lt; and @ are replaced according to the mapping (this
 handles git-svn lifts). Alternatively, if the local ID is the entire
-address, this is also considered a match (this handles what cvs2git
-does).  Takes a selection set of events to modify, defaulting to all
+address, this is also considered a match (this handles what git-cvsimport 
+and cvs2git do).  Takes a selection set of events to modify, defaulting to all
 events.</para>
 
 <para>With no file argument, write each unique committer, author, and tagger
@@ -893,6 +898,7 @@ file.</para>
 </varlistentry>
 <varlistentry>
 <term><command>gitsvnparse strip</command>
+          [<emphasis>selection-set</emphasis>]
 </term>
 <listitem>
 <para>The <command>gitsvnparse</command> (previously described) will strip
@@ -919,6 +925,7 @@ the directory.</para>
 </varlistentry>
 <varlistentry>
 <term><command>diff</command>
+          [<emphasis>selection-set</emphasis>]
 </term>
 <listitem>
 <para>Display the difference between commits. Takes a selection-set
