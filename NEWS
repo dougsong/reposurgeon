@@ -1,8 +1,9 @@
 			reposurgeon project news
 
 1.7:
-     authormap command handles /cvsimport/cvs2git style: "localname <localname>"
-     authormap with no arguments prints a list of committer/author/taggers
+     authormap -> authors; the syntax has changed, read theman page.
+     authors command handles /cvsimport/cvs2git style: "localname <localname>"
+     authors with no arguments prints a list of committer/author/taggers
      Automatic use of .git/cvsauthors for ID mapping.
 
 1.6: 2011-11-03

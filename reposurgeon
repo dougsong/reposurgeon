@@ -1775,7 +1775,7 @@ def read_repo(source, preferred):
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(tp, progress=showprogress)
             # kluge: git-cvsimport -A might have left this in place
-            cvsauthors = os.path.join(repo.vcs.subdir(), "cvsauthors")
+            cvsauthors = os.path.join(repo.vcs.subdirectory, "cvsauthors")
             if os.path.exists(cvsauthors):
                 with open(cvsauthors) as fp:
                     repo.read_authormap(fp)
@@ -3626,35 +3626,53 @@ list.
         self.chosen().graft(graft_repo, graft_point)
         self.remove_by_name(graft_repo.name)
 
-    def help_authormap(self):
+    def help_authors(self):
         print("""
-Apply an author mapping file.  May be useful if you are editing a repo
-or dump created by git-svn invoked without an authors file; it applies
-such a file. The file is expected to consist of lines: each beginning
-with a local user ID, followed by a '=' (possibly surrounded by
-whitespace) followed by a full name and email address.  Email
-addresses in committer and author metdata for which the local ID
-matches between < and @ are replaced according to the mapping (this
-handles git-svn lifts). Alternatively, if the local ID is the entire
-address, this is also considered a match (this handles what cvs2git
-does).  Takes a selection set of events to modify, defaulting to all
-events.
+Apply or dump author-map information for the specified selection
+set, defaulting to all events. 
 
-With no file argument, write each unique committer, author, and tagger
-to standard output. This may be helpful as a start on building an authors
-file.
+Lifts from CVS and Subversion may have only usernames local to
+the repository host in committer and author IDs. DVCSes want email
+addresses (net-wide identifiers) and complete names. To supply the map
+from oune to the other, an authors file is expected to consist of
+lines each beginning with a local user ID, followed by a '=' (possibly
+surrounded by whitespace) followed by a full name and email address.
+
+When an authors file is applied, email addresses in committer and author
+metdata for which the local ID matches between &lt; and @ are replaced
+according to the mapping (this handles git-svn lifts). Alternatively,
+if the local ID is the entire address, this is also considered a match
+(this handles what git-cvsimport and cvs2git do) 
+
+With the 'read' modifier, or no modifier and a filename
+argument, apply author mapping data (no filename argument, read the
+mapping from standard input).  May be useful if you are editing a repo
+or dump created by cvs2git or by git-svn invoked without -A.
+
+With no file argument, or with the 'write' modifier and a file
+argument: write each unique committer, author, and tagger (no file
+argument sends the report to standard output). This may be helpful as
+a start on building an authors file.
 """)
-    def do_authormap(self, line):
+    def do_authors(self, line):
         "Apply an author-mapping file."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        if not line.strip():
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        fields = rest.split()
+        if not fields or (fields[0] == "write" and len(fields) == 1):
             self.chosen().write_authormap(self.selection, sys.stdout)
+        elif fields[0] == "write":
+            with open(fields[1], "w") as wfp:
+                self.chosen().write_authormap(self.selection, wfp)            
+        elif fields[0] == "read" and len(fields) == 1:
+            self.chosen().read_authormap(self.selection, sys.stdin)
+        elif fields[0] == "read":
+            with open(fields[1]) as fp:
+                self.chosen().read_authormap(self.selection, fp)
         else:
-            # With a file, try to apply it.
-            with open(line.strip()) as fp:
+            with open(fields[0]) as fp:
                 self.chosen().read_authormap(self.selection, fp)
 
     def help_gitsvnparse(self):
