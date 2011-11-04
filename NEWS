@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 1.7:
-     authormap command handles cvs2git style: "localname <localname>"
+     authormap command handles /cvsimport/cvs2git style: "localname <localname>"
      authormap with no arguments prints a list of committer/author/taggers
      Automatic use of .git/cvsauthors for ID mapping.
 
@@ -16,7 +16,7 @@
      cvslift -> cvspurge (it no longer does ID lifting)
      gitsvnlift -> gitsvnparse (it no longer does ID lifting)
      'checkout' command allows filling a specified directory with a revision. 
-     'diff' commant allows examining diffs between commits.
+     'diff' command allows examining diffs between commits.
      New [ ] syntax for selecting commits containing a specified path.
 
 1.4: 2011-10-28
