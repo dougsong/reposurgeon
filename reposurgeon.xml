@@ -880,6 +880,10 @@ handles git-svn lifts). Alternatively, if the local ID is the entire
 address, this is also considered a match (this handles what cvs2git
 does).  Takes a selection set of events to modify, defaulting to all
 events.</para>
+
+<para>With no file argument, write each unique committer, author, and tagger
+to standard output. This may be helpful as a start on building an authors
+file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

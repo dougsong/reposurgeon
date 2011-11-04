@@ -346,6 +346,8 @@ class Attribution:
         return (self.name == other.name
                 and self.email == other.email
                 and self.date == other.date)
+    def who(self):
+        return self.name + " <" + self.email + ">"
     def __str__(self):
         return self.name + " <" + self.email + "> " + str(self.date)
 
@@ -865,6 +867,41 @@ class Repository:
             if hasattr(event, "mark") and mark == event.mark:
                 return self.events[ind]
         return None
+    def read_authormap(self, selection, fp):
+        "Read an author-mapping file and apply it to the repo."
+        authormap = {}
+        try:
+            for line in fp:
+                (local, netwide) = line.strip().split('=')
+                (name, mail) = email.utils.parseaddr(netwide.strip())
+                if not mail:
+                    raise Fatal("can't recognize address in '%s'" % netwide)
+                authormap[local.strip()] = (name, mail)
+        except IOError:
+            raise Recoverable("couldn't open author-map file")
+        except ValueError:
+            raise Recoverable("bad author map syntax")
+        for ei in selection:
+            event = self.events[ei]
+            if isinstance(event, Commit):
+                event.committer.remap(authormap)
+                for author in event.authors:
+                    author.remap(authormap)
+            elif isinstance(event, Tag):
+                event.tagger.remap(authormap)
+    def write_authormap(self, selection, fp):
+        "List the identifiers we need."
+        contributors = set([])
+        for ei in selection:
+            event = self.events[ei]
+            if isinstance(event, Commit):
+                contributors.add(event.committer.who())
+                for author in event.authors:
+                    contributors.add(author.who())
+            elif isinstance(event, Tag):
+                contributors.add(event.tagger.who())
+        for contributor in contributors:
+            fp.write(contributor + "\n")
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
         try:
@@ -3597,6 +3634,10 @@ handles git-svn lifts). Alternatively, if the local ID is the entire
 address, this is also considered a match (this handles what cvs2git
 does).  Takes a selection set of events to modify, defaulting to all
 events.
+
+With no file argument, write each unique committer, author, and tagger
+to standard output. This may be helpful as a start on building an authors
+file.
 """)
     def do_authormap(self, line):
         "Apply an author-mapping file."
@@ -3604,27 +3645,12 @@ events.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        authormap = {}
-        try:
+        if not line.strip():
+            self.chosen().write_authormap(self.selection, sys.stdout)
+        else:
+            # With a file, try to apply it.
             with open(line.strip()) as fp:
-                for line in fp:
-                    (local, netwide) = line.strip().split('=')
-                    (name, mail) = email.utils.parseaddr(netwide.strip())
-                    if not mail:
-                        raise Fatal("can't recognize address in '%s'" % netwide)
-                    authormap[local.strip()] = (name, mail)
-        except IOError:
-            raise Recoverable("couldn't open author-map file")
-        except ValueError:
-            raise Recoverable("bad author map syntax")
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if isinstance(event, Commit):
-                event.committer.remap(authormap)
-                for author in event.authors:
-                    author.remap(authormap)
-            elif isinstance(event, Tag):
-                event.tagger.remap(authormap)
+                self.chosen().read_authormap(self.selection, fp)
 
     def help_gitsvnparse(self):
         print("""
