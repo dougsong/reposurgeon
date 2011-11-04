@@ -1,5 +1,5 @@
 ## Test authormap command
 read gsoc.fi
-authormap roundup-authors.txt
+authors read roundup-authors.txt
 gitsvnparse
 write
