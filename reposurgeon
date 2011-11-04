@@ -1782,6 +1782,7 @@ def read_repo(source, preferred):
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(tp, progress=showprogress)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
+                announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
                     repo.read_authormap(fp)
         finally:
