@@ -869,14 +869,17 @@ deleted.</para>
 <term><command>authormap</command>
 </term>
 <listitem>
-<para>Apply an author mapping file.  May be useful if you are editing a repo or
-dump created by git-svn invoked without an authors file; it applies such a
-file. The file is expected to consist of lines: each beginning with a local
-user ID, followed by a '=' (possibly surrounded by whitespace) followed by
-a full name and email address.  Email addresses in committer and author
-metdata for which the local ID matches between &lt; and @ are replaced according
-to the mapping.  Takes a selection set of events to modify, defaulting to
-all events.</para>
+<para>Apply an author mapping file.  May be useful if you are editing
+a repo or dump created by git-svn invoked without an authors file; it
+applies such a file. The file is expected to consist of lines: each
+beginning with a local user ID, followed by a '=' (possibly surrounded
+by whitespace) followed by a full name and email address.  Email
+addresses in committer and author metdata for which the local ID
+matches between &lt; and @ are replaced according to the mapping (this
+handles git-svn lifts). Alternatively, if the local ID is the entire
+address, this is also considered a match (this handles what cvs2git
+does).  Takes a selection set of events to modify, defaulting to all
+events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

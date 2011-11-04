@@ -335,7 +335,7 @@ class Attribution:
     def remap(self, authors):
         "Remap the attribution name."
         for (local, (name, mail)) in authors.items():
-            if local + "@" in self.email:
+            if self.email.startswith(local + "@") or self.email == local:
                 self.name = name
                 self.email = mail
                 break
@@ -3586,14 +3586,17 @@ list.
 
     def help_authormap(self):
         print("""
-Apply an author mapping file.  May be useful if you are editing a repo or
-dump created by git-svn invoked without an authors file; it applies such a
-file. The file is expected to consist of lines: each beginning with a local
-user ID, followed by a '=' (possibly surrounded by whitespace) followed by
-a full name and email address.  Email addresses in committer and author
-metdata for which the local ID matches between < and @ are replaced according
-to the mapping.  Takes a selection set of events to modify, defaulting to
-all events.
+Apply an author mapping file.  May be useful if you are editing a repo
+or dump created by git-svn invoked without an authors file; it applies
+such a file. The file is expected to consist of lines: each beginning
+with a local user ID, followed by a '=' (possibly surrounded by
+whitespace) followed by a full name and email address.  Email
+addresses in committer and author metdata for which the local ID
+matches between < and @ are replaced according to the mapping (this
+handles git-svn lifts). Alternatively, if the local ID is the entire
+address, this is also considered a match (this handles what cvs2git
+does).  Takes a selection set of events to modify, defaulting to all
+events.
 """)
     def do_authormap(self, line):
         "Apply an author-mapping file."
