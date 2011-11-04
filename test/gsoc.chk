@@ -1,3 +1,9 @@
+pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2>
+pygi <pygi>
+stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2>
+# This was originally a section from a git-svn lift, but a few of the
+# committer/author headers have been hacked into the form emitted by
+# git-cvsimport and cvs2git in order to broaden the test coverage.
 blob
 mark :186
 data 171

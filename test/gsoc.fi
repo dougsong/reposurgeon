@@ -1,3 +1,6 @@
+# This was originally a section from a git-svn lift, but a few of the
+# committer/author headers have been hacked into the form emitted by
+# git-cvsimport and cvs2git in order to broaden the test coverage.
 blob
 mark :186
 data 171
@@ -38857,8 +38860,8 @@ for cl in 'bug', 'task', 'milestone', 'severity', 'status', 'resolution', 'msg',
 
 commit refs/remotes/svn/gsoc-2009
 mark :794
-author pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2> 1250322225 +0000
-committer pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2> 1250322225 +0000
+author pygi <pygi> 1250322225 +0000
+committer pygi <pygi> 1250322225 +0000
 data 163
 Added some hg patch apply things
 
