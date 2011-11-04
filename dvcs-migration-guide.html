@@ -49,6 +49,14 @@ document.writeln(document.title);
 
 <div id="Content">
 
+<h1 id="history">Major revisions<h1>
+
+<p>1.0 (2011-10-25) Original version.
+
+<p>2.0 (2011-11-04) Much more about CVS-to-git conversion, including
+recommending <code>git cvsimport</code>. I started numbering versions
+at this point.</p>
+
 <h1 id="overview">Overview</h1>
 
 <p>Distributed version control systems (DVCSes) are powerful and
@@ -93,27 +101,62 @@ foonly = Fred Foonly &lt;foonly@foobar.com&gt;
 <h2 id="cvs_to_git">CVS to git</h2> 
 
 <p>If you are using CVS, you have (at least) two conversion options.
-One is to use the cvsimport plugin of git itself.  Use the -A option
-of <code>git cvsimport</code> to pass it your authors file. You can <a
-href="http://feeding.cloud.geek.nz/2009/08/migrating-sahana-from-cvs-to-git.html">read
-a description</a> of a migration using git cvsimport.</p>
+Under most circumstances, the best option is to use the cvsimport
+plugin of git itself.  I recommend passing it the following options:</p>
 
-<p>You can use <a
+<dl>
+<dt>-s '~'</dt>
+<dd>Map slashes in CVS tag names to tildes (or something else they
+don't contain). This avoids confusing git, which will otherwise try to
+create directories beneath .git/refs/tags.</dd>
+<dt>-u</dt>
+<dt>Map underscores in tag names to periods. This is just cosmetic</dt>
+<dt>-k</dt>
+<dd>Suppress CVS keyword explansion.  As the manual page says, this
+avoids a lot of tiny, noisy changesets.</dd>
+<dt>-m</dt>
+<dd>Attempt merge recognition by matching committer headers.</dd>
+<dt>-A</dt>
+<dd>Pass in your authors file.</dd>
+<dt>-z 90</dt>
+<dd>Shorten the time interval within which CVS commits can be grouped
+into changesets.  This makes the history noisier, but may protect you
+if the clock on the system where the CVS repo was hosted was unstable;
+in that situation it reduces the odds that <code>git cvsimport</code> 
+will be confused by out-of-time-order commits.</dd>
+<dt>-v</dt>
+<dd>This tool runs for a while on large repositories; its default
+silent mode can be disconcerting.</dd>
+</dl>
+
+<p>The reason this is normally your best option is that it converts
+straight to git, avoiding issues produced by the other major
+conversion tools which either go through Subversion as an intermediate 
+stage or have Subversion-based assumptions baked into them. But read
+the warnings on the manual page; under some (rare) circumstances this
+tool can produce incorrect conversions.</p>
+
+<p>Another option is the <a
+href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
+from cvs2svn.  The hard part - deducing changesets from CVS's per-file
+commits - is shared with <code>cvs2svn</code>, which has probably been more
+extensively battle-tested than any other CVS converter out there. The
+drawbacks are (1) There is no -A option, and (b) your converted
+history will contain the same sorts of cruft that cvs2svn generates
+(see below).</p>
+
+<p>I have done a test conversion of a CVS repo with ten years of
+history with <code>cvs2git</code> and it seemed to work as well as
+<code>cvs2svn</code> (but not as well as <code>git cvsimport</code>).
+I had to git reset --hard afterwards to actually materialize the files
+in the working directory.</p>
+
+<p>Finally, you can use <a
 href="http://cvs2svn.tigris.org/cvs2svn.html">cvs2svn</a> to convert
 from CVS to Subversion, then from Subversion to git. I've done this,
 and it worked - but see the description of cvs2svn artifacts later on.
 Use the -A option of <code>cvs2svn</code> (which works just like -A in
 <code>git cvsimport</code>) to pass it your authors file.</p>
-
-<p>There is a <a
-href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
-from cvs2svn.  The hard part - deducing changesets from CVS's per-file
-commits - is shared with cvs2svn, which has probably been more
-extensively battle-tested than any other CVS converter out there. 
-I have done a test conversion of a CVS repo with ten years of history
-and it seemed to work as well as cvs2svn.  I had to git reset --hard
-afterwards to actually materialize the files in the working directory.
-There is no -A option.</p>
 
 <h2 id="svn_to_git">Subversion to git</h2>
 
@@ -203,11 +246,13 @@ randomly to file versions far older than the junk commit). Older versions
 of <code>cvs2svn</code> seem to have generated all kinds of meaningless
 crud into these.</dd>
 
-<dt><em>Subversion commit references</em></dt>
-<dd>Often these will be in the form 'r' followed by a string of digits
+<dt><em>Subversion and CVS commit references</em></dt> <dd>Often
+Subversion will be in the form 'r' followed by a string of digits
 referring to a Subversion commit number. But not always; humans come
-up with lots of ambiguous ways to write these.  A clean conversion
-should turn them into them to VCS-indpendent commit references, which 
+up with lots of ambiguous ways to write these.  CVS commit references
+are even harder to spot mechanically, as they're just groups of digits
+separated by dots with no identifing prefix.  A clean conversion
+should turn all these into VCS-indpendent commit references, which
 I'll describe later in this document.</dd>
 
 <dt><em>Multiline contents with no summary</em></dt>
