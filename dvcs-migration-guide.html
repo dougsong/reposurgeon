@@ -107,13 +107,13 @@ Use the -A option of <code>cvs2svn</code> (which works just like -A in
 
 <p>There is a <a
 href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
-from cvs2svn. I have not had occasion to try this tool myself; I did
-my last lift from CVS before it existed. It's likely to be effective,
-though, because the hard part - deducing changesets from CVS's
-per-file commits - is shared with cvs2svn, which has probably been
-more extensively battle-tested than any other CVS converter out
-there. I don't know how you pass it your authors file, though, as it
-doesn't seem to have that option.</p>
+from cvs2svn.  The hard part - deducing changesets from CVS's per-file
+commits - is shared with cvs2svn, which has probably been more
+extensively battle-tested than any other CVS converter out there. 
+I have done a test conversion of a CVS repo with ten years of history
+and it seemed to work as well as cvs2svn.  I had to git reset --hard
+afterwards to actually materialize the files in the working directory.
+There is no -A option.</p>
 
 <h2 id="svn_to_git">Subversion to git</h2>
 
