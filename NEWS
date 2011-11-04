@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+1.7:
+     authormap command handles cvs2git style: "localname <localname>"
+
 1.6: 2011-11-03
      Fix Python 3.2 compatibility problem pointed out by Mike Swanson.
      gitsvnparse moves remote branches/tags to local ones (like svn2git).
