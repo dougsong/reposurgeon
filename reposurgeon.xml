@@ -280,7 +280,12 @@ an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para>
 
-<para>The just-read-in repo isdded to the list of loaded repositories and
+<para>If the directory is a git repository and contains a 
+<filename>.git/cvsauthors</filename> file (such as is left in in place
+by <command>git cvsimport -A</command>) that file will be read in as
+if it had been given to the <command>authormap</command>.</para>
+
+<para>The just-read-in repo is added to the list of loaded repositories and
 becomes the current one, selected for surgery. If it was read from a
 plain file and the file name ends with the extension <filename>.fi</filename>,
 that is removed from the load list name.</para>

@@ -1774,6 +1774,11 @@ def read_repo(source, preferred):
             else:
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(tp, progress=showprogress)
+            # kluge: git-cvsimport -A might have left this in place
+            cvsauthors = os.path.join(repo.vcs.subdir(), "cvsauthors")
+            if os.path.exists(cvsauthors):
+                with open(cvsauthors) as fp:
+                    repo.read_authormap(fp)
         finally:
             os.chdir(here)
     return repo
