@@ -776,6 +776,10 @@ filename.</para>
 revision matching a CVS $Id$ or $Revision$ header embedded in blob
 data for the filename.</para>
 
+<para>A mark cookie is of the form [[:dddd]] and is simply a reference
+to the specified mark. You may want to hand-patch this in when one of
+previous forms is inconvenient.</para>
+
 <para>An action stamp is an RFC3339timestamp, followed by a '!',
 followed by a committer email address; it refers to a commit without
 being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",

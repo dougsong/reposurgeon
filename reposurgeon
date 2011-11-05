@@ -3815,6 +3815,10 @@ substituted when possible.
                       "([0-9]+)",
                       lambda m: m.group(1),
                       lambda p: repo.svnmap.get(p)),
+                     ("",
+                      "([0-9]+)",
+                      lambda m: m.group(1),
+                      lambda p: p),
                      ):
                 match_re = re.compile(re.escape("[[%s:" % name) \
                                       + regexp \
