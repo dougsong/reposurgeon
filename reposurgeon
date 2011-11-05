@@ -3826,11 +3826,9 @@ substituted when possible.
                 for ei in self.selection:
                     event = repo.events[ei]
                     if isinstance(event, Commit):
-                        # Minor bug: if there are multiple cookies,
-                        # the first one without a unique match aborts
-                        # all later substitutions.
+                        earliest = 0
                         while True:
-                            m = match_re.search(event.comment)
+                            m = match_re.search(event.comment[earliest:])
                             if not m:
                                 break
                             payload = extractor(m)
@@ -3841,15 +3839,16 @@ substituted when possible.
                             elif len(possible) == 1:
                                 commit = repo.objfind(possible[0])
                                 if commit:
-                                    event.comment = event.comment[:m.start()] \
+                                    event.comment = event.comment[:earliest+m.start()] \
                                                     + commit.committer.action_stamp() \
-                                                    + event.comment[m.end():]
+                                                    + event.comment[earliest+m.end():]
                                     hits += 1
                                 else:
                                     complain("no such mark as %s" % possible[0])
                             else:
                                 complain("more than one commit matches " + repr(payload))
                                 break
+                            earliest += m.end()
             announce("%d references resolved." % hits)
         else:
             # No modifier, just list or edit
