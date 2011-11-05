@@ -2,7 +2,7 @@ reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2
 reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204127 +0000
 reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 reposurgeon: nothing matches Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
-reposurgeon: 3 references resolved.
+reposurgeon: 4 references resolved.
 4: ========================================================================
 commit refs/tags/0.8.0-b1
 mark :9022
@@ -30,9 +30,10 @@ commit refs/tags/lightweight-sample
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
-data 111
+data 198
 The adventure begins.
 
 Example subversion cookie from map file 2004-07-03T13:51:03Z!a1s@users.sourceforge.net.
+Exanmple mark cookie: 2009-06-17T02:02:07Z!stefan@57a73879-2fb5-44c3-a270-3262357dd7e2
 M 100644 :1 rs
 
