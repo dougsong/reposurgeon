@@ -94,7 +94,8 @@ class VCS:
              + "     Authormap: " + str(self.authormap) + "\n"
 
 # All knowledge about specific version-control systems lives in the
-# following class list.  The members are, respectively:
+# following class list (exception; there's a git-specific hook in the
+# repo reader).  The members are, respectively:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
@@ -1788,6 +1789,35 @@ def read_repo(source, preferred):
                 announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
                     repo.read_authormap(fp)                    
+            # kluge: git-specific hook
+            if repo.vcs.name == "git":
+                if os.path.exists(".git/cvs-revisions"):
+                    announce("reading cvs-revisions map.")
+                    pathrev_to_hash = {}
+                    for line in open(".git/cvs-revisions"):
+                        (path, rev, hashv) = line.split()
+                        pathrev_to_hash[(path, rev)] = hashv
+                    hash_to_action = {}
+                    stamp_set = set({})
+                    for line in popen_or_die("git log --all --format='%H %ct %ce'", "r"):
+                        (hashv, ctime, cperson) = line.split()
+                        stamp = (int(ctime), cperson)
+                        if stamp in stamp_set:
+                            complain("more than one commit matches %s!%s" \
+                                     % rfc3339(int(ctime)), cperson)
+                            if stamp in hash_to_action:
+                                del hash_to_action[hashv]
+                        else:
+                            hash_to_action[hashv] = stamp
+                            stamp_set.add(stamp)
+                    for ((path, rev), value) in rev_to_hash.items():
+                        (ctime, cperson) = hash_to_action[value]
+                        # Note: as a result of this hack, self.cvsmap
+                        # can contain a mix of marks and action stamps.
+                        self.cvsmap[(path, rev)] = rfc3339(ctime)+"!"+cperson
+                    del rev_to_hash
+                    del hash_to_action
+                    del stamp_set
         finally:
             os.chdir(here)
     return repo
