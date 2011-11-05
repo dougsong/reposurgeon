@@ -140,7 +140,7 @@ vcstypes = [
         importer="git fast-import",
         checkout="git checkout",
         preserve=set(['.git/config', '.git/hooks']),
-        authormap=".git/cvsauthors"),
+        authormap=".git/cvs-authors"),
     # The bzr import/export methods require the bzr-fast-import plugin.
     VCS(name="bzr",
         subdirectory=".bzr",
