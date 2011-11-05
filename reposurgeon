@@ -194,6 +194,10 @@ def nuke(directory, legend):
     except OSError:
         pass
 
+def rfc3339(t):
+    "RFC3339 string from Unix time."
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
+
 def complain(msg):
     sys.stdout.flush()
     sys.stderr.write("reposurgeon: %s\n" % msg)
@@ -305,7 +309,7 @@ class Date:
         "Format as an ISO8601 timestamp."
         return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.timestamp)) + self.timezone
     def rfc3339(self):
-        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.timestamp))
+        return rfc3339(self.timestamp)
     def rfc822(self):
         "Format as an RFC822 timestamp."
         return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(self.timestamp)) + " " + self.timezone
@@ -828,7 +832,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.cookiemap = {}
+        self.cvsmap = {}
         self.svnrevs = {}
     def cleanup(self):
         "Release blob files associated with this repo."
@@ -1202,11 +1206,10 @@ class Repository:
                     blob.cookie = None
             # Prepare a map from pathname/CVS-revision pairs to lists of
             # commits that reference the blob containing that CVS revision.
-            self.cookiemap = {}
+            self.cvsmap = {}
             for cvsdata in stagemap:
                 blob = stagemap[cvsdata] = stagemap[cvsdata][0]
-                # Sanity-check that the CVS header name matches the
-                # path in the file reference for which the blob is data.
+                cvsref = blob.cookie[1]
                 for commit in blob.backreferences:
                     for fileop in commit.fileops:
                         if fileop.op == 'M' and fileop.ref == blob.mark:
@@ -1216,9 +1219,9 @@ class Repository:
                                 # git-svn didn't pick up on.
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                            if not (fileop.path,blob.cookie[1]) in self.cookiemap:
-                                self.cookiemap[(fileop.path, blob.cookie[1])] = []
-                            self.cookiemap[(fileop.path,blob.cookie[1])].append(commit.mark)
+                            if not (fileop.path,cvsref) in self.cvsmap:
+                                self.cvsmap[(fileop.path, cvsref)] = []
+                            self.cvsmap[(fileop.path,cvsref)].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1636,8 +1639,8 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
-        for (key, value) in self.cookiemap.items():
-            self.cookiemap[key] = [remark(x) for x in value]
+        for (key, value) in self.cvsmap.items():
+            self.cvsmap[key] = [remark(x) for x in value]
         for (key, value) in self.svnrevs.items():
             self.svnrevs[key] = [remark(x) for x in value]
     def uniquify(self, color):
@@ -1784,7 +1787,7 @@ def read_repo(source, preferred):
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
-                    repo.read_authormap(fp)
+                    repo.read_authormap(fp)                    
         finally:
             os.chdir(here)
     return repo
@@ -3777,7 +3780,7 @@ substituted when possible.
                     (("CVS",
                       r"([^:\]]+):([0-9.]+)",
                       lambda m: tuple(m.groups()),
-                      lambda p: repo.cookiemap.get(p)),
+                      lambda p: repo.cvsmap.get(p)),
                      ("SVN",
                       "([0-9]+)",
                       lambda m: m.group(1),
@@ -3789,8 +3792,9 @@ substituted when possible.
                 for ei in self.selection:
                     event = repo.events[ei]
                     if isinstance(event, Commit):
-                        # Minor bug: if there are multiple cookies, the first one
-                        # without a unique match aborts all later substitutions.
+                        # Minor bug: if there are multiple cookies,
+                        # the first one without a unique match aborts
+                        # all later substitutions.
                         while True:
                             m = match_re.search(event.comment)
                             if not m:
