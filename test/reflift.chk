@@ -3,7 +3,7 @@ reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2
 reposurgeon: nothing matches stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 reposurgeon: nothing matches Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 reposurgeon: 3 references resolved.
-2: ========================================================================
+4: ========================================================================
 commit refs/tags/0.8.0-b1
 mark :9022
 author Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
@@ -14,7 +14,7 @@ from :9020
 property svn 4 9022
 M 100644 :9021 locale/ru.po
 
-10: ========================================================================
+12: ========================================================================
 commit refs/heads/gsoc-2009
 mark :620
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
@@ -25,7 +25,7 @@ from :618
 property svn 4 4224
 M 100644 :619 share/roundup/templates/devel/html/page.html
 
-13: ========================================================================
+15: ========================================================================
 commit refs/tags/lightweight-sample
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
