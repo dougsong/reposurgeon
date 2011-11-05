@@ -3818,7 +3818,7 @@ substituted when possible.
                      ("",
                       "([0-9]+)",
                       lambda m: m.group(1),
-                      lambda p: p),
+                      lambda p: [":"+p]),
                      ):
                 match_re = re.compile(re.escape("[[%s:" % name) \
                                       + regexp \
@@ -3840,10 +3840,13 @@ substituted when possible.
                                 break
                             elif len(possible) == 1:
                                 commit = repo.objfind(possible[0])
-                                event.comment = event.comment[:m.start()] \
-                                                + commit.committer.action_stamp() \
-                                                + event.comment[m.end():]
-                                hits += 1
+                                if commit:
+                                    event.comment = event.comment[:m.start()] \
+                                                    + commit.committer.action_stamp() \
+                                                    + event.comment[m.end():]
+                                    hits += 1
+                                else:
+                                    complain("no such mark as %s" % possible[0])
                             else:
                                 complain("more than one commit matches " + repr(payload))
                                 break
