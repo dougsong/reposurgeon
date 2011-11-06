@@ -833,8 +833,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.cvsmap = {}
-        self.svnmap = {}
+        self.revision_map = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1009,9 +1008,9 @@ class Repository:
                                     blob.cookie = (fields[1][:-2], fields[2])
                                 else:
                                     # Subversion revision
-                                    if fields[1] not in self.svnmap:
-                                        self.svnmap[fields[1]] = []
-                                    self.svnmap[fields[1]].append(commit.mark)
+                                    if fields[1] not in self.revision_map:
+                                        self.revision_map[fields[1]] = []
+                                    self.revision_map[fields[1]].append(commit.mark)
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
@@ -1020,9 +1019,9 @@ class Repository:
                                     blob.cookie = (None, rev)
                                 else:
                                     # Subversion revision
-                                    if rev not in self.svnmap:
-                                        self.svnmap[rev] = []
-                                    self.svnmap[rev].append(commit.mark)
+                                    if rev not in self.revision_map:
+                                        self.revision_map[rev] = []
+                                    self.revision_map[rev].append(commit.mark)
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -1207,7 +1206,6 @@ class Repository:
                     blob.cookie = None
             # Prepare a map from pathname/CVS-revision pairs to lists of
             # commits that reference the blob containing that CVS revision.
-            self.cvsmap = {}
             for cvsdata in stagemap:
                 blob = stagemap[cvsdata] = stagemap[cvsdata][0]
                 cvsref = blob.cookie[1]
@@ -1220,9 +1218,9 @@ class Repository:
                                 # git-svn didn't pick up on.
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                            if not (fileop.path,cvsref) in self.cvsmap:
-                                self.cvsmap[(fileop.path, cvsref)] = []
-                            self.cvsmap[(fileop.path,cvsref)].append(commit.mark)
+                            if not (fileop.path,cvsref) in self.revision_map:
+                                self.revision_map[(fileop.path, cvsref)] = []
+                            self.revision_map[(fileop.path,cvsref)].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1640,10 +1638,8 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
-        for (key, value) in self.cvsmap.items():
-            self.cvsmap[key] = [remark(x) for x in value]
-        for (key, value) in self.svnmap.items():
-            self.svnmap[key] = [remark(x) for x in value]
+        for (key, value) in self.revision_map.items():
+            self.revision_map[key] = [remark(x) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -1794,9 +1790,11 @@ def read_repo(source, preferred):
                 if os.path.exists(".git/cvs-revisions"):
                     announce("reading cvs-revisions map.")
                     pathrev_to_hash = {}
+                    # Pass 1: Get git's path/revision to hash mapping
                     for line in open(".git/cvs-revisions"):
                         (path, rev, hashv) = line.split()
                         pathrev_to_hash[(path, rev)] = hashv
+                    # Pass 2: get git's hash to (time,person) mapping 
                     hash_to_action = {}
                     stamp_set = set({})
                     for line in popen_or_die("git log --all --format='%H %ct %ce'", "r"):
@@ -1810,13 +1808,15 @@ def read_repo(source, preferred):
                         else:
                             hash_to_action[hashv] = stamp
                             stamp_set.add(stamp)
-                    for ((path, rev), value) in rev_to_hash.items():
+                    # Pass 3: build a (time,person) to mark mapping 
+                    action_to_mark = {}
+                    for commit in event.repo.commits():
+                        action_to_mark[(commit.committer.timestamp, commit.committer.email)] = commit.mark
+                    # Pass 4: combine to get a (path,revision) to mark map
+                    for ((path, rev), value) in pathrev_to_hash.items():
                         (ctime, cperson) = hash_to_action[value]
-                        # Note: as a result of this hack, self.cvsmap
-                        # can contain a mix of marks and (time,person)
-                        # pairs.
-                        self.cvsmap[(path, rev)] = (ctime, cperson)
-                    del rev_to_hash
+                        self.revision_map[(path, rev)] = action_to_mark[(ctime, cperson)]
+                    del pathrev_to_hash
                     del hash_to_action
                     del stamp_set
         finally:
@@ -3751,7 +3751,7 @@ and treat the second argument as a dump file to be loaded, setting
                     lookup = revdict.get(str(event.committer))
                     if lookup:
                         event.properties.append(("svn", lookup))
-                        self.chosen().svnmap[lookup] = [event.mark]
+                        self.chosen().revision_map[lookup] = [event.mark]
                     else:
                         complain("nothing matches %s" % str(event.committer))
         else:
@@ -3767,9 +3767,9 @@ and treat the second argument as a dump file to be loaded, setting
                         event.comment = event.comment[:m.start()]
                         (_, after) = gitsvn.split("@")
                         fields = after.split()
-                        if fields[0] not in self.chosen().svnmap:
-                            self.chosen().svnmap[fields[0]] = []
-                        self.chosen().svnmap[fields[0]].append(event.mark)
+                        if fields[0] not in self.chosen().revision_map:
+                            self.chosen().revision_map[fields[0]] = []
+                        self.chosen().revision_map[fields[0]].append(event.mark)
                         if "strip" not in rest:
                             event.properties.append(("svn", fields[0]))
                     # Things that were remote branches in the git-svn pull
@@ -3807,18 +3807,17 @@ substituted when possible.
             return
         repo = self.chosen()
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        lookup_cache = None
         if "lift" in rest:
             hits = 0
             for (name, regexp, extractor, getter) in \
                     (("CVS",
                       r"([^:\]]+):([0-9.]+)",
                       lambda m: tuple(m.groups()),
-                      lambda p: repo.cvsmap.get(p)),
+                      lambda p: repo.revision_map.get(p)),
                      ("SVN",
                       "([0-9]+)",
                       lambda m: m.group(1),
-                      lambda p: repo.svnmap.get(p)),
+                      lambda p: repo.revision_map.get(p)),
                      ("",
                       "([0-9]+)",
                       lambda m: m.group(1),
@@ -3842,12 +3841,6 @@ substituted when possible.
                                 break
                             elif len(possible) == 1:
                                 commit_spec = possible[0]
-                                if type(commit_spec) == type(()):
-                                    if lookup_cache is None:
-                                        lookup_cache = {}
-                                        for commit in event.repo.commits():
-                                            lookup_cache[(commit.committer.timestamp, commit.committer.email)] = commit.mark
-                                    commit_spec = lookup_cache[commit_spec]
                                 commit = repo.objfind(commit_spec)
                                 if commit:
                                     event.comment = event.comment[:earliest+m.start()] \
