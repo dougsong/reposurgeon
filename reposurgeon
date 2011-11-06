@@ -3727,7 +3727,7 @@ saving the 'svn' property.
 The 'write' modifier emits git-svn-id information to a file (named by
 the second argument) one line per revision, with each line consisting
 of the revision followed by a colon followed by the committer header
-of the revision.  With the 'load' modifier, ignore the selection set
+of the revision.  With the 'read' modifier, ignore the selection set
 and treat the second argument as a dump file to be loaded, setting
 'svn' properties from it.
 """)
