@@ -1813,8 +1813,9 @@ def read_repo(source, preferred):
                     for ((path, rev), value) in rev_to_hash.items():
                         (ctime, cperson) = hash_to_action[value]
                         # Note: as a result of this hack, self.cvsmap
-                        # can contain a mix of marks and action stamps.
-                        self.cvsmap[(path, rev)] = rfc3339(ctime)+"!"+cperson
+                        # can contain a mix of marks and (time,person)
+                        # pairs.
+                        self.cvsmap[(path, rev)] = (ctime, cperson)
                     del rev_to_hash
                     del hash_to_action
                     del stamp_set
@@ -3804,6 +3805,7 @@ substituted when possible.
             return
         repo = self.chosen()
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        lookup_cache = None
         if "lift" in rest:
             hits = 0
             for (name, regexp, extractor, getter) in \
@@ -3837,7 +3839,14 @@ substituted when possible.
                                 complain("no commit matches " + repr(payload))
                                 break
                             elif len(possible) == 1:
-                                commit = repo.objfind(possible[0])
+                                commit_spec = possible[0]
+                                if type(commit_spec) == type(()):
+                                    if lookup_cache is None:
+                                        lookup_cache = {}
+                                        for commit in event.repo.commits():
+                                            lookup_cache[(commit.committer.timestamp, commit.committer.email)] = commit.mark
+                                    commit_spec = lookup_cache[commit_spec]
+                                commit = repo.objfind(commit_spec)
                                 if commit:
                                     event.comment = event.comment[:earliest+m.start()] \
                                                     + commit.committer.action_stamp() \
