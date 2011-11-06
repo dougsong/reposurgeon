@@ -794,6 +794,8 @@ hand.</para>
 <variablelist>
 <varlistentry>
 <term><command>gitsvnparse</command>
+          [<command>read</command>|<command>write</command>]
+          [<command>filename</command>]
 </term>
 <listitem>
 <para>Takes a selection set of events to modify, defaulting to all
@@ -813,12 +815,12 @@ that did not automatically suppress writing properties to importers
 that couldn't handle them: it has been retained for backwards
 compatibility.</para>
 
-<para>The "dump" modifier emits git-svn-id information to a file
+<para>The "write" modifier emits git-svn-id information to a file
 (named by the second argument) one line per revision, with each line
 consisting of the revision followed by a colon followed by the
-committer header of the revision.  With the "load" modifier, ignore the
+committer header of the revision.  With the "read" modifier, ignore the
 selection set and treat the second argument as a dump file to be
-loaded, setting 'svn' properties from it.</para>
+read, setting 'svn' properties from it.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

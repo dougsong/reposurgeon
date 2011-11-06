@@ -3724,7 +3724,7 @@ which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property.
 
-The 'dump' modifier emits git-svn-id information to a file (named by
+The 'write' modifier emits git-svn-id information to a file (named by
 the second argument) one line per revision, with each line consisting
 of the revision followed by a colon followed by the committer header
 of the revision.  With the 'load' modifier, ignore the selection set
@@ -3738,7 +3738,7 @@ and treat the second argument as a dump file to be loaded, setting
             return
         # Load svnid:attribution pairs from a map file.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        if "load" in rest:
+        if "read" in rest:
             revdict = {}
             for line in open(rest.split()[1]):
                 (rev, stamp) = line.strip().split(":")
@@ -3777,7 +3777,7 @@ and treat the second argument as a dump file to be loaded, setting
                     event.branch=event.branch.replace("refs/remotes/svn/",
                                                       "refs/heads/")
         # Dump svnid:attribution pairs to a map file
-        if "dump" in line:
+        if "write" in line:
             with open(rest.split()[1], "w") as wfp:
                 for ei in self.selection:
                     event = self.chosen().events[ei]
