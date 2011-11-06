@@ -3722,7 +3722,9 @@ as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
-saving the 'svn' property.
+saving the 'svn' property. Also, change refs/remotes/svn branch and
+lightweight tag names to corresponding local ones (replicating what
+svn2git does to clean up the repository).
 
 The 'write' modifier emits git-svn-id information to a file (named by
 the second argument) one line per revision, with each line consisting
