@@ -1008,9 +1008,10 @@ class Repository:
                                     blob.cookie = (fields[1][:-2], fields[2])
                                 else:
                                     # Subversion revision
-                                    if fields[1] not in self.revision_map:
-                                        self.revision_map[fields[1]] = []
-                                    self.revision_map[fields[1]].append(commit.mark)
+                                    svnkey = "SVN:" + fields[1]
+                                    if svnkey not in self.revision_map:
+                                        self.revision_map[svnkey] = []
+                                    self.revision_map[svnkey].append(commit.mark)
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
@@ -1019,6 +1020,7 @@ class Repository:
                                     blob.cookie = (None, rev)
                                 else:
                                     # Subversion revision
+                                    rev = "SVN:" + rev
                                     if rev not in self.revision_map:
                                         self.revision_map[rev] = []
                                     self.revision_map[rev].append(commit.mark)
@@ -1218,9 +1220,10 @@ class Repository:
                                 # git-svn didn't pick up on.
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                            if not (fileop.path,cvsref) in self.revision_map:
-                                self.revision_map[(fileop.path, cvsref)] = []
-                            self.revision_map[(fileop.path,cvsref)].append(commit.mark)
+                            cvskey = "CVS:%s:%s" % (fileop.path,cvsref)
+                            if not cvskey in self.revision_map:
+                                self.revision_map[cvskey] = []
+                            self.revision_map[cvskey].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -3725,13 +3728,6 @@ modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property. Also, change refs/remotes/svn branch and
 lightweight tag names to corresponding local ones (replicating what
 svn2git does to clean up the repository).
-
-The 'write' modifier emits git-svn-id information to a file (named by
-the second argument) one line per revision, with each line consisting
-of the revision followed by a colon followed by the committer header
-of the revision.  With the 'read' modifier, ignore the selection set
-and treat the second argument as a dump file to be loaded, setting
-'svn' properties from it.
 """)
     def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
@@ -3740,54 +3736,30 @@ and treat the second argument as a dump file to be loaded, setting
             return
         # Load svnid:attribution pairs from a map file.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        if "read" in rest:
-            revdict = {}
-            for line in open(rest.split()[1]):
-                (rev, stamp) = line.strip().split(":")
-                revdict[stamp] = rev
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit):
-                    lookup = revdict.get(str(event.committer))
-                    if lookup:
-                        event.properties.append(("svn", lookup))
-                        self.chosen().revision_map[lookup] = [event.mark]
-                    else:
-                        complain("nothing matches %s" % str(event.committer))
-        else:
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Reset):
-                    event.ref = event.ref.replace("refs/remotes/svn/",
-                                                      "refs/heads/")
-                elif isinstance(event, Commit):
-                    m = re.search("\ngit-svn-id:.*\n", event.comment)
-                    if m:
-                        gitsvn = event.comment[m.start():m.end()]
-                        event.comment = event.comment[:m.start()]
-                        (_, after) = gitsvn.split("@")
-                        fields = after.split()
-                        if fields[0] not in self.chosen().revision_map:
-                            self.chosen().revision_map[fields[0]] = []
-                        self.chosen().revision_map[fields[0]].append(event.mark)
-                        if "strip" not in rest:
-                            event.properties.append(("svn", fields[0]))
-                    # Things that were remote branches in the git-svn pull
-                    # need to become local now.
-                    event.branch=event.branch.replace("refs/remotes/svn/tags/",
-                                                      "refs/tags/")
-                    event.branch=event.branch.replace("refs/remotes/svn/",
-                                                      "refs/heads/")
-        # Dump svnid:attribution pairs to a map file
-        if "write" in line:
-            with open(rest.split()[1], "w") as wfp:
-                for ei in self.selection:
-                    event = self.chosen().events[ei]
-                    if isinstance(event, Commit):
-                        for (k, v) in event.properties:
-                            if k == 'svn':
-                                wfp.write("%s:%s\n" % (v, str(event.committer)))
-
+        for ei in self.selection:
+            event = self.chosen().events[ei]
+            if isinstance(event, Reset):
+                event.ref = event.ref.replace("refs/remotes/svn/",
+                                                  "refs/heads/")
+            elif isinstance(event, Commit):
+                m = re.search("\ngit-svn-id:.*\n", event.comment)
+                if m:
+                    gitsvn = event.comment[m.start():m.end()]
+                    event.comment = event.comment[:m.start()]
+                    (_, after) = gitsvn.split("@")
+                    fields = after.split()
+                    if "strip" not in rest:
+                        event.properties.append(("svn", fields[0]))
+                    svnrev = "SVN:" + fields[0]
+                    if svnrev not in self.chosen().revision_map:
+                        self.chosen().revision_map[svnrev] = []
+                    self.chosen().revision_map[svnrev].append(event.mark)
+                # Things that were remote branches in the git-svn pull
+                # need to become local now.
+                event.branch=event.branch.replace("refs/remotes/svn/tags/",
+                                                  "refs/tags/")
+                event.branch=event.branch.replace("refs/remotes/svn/",
+                                                  "refs/heads/")
     def help_references(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
@@ -3809,23 +3781,15 @@ substituted when possible.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "lift" in rest:
             hits = 0
-            for (name, regexp, extractor, getter) in \
-                    (("CVS",
-                      r"([^:\]]+):([0-9.]+)",
-                      lambda m: tuple(m.groups()),
+            for (regexp, getter) in \
+                    ((r"CVS:[^:\]]+:[0-9.]+",
                       lambda p: repo.revision_map.get(p)),
-                     ("SVN",
-                      "([0-9]+)",
-                      lambda m: m.group(1),
+                     ("SVN:[0-9]+",
                       lambda p: repo.revision_map.get(p)),
-                     ("",
-                      "([0-9]+)",
-                      lambda m: m.group(1),
-                      lambda p: [":"+p]),
+                     (":[0-9]+",
+                      lambda p: [p]),
                      ):
-                match_re = re.compile(re.escape("[[%s:" % name) \
-                                      + regexp \
-                                      + re.escape("]]"))
+                match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
                     event = repo.events[ei]
                     if isinstance(event, Commit):
@@ -3834,7 +3798,7 @@ substituted when possible.
                             m = match_re.search(event.comment[earliest:])
                             if not m:
                                 break
-                            payload = extractor(m)
+                            payload = m.group(0)[2:-2]
                             possible = getter(payload)
                             if possible is None:
                                 complain("no commit matches " + repr(payload))
