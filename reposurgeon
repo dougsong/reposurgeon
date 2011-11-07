@@ -1821,7 +1821,11 @@ def read_repo(source, preferred):
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
-                    repo.read_authormap(range(len(repo.events)),fp)                    
+                    repo.read_authormap(range(len(repo.events)),fp)
+            fossils = os.path.join(vcs.subdirectory, "fossils")
+            if os.path.exists(fossils):
+                with open(fossils) as rfp:
+                    repo.read_fossils(rfp)
             # kluge: git-specific hook
             if repo.vcs.name == "git":
                 if os.path.exists(".git/cvs-revisions"):
@@ -1934,6 +1938,9 @@ def rebuild_repo(repo, target, preferred):
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+        if repo.fossil_map:
+            with open(os.path.join(vcs.subdirectory, "fossils"), "w") as wfp:
+                repo.write_fossils(wfp)
         do_or_die(vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
