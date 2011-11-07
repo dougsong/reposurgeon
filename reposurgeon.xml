@@ -785,11 +785,21 @@ followed by a committer email address; it refers to a commit without
 being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
 "2011-10-25T15:11:09Z!fred@foonly.com".</para>
 
-<para>Find possible CVS and Subversion references with the
-<command>references</command>, then replace them with equivalent
-cookies, then run <command>references lift</command> to turn the
-cookies into action stamps without having to do the lookup by
-hand.</para>
+<para>In order to support reference lifting,
+<command>reposurgeon</command> internally builds a fossil-reference
+map that associates revision identifiers in older version-control
+systems with commits.  The contents of this map comes from three
+places: (1) git-svn metadata headers (when gitsvnparse is called), (2)
+$Id$ and $Revision$ headers in repository files, and (3) the
+<filename>.git/cvs-revisions</filename> created by <command>git
+cvsimport</command>.</para>
+
+<para>The workflow for lifting possible references is this: first,
+find possible CVS and Subversion references with the
+<command>references</command>; then replace them with equivalent
+cookies; then run <command>references lift</command> to turn the
+cookies into action stamps (using the information in the
+fossil-reference map) without having to do the lookup by hand.</para>
 
 <variablelist>
 <varlistentry>
@@ -812,6 +822,9 @@ property. This option was required for older versions of this tool
 that did not automatically suppress writing properties to importers
 that couldn't handle them: it has been retained for backwards
 compatibility.</para>
+
+<para>Enables writing of the fossil-reference map when the repo is written or
+rebuilt.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -835,6 +848,9 @@ with that blob, as described in <xref linkend='style'/>.</para>
 or even that any at all will be. Generally, if the repo contains git-svn
 headers and <command>gitsvnparse</command> has been called, every SVN
 cookie will resolve. CVS references are less likely to be resolvable.</para>  
+
+<para>Enables writing of the fossil-reference map when the repo is written or
+rebuilt.</para>
 </listitem>
 </varlistentry>
 </variablelist>

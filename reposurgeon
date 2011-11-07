@@ -833,7 +833,8 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.revision_map = {}
+        self.fossil_map = {}
+        self.write_fossils = False
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1009,9 +1010,9 @@ class Repository:
                                 else:
                                     # Subversion revision
                                     svnkey = "SVN:" + fields[1]
-                                    if svnkey not in self.revision_map:
-                                        self.revision_map[svnkey] = []
-                                    self.revision_map[svnkey].append(commit.mark)
+                                    if svnkey not in self.fossil_map:
+                                        self.fossil_map[svnkey] = []
+                                    self.fossil_map[svnkey].append(commit.mark)
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
@@ -1021,9 +1022,9 @@ class Repository:
                                 else:
                                     # Subversion revision
                                     rev = "SVN:" + rev
-                                    if rev not in self.revision_map:
-                                        self.revision_map[rev] = []
-                                    self.revision_map[rev].append(commit.mark)
+                                    if rev not in self.fossil_map:
+                                        self.fossil_map[rev] = []
+                                    self.fossil_map[rev].append(commit.mark)
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -1159,6 +1160,9 @@ class Repository:
                         self.events.append(Tag(tagname,
                                                referent, tagger, read_data()))
                         baton.twirl()
+                    elif line.startswith("revision"):
+                      (_, key, mark) = line.split()
+                      self.fossil_map[key] = mark
                     else:
                         # Simply pass through any line we don't understand.
                         self.events.append(Passthrough(line))
@@ -1221,9 +1225,9 @@ class Repository:
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
                             cvskey = "CVS:%s:%s" % (fileop.path,cvsref)
-                            if not cvskey in self.revision_map:
-                                self.revision_map[cvskey] = []
-                            self.revision_map[cvskey].append(commit.mark)
+                            if not cvskey in self.fossil_map:
+                                self.fossil_map[cvskey] = []
+                            self.fossil_map[cvskey].append(commit.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1245,6 +1249,11 @@ class Repository:
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
+                if self.write_fossils:
+                    revkeys = self.fossil_map.keys()
+                    revkeys.sort()
+                    for (k, v) in self.fossil_map.items():
+                        fp.write("revision %s %s\n" % (k, " ".join(v)))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
@@ -1641,8 +1650,8 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
-        for (key, value) in self.revision_map.items():
-            self.revision_map[key] = [remark(x) for x in value]
+        for (key, value) in self.fossil_map.items():
+            self.fossil_map[key] = [remark(x) for x in value]
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -1818,7 +1827,7 @@ def read_repo(source, preferred):
                     # Pass 4: combine to get a (path,revision) to mark map
                     for ((path, rev), value) in pathrev_to_hash.items():
                         (ctime, cperson) = hash_to_action[value]
-                        self.revision_map[(path, rev)] = action_to_mark[(ctime, cperson)]
+                        self.fossil_map[(path, rev)] = action_to_mark[(ctime, cperson)]
                     del pathrev_to_hash
                     del hash_to_action
                     del stamp_set
@@ -3727,7 +3736,8 @@ which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property. Also, change refs/remotes/svn branch and
 lightweight tag names to corresponding local ones (replicating what
-svn2git does to clean up the repository).
+svn2git does to clean up the repository). Finally, enable writing of
+the fassil-reference map when the repo is written or rebuilt.
 """)
     def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
@@ -3751,15 +3761,16 @@ svn2git does to clean up the repository).
                     if "strip" not in rest:
                         event.properties.append(("svn", fields[0]))
                     svnrev = "SVN:" + fields[0]
-                    if svnrev not in self.chosen().revision_map:
-                        self.chosen().revision_map[svnrev] = []
-                    self.chosen().revision_map[svnrev].append(event.mark)
+                    if svnrev not in self.chosen().fossil_map:
+                        self.chosen().fossil_map[svnrev] = []
+                    self.chosen().fossil_map[svnrev].append(event.mark)
                 # Things that were remote branches in the git-svn pull
                 # need to become local now.
                 event.branch=event.branch.replace("refs/remotes/svn/tags/",
                                                   "refs/tags/")
                 event.branch=event.branch.replace("refs/remotes/svn/",
                                                   "refs/heads/")
+        self.chosen().write_fossils = True
     def help_references(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
@@ -3771,6 +3782,8 @@ consisting of the leading string '[[', followed by a VCS identifier
 (currently SVN or CVS) followed by VCS-dependent information, followed
 by ']]'. An action stamp pointing at the corresponding commit is
 substituted when possible.
+
+Enables writing of the fassil-reference map when the repo is written or rebuilt.
 """)
     def do_references(self, line):
         "Look for things that might be CVS or Subversion revision references."
@@ -3783,9 +3796,9 @@ substituted when possible.
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.revision_map.get(p)),
+                      lambda p: repo.fossil_map.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: repo.revision_map.get(p)),
+                      lambda p: repo.fossil_map.get(p)),
                      (":[0-9]+",
                       lambda p: [p]),
                      ):
@@ -3818,6 +3831,7 @@ substituted when possible.
                                 break
                             earliest += m.end()
             announce("%d references resolved." % hits)
+            repo.write_fossils = True
         else:
             # No modifier, just list or edit
             idhits = []
