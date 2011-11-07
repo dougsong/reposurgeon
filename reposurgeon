@@ -1186,8 +1186,8 @@ class Repository:
                         baton.twirl()
                     # This is reposurgeon-specific
                     elif line.startswith("fossil"):
-                      (_, key, mark) = line.split()
-                      self.fossil_map[key] = mark
+                        (_, key, mark) = line.split()
+                        self.fossil_map[key] = mark
                     else:
                         # Simply pass through any line we don't understand.
                         self.events.append(Passthrough(line))
@@ -1278,7 +1278,7 @@ class Repository:
                     revkeys = self.fossil_map.keys()
                     revkeys.sort()
                     for (k, v) in self.fossil_map.items():
-                        fp.write("fossil %s %s\n" % (k, " ".join(v)))
+                        fp.write("fossil %s %s\n" % (k, v))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
