@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-1.7:
+1.7: 2011-11-07
      authormap -> authors; the command syntax has changed, read the man page.
      authors handles git-cvsimport/cvs2git style: "localname <localname>"
      authors with no arguments prints a list of committer/author/taggers
