@@ -1184,7 +1184,8 @@ class Repository:
                         self.events.append(Tag(tagname,
                                                referent, tagger, read_data()))
                         baton.twirl()
-                    elif line.startswith("revision"):
+                    # This is reposurgeon-specific
+                    elif line.startswith("fossil"):
                       (_, key, mark) = line.split()
                       self.fossil_map[key] = mark
                     else:
@@ -1277,7 +1278,7 @@ class Repository:
                     revkeys = self.fossil_map.keys()
                     revkeys.sort()
                     for (k, v) in self.fossil_map.items():
-                        fp.write("revision %s %s\n" % (k, " ".join(v)))
+                        fp.write("fossil %s %s\n" % (k, " ".join(v)))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
