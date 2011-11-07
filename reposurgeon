@@ -1837,7 +1837,7 @@ def read_repo(source, preferred):
                         for ((path, rev), value) in pathrev_to_hash.items():
                             if value in hash_to_action:
                                 (ctime, cperson) = hash_to_action[value]
-                                repo.fossil_map[(path, rev)] = action_to_mark[(ctime, cperson)]
+                                repo.fossil_map["CVS:%s:%s" % (path, rev)] = action_to_mark[(ctime, cperson)]
                         del pathrev_to_hash
                         del hash_to_action
                         del stamp_set
