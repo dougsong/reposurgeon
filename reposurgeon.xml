@@ -794,7 +794,7 @@ data for the filename.</para>
 to the specified mark. You may want to hand-patch this in when one of
 previous forms is inconvenient.</para>
 
-<para>An action stamp is an RFC3339timestamp, followed by a '!',
+<para>An action stamp is an RFC3339 timestamp, followed by a '!',
 followed by a committer email address; it refers to a commit without
 being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
 "2011-10-25T15:11:09Z!fred@foonly.com".</para>
@@ -824,15 +824,16 @@ fossil-reference map) without having to do the lookup by hand.</para>
 events.</para>
 
 <para>Interpret final comment lines of commits beginning with
-'git-svn-id:' as git-svn magic cookies and remove them.  If present,
+'git-svn-id:' as git-svn metadata lines and remove them.  If present,
 the Subversion commit ID is extracted and made the value of a
-per-commit property named 'svn', which becomes visible and
-editable; the association between that Subversion revision and its
-commit becomes part of the fossil map.</para> 
+per-commit property named 'svn', which becomes visible; also, the
+association between that Subversion revision and its commit becomes
+part of the fossil map.</para>
 
-<para>Also, change refs/remotes/svn branch and lightweight tag
-names to corresponding local ones (replicating what svn2git does to
-clean up the repository).</para>
+<para>Also, change refs/remotes/svn branch and lightweight tag names
+to corresponding local ones (replicating what
+<command>svn2git</command> does to clean up a repository
+after translation).</para>
 
 <para>The command modifier "strip" suppresses saving the 'svn'
 property. This option was required for older versions of this tool
