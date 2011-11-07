@@ -4,8 +4,8 @@
      authormap -> authors; the syntax has changed, read the man page.
      authors command handles /cvsimport/cvs2git style: "localname <localname>"
      authors with no arguments prints a list of committer/author/taggers
-     Automatic use of .git/cvsauthors for ID mapping.
-     gitsvnparse modifiers have changed slightly; read the man page.
+     Automatic use of .git/cvs-authors for ID mapping.
+     gitsvnparse modifiers are gone; instead there's a new 'fossils' command.
 
 1.6: 2011-11-03
      Fix Python 3.2 compatibility problem pointed out by Mike Swanson.
