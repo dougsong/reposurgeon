@@ -3794,7 +3794,7 @@ which becomes visible and editable. Takes a selection set of events to
 modify, defaulting to all events. The modifier 'strip' suppresses
 saving the 'svn' property. Also, change refs/remotes/svn branch and
 lightweight tag names to corresponding local ones (replicating what
-svn2git does to clean up the repository). Finally, enable writing of
+svn2git does to clean up the repository). Finally, enables writing of
 the fassil-reference map when the repo is written or rebuilt.
 """)
     def do_gitsvnparse(self, line):
