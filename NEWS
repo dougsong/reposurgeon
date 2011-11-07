@@ -1,8 +1,8 @@
 			reposurgeon project news
 
 1.7:
-     authormap -> authors; the syntax has changed, read the man page.
-     authors command handles /cvsimport/cvs2git style: "localname <localname>"
+     authormap -> authors; the command syntax has changed, read the man page.
+     authors handles git-cvsimport/cvs2git style: "localname <localname>"
      authors with no arguments prints a list of committer/author/taggers
      Automatic use of .git/cvs-authors for ID mapping.
      gitsvnparse modifiers are gone; instead there's a new 'fossils' command.
