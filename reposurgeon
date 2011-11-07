@@ -914,6 +914,14 @@ class Repository:
                 contributors.add(event.tagger.who())
         for contributor in contributors:
             fp.write(contributor + "\n")
+    def read_fossilmap(self, fp):
+        "Read a fossil-references dump and apply it to the repo."
+        pass
+    def write_fossilmap(self, fp):
+        "Dump fossil references."
+        for (k, v) in self.fossil_map.items():
+            committer = self.objfind(v).committer
+            fp.write("%s\t%s\t%s\n" % (k, committer.date.rfc3339(), committer.email))
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
         try:
@@ -3709,7 +3717,7 @@ argument sends the report to standard output). This may be helpful as
 a start on building an authors file.
 """)
     def do_authors(self, line):
-        "Apply an author-mapping file."
+        "Apply or dump author-mapping file."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -3728,7 +3736,31 @@ a start on building an authors file.
         else:
             with open(fields[0]) as fp:
                 self.chosen().read_authormap(self.selection, fp)
-
+    def help_fossils(self):
+        print("""
+Read or write the fossil-references data.  The format of each line is
+three whitespace-separated fields: a reference cookie, a timestamp, and
+a committer email address.  Does not take a selection set.
+""")
+    def do_fossils(self, line):
+        "Apply an author-mapping file."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        fields = line.split()
+        if not fields or (fields[0] == "write" and len(fields) == 1):
+            self.chosen().write_fossilmap(sys.stdout)
+        elif fields[0] == "write":
+            with open(fields[1], "w") as wfp:
+                self.chosen().write_fossilmap(self.selection, wfp)            
+        elif fields[0] == "read" and len(fields) == 1:
+            self.chosen().read_fossilmap(sys.stdin)
+        elif fields[0] == "read":
+            with open(fields[1]) as fp:
+                self.chosen().read_fossilmap(fp)
+        else:
+            with open(fields[0]) as fp:
+                self.chosen().read_fossilmap(fp)
     def help_gitsvnparse(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
