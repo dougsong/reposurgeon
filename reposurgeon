@@ -918,8 +918,21 @@ class Repository:
         for contributor in contributors:
             fp.write(contributor + "\n")
     def read_fossilmap(self, fp):
-        "Read a fossil-references dump and apply it to the repo."
-        pass
+        "Read a fossil-references dump and initialize the repo's fossil map."
+        mark_map = {}
+        for event in repo.events():
+            mark_map[(event.committer.date.timestamp, event.committer.email)] = commit.mark
+        try:
+            for line in fp:
+                (fossil, timefield, person) = line.split()
+                when_who = (Date(timefield).timestamp, person)
+                if when_who in mark_map:
+                    self.fossil_map[fossil] = mark_map[when_who]
+                else:
+                    complain("no mark matches fossil %s" % fossil)
+            del mark_map
+        except ValueError:
+            raise Recoverable("bad syntax in fossils file.")
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for (k, v) in self.fossil_map.items():
