@@ -920,7 +920,7 @@ class Repository:
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
         mark_map = {}
-        for event in self.events():
+        for event in self.commits():
             mark_map[(event.committer.date.timestamp, event.committer.email)] = event.mark
         try:
             for line in fp:
@@ -1278,7 +1278,7 @@ class Repository:
                     revkeys = self.fossil_map.keys()
                     revkeys.sort()
                     for (k, v) in self.fossil_map.items():
-                        fp.write("fossil %s %s\n" % (k, v[0]))
+                        fp.write("fossil %s %s\n" % (k, " ".join(v)))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
@@ -1940,7 +1940,7 @@ def rebuild_repo(repo, target, preferred):
                 repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
         if repo.fossil_map:
             with open(os.path.join(vcs.subdirectory, "fossils"), "w") as wfp:
-                repo.write_fossils(wfp)
+                repo.write_fossilmap(wfp)
         do_or_die(vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
