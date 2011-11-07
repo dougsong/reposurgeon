@@ -1796,7 +1796,7 @@ def read_repo(source, preferred):
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
-                    repo.read_authormap(fp)                    
+                    repo.read_authormap(range(len(repo.events)),fp)                    
             # kluge: git-specific hook
             if repo.vcs.name == "git":
                 if os.path.exists(".git/cvs-revisions"):
@@ -1809,28 +1809,30 @@ def read_repo(source, preferred):
                     # Pass 2: get git's hash to (time,person) mapping 
                     hash_to_action = {}
                     stamp_set = set({})
-                    for line in popen_or_die("git log --all --format='%H %ct %ce'", "r"):
-                        (hashv, ctime, cperson) = line.split()
-                        stamp = (int(ctime), cperson)
-                        if stamp in stamp_set:
-                            complain("more than one commit matches %s!%s" \
-                                     % rfc3339(int(ctime)), cperson)
-                            if stamp in hash_to_action:
-                                del hash_to_action[hashv]
-                        else:
-                            hash_to_action[hashv] = stamp
-                            stamp_set.add(stamp)
-                    # Pass 3: build a (time,person) to mark mapping 
-                    action_to_mark = {}
-                    for commit in event.repo.commits():
-                        action_to_mark[(commit.committer.timestamp, commit.committer.email)] = commit.mark
-                    # Pass 4: combine to get a (path,revision) to mark map
-                    for ((path, rev), value) in pathrev_to_hash.items():
-                        (ctime, cperson) = hash_to_action[value]
-                        self.fossil_map[(path, rev)] = action_to_mark[(ctime, cperson)]
-                    del pathrev_to_hash
-                    del hash_to_action
-                    del stamp_set
+                    with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
+                        for line in fp:
+                            (hashv, ctime, cperson) = line.split()
+                            stamp = (int(ctime), cperson)
+                            if stamp in stamp_set:
+                                complain("more than one commit matches %s!%s (%s)" \
+                                         % (rfc3339(int(ctime)), cperson, hashv))
+                                if stamp in hash_to_action:
+                                    del hash_to_action[hashv]
+                            else:
+                                hash_to_action[hashv] = stamp
+                                stamp_set.add(stamp)
+                        # Pass 3: build a (time,person) to mark mapping 
+                        action_to_mark = {}
+                        for commit in repo.commits():
+                            action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit.mark
+                        # Pass 4: combine to get a (path,revision) to mark map
+                        for ((path, rev), value) in pathrev_to_hash.items():
+                            if value in hash_to_action:
+                                (ctime, cperson) = hash_to_action[value]
+                                repo.fossil_map[(path, rev)] = action_to_mark[(ctime, cperson)]
+                        del pathrev_to_hash
+                        del hash_to_action
+                        del stamp_set
         finally:
             os.chdir(here)
     return repo
@@ -1999,7 +2001,7 @@ class popen_or_die:
     def __exit__(self, extype, value, traceback):
         if extype:
             if verbose:
-                complain("fatal exception in popen_or_die." % (extype))
+                complain("fatal exception in popen_or_die.")
             # This is what we want, but it's only in true Python 3.x
             if sys.version_info.major >= 3:
                 raise extype(value).with_traceback(traceback)
