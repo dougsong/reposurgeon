@@ -280,10 +280,15 @@ an argument of <quote>-</quote>, this command reads a fast-import
 stream from standard input (this will be useful in filters constructed
 with command-line arguments).</para>
 
-<para>If the directory is a git repository and contains a 
+<para>If the read location is a git repository and contains a 
 <filename>.git/cvsauthors</filename> file (such as is left in in place
 by <command>git cvsimport -A</command>) that file will be read in as
 if it had been given to the <command>authormap read</command>.</para>
+
+<para>If the read location is a directory, and its repository
+subdirectory has a file named <filename>fossils</filename>, that file
+will be read as though passed to a <filename>fossil read</filename>
+command.</para>
 
 <para>The just-read-in repo is added to the list of loaded repositories and
 becomes the current one, selected for surgery. If it was read from a
@@ -365,9 +370,12 @@ of the new repository is checked out.</para>
 <term><command>rebuild</command>
         [<emphasis>directory</emphasis>]
 </term>
-<listitem><para> Rebuild a repository from the state held by
+<listitem>
+<para> Rebuild a repository from the state held by
 <command>reposurgeon</command>.  This command does not take a
-selection-set argument.  The single argument, if present,
+selection-set argument.</para>
+
+<para>The single argument, if present,
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import
 stream), it defaults to that directory.  If the target directory is
@@ -375,7 +383,13 @@ nonempty its contents are backed up to a save directory.  Files and
 directories on the repository's preserve list are copied back from the
 backup directory after repo rebuild. The default preserve list
 depends on the repository type, and can be displayed with the
-<command>stats</command> command.</para></listitem>
+<command>stats</command> command.</para>
+
+<para>If <command>reposurgeon</command> has a nonempty fossil map,
+it will be written to a file named <filename>fossils</filename> 
+in the repository subdirectory as though by a a 
+<filename>fossil write</filename> command.</para>
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><command>preserve</command> 
@@ -813,7 +827,10 @@ events.</para>
 'git-svn-id:' as git-svn magic cookies and remove them.  If present,
 the Subversion commit ID is extracted and made the value of a
 per-commit property named 'svn', which becomes visible and
-editable. Also, change refs/remotes/svn branch and lightweight tag
+editable; the association between that Subversion revision and its
+commit becomes part of the fossil map.</para> 
+
+<para>Also, change refs/remotes/svn branch and lightweight tag
 names to corresponding local ones (replicating what svn2git does to
 clean up the repository).</para>
 
@@ -823,8 +840,8 @@ that did not automatically suppress writing properties to importers
 that couldn't handle them: it has been retained for backwards
 compatibility.</para>
 
-<para>Enables writing of the fossil-reference map when the repo is written or
-rebuilt.</para>
+<para>Also, enables writing of the fossil map as 'fossil' passthroughs when
+the repo is written to a steam file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -840,17 +857,18 @@ translated into VCS-independent action stamps. With the modifier
 'edit', edit the set where revision IDs are found.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
-cookies in comments into action stamps. An action stamp is a
-timestamp/email combination uniquely identifying the commit associated
-with that blob, as described in <xref linkend='style'/>.</para>
+cookies in comments into action stamps using the fossil map. An action
+stamp is a timestamp/email combination uniquely identifying the commit
+associated with that blob, as described in <xref
+linkend='style'/>.</para>
 
 <para>It is not guaranteed that every such reference will be resolved,
 or even that any at all will be. Generally, if the repo contains git-svn
 headers and <command>gitsvnparse</command> has been called, every SVN
 cookie will resolve. CVS references are less likely to be resolvable.</para>  
 
-<para>Enables writing of the fossil-reference map when the repo is written or
-rebuilt.</para>
+<para>Also, enables writing of the fossil map as 'fossil' passthroughs
+when the repo is written to a stream file.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -1074,6 +1092,26 @@ and executes it as a command.</para></listitem>
 </term>
 <listitem>
 <para>List the commands you have entered this session.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>fossils</command>
+          [<command>read</command>|<command>write</command>]
+          [<command>filename</command>]
+</term>
+<listitem>
+<para>Apply or list fossil-reference information. Does not take a
+selection set.</para>
+
+<para> A fossil-reference file maps reference cookies to (committer,
+commit-date) pairs; these in turn (should) uniquely identify a commit.
+The format is three whitespace-separated fields: the cookie, an RFC3339
+timestamp, and a committer email ID.</para>
+
+<para>It should not normally be necessary to use this command.  The
+fossil map is automatically preserved through repository reads and
+rebuilds, being stored in the file <filename>fossils</filename> under
+the repository subdirectory..</para>
 </listitem>
 </varlistentry>
 </variablelist>
