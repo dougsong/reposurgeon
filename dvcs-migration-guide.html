@@ -57,6 +57,8 @@ document.writeln(document.title);
 recommending <code>git cvsimport</code>. I started numbering versions
 at this point.</p>
 
+<p>2.1 (2011-11-07) Updated for reposurgeon 1.7.</p>
+
 <h1 id="overview">Overview</h1>
 
 <p>Distributed version control systems (DVCSes) are powerful and
@@ -118,6 +120,8 @@ avoids a lot of tiny, noisy changesets.</dd>
 <dd>Attempt merge recognition by matching committer headers.</dd>
 <dt>-A</dt>
 <dd>Pass in your authors file.</dd>
+<dt>-R</dt>
+<dd>Tell it to generate a map of CVS revisions.</dd>
 <dt>-z 90</dt>
 <dd>Shorten the time interval within which CVS commits can be grouped
 into changesets.  This makes the history noisier, but may protect you
@@ -135,7 +139,8 @@ probably not what you want.</dd>
 <p>The reason this is normally your best option is that it converts
 straight to git, avoiding issues produced by the other major
 conversion tools which either go through Subversion as an intermediate 
-stage or have Subversion-based assumptions baked into them. But read
+stage or have Subversion-based assumptions baked into them. Also, the
+-R option is immensely helpful for reference-lifting. But read
 the warnings on the manual page; under some (rare) circumstances this
 tool can produce incorrect conversions.</p>
 
@@ -249,14 +254,14 @@ randomly to file versions far older than the junk commit). Older versions
 of <code>cvs2svn</code> seem to have generated all kinds of meaningless
 crud into these.</dd>
 
-<dt><em>Subversion and CVS commit references</em></dt> <dd>Often
-Subversion will be in the form 'r' followed by a string of digits
-referring to a Subversion commit number. But not always; humans come
-up with lots of ambiguous ways to write these.  CVS commit references
-are even harder to spot mechanically, as they're just groups of digits
-separated by dots with no identifing prefix.  A clean conversion
-should turn all these into VCS-indpendent commit references, which
-I'll describe later in this document.</dd>
+<dt><em>Subversion and CVS commit references</em></dt> 
+<dd>Often Subversion will be in the form 'r' followed by a string of
+digits referring to a Subversion commit number. But not always; humans
+come up with lots of ambiguous ways to write these.  CVS commit
+references are even harder to spot mechanically, as they're just
+groups of digits separated by dots with no identifing prefix.  A clean
+conversion should turn all these into VCS-indpendent commit
+references, which I'll describe later in this document.</dd>
 
 <dt><em>Multiline contents with no summary</em></dt>
 <dd>git and hg both encourage comments to begin with a summary line
@@ -288,14 +293,6 @@ and makes the Subversion revision number from them a property of the
 commit.  You will probably want to do <code>gitsvnlift strip</code> at
 some point in the cleanup.</p>
 
-<p>The <code>edit</code> command is useful for changing commit
-references in comments to a VCS-independent form. This is where you
-may be glad for the magic-cookie lines git-svn patches
-into comments; you'll find the Subversion commit number in them
-following '@'. When you've done all that. <code>edit</code> is also
-useful for deleting those git-svn lines once you're done resoving
-references.</p>
-
 <p>The <code>edit</code> command is also good for (1) fixing up up multiline
 comments and (2) tweaking the comments on the tag objects generated
 by the <code>cvslift</code> step.</p>
@@ -308,9 +305,10 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
-<p>Also, read the documentation of the <code>references</code> command; 
-reposurgeon has facilities for fixing up Subversion and CVS changeset 
-references in comments so they're still meaningful.</p>
+<p>Also, read the documentation of the <code>references</code>
+command; reposurgeon has facilities for reference-lifting - fixing up
+Subversion and CVS changeset references in comments so they're still
+meaningful.</p>
 
 <p>Experiments with reposurgeon suggest that <code>git import</code>
 doesn't try to pack or otherwise optimize for space when it populates
@@ -438,7 +436,8 @@ VCS-specific.  Thus, instead of "commit 304a53c2",
 vary from this format</em>, even in trivial ways like omitting the 'Z'
 or changing the 'T' or '!'. Making these cookies uniform and
 machine-parseable will have good consequences for future
-repository-browsing tools.</p>
+repository-browsing tools. The reference-lifting code in
+<command>reposurgeon</command> generates them.</p>
 
 <p>Sometimes it's enough to quote the summary line of a commit. So,
 instead of "Back out most of commit 304a53c2", you might write 
