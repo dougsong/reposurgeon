@@ -837,9 +837,6 @@ fossil-reference map) without having to do the lookup by hand.</para>
 <term><command>gitsvnparse</command>
 </term>
 <listitem>
-<para>Takes a selection set of events to modify, defaulting to all
-events.</para>
-
 <para>Interpret final comment lines of commits beginning with
 'git-svn-id:' as git-svn metadata lines and remove them.  If present,
 the Subversion commit ID is extracted and made the value of a
@@ -852,6 +849,9 @@ to corresponding local ones (replicating what
 <command>svn2git</command> does to clean up a repository
 after translation).</para>
 
+<para>Finally, detect delete/modify sequences that are actually renames 
+and turn them into renames.</para>
+
 <para>The command modifier "strip" suppresses saving the 'svn'
 property. This option was required for older versions of this tool
 that did not automatically suppress writing properties to importers
@@ -860,6 +860,13 @@ compatibility.</para>
 
 <para>Also, enables writing of the fossil map as 'fossil' passthroughs when
 the repo is written to a steam file.</para>
+
+<para>Note: in earlier version of <command>reposugeon</command> this
+command took a selection set of events to modify, defaulting to all
+events. It now always converts the entire repo, and no longer takes
+a selection set.</para>
+
+
 </listitem>
 </varlistentry>
 <varlistentry>

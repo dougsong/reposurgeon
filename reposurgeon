@@ -1777,6 +1777,42 @@ class Repository:
         graft_repo.commits()[0].parent_marks.append(where.mark)
         self.absorb(graft_repo)
         self.renumber()
+    def __last_modification(self, commit, path):
+        "Locate the last modification of the specified path before this commit."
+        ancestors = commit.parents()
+        while ancestors:
+            backto = []
+            for ancestor in ancestors:
+                for (i, fileop) in enumerate(ancestor.fileops):
+                    if fileop.op == 'M' and fileop.path == path:
+                        return (ancestor, i)
+                else:
+                    backto += ancestor.parents()
+            ancestors = backto
+        return None
+    def move_to_rename(self):
+        "Make rename sequenced from matched delete-modify pairs."
+        for commit in self.commits():
+            renames = []
+            for (d, op) in enumerate(commit.fileops):
+                if op.op == 'D':
+                    previous = self.__last_modification(commit, op.path)
+                    if not previous:
+                        raise Recoverable("internal error looking for renames of %s" % op.path)
+                    else:
+                        (ancestor, i) = previous
+                        for (m, op2) in enumerate(commit.fileops):
+                            if op2.op == 'M' and \
+                               op2.mode == op.mode and \
+                               ancestor.fileops[i].ref == op2.ref:
+                                renames.append(d, m)
+                                break
+            for (d, m) in renames:
+                commit.fileops[d].source = commit.fileops[d].path
+                commit.fileops[d].target = commit.fileops[m].path
+                del commit.fileops[d].path
+                commit.fileops[d].op = 'R'
+                commit.fiileops.pop(m)
 
     # Container emulation methods
     def __len__(self):
@@ -3811,8 +3847,7 @@ a committer email address.  Does not take a selection set.
 Interpret final comment lines of commits beginning with 'git-svn-id:'
 as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
-which becomes visible and editable. Takes a selection set of events to
-modify, defaulting to all events. The modifier 'strip' suppresses
+which becomes visible and editable. The modifier 'strip' suppresses
 saving the 'svn' property. Also, change refs/remotes/svn branch and
 lightweight tag names to corresponding local ones (replicating what
 svn2git does to clean up the repository). Finally, enables writing of
@@ -3823,10 +3858,7 @@ the fassil-reference map when the repo is written or rebuilt.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        # Load svnid:attribution pairs from a map file.
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        for ei in self.selection:
-            event = self.chosen().events[ei]
+        for event in self.chosen().events:
             if isinstance(event, Reset):
                 event.ref = event.ref.replace("refs/remotes/svn/",
                                                   "refs/heads/")
@@ -3837,7 +3869,7 @@ the fassil-reference map when the repo is written or rebuilt.
                     event.comment = event.comment[:m.start()]
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
-                    if "strip" not in rest:
+                    if "strip" not in line:
                         event.properties.append(("svn", fields[0]))
                     svnrev = "SVN:" + fields[0]
                     self.chosen().fossil_map[svnrev] = event.mark
@@ -3848,6 +3880,7 @@ the fassil-reference map when the repo is written or rebuilt.
                 event.branch=event.branch.replace("refs/remotes/svn/",
                                                   "refs/heads/")
         self.chosen().write_fossils = True
+        self.chosen().move_to_rename()
     def help_references(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit

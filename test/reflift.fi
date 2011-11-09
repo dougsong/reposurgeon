@@ -4277,9 +4277,6 @@ Merge from trunk.
 
 git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4223 57a73879-2fb5-44c3-a270-3262357dd7e2
 from :614
-D detectors/creator_resolution.py
-D detectors/emailauditor.py
-D detectors/newissuecopy.py
 M 100644 :615 roundup/actions.py
 M 100755 :616 roundup/cgi/actions.py
 M 100644 :617 roundup/xmlrpc.py
