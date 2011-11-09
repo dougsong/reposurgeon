@@ -1,9 +1,11 @@
 pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2>
 pygi <pygi>
 stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2>
+reposurgeon: internal error looking for renames of scripts/notify-roundup/notify-roundup.py
 # This was originally a section from a git-svn lift, but a few of the
 # committer/author headers have been hacked into the form emitted by
-# git-cvsimport and cvs2git in order to broaden the test coverage.
+# git-cvsimport and cvs2git in order to broaden the test coverage. Also
+# some delete ops have been removed.
 blob
 mark :186
 data 171
@@ -12101,9 +12103,6 @@ data 18
 Merge from trunk.
 from :614
 property svn 4 4223
-D detectors/creator_resolution.py
-D detectors/emailauditor.py
-D detectors/newissuecopy.py
 M 100644 :615 roundup/actions.py
 M 100755 :616 roundup/cgi/actions.py
 M 100644 :617 roundup/xmlrpc.py
