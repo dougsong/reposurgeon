@@ -936,8 +936,13 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for (k, v) in self.fossil_map.items():
-            committer = self.objfind(v).committer
-            fp.write("%s\t%s\t%s\n" % (k, committer.date.rfc3339(), committer.email))
+            commit = self.objfind(v)
+            if commit is None:
+                raise Recoverable("internal error, can't find commit for %s" % v)
+            else:
+                fp.write("%s\t%s\t%s\n" % (k,
+                                           commit.committer.date.rfc3339(),
+                                           commit.committer.email))
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
         try:
@@ -1034,9 +1039,11 @@ class Repository:
                                 else:
                                     # Subversion revision
                                     svnkey = "SVN:" + fields[1]
-                                    if svnkey not in self.fossil_map:
-                                        self.fossil_map[svnkey] = []
-                                    self.fossil_map[svnkey].append(commit.mark)
+                                    oldval = self.fossil_map.get(svnkey)
+                                    if oldval and oldval != commit.mark:
+                                        complain("differing referents for %s from $Id$" \
+                                                 % svnkey)
+                                    self.fossil_map[svnkey] = commit.mark
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
@@ -1046,9 +1053,11 @@ class Repository:
                                 else:
                                     # Subversion revision
                                     rev = "SVN:" + rev
-                                    if rev not in self.fossil_map:
-                                        self.fossil_map[rev] = []
-                                    self.fossil_map[rev].append(commit.mark)
+                                    oldval = self.fossil_map.get(rev)
+                                    if oldval and oldval != commit.mark:
+                                        complain("differing referents for %s from $Revision$" \
+                                                 % rev)
+                                    self.fossil_map[rev] = commit.mark
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -1250,9 +1259,10 @@ class Repository:
                                 complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
                             cvskey = "CVS:%s:%s" % (fileop.path,cvsref)
-                            if not cvskey in self.fossil_map:
-                                self.fossil_map[cvskey] = []
-                            self.fossil_map[cvskey].append(commit.mark)
+                            oldval = self.fossil_map.get(cvskey)
+                            if oldval and oldval != commit.mark:
+                                complain("blob %s clobbers %s referent for %s" % (commit.mark, oldval, cvskey))
+                            self.fossil_map[cvskey] = commit.mark
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1278,7 +1288,7 @@ class Repository:
                     revkeys = self.fossil_map.keys()
                     revkeys.sort()
                     for (k, v) in self.fossil_map.items():
-                        fp.write("fossil %s %s\n" % (k, " ".join(v)))
+                        fp.write("fossil %s %s\n" % (k, v))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
@@ -1687,7 +1697,7 @@ class Repository:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
         for (key, value) in self.fossil_map.items():
-            self.fossil_map[key] = [remark(x) for x in value]
+            self.fossil_map[key] = remark(value)
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -3830,9 +3840,7 @@ the fassil-reference map when the repo is written or rebuilt.
                     if "strip" not in rest:
                         event.properties.append(("svn", fields[0]))
                     svnrev = "SVN:" + fields[0]
-                    if svnrev not in self.chosen().fossil_map:
-                        self.chosen().fossil_map[svnrev] = []
-                    self.chosen().fossil_map[svnrev].append(event.mark)
+                    self.chosen().fossil_map[svnrev] = event.mark
                 # Things that were remote branches in the git-svn pull
                 # need to become local now.
                 event.branch=event.branch.replace("refs/remotes/svn/tags/",
@@ -3869,7 +3877,7 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                      ("SVN:[0-9]+",
                       lambda p: repo.fossil_map.get(p)),
                      (":[0-9]+",
-                      lambda p: [p]),
+                      lambda p: p),
                      ):
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
@@ -3885,9 +3893,8 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                             if possible is None:
                                 complain("no commit matches " + repr(payload))
                                 break
-                            elif len(possible) == 1:
-                                commit_spec = possible[0]
-                                commit = repo.objfind(commit_spec)
+                            else:
+                                commit = repo.objfind(possible)
                                 if commit:
                                     event.comment = event.comment[:earliest+m.start()] \
                                                     + commit.committer.action_stamp() \
@@ -3895,8 +3902,6 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                                     hits += 1
                                 else:
                                     complain("no such mark as %s" % possible[0])
-                            else:
-                                complain("more than one commit matches " + repr(payload))
                                 break
                             earliest += m.end()
             announce("%d references resolved." % hits)
