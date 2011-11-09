@@ -1260,9 +1260,11 @@ class Repository:
                                          % (fileop.path, commit.mark, cvsdata[0], blob.mark))
                             cvskey = "CVS:%s:%s" % (fileop.path,cvsref)
                             oldval = self.fossil_map.get(cvskey)
-                            if oldval and oldval != commit.mark:
-                                complain("blob %s clobbers %s referent for %s" % (commit.mark, oldval, cvskey))
-                            self.fossil_map[cvskey] = commit.mark
+                            # Only pay attention to the oldest commit that
+                            # matches, the later ones will be branching
+                            # artifacts.
+                            if not oldval or self.objfind(oldval).when() > commit.when():
+                                self.fossil_map[cvskey] = commit.mark
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
