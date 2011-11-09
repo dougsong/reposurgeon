@@ -713,6 +713,9 @@ taken from the $EDITOR variable in your environment.</para>
 <para>Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called directly on the blob file.</para>
+
+<para>The modifier 'multiline' will trim the selection set to commits that
+are multiline and not in summary/blank-line/details form.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

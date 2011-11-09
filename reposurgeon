@@ -3376,6 +3376,9 @@ taken from the $EDITOR variable in your environment.
 Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
+
+The modifier 'multiline' will trim the selection set to commits that
+are multiline and not in summary/blank-line/details form.
 """)
     def do_edit(self, line):
         "Edit metadata interactively."
@@ -3384,6 +3387,15 @@ blob, your editor will be called on the blob file.
             return
         default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
         rest = self.set_selection_set(line, default)
+        if "multiline" in rest:
+            rest = rest.replace("multiline", "")
+            mr = re.compile("[^\n]*\n[^\n]")
+            filtered = []
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit) and mr.match(event.comment):
+                    filtered.append(ei)
+            self.selection = filtered
         self.edit(self.selection, rest)
 
     def help_delete(self):

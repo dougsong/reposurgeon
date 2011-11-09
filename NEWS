@@ -2,6 +2,7 @@
 
 1.8:
      Added "sort" command.
+     Added "multiline" modifier to edit command.
      gitsvnparse now creates R ops from properly matched D/M pairs.
 
 1.7: 2011-11-07
