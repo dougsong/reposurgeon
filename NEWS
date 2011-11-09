@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+1.8:
+     Added "sort" command.
+
 1.7: 2011-11-07
      authormap -> authors; the command syntax has changed, read the man page.
      authors handles git-cvsimport/cvs2git style: "localname <localname>"

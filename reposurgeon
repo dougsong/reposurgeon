@@ -1313,6 +1313,17 @@ class Repository:
     def earliest(self):
         "Return the date of earlist commit."
         return self.commits()[0].committer.date
+    def sort(self):
+        "Sort commits into as close to time order as parent pointers allow."
+        for event in self.events:
+            if hasattr(event, "children"):
+                for child in event.children():
+                    if child.when() < event.when():
+                        raise Recoverable("times of %s and %s are out of order" \
+                                      % (event.mark, child.mark))
+        self.events.sort(key=lambda e: e.when())
+        self.events = [x for x in self.events if not isinstance(x, Tag) ] \
+                      + [x for x in self.events if isinstance(x, Tag)]
     #
     # Delete machinery begins here
     #
@@ -3971,6 +3982,19 @@ must resolve to exactly two commits.
         command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
+
+    def help_sort(self):
+        print("""Sort events in the selected repo by timestamp, unless
+doing so would put a child before a parent. May be useful after a
+graft operation; a sorted repo tends to display more nicely in tools
+which exibit the graph structure. Does not take a selection set.""")
+    def do_sort(self, line):
+        "Sort events by timestamp."
+        assert line is not None      # Pacify pylint
+        if self.chosen():
+            self.chosen().sort()
+        else:
+            complain("no repo has been chosen.")
 
 if __name__ == '__main__':
     try:
