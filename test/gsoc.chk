@@ -1,7 +1,6 @@
 pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2>
 pygi <pygi>
 stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2>
-reposurgeon: internal error looking for renames of scripts/notify-roundup/notify-roundup.py
 # This was originally a section from a git-svn lift, but a few of the
 # committer/author headers have been hacked into the form emitted by
 # git-cvsimport and cvs2git in order to broaden the test coverage. Also
@@ -26235,12 +26234,11 @@ D scripts/beta-notify/extensions/revision_info.py
 D scripts/beta-notify/html/bug.item.html
 R "scripts/beta-notify/html/svn_rev.item.html" "scripts/notify-roundup/html/vcs_rev.item.html"
 D scripts/beta-notify/html/user.item.html
-D scripts/beta-notify/notify-roundup.ini
+R "scripts/beta-notify/notify-roundup.ini" "scripts/notify-roundup/notify-roundup.ini"
 D scripts/beta-notify/notify-roundup.py
 D scripts/notify-roundup/detectors/svnauditor.py
 M 100644 :681 scripts/notify-roundup/html/bug.item.html
 D scripts/notify-roundup/html/svn_rev.item.html
-M 100644 :667 scripts/notify-roundup/notify-roundup.ini
 M 100755 :721 scripts/notify-roundup/notify-roundup.py
 M 100644 :673 share/roundup/templates/devel/schema.py
 
