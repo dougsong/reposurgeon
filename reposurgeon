@@ -1783,8 +1783,14 @@ class Repository:
         while ancestors:
             backto = []
             for ancestor in ancestors:
+                # This is potential trouble if the file was renamed
+                # down one side of a merge bubble but not the other.
+                # Might cause an internal-error message, but no real
+                # harm will be done.
                 for (i, fileop) in enumerate(ancestor.fileops):
-                    if fileop.op == 'M' and fileop.path == path:
+                    if fileop.op == 'R' and fileop.target == path:
+                        path = fileop.source
+                    elif fileop.op == 'M' and fileop.path == path:
                         return (ancestor, i)
                 else:
                     backto += ancestor.parents()
@@ -1803,16 +1809,16 @@ class Repository:
                         (ancestor, i) = previous
                         for (m, op2) in enumerate(commit.fileops):
                             if op2.op == 'M' and \
-                               op2.mode == op.mode and \
+                               ancestor.fileops[i].mode == op2.mode and \
                                ancestor.fileops[i].ref == op2.ref:
-                                renames.append(d, m)
+                                renames.append((d, m))
                                 break
             for (d, m) in renames:
                 commit.fileops[d].source = commit.fileops[d].path
                 commit.fileops[d].target = commit.fileops[m].path
                 del commit.fileops[d].path
                 commit.fileops[d].op = 'R'
-                commit.fiileops.pop(m)
+                commit.fileops.pop(m)
 
     # Container emulation methods
     def __len__(self):
