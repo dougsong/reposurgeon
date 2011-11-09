@@ -59,6 +59,8 @@ at this point.</p>
 
 <p>2.1 (2011-11-07) Updated for reposurgeon 1.7.</p>
 
+<p>2.2 (2011-11-09) Updated for reposurgeon 1.8.</p>
+
 <h1 id="overview">Overview</h1>
 
 <p>Distributed version control systems (DVCSes) are powerful and
@@ -269,6 +271,12 @@ that can stand alone as a short description of the change; this
 practice produces more readable output from <code>git log</code>
 and <code>hg log</code>. For a really high-quality conversion, 
 multiline comments should be edited into this form.</dd>
+
+<dt><em>Missing 'R' file operations</em></dt>
+<dd>Some VCSes don't represent file rename operations, creating
+pairs of file deletes and adds instead, and DVCS conversion tools won't
+necessarily turn these pairs into rename operations. This happens
+in particular with Subversion and gitsvnparse.</dd>
 </dl>
 
 <h2 id="reposurgeon">Using reposurgeon</h2>
@@ -290,12 +298,13 @@ empty or have fileop lists consisting entirely of deletes.</p>
 
 <p>The <code>gitsvnparse</code> command parses git-svn metadata lines
 and makes the Subversion revision number from them a property of the
-commit.  You will probably want to do <code>gitsvnlift strip</code> at
-some point in the cleanup.</p>
+commit. In versions 1.8 or later of reposurgeon this command also
+converts delete-add pairs into renames when possible.</p>
 
 <p>The <code>edit</code> command is also good for (1) fixing up up multiline
 comments and (2) tweaking the comments on the tag objects generated
-by the <code>cvslift</code> step.</p>
+by the <code>cvslift</code> step.  In reposurgeon 1.8 or later, try
+"edit multiline".</p>
 
 <p>The command <code>list /cvs2svn/</code> will show you all remaining
 <code>cvs2svn</code> artifacts.  Some can be deleted; a clue to look
