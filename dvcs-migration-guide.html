@@ -223,10 +223,11 @@ one at <a href="https://gitorious.org/svn2git/">Gitorious</a>.</p>
 
 <p>The GitHub one is a thin wrapper around git-svn that,
 according to its documentation, does something quite like the fixup
-described above. But it turns the remote tags into actual tag objects
-rather than "lightweight" tags (which are really just a kind of
-branch).  If you have a Ruby interpreter installed it is possibly
-worth experimenting with.</p>
+described above. But it also turns the remote tags into actual tag objects
+rather than "lightweight" tags, which are really just a kind of
+branch.  Versions of reposurgeon from 1.8 onward do this fixup
+automatically when the <command>gitsvnparse</command> is invoked, 
+so it is unlikely you will need this program.</p>
 
 <p>The Gitorious one is undocumented and written in C++, which are
 both good reasons to avoid it (C++ being overkill for a job naturally
