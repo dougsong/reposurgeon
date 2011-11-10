@@ -78,8 +78,8 @@ political friction to a minimum.</p>
 <p>The technical fact central to the strategy I'm going to describe is
 that as of late 2011 an hg plugin already exists to allow seamless
 access to a git repository - but the reverse is not true.  So we'll
-explain how to create a git repository and then line up the tools to
-access it in several different ways.</p>
+walk through how to up-convert a git repository and then line up the
+tools to access it in several different ways.</p>
 
 <p>But tools aren't the end of the story. Your developers will need
 some education in good practice to get the most out of the tools.
@@ -295,6 +295,11 @@ for dealing with unusual situations</p>
 
 <p>(The descriptions below apply to reposurgeon 1.6 and later.
 The command set was significantly different in earlier versions.)</p>
+
+<p>If you forgot to specify an authors file with -A at conversion
+time, or couldn't do that because you were using <code>cvs2git</code>,
+you can use the <code>authors read</code> command to perform the
+operation with <code>reposurgeon</code>.</p>
 
 <p>The <code>cvspurge</code> command removes most cvs2svn artifacts.
 Specifically, it makes all junk commits generated to carry tags into
