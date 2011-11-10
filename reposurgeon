@@ -1982,8 +1982,7 @@ def rebuild_repo(repo, target, preferred):
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
-        # FIXME: we can remove this if git preserves properies through rebuild
-        if self.write_fossils:
+        if repo.write_fossils:
             with open(os.path.join(vcs.subdirectory, "fossils"), "w") as wfp:
                 repo.write_fossilmap(wfp)
         do_or_die(vcs.checkout, "repository_checkout")
