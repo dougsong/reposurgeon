@@ -1215,7 +1215,7 @@ class Repository:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
     def parse_dollar_cookies(self):
-        "Extract info about fossil references from CVS/SVN header cookies/"
+        "Extract info about fossil references from CVS/SVN header cookies."
         if self.dollar_latch:
             return
         else:
