@@ -1667,7 +1667,11 @@ class Repository:
     def renumber(self):
         "Renumber the marks in a repo."
         marklist = []
-        def remark(m): return ":" + repr(1 + marklist.index(m))
+        def remark(m):
+            try:
+                return ":" + repr(1 + marklist.index(m))
+            except ValueError:
+                raise Fatal("unknown mark %s cannot be renumbered!" % m)
         for event in self.events:
             if hasattr(event, "mark"):
                 if event.mark is None:
