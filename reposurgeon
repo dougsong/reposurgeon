@@ -3973,7 +3973,7 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                                                     + event.comment[earliest+m.end():]
                                     hits += 1
                                 else:
-                                    complain("no mark for %s" % payload)
+                                    complain("cannot resolve %s" % payload)
                                 break
                             earliest += m.end()
             announce("%d references resolved." % hits)
