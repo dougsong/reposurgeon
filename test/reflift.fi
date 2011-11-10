@@ -1,7 +1,7 @@
 # This is a syntehetic terst load for CVS and Subversion reference cookies,
-# pieced together from a couple of different repos and hand-hacked.
+# pieced together from a couple of different repos, renumbered, and hand-hacked.
 blob
-mark :9021
+mark :1
 data 88783
 # Russian message file for Roundup Issue Tracker
 # alexander smishlajev <alex@tycobka.lv>, 2004
@@ -2713,16 +2713,15 @@ msgid "User editing - ${tracker}"
 msgstr "Редактирование карточки пользователя - ${tracker}"
 
 commit refs/tags/0.8.0-b1
-mark :9022
+mark :2
 author Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 committer Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 data 79
 updated to roundup.pot at [[CVS:locale/ru.po:1.6]] use better term for "issue"
-from :9020
-M 100644 :9021 locale/ru.po
+M 100644 :1 locale/ru.po
 
 blob
-mark :613
+mark :3
 data 5155
 #! /usr/bin/env python
 #
@@ -2902,18 +2901,18 @@ if __name__ == '__main__':
 # vim: set filetype=python sts=4 sw=4 et si :
 
 commit refs/remotes/svn/gsoc-2009
-mark :614
+mark :4
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1244859175 +0000
 committer stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1244859175 +0000
 data 158
 Allow options '-t' and '-b'
 
 git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4216 57a73879-2fb5-44c3-a270-3262357dd7e2
-from :612
-M 100644 :613 demo.py
+from :1
+M 100644 :3 demo.py
 
 blob
-mark :615
+mark :5
 data 1818
 #
 # Copyright (C) 2009 Stefan Seefeld
@@ -2985,7 +2984,7 @@ class Retire(Action):
             
 
 blob
-mark :616
+mark :6
 data 42840
 import re, cgi, StringIO, urllib, time, random, csv, codecs
 
@@ -4096,7 +4095,7 @@ class Bridge(BaseAction):
 # vim: set filetype=python sts=4 sw=4 et si :
 
 blob
-mark :617
+mark :7
 data 6001
 #
 # Copyright (C) 2007 Stefan Seefeld
@@ -4269,20 +4268,20 @@ class RoundupDispatcher(SimpleXMLRPCDispatcher):
     
 
 commit refs/remotes/svn/gsoc-2009
-mark :618
+mark :8
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204127 +0000
 committer stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204127 +0000
 data 148
 Merge from trunk.
 
 git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4223 57a73879-2fb5-44c3-a270-3262357dd7e2
-from :614
-M 100644 :615 roundup/actions.py
-M 100755 :616 roundup/cgi/actions.py
-M 100644 :617 roundup/xmlrpc.py
+from :4
+M 100644 :5 roundup/actions.py
+M 100755 :6 roundup/cgi/actions.py
+M 100644 :7 roundup/xmlrpc.py
 
 blob
-mark :619
+mark :9
 data 18325
 <tal:block metal:define-macro="frame">
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -4693,18 +4692,18 @@ See user.item.html in the classic template for examples.
 
 
 commit refs/remotes/svn/gsoc-2009
-mark :620
+mark :10
 author stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 committer stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2> 1245204199 +0000
 data 198
 Fix validity issue.  This is a test Subversion cookie: [[SVN:4216]]
 
 git-svn-id: https://svn.roundup-tracker.org/svnroot/roundup/roundup/branches/gsoc-2009@4224 57a73879-2fb5-44c3-a270-3262357dd7e2
-from :618
-M 100644 :619 share/roundup/templates/devel/html/page.html
+from :8
+M 100644 :9 share/roundup/templates/devel/html/page.html
 
 blob
-mark :1
+mark :11
 data 53
 #!/ysr/bin/env python
 #
@@ -4712,7 +4711,7 @@ data 53
 
 reset refs/tags/lightweight-sample
 commit refs/tags/lightweight-sample
-mark :2
+mark :12
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 data 107
@@ -4720,5 +4719,5 @@ The adventure begins.
 
 Example subversion cookie from map file [[SVN:4224]].
 Example mark cookie: [[:618]]
-M 100644 :1 rs
+M 100644 :11 rs
 
