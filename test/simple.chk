@@ -58,6 +58,8 @@ index
    129 commit   :128    refs/heads/master
    130 branch   :128    refs/heads/master
    131 tag      :113    'annotated-sample'
+resolve =H
+[129]
 resolve 15
 [15]
 resolve =TR
@@ -137,6 +139,7 @@ script simple.tst
 echo 1
 read simple.fi
 index
+resolve =H
 resolve 15
 resolve =TR
 resolve 24..97

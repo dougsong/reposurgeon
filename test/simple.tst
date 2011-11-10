@@ -2,6 +2,7 @@
 echo 1
 read simple.fi
 index
+resolve =H
 resolve 15
 resolve =TR
 resolve 24..97

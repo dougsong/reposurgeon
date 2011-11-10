@@ -2607,11 +2607,12 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             visibility = None
         else:
             typeletters = {
-                "B" : Blob,
-                "C" : Commit,
-                "T" : Tag,
-                "R" : Reset,
-                "P" : Passthrough,
+                "B" : lambda e: isinstance(e, Blob),
+                "C" : lambda e: isinstance(e, Commit),
+                "T" : lambda e: isinstance(e, Tag),
+                "R" : lambda e: isinstance(e, Reset),
+                "P" : lambda e: isinstance(e, Passthrough),
+                "H" : lambda e: isinstance(e, Commit) and not e.children(),
                 }
             visible = set([])
             self.pop()
@@ -2627,8 +2628,10 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                 announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
             selected = []
             for (i, event) in enumerate(self.chosen()):
-                if event.__class__ in visible:
-                    selected.append(i)
+                for predicate in visible:
+                    if predicate(event):
+                        selected.append(i)
+                        break
             visibility = set(selected)
         if verbose >= DEBUG_LEXER:
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
