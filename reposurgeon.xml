@@ -852,10 +852,10 @@ per-commit property named 'svn', which becomes visible; also, the
 association between that Subversion revision and its commit becomes
 part of the fossil map.</para>
 
-<para>Also, change refs/remotes/svn branch and lightweight tag names
-to corresponding local ones (replicating what
-<command>svn2git</command> does to clean up a repository
-after translation).</para>
+<para>Also, change refs/remotes/svn branch names to corresponding
+local ones and lift tip tag commits without file opations to actual
+tag objects (replicating what <command>svn2git</command> does to clean
+up a repository after translation).</para>
 
 <para>Finally, detect delete/modify sequences that are actually renames 
 and turn them into renames.</para>
