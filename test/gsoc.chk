@@ -1,5 +1,3 @@
-reposurgeon: fossil property of :785 overwritten
-reposurgeon: fossil property of :785 overwritten
 pygi <pygi@57a73879-2fb5-44c3-a270-3262357dd7e2>
 pygi <pygi>
 stefan <stefan@57a73879-2fb5-44c3-a270-3262357dd7e2>
@@ -10488,7 +10486,6 @@ committer Stefan Seefeld <stefan@users.sourceforge.net> 1243903317 +0000
 data 34
 Add new tracker template sandbox.
 from :557
-property fossil 65 CVS:share/roundup/templates/devel/detectors/messagesummary.py:1.1
 property fossil 8 SVN:4215
 M 100644 :558 share/roundup/templates/devel/TEMPLATE-INFO.txt
 M 100644 :559 share/roundup/templates/devel/config.ini
@@ -36218,9 +36215,6 @@ committer Pygi <pygi@users.sourceforge.net> 1248410105 +0000
 data 36
 Some preparations for 3.0 migration
 from :776
-property fossil 24 CVS:roundup/init.py:1.36
-property fossil 26 CVS:roundup/mailer.py:1.22
-property fossil 27 CVS:roundup/mailgw.py:1.196
 property fossil 8 SVN:4334
 M 100644 :777 roundup/admin.py
 M 100644 :778 roundup/hyperdb.py
