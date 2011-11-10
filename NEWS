@@ -4,7 +4,7 @@
      Added "sort" command.
      Added "multiline" modifier to edit command.
      gitsvnparse now creates R ops from properly matched D/M pairs.
-     Added =H visbility set - childless commits.
+     Added =H visibility set - childless commits.
 
 1.7: 2011-11-07
      authormap -> authors; the command syntax has changed, read the man page.
