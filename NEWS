@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-1.8:
+1.8: 2011-11-10
      Added "sort" command.
      Added "multiline" modifier to edit command.
      gitsvnparse now creates R ops from properly matched D/M pairs.
