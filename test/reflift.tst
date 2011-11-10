@@ -2,5 +2,5 @@
 read reflift.fi
 gitsvnparse
 references lift
-inspect :9022,:620,:2
+inspect :2,:10,:12
 
