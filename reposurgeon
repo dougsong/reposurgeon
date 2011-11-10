@@ -760,6 +760,13 @@ class Commit:
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
         return directory
+    def set_fossil(self, value):
+        "Set the commit's fossil property (for reference-lifting)."
+        oldval = dict(self.properties).get("fossil")
+        if oldval is not None and oldval != value:
+            complain("fossil property of %s overwritten, %s to %s" \
+                     % (self.mark, oldval, value))
+        self.properties.append(("fossil", value))
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
@@ -927,7 +934,7 @@ class Repository:
                 (fossil, timefield, person) = line.split()
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in mark_map:
-                    mark_map[when_who].properties.append(("fossil", fossil))
+                    mark_map[when_who].set_fossil(fossil)
                 else:
                     complain("no mark matches fossil %s" % fossil)
             del mark_map
@@ -1241,7 +1248,7 @@ class Repository:
                                  % commit.mark)
                     if type(event.cookie) == type(""):
                         svnkey = "SVN:" + event.cookie
-                        commit.properties.append(("fossil", svnkey))
+                        commit.set_fossil(svnkey)
                     else:
                         (basename, cvsref) = event.cookie
                         for fileop in commit.fileops:
@@ -1251,9 +1258,9 @@ class Repository:
                                     # file move or copy that cvs2svn or
                                     # git-svn didn't pick up on.
                                     complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
-                                             % (fileop.path, commit.mark, basename, blob.mark))
+                                             % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
-                                commit.properties.append(("fossil", cvskey))
+                                commit.set_fossil(cvskey)
     def export_style(self):
         "How should we tune the export dump format?"
         if self.vcs:
@@ -1909,7 +1916,7 @@ def read_repo(source, preferred):
                         for ((path, rev), value) in pathrev_to_hash.items():
                             if value in hash_to_action:
                                 (ctime, cperson) = hash_to_action[value]
-                                action_to_mark[(ctime, cperson)].properties.append(("fossil", "CVS:%s:%s" % (path, rev)))
+                                action_to_mark[(ctime, cperson)].set_fossil("CVS:%s:%s" % (path, rev))
                         del pathrev_to_hash
                         del hash_to_action
                         del stamp_set
@@ -3879,7 +3886,7 @@ the repo is written or rebuilt.
                     event.comment = event.comment[:m.start()]
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
-                    event.properties.append(("fossil", "SVN:" + fields[0]))
+                    event.set_fossil("SVN:" + fields[0])
                 # Things that were remote branches in the git-svn pull
                 # need to become local now.
                 event.branch=event.branch.replace("refs/remotes/svn/tags/",
