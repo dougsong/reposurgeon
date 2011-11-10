@@ -136,7 +136,7 @@ vcstypes = [
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags=("nl-after-commit",),
-        properties=False,
+        properties=True,
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout",
@@ -833,7 +833,6 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
-        self.fossil_map = {}
         self.write_fossils = False
     def cleanup(self):
         "Release blob files associated with this repo."
@@ -921,13 +920,13 @@ class Repository:
         "Read a fossil-references dump and initialize the repo's fossil map."
         mark_map = {}
         for event in self.commits():
-            mark_map[(event.committer.date.timestamp, event.committer.email)] = event.mark
+            mark_map[(event.committer.date.timestamp, event.committer.email)] = event
         try:
             for line in fp:
                 (fossil, timefield, person) = line.split()
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in mark_map:
-                    self.fossil_map[fossil] = mark_map[when_who]
+                    mark_map[when_who].properties.append(("fossil", fossil))
                 else:
                     complain("no mark matches fossil %s" % fossil)
             del mark_map
@@ -935,12 +934,10 @@ class Repository:
             raise Recoverable("bad syntax in fossils file.")
     def write_fossilmap(self, fp):
         "Dump fossil references."
-        for (k, v) in self.fossil_map.items():
-            commit = self.objfind(v)
-            if commit is None:
-                raise Recoverable("internal error, can't find commit for %s" % v)
-            else:
-                fp.write("%s\t%s\t%s\n" % (k,
+        for commit in self.commits():
+            pdict = dict(commit.properties)
+            if "fossil" in pdict:
+                fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
     def fast_import(self, fp, progress=False):
@@ -1038,26 +1035,15 @@ class Repository:
                                     blob.cookie = (fields[1][:-2], fields[2])
                                 else:
                                     # Subversion revision
-                                    svnkey = "SVN:" + fields[1]
-                                    oldval = self.fossil_map.get(svnkey)
-                                    if oldval and oldval != commit.mark:
-                                        complain("differing referents for %s from $Id$" \
-                                                 % svnkey)
-                                    self.fossil_map[svnkey] = commit.mark
+                                    blob.cookie = fields[1]
+                                self.write_fossils = True
                             for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                  blobcontent):
                                 rev = m.group(0).strip()
-                                if '.' in rev:
-                                    # CVS revision
-                                    blob.cookie = (None, rev)
-                                else:
+                                if '.' not in rev:
                                     # Subversion revision
-                                    rev = "SVN:" + rev
-                                    oldval = self.fossil_map.get(rev)
-                                    if oldval and oldval != commit.mark:
-                                        complain("differing referents for %s from $Revision$" \
-                                                 % rev)
-                                    self.fossil_map[rev] = commit.mark
+                                    blob.cookie = rev
+                                    self.write_fossils = True
                             wfp.write(blobcontent)
                             wfp.close()
                         else:
@@ -1193,10 +1179,6 @@ class Repository:
                         self.events.append(Tag(tagname,
                                                referent, tagger, read_data()))
                         baton.twirl()
-                    # This is reposurgeon-specific
-                    elif line.startswith("fossil"):
-                        (_, key, mark) = line.split()
-                        self.fossil_map[key] = mark
                     else:
                         # Simply pass through any line we don't understand.
                         self.events.append(Passthrough(line))
@@ -1228,43 +1210,40 @@ class Repository:
                 elif isinstance(sevent, Blob):
                     if not sevent.backreferences:
                         complain("blob %s has no backreferences" % sevent.mark)
-            # The goal here is to throw away CVS header information still
-            # fossilized into $Id$ headers after Subversion
-            # conversion.  So, build a map from (filename, cvs-version)
-            # pairs to imputed dates.  Then, for each element of the
-            # map, all but the earliest blob containing it has it as a
-            # fossil which should be removed.
-            stagemap = {}
+            # The goal here is to throw away CVS and Subversion header
+            # information still fossilized into $Id$ and $Subversion$
+            # headers after conversion to a later version. For each
+            # cookie, all but the earliest blob containing it has it
+            # as a fossil which should be removed.  Then, the earliest
+            # commit referencing that blob gets a fossil property set;
+            # later references will be branching artifacts.
+            seen = set([])
             for event in self.events:
                 if isinstance(event, Blob) and event.cookie:
-                    if event.cookie not in stagemap:
-                        stagemap[event.cookie] = []
-                    stagemap[event.cookie].append(event)
-            for (cvsdata, blobs) in stagemap.items():
-                blobs.sort(key=lambda b: b.timestamp)
-                for blob in blobs[1:]:
-                    blob.cookie = None
-            # Prepare a map from pathname/CVS-revision pairs to lists of
-            # commits that reference the blob containing that CVS revision.
-            for cvsdata in stagemap:
-                blob = stagemap[cvsdata] = stagemap[cvsdata][0]
-                cvsref = blob.cookie[1]
-                for commit in blob.backreferences:
-                    for fileop in commit.fileops:
-                        if fileop.op == 'M' and fileop.ref == blob.mark:
-                            if cvsdata[0] and not os.path.basename(fileop.path).endswith(cvsdata[0]):
-                                # Usually the harmless result of a
-                                # file move or copy that cvs2svn or
-                                # git-svn didn't pick up on.
-                                complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
-                                         % (fileop.path, commit.mark, cvsdata[0], blob.mark))
-                            cvskey = "CVS:%s:%s" % (fileop.path,cvsref)
-                            oldval = self.fossil_map.get(cvskey)
-                            # Only pay attention to the oldest commit that
-                            # matches, the later ones will be branching
-                            # artifacts.
-                            if not oldval or self.objfind(oldval).when() > commit.when():
-                                self.fossil_map[cvskey] = commit.mark
+                    if event.cookie in seen:
+                        continue
+                    else:
+                        seen.add(event.cookie)
+                        event.backreferences.sort(key=lambda e: commit.when())
+                        commit = event.backreferences[0]
+                        if "fossil" in dict(commit.properties):
+                            complain("fossil property of %s overwritten" \
+                                     % commit.mark)
+                        if type(blob.cookie) == type(""):
+                            svnkey = "SVN:" + blob.cookie
+                            commit.properties.append(("fossil", svnkey))
+                        else:
+                            (basename, cvsref) = event.cookie
+                            for fileop in commit.fileops:
+                                if fileop.op == 'M' and fileop.ref == event.mark:
+                                    if not os.path.basename(fileop.path).endswith(basename):
+                                        # Usually the harmless result of a
+                                        # file move or copy that cvs2svn or
+                                        # git-svn didn't pick up on.
+                                        complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
+                                                 % (fileop.path, commit.mark, basename, blob.mark))
+                                    cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
+                                    commit.properties.append(("fossil", cvskey))
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
@@ -1286,11 +1265,6 @@ class Repository:
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
-                if self.write_fossils:
-                    revkeys = self.fossil_map.keys()
-                    revkeys.sort()
-                    for (k, v) in self.fossil_map.items():
-                        fp.write("fossil %s %s\n" % (k, v))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
@@ -1702,8 +1676,6 @@ class Repository:
                         if verbose >= DEBUG_MERGE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
-        for (key, value) in self.fossil_map.items():
-            self.fossil_map[key] = remark(value)
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
@@ -1922,15 +1894,15 @@ def read_repo(source, preferred):
                             else:
                                 hash_to_action[hashv] = stamp
                                 stamp_set.add(stamp)
-                        # Pass 3: build a (time,person) to mark mapping 
+                        # Pass 3: build a (time,person) to commit mapping 
                         action_to_mark = {}
                         for commit in repo.commits():
-                            action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit.mark
-                        # Pass 4: combine to get a (path,revision) to mark map
+                            action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
+                        # Pass 4: use it to set commit properties
                         for ((path, rev), value) in pathrev_to_hash.items():
                             if value in hash_to_action:
                                 (ctime, cperson) = hash_to_action[value]
-                                repo.fossil_map["CVS:%s:%s" % (path, rev)] = action_to_mark[(ctime, cperson)]
+                                action_to_mark[(ctime, cperson)].properties.append(("fossil", "CVS:%s:%s" % (path, rev)))
                         del pathrev_to_hash
                         del hash_to_action
                         del stamp_set
@@ -2010,7 +1982,8 @@ def rebuild_repo(repo, target, preferred):
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
-        if repo.fossil_map:
+        # FIXME: we can remove this if git preserves properies through rebuild
+        if self.write_fossils:
             with open(os.path.join(vcs.subdirectory, "fossils"), "w") as wfp:
                 repo.write_fossilmap(wfp)
         do_or_die(vcs.checkout, "repository_checkout")
@@ -3877,8 +3850,7 @@ a committer email address.  Does not take a selection set.
 Interpret final comment lines of commits beginning with 'git-svn-id:'
 as git-svn magic cookies and remove them.  The Subversion commit ID is
 extracted and made the value of a per-commit property named 'svn',
-which becomes visible and editable. The modifier 'strip' suppresses
-saving the 'svn' property. Also, change refs/remotes/svn branch
+which becomes visible and editable. Also, change refs/remotes/svn branch
 names to corresponding local ones and lift tip tag commits to actual
 tag objects (replicating what svn2git does to clean up the
 repository). Finally, enables writing of the fassil-reference map when
@@ -3886,6 +3858,7 @@ the repo is written or rebuilt.
 """)
     def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
+        assert line is not None   # Pacify pylint
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -3900,10 +3873,7 @@ the repo is written or rebuilt.
                     event.comment = event.comment[:m.start()]
                     (_, after) = gitsvn.split("@")
                     fields = after.split()
-                    if "strip" not in line:
-                        event.properties.append(("svn", fields[0]))
-                    svnrev = "SVN:" + fields[0]
-                    self.chosen().fossil_map[svnrev] = event.mark
+                    event.properties.append(("fossil", "SVN:" + fields[0]))
                 # Things that were remote branches in the git-svn pull
                 # need to become local now.
                 event.branch=event.branch.replace("refs/remotes/svn/tags/",
@@ -3957,12 +3927,16 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
         repo = self.chosen()
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "lift" in rest:
+            fossilmap = {}
+            for commit in repo.commits():
+                if "fossil" in dict(commit.properties):
+                    fossilmap[dict(commit.properties)["fossil"]] = commit.mark
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.fossil_map.get(p)),
+                      lambda p: fossilmap.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: repo.fossil_map.get(p)),
+                      lambda p: fossilmap.get(p)),
                      (":[0-9]+",
                       lambda p: p),
                      ):

@@ -5,6 +5,7 @@
      Added "multiline" modifier to edit command.
      gitsvnparse now creates R ops from properly matched D/M pairs.
      gitsvnparse now lifts tip tags to actual tag objects.
+     gitsvnparse strip is no more, since git handles properties now.
      Added =H visibility set - childless commits.
 
 1.7: 2011-11-07

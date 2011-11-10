@@ -4714,10 +4714,10 @@ commit refs/tags/lightweight-sample
 mark :12
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
-data 107
+data 92
 The adventure begins.
 
-Example subversion cookie from map file [[SVN:4224]].
-Example mark cookie: [[:618]]
+Example subversion cookie: [[SVN:4224]].
+Example mark cookie: [[:8]]
 M 100644 :11 rs
 
