@@ -841,7 +841,7 @@ class Repository:
         self.case_coverage = set([])
         self.basedir = os.getcwd()
         self.write_fossils = False
-        self.dollar_latch = False
+        self.dollar_map = {}
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1223,10 +1223,8 @@ class Repository:
             raise KeyboardInterrupt
     def parse_dollar_cookies(self):
         "Extract info about fossil references from CVS/SVN header cookies."
-        if self.dollar_latch:
+        if self.dollar_map:
             return
-        else:
-            self.dollar_latch = True
         # The goal here is to throw away CVS and Subversion header
         # information still fossilized into $Id$ and $Subversion$
         # headers after conversion to a later version. For each
@@ -1248,7 +1246,7 @@ class Repository:
                                  % commit.mark)
                     if type(event.cookie) == type(""):
                         svnkey = "SVN:" + event.cookie
-                        commit.set_fossil(svnkey)
+                        self.dollar_map[svnkey] = commit
                     else:
                         (basename, cvsref) = event.cookie
                         for fileop in commit.fileops:
@@ -1260,7 +1258,7 @@ class Repository:
                                     complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
-                                commit.set_fossil(cvskey)
+                                self.dollar_map[cvskey] = commit
     def export_style(self):
         "How should we tune the export dump format?"
         if self.vcs:
@@ -3944,15 +3942,15 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
             fossilmap = {}
             for commit in repo.commits():
                 if "fossil" in dict(commit.properties):
-                    fossilmap[dict(commit.properties)["fossil"]] = commit.mark
+                    fossilmap[dict(commit.properties)["fossil"]] = commit
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: fossilmap.get(p)),
+                      lambda p: fossilmap.get(p) or repo.dollar_map.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: fossilmap.get(p)),
+                      lambda p: fossilmap.get(p) or repo.dollar_map.get(p)),
                      (":[0-9]+",
-                      lambda p: p),
+                      lambda p: repo.objfind(p)),
                      ):
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
@@ -3964,19 +3962,18 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                             if not m:
                                 break
                             payload = m.group(0)[2:-2]
-                            possible = getter(payload)
-                            if possible is None:
+                            commit = getter(payload)
+                            if commit is None:
                                 complain("no commit matches " + repr(payload))
                                 break
                             else:
-                                commit = repo.objfind(possible)
                                 if commit:
                                     event.comment = event.comment[:earliest+m.start()] \
                                                     + commit.committer.action_stamp() \
                                                     + event.comment[earliest+m.end():]
                                     hits += 1
                                 else:
-                                    complain("no such mark as %s" % possible[0])
+                                    complain("no mark for %s" % payload)
                                 break
                             earliest += m.end()
             announce("%d references resolved." % hits)

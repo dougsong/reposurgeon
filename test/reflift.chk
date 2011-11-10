@@ -6,7 +6,6 @@ author Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 committer Alexander Smishlajev <a1s@users.sourceforge.net> 1088862663 +0000
 data 101
 updated to roundup.pot at 2004-07-03T13:51:03Z!a1s@users.sourceforge.net use better term for "issue"
-property fossil 20 CVS:locale/ru.po:1.6
 M 100644 :1 locale/ru.po
 
 12: ========================================================================
