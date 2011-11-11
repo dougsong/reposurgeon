@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+1.9:
+     'prefer' command now sets the type for the selected repo.
+
 1.8: 2011-11-10
      Added "sort" command.
      Added "multiline" modifier to edit command.

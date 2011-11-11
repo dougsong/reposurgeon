@@ -1037,11 +1037,15 @@ also invokes this.
 </term>
 <listitem>
 <para>Report or set (with argument) the preferred type of repository. This
-will have two effects.  First, if there are multiple repositories in a
+will have two effects.</para>
+
+<para>First, if there are multiple repositories in a
 directory you do a read on, reposurgeon will read the preferred one
-(otherwise it will complain that it can't choose among them).
-Secondly, if you do a write to a directory, it will build a repo of
-the preferred type.</para>
+(otherwise it will complain that it can't choose among them).</para>
+
+<para>Secondly, if there is a selcted repo, this will change its type.
+This means that you do a write to a directory, it will build a repo of
+the preferred type rather than its original type (if it had one).</para>
 
 <para>If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set it
