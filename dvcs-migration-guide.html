@@ -319,12 +319,6 @@ command; reposurgeon has facilities for reference-lifting - fixing up
 Subversion and CVS changeset references in comments so they're still
 meaningful.</p>
 
-<p>If your git installation chokes on "property" commands during a
-reposurgeon rebuild operation, get an updated git.  If that is
-impossible, the reposugeon source can be tweaked to work around the
-problem; clear the "properties" flag in the VCS class initializer for
-git.</p>
-
 <p>Experiments with reposurgeon suggest that <code>git import</code>
 doesn't try to pack or otherwise optimize for space when it populates
 a repo from a dump file; this produces large repositories.  Running
@@ -489,6 +483,9 @@ at this point.</p>
 <p>2.1 (2011-11-07) Updated for reposurgeon 1.7.</p>
 
 <p>2.2 (2011-11-10) Updated for reposurgeon 1.8.</p>
+
+<p>2.3 (2011-11-10) Fix incorrect assertion about newer versions of
+git handling properties, this was a failure in my testing.<p>
 
 </div>
 <hr />
