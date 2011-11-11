@@ -86,7 +86,7 @@ class VCS:
         return "  Subdirectory: " + self.subdirectory + "\n" \
              + "      Exporter: " + self.exporter + "\n" \
              + "  Export-Style: " + repr(self.styleflags) + "\n" \
-             + "   Properties:  " + repr(self.styleflags) + "\n" \
+             + "   Properties:  " + repr(self.properties) + "\n" \
              + "   Initializer: " + str(self.initializer) + "\n" \
              + "      Importer: " + self.importer + "\n" \
              + "      Checkout: " + str(self.checkout) + "\n" \
@@ -136,7 +136,7 @@ vcstypes = [
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags=("nl-after-commit",),
-        properties=True,
+        properties=False,
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout",
@@ -3068,11 +3068,15 @@ no argument, or one of '-'; writes to standard output.
     def help_prefer(self):
         print("""
 Report or set (with argument) the preferred type of repository. This
-will have two effects.  First, if there are multiple repositories in a
-directory you do a read on, reposurgeon will read the preferred one
-(otherwise it will complain that it can't choose among them).
-Secondly, if you do a write to a directory, it will build a repo of
-the preferred type.
+will have two effects.
+
+First, if there are multiple repositories in a directory you do a read
+on, reposurgeon will read the preferred one (otherwise it will
+complain that it can't choose among them).
+
+Secondly, if there is a selcted repo, this will change its type.
+This means that you do a write to a directory, it will build a repo of
+the preferred type rather than its original type (if it had one).
 
 If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set it
@@ -3084,6 +3088,8 @@ to the type of that repository.
             for repotype in vcstypes:
                 if line.lower() == repotype.name:
                     self.preferred = repotype
+                    if self.chosen():
+                        self.chosen().vcs = self.preferred
                     break
             else:
                 complain("known types are %s." % " ".join([x.name for x in vcstypes]))
