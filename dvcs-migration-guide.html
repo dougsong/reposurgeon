@@ -99,8 +99,9 @@ plugin of git itself.  I recommend passing it the following options:</p>
 <dl>
 <dt>-s '~'</dt>
 <dd>Map slashes in CVS tag names to tildes (or something else they
-don't contain). This avoids confusing git, which will otherwise try to
-create directories beneath .git/refs/tags.</dd>
+don't contain). git will cheerfully create directories beneath
+.git/refs/tags, but this is not how most users expect tags to
+look.</dd>
 <dt>-u</dt>
 <dt>Map underscores in tag names to periods. This is just cosmetic</dt>
 <dt>-k</dt>
