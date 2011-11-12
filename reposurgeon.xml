@@ -120,7 +120,7 @@ delete =T &amp; 1..:97     ;; delete tags from event 1 to mark 97
 
 inspect [Makefile]     ;; Inspect all commits with a file op touching Makefile
 
-list *master           ;; List commits on the 'master' branch
+list (master)          ;; List commits on the 'master' branch
 </programlisting>
 
 <para>The selection-set specification syntax is an expression-oriented 
@@ -146,9 +146,11 @@ of the semantics of marks.</para></listitem>
 
 <para>The basename of a branch refers to its tip commit.  The name of
 a tag is equivalent to its mark, and through that to a commit. Tag and
-branch locations are led with @ to distinguish them from command
-keywords. (But also see the discussion of branch sets and &amp; a bit 
-further on.)</para>
+branch locations are bracketed with &lt; &gt; (angle brackets) to
+distinguish them from command keywords. (But also see the discussion
+of branch sets and &amp; a bit further on; also, in older versions
+of this tool tag ad branch locations were prefixed with  '@' rather
+than bracketed. The change fixed a parsing ambiguity)</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -227,9 +229,9 @@ letters. These are the type letters:</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>branches</firstterm></term>
-<listitem><para>A branch name (preceded by *) resolves to the set of
-all commits on that branch, plus any tags pointed at them and any
-associated branch resets.</para>
+<listitem><para>A branch name (bracketed by parentheses) resolves to
+the set of all commits on that branch, plus any tags pointed at them
+and any associated branch resets.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1090,8 +1092,9 @@ for exploring the selection-set language.</para></listitem>
 <varlistentry>
 <term><command>names</command>
 </term>
-<listitem><para>List the names of all known branches and tags.
-Tells you what things are legal after @.</para></listitem>
+<listitem><para>List the names of all known branches and tags.  Tells
+you what things are legal within angle brackets and
+parentheses.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>version</command>

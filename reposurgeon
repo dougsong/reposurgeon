@@ -2539,9 +2539,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     add_list.append(self.chosen().find(event.committish))
             value |= set(add_list)
             value -= set(remove_list)
-            c = self.peek()
-        if c and not c.isspace() and not c.isalpha() and not c in ('-', '+'):
-            raise Recoverable("trailing junk on selection: %s" % repr(self.line))
+        self.line = self.line.lstrip()
         if verbose >= DEBUG_LEXER:
             announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
@@ -2653,7 +2651,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         if verbose >= DEBUG_LEXER:
             announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
-        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "@")
+        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
         if not self.peek() in polyrange_initials:
             polyrange = None
         else:
@@ -2700,7 +2698,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                         continue
                     else:
                         raise Recoverable("start of span is missing")
-                if self.peek() == "@":
+                if self.peek() == "<":
                     self.pop()
                     matched = False
                     # First, search branches
@@ -2708,7 +2706,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                     branchlist.sort(key=len, reverse=True) # longest name first
                     for symbol in branchlist:
                         if self.line.startswith(os.path.basename(symbol)):
-                            self.line = self.line[len(symbol):]
+                            self.line = self.line[len(os.path.basename(symbol)):]
                             loc = None
                             # Find the last commit with this branchname
                             for (i, event) in enumerate(self.chosen()):
@@ -2732,8 +2730,13 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                                     selection.append(i)
                             else:
                                 raise Recoverable("tag name %s points to hyperspace" % tag.name)
+                    print "Foo!", self.line
+                    if self.peek() == '>':
+                        self.pop()
+                    else:
+                        raise Recoverable("branch ref improperly terminated. '%s'" % self.line)
                     if not matched:
-                        raise Recoverable("couldn't match a name at @%s" % self.line)
+                        raise Recoverable("couldn't match a name at <%s>" % self.line)
             if verbose >= DEBUG_LEXER:
                 announce("location list is %s with %s left" % (selection, repr(self.line)))
             # Resolve spans
@@ -2811,7 +2814,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
             return set(selection)
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
-        if self.peek() != "*":
+        if self.peek() != "(":
             return None
         else:
             self.pop()
@@ -2834,6 +2837,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                             if self.chosen()[ti].branch == symbol:
                                 selection.append(i)
                     self.line = self.line[len(os.path.basename(symbol)):]
+                    if self.pop() != ')':
+                        raise Recoverable("branch set improperly terminated.")
                     break
             else:
                 raise Recoverable("unknown branch name %s" % self.line)
