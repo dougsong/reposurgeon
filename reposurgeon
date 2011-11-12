@@ -1812,6 +1812,30 @@ class Repository:
                 commit.fileops[d].op = 'R'
                 commit.fileops.pop(m)
         return rename_count
+    def path_walk(self, selection, hook=lambda path: path):
+        "Apply a hook to all paths, returning the set of modified paths."
+        modified = set([])
+        for ei in selection:
+            event = self.events[ei]
+            if isinstance(event, Commit):
+                for fileop in event.fileops:
+                    if fileop.op in ("M", "D"):
+                        newpath = hook(fileop.path)
+                        if newpath != fileop.path:
+                            modified.add(newpath)
+                        fileop.path = newpath
+                    elif fileop.op in ("R", "C"):
+                        newpath = hook(fileop.source)
+                        if newpath != fileop.source:
+                            modified.add(newpath)
+                        fileop.source = newpath
+                        newpath = hook(fileop.target)
+                        if newpath != fileop.target:
+                            modified.add(newpath)
+                        fileop.target = newpath
+        modified = list(modified)
+        modified.sort()
+        return modified
 
     # Container emulation methods
     def __len__(self):
@@ -3754,6 +3778,21 @@ which exibit the graph structure. Does not take a selection set.""")
             self.chosen().sort()
         else:
             complain("no repo has been chosen.")
+
+    def help_paths(self):
+        """List all paths touched by fileops in the selection set.""" 
+    def do_paths(self, line):
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        if not rest:
+            allpaths = set([])
+            self.chosen().path_walk(self.selection,
+                                  lambda f: allpaths.add(f) or f)
+            allpaths = list(allpaths)
+            allpaths.sort()
+            print "\n".join(allpaths)
 
     #
     # Artifact Removal

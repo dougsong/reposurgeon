@@ -156,6 +156,16 @@ tags
 history
 verbose 1
 reposurgeon: verbose 1
+paths
+.gitignore
+Makefile
+README
+reposurgeon
+reposurgeon.xml
+rs
+test/Makefile
+test/simple.dump
+theory.txt
 expunge 1..$ theory.txt
 reposurgeon: at 7, expunging theory.txt
 reposurgeon: at 10, expunging theory.txt
@@ -163,6 +173,15 @@ reposurgeon: at 24, expunging theory.txt
 reposurgeon: at 29, expunging theory.txt
 reposurgeon: at 52, expunging theory.txt
 reposurgeon: deleting blobs and empty commits [6, 7, 9, 23, 24, 28, 51, 52]
+paths
+.gitignore
+Makefile
+README
+reposurgeon
+reposurgeon.xml
+rs
+test/Makefile
+test/simple.dump
 verbose 0
 checkout 116 foobar
 !ls foobar
