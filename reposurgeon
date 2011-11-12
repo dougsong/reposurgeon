@@ -2730,7 +2730,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
                                     selection.append(i)
                             else:
                                 raise Recoverable("tag name %s points to hyperspace" % tag.name)
-                    print "Foo!", self.line
                     if self.peek() == '>':
                         self.pop()
                     else:
