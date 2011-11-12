@@ -18,7 +18,9 @@ resolve [Makefile]
 tags
 history
 verbose 1
+paths
 expunge 1..$ theory.txt
+paths
 verbose 0
 checkout 116 foobar
 !ls foobar
