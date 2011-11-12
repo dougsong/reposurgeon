@@ -2950,6 +2950,7 @@ for exploring the selection-set language.
                 interpreter.onecmd(interpreter.precmd(cmdline))
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
+
     def do_history(self, line):
         "Dump your command list from this session so far."
         for line in self.history:
@@ -2967,39 +2968,6 @@ for exploring the selection-set language.
         coverage = list(self.chosen().case_coverage)
         coverage.sort()
         sys.stdout.write("Case coverage: %s\n" % coverage)
-
-    #
-    # Information-gathering
-    #
-    def help_stats(self):
-        print("""
-Report size statistics and import/export method information of the
-currently chosen repository.
-""")
-    def do_stats(self, line):
-        "Report information on repositories."
-        if not line:
-            line = self.chosen().name
-            if line is None:
-                complain("no repo has been chosen.")
-                return                
-        for name in line.split():
-            this = self.repo_by_name(name)
-            if not this:
-                raise Recoverable("no such repo as %s" % name)
-        if this:
-            def count(otype):
-                return len([x for x in this.events if isinstance(x,otype)])
-            print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
-                  (this.name, this.size() / 1000.0, len(this),
-                   count(Blob), count(Commit), count(Tag), count(Reset),
-                   iso8601_from_unixtime(this.readtime)))
-            if this.sourcedir:
-                print("  Loaded from " + this.sourcedir)
-            if this.vcs:
-                print(repr(this.vcs))
-        else:
-            complain("no repository has been chosen.")
 
     def help_index(self):
         print("""
@@ -3037,6 +3005,39 @@ file in the blob.
                 continue
             else:
                 print("?      -      %s" % (event,)) 
+
+    #
+    # Information-gathering
+    #
+    def help_stats(self):
+        print("""
+Report size statistics and import/export method information of the
+currently chosen repository.
+""")
+    def do_stats(self, line):
+        "Report information on repositories."
+        if not line:
+            line = self.chosen().name
+            if line is None:
+                complain("no repo has been chosen.")
+                return                
+        for name in line.split():
+            this = self.repo_by_name(name)
+            if not this:
+                raise Recoverable("no such repo as %s" % name)
+        if this:
+            def count(otype):
+                return len([x for x in this.events if isinstance(x,otype)])
+            print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
+                  (this.name, this.size() / 1000.0, len(this),
+                   count(Blob), count(Commit), count(Tag), count(Reset),
+                   iso8601_from_unixtime(this.readtime)))
+            if this.sourcedir:
+                print("  Loaded from " + this.sourcedir)
+            if this.vcs:
+                print(repr(this.vcs))
+        else:
+            complain("no repository has been chosen.")
 
     def help_list(self):
         print("""
@@ -3294,6 +3295,7 @@ its contents are backed up to a save directory.
             complain("no repo has been chosen.")
             return
         rebuild_repo(self.chosen(), line, self.preferred)
+
     #
     # Editing commands
     #
@@ -3710,6 +3712,52 @@ type.
         if verbose:
             self.do_choose('')
 
+    def help_graft(self):
+        print("""
+For when merge doesn't give you enough control.  The selection set
+must be of size 1, identifying a single commit in the currently
+selected repo.  A following argument must be a repository name.
+Labels and branches in the named repo are prefixed with its name; then
+it is grafted to the selected one. Its root becomes a child of the
+specified commit.  Finally the named repo is removed from the load
+list.
+""")
+    def do_graft(self, line):
+        "Graft a named repo onto the selected one."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, [])
+        if len(self.selection) == 1:
+            graft_point = self.selection[0]
+        else:
+            raise Recoverable("a singleton selection set is required.")
+        if not self.repolist:
+            raise Recoverable("no repositories are loaded.")
+        if line in self.reponames():
+            graft_repo = self.repo_by_name(line)
+        else:
+            raise Recoverable("no such repo as %s" % line)
+        # OK, we've got the two repos and the graft point.  Do it.
+        self.chosen().graft(graft_repo, graft_point)
+        self.remove_by_name(graft_repo.name)
+
+    def help_sort(self):
+        print("""Sort events in the selected repo by timestamp, unless
+doing so would put a child before a parent. May be useful after a
+graft operation; a sorted repo tends to display more nicely in tools
+which exibit the graph structure. Does not take a selection set.""")
+    def do_sort(self, line):
+        "Sort events by timestamp."
+        assert line is not None      # Pacify pylint
+        if self.chosen():
+            self.chosen().sort()
+        else:
+            complain("no repo has been chosen.")
+
+    #
+    # Artifact Removal
+    #
     def help_cvspurge(self):
         print("""
 Purge cruft created by cvs2svn conversions.  This looks for dummy
@@ -3759,109 +3807,6 @@ the commit's parent and the commit itself deleted.  Also,
         if verbose >= 1:
             announce("%d commits obliterated." % len(deletion_set))
                         
-    def help_graft(self):
-        print("""
-For when merge doesn't give you enough control.  The selection set
-must be of size 1, identifying a single commit in the currently
-selected repo.  A following argument must be a repository name.
-Labels and branches in the named repo are prefixed with its name; then
-it is grafted to the selected one. Its root becomes a child of the
-specified commit.  Finally the named repo is removed from the load
-list.
-""")
-    def do_graft(self, line):
-        "Graft a named repo onto the selected one."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        line = self.set_selection_set(line, [])
-        if len(self.selection) == 1:
-            graft_point = self.selection[0]
-        else:
-            raise Recoverable("a singleton selection set is required.")
-        if not self.repolist:
-            raise Recoverable("no repositories are loaded.")
-        if line in self.reponames():
-            graft_repo = self.repo_by_name(line)
-        else:
-            raise Recoverable("no such repo as %s" % line)
-        # OK, we've got the two repos and the graft point.  Do it.
-        self.chosen().graft(graft_repo, graft_point)
-        self.remove_by_name(graft_repo.name)
-
-    def help_authors(self):
-        print("""
-Apply or dump author-map information for the specified selection
-set, defaulting to all events. 
-
-Lifts from CVS and Subversion may have only usernames local to
-the repository host in committer and author IDs. DVCSes want email
-addresses (net-wide identifiers) and complete names. To supply the map
-from oune to the other, an authors file is expected to consist of
-lines each beginning with a local user ID, followed by a '=' (possibly
-surrounded by whitespace) followed by a full name and email address.
-
-When an authors file is applied, email addresses in committer and author
-metdata for which the local ID matches between &lt; and @ are replaced
-according to the mapping (this handles git-svn lifts). Alternatively,
-if the local ID is the entire address, this is also considered a match
-(this handles what git-cvsimport and cvs2git do) 
-
-With the 'read' modifier, or no modifier and a filename
-argument, apply author mapping data (no filename argument, read the
-mapping from standard input).  May be useful if you are editing a repo
-or dump created by cvs2git or by git-svn invoked without -A.
-
-With no file argument, or with the 'write' modifier and a file
-argument: write each unique committer, author, and tagger (no file
-argument sends the report to standard output). This may be helpful as
-a start on building an authors file.
-""")
-    def do_authors(self, line):
-        "Apply or dump author-mapping file."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        fields = rest.split()
-        if not fields or (fields[0] == "write" and len(fields) == 1):
-            self.chosen().write_authormap(self.selection, sys.stdout)
-        elif fields[0] == "write":
-            with open(fields[1], "w") as wfp:
-                self.chosen().write_authormap(self.selection, wfp)            
-        elif fields[0] == "read" and len(fields) == 1:
-            self.chosen().read_authormap(self.selection, sys.stdin)
-        elif fields[0] == "read":
-            with open(fields[1]) as fp:
-                self.chosen().read_authormap(self.selection, fp)
-        else:
-            with open(fields[0]) as fp:
-                self.chosen().read_authormap(self.selection, fp)
-    def help_fossils(self):
-        print("""
-Read or write the fossil-references data.  The format of each line is
-three whitespace-separated fields: a reference cookie, a timestamp, and
-a committer email address.  Does not take a selection set.
-""")
-    def do_fossils(self, line):
-        "Apply an author-mapping file."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        fields = line.split()
-        if not fields or (fields[0] == "write" and len(fields) == 1):
-            self.chosen().write_fossilmap(sys.stdout)
-        elif fields[0] == "write":
-            with open(fields[1], "w") as wfp:
-                self.chosen().write_fossilmap(self.selection, wfp)            
-        elif fields[0] == "read" and len(fields) == 1:
-            self.chosen().read_fossilmap(sys.stdin)
-        elif fields[0] == "read":
-            with open(fields[1]) as fp:
-                self.chosen().read_fossilmap(fp)
-        else:
-            with open(fields[0]) as fp:
-                self.chosen().read_fossilmap(fp)
     def help_gitsvnparse(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
@@ -3922,6 +3867,85 @@ the repo is written or rebuilt.
                         break
         self.chosen().write_fossils = True
         self.chosen().move_to_rename()
+
+    def help_authors(self):
+        print("""
+Apply or dump author-map information for the specified selection
+set, defaulting to all events. 
+
+Lifts from CVS and Subversion may have only usernames local to
+the repository host in committer and author IDs. DVCSes want email
+addresses (net-wide identifiers) and complete names. To supply the map
+from oune to the other, an authors file is expected to consist of
+lines each beginning with a local user ID, followed by a '=' (possibly
+surrounded by whitespace) followed by a full name and email address.
+
+When an authors file is applied, email addresses in committer and author
+metdata for which the local ID matches between &lt; and @ are replaced
+according to the mapping (this handles git-svn lifts). Alternatively,
+if the local ID is the entire address, this is also considered a match
+(this handles what git-cvsimport and cvs2git do) 
+
+With the 'read' modifier, or no modifier and a filename
+argument, apply author mapping data (no filename argument, read the
+mapping from standard input).  May be useful if you are editing a repo
+or dump created by cvs2git or by git-svn invoked without -A.
+
+With no file argument, or with the 'write' modifier and a file
+argument: write each unique committer, author, and tagger (no file
+argument sends the report to standard output). This may be helpful as
+a start on building an authors file.
+""")
+    def do_authors(self, line):
+        "Apply or dump author-mapping file."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        fields = rest.split()
+        if not fields or (fields[0] == "write" and len(fields) == 1):
+            self.chosen().write_authormap(self.selection, sys.stdout)
+        elif fields[0] == "write":
+            with open(fields[1], "w") as wfp:
+                self.chosen().write_authormap(self.selection, wfp)            
+        elif fields[0] == "read" and len(fields) == 1:
+            self.chosen().read_authormap(self.selection, sys.stdin)
+        elif fields[0] == "read":
+            with open(fields[1]) as fp:
+                self.chosen().read_authormap(self.selection, fp)
+        else:
+            with open(fields[0]) as fp:
+                self.chosen().read_authormap(self.selection, fp)
+
+    #
+    # Reference lifting
+    #
+    def help_fossils(self):
+        print("""
+Read or write the fossil-references data.  The format of each line is
+three whitespace-separated fields: a reference cookie, a timestamp, and
+a committer email address.  Does not take a selection set.
+""")
+    def do_fossils(self, line):
+        "Apply a reference-mapping file."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        fields = line.split()
+        if not fields or (fields[0] == "write" and len(fields) == 1):
+            self.chosen().write_fossilmap(sys.stdout)
+        elif fields[0] == "write":
+            with open(fields[1], "w") as wfp:
+                self.chosen().write_fossilmap(self.selection, wfp)            
+        elif fields[0] == "read" and len(fields) == 1:
+            self.chosen().read_fossilmap(sys.stdin)
+        elif fields[0] == "read":
+            with open(fields[1]) as fp:
+                self.chosen().read_fossilmap(fp)
+        else:
+            with open(fields[0]) as fp:
+                self.chosen().read_fossilmap(fp)
+
     def help_references(self):
         print("""
 Produces a listing of events that may have Subversion or CVS commit
@@ -4019,6 +4043,9 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                             if summary:
                                 sys.stdout.write(summary + "\n")
 
+    #
+    # Examining tree states
+    #
     def help_checkout(self):
         print("""
 Check out files for a specified commit into a directory.  The selection
@@ -4065,19 +4092,6 @@ must resolve to exactly two commits.
         command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
-
-    def help_sort(self):
-        print("""Sort events in the selected repo by timestamp, unless
-doing so would put a child before a parent. May be useful after a
-graft operation; a sorted repo tends to display more nicely in tools
-which exibit the graph structure. Does not take a selection set.""")
-    def do_sort(self, line):
-        "Sort events by timestamp."
-        assert line is not None      # Pacify pylint
-        if self.chosen():
-            self.chosen().sort()
-        else:
-            complain("no repo has been chosen.")
 
 if __name__ == '__main__':
     try:
