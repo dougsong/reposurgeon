@@ -793,6 +793,14 @@ structure.</para>
 repository.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>paths</command>
+</term>
+<listitem>
+<para>Takes a selection set.  Lists all paths touched by file operations
+in that set.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
