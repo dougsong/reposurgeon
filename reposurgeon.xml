@@ -797,8 +797,11 @@ repository.</para>
 <term><command>paths</command>
 </term>
 <listitem>
-<para>Takes a selection set.  Lists all paths touched by file operations
-in that set.</para>
+<para>Takes a selection set. Without a modifier, list all paths
+touched by fileops in the selection set (which defaults to the entire
+repo). With the 'sub' modifier, take a second argument that is a
+directory name and prepend it to every path. With the 'sup' modifier,
+strip the first directory component from every path.</para>
 </listitem>
 </varlistentry>
 </variablelist>

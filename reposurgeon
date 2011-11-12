@@ -3784,7 +3784,11 @@ which exibit the graph structure. Does not take a selection set.""")
             complain("no repo has been chosen.")
 
     def help_paths(self):
-        """List all paths touched by fileops in the selection set.""" 
+        """Without a modifier, list all paths touched by fileops in
+the selection set (which defaults to the entire repo). With the 'sub'
+modifier, take a second argument that is a directory name and prepend
+it to every path. With the 'sup' modifier, strip the first directory
+component from every path.""" 
     def do_paths(self, line):
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -3797,7 +3801,20 @@ which exibit the graph structure. Does not take a selection set.""")
             allpaths = list(allpaths)
             allpaths.sort()
             print "\n".join(allpaths)
-
+            return
+        fields = rest.split()
+        if fields[0] == "sub":
+            prefix = fields[1]
+            modified = self.chosen().path_walk(self.selection,
+                                               lambda f: os.path.join(prefix,f))
+            print "\n".join(modified)
+        elif fields[0] == "sup":
+            try:
+                modified = self.chosen().path_walk(self.selection,
+                                               lambda f: f[f.find(os.sep)+1:])
+                print "\n".join(modified)
+            except IndexError:
+                raise Recoverable("no / in sup path.")
     #
     # Artifact Removal
     #

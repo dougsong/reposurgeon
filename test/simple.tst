@@ -27,5 +27,7 @@ checkout 116 foobar
 !rm -fr foobar
 diff 101,103
 choose simple-expunges
+paths sub foo
+paths sup
 write
 
