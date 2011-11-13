@@ -780,7 +780,7 @@ list.</para>
 <term><command>sort</command>
 </term>
 <listitem>
-<para>Sort events in the selexcted repo by timestamp, unless doing so
+<para>Sort events in the selected repo by timestamp, unless doing so
 would put a child before a parent in which case it throws an error
 listing the out-of-order commit pair. All parent-child relationships
 are preserved. Commit hashes are not modified.</para>
