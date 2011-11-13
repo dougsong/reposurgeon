@@ -226,6 +226,10 @@ diff -r --label 'commit :108' --label 'commit :110' -u commit :108 commit :110
                  if match:
 diff 101,103
 choose simple-expunges
+paths sub foo
+foo/theory.txt
+paths sup
+theory.txt
 write
 blob
 mark :5

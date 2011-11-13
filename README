@@ -7,4 +7,5 @@ and subtrees from repo history. The original motivation for
 reposurgeon was to clean up artifacts created by repository
 conversions.
 
-To test the correctness of this software, type 'make check'
+To test the correctness of this software, ensure that pylint
+is installed and then type type 'make check'
