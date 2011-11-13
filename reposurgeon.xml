@@ -29,15 +29,15 @@
 operations that version-control systems don't want to let you do, such
 as (a) editing past comments and metadata, (b) excising commits, (c)
 coalescing and splitting commits, (d) removing files and subtrees from
-repo history, (e) merging two or more repos, and (f) cutting a repo in
-two by cutting a parent-child link, preserving the branch structure of
-both child repos.</para>
+repo history, (e) merging or grafting two or more repos, and (f)
+cutting a repo in two by cutting a parent-child link, preserving the
+branch structure of both child repos.</para>
 
 <para>The original motivation for <command>reposurgeon</command> was
 to clean up artifacts created by repository conversions, and it has
-some special-purpose commands for this purpose. It was foreseen that
-the tool would also have applications when code needs to be removed
-from repositories for legal or policy reasons.</para>
+some special-purpose commands for this use. It was foreseen that the
+tool would also have applications when code needs to be removed from
+repositories for legal or policy reasons.</para>
 
 <para>To keep <command>reposurgeon</command> simple and flexible, it
 does not do its own repository reading and writing.  Instead, it
@@ -783,7 +783,7 @@ list.</para>
 <para>Sort events in the selexcted repo by timestamp, unless doing so
 would put a child before a parent in which case it throws an error
 listing the out-of-order commit pair. All parent-child relationships
-are preserved.</para>
+are preserved. Commit hashes are not modified.</para>
 
 <para>May be useful after a graft operation; a sorted repo tends to
 display more nicely in browsing tools which exibit the graph
