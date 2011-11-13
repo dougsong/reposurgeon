@@ -33,7 +33,7 @@ pychecker:
 	@-pychecker --only --limit 50 reposurgeon.py
 	@rm -f reposurgeon.py
 
-PYLINTOPTS = --reports=n --include-ids=y --disable=C0103,C0111,C0301,C0302,C0322,C0324,C0321,C0323,R0201,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0108,W0141,W0212,W0603,W0511,W0611,E1103
+PYLINTOPTS = --rcfile=/dev/null --reports=n --include-ids=y --disable=C0103,C0111,C0301,C0302,C0322,C0324,C0321,C0323,R0201,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0108,W0141,W0212,W0603,W0511,W0611,E1103
 pylint:
 	@pylint --output-format=parseable $(PYLINTOPTS) reposurgeon
 
