@@ -1056,8 +1056,9 @@ also invokes this.
         [<emphasis>repotype</emphasis>]
 </term>
 <listitem>
-<para>Report or set (with argument) the preferred type of repository. This
-will have two effects.</para>
+<para>With no arguments, describe capabilities of all supported
+systems. With an argument (which must be the name of a supported
+system) this has two effects:</para>
 
 <para>First, if there are multiple repositories in a
 directory you do a read on, reposurgeon will read the preferred one
