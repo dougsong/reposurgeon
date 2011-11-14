@@ -402,10 +402,17 @@ in the repository subdirectory as though by a a
 <term><command>preserve</command> 
     [<emphasis>file...</emphasis>]
 </term>
-<listitem><para>Add (presumably untracked) files or directories to the repo's 
+<listitem>
+<para>Add (presumably untracked) files or directories to the repo's 
 list of paths to be restored from the backup directory after a 
 <command>rebuild</command>. Each argument, if any, is interpreted as a
-pathname.  The current preserve list is displayed afterwards.</para></listitem>
+pathname.  The current preserve list is displayed afterwards.</para>
+
+<para>It is only necessary to use this command if your version-control system
+lacks a command to list files under version control. Under systems with such
+a command, all files that are newither beneath the repository dot directory
+nor under reposurgeon temporary directories are preserved automatically.</para>
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><command>unpreserve</command>
