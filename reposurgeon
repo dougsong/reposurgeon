@@ -85,16 +85,17 @@ class VCS:
         self.preserve = preserve
         self.authormap = authormap
     def __repr__(self):
-        return "  Subdirectory: " + self.subdirectory + "\n" \
-             + "      Exporter: " + self.exporter + "\n" \
-             + "  Export-Style: " + repr(self.styleflags) + "\n" \
-             + "   Properties:  " + repr(self.properties) + "\n" \
-             + "   Initializer: " + str(self.initializer) + "\n" \
-             + "        Lister: " + str(self.lister) + "\n" \
-             + "      Importer: " + self.importer + "\n" \
-             + "      Checkout: " + str(self.checkout) + "\n" \
-             + "      Preserve: " + str(self.preserve) + "\n" \
-             + "     Authormap: " + str(self.authormap) + "\n"
+        return "         Name: " + str(self.name) + "\n" \
+             + " Subdirectory: " + str(self.subdirectory) + "\n" \
+             + "     Exporter: " + str(self.exporter) + "\n" \
+             + " Export-Style: " + repr(self.styleflags) + "\n" \
+             + "   Properties: " + repr(self.properties) + "\n" \
+             + "  Initializer: " + str(self.initializer) + "\n" \
+             + "       Lister: " + str(self.lister) + "\n" \
+             + "     Importer: " + str(self.importer) + "\n" \
+             + "     Checkout: " + str(self.checkout) + "\n" \
+             + "     Preserve: " + str(self.preserve) + "\n" \
+             + "    Authormap: " + str(self.authormap) + "\n"
 
 # All knowledge about specific version-control systems lives in the
 # following class list (exception; there's a git-specific hook in the
@@ -3117,8 +3118,10 @@ no argument, or one of '-'; writes to standard output.
     #
     def help_prefer(self):
         print("""
-Report or set (with argument) the preferred type of repository. This
-will have two effects.
+Report or set (with argument) the preferred type of repository. With
+no arguments, describe capabilities of all supported systems. With
+an argument (which must be the name of a supported system) this has
+two effects:
 
 First, if there are multiple repositories in a directory you do a read
 on, reposurgeon will read the preferred one (otherwise it will
@@ -3134,7 +3137,10 @@ to the type of that repository.
 """)
     def do_prefer(self, line):
         "Report or select the preferred repository type."
-        if line:
+        if not line:
+            for vcs in vcstypes:
+                print(vcs)
+        else:
             for repotype in vcstypes:
                 if line.lower() == repotype.name:
                     self.preferred = repotype
