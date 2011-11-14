@@ -3071,20 +3071,20 @@ currently chosen repository.
                 complain("no repo has been chosen.")
                 return                
         for name in line.split():
-            this = self.repo_by_name(name)
-            if not this:
+            repo = self.repo_by_name(name)
+            if not repo:
                 raise Recoverable("no such repo as %s" % name)
-        if this:
+        if repo:
             def count(otype):
-                return len([x for x in this.events if isinstance(x,otype)])
+                return len([x for x in repo.events if isinstance(x,otype)])
             print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
-                  (this.name, this.size() / 1000.0, len(this),
+                  (repo.name, repo.size() / 1000.0, len(repo),
                    count(Blob), count(Commit), count(Tag), count(Reset),
-                   iso8601_from_unixtime(this.readtime)))
-            if this.sourcedir:
-                print("  Loaded from " + this.sourcedir)
-            if this.vcs:
-                print(repr(this.vcs))
+                   iso8601_from_unixtime(repo.readtime)))
+            if repo.sourcedir:
+                print("  Loaded from " + repo.sourcedir)
+            if repo.vcs:
+                print(repr(repo.vcs))
         else:
             complain("no repository has been chosen.")
 
