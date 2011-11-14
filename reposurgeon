@@ -6,7 +6,7 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-import sys, os, cmd, tempfile, subprocess
+import sys, os, cmd, tempfile, subprocess, glob
 import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
@@ -68,6 +68,7 @@ class VCS:
                  styleflags,
                  properties,
                  initializer,
+                 lister,
                  importer,
                  checkout,
                  preserve,
@@ -78,6 +79,7 @@ class VCS:
         self.styleflags = styleflags
         self.properties = properties
         self.initializer = initializer
+        self.lister = lister
         self.importer = importer
         self.checkout = checkout
         self.preserve = preserve
@@ -88,6 +90,7 @@ class VCS:
              + "  Export-Style: " + repr(self.styleflags) + "\n" \
              + "   Properties:  " + repr(self.properties) + "\n" \
              + "   Initializer: " + str(self.initializer) + "\n" \
+             + "        Lister: " + str(self.lister) + "\n" \
              + "      Importer: " + self.importer + "\n" \
              + "      Checkout: " + str(self.checkout) + "\n" \
              + "      Preserve: " + str(self.preserve) + "\n" \
@@ -108,8 +111,9 @@ class VCS:
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
-# * Default preserven set (typically config and hook files).
+# * Default preserve set (typically config and hook files).
 # * Likely location for an importer to drop an authrmaps file
+# * Command to list files under repository control.
 #
 # Note that some of the commands used here are plugins or extensions
 # that are not part of the basic VCS. Thus these may fail when called;
@@ -140,6 +144,7 @@ vcstypes = [
         initializer="git init",
         importer="git fast-import",
         checkout="git checkout",
+        lister="git ls-files",
         preserve=set(['.git/config', '.git/hooks']),
         authormap=".git/cvs-authors"),
     # The bzr import/export methods require the bzr-fast-import plugin.
@@ -149,6 +154,7 @@ vcstypes = [
         styleflags=("export-progress", "nl-after-comment",),
         properties=True,
         initializer=None,
+        lister=None,
         importer="bzr fast-import -",
         checkout="bzr checkout",
         preserve=set([]),
@@ -161,6 +167,7 @@ vcstypes = [
         styleflags=("nl-after-comment", "nl-after-commit", "export-progress"),
         properties=False,
         initializer="hg init",
+        lister="hg locate",
         importer="hg fastimport %(tempfile)s",
         checkout="hg checkout",
         preserve=set([".hg/hgrc"]),
@@ -2038,6 +2045,24 @@ def rebuild_repo(repo, target, preferred):
         assert(os.path.abspath(savedir))
 
         if staging != target:
+            if not repo.preserve_set:
+                if verbose:
+                    announce("no preservations.")
+            else:
+                preserve = repo.preserve_set.copy()
+                if vcs and vcs.lister:
+                    def fileset(exclude):
+                        allfiles = []
+                        for root, dirs, files in os.walk("."):
+                            allfiles += [os.path.join(root, name)[2:] for name in files]
+                            for exdir in exclude:
+                                if exdir in dirs:
+                                    dirs.remove(exdir)
+                        return set(allfiles)
+                    with popen_or_die(vcs.lister) as fp:
+                        repofiles = set(fp.read().split())
+                    allfiles = fileset(exclude=[vcs.subdirectory]+glob.glob(".rs*"))
+                    preserve = allfiles - repofiles
             # This is a critical region.  Ignore all signals until we're done.
             with CriticalRegion():
                 # Move the unmodified repo contents in target to the
@@ -2054,11 +2079,7 @@ def rebuild_repo(repo, target, preferred):
                               os.path.join(target, sub))
                 if verbose:
                     announce("modified repo moved to %s." % os.path.relpath(target))
-                if not repo.preserve_set:
-                    if verbose:
-                        announce("no preservations.")
-                else:
-                    for sub in repo.preserve_set:
+                    for sub in preserve:
                         src = os.path.join(savedir, sub)
                         dst = os.path.join(target, sub)
                         if os.path.exists(src):
