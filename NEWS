@@ -5,6 +5,7 @@
      Added 'paths' command to list/modify pathnames touched by a selection set.
      In selection-set syntax, what was @foo for tag reference is now <foo>.
      In selection-set syntax, what was *foo for a branch set is now (foo).
+     Automatic file prservation.
 
 1.8: 2011-11-10
      Added "sort" command.
