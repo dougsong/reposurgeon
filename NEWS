@@ -1,11 +1,11 @@
 			reposurgeon project news
 
-1.9: 2011-10-14
+1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.
      Added 'paths' command to list/modify pathnames touched by a selection set.
      In selection-set syntax, what was @foo for tag reference is now <foo>.
      In selection-set syntax, what was *foo for a branch set is now (foo).
-     Under git and bzr, automatic file prservation of anything untracked.
+     Under git and bzr, automatic file preservation of anything untracked.
 
 1.8: 2011-11-10
      Added "sort" command.
