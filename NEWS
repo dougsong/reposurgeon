@@ -6,6 +6,7 @@
      In selection-set syntax, what was @foo for tag reference is now <foo>.
      In selection-set syntax, what was *foo for a branch set is now (foo).
      Under git and bzr, automatic file preservation of anything untracked.
+     My believe that git handled properties was due to a test error...
 
 1.8: 2011-11-10
      Added "sort" command.
