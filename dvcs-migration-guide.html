@@ -409,10 +409,10 @@ directory on the host - let's suppose it's 'myproject'. Pop up to the
 enclosing directory and do this:
 
 <pre><code>
-    mv myproject myproject-save
-    rm -fr myproject-save/*
-    git init &#45;&#45;bare myproject-save
-    mv myproject-save myproject
+    mv myproject myproject-hidden
+    rm -fr myproject-hidden/*
+    git init &#45;&#45;bare myproject-hidden
+    mv myproject-hidden myproject
 </code></pre>
 <div>&nbsp;</div>
 
