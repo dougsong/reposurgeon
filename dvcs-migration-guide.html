@@ -157,6 +157,14 @@ and it worked - but see the description of cvs2svn artifacts later on.
 Use the -A option of <code>cvs2svn</code> (which works just like -A in
 <code>git cvsimport</code>) to pass it your authors file.</p>
 
+<p>The format of .gitignore is compatible with .cvsignore; after a
+CVS-to-git conversion you'll want to do something like this:</p> 
+
+<pre><code>
+for x in `find . -print | grep cvsignore`; do t=`dirname $x`/.gitignore; git mv $x $t; done
+git commit -m 'Convert each .cvsignore to a .gitignore.'
+</code></pre>
+
 <h2 id="svn_to_git">Subversion to git</h2>
 
 <p>For Subversion to git lifting, you have no fewer than three options
@@ -222,6 +230,15 @@ so it is unlikely you will need this program.</p>
 both good reasons to avoid it (C++ being overkill for a job naturally
 done by a scripting language). I mention it only because you might
 trip over it while looking for the GitHub version.</p>
+
+<p>Moving Subversion ignore properties is easy, as git-svn has direct
+support for this:</p>
+
+<pre><code>
+git svn show-ignore >.gitignore
+git add .gitignore
+git commit -m 'Convert svn:ignore properties to .gitignore.'
+</code></pre>
 
 <h1 id="cleanup">Step Two: Cleanup</h1>
 
@@ -488,6 +505,8 @@ at this point.</p>
 <p>2.3 (2011-11-10) Fix incorrect assertion about newer versions of
 git handling properties, this was a failure in my testing.<p>
 
+<p>2.4 (2011-11-16) Add sections on moving ignores.</p>
+
 </div>
 <hr />
 </body>
@@ -497,4 +516,3 @@ Local Variables:
 compile-command: "(cd ~/WWW; upload dvcs-migration-guide.html)"
 End:
 -->
-
