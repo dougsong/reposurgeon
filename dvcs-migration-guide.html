@@ -252,12 +252,12 @@ commits. These are tip commits carrying a tag which have no
 file-operation content.</dd>
 
 <dt><em>Subversion and CVS commit references</em></dt> 
-<dd>Often Subversion will be in the form 'r' followed by a string of
-digits referring to a Subversion commit number. But not always; humans
-come up with lots of ambiguous ways to write these.  CVS commit
-references are even harder to spot mechanically, as they're just
-groups of digits separated by dots with no identifing prefix.  A clean
-conversion should turn all these into VCS-independent commit
+<dd>Often Subversion references will be in the form 'r' followed by a
+string of digits referring to a Subversion commit number. But not
+always; humans come up with lots of ambiguous ways to write these.
+CVS commit references are even harder to spot mechanically, as they're
+just groups of digits separated by dots with no identifing prefix.  A
+clean conversion should turn all these into VCS-independent commit
 references, which I'll describe later in this document.</dd>
 
 <dt><em>Multiline contents with no summary</em></dt>
@@ -271,7 +271,7 @@ multiline comments should be edited into this form.</dd>
 <dd>Some VCSes don't represent file rename operations, creating
 pairs of file deletes and adds instead, and DVCS conversion tools won't
 necessarily turn these pairs into rename operations. This happens
-in particular with Subversion and gitsvnparse.</dd>
+in particular with Subversion and git-svn.</dd>
 </dl>
 
 <h2 id="reposurgeon">Surgical cleanup using reposurgeon</h2>
@@ -359,7 +359,7 @@ will turn these up.  Note that if you've been replying on these
 to supply version strings that are visible at runtime, you will
 need to supply that information in some different way.</p>
 
-<p>A atep that too often gets missed and then inelegantly patched in
+<p>A step that too often gets missed and then inelegantly patched in
 later is converting the declarations that tell the
 version-control system to ignore derived files.</p>
 
@@ -442,15 +442,15 @@ href="http://hg-git.github.com/">hg-git mercurial plugin</a>. There is
 an Ubuntu package "mercurial-git" for this, and other distributions
 are likely to carry it as well.</p>
 
-<p>There are some hg-git limitations to be aware of. In order
-to simulate git behavior, hg-git keeps some local state in the
-.hg directories; a map from git branch names to Mercurial commits,
-a list of Mercurial bookmarks describing git branches (which
-have bookmark-like behavior different from a Mercurial named branch) and a
-file mapping git SHA1 hashes to hg SHA1 hashes (both systems 
-use them as commit IDs).  The problem is that hg doesn't
-copy any of this local state when it clones a repo, so clones
-of hg-git repos lose their branches and tags.</p>
+<p>There are some hg-git limitations to be aware of. In order to
+simulate git behavior, hg-git keeps some local state in the .hg
+directories; a map from git branch names to Mercurial commits, a list
+of Mercurial bookmarks describing git branches (which have
+bookmark-like behavior different from a Mercurial named branch) and a
+file mapping git SHA1 hashes to hg SHA1 hashes (both systems use them
+as commit IDs).  The problem is that hg doesn't copy any of this local
+state when it clones a repo, so clones of hg-git repos lose their
+git branches and tags.</p>
 
 <h1 id="practice">Step Four: Good Practice</h1>
 
