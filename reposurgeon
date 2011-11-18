@@ -54,9 +54,9 @@ version="1.9"
 # VCS is not a core class.  The code for manipulating actual repos is bolted
 # on the the ends of the pipeline, like this:
 #
-#  +--------+    +-------------+    +---------+    +-------------+    +--------+
-#  | Import |--->| Deserialize |--->| Operate |--->| Deserialize |--->| Export |
-#  +--------+    +-------------+    +---------+    +-------------+    +--------+
+#  +--------+    +-------------+    +---------+    +-----------+    +--------+
+#  | Import |--->| Deserialize |--->| Operate |--->| Serialize |--->| Export |
+#  +--------+    +-------------+    +---------+    +-----------+    +--------+
 #
 # The Import and Export boxes call methods in VCS.
 
