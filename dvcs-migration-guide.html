@@ -232,7 +232,7 @@ forms of cruft:</p>
 <dl>
 <dt><em style="bold">Metadata inserted by git-svn.</em></dt>
 <dd><code>git-svn</code> inserts lines at the end of each commit
-comment that refer back to the Subversion commit it is derived.  This
+comment that refer back to the Subversion commit it is derived from.  This
 is necessary for live-gatewaying, and useful during one-shot
 conversions, but you will probably not want it in the final repo.</dd>
 
@@ -355,7 +355,7 @@ summary-plus-continuation form.]]
 
 <p>You'll want to run through the repository removing
 CVS and Subversion keyword-expansion headers.  "grep -R '\\$[A-Z]' ."
-will turn these up.  Note that if you've been replying on these
+will turn these up.  Note that if you've been relying on these
 to supply version strings that are visible at runtime, you will
 need to supply that information in some different way.</p>
 
@@ -456,8 +456,8 @@ git branches and tags.</p>
 
 <p>Since the object of this exercise is to support both git and hg
 fans, both groups need to use the repo in a way that doesn't assume
-other will understand artifacts (like commit hashes) that are specific
-to either VCS.</p>
+the other group will understand artifacts (like commit hashes) that
+are specific to either VCS.</p>
 
 <p>Being careful about this has an additional benefit.  Someday your
 project may need to change VCSes yet again; on that day, it will be
