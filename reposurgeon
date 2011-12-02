@@ -1238,7 +1238,6 @@ class RepoStreamer:
                                 # The file's hash corresponds to an existing
                                 # blob; generate modify, copy, or rename as
                                 # appropriate.
-                                # TODO: must make backreferences from blobs
                                 if path not in self.filemap[revision] \
                                        or self.filemap[revision][path]!=newsig:
                                     for (oldpath, oldsig) in self.filemap[revision].items():
@@ -1246,11 +1245,13 @@ class RepoStreamer:
                                             if oldpath in removed:
                                                 op = FileOp(commit)
                                                 op.construct('R', oldpath, path)
+                                                repo.backlink_blobs(op)
                                                 commit.fileops.append(op)
                                                 del self.filemap[revision][oldpath]
                                             elif oldpath != path:
                                                 op = FileOp(commit)
                                                 op.construct('C', oldpath, path)
+                                                repo.backlink_blobs(op)
                                                 commit.fileops.append(op)
                                             break
                                     else:
@@ -1259,6 +1260,7 @@ class RepoStreamer:
                                                      newsig.perms,
                                                      self.hash_to_mark[newsig.hashval],
                                                      path)
+                                        repo.backlink_blobs(op)
                                         commit.fileops.append(op)
                             else:
                                 # Content hash doesn't match any existing blobs
@@ -1266,17 +1268,18 @@ class RepoStreamer:
                                     announce("%s of %s has new hash" \
                                              % (path, revision))
                                 blobmark = self.__newmark()
-                                op = FileOp(commit)
-                                op.construct('M', newsig.perms, blobmark, path)
-                                commit.fileops.append(op)
                                 self.hash_to_mark[newsig.hashval] = blobmark
+                                # Actual content enters the representation
                                 blob = Blob()
                                 blob.mark = blobmark
                                 shutil.copyfile(path, blob.blobfile())
                                 blob.path = path
-                                # See 'blatant hack' below...
-                                blob.timestamp = commit.when()-1
                                 self.repo.events.append(blob)
+                                # Its new fileop is added to the commit
+                                op = FileOp(commit)
+                                op.construct('M', newsig.perms, blobmark, path)
+                                repo.backlink_blobs(op)
+                                commit.fileops.append(op)
                             self.filemap[revision][path] = newsig
                         for tbd in removed:
                             op = FileOp(commit)
@@ -1490,25 +1493,7 @@ class Repository:
                     linebuffers.append(line)
                 def parse_fileop_content(fileop):
                     if fileop.ref[0] == ':':
-                        for obj in self.events:
-                            if isinstance(obj, Blob) and obj.mark == fileop.ref:
-                                obj.path = fileop.path
-                                obj.backreferences.append(commit)
-                                # This is a blatant hack.
-                                # We need to impute a timestamp
-                                # to each blob for sorting after
-                                # merge operations. We want the
-                                # blobs to tuck in close behind
-                                # their first associated commits.
-                                # So we do this and trust the
-                                # stability of Python sort
-                                # (guaranteed since Python 2.4).
-                                if obj.timestamp is None \
-                                       or obj.timestamp >= commit.when():
-                                    obj.timestamp = commit.when()-1
-                                break
-                        else:
-                            self.error("no blob matches commit reference to %s" % fileop.ref)
+                        self.backlink_blobs(fileop)
                     elif fileop.ref == 'inline':
                         wfp = open(fileop.inlinefile(), "w")
                         wfp.write(read_data())
@@ -1755,6 +1740,28 @@ class Repository:
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
+
+    def backlink_blobs(self, fileop):
+        "Link a blob to the commits it's involved in, via a fileop."
+        for obj in self.events:
+            if isinstance(obj, Blob) and obj.mark == fileop.ref:
+                obj.path = fileop.path
+                obj.backreferences.append(fileop.commit)
+                # This is a blatant hack.
+                # We need to impute a timestamp
+                # to each blob for sorting after
+                # merge operations. We want the
+                # blobs to tuck in close behind
+                # their first associated commits.
+                # So we do this and trust the
+                # stability of Python sort
+                # (guaranteed since Python 2.4).
+                if obj.timestamp is None \
+                       or obj.timestamp >= fileop.commit.when():
+                    obj.timestamp = fileop.commit.when()-1
+                break
+        else:
+            self.error("no blob matches commit reference to %s" % fileop.ref)
     def export_style(self):
         "How should we tune the export dump format?"
         if self.vcs:
