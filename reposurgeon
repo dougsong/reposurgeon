@@ -2155,11 +2155,7 @@ class popen_or_die:
                 except SyntaxError:
                     pass
         if self.fp.close() is not None:
-            legend = "%s%s returned error" % (self.command, self.legend)
-            if extype == Fatal:
-                value.msg += " and " + legend
-            else:
-                raise Fatal(legend + ".")
+            raise Fatal("%s%s returned error." % (self.command, self.legend))
         return False
 
 def iso8601_from_unixtime(secs_since_epoch):
