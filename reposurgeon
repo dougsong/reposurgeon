@@ -179,18 +179,11 @@ vcstypes = [
 
 class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
-    class Commit:
-        "Represent a Subversion commit."
-        def __init__(self, **cargs):
-            self.__dict__ = cargs
-            self.branch = ""
-            self.parents = []
-            self.ignores = None
-        def __str__(self):
-            return "<Commit: %s>" % str(self.__dict__)
-        __repr__ = __str__
     def __init__(self):
+        # These must be set for every extractor class
         self.name = "svn"
+        self.subdirectory = ".svn"
+        # These are internal
         self.commits = None
         self.revlist = []
         self.branchtips = {}
@@ -200,6 +193,13 @@ class SvnExtractor():
         self.manifest = []
     def analyze(self):
         "Analyze a Subversion repository for streaming."
+        class SvnCommit:
+            "Represent a Subversion commit."
+            def __init__(self, **cargs):
+                self.__dict__ = cargs
+                self.branch = ""
+                self.parents = []
+                self.ignores = None
         # Havoc can ensue if the checkout directory is not up to date
         with CriticalRegion():
             toprev = capture("svn up --quiet && svn info")
@@ -255,7 +255,7 @@ class SvnExtractor():
                                 action = path.getAttribute("action")
                                 parsed['pathops'][filepath[1:]] = action
                         # End of paths loop.
-                        self.commits[rev] = SvnExtractor.Commit(**parsed)
+                        self.commits[rev] = SvnCommit(**parsed)
                     self.baton.twirl()
             self.baton.twirl()
         # Compute the set of keys (revision numbers).
@@ -294,9 +294,6 @@ class SvnExtractor():
     def __git_name(svnid):
         "Massage a local Subversion ID into a git-like form."
         return "%s <%s>" % (svnid, svnid)
-    def directory(self):
-        "Return the name of the VCS state directory."
-        return ".svn"
     def pre_extract(self):
         "Hook for any setup actions required before streaming."
         pass
@@ -469,7 +466,7 @@ class SvnExtractor():
 
 # More extractors go here
 
-extractors = [SvnExtractor]
+extractors = [SvnExtractor()]
 
 verbose         = 0
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
@@ -3659,8 +3656,8 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
-            for ext in extractors:
-                print "%s (read only)" % ext.name
+            print("Other systems supported for read only: %s\n" \
+                  % " ".join(ext.name for ext in extractors))
         else:
             for repotype in vcstypes:
                 if line.lower() == repotype.name:
@@ -3672,9 +3669,9 @@ to the type of that repository.
                 complain("known types are %s." % " ".join([x.name for x in (vcstypes+extractors)]))
         if verbose:
             if not self.preferred:
-                announce("no preferred type has been set.")
+                print("No preferred type has been set.")
             else:
-                announce("%s is the preferred type." % self.preferred.name)
+                print("%s is the preferred type." % self.preferred.name)
 
     def help_choose(self):
         print("""
