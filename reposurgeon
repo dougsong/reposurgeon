@@ -279,18 +279,6 @@ class SvnExtractor():
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
     @staticmethod
-    def git_time(s):
-        "Convert timestamps in ISO8661 format to git raw date format."
-        if s[-1] == "Z":
-            s = s[:-1]
-        # Ugh...must throw away info because git only wants integer seconds
-        if "." in s:
-            date = s.split(".")[0]
-        else:
-            date = s
-        return str(calendar.timegm(time.strptime(date, "%Y-%m-%dT%H:%M:%S"))) \
-               + " +0000"
-    @staticmethod
     def __git_name(svnid):
         "Massage a local Subversion ID into a git-like form."
         return "%s <%s>" % (svnid, svnid)
@@ -451,18 +439,15 @@ class SvnExtractor():
     def get_committer_id(self, chs):
         "Return the committer's name and email address as a string."
         return SvnExtractor.__git_name(self.commits[chs].author)
-    def get_committer_time(self, chs):
-        "Return the commit or tag time as a timestamp-TZ pair."
-        return SvnExtractor.git_time(self.commits[chs].date)
     def get_committer_rfc3339(self, chs):
         "Return the commit time as an RFC3339 date."
         return self.commits[chs].date
     def get_author_id(self, chs):
         "Return the author's name and email address as a string."
         return SvnExtractor.__git_name(self.commits[chs].author)
-    def get_author_time(self, chs):
-        "Return the authorship time as a timestamp-TZ pair."
-        return SvnExtractor.git_time(self.commits[chs].date)
+    def get_author_rfc3339(self, chs):
+        "Return the author time as an RFC3339 date."
+        return self.commits[chs].date
 
 # More extractors go here
 
@@ -1215,7 +1200,6 @@ class RepoStreamer:
         self.filemap = {}
         self.hash_to_mark = {}
         self.baton = None
-        self.repo = Repository()
         self.extractor = extractor
     def __newmark(self, revision=None):
         self.markseq += 1
@@ -1223,9 +1207,9 @@ class RepoStreamer:
         if revision:
             self.markmap[revision] = mark
         return mark
-    def extract(self, withbaton=True):
+    def extract(self, repo, withbaton=True):
         if not self.isclean():
-            raise Fatal("directory %s has unsaved changes." % os.getcwd())
+            raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         with Baton(prompt="Extracting", enable=withbaton) as self.baton:
             self.extractor.analyze()
             self.extractor.pre_extract()
@@ -1234,7 +1218,7 @@ class RepoStreamer:
                 consume = copy.copy(self.extractor.get_revlist())
                 while consume:
                     revision = consume.pop(0)
-                    commit = Commit()
+                    commit = Commit(repo)
                     self.baton.twirl()
                     self.filemap[revision] = {}
                     present = self.extractor.checkout(revision)
@@ -1254,6 +1238,7 @@ class RepoStreamer:
                                 # The file's hash corresponds to an existing
                                 # blob; generate modify, copy, or rename as
                                 # appropriate.
+                                # TODO: must make backreferences from blobs
                                 if path not in self.filemap[revision] \
                                        or self.filemap[revision][path]!=newsig:
                                     for (oldpath, oldsig) in self.filemap[revision].items():
@@ -1287,9 +1272,10 @@ class RepoStreamer:
                                 self.hash_to_mark[newsig.hashval] = blobmark
                                 blob = Blob()
                                 blob.mark = blobmark
-                                # TODO: should refer to path; don't delete!
-                                # TODO: Impute timestamp, make backreferences
-                                # TODO: parse cookies in blobfile
+                                shutil.copyfile(path, blob.blobfile())
+                                blob.path = path
+                                # See 'blatant hack' below...
+                                blob.timestamp = commit.when()-1
                                 self.repo.events.append(blob)
                             self.filemap[revision][path] = newsig
                         for tbd in removed:
@@ -1298,16 +1284,17 @@ class RepoStreamer:
                             commit.fileops.append(op)
                             del self.filemap[revision][tbd]
                     self.extractor.cleanup(revision, True)
-                    comment = self.extractor.get_comment(revision)
-                    branch = self.extractor.get_branch(revision)
-                    parents = self.extractor.get_parents(revision)
-                    if not parents and branch != "refs/heads/master":
+                    # TODO: More fields - authors, committer
+                    commit.mark = self.__newmark(revision)
+                    commit.parent_marks = [self.markmap[rev] \
+                                           for rev in self.extractor.get_parents(revision)]
+                    commit.branch = self.extractor.get_branch(revision)
+                    commit.comment = self.extractor.get_comment(revision)
+                    if not parents and commit.branch != "refs/heads/master":
                         reset = Reset()
-                        reset.ref = branch
+                        reset.ref = commit.branch
                         # TODO: Impute timestamp from the commit that follows.
                         self.repo.events.append(reset)
-                        # TODO: Fill in commit fields
-                        assert comment is not None
                     commit.fileops.sort(cmp=FileOp.compare)
                     self.repo.events.append(commit)
                 # Now append reset objects
