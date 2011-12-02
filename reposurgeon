@@ -177,7 +177,7 @@ vcstypes = [
         authormap=None),
     ]
 
-class SvnExtractor(RepoStreamer):
+class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
     class Commit:
         "Represent a Subversion commit."
@@ -190,7 +190,6 @@ class SvnExtractor(RepoStreamer):
             return "<Commit: %s>" % str(self.__dict__)
         __repr__ = __str__
     def __init__(self):
-        RepoStreamer.__init__(self)
         self.name = "svn"
         self.commits = None
         self.revlist = []
@@ -203,7 +202,7 @@ class SvnExtractor(RepoStreamer):
         "Analyze a Subversion repository for streaming."
         # Havoc can ensue if the checkout directory is not up to date
         with CriticalRegion():
-            toprev = self.capture("svn up --quiet && svn info")
+            toprev = capture("svn up --quiet && svn info")
         # Prepare to read the log in chunks so that the log analysis
         # phase doesn't just silently grind forever on large repositories.
         m = re.search("Last Changed Rev: ([0-9]*)", toprev)
@@ -266,7 +265,7 @@ class SvnExtractor(RepoStreamer):
         # we have to make a special pass through to get them.
         for rev in self.revlist:
             commit = self.commits[rev]
-            commit.ignores = self.capture("svn propget svn:ignore -r %s %s" \
+            commit.ignores = capture("svn propget svn:ignore -r %s %s" \
                                           % (rev, commit.branch))
             self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
@@ -308,7 +307,7 @@ class SvnExtractor(RepoStreamer):
         os.system("svn up --quiet")
     def isclean(self):
         "Return True if repo has no unsaved changes."
-        return len(self.capture("svn status")) == 0
+        return len(capture("svn status")) == 0
     def get_revlist(self):
         "Return a list of commit ID strings in commit timestamp order."
         return self.revlist
@@ -377,12 +376,12 @@ class SvnExtractor(RepoStreamer):
         if verbose >= DEBUG_COMMANDS:
             announce("checking out %s in directory '%s'" % (chs, branchdir))
         if chs:
-            self.capture("svn up -r%s %s" % (chs, branchdir))
+            capture("svn up -r%s %s" % (chs, branchdir))
         else:
-            self.capture("svn up")
+            capture("svn up")
         self.manifest = []
         if os.path.exists(branchdir):
-            self.manifest += self.capture("svn ls -R %s" % branchdir).split()
+            self.manifest += capture("svn ls -R %s" % branchdir).split()
             os.chdir(branchdir)
         ignores = self.commits[chs].ignores
         if ignores:
@@ -1197,9 +1196,21 @@ class signature:
 def signature_map(paths):
     return dict([(path, signature(path)) for path in paths])
 
+def capture(command):
+    "Run a specified command, capturing the output."
+    if verbose >= DEBUG_COMMANDS:
+        announce("capturing %s" % command)
+    try:
+        content = subprocess.check_output(command, shell=True)
+    except (subprocess.CalledProcessError, OSError) as oe:
+        raise Fatal("execution of '%s' failed: %s" % (command, oe))
+    if verbose >= DEBUG_COMMANDS:
+        sys.stderr.write(content)
+    return content
+
 class RepoStreamer:
-    "Repository factory superclass for all repo analyzers."
-    def __init__(self):
+    "Repository factory driver class for all repo analyzers."
+    def __init__(self, extractor):
         self.markseq = 0
         self.tagseq = 0
         self.commits = {}
@@ -1208,17 +1219,7 @@ class RepoStreamer:
         self.hash_to_mark = {}
         self.baton = None
         self.repo = Repository()
-    def capture(self, command):
-        "Run a specified command, capturing the output."
-        if verbose >= DEBUG_COMMANDS:
-            announce("capturing %s" % command)
-        try:
-            content = subprocess.check_output(command, shell=True)
-        except (subprocess.CalledProcessError, OSError) as oe:
-            raise Fatal("execution of '%s' failed: %s" % (command, oe))
-        if verbose >= DEBUG_COMMANDS:
-            sys.stderr.write(content)
-        return content
+        self.extractor = extractor
     def __newmark(self, revision=None):
         self.markseq += 1
         mark = ":" + str(self.markseq)
@@ -1229,18 +1230,18 @@ class RepoStreamer:
         if not self.isclean():
             raise Fatal("directory %s has unsaved changes." % os.getcwd())
         with Baton(prompt="Extracting", enable=withbaton) as self.baton:
-            self.analyze()
-            self.pre_extract()
+            self.extractor.analyze()
+            self.extractor.pre_extract()
             saved_umask = os.umask(0)
             try:
-                consume = copy.copy(self.get_revlist())
+                consume = copy.copy(self.extractor.get_revlist())
                 while consume:
                     revision = consume.pop(0)
                     commit = Commit()
                     self.baton.twirl()
                     self.filemap[revision] = {}
-                    present = self.checkout(revision)
-                    parents = self.get_parents(revision)
+                    present = self.extractor.checkout(revision)
+                    parents = self.extractor.get_parents(revision)
                     for rev in parents:
                         self.filemap[revision].update(self.filemap[rev])
                     if present:
@@ -1299,10 +1300,10 @@ class RepoStreamer:
                             op.construct('D', tbd)
                             commit.fileops.append(op)
                             del self.filemap[revision][tbd]
-                    self.cleanup(revision, True)
-                    comment = self.get_comment(revision)
-                    branch = self.get_branch(revision)
-                    parents = self.get_parents(revision)
+                    self.extractor.cleanup(revision, True)
+                    comment = self.extractor.get_comment(revision)
+                    branch = self.extractor.get_branch(revision)
+                    parents = self.extractor.get_parents(revision)
                     if not parents and branch != "refs/heads/master":
                         reset = Reset()
                         reset.ref = branch
@@ -1313,7 +1314,7 @@ class RepoStreamer:
                     commit.fileops.sort(cmp=FileOp.compare)
                     self.repo.events.append(commit)
                 # Now append reset objects
-                resets = self.get_resetlist()
+                resets = self.extractor.get_resetlist()
                 resets.sort(key=lambda (k, v): v)
                 for (resetname, revision) in resets:
                     reset = Reset()
@@ -1322,7 +1323,7 @@ class RepoStreamer:
                     # TODO: Impute a timestamp for this reset
                     self.repo.append(reset)
                 # Last, append tag objects.
-                tags = self.get_taglist()
+                tags = self.extractor.get_taglist()
                 tags.sort(key=lambda t: t.date)
                 for tag in tags:
                     tag.committish = self.markmap.get(tag.committish)
@@ -1332,7 +1333,7 @@ class RepoStreamer:
                 # to a clean state cannot be screwed up by a control-C.
                 with CriticalRegion():
                     os.umask(saved_umask)
-                    self.post_extract()
+                    self.extractor.post_extract()
         return self.repo
     def export_marks(self, ofp):
         "Write out a marks export file in git fast-export format."
@@ -1340,11 +1341,12 @@ class RepoStreamer:
         marklist.sort()
         ofp.writelines(marklist)
     def export_fossils(self, ofp):
-        "Write out a fossil export file in the format used by reposurgeon."
+        "Write out a fossil export file."
+        # TODO: Abolish this and build the fossil table instead
         for rev in self.revlist:
             ofp.write("%s\t%s\t%s\n" % (rev,
-                                        self.get_committer_rfc3339(rev),
-                                        self.get_committer_id(rev)))
+                                        self.extractor.get_committer_rfc3339(rev),
+                                        self.extractor.get_committer_id(rev)))
 
 # Generic repository -manipulation code begins here
 
