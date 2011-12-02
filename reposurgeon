@@ -6,10 +6,11 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-import sys, os, cmd, tempfile, subprocess, glob
+import sys, os, cmd, tempfile, subprocess, glob, hashlib
 import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
+import xml.dom.minidom
 
 version="1.9"
 
@@ -97,9 +98,10 @@ class VCS:
              + "     Preserve: " + str(self.preserve) + "\n" \
              + "    Authormap: " + str(self.authormap) + "\n"
 
-# All knowledge about specific version-control systems lives in the
-# following class list (exception; there's a git-specific hook in the
-# repo reader).  The members are, respectively:
+# Most knowledge about specific version-control systems lives in the
+# following class list. Exception; there's a git-specific hook in the
+# repo reader; also see the extractor classes.
+# The members are, respectively:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
@@ -176,6 +178,7 @@ vcstypes = [
     ]
 
 verbose         = 0
+DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
 DEBUG_SHUFFLE   = 2    # Debug file and directory handling
 DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 3    # Show commands as they are executed
@@ -844,6 +847,32 @@ class Fatal(Exception):
     def __init__(self, msg):
         Exception.__init__(self)
         self.msg = msg
+
+# Generic extractor code begins here
+
+class signature:
+    "A file signature - file path, hash value of content and permissions."
+    def __init__(self, path):
+        self.path = path
+        self.hashval = None
+        self.perms = None
+        if not os.path.isdir(path):
+            with file(path) as fp:
+                self.hashval = hashlib.sha1(fp.read()).hexdigest()
+            self.perms = os.stat(path).st_mode
+            # Map to the restricted set of modes that are allowed in
+            # the stream format.
+            if self.perms & 0o100700 == 0o100700:
+                self.perms = 0o100755
+            elif self.perms & 0o100600 == 0o100600:
+                self.perms = 0o100644
+    def __eq__(self, other):
+        return (self.__dict__ == other.__dict__)
+
+def signature_map(paths):
+    return dict([(path, signature(path)) for path in paths])
+
+# Generic repository -manipulation code begins here
 
 class Repository:
     "Generic repository object."
