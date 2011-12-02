@@ -1296,6 +1296,7 @@ class RepoStreamer:
                         reset.timestamp = commit.when()-1
                         self.repo.events.append(reset)
                     commit.fileops.sort(cmp=FileOp.compare)
+                    commit.set_fossil(revision)
                     self.repo.events.append(commit)
                 # Now append reset objects
                 resets = self.extractor.get_resetlist()
@@ -1320,18 +1321,6 @@ class RepoStreamer:
                     os.umask(saved_umask)
                     self.extractor.post_extract()
         return self.repo
-    def export_marks(self, ofp):
-        "Write out a marks export file in git fast-export format."
-        marklist = ["%s %s\n" % (m, r) for (r, m) in list(self.markmap.items())]
-        marklist.sort()
-        ofp.writelines(marklist)
-    def export_fossils(self, ofp):
-        "Write out a fossil export file."
-        # TODO: Abolish this and build the fossil table instead
-        for rev in self.revlist:
-            ofp.write("%s\t%s\t%s\n" % (rev,
-                                        self.extractor.get_committer_rfc3339(rev),
-                                        self.extractor.get_committer_id(rev)))
 
 # Generic repository -manipulation code begins here
 
