@@ -177,6 +177,296 @@ vcstypes = [
         authormap=None),
     ]
 
+class SvnExtractor(RepoStreamer):
+    "Repository extractor for the Subversion version-control system."
+    class Commit:
+        "Represent a Subversion commit."
+        def __init__(self, **cargs):
+            self.__dict__ = cargs
+            self.branch = ""
+            self.parents = []
+            self.ignores = None
+        def __str__(self):
+            return "<Commit: %s>" % str(self.__dict__)
+        __repr__ = __str__
+    def __init__(self):
+        RepoStreamer.__init__(self)
+        self.commits = None
+        self.revlist = []
+        self.branchtips = {}
+        self.topdir = os.getcwd()
+        self.trunk = ""
+        self.tags = []
+        self.manifest = []
+    def analyze(self):
+        "Analyze a Subversion repository for streaming."
+        # Havoc can ensue if the checkout directory is not up to date
+        with CriticalRegion():
+            toprev = self.capture("svn up --quiet && svn info")
+        # Prepare to read the log in chunks so that the log analysis
+        # phase doesn't just silently grind forever on large repositories.
+        m = re.search("Last Changed Rev: ([0-9]*)", toprev)
+        if not m:
+            raise Fatal("couldn't retrieve top revision number.")
+        else:
+            try:
+                toprev = int(m.group(1))
+            except ValueError:
+                raise Fatal("couldn't parse to revision, check svninfo.")
+        if verbose >= DEBUG_EXTRACT:
+            announce("tip rev is %s" % toprev)
+        CHUNK = 100
+        intervals = [[str(i + 1), str((i + CHUNK))]
+                     for i in range(0, toprev, CHUNK)]
+        intervals[-1][1] = "HEAD"
+        # Collect and parse all log information
+        # This code includes no assumptions about branch structure.
+        self.commits = {}
+        self.baton.twirl()
+        for (lo, hi) in intervals:
+            with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
+                try:
+                    dom = xml.dom.minidom.parse(fp)
+                except xml.parsers.expat.ExpatError:
+                    raise Fatal("error while parsing Subversion log.")
+                log = dom.getElementsByTagName("log")[0]
+                def getText(supnode):
+                    rc = []
+                    for node in supnode.childNodes:
+                        if node.nodeType == node.TEXT_NODE:
+                            rc.append(node.data)
+                    return ''.join(rc)
+                for logentry in log.getElementsByTagName("logentry"):
+                    parsed = {}
+                    parsed["pathops"] = {}
+                    rev = parsed["revision"] = logentry.getAttribute("revision")
+                    if rev not in self.commits:
+                        for attr in ("author", "date", "msg"):
+                            sub = logentry.getElementsByTagName(attr)
+                            if not sub:
+                                sub = None  # Author can be None for generated commits
+                            else:
+                                sub = getText(sub[0])
+                            parsed[attr] = sub
+                        paths = logentry.getElementsByTagName("paths")
+                        if paths:
+                            for path in paths[0].getElementsByTagName("path"):
+                                filepath = getText(path)
+                                action = path.getAttribute("action")
+                                parsed['pathops'][filepath[1:]] = action
+                        # End of paths loop.
+                        self.commits[rev] = SvnExtractor.Commit(**parsed)
+                    self.baton.twirl()
+            self.baton.twirl()
+        # Compute the set of keys (revision numbers).
+        self.revlist = self.commits.keys()
+        self.revlist.sort(key=int)
+        # Because Subversion doesn't expose unversioned properties in XML,
+        # we have to make a special pass through to get them.
+        for rev in self.revlist:
+            commit = self.commits[rev]
+            commit.ignores = self.capture("svn propget svn:ignore -r %s %s" \
+                                          % (rev, commit.branch))
+            self.baton.twirl()
+        if verbose >= DEBUG_EXTRACT:
+            for rev in self.revlist:
+                commit = self.commits[rev]
+                if commit.ignores:
+                    decoration = '+'
+                else:
+                    decoration = '-'
+                announce("%s %s %2d '%s'" % \
+                         (commit.revision, decoration,
+                          len(commit.pathops), commit.msg[:20].strip()))
+    @staticmethod
+    def git_time(s):
+        "Convert timestamps in ISO8661 format to git raw date format."
+        if s[-1] == "Z":
+            s = s[:-1]
+        # Ugh...must throw away info because git only wants integer seconds
+        if "." in s:
+            date = s.split(".")[0]
+        else:
+            date = s
+        return str(calendar.timegm(time.strptime(date, "%Y-%m-%dT%H:%M:%S"))) \
+               + " +0000"
+    @staticmethod
+    def __git_name(svnid):
+        "Massage a local Subversion ID into a git-like form."
+        return "%s <%s>" % (svnid, svnid)
+    def directory(self):
+        "Return the name of the VCS state directory."
+        return ".svn"
+    def pre_dump(self):
+        "Hook for any setup actions required before streaming."
+        pass
+    def post_dump(self):
+        os.chdir(self.topdir)
+        # Warning! Can result in unexpectedly huge downloads
+        # when called on a partial checkout!
+        os.system("svn up --quiet")
+    def isclean(self):
+        "Return True if repo has no unsaved changes."
+        return len(self.capture("svn status")) == 0
+    def get_revlist(self):
+        "Return a list of commit ID strings in commit timestamp order."
+        return self.revlist
+    def get_taglist(self):
+        "Return a list of tag objects."
+        return []
+    def get_resetlist(self):
+        "Return a dictionary of reset names with revisions as values."
+        return []
+    def checkout(self, chs=None):
+        "Check the directory out to a specified revision, return its file list."
+        os.chdir(self.topdir)
+        # All the tricky stuff gets done here.  What we need to do is
+        # compute the branch name and parent revisions for this
+        # commit.  This requires updating self.branchtips, which is a
+        # dictionary mapping branch names to branch tip revisions.
+        #
+        # There are two kinds of repos: branchy and flat. The self.trunk
+        # member is "trunk" for a branch repo and "" for a flat one.
+        #
+        # A branchy repo has a "trunk" top-level directory, and its
+        # branches live in 'branches' at the top level, and its
+        # branches live in 'tags' at the top level (but neither of
+        # these latter two directories are required to exist). Any
+        # other directory at the top level is presumed to be an
+        # exiguous branch (it's not uncommon, for example, for
+        # there to be a web content directory as an exiguos branch).
+        # A branchy directory with no exiguous branches is the
+        # recommended standard layout.
+        #
+        # A flat repo has no branches and no tags; it's just one big
+        # tree with a linear history.
+        #
+        # Is it flat or branchy?  Initially we assume flat. This code
+        # relies on the assumption that trunk gets created in a
+        # revision earlier than any in which we have to generate any
+        # fileops that need a nonempty branch.
+        #
+        commit = self.commits[chs]
+        if verbose >= DEBUG_EXTRACT:
+            announce("revision %s: pathops '%s'" % (chs, commit.pathops))
+        if 'trunk' in commit.pathops:
+            self.trunk = "trunk"
+        # The common prefix of the names could be the branch.
+        # But it could also be some directory beneath the branch.
+        # It could even be a truncated filename if all the files
+        # on the directory happen to have a common name prefix.
+        commit.branch = ""
+        if self.trunk == "trunk":
+            common = os.path.commonprefix(commit.pathops.keys())
+            if os.sep in common:
+                while common.endswith(os.sep):
+                    common = common[:-1]
+            if common != "":
+                common = common.split(os.sep)
+                if common[0] in ("tags", "branches"):
+                    commit.branch = os.path.join(*common[0:2])
+                elif os.path.isdir(common[0]):
+                    commit.branch = common[0]
+        if verbose >= DEBUG_EXTRACT:
+            announce("revision %s: branch is '%s'" % (chs, commit.branch))
+        # Now that we have the branch, we can get the directory contents
+        # and the filelist.  This had to be done first because the branch
+        # arguments to svnup and svn ls actually matter,
+        branchdir = os.path.join(self.topdir, commit.branch)
+        if verbose >= DEBUG_COMMANDS:
+            announce("checking out %s in directory '%s'" % (chs, branchdir))
+        if chs:
+            self.capture("svn up -r%s %s" % (chs, branchdir))
+        else:
+            self.capture("svn up")
+        self.manifest = []
+        if os.path.exists(branchdir):
+            self.manifest += self.capture("svn ls -R %s" % branchdir).split()
+            os.chdir(branchdir)
+        ignores = self.commits[chs].ignores
+        if ignores:
+            if verbose >= DEBUG_EXTRACT:
+                announce("generating .gitignore")
+            if not os.path.exists(branchdir):
+                os.mkdir(branchdir)
+                os.chdir(branchdir)
+            with open(".gitignore", "w") as ofp:
+                ofp.write(ignores)
+            self.manifest.append(".gitignore")
+        if verbose >= DEBUG_EXTRACT:
+            announce("revision %s: files %s" % (chs, self.manifest))
+        # Now compute the parent pointer. Someday, we may use mergeprops here.
+        if commit.branch in self.branchtips:
+            # The easy case is that we've already seen a commit on this branch.
+            commit.parents = [self.branchtips[commit.branch]]
+            if verbose >= DEBUG_EXTRACT:
+                announce("revision %s: parent from branch tip" % (chs,))
+        else:
+            if verbose >= DEBUG_EXTRACT:
+                announce("revision %s: looking backward" % (chs,))
+            # This is the tricky bit.  We see a commit on a new branch.
+            # We use the fact that new branches have to be created by
+            # copy operations.  The first commit on a branch is always
+            # a no-fileop commit representing the copy, which means that
+            # somewhere before it there's a commit with an *identical
+            # file map*. We have to find that one.
+            lookfor = signature_map(self.manifest)
+            for earlier in self.revlist:
+                if earlier == chs:
+                    break
+                elif self.filemap[earlier] == lookfor:
+                    commit.parents = [earlier]
+                    break
+        if verbose >= DEBUG_EXTRACT:
+            announce("revision %s: parents %s" % (chs, commit.parents,))
+        # Finally, this commit becomes its branch tip, and we're done.
+        self.branchtips[commit.branch] = chs
+        return self.manifest
+    def cleanup(self, chs, issued):
+        "Cleanup after checkout."
+        assert chs and (issued is not None) # Pacify pylint
+        ignores = self.commits[chs].ignores
+        if ignores:
+            if verbose >= DEBUG_EXTRACT:
+                announce("generating .gitignore")
+            os.remove(".gitignore")
+            if self.manifest == [".gitignore"]:
+                os.rmdir(os.path.join(self.topdir, self.commits[chs].branch))
+    # After this, all methods take a commit ID or tag name string as argument.
+    # A "timestamp-TZ pair" is a Unix timestamp, followed by a space, followed
+    # by a plus or minus sign, followed by a 4-diget hhmm timezone offset.
+    def get_parents(self, chs):
+        "Return the list of commit IDs of a commit's parents."
+        return self.commits[chs].parents
+    def get_branch(self, chs):
+        "Return the branch to which this commit belongs."
+        branch = self.commits[chs].branch
+        if not branch:
+            tip = "root"
+        elif branch == self.trunk:
+            tip = "master"
+        else:
+            tip = os.path.basename(branch)
+        return os.path.join("refs", "heads", tip)
+    def get_comment(self, chs):
+        "Return a commit or tag's change comment as a string."
+        return self.commits[chs].msg
+    def get_committer_id(self, chs):
+        "Return the committer's name and email address as a string."
+        return SvnExtractor.__git_name(self.commits[chs].author)
+    def get_committer_time(self, chs):
+        "Return the commit or tag time as a timestamp-TZ pair."
+        return SvnExtractor.git_time(self.commits[chs].date)
+    def get_committer_rfc3339(self, chs):
+        "Return the commit time as an RFC3339 date."
+        return self.commits[chs].date
+    def get_author_id(self, chs):
+        "Return the author's name and email address as a string."
+        return SvnExtractor.__git_name(self.commits[chs].author)
+    def get_author_time(self, chs):
+        "Return the authorship time as a timestamp-TZ pair."
+        return SvnExtractor.git_time(self.commits[chs].date)
+
 verbose         = 0
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
 DEBUG_SHUFFLE   = 2    # Debug file and directory handling
