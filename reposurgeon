@@ -177,6 +177,29 @@ vcstypes = [
         authormap=None),
     ]
 
+# How to write extractor classes:
+#
+# Clone one of the existing ones and mutate.  
+#
+# Significant fact: None of the get_* methods for extracting information about
+# a revision is called until after checkout has been called on that revision.
+#
+# Most methods take a native revision ID as argument. The value and type of the
+# ID don't matter to any of the code that will call the extractor, except that
+# IDs must be hashable so they can be dictionary keys.
+#
+# The 'name' and 'subdirectory' members must be set. The subdirectory member
+# is how an extractor recognizes what repositories it can consume.
+#
+# The strings returned by get_committer() and get_authors() should look like
+#
+# J. Random User <random@foobar> 2011-11-29T10:13:32Z
+#
+# that is, a free text name followed by an email ID followed by a date.
+# The date specification can be anything Attribution() can parse; in
+# particular, RFC3339/ISO8601 dates are good, so are RFC822 (email) dates,
+# and so is git's native integer-Unix-timetamp/timezone pairs.
+
 class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
     def __init__(self):
@@ -201,6 +224,8 @@ class SvnExtractor():
                 self.parents = []
                 self.ignores = None
         # Havoc can ensue if the checkout directory is not up to date
+        # Warning! Can result in unexpectedly huge downloads
+        # when called on a partial checkout!
         with CriticalRegion():
             toprev = capture("svn up --quiet && svn info")
         # Prepare to read the log in chunks so that the log analysis
@@ -278,17 +303,11 @@ class SvnExtractor():
                 announce("%s %s %2d '%s'" % \
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
-    @staticmethod
-    def __git_name(svnid):
-        "Massage a local Subversion ID into a git-like form."
-        return "%s <%s>" % (svnid, svnid)
     def pre_extract(self):
         "Hook for any setup actions required before streaming."
         pass
     def post_extract(self):
         os.chdir(self.topdir)
-        # Warning! Can result in unexpectedly huge downloads
-        # when called on a partial checkout!
         os.system("svn up --quiet")
     def isclean(self):
         "Return True if repo has no unsaved changes."
@@ -407,25 +426,22 @@ class SvnExtractor():
         # Finally, this commit becomes its branch tip, and we're done.
         self.branchtips[commit.branch] = chs
         return self.manifest
-    def cleanup(self, chs, issued):
+    def cleanup(self, rev, issued):
         "Cleanup after checkout."
-        assert chs and (issued is not None) # Pacify pylint
-        ignores = self.commits[chs].ignores
+        assert rev and (issued is not None) # Pacify pylint
+        ignores = self.commits[rev].ignores
         if ignores:
             if verbose >= DEBUG_EXTRACT:
                 announce("generating .gitignore")
             os.remove(".gitignore")
             if self.manifest == [".gitignore"]:
-                os.rmdir(os.path.join(self.topdir, self.commits[chs].branch))
-    # After this, all methods take a commit ID or tag name string as argument.
-    # A "timestamp-TZ pair" is a Unix timestamp, followed by a space, followed
-    # by a plus or minus sign, followed by a 4-diget hhmm timezone offset.
-    def get_parents(self, chs):
+                os.rmdir(os.path.join(self.topdir, self.commits[rev].branch))
+    def get_parents(self, rev):
         "Return the list of commit IDs of a commit's parents."
-        return self.commits[chs].parents
-    def get_branch(self, chs):
+        return self.commits[rev].parents
+    def get_branch(self, rev):
         "Return the branch to which this commit belongs."
-        branch = self.commits[chs].branch
+        branch = self.commits[rev].branch
         if not branch:
             tip = "root"
         elif branch == self.trunk:
@@ -433,21 +449,17 @@ class SvnExtractor():
         else:
             tip = os.path.basename(branch)
         return os.path.join("refs", "heads", tip)
-    def get_comment(self, chs):
+    def get_comment(self, rev):
         "Return a commit or tag's change comment as a string."
-        return self.commits[chs].msg
-    def get_committer_id(self, chs):
-        "Return the committer's name and email address as a string."
-        return SvnExtractor.__git_name(self.commits[chs].author)
-    def get_committer_rfc3339(self, chs):
-        "Return the commit time as an RFC3339 date."
-        return self.commits[chs].date
-    def get_author_id(self, chs):
-        "Return the author's name and email address as a string."
-        return SvnExtractor.__git_name(self.commits[chs].author)
-    def get_author_rfc3339(self, chs):
-        "Return the author time as an RFC3339 date."
-        return self.commits[chs].date
+        return self.commits[rev].msg
+    def get_committer(self, rev):
+        "Return the committer's ID/date as a string."
+        return "%s <%s>" % (self.commits[rev].author,self.commits[rev].author) \
+               + " " \
+               + self.commits[rev].date
+    def get_authors(self, rev):
+        "Return a list of ID/date strings for authors."
+        return [self.get_committer(rev)]
 
 # More extractors go here
 
@@ -583,6 +595,8 @@ class Date:
             pass
         # Also accept IS8601 dates in Zulu time, just because I like them.
         try:
+            # Discard subsecond precision, import-stream format can't use it.
+            text = re.sub(r"\.[0-9]+Z", "Z", text)
             iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(iso860date)
             self.timezone = "+0000"
@@ -1287,8 +1301,9 @@ class RepoStreamer:
                             commit.fileops.append(op)
                             del self.filemap[revision][tbd]
                     self.extractor.cleanup(revision, True)
-                    # TODO: More fields - authors, committer (including dates)
                     commit.mark = self.__newmark(revision)
+                    commit.committer = Attribution(self.extractor.get_committer(revision))
+                    commit.authors = Attribution(self.extractor.get_authors(revision))
                     commit.parent_marks = [self.markmap[rev] \
                                            for rev in self.extractor.get_parents(revision)]
                     commit.branch = self.extractor.get_branch(revision)
