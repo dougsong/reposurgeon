@@ -2390,63 +2390,69 @@ def read_repo(source, preferred):
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
-            if "%(tempfile)s" in repo.vcs.exporter:
-                try:
-                    (tfdesc, tfname) = tempfile.mkstemp()
-                    assert tfdesc > -1    # pacify pylint
-                    context["tempfile"] = tfname
-                    do_or_die(repo.vcs.exporter % context, "repository export")
-                    with open(tfname) as tp:
+            # We found a matching VCS type
+            if vcs:
+                if "%(tempfile)s" in repo.vcs.exporter:
+                    try:
+                        (tfdesc, tfname) = tempfile.mkstemp()
+                        assert tfdesc > -1    # pacify pylint
+                        context["tempfile"] = tfname
+                        do_or_die(repo.vcs.exporter % context, "repository export")
+                        with open(tfname) as tp:
+                            repo.fast_import(tp, progress=showprogress)
+                    finally:
+                        os.remove(tfname)
+                else:
+                    with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                         repo.fast_import(tp, progress=showprogress)
-                finally:
-                    os.remove(tfname)
-            else:
-                with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(tp, progress=showprogress)
-            if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
-                announce("reading author map.")
-                with open(repo.vcs.authormap) as fp:
-                    repo.read_authormap(range(len(repo.events)),fp)
-            fossils = os.path.join(vcs.subdirectory, "fossils")
-            if os.path.exists(fossils):
-                with open(fossils) as rfp:
-                    repo.read_fossilmap(rfp)
-            # kluge: git-specific hook
-            if repo.vcs.name == "git":
-                if os.path.exists(".git/cvs-revisions"):
-                    announce("reading cvs-revisions map.")
-                    pathrev_to_hash = {}
-                    # Pass 1: Get git's path/revision to hash mapping
-                    for line in open(".git/cvs-revisions"):
-                        (path, rev, hashv) = line.split()
-                        pathrev_to_hash[(path, rev)] = hashv
-                    # Pass 2: get git's hash to (time,person) mapping 
-                    hash_to_action = {}
-                    stamp_set = set({})
-                    with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
-                        for line in fp:
-                            (hashv, ctime, cperson) = line.split()
-                            stamp = (int(ctime), cperson)
-                            if stamp in stamp_set:
-                                complain("more than one commit matches %s!%s (%s)" \
-                                         % (rfc3339(int(ctime)), cperson, hashv))
-                                if stamp in hash_to_action:
-                                    del hash_to_action[hashv]
-                            else:
-                                hash_to_action[hashv] = stamp
-                                stamp_set.add(stamp)
-                        # Pass 3: build a (time,person) to commit mapping 
-                        action_to_mark = {}
-                        for commit in repo.commits():
-                            action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
-                        # Pass 4: use it to set commit properties
-                        for ((path, rev), value) in pathrev_to_hash.items():
-                            if value in hash_to_action:
-                                (ctime, cperson) = hash_to_action[value]
-                                action_to_mark[(ctime, cperson)].set_fossil("CVS:%s:%s" % (path, rev))
-                        del pathrev_to_hash
-                        del hash_to_action
-                        del stamp_set
+                if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
+                    announce("reading author map.")
+                    with open(repo.vcs.authormap) as fp:
+                        repo.read_authormap(range(len(repo.events)),fp)
+                fossils = os.path.join(vcs.subdirectory, "fossils")
+                if os.path.exists(fossils):
+                    with open(fossils) as rfp:
+                        repo.read_fossilmap(rfp)
+                # kluge: git-specific hook
+                if repo.vcs.name == "git":
+                    if os.path.exists(".git/cvs-revisions"):
+                        announce("reading cvs-revisions map.")
+                        pathrev_to_hash = {}
+                        # Pass 1: Get git's path/revision to hash mapping
+                        for line in open(".git/cvs-revisions"):
+                            (path, rev, hashv) = line.split()
+                            pathrev_to_hash[(path, rev)] = hashv
+                        # Pass 2: get git's hash to (time,person) mapping 
+                        hash_to_action = {}
+                        stamp_set = set({})
+                        with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
+                            for line in fp:
+                                (hashv, ctime, cperson) = line.split()
+                                stamp = (int(ctime), cperson)
+                                if stamp in stamp_set:
+                                    complain("more than one commit matches %s!%s (%s)" \
+                                             % (rfc3339(int(ctime)), cperson, hashv))
+                                    if stamp in hash_to_action:
+                                        del hash_to_action[hashv]
+                                else:
+                                    hash_to_action[hashv] = stamp
+                                    stamp_set.add(stamp)
+                            # Pass 3: build a (time,person) to commit mapping 
+                            action_to_mark = {}
+                            for commit in repo.commits():
+                                action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
+                            # Pass 4: use it to set commit properties
+                            for ((path, rev), value) in pathrev_to_hash.items():
+                                if value in hash_to_action:
+                                    (ctime, cperson) = hash_to_action[value]
+                                    action_to_mark[(ctime, cperson)].set_fossil("CVS:%s:%s" % (path, rev))
+                            del pathrev_to_hash
+                            del hash_to_action
+                            del stamp_set
+            # We found a matching custom extractor
+            if extractor:
+                streamer = RepoStreamer(extractor)
+                streamer.extract(repo)
         finally:
             os.chdir(here)
     return repo
