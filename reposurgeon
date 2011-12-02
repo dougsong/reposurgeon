@@ -1287,7 +1287,7 @@ class RepoStreamer:
                             commit.fileops.append(op)
                             del self.filemap[revision][tbd]
                     self.extractor.cleanup(revision, True)
-                    # TODO: More fields - authors, committer
+                    # TODO: More fields - authors, committer (including dates)
                     commit.mark = self.__newmark(revision)
                     commit.parent_marks = [self.markmap[rev] \
                                            for rev in self.extractor.get_parents(revision)]
@@ -2393,7 +2393,6 @@ def read_repo(source, preferred):
             repo.preserve_set = vcs.preserve
             showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
             context = {"basename": os.path.basename(repo.sourcedir)}
-        # TODO: Extractor call goes about here.
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
