@@ -191,6 +191,7 @@ class SvnExtractor(RepoStreamer):
         __repr__ = __str__
     def __init__(self):
         RepoStreamer.__init__(self)
+        self.name = "svn"
         self.commits = None
         self.revlist = []
         self.branchtips = {}
@@ -297,10 +298,10 @@ class SvnExtractor(RepoStreamer):
     def directory(self):
         "Return the name of the VCS state directory."
         return ".svn"
-    def pre_dump(self):
+    def pre_extract(self):
         "Hook for any setup actions required before streaming."
         pass
-    def post_dump(self):
+    def post_extract(self):
         os.chdir(self.topdir)
         # Warning! Can result in unexpectedly huge downloads
         # when called on a partial checkout!
@@ -334,7 +335,7 @@ class SvnExtractor(RepoStreamer):
         # these latter two directories are required to exist). Any
         # other directory at the top level is presumed to be an
         # exiguous branch (it's not uncommon, for example, for
-        # there to be a web content directory as an exiguos branch).
+        # there to be a web content directory as an exiguous branch).
         # A branchy directory with no exiguous branches is the
         # recommended standard layout.
         #
@@ -466,6 +467,10 @@ class SvnExtractor(RepoStreamer):
     def get_author_time(self, chs):
         "Return the authorship time as a timestamp-TZ pair."
         return SvnExtractor.git_time(self.commits[chs].date)
+
+# More extractors go here
+
+extractors = [SvnExtractor]
 
 verbose         = 0
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
@@ -1225,7 +1230,7 @@ class RepoStreamer:
             raise Fatal("directory %s has unsaved changes." % os.getcwd())
         with Baton(prompt="Extracting", enable=withbaton) as self.baton:
             self.analyze()
-            self.pre_dump()
+            self.pre_extract()
             saved_umask = os.umask(0)
             try:
                 consume = copy.copy(self.get_revlist())
@@ -1327,7 +1332,7 @@ class RepoStreamer:
                 # to a clean state cannot be screwed up by a control-C.
                 with CriticalRegion():
                     os.umask(saved_umask)
-                    self.post_dump()
+                    self.post_extract()
         return self.repo
     def export_marks(self, ofp):
         "Write out a marks export file in git fast-export format."
@@ -2377,7 +2382,7 @@ def read_repo(source, preferred):
             else:
                 announce("reposurgeon: looking for any repo...")
         hitcount = 0
-        vcs = None
+        extractor = vcs = None
         for possible in vcstypes:
             if preferred and possible.name != preferred.name:
                 continue
@@ -2385,18 +2390,27 @@ def read_repo(source, preferred):
             if os.path.exists(subdir) and os.path.isdir(subdir):
                 vcs = possible
                 hitcount += 1
+        for possible in extractors:
+            if preferred and possible.name != preferred.name:
+                continue
+            subdir = os.path.join(source, possible.subdirectory)
+            if os.path.exists(subdir) and os.path.isdir(subdir):
+                extractor = possible
+                hitcount += 1
         if hitcount == 0:
             raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
         elif hitcount > 1:
             raise Recoverable("too many repos under %s" % os.path.relpath(source))
         elif verbose > 0:
-            announce("found %s repository" % vcs.name)
+            announce("found %s repository" % (vcs.name or extractor.name))
         repo = Repository()
-        repo.vcs = vcs
-        repo.preserve_set = vcs.preserve
         repo.sourcedir = source
-        showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
-        context = {"basename": os.path.basename(repo.sourcedir)}
+        if vcs:
+            repo.vcs = vcs
+            repo.preserve_set = vcs.preserve
+            showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
+            context = {"basename": os.path.basename(repo.sourcedir)}
+        # TODO: Extractor call goes about here.
         try:
             here = os.getcwd()
             os.chdir(repo.sourcedir)
@@ -3465,7 +3479,7 @@ developers only.
     def do_version(self, unused):
         "Report the program version and supported version-control systems."
         assert unused is not None   # pacify pylint
-        print("reposurgeon " + version + " supporting " + " ".join([x.name for x in vcstypes]))
+        print("reposurgeon " + version + " supporting " + " ".join([x.name for x in (vcstypes+extractors)]))
 
     def help_resolve(self):
         print("""
@@ -3630,7 +3644,7 @@ First, if there are multiple repositories in a directory you do a read
 on, reposurgeon will read the preferred one (otherwise it will
 complain that it can't choose among them).
 
-Secondly, if there is a selcted repo, this will change its type.
+Secondly, if there is a selected repo, this will change its type.
 This means that you do a write to a directory, it will build a repo of
 the preferred type rather than its original type (if it had one).
 
@@ -3643,6 +3657,8 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
+            for ext in extractors:
+                print "%s (read only)" % ext.name
         else:
             for repotype in vcstypes:
                 if line.lower() == repotype.name:
@@ -3651,7 +3667,7 @@ to the type of that repository.
                         self.chosen().vcs = self.preferred
                     break
             else:
-                complain("known types are %s." % " ".join([x.name for x in vcstypes]))
+                complain("known types are %s." % " ".join([x.name for x in (vcstypes+extractors)]))
         if verbose:
             if not self.preferred:
                 announce("no preferred type has been set.")
