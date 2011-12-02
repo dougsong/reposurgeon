@@ -1293,18 +1293,19 @@ class RepoStreamer:
                     if not parents and commit.branch != "refs/heads/master":
                         reset = Reset()
                         reset.ref = commit.branch
-                        # TODO: Impute timestamp from the commit that follows.
+                        reset.timestamp = commit.when()-1
                         self.repo.events.append(reset)
                     commit.fileops.sort(cmp=FileOp.compare)
                     self.repo.events.append(commit)
                 # Now append reset objects
                 resets = self.extractor.get_resetlist()
                 resets.sort(key=lambda (k, v): v)
+                last_time = repo.commits()[0].timestamp()
                 for (resetname, revision) in resets:
                     reset = Reset()
                     reset.ref = resetname
                     reset.committish = self.markmap[revision]
-                    # TODO: Impute a timestamp for this reset
+                    reset.timestamp = last_time + 1
                     self.repo.append(reset)
                 # Last, append tag objects.
                 tags = self.extractor.get_taglist()
