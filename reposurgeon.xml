@@ -1077,7 +1077,7 @@ system) this has two effects:</para>
 directory you do a read on, reposurgeon will read the preferred one
 (otherwise it will complain that it can't choose among them).</para>
 
-<para>Secondly, if there is a selcted repo, this will change its type.
+<para>Secondly, if there is a selected repo, this will change its type.
 This means that you do a write to a directory, it will build a repo of
 the preferred type rather than its original type (if it had one).</para>
 
