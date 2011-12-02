@@ -511,6 +511,19 @@ class FileOp:
         self.mode = None
         self.path = None
         self.ref = None
+    def construct(self, *opargs):
+        if opargs[0] == "M":
+            (self.op, self.mode, self.ref, self.path) = opargs
+            if type(self.mode) == type(0):
+                self.mode = "%06o" % self.mode
+        elif opargs[0] == "D":
+            (self.op, self.path) = opargs
+        elif opargs[0] in ("R", "C"):
+            (self.op, self.source, self.target) = opargs
+        elif opargs[0] == "deleteall":
+            self.op = "deleteall"
+        else:
+            raise Fatal("unexpected fileop %s" % opargs[0])
     def parse(self, opline):
         if opline.startswith("M"):
             m = FileOp.modify_re.match(opline)
@@ -544,6 +557,23 @@ class FileOp:
             return True
         else:
             return self.paths() & other.paths()
+    @staticmethod
+    def compare(a, b):
+        "Emulates the sort that git fast-export uses."
+        name_a = FileOp.__pathname__(a)
+        name_b = FileOp.__pathname__(b)
+        len_a = len(name_a)
+        len_b = len(name_b)
+        slen = min(len_a, len_b)
+        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
+        c = cmp(name_a[:slen], name_b[:slen])
+        if c:
+            return c
+        c = len_b - len_a
+        if c:
+            return c
+        # renames go last
+        return (a.op == 'R') - (b.op == 'R') 
     def __str__(self):
         "Dump this fileop in import-stream format."
         if self.op == "M":
@@ -871,6 +901,155 @@ class signature:
 
 def signature_map(paths):
     return dict([(path, signature(path)) for path in paths])
+
+class RepoStreamer:
+    "Repository factory superclass for all repo analyzers."
+    def __init__(self):
+        self.markseq = 0
+        self.tagseq = 0
+        self.commits = {}
+        self.markmap = {}
+        self.filemap = {}
+        self.hash_to_mark = {}
+        self.baton = None
+        self.repo = Repository()
+    def capture(self, command):
+        "Run a specified command, capturing the output."
+        if verbose >= DEBUG_COMMANDS:
+            announce("capturing %s" % command)
+        try:
+            content = subprocess.check_output(command, shell=True)
+        except (subprocess.CalledProcessError, OSError) as oe:
+            raise Fatal("execution of '%s' failed: %s" % (command, oe))
+        if verbose >= DEBUG_COMMANDS:
+            sys.stderr.write(content)
+        return content
+    def __newmark(self, revision=None):
+        self.markseq += 1
+        mark = ":" + str(self.markseq)
+        if revision:
+            self.markmap[revision] = mark
+        return mark
+    def extract(self, withbaton=True):
+        if not self.isclean():
+            raise Fatal("directory %s has unsaved changes." % os.getcwd())
+        with Baton(prompt="Extracting", enable=withbaton) as self.baton:
+            self.analyze()
+            self.pre_dump()
+            saved_umask = os.umask(0)
+            try:
+                consume = copy.copy(self.get_revlist())
+                while consume:
+                    revision = consume.pop(0)
+                    commit = Commit()
+                    self.baton.twirl()
+                    self.filemap[revision] = {}
+                    present = self.checkout(revision)
+                    parents = self.get_parents(revision)
+                    for rev in parents:
+                        self.filemap[revision].update(self.filemap[rev])
+                    if present:
+                        removed = set(self.filemap[revision].keys()) - set(present)
+                        for path in present:
+                            if os.path.isdir(path):
+                                continue
+                            newsig = signature(path)
+                            if newsig.hashval in self.hash_to_mark:
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("%s of %s has old hash" \
+                                             % (path, revision))
+                                # The file's hash corresponds to an existing
+                                # blob; generate modify, copy, or rename as
+                                # appropriate.
+                                if path not in self.filemap[revision] \
+                                       or self.filemap[revision][path]!=newsig:
+                                    for (oldpath, oldsig) in self.filemap[revision].items():
+                                        if oldsig == newsig:
+                                            if oldpath in removed:
+                                                op = FileOp(commit)
+                                                op.construct('R', oldpath, path)
+                                                commit.fileops.append(op)
+                                                del self.filemap[revision][oldpath]
+                                            elif oldpath != path:
+                                                op = FileOp(commit)
+                                                op.construct('C', oldpath, path)
+                                                commit.fileops.append(op)
+                                            break
+                                    else:
+                                        op = FileOp(commit)
+                                        op.construct('M',
+                                                     newsig.perms,
+                                                     self.hash_to_mark[newsig.hashval],
+                                                     path)
+                                        commit.fileops.append(op)
+                            else:
+                                # Content hash doesn't match any existing blobs
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("%s of %s has new hash" \
+                                             % (path, revision))
+                                blobmark = self.__newmark()
+                                op = FileOp(commit)
+                                op.construct('M', newsig.perms, blobmark, path)
+                                commit.fileops.append(op)
+                                self.hash_to_mark[newsig.hashval] = blobmark
+                                blob = Blob()
+                                blob.mark = blobmark
+                                # TODO: should refer to path; don't delete!
+                                # TODO: Impute timestamp, make backreferences
+                                # TODO: parse cookies in blobfile
+                                self.repo.events.append(blob)
+                            self.filemap[revision][path] = newsig
+                        for tbd in removed:
+                            op = FileOp(commit)
+                            op.construct('D', tbd)
+                            commit.fileops.append(op)
+                            del self.filemap[revision][tbd]
+                    self.cleanup(revision, True)
+                    comment = self.get_comment(revision)
+                    branch = self.get_branch(revision)
+                    parents = self.get_parents(revision)
+                    if not parents and branch != "refs/heads/master":
+                        reset = Reset()
+                        reset.ref = branch
+                        # TODO: Impute timestamp from the commit that follows.
+                        self.repo.events.append(reset)
+                        # TODO: Fill in commit fields
+                        assert comment is not None
+                    commit.fileops.sort(cmp=FileOp.compare)
+                    self.repo.events.append(commit)
+                # Now append reset objects
+                resets = self.get_resetlist()
+                resets.sort(key=lambda (k, v): v)
+                for (resetname, revision) in resets:
+                    reset = Reset()
+                    reset.ref = resetname
+                    reset.committish = self.markmap[revision]
+                    # TODO: Impute a timestamp for this reset
+                    self.repo.append(reset)
+                # Last, append tag objects.
+                tags = self.get_taglist()
+                tags.sort(key=lambda t: t.date)
+                for tag in tags:
+                    tag.committish = self.markmap.get(tag.committish)
+                    self.repo.events.append(tag)
+            finally:
+                # This is an attempt to ensure that the final checkout
+                # to a clean state cannot be screwed up by a control-C.
+                with CriticalRegion():
+                    os.umask(saved_umask)
+                    self.post_dump()
+        return self.repo
+    def export_marks(self, ofp):
+        "Write out a marks export file in git fast-export format."
+        marklist = ["%s %s\n" % (m, r) for (r, m) in list(self.markmap.items())]
+        marklist.sort()
+        ofp.writelines(marklist)
+    def export_fossils(self, ofp):
+        "Write out a fossil export file in the format used by reposurgeon."
+        for rev in self.revlist:
+            ofp.write("%s\t%s\t%s\n" % (rev,
+                                        self.get_committer_rfc3339(rev),
+                                        self.get_committer_id(rev)))
 
 # Generic repository -manipulation code begins here
 
