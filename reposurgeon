@@ -315,6 +315,13 @@ class SvnExtractor():
         # and branches show up as commits with no fileops.  We
         # turn them into tags to presrve the metadata while making
         # easy for the user to delete them if required.
+        if verbose >= DEBUG_EXTRACT:
+            announce("at post-extraction time:")
+            for commit in repo.commits():
+                announce("%s %2d '%s'" % \
+                         (commit.mark,
+                          len(commit.fileops),
+                          commit.comment[:20].strip()))
         def tagify(commit, name, committish):
             assert not commit.fileops
             repo.events.append(Tag(name=name,
