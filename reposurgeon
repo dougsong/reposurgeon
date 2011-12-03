@@ -1232,6 +1232,14 @@ class RepoStreamer:
                 while consume:
                     revision = consume.pop(0)
                     commit = Commit(repo)
+                    commit.mark = self.__newmark(revision)
+                    commit.committer = Attribution(self.extractor.get_committer(revision))
+                    commit.authors = [Attribution(a) \
+                                      for a in self.extractor.get_authors(revision)]
+                    commit.parent_marks = [self.markmap[rev] \
+                                           for rev in self.extractor.get_parents(revision)]
+                    commit.branch = self.extractor.get_branch(revision)
+                    commit.comment = self.extractor.get_comment(revision)
                     self.baton.twirl()
                     self.filemap[revision] = {}
                     present = self.extractor.checkout(revision, self.filemap)
@@ -1300,14 +1308,6 @@ class RepoStreamer:
                             commit.fileops.append(op)
                             del self.filemap[revision][tbd]
                     self.extractor.cleanup(revision, True)
-                    commit.mark = self.__newmark(revision)
-                    commit.committer = Attribution(self.extractor.get_committer(revision))
-                    commit.authors = [Attribution(a) \
-                                      for a in self.extractor.get_authors(revision)]
-                    commit.parent_marks = [self.markmap[rev] \
-                                           for rev in self.extractor.get_parents(revision)]
-                    commit.branch = self.extractor.get_branch(revision)
-                    commit.comment = self.extractor.get_comment(revision)
                     if not parents and commit.branch != "refs/heads/master":
                         reset = Reset()
                         reset.ref = commit.branch
@@ -1319,7 +1319,7 @@ class RepoStreamer:
                 # Now append reset objects
                 resets = self.extractor.get_resetlist()
                 resets.sort(key=lambda (k, v): v)
-                last_time = repo.commits()[0].timestamp()
+                last_time = repo.commits()[0].when()
                 for (resetname, revision) in resets:
                     reset = Reset()
                     reset.ref = resetname
