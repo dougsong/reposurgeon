@@ -311,6 +311,14 @@ class SvnExtractor():
         assert repo is not None # pacify pylint
         os.chdir(self.topdir)
         os.system("svn up --quiet")
+        def tagify(commit, name, committish):
+            assert not commit.fileops
+            repo.events.append(Tag(name=name,
+                                   committish=committish,
+                                   tagger=commit.committer,
+                                   content=commit.comment))
+            #repo.delete([repo.find(commit)], ["obliterate"])
+        tagify(repo.commits()[0], "root", repo.commits()[1].mark)
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return len(capture("svn status")) == 0
