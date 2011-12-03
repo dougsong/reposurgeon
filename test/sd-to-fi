@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# sd-to-fi - Subversion dump on stdin to fast-import on stout
+#
+# Relies on repostreamer bein where BIN declares it.
+#
+# With the -n option, create a repo corresponding to the input file
+# and check out a working copy for editing, but do not stream the
+# result to stdout and do not delete the repo.
+#
+# With the -r option, expect the repo to exist, pick it
+# up with repostreamer, and throw the result to stdout; then
+# do not delete the repo.
+#
+# With the -d option, expect the repo to exist, undump the repo to
+# an sd file; then do not delete the repo.
+#
+# The -v option argument will be used to set reposurgeon's verbose option.
+#
+# To add complexity to a test load, do -n, then edit the test repo with
+# Subversion, then use -d. Note: you must commit to force the repo to
+# be up to date before streaming it. 
+#
+BIN=../..
+
+extract=True
+stream=True
+undump=False
+cleanup=True
+verbose="0"
+
+while getopts dnrv: opt
+do
+    case $opt in
+	n) extract=True ;  stream=False ; undump=False ; cleanup=False ;;
+        r) extract=False ; stream=True  ; undump=False ; cleanup=False ;;
+        d) extract=False ; stream=False ; undump=True  ; cleanup=False ;;
+	v) verbose="$OPTARG" ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+# Should we build a repo from the input file?
+if [ $extract = True ]
+then
+    rm -fr test-repo test-checkout
+    svnadmin create test-repo
+    svnadmin load test-repo >/dev/null
+    svn co file://${PWD}/test-repo test-checkout >/dev/null
+fi
+
+# Should we stream the repo?
+# (Note: the 'prefer git' is just there to suppress fossil emission.)
+if [ $stream = True ]
+then
+    (cd test-checkout >/dev/null; ${BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "write")
+fi
+
+# Should we undump the repo?
+if [ $undump = True ]
+then
+    svnadmin dump test-repo
+fi
+
+# Should we clean up the test directory
+if [ $cleanup = True ]
+then
+    rm -fr test-repo test-checkout
+fi
