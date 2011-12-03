@@ -214,7 +214,7 @@ class SvnExtractor():
         self.trunk = ""
         self.tags = []
         self.manifest = []
-    def analyze(self):
+    def analyze(self, baton):
         "Analyze a Subversion repository for streaming."
         class SvnCommit:
             "Represent a Subversion commit."
@@ -247,7 +247,7 @@ class SvnExtractor():
         # Collect and parse all log information
         # This code includes no assumptions about branch structure.
         self.commits = {}
-        self.baton.twirl()
+        baton.twirl()
         for (lo, hi) in intervals:
             with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
                 try:
@@ -281,8 +281,8 @@ class SvnExtractor():
                                 parsed['pathops'][filepath[1:]] = action
                         # End of paths loop.
                         self.commits[rev] = SvnCommit(**parsed)
-                    self.baton.twirl()
-            self.baton.twirl()
+                    baton.twirl()
+            baton.twirl()
         # Compute the set of keys (revision numbers).
         self.revlist = self.commits.keys()
         self.revlist.sort(key=int)
@@ -292,7 +292,7 @@ class SvnExtractor():
             commit = self.commits[rev]
             commit.ignores = capture("svn propget svn:ignore -r %s %s" \
                                           % (rev, commit.branch))
-            self.baton.twirl()
+            baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
                 commit = self.commits[rev]
@@ -1222,10 +1222,10 @@ class RepoStreamer:
             self.markmap[revision] = mark
         return mark
     def extract(self, repo, withbaton=True):
-        if not self.isclean():
+        if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         with Baton(prompt="Extracting", enable=withbaton) as self.baton:
-            self.extractor.analyze()
+            self.extractor.analyze(self.baton)
             self.extractor.pre_extract()
             saved_umask = os.umask(0)
             try:
