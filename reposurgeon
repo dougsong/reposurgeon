@@ -1304,7 +1304,8 @@ class RepoStreamer:
                     self.extractor.cleanup(revision, True)
                     commit.mark = self.__newmark(revision)
                     commit.committer = Attribution(self.extractor.get_committer(revision))
-                    commit.authors = Attribution(self.extractor.get_authors(revision))
+                    commit.authors = [Attribution(a) \
+                                      for a in self.extractor.get_authors(revision)]
                     commit.parent_marks = [self.markmap[rev] \
                                            for rev in self.extractor.get_parents(revision)]
                     commit.branch = self.extractor.get_branch(revision)
@@ -1313,10 +1314,10 @@ class RepoStreamer:
                         reset = Reset()
                         reset.ref = commit.branch
                         reset.timestamp = commit.when()-1
-                        self.repo.events.append(reset)
+                        repo.events.append(reset)
                     commit.fileops.sort(cmp=FileOp.compare)
                     commit.set_fossil(revision)
-                    self.repo.events.append(commit)
+                    repo.events.append(commit)
                 # Now append reset objects
                 resets = self.extractor.get_resetlist()
                 resets.sort(key=lambda (k, v): v)
@@ -1326,20 +1327,20 @@ class RepoStreamer:
                     reset.ref = resetname
                     reset.committish = self.markmap[revision]
                     reset.timestamp = last_time + 1
-                    self.repo.append(reset)
+                    repo.append(reset)
                 # Last, append tag objects.
                 tags = self.extractor.get_taglist()
                 tags.sort(key=lambda t: t.date)
                 for tag in tags:
                     tag.committish = self.markmap.get(tag.committish)
-                    self.repo.events.append(tag)
+                    repo.events.append(tag)
             finally:
                 # This is an attempt to ensure that the final checkout
                 # to a clean state cannot be screwed up by a control-C.
                 with CriticalRegion():
                     os.umask(saved_umask)
                     self.extractor.post_extract()
-        return self.repo
+        return repo
 
 # Generic repository -manipulation code begins here
 
