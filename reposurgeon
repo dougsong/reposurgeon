@@ -317,7 +317,9 @@ class SvnExtractor():
                                    committish=committish,
                                    tagger=commit.committer,
                                    content=commit.comment))
-            #repo.delete([repo.find(commit)], ["obliterate"])
+            repo.delete([repo.events.index(commit)], ["obliterate"])
+        assert repo.events[0].__class__ == Reset
+        repo.events.pop(0)
         tagify(repo.commits()[0], "root", repo.commits()[1].mark)
     def isclean(self):
         "Return True if repo has no unsaved changes."
