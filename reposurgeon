@@ -1241,17 +1241,16 @@ class RepoStreamer:
                 while consume:
                     revision = consume.pop(0)
                     commit = Commit(repo)
+                    self.baton.twirl()
+                    present = self.extractor.checkout(revision, self.filemap)
+                    parents = self.extractor.get_parents(revision)
                     commit.committer = Attribution(self.extractor.get_committer(revision))
                     commit.authors = [Attribution(a) \
                                       for a in self.extractor.get_authors(revision)]
-                    commit.parent_marks = [self.markmap[rev] \
-                                           for rev in self.extractor.get_parents(revision)]
+                    commit.parent_marks = [self.markmap[rev] for rev in parents]
                     commit.branch = self.extractor.get_branch(revision)
                     commit.comment = self.extractor.get_comment(revision)
-                    self.baton.twirl()
                     self.filemap[revision] = {}
-                    present = self.extractor.checkout(revision, self.filemap)
-                    parents = self.extractor.get_parents(revision)
                     for rev in parents:
                         self.filemap[revision].update(self.filemap[rev])
                     if present:
