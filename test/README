@@ -1,0 +1,47 @@
+= Notes on the test machinery = 
+
+== Making new Subversion test loads ==
+
+1. To create a new Subversion test repo, 'make svn-flat' or 'make svn-branchy'.
+
+2. To copy trunk, creating a tag named 'foo'
+
+   svn copy file://${PWD}/test-repo/trunk file://${PWD}/test-repo/tags/foo
+
+3. sd-to-fi -d will dump the new test load to stdout.
+
+== The test loads ==
+
+A .fi extension means it's a git fast-import stream.  
+An .sd extension means it's a Subversion repo dump.
+
+=== bs.fi ===
+
+Git import stream for a multibranch repo with tags.
+
+=== vanilla.sd ===
+
+Standard layout. Linear. The simplest case, no tags or branches.
+
+=== simpletag.sd ===
+
+Standard layout. Linear. A couple of tags and no branches.
+
+=== samplebranch.sd ===
+
+Two-branch history with interleaved commits.
+
+=== ignores.sd ===
+
+Nonstandard layout - no branches, just stuff at top level.  Mainly
+this is a test of the code for turning ignore properties into
+.gitignore files.
+
+=== nontipcopy.sd ===
+
+Standard layout. Two branches, with the branch  creation right after the
+copy.
+
+=== rootfile.sd ===
+
+Branchy layout with a file at the root level.
