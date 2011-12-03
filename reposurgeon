@@ -1222,6 +1222,7 @@ class RepoStreamer:
     def extract(self, repo, withbaton=True):
         if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
+        repo.makedir()
         with Baton(prompt="Extracting", enable=withbaton) as self.baton:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract()
@@ -1286,7 +1287,7 @@ class RepoStreamer:
                                 blob.mark = blobmark
                                 shutil.copyfile(path, blob.blobfile())
                                 blob.path = path
-                                self.repo.events.append(blob)
+                                repo.events.append(blob)
                                 # Its new fileop is added to the commit
                                 op = FileOp(commit)
                                 op.construct('M', newsig.perms, blobmark, path)
@@ -1365,6 +1366,13 @@ class Repository:
             return os.path.join(self.basedir, ".rs" + repr(os.getpid()))
         else:
             return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
+    def makedir(self):
+        try:
+            if verbose >= DEBUG_SHUFFLE:
+                self.warn("repository fast import creates " + self.subdir())
+            os.mkdir(self.subdir())
+        except OSError:
+            self.error("can't create operating directory", atline=False)
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1463,13 +1471,8 @@ class Repository:
                                            commit.committer.email))
     def fast_import(self, fp, progress=False):
         "Initialize repo object from fast-import stream."
+        self.makedir()
         try:
-            try:
-                if verbose >= DEBUG_SHUFFLE:
-                    self.warn("repository fast import creates " + self.subdir())
-                os.mkdir(self.subdir())
-            except OSError:
-                self.error("can't create operating directory", atline=False)
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
