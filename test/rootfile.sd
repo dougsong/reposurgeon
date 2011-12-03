@@ -1,0 +1,123 @@
+SVN-fs-dump-format-version: 2
+
+UUID: c8181032-df8d-45ee-b41b-a8969c8cbe85
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-01T21:57:21.091953Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 114
+Content-length: 114
+
+K 7
+svn:log
+V 16
+Directory layout
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-01T21:57:21.887405Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-01T21:57:23.404604Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 135
+Content-length: 135
+
+K 7
+svn:log
+V 37
+This is our root-level file content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-01T22:00:54.254310Z
+PROPS-END
+
+Node-path: EXIGUOUS
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 81
+Text-content-md5: 2da26cacf64e76f56d1f1eb6ac548c03
+Text-content-sha1: 81f177e8bea729fac504bc7007d11d6cf75e41f6
+Content-length: 91
+
+PROPS-END
+This is an exiguous file which should be stoffed in a root branch on conversion.
+
+

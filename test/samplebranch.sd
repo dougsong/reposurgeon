@@ -1,0 +1,240 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 4c684140-813a-4478-9aca-cb28fef049d2
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-11-30T19:43:17.524750Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 163
+Content-length: 163
+
+K 7
+svn:log
+V 65
+This repo illustrates simple branching with interleaved commits.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T19:46:20.235780Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 136
+Content-length: 136
+
+K 7
+svn:log
+V 38
+README, base version on trunk branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T19:47:11.615041Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 60
+Text-content-md5: 9f10ff78f508f409baf2a495caae3fb5
+Text-content-sha1: 84a6cc8a1456b43e8e79c70efb0f3c38bbe2b91c
+Content-length: 70
+
+PROPS-END
+This is the trunk version of README, without modifications.
+
+
+Revision-number: 3
+Prop-content-length: 141
+Content-length: 141
+
+K 7
+svn:log
+V 43
+A branch created for illustrative purposes.
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T19:49:00.267276Z
+PROPS-END
+
+Node-path: branches/samplebranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Second commit on trunk.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T19:56:34.845054Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 73
+Text-content-md5: 7d3f701c9f658ba579080318e98a67f8
+Text-content-sha1: 64e0de77adfc9503955ebd0dc2ee9029ec69e759
+Content-length: 73
+
+This is the trunk version of README, with an illustrative modifications.
+
+
+Revision-number: 5
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 39
+First modification on the branch side.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T19:59:20.146034Z
+PROPS-END
+
+Node-path: branches/samplebranch/README
+Node-kind: file
+Node-action: change
+Text-content-length: 71
+Text-content-md5: 739c889674515d44da0b7ff483b09bfd
+Text-content-sha1: 9f7e764d1e84be7f7afad7e56aa109cd4d94c7bf
+Content-length: 71
+
+This is the branch version of README, after we've actually changed it.
+
+
+Revision-number: 6
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+Third commit on trunk.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T20:00:51.311668Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Text-content-md5: c33972925f636419d49826d281c908cc
+Text-content-sha1: 10a42e53138c6306a1f6cab9687bd3f543fcd892
+Content-length: 61
+
+This is the trunk version of README, with its typo removed.
+
+
+
+Revision-number: 7
+Prop-content-length: 138
+Content-length: 138
+
+K 7
+svn:log
+V 40
+Create another node on the branch side.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T22:15:57.523666Z
+PROPS-END
+
+Node-path: branches/samplebranch/README
+Node-kind: file
+Node-action: change
+Text-content-length: 107
+Text-content-md5: 5daf907b09f6921cd52ae332ace7a6a5
+Text-content-sha1: 0671cdec36ded19d376915b85dcf8a3e969626ce
+Content-length: 107
+
+This is the branch version of README, after we've actually changed it.
+
+Second modification to the README.
+
+

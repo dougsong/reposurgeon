@@ -4,7 +4,7 @@ all: clean roundtrip mailboxing regress coalesce
 	@echo "No diff output is good news."
 
 clean:
-	rm -fr .rs*
+	rm -fr .rs* test-repo test-checkout
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
@@ -58,3 +58,32 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
+# Make a new repo and checkout directory to create a Subversion test load.
+svn-flat: clean
+	svnadmin create test-repo
+	svn co file://${PWD}/test-repo test-checkout
+svn-branchy: svn-flat
+	@cd test-checkout; set -x; \
+		svn mkdir trunk; svn mkdir tags; svn mkdir branches; \
+		svn commit -m "Directory layout"; \
+		echo "This is a test Subversion repository" >trunk/README; \
+		svn add trunk/README; \
+		svn commit -m "Initial README content.\n"
+
+SVNLOADS = vanilla #simpletag samplebranch ignores nontipcopy
+buildsvnregress:
+	@for test in $(SVNLOADS); do \
+	    echo "Remaking $${test}.chk"; \
+	    sd-to-fi <$${test}.sd >$${test}.chk; \
+	done
+svnregress:
+	@for test in $(SVNLOADS); do \
+	    if (echo "Testing $${test}" >&2; \
+	    sd-to-fi) <$${test}.sd >/tmp/regress; \
+	    then diff -u $${test}.chk /tmp/regress; \
+	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
+	    mkdir /tmp/reposteamer$$$$ ; \
+	    (cd /tmp/reposteamer$$$$; git init --quiet; git fast-import --quiet) </tmp/regress; \
+	    rm -fr /tmp/reposteamer$$$$ ; \
+	done
+	@rm -f /tmp/regress
