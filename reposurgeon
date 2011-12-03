@@ -304,10 +304,11 @@ class SvnExtractor():
                 announce("%s %s %2d '%s'" % \
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
-    def pre_extract(self):
+    def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
-        pass
-    def post_extract(self):
+        assert repo is not None # pacify pylint
+    def post_extract(self, repo):
+        assert repo is not None # pacify pylint
         os.chdir(self.topdir)
         os.system("svn up --quiet")
     def isclean(self):
@@ -1225,7 +1226,7 @@ class RepoStreamer:
         repo.makedir()
         with Baton(prompt="Extracting", enable=progress) as self.baton:
             self.extractor.analyze(self.baton)
-            self.extractor.pre_extract()
+            self.extractor.pre_extract(repo)
             saved_umask = os.umask(0)
             try:
                 consume = copy.copy(self.extractor.get_revlist())
@@ -1337,7 +1338,7 @@ class RepoStreamer:
                 # to a clean state cannot be screwed up by a control-C.
                 with CriticalRegion():
                     os.umask(saved_umask)
-                    self.extractor.post_extract()
+                    self.extractor.post_extract(repo)
         return repo
 
 # Generic repository -manipulation code begins here
