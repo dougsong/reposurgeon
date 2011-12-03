@@ -1,6 +1,9 @@
 			reposurgeon project news
 
-1.10:
+TO-DO: Check that we can in fact delete tags.
+
+2.0:
+     reposurgon can now read Subversion repositories directly.
      Added 'import_marks' command.
 
 1.9: 2011-11-14

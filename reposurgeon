@@ -311,6 +311,10 @@ class SvnExtractor():
         assert repo is not None # pacify pylint
         os.chdir(self.topdir)
         os.system("svn up --quiet")
+        # The copy commits used to create initial directories, tags,
+        # and branches show up as commits with no fileops.  We
+        # turn them into tags to presrve the metadata while making
+        # easy for the user to delete them if required.
         def tagify(commit, name, committish):
             assert not commit.fileops
             repo.events.append(Tag(name=name,
@@ -318,8 +322,9 @@ class SvnExtractor():
                                    tagger=commit.committer,
                                    content=commit.comment))
             repo.delete([repo.events.index(commit)], ["obliterate"])
-        assert repo.events[0].__class__ == Reset
-        repo.events.pop(0)
+        if not repo.commits()[0]:
+            assert repo.events[0].__class__ == Reset
+            repo.events.pop(0)
         tagify(repo.commits()[0], "root", repo.commits()[1].mark)
         if self.trunk == "trunk":
             for commit in repo.commits():
