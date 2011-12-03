@@ -322,7 +322,7 @@ class SvnExtractor():
     def get_resetlist(self):
         "Return a dictionary of reset names with revisions as values."
         return []
-    def checkout(self, chs=None):
+    def checkout(self, chs, filemap):
         "Check the directory out to a specified revision, return its file list."
         os.chdir(self.topdir)
         # All the tricky stuff gets done here.  What we need to do is
@@ -380,10 +380,7 @@ class SvnExtractor():
         branchdir = os.path.join(self.topdir, commit.branch)
         if verbose >= DEBUG_COMMANDS:
             announce("checking out %s in directory '%s'" % (chs, branchdir))
-        if chs:
-            capture("svn up -r%s %s" % (chs, branchdir))
-        else:
-            capture("svn up")
+        capture("svn up -r%s %s" % (chs, branchdir))
         self.manifest = []
         if os.path.exists(branchdir):
             self.manifest += capture("svn ls -R %s" % branchdir).split()
@@ -419,7 +416,7 @@ class SvnExtractor():
             for earlier in self.revlist:
                 if earlier == chs:
                     break
-                elif self.filemap[earlier] == lookfor:
+                elif filemap[earlier] == lookfor:
                     commit.parents = [earlier]
                     break
         if verbose >= DEBUG_EXTRACT:
@@ -1236,7 +1233,7 @@ class RepoStreamer:
                     commit = Commit(repo)
                     self.baton.twirl()
                     self.filemap[revision] = {}
-                    present = self.extractor.checkout(revision)
+                    present = self.extractor.checkout(revision, self.filemap)
                     parents = self.extractor.get_parents(revision)
                     for rev in parents:
                         self.filemap[revision].update(self.filemap[rev])
@@ -1285,7 +1282,7 @@ class RepoStreamer:
                                 blobmark = self.__newmark()
                                 self.hash_to_mark[newsig.hashval] = blobmark
                                 # Actual content enters the representation
-                                blob = Blob()
+                                blob = Blob(repo)
                                 blob.mark = blobmark
                                 shutil.copyfile(path, blob.blobfile())
                                 blob.path = path
