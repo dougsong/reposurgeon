@@ -210,7 +210,7 @@ class SvnExtractor():
         self.commits = None
         self.revlist = []
         self.branchtips = {}
-        self.topdir = os.getcwd()
+        self.topdir = None
         self.trunk = ""
         self.tags = []
         self.manifest = []
@@ -223,6 +223,7 @@ class SvnExtractor():
                 self.branch = ""
                 self.parents = []
                 self.ignores = None
+        self.topdir = os.getcwd()
         # Havoc can ensue if the checkout directory is not up to date
         # Warning! Can result in unexpectedly huge downloads
         # when called on a partial checkout!
@@ -2378,7 +2379,8 @@ def read_repo(source, preferred):
             if preferred:
                 announce("looking for a %s repo..." % preferred.name)
             else:
-                announce("reposurgeon: looking for any repo...")
+                announce("reposurgeon: looking for any repo at %s..." % \
+                         os.path.abspath(source))
         hitcount = 0
         extractor = vcs = None
         for possible in vcstypes:
@@ -2400,7 +2402,7 @@ def read_repo(source, preferred):
         elif hitcount > 1:
             raise Recoverable("too many repos under %s" % os.path.relpath(source))
         elif verbose > 0:
-            announce("found %s repository" % (vcs.name or extractor.name))
+            announce("found %s repository" % getattr(vcs or extractor, "name"))
         repo = Repository()
         repo.sourcedir = source
         if vcs:
