@@ -1219,11 +1219,11 @@ class RepoStreamer:
         if revision:
             self.markmap[revision] = mark
         return mark
-    def extract(self, repo, withbaton=True):
+    def extract(self, repo, progress=True):
         if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         repo.makedir()
-        with Baton(prompt="Extracting", enable=withbaton) as self.baton:
+        with Baton(prompt="Extracting", enable=progress) as self.baton:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract()
             saved_umask = os.umask(0)
@@ -2476,7 +2476,7 @@ def read_repo(source, preferred):
             # We found a matching custom extractor
             if extractor:
                 streamer = RepoStreamer(extractor)
-                streamer.extract(repo)
+                streamer.extract(repo, progress=verbose>0)
         finally:
             os.chdir(here)
     return repo
