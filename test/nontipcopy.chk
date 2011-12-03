@@ -1,0 +1,116 @@
+blob
+mark :1
+data 233
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+commit refs/heads/master
+mark :2
+author esr <esr> 1322088164 +0000
+committer esr <esr> 1322088164 +0000
+data 21
+First content added.
+M 100644 :1 README
+
+blob
+mark :3
+data 267
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do ur first modification.
+
+commit refs/heads/master
+mark :4
+author esr <esr> 1322088260 +0000
+committer esr <esr> 1322088260 +0000
+data 32
+Our first content modification.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
+data 268
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do our first modification.
+
+commit refs/heads/master
+mark :6
+author esr <esr> 1322088662 +0000
+committer esr <esr> 1322088662 +0000
+data 24
+And our first typo fix.
+from :4
+M 100644 :5 README
+
+blob
+mark :7
+data 74
+This file only exists so repostreamer won't process this branch as a tag.
+
+commit refs/heads/sample-branch
+mark :8
+author esr <esr> 1322509428 +0000
+committer esr <esr> 1322509428 +0000
+data 48
+This is not a tag. Ceci n'est pas un pipe, too.
+from :6
+M 100644 :7 placeholder
+
+blob
+mark :9
+data 305
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do our first modification.
+And our second content modification.
+
+commit refs/heads/master
+mark :10
+author esr <esr> 1322533305 +0000
+committer esr <esr> 1322533305 +0000
+data 66
+Another modification, to make the history graph more interesting.
+from :6
+M 100644 :9 README
+
+tag root
+from :2
+tagger esr <esr> 1322088070 +0000
+data 21
+Initial repo layout.
+
+tag sample-tag
+from :2
+tagger esr <esr> 1322408285 +0000
+data 36
+Crearte a sample tag at revision 2.
+
+tag sample-branch
+from :6
+tagger esr <esr> 1322509253 +0000
+data 25
+This is a sample branch.
+
+tag master
+from :10
+tagger esr <esr> 1322533492 +0000
+data 43
+This should commit some property settings.
+

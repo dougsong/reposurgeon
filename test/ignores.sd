@@ -1,0 +1,175 @@
+SVN-fs-dump-format-version: 2
+
+UUID: c5c3272b-47d6-4c38-9040-a1f498a121f6
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-11-30T23:01:39.562293Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 131
+Content-length: 131
+
+K 7
+svn:log
+V 33
+First commit to branchless repo.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T23:06:27.557744Z
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 112
+Text-content-md5: 4ab5aeeaebc3e3f8ff43c3fae94c1d20
+Text-content-sha1: 82e607016fe2378042f9110f406712528e516031
+Content-length: 122
+
+PROPS-END
+This repository is branchless.  It includes ignore propety sets...
+
+...which should turn into .gitignore files.
+
+
+Revision-number: 2
+Prop-content-length: 145
+Content-length: 145
+
+K 7
+svn:log
+V 47
+All this commit does is set an ignore property
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T23:08:14.136495Z
+PROPS-END
+
+Node-path: 
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 127
+Content-length: 127
+
+K 7
+svn:log
+V 29
+Modify the one visible file.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T23:09:32.596061Z
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: change
+Text-content-length: 49
+Text-content-md5: c72981b51f656513588adb787083a92f
+Text-content-sha1: 91adeae86c0fbcea7db4cc191388b173fadfe1c9
+Content-length: 49
+
+Now we modiy the README just as a placeholder.
+ 
+
+
+Revision-number: 4
+Prop-content-length: 225
+Content-length: 225
+
+K 7
+svn:log
+V 126
+Time to delete the svn:ignore property.
+
+The result we want is that .gitignore is no longer
+generated into the file manifest.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T23:11:25.076848Z
+PROPS-END
+
+Node-path: 
+Node-kind: dir
+Node-action: change
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 110
+Content-length: 110
+
+K 7
+svn:log
+V 12
+We're done.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T23:12:17.303954Z
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: change
+Text-content-length: 79
+Text-content-md5: b08ca98f7300de5d250c34dc6b1e105c
+Text-content-sha1: deb32cb603697c95561fabd2b7071e05dd0c3d88
+Content-length: 79
+
+Put another change here just so we have a commit after the property delete.
+
+ 
+
+

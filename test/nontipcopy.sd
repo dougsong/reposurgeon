@@ -1,0 +1,322 @@
+SVN-fs-dump-format-version: 2
+
+UUID: b608e5e6-3d76-418e-a913-354e0e09f787
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-11-23T22:38:18.963079Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 119
+Content-length: 119
+
+K 7
+svn:log
+V 21
+Initial repo layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-23T22:41:10.673920Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 119
+Content-length: 119
+
+K 7
+svn:log
+V 21
+First content added.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-23T22:42:44.046702Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 233
+Text-content-md5: 33f830a78fa714b5b5dc183858af1c35
+Text-content-sha1: 224465723b6b2038097e40d468c7aae502a4eb78
+Content-length: 243
+
+PROPS-END
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+
+Revision-number: 3
+Prop-content-length: 130
+Content-length: 130
+
+K 7
+svn:log
+V 32
+Our first content modification.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-23T22:44:20.588271Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 267
+Text-content-md5: b1f10861ac282bcfd3a4af4a431e9d6b
+Text-content-sha1: 7dafe3025dd655d053efa2b1675959eaa7f16204
+Content-length: 267
+
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do ur first modification.
+
+
+Revision-number: 4
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+And our first typo fix.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-23T22:51:02.055814Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 268
+Text-content-md5: 848cf2b129224aaf35e4edc5d501a9b2
+Text-content-sha1: aee7f8ffb8b86df94115e257dc2095b01d38e1a4
+Content-length: 268
+
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do our first modification.
+
+
+Revision-number: 5
+Prop-content-length: 134
+Content-length: 134
+
+K 7
+svn:log
+V 36
+Crearte a sample tag at revision 2.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-27T15:38:05.116500Z
+PROPS-END
+
+Node-path: tags/sample-tag
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 6
+Prop-content-length: 123
+Content-length: 123
+
+K 7
+svn:log
+V 25
+This is a sample branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-28T19:40:53.609923Z
+PROPS-END
+
+Node-path: branches/sample-branch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk
+
+
+Revision-number: 7
+Prop-content-length: 146
+Content-length: 146
+
+K 7
+svn:log
+V 48
+This is not a tag. Ceci n'est pas un pipe, too.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-28T19:43:48.493208Z
+PROPS-END
+
+Node-path: branches/sample-branch/placeholder
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 74
+Text-content-md5: dcc570e2f77ca9be7011e1e73d453b46
+Text-content-sha1: 3f43ea546b3c694f061afbd27f563398dcf1194f
+Content-length: 84
+
+PROPS-END
+This file only exists so repostreamer won't process this branch as a tag.
+
+
+Revision-number: 8
+Prop-content-length: 164
+Content-length: 164
+
+K 7
+svn:log
+V 66
+Another modification, to make the history graph more interesting.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-29T02:21:45.941207Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 305
+Text-content-md5: c86e4e75b501a3a6f4271bd94118d6fe
+Text-content-sha1: 825814cc10713bd05c0f4e92124d92b63e0fc55b
+Content-length: 305
+
+This is a test Subversion repository. 
+It has no other actual purpose than to exercise repostreamer.
+
+It is normally formed, with trunk and branches and tags directories
+at the top level.  Initially, the only content is this README.
+
+Now we do our first modification.
+And our second content modification.
+
+
+Revision-number: 9
+Prop-content-length: 141
+Content-length: 141
+
+K 7
+svn:log
+V 43
+This should commit some property settings.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-29T02:24:52.228396Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
