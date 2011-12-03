@@ -1,7 +1,9 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing regress coalesce
+all: clean roundtrip mailboxing fi-regress coalesce svn-regress
 	@echo "No diff output is good news."
+
+buildregress: fi-regress svn-regress
 
 clean:
 	rm -fr .rs* test-repo test-checkout
@@ -28,12 +30,12 @@ mailboxing:
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
 TESTLOADS = simple roundup gsoc cut testrepo testmerge graft references
-buildregress:
+fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
 	    ../reposurgeon "script $${file}.tst" >$${file}.chk 2>&1; \
 	done
-regress:
+fi-regress:
 	@for file in $(TESTLOADS); do \
 	    echo -n $${file} " "; grep '##' $${file}.tst; \
 	    if ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
@@ -71,12 +73,12 @@ svn-branchy: svn-flat
 		svn commit -m "Initial README content.\n"
 
 SVNLOADS = vanilla simpletag #samplebranch ignores nontipcopy
-buildsvnregress:
+svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
 	    sd-to-fi <$${test}.sd >$${test}.chk; \
 	done
-svnregress:
+svn-regress:
 	@for test in $(SVNLOADS); do \
 	    if (echo "Testing $${test}" >&2; \
 	    sd-to-fi) <$${test}.sd >/tmp/regress; \

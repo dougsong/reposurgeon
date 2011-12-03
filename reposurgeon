@@ -328,8 +328,8 @@ class SvnExtractor():
                                    committish=committish,
                                    tagger=commit.committer,
                                    content=commit.comment))
-            repo.delete([repo.events.index(commit)], ["obliterate"])
-        if not repo.commits()[0]:
+            repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
+        if not repo.commits()[0].fileops:
             assert repo.events[0].__class__ == Reset
             repo.events.pop(0)
         tagify(repo.commits()[0], "root", repo.commits()[1].mark)
@@ -2056,7 +2056,7 @@ class Repository:
                 break
         commit.fileops = [x for x in commit.fileops if x is not None]
         return coverage
-    def delete(self, selected, policy):
+    def delete(self, selected, policy, quiet=False):
         "Delete commits, handling multiple Ms on a file with specified policy"
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
@@ -2069,7 +2069,7 @@ class Repository:
             if isinstance(event, Blob):
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
-                if "obliterate" in policy:
+                if "obliterate" in policy and not quiet:
                     speak = "warning: commit %s to be obliterated has " % event.mark 
                     if '/' in event.branch and not '/heads/' in event.branch:
                         complain(speak + "non-head branch attribute %s" % event.branch)
