@@ -2559,7 +2559,7 @@ class CriticalRegion:
         self.handlers = None	# Pacifies pylint
     def __enter__(self):
         "Begin critical region."
-        if verbose:
+        if verbose >= DEBUG_COMMANDS:
             complain("critical region begins...")
         # Alas that we lack sigblock support
         self.handlers = [None]*(CriticalRegion.NSIG+1)
@@ -2571,7 +2571,7 @@ class CriticalRegion:
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, self.handlers[sig])
-        if verbose:
+        if verbose >= DEBUG_COMMANDS:
             complain("critical region ends.")
         return False
 
