@@ -318,7 +318,7 @@ class SvnExtractor():
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
             for commit in repo.commits():
-                announce("%3s %2d '%s'" % \
+                announce("%4s %2d '%s'" % \
                          (commit.mark,
                           len(commit.fileops),
                           commit.comment[:20].strip()))
@@ -1362,9 +1362,6 @@ class RepoStreamer:
                                 op = FileOp(commit)
                                 op.construct('M', newsig.perms, blobmark, path)
                                 repo.backlink_blobs(op)
-                            commit.mark = self.__newmark(revision)
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                             commit.fileops.append(op)
                             self.filemap[revision][path] = newsig
                         for tbd in removed:
@@ -1380,6 +1377,9 @@ class RepoStreamer:
                         repo.events.append(reset)
                     #commit.fileops.sort(cmp=FileOp.compare)
                     commit.set_fossil(revision)
+                    commit.mark = self.__newmark(revision)
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                     repo.events.append(commit)
                 # Now append reset objects
                 resets = self.extractor.get_resetlist()
