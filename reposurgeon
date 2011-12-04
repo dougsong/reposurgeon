@@ -832,6 +832,19 @@ class FileOp:
         self.mode = None
         self.path = None
         self.ref = None
+    # Following two functions emulate the FileOp sort used by git
+    # fast_export As it says, 'Handle files below a directory first,
+    # in case they are all deleted and the directory changes to a file
+    # or symlink.'
+    def __pathname__(self):
+        if hasattr(self, 'path'):
+            return self.path
+        elif hasattr(self, 'source'):
+            return self.source
+        elif self.op == 'deleteall':
+            return ""
+        else:
+            raise Fatal("internal error while extracting pathname")
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
