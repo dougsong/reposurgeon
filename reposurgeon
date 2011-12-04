@@ -340,6 +340,7 @@ class SvnExtractor():
                         tagify(commit,
                                os.path.basename(commit.branch),
                                commit.parent_marks[0])
+        repo.renumber()
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return len(capture("svn status")) == 0
@@ -1330,8 +1331,8 @@ class RepoStreamer:
                                 op = FileOp(commit)
                                 op.construct('M', newsig.perms, blobmark, path)
                                 repo.backlink_blobs(op)
-                                commit.mark = self.__newmark(revision)
-                                commit.fileops.append(op)
+                            commit.mark = self.__newmark(revision)
+                            commit.fileops.append(op)
                             self.filemap[revision][path] = newsig
                         for tbd in removed:
                             op = FileOp(commit)
