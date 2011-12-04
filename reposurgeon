@@ -1231,11 +1231,13 @@ class signature:
             elif self.perms & 0o100600 == 0o100600:
                 self.perms = 0o100644
     def __eq__(self, other):
-        #if verbose >= DEBUG_EXTRACT:
-        #    announce("%s == %s -> %s" % (str(self),
-        #                                 str(other),
-        #                                 self.__dict__ == other.__dict__))
+        if verbose >= DEBUG_EXTRACT:
+            announce("%s == %s -> %s" % (str(self),
+                                         str(other),
+                                         self.__dict__ == other.__dict__))
         return self.__dict__ == other.__dict__
+    def __ne__(self, other):
+        return not signature.__eq__(self, other)
     def __str__(self):
         return "<%s:%s:%s>" % (self.path, "%6o" % self.perms, self.hashval[:4])
     __repr__ = __str__
@@ -1315,14 +1317,16 @@ class RepoStreamer:
                                 # blob; generate modify, copy, or rename as
                                 # appropriate.
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("revision %s: %s present = %s" % \
-                                             (revision, path, path in self.filemap[revision]))
+                                    announce("revision %s: %s not present = %s" % \
+                                             (revision, path, path not in self.filemap[revision]))
                                     if path in self.filemap[revision]:
-                                        announce("revision %s: %s match = %s" % \
-                                                 (revision, path, self.filemap[revision][path]==newsig))
+                                        announce("revision %s: %s mismatch = %s %s %s" % \
+                                                 (revision, path, self.filemap[revision][path], newsig, self.filemap[revision][path]!=newsig))
                                 
                                 if path not in self.filemap[revision] \
                                        or self.filemap[revision][path]!=newsig:
+                                    if verbose >= DEBUG_EXTRACT:
+                                        announce("revision %s: update for %s" % (revision, path))
                                     for (oldpath, oldsig) in self.filemap[revision].items():
                                         if oldsig == newsig:
                                             if oldpath in removed:
