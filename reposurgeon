@@ -340,7 +340,7 @@ class SvnExtractor():
                         tagify(commit,
                                os.path.basename(commit.branch),
                                commit.parent_marks[0])
-        #repo.renumber()
+        repo.renumber()
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return len(capture("svn status")) == 0
