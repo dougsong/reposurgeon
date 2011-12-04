@@ -332,7 +332,7 @@ class SvnExtractor():
         if not repo.commits()[0].fileops:
             assert repo.events[0].__class__ == Reset
             repo.events.pop(0)
-        tagify(repo.commits()[0], "root", repo.commits()[1].mark)
+            tagify(repo.commits()[0], "root", repo.commits()[1].mark)
         if self.trunk == "trunk":
             for commit in repo.commits():
                 if not commit.fileops:
