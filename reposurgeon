@@ -336,10 +336,9 @@ class SvnExtractor():
         if self.trunk == "trunk":
             for commit in repo.commits():
                 if not commit.fileops:
-                    if commit.branch.startswith("tags" + os.sep):
-                        tagify(commit,
-                               os.path.basename(commit.branch),
-                               commit.parent_marks[0])
+                    tagify(commit,
+                           os.path.basename(commit.branch),
+                           commit.parent_marks[0])
         repo.renumber()
     def isclean(self):
         "Return True if repo has no unsaved changes."
