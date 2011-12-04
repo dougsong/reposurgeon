@@ -496,8 +496,8 @@ this command is empty.</para>
 
 <para>No <command>blob</command> event can be deleted directly with
 this command; <command>blob</command> events are tied to associated
-<command>commit</command> or <command>tag</command> events and are
-discarded only when those are.</para>
+<command>commit</command> events and are discarded only when those
+are.</para>
 
 <para>Deleting a <command>tag</command>, <command>reset</command> or
 <command>passthrough</command> event has no side effects.</para>
