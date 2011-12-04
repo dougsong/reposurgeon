@@ -72,6 +72,7 @@ svn-branchy: svn-flat
 		svn add trunk/README; \
 		svn commit -m "Initial README content.\n"
 
+# TO-DO: We need a test load with an exiguous branch
 SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
