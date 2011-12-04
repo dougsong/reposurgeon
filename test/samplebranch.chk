@@ -79,5 +79,6 @@ This repo illustrates simple branching with interleaved commits.
 tag samplebranch
 from :2
 tagger esr <esr> 1322682540 +0000
-data 43
+data 44
 A branch created for illustrative purposes.
+

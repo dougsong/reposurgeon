@@ -72,7 +72,7 @@ svn-branchy: svn-flat
 		svn add trunk/README; \
 		svn commit -m "Initial README content.\n"
 
-SVNLOADS = vanilla simpletag #samplebranch ignores nontipcopy
+SVNLOADS = vanilla simpletag samplebranch #ignores nontipcopy
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
