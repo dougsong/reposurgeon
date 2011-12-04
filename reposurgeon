@@ -318,7 +318,7 @@ class SvnExtractor():
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
             for commit in repo.commits():
-                announce("%s %2d '%s'" % \
+                announce("%3s %2d '%s'" % \
                          (commit.mark,
                           len(commit.fileops),
                           commit.comment[:20].strip()))
@@ -340,7 +340,7 @@ class SvnExtractor():
                         tagify(commit,
                                os.path.basename(commit.branch),
                                commit.parent_marks[0])
-        repo.renumber()
+        #repo.renumber()
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return len(capture("svn status")) == 0
@@ -1231,7 +1231,14 @@ class signature:
             elif self.perms & 0o100600 == 0o100600:
                 self.perms = 0o100644
     def __eq__(self, other):
-        return (self.__dict__ == other.__dict__)
+        #if verbose >= DEBUG_EXTRACT:
+        #    announce("%s == %s -> %s" % (str(self),
+        #                                 str(other),
+        #                                 self.__dict__ == other.__dict__))
+        return self.__dict__ == other.__dict__
+    def __str__(self):
+        return "<%s:%s:%s>" % (self.path, "%6o" % self.perms, self.hashval[:4])
+    __repr__ = __str__
 
 def signature_map(paths):
     return dict([(path, signature(path)) for path in paths])
@@ -1287,9 +1294,13 @@ class RepoStreamer:
                     commit.parent_marks = [self.markmap[rev] for rev in parents]
                     commit.branch = self.extractor.get_branch(revision)
                     commit.comment = self.extractor.get_comment(revision)
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("revision %s: comment '%s'" % (revision, commit.comment[:20].strip()))
                     self.filemap[revision] = {}
                     for rev in parents:
                         self.filemap[revision].update(self.filemap[rev])
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("revision %s: ancestral filemap %s" % (revision, self.filemap[revision],))
                     if present:
                         removed = set(self.filemap[revision].keys()) - set(present)
                         for path in present:
@@ -1298,11 +1309,18 @@ class RepoStreamer:
                             newsig = signature(path)
                             if newsig.hashval in self.hash_to_mark:
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("%s of %s has old hash" \
-                                             % (path, revision))
+                                    announce("revision %s: %s has old signature %s" \
+                                             % (revision, path, newsig))
                                 # The file's hash corresponds to an existing
                                 # blob; generate modify, copy, or rename as
                                 # appropriate.
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("revision %s: %s present = %s" % \
+                                             (revision, path, path in self.filemap[revision]))
+                                    if path in self.filemap[revision]:
+                                        announce("revision %s: %s match = %s" % \
+                                                 (revision, path, self.filemap[revision][path]==newsig))
+                                
                                 if path not in self.filemap[revision] \
                                        or self.filemap[revision][path]!=newsig:
                                     for (oldpath, oldsig) in self.filemap[revision].items():
@@ -1330,8 +1348,8 @@ class RepoStreamer:
                             else:
                                 # Content hash doesn't match any existing blobs
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("%s of %s has new hash" \
-                                             % (path, revision))
+                                    announce("revision %s: %s has new hash" \
+                                             % (revision, path))
                                 blobmark = self.__newmark()
                                 self.hash_to_mark[newsig.hashval] = blobmark
                                 # Actual content enters the representation
@@ -1345,6 +1363,8 @@ class RepoStreamer:
                                 op.construct('M', newsig.perms, blobmark, path)
                                 repo.backlink_blobs(op)
                             commit.mark = self.__newmark(revision)
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                             commit.fileops.append(op)
                             self.filemap[revision][path] = newsig
                         for tbd in removed:
@@ -1358,7 +1378,7 @@ class RepoStreamer:
                         reset.ref = commit.branch
                         reset.timestamp = commit.when()-1
                         repo.events.append(reset)
-                    commit.fileops.sort(cmp=FileOp.compare)
+                    #commit.fileops.sort(cmp=FileOp.compare)
                     commit.set_fossil(revision)
                     repo.events.append(commit)
                 # Now append reset objects
