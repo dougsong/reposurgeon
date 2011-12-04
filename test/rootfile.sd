@@ -58,8 +58,8 @@ PROPS-END
 
 
 Revision-number: 2
-Prop-content-length: 121
-Content-length: 121
+Prop-content-length: 122
+Content-length: 122
 
 K 7
 svn:log
@@ -119,5 +119,37 @@ Content-length: 91
 
 PROPS-END
 This is an exiguous file which should be stoffed in a root branch on conversion.
+
+
+Revision-number: 4
+Prop-content-length: 155
+Content-length: 155
+
+K 7
+svn:log
+V 57
+Have some content on trunk after the root file creation.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-04T22:23:55.992811Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 68
+Text-content-md5: e565bc3bd7b533b9ec4350aabe270cd8
+Text-content-sha1: 392c43a013708f75b861f54f80f50c5702aa13f3
+Content-length: 68
+
+This is a test Subversion repository
+
+One more brick in the wall...
 
 
