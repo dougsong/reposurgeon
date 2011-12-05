@@ -26,21 +26,23 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 
 <para>The purpose of <command>reposurgeon</command> is to enable risky
-operations that version-control systems don't want to let you do, such
-as (a) editing past comments and metadata, (b) excising commits, (c)
-coalescing and splitting commits, (d) removing files and subtrees from
-repo history, (e) merging or grafting two or more repos, and (f)
-cutting a repo in two by cutting a parent-child link, preserving the
-branch structure of both child repos.</para>
+operations that VCSes (version-control systems) don't want to let you
+do, such as (a) editing past comments and metadata, (b) excising
+commits, (c) coalescing and splitting commits, (d) removing files and
+subtrees from repo history, (e) merging or grafting two or more repos,
+and (f) cutting a repo in two by cutting a parent-child link,
+preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for <command>reposurgeon</command> was
 to clean up artifacts created by repository conversions, and it has
-some special-purpose commands for this use. It was foreseen that the
-tool would also have applications when code needs to be removed from
-repositories for legal or policy reasons.</para>
+some special-purpose commands for this use. With the addition of
+extractors (see below) <command>reposurgeon</command> is a repository
+conversion tool in its own right.  It was foreseen that the tool would
+also have applications when code needs to be removed from repositories
+for legal or policy reasons.</para>
 
 <para>To keep <command>reposurgeon</command> simple and flexible, it
-does not do its own repository reading and writing.  Instead, it
+normally does not do its own repository reading and writing.  Instead, it
 relies on being able to parse and emit the command streams created by
 git-fast-export and read by git-fast-import.  This means that it can
 be used on any version-control system that that has both fast-export
@@ -48,6 +50,22 @@ and fast-import utilities.  At time of writing this set includes git
 itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
+
+<para>In order to deal with version-control systems that do not have
+fast-export equivalents, <command>reposurgeon</command> can also host
+extractor code that reads repositories directly.  For each
+version-control system supported through an extractor,
+<command>reposurgeon</command> uses a small amount of knowledge about
+the system's command-line tools to (in effect) replay repository
+history into an input stream internally. Repositories under systems
+supported through extractors can be read by
+<command>reposurgeon</command>, but not modified by it.  In
+particular, <command>reposurgeon</command> can be used to move a
+repostory history from any VCS supported by an extractor to any VCS
+supported by a normal importer/exporter pair.</para>
+
+<para>At time of writing the following VCSes are supported through exporters: 
+git itself, hg, and bzr. Subversion is supported through an extractor.</para>
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNINGS</title>
@@ -410,7 +428,7 @@ pathname.  The current preserve list is displayed afterwards.</para>
 
 <para>It is only necessary to use this command if your version-control system
 lacks a command to list files under version control. Under systems with such
-a command, all files that are newither beneath the repository dot directory
+a command, all files that are neither beneath the repository dot directory
 nor under reposurgeon temporary directories are preserved automatically.</para>
 </listitem>
 </varlistentry>
@@ -826,8 +844,9 @@ hard for a machine to get right, while the second part is prone to errors
 when a human does it.</para>
 
 <para>A Subversion cookie is a comment substring of the form
-[[SVN:ddddd]] (example: [[SVN:2355]] with the revision deduced from git-svn
-metadata or matching a $Revision$ header embedded in blob data for the
+[[SVN:ddddd]] (example: [[SVN:2355]] with the revision read directly
+via the Subversion extractor, deduced from git-svn metadata, or
+matching a $Revision$ header embedded in blob data for the
 filename.</para>
 
 <para>A CVS cookie is a comment substring of the form
@@ -848,8 +867,9 @@ being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
 <command>reposurgeon</command> internally builds a fossil-reference
 map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
-places: (1) git-svn metadata headers (when gitsvnparse is called), (2)
-$Id$ and $Revision$ headers in repository files, and (3) the
+places: (1) Metadata from a repository if an extractor was used, (2)
+git-svn metadata headers (when gitsvnparse is called), (3) $Id$ and
+$Revision$ headers in repository files, and (4) the
 <filename>.git/cvs-revisions</filename> created by <command>git
 cvsimport</command>.</para>
 
@@ -893,8 +913,6 @@ the repo is written to a stream file.</para>
 command took a selection set of events to modify, defaulting to all
 events. It now always converts the entire repo, and no longer takes
 a selection set.</para>
-
-
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1015,7 +1033,6 @@ out git-svn metadata lines when given the 'strip' modifier.</para>
 </varlistentry>
 </variablelist>
 </refsect2>
-
 
 <refsect2 id='examining-tree-states'><title>EXAMINING TREE STATES</title>
 
@@ -1187,6 +1204,71 @@ the repository subdirectory..</para>
 </listitem>
 </varlistentry>
 </variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='extractors'><title>WORKING WITH EXTRACTORS</title>
+
+<para>Presently, <command>reposurgeon</command> supports one extractor 
+for the Subversion VCS.  More may be added in the future.</para>
+
+<para>The most important limit of working with a repository type supported
+by an extractor is that <command>reposurgeon</command> can only read
+such repositories, not write them.</para>
+
+<para>The remainder of this section describes problems specific to
+individual extractors.</para>
+
+<refsect2 id='subversion'><title>Subversion</title>
+
+<para>To run the Subversion extractor, ask
+<application>reposurgeon</application> to read from a a Subversion
+checkout directory. Network access to the host repository will be
+required.  For better performance, use svnsync to make a local mirror
+of the repository and work on that.</para>
+
+<para><application>reposurgeon</application> tries to adapt to
+whatever directory layout it finds in the top level of the Subversion
+checkout directory. It can cope with a top level containing any
+nonempty subset of the standard directories (trunk, tags, branches)
+plus any number of exiguous branch directories. Top-level files in a
+branched repository will be stuffed into a synthetic branch named
+'root'. The tool can cope with a layout that has none of the standard
+directories; all content will in that case be considered a single
+unnamed branch with a linear history.</para>
+
+<para>Each commit that only creates or deletes directories (in
+particular, copy commits for tags and branches, and commits that only
+change properties) will be transformed into a tag named after the
+branch, containing the date/author/comment metadata from the
+commit. While this produces a desirable result for tags, non-tag
+branches (including trunk) will also get root tags this way. This
+apparent misfeature has been accepted so that
+<application>reposurgeon</application> will never destroy metadata
+that might have value; it is left up to the user to manually remove
+unwanted tags.</para>
+
+<para>Per-directory svn:ignore properties become .gitignore files; if
+you're somehow managed to have an actual .gitignore file in a
+Subversion directory with an svn:ignore property, the file will get
+stepped on.</para>
+
+<para>All properties other than svn:ignore are preserved as per-commit
+properties using the properties extension, and will thus be visible
+and editable in the mailboxized view of commit metadata. Some
+preserved properties have no natural interpretation outside the
+Subversion system, but are kept anyway on the principle that
+<application>reposurgeon</application> should never discard any data
+or metadata that it's not told to.</para>
+
+<para>The subsecond resolution on Subversion commit dates is discarded;
+Git wants integer timestamps only.</para>
+
+<para>Regardless of what revision or branch was current at start,
+before and after <application>reposurgeon</application> runs the
+latest (svn up) revision will be checked out. This could lead to an
+unexpectedly large download on a partial checkout.</para>
+
 </refsect2>
 </refsect1>
 
