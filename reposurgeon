@@ -291,8 +291,18 @@ class SvnExtractor():
         # we have to make a special pass through to get them.
         for rev in self.revlist:
             commit = self.commits[rev]
-            commit.ignores = capture("svn propget svn:ignore -r %s %s" \
-                                          % (rev, commit.branch))
+            commit.ignores = None
+            with popen_or_die("svn proplist --xml -v -r%s %s" \
+                              % (rev, commit.branch)) as fp:
+                try:
+                    dom = xml.dom.minidom.parse(fp)
+                except xml.parsers.expat.ExpatError:
+                    raise Fatal("error while parsing Subversion properties.")
+                for prop in dom.getElementsByTagName("property"):
+                    name = prop.getAttribute("name")
+                    value = getText(prop)
+                    if name == "svn:ignore":
+                        commit.ignores = value 
             baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
