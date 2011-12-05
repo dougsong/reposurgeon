@@ -352,8 +352,11 @@ class SvnExtractor():
             repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
         if not repo.commits()[0].fileops:
             assert repo.events[0].__class__ == Reset
-            repo.events.pop(0)
-            tagify(repo.commits()[0], "root", repo.commits()[1].mark)
+            if len(repo.commits()) >= 2:
+                repo.events.pop(0)
+                tagify(repo.commits()[0], "root", repo.commits()[1].mark)
+            else:
+                complain("could not tagify root commit.")
         if self.trunk == "trunk":
             for commit in repo.commits():
                 if not commit.fileops:
@@ -1334,7 +1337,7 @@ class RepoStreamer:
                             if os.path.isdir(path):
                                 continue
                             if os.path.exists(path):
-                                complain("revision %s: expected path %s does not exist!" \
+                                complain("revision %s: expected path %s does not exist!" % \
                                          (revision, path))
                             newsig = signature(path)
                             if newsig.hashval in self.hash_to_mark:
