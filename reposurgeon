@@ -7,7 +7,6 @@
 # Requires Python 2.7.2 or newer.
 #
 # To do:
-# * The representation we're writing for Subversion properties is a kluge.
 # * Can we use Subversion merge properties to edit the DAG?
 # * RCS extraction
 # * Bitkeeper extraction.
