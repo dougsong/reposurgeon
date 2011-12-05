@@ -13,8 +13,8 @@ V 27
 PROPS-END
 
 Revision-number: 1
-Prop-content-length: 178
-Content-length: 178
+Prop-content-length: 177
+Content-length: 177
 
 K 7
 svn:log
@@ -154,5 +154,37 @@ This is a sample file.
 This is our first line of modified content.
 
 This is our second line of modified content.
+
+
+Revision-number: 5
+Prop-content-length: 125
+Content-length: 125
+
+K 7
+svn:log
+V 27
+Adding a property setting.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-05T11:27:20.130826Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 26
+Content-length: 26
+
+K 3
+foo
+V 3
+bar
+PROPS-END
 
 
