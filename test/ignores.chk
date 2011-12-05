@@ -16,9 +16,8 @@ M 100644 :1 README
 
 blob
 mark :3
-data 7
+data 6
 *.pyc
-
 
 commit refs/heads/root
 mark :4
