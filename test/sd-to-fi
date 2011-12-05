@@ -23,25 +23,27 @@
 #
 BIN=../..
 
-extract=True
-stream=True
-undump=False
-cleanup=True
+extract=T
+view=F
+stream=T
+undump=F
+cleanup=T
 verbose="0"
 
-while getopts dnrv: opt
+while getopts dgnrv: opt
 do
     case $opt in
-	n) extract=True ;  stream=False ; undump=False ; cleanup=False ;;
-        r) extract=False ; stream=True  ; undump=False ; cleanup=False ;;
-        d) extract=False ; stream=False ; undump=True  ; cleanup=False ;;
+	n) extract=T ; view=F ; stream=F ; undump=F ; cleanup=F ;;
+        g) extract=F ; view=T ; stream=F ; undump=F ; cleanup=F ;;
+        r) extract=F ; view=F ; stream=T ; undump=F ; cleanup=F ;;
+        d) extract=F ; view=F ; stream=F ; undump=T  ; cleanup=F ;;
 	v) verbose="$OPTARG" ;;
     esac
 done
 shift $(($OPTIND - 1))
 
 # Should we build a repo from the input file?
-if [ $extract = True ]
+if [ $extract = T ]
 then
     rm -fr test-repo test-checkout
     svnadmin create test-repo
@@ -49,21 +51,27 @@ then
     svn co file://${PWD}/test-repo test-checkout >/dev/null
 fi
 
+# Should we view the repo?
+if [ $view = T ]
+then
+    (cd test-repo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo"; cd /tmp/testrepo; gitk --all --tags)
+fi
+
 # Should we stream the repo?
 # (Note: the 'prefer git' is just there to suppress fossil emission.)
-if [ $stream = True ]
+if [ $stream = T ]
 then
     (cd test-checkout >/dev/null; ${BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "write")
 fi
 
 # Should we undump the repo?
-if [ $undump = True ]
+if [ $undump = T ]
 then
     svnadmin dump test-repo
 fi
 
 # Should we clean up the test directory
-if [ $cleanup = True ]
+if [ $cleanup = T ]
 then
     rm -fr test-repo test-checkout
 fi

@@ -48,6 +48,8 @@ M 100644 :5 README
 tag root
 from :2
 tagger esr <esr> 1322671315 +0000
-data 79
+data 144
 A vanilla repository - standard layout, linear history, no tags, no branches. 
+
+[[Tag from directory creation or copy commit at Subversion r1]]
 

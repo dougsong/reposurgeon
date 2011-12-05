@@ -73,12 +73,16 @@ M 100644 :9 README
 tag root
 from :2
 tagger esr <esr> 1322682380 +0000
-data 65
+data 130
 This repo illustrates simple branching with interleaved commits.
+
+[[Tag from directory creation or copy commit at Subversion r1]]
 
 tag samplebranch
 from :2
 tagger esr <esr> 1322682540 +0000
-data 44
+data 109
 A branch created for illustrative purposes.
+
+[[Tag from directory creation or copy commit at Subversion r3]]
 
