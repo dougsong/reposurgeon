@@ -17,6 +17,9 @@
 #
 # The -v option argument will be used to set reposurgeon's verbose option.
 #
+# The -t option allows property extensions to be generated.  It's turned
+# off by default because git-import chokes on it.
+#
 # To add complexity to a test load, do -n, then edit the test repo with
 # Subversion, then use -d. Note: you must commit to force the repo to
 # be up to date before streaming it. 
@@ -29,14 +32,17 @@ stream=T
 undump=F
 cleanup=T
 verbose="0"
+# Suppress fossil emission by default
+streamopts='prefer git'
 
-while getopts dgnrv: opt
+while getopts dgnrtv: opt
 do
     case $opt in
 	n) extract=T ; view=F ; stream=F ; undump=F ; cleanup=F ;;
         g) extract=F ; view=T ; stream=F ; undump=F ; cleanup=F ;;
         r) extract=F ; view=F ; stream=T ; undump=F ; cleanup=F ;;
         d) extract=F ; view=F ; stream=F ; undump=T  ; cleanup=F ;;
+	t) streamopts="" ;;
 	v) verbose="$OPTARG" ;;
     esac
 done
@@ -58,10 +64,9 @@ then
 fi
 
 # Should we stream the repo?
-# (Note: the 'prefer git' is just there to suppress fossil emission.)
 if [ $stream = T ]
 then
-    (cd test-checkout >/dev/null; ${BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "write")
+    (cd test-checkout >/dev/null; ${BIN}/reposurgeon "verbose $verbose" "read ." "$streamopts" "write")
 fi
 
 # Should we undump the repo?
