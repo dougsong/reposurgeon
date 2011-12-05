@@ -67,7 +67,7 @@ svn-flat: clean
 svn-branchy: svn-flat
 	@cd test-checkout; set -x; \
 		svn mkdir trunk; svn mkdir tags; svn mkdir branches; \
-		svn commit -m "Directory layout\n"; \
+		svn commit -m "Directory layout.\n"; \
 		echo "This is a test Subversion repository" >trunk/README; \
 		svn add trunk/README; \
 		svn commit -m "Initial README content.\n"
