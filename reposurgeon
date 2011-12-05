@@ -6,6 +6,12 @@
 #
 # Requires Python 2.7.2 or newer.
 #
+# To do:
+# * The representation we're writing for Subversion properties is a kluge.
+# * Can we use Subversion merge properties to edit the DAG?
+# * RCS extraction
+# * Bitkeeper extraction.
+#
 import sys, os, cmd, tempfile, subprocess, glob, hashlib
 import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
@@ -298,11 +304,16 @@ class SvnExtractor():
                     dom = xml.dom.minidom.parse(fp)
                 except xml.parsers.expat.ExpatError:
                     raise Fatal("error while parsing Subversion properties.")
-                for prop in dom.getElementsByTagName("property"):
-                    name = prop.getAttribute("name")
-                    value = getText(prop)
-                    if name == "svn:ignore":
-                        commit.ignores = value 
+                for target in dom.getElementsByTagName("target"):
+                    path = target.getAttribute("path")
+                    for prop in target.getElementsByTagName("property"):
+                        name = prop.getAttribute("name")
+                        value = getText(prop)
+                        if name == "svn:ignore":
+                            commit.ignores = value
+                        else:
+                            commit.properties.append((name,
+                                                      repr((path, value))))
             baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
