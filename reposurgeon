@@ -327,7 +327,7 @@ class SvnExtractor():
             repo.events.append(Tag(name=name,
                                    committish=committish,
                                    tagger=commit.committer,
-                                   content=commit.comment))
+                                   content=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
             repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
         if not repo.commits()[0].fileops:
             assert repo.events[0].__class__ == Reset
@@ -336,9 +336,12 @@ class SvnExtractor():
         if self.trunk == "trunk":
             for commit in repo.commits():
                 if not commit.fileops:
-                    tagify(commit,
-                           os.path.basename(commit.branch),
-                           commit.parent_marks[0])
+                    if commit.parent_marks:
+                        tagify(commit,
+                               os.path.basename(commit.branch),
+                               commit.parent_marks[0])
+                    else:
+                        complain("revision %s, mark %s: could not tagify parentless commit." % (commit.get_fossil(), commit.mark))
         repo.renumber()
     def isclean(self):
         "Return True if repo has no unsaved changes."
@@ -1150,6 +1153,8 @@ class Commit:
             complain("fossil property of %s overwritten, %s to %s" \
                      % (self.mark, oldval, value))
         self.properties.append(("fossil", value))
+    def get_fossil(self):
+        return dict(self.properties).get("fossil", None)
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
