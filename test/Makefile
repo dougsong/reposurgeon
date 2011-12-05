@@ -11,7 +11,7 @@ clean:
 # Test that all dumpfiles round-trip properly
 roundtrip:
 	@for file in *.fi; do \
-	    echo "Testing round-tripping of $${file}.tst."; \
+	    echo "Testing round-tripping of $${file}"; \
 	    ../reposurgeon "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \

@@ -90,6 +90,20 @@ Another modification, to make the history graph more interesting.
 from :6
 M 100644 :9 README
 
+blob
+mark :11
+data 6
+*.pyc
+
+commit refs/heads/master
+mark :12
+author esr <esr> 1322533492 +0000
+committer esr <esr> 1322533492 +0000
+data 43
+This should commit some property settings.
+from :10
+M 100644 :11 .gitignore
+
 tag root
 from :2
 tagger esr <esr> 1322088070 +0000
@@ -113,12 +127,4 @@ data 90
 This is a sample branch.
 
 [[Tag from directory creation or copy commit at Subversion r6]]
-
-tag master
-from :10
-tagger esr <esr> 1322533492 +0000
-data 108
-This should commit some property settings.
-
-[[Tag from directory creation or copy commit at Subversion r9]]
 

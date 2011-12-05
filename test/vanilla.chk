@@ -53,3 +53,11 @@ A vanilla repository - standard layout, linear history, no tags, no branches.
 
 [[Tag from directory creation or copy commit at Subversion r1]]
 
+tag master
+from :6
+tagger esr <esr> 1323084440 +0000
+data 92
+Adding a property setting.
+
+[[Tag from directory creation or copy commit at Subversion r5]]
+

@@ -229,6 +229,7 @@ class SvnExtractor():
                 self.branch = ""
                 self.parents = []
                 self.ignores = None
+                self.properties = []
         self.topdir = os.getcwd()
         # Havoc can ensue if the checkout directory is not up to date
         # Warning! Can result in unexpectedly huge downloads
@@ -298,7 +299,7 @@ class SvnExtractor():
         for rev in self.revlist:
             commit = self.commits[rev]
             commit.ignores = None
-            with popen_or_die("svn proplist --xml -v -r%s %s" \
+            with popen_or_die("svn proplist --xml -v -R -r%s %s" \
                               % (rev, commit.branch)) as fp:
                 try:
                     dom = xml.dom.minidom.parse(fp)
@@ -312,8 +313,7 @@ class SvnExtractor():
                         if name == "svn:ignore":
                             commit.ignores = value
                         else:
-                            commit.properties.append((name,
-                                                      repr((path, value))))
+                            commit.properties.append((name + "#" + value))
             baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
