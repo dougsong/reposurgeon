@@ -1333,6 +1333,9 @@ class RepoStreamer:
                         for path in present:
                             if os.path.isdir(path):
                                 continue
+                            if os.path.exists(path):
+                                complain("revision %s: expected path %s does not exist!" \
+                                         (revision, path))
                             newsig = signature(path)
                             if newsig.hashval in self.hash_to_mark:
                                 if verbose >= DEBUG_EXTRACT:
