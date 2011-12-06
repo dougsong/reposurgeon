@@ -5,47 +5,44 @@ An .sd extension means it's a Subversion repo dump.
 A .chk extension means it's expected output from a test
 A .tst extension means it's a test driver script
 
-== The surgery tests ==
+== The tests ==
+
+Keeping live Subversion repos under version control doesn't work very well; 
+in particular, things like the entries file change too often.  So what we 
+do is keep Subversion dump files and rebuild the repo before each test.
+
+In general, a file named foo.chk is the expected output from a test involving
+either some operation test on an input stream in foo.fi or a repo conversion
+from foo.sd.  Here is a summary of the test sources:
 
 |=============================================================================
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
-|cut.chk         |Expected stream output from cut test 
 |cut.fi          |Test load for cut operation; uses bzr repo
-|emptybranch.chk |Expected stream output from emptybranch test
 |emptybranch.sd  |Branchy repo with empty branch at top level
-|exiguous.chk    |Expected stream output from exiguous test
 |exiguous.sd     |Branchy repo with exiguous branch at top level
-|graft.chk       |Expected stream output from graft test
 |graft.tst       |Grafts together the bzr and testrepo repositories
-|gsoc.chk        |Expected stream output from gsoc test
 |gsoc.fi         |The Google Summer of Code branch of Roundup
 |gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
-|references.chk	 |Expected stream output from references test
+|ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
+|nontipcopy.sd   |Two branches, with the creation right after a tag copy.
 |references.fi   |Synthetic test load for CVS and Subversion reference cookies,
 |references.tst  |Tests reference lifting commands using references.fi 
-|roundup.chk     |Expected stream output from roundup test
+|rootfile.sd     |Branchy layout with a file at the root level.
 |roundup.fi      |Early segment of the Roundup tracker repo
 |roundup.tst     |Test to see how it renders  the two different botched starts
-|simple.chk      |Expected stream output from simple test
+|samplebranch.sd |Two-branch history with interleaved commits.
 |simple.fi       |Earlier version of the reposurgeon repo, kept as a test
 |simple.tst      |Test expression interpreter and basic operations
-|testmerge.chk   |Expected stream output from merge test
+|simpletag.sd    |Standard layout. Linear. A couple of tags and no branches.
 |testmerge.tst   |Test merge on bzr and testrepo
-|testrepo.chk    |Expected stream output from testrepo test
 |testrepo.fi     |Synthetic repo made to check deltion results
 |testrepo.tst    |Exercises all the deletion cases, with coverage checks
-|uncoalesced.chk |Expected stream output from uncoalesced test
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
+|vanilla.sd      |Standard layout. Linear. Simplest case, no tags or branches.
 |=============================================================================
 
 roundup-authors.txt is the auxiliary file used to test author mapping
-
-== The Subversion extractor tests ==
-
-Keeping live Subverson repos under version control doesn't work very well; 
-in particular, things like the entries file change too often.  So what we 
-do is keep Subversion dump files and rebuild the repo before each test.
 
 === Making new Subversion test loads ===
 
@@ -57,31 +54,4 @@ do is keep Subversion dump files and rebuild the repo before each test.
 
 3. sd-to-fi -d will dump the new test load to stdout.
 
-=== The Subversion test loads ===
 
-==== vanilla.sd ====
-
-Standard layout. Linear. The simplest case, no tags or branches.
-
-==== simpletag.sd ====
-
-Standard layout. Linear. A couple of tags and no branches.
-
-==== samplebranch.sd ====
-
-Two-branch history with interleaved commits.
-
-==== ignores.sd ====
-
-Nonstandard layout - no branches, just stuff at top level.  Mainly
-this is a test of the code for turning ignore properties into
-.gitignore files.
-
-==== nontipcopy.sd ====
-
-Standard layout. Two branches, with the branch  creation right after the
-copy.
-
-==== rootfile.sd ====
-
-Branchy layout with a file at the root level.
