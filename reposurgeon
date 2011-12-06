@@ -427,6 +427,9 @@ class SvnExtractor():
             announce("revision %s: pathops '%s'" % (chs, commit.pathops))
         if 'trunk' in commit.pathops:
             self.trunk = "trunk"
+        if verbose >= DEBUG_COMMANDS:
+            announce("checking out %s" % chs)
+        capture("svn up -r%s" % chs)
         # The common prefix of the names could be the branch.
         # But it could also be some directory beneath the branch.
         # It could even be a truncated filename if all the files
@@ -449,9 +452,6 @@ class SvnExtractor():
         # and the filelist.  This had to be done first because the branch
         # arguments to svnup and svn ls actually matter,
         branchdir = os.path.join(self.topdir, commit.branch)
-        if verbose >= DEBUG_COMMANDS:
-            announce("checking out %s in directory '%s'" % (chs, branchdir))
-        capture("svn up -r%s %s" % (chs, branchdir))
         self.manifest = []
         if os.path.exists(branchdir):
             self.manifest += capture("svn ls -R %s" % branchdir).split()

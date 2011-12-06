@@ -11,15 +11,6 @@ data 24
 Initial README content.
 M 100644 :1 README
 
-commit refs/heads/root
-mark :3
-author esr <esr> 1323167895 +0000
-committer esr <esr> 1323167895 +0000
-data 72
-Creare an empty to-level branch for test purposes.  Should be tagified.
-M 100644 :1 emptybranch/README
-M 100644 :1 trunk/README
-
 tag root
 from :2
 tagger esr <esr> 1323167840 +0000
@@ -27,4 +18,12 @@ data 83
 Directory layout.
 
 [[Tag from directory creation or copy commit at Subversion r1]]
+
+tag emptybranch
+from :2
+tagger esr <esr> 1323167895 +0000
+data 137
+Creare an empty to-level branch for test purposes.  Should be tagified.
+
+[[Tag from directory creation or copy commit at Subversion r3]]
 
