@@ -17,6 +17,8 @@ import email.message, email.parser, email.utils
 import re, sre_constants
 import xml.dom.minidom
 
+import xml.etree.cElementTree as ET
+
 version="1.9"
 
 #
@@ -244,22 +246,20 @@ class SvnExtractor():
             return ''.join(rc)
         with popen_or_die("svn info --xml") as fp:
             try:
-                info = xml.dom.minidom.parse(fp)
+                info = ET.parse(fp).getroot()
             except:
                 raise Fatal("error while parsing Subversion info.")
-        commit = info.getElementsByTagName("commit")[0]
-        toprev = commit.getAttribute("revision")
-        root = info.getElementsByTagName("root")[0]
+        toprev = info.find("entry/commit").get("revision")
+        self.svnroot = info.find("entry/repository/root").text
         # Prepare to read the log in chunks so that the log analysis
         # phase doesn't just silently grind forever on large repositories.
-        if not toprev or not root:
+        if toprev is None or self.svnroot is None:
             raise Fatal("couldn't retrieve top revision number or repo root.")
         else:
             try:
                 toprev = int(toprev)
             except ValueError:
                 raise Fatal("couldn't parse top revision, check svninfo.")
-            self.svnroot = getText(root)
         if verbose >= DEBUG_EXTRACT:
             announce("root is %s, tip rev is %s" % (self.svnroot, toprev))
         CHUNK = 100
