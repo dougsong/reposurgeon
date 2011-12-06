@@ -15,7 +15,6 @@ import sys, os, cmd, tempfile, subprocess, glob, hashlib
 import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
-import xml.dom.minidom
 
 import xml.etree.cElementTree as ET
 
@@ -311,14 +310,14 @@ class SvnExtractor():
             with popen_or_die("svn proplist --xml -v -R -r%s %s" \
                               % (rev, commit.branch)) as fp:
                 try:
-                    dom = xml.dom.minidom.parse(fp)
-                except xml.parsers.expat.ExpatError:
+                    dom = ET.parse(fp)
+                except:
                     raise Fatal("error while parsing Subversion properties.")
-                for target in dom.getElementsByTagName("target"):
-                    path = target.getAttribute("path")
-                    for prop in target.getElementsByTagName("property"):
-                        name = prop.getAttribute("name")
-                        value = getText(prop)
+                for target in dom.findall("target"):
+                    path = target.get("path")
+                    for prop in target.findall("property"):
+                        name = prop.get("name")
+                        value = prop.text
                         if name == "svn:ignore":
                             commit.ignores = value
                         else:
