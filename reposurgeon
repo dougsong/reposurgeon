@@ -218,6 +218,7 @@ class SvnExtractor():
         self.revlist = []
         self.branchtips = {}
         self.topdir = None
+        self.svnroot = None
         self.trunk = ""
         self.tags = []
         self.manifest = []
@@ -273,29 +274,29 @@ class SvnExtractor():
         for (lo, hi) in intervals:
             with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
                 try:
-                    dom = xml.dom.minidom.parse(fp)
-                except xml.parsers.expat.ExpatError:
+                    log = ET.parse(fp).getroot()
+                except:
                     raise Fatal("error while parsing Subversion log.")
-                log = dom.getElementsByTagName("log")[0]
-                for logentry in log.getElementsByTagName("logentry"):
+                for logentry in log.findall("logentry"):
                     parsed = {}
                     parsed["pathops"] = {}
-                    rev = parsed["revision"] = logentry.getAttribute("revision").encode("ascii")
+                    rev = parsed["revision"] = logentry.get("revision").encode("ascii")
                     if rev not in self.commits:
                         for attr in ("author", "date", "msg"):
-                            sub = logentry.getElementsByTagName(attr)
-                            if not sub:
+                            sub = logentry.find(attr)
+                            if sub is None:
                                 sub = None  # Author can be None for generated commits
                             else:
-                                sub = getText(sub[0])
+                                sub = sub.text
                             parsed[attr] = sub
-                        paths = logentry.getElementsByTagName("paths")
-                        if paths:
-                            for path in paths[0].getElementsByTagName("path"):
-                                filepath = getText(path)
-                                action = path.getAttribute("action")
+                            for path in list(logentry.find("paths")):
+                                filepath = path.text
+                                action = path.get("action")
                                 parsed['pathops'][filepath[1:]] = action
-                        # End of paths loop.
+			# End of paths loop.
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("revision %s: registering %s" \
+				     % (rev, parsed))
                         self.commits[rev] = SvnCommit(**parsed)
                     baton.twirl()
             baton.twirl()
@@ -1318,135 +1319,129 @@ class RepoStreamer:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
             saved_umask = os.umask(0)
-            try:
-                consume = copy.copy(self.extractor.get_revlist())
-                while consume:
-                    revision = consume.pop(0)
-                    commit = Commit(repo)
-                    self.baton.twirl()
-                    present = self.extractor.checkout(revision, self.filemap)
-                    parents = self.extractor.get_parents(revision)
-                    commit.committer = Attribution(self.extractor.get_committer(revision))
-                    commit.authors = [Attribution(a) \
-                                      for a in self.extractor.get_authors(revision)]
-                    commit.parent_marks = [self.markmap[rev] for rev in parents]
-                    commit.branch = self.extractor.get_branch(revision)
-                    commit.comment = self.extractor.get_comment(revision)
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("revision %s: comment '%s'" % (revision, commit.comment[:20].strip()))
-                    self.filemap[revision] = {}
-                    for rev in parents:
-                        self.filemap[revision].update(self.filemap[rev])
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("revision %s: ancestral filemap %s" % (revision, self.filemap[revision],))
-                    if present:
-                        removed = set(self.filemap[revision].keys()) - set(present)
-                        for path in present:
-                            if os.path.isdir(path):
-                                continue
-                            if not os.path.exists(path):
-                                complain("revision %s: expected path %s does not exist!" % \
-                                         (revision, path))
-                                continue
-                            newsig = signature(path)
-                            if newsig.hashval in self.hash_to_mark:
+            consume = copy.copy(self.extractor.get_revlist())
+            while consume:
+                revision = consume.pop(0)
+                commit = Commit(repo)
+                self.baton.twirl()
+                present = self.extractor.checkout(revision, self.filemap)
+                parents = self.extractor.get_parents(revision)
+                commit.committer = Attribution(self.extractor.get_committer(revision))
+                commit.authors = [Attribution(a) \
+                                  for a in self.extractor.get_authors(revision)]
+                commit.parent_marks = [self.markmap[rev] for rev in parents]
+                commit.branch = self.extractor.get_branch(revision)
+                commit.comment = self.extractor.get_comment(revision)
+                if verbose >= DEBUG_EXTRACT:
+                    announce("revision %s: comment '%s'" % (revision, commit.comment[:20].strip()))
+                self.filemap[revision] = {}
+                for rev in parents:
+                    self.filemap[revision].update(self.filemap[rev])
+                if verbose >= DEBUG_EXTRACT:
+                    announce("revision %s: ancestral filemap %s" % (revision, self.filemap[revision],))
+                if present:
+                    removed = set(self.filemap[revision].keys()) - set(present)
+                    for path in present:
+                        if os.path.isdir(path):
+                            continue
+                        if not os.path.exists(path):
+                            announce("revision %s: expected path %s does not exist!" % \
+                                     (revision, path))
+                            continue
+                        newsig = signature(path)
+                        if newsig.hashval in self.hash_to_mark:
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision %s: %s has old signature %s" \
+                                         % (revision, path, newsig))
+                            # The file's hash corresponds to an existing
+                            # blob; generate modify, copy, or rename as
+                            # appropriate.
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision %s: %s not present = %s" % \
+                                         (revision, path, path not in self.filemap[revision]))
+                                if path in self.filemap[revision]:
+                                    announce("revision %s: %s mismatch = %s %s %s" % \
+                                             (revision, path, self.filemap[revision][path], newsig, self.filemap[revision][path]!=newsig))
+
+                            if path not in self.filemap[revision] \
+                                   or self.filemap[revision][path]!=newsig:
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("revision %s: %s has old signature %s" \
-                                             % (revision, path, newsig))
-                                # The file's hash corresponds to an existing
-                                # blob; generate modify, copy, or rename as
-                                # appropriate.
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("revision %s: %s not present = %s" % \
-                                             (revision, path, path not in self.filemap[revision]))
-                                    if path in self.filemap[revision]:
-                                        announce("revision %s: %s mismatch = %s %s %s" % \
-                                                 (revision, path, self.filemap[revision][path], newsig, self.filemap[revision][path]!=newsig))
-                                
-                                if path not in self.filemap[revision] \
-                                       or self.filemap[revision][path]!=newsig:
-                                    if verbose >= DEBUG_EXTRACT:
-                                        announce("revision %s: update for %s" % (revision, path))
-                                    for (oldpath, oldsig) in self.filemap[revision].items():
-                                        if oldsig == newsig:
-                                            if oldpath in removed:
-                                                op = FileOp(commit)
-                                                op.construct('R', oldpath, path)
-                                                repo.backlink_blobs(op)
-                                                commit.fileops.append(op)
-                                                del self.filemap[revision][oldpath]
-                                            elif oldpath != path:
-                                                op = FileOp(commit)
-                                                op.construct('C', oldpath, path)
-                                                repo.backlink_blobs(op)
-                                                commit.fileops.append(op)
-                                            break
-                                    else:
-                                        op = FileOp(commit)
-                                        op.construct('M',
-                                                     newsig.perms,
-                                                     self.hash_to_mark[newsig.hashval],
-                                                     path)
-                                        repo.backlink_blobs(op)
-                                        commit.fileops.append(op)
-                            else:
-                                # Content hash doesn't match any existing blobs
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("revision %s: %s has new hash" \
-                                             % (revision, path))
-                                blobmark = self.__newmark()
-                                self.hash_to_mark[newsig.hashval] = blobmark
-                                # Actual content enters the representation
-                                blob = Blob(repo)
-                                blob.mark = blobmark
-                                shutil.copyfile(path, blob.blobfile())
-                                blob.path = path
-                                repo.events.append(blob)
-                                # Its new fileop is added to the commit
-                                op = FileOp(commit)
-                                op.construct('M', newsig.perms, blobmark, path)
-                                repo.backlink_blobs(op)
-                                commit.fileops.append(op)
-                            self.filemap[revision][path] = newsig
-                        for tbd in removed:
+                                    announce("revision %s: update for %s" % (revision, path))
+                                for (oldpath, oldsig) in self.filemap[revision].items():
+                                    if oldsig == newsig:
+                                        if oldpath in removed:
+                                            op = FileOp(commit)
+                                            op.construct('R', oldpath, path)
+                                            repo.backlink_blobs(op)
+                                            commit.fileops.append(op)
+                                            del self.filemap[revision][oldpath]
+                                        elif oldpath != path:
+                                            op = FileOp(commit)
+                                            op.construct('C', oldpath, path)
+                                            repo.backlink_blobs(op)
+                                            commit.fileops.append(op)
+                                        break
+                                else:
+                                    op = FileOp(commit)
+                                    op.construct('M',
+                                                 newsig.perms,
+                                                 self.hash_to_mark[newsig.hashval],
+                                                 path)
+                                    repo.backlink_blobs(op)
+                                    commit.fileops.append(op)
+                        else:
+                            # Content hash doesn't match any existing blobs
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision %s: %s has new hash" \
+                                         % (revision, path))
+                            blobmark = self.__newmark()
+                            self.hash_to_mark[newsig.hashval] = blobmark
+                            # Actual content enters the representation
+                            blob = Blob(repo)
+                            blob.mark = blobmark
+                            shutil.copyfile(path, blob.blobfile())
+                            blob.path = path
+                            repo.events.append(blob)
+                            # Its new fileop is added to the commit
                             op = FileOp(commit)
-                            op.construct('D', tbd)
+                            op.construct('M', newsig.perms, blobmark, path)
+                            repo.backlink_blobs(op)
                             commit.fileops.append(op)
-                            del self.filemap[revision][tbd]
-                    self.extractor.cleanup(revision, True)
-                    if not parents and commit.branch != "refs/heads/master":
-                        reset = Reset()
-                        reset.ref = commit.branch
-                        reset.timestamp = commit.when()-1
-                        repo.events.append(reset)
-                    #commit.fileops.sort(cmp=FileOp.compare)
-                    commit.set_fossil(revision)
-                    commit.mark = self.__newmark(revision)
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
-                    repo.events.append(commit)
-                # Now append reset objects
-                resets = self.extractor.get_resetlist()
-                resets.sort(key=lambda (k, v): v)
-                last_time = repo.commits()[0].when()
-                for (resetname, revision) in resets:
+                        self.filemap[revision][path] = newsig
+                    for tbd in removed:
+                        op = FileOp(commit)
+                        op.construct('D', tbd)
+                        commit.fileops.append(op)
+                        del self.filemap[revision][tbd]
+                self.extractor.cleanup(revision, True)
+                if not parents and commit.branch != "refs/heads/master":
                     reset = Reset()
-                    reset.ref = resetname
-                    reset.committish = self.markmap[revision]
-                    reset.timestamp = last_time + 1
-                    repo.append(reset)
-                # Last, append tag objects.
-                tags = self.extractor.get_taglist()
-                tags.sort(key=lambda t: t.date)
-                for tag in tags:
-                    tag.committish = self.markmap.get(tag.committish)
-                    repo.events.append(tag)
-            finally:
-                # This is an attempt to ensure that the final checkout
-                # to a clean state cannot be screwed up by a control-C.
-                with CriticalRegion():
-                    os.umask(saved_umask)
-                    self.extractor.post_extract(repo)
+                    reset.ref = commit.branch
+                    reset.timestamp = commit.when()-1
+                    repo.events.append(reset)
+                #commit.fileops.sort(cmp=FileOp.compare)
+                commit.set_fossil(revision)
+                commit.mark = self.__newmark(revision)
+                if verbose >= DEBUG_EXTRACT:
+                    announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
+                repo.events.append(commit)
+            # Now append reset objects
+            resets = self.extractor.get_resetlist()
+            resets.sort(key=lambda (k, v): v)
+            last_time = repo.commits()[0].when()
+            for (resetname, revision) in resets:
+                reset = Reset()
+                reset.ref = resetname
+                reset.committish = self.markmap[revision]
+                reset.timestamp = last_time + 1
+                repo.append(reset)
+            # Last, append tag objects.
+            tags = self.extractor.get_taglist()
+            tags.sort(key=lambda t: t.date)
+            for tag in tags:
+                tag.committish = self.markmap.get(tag.committish)
+                repo.events.append(tag)
+            self.extractor.post_extract(repo)
         return repo
 
 # Generic repository -manipulation code begins here
