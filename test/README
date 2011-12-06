@@ -11,6 +11,10 @@ A .tst extension means it's a test driver script
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |cut.chk         |Expected stream output from cut test 
 |cut.fi          |Test load for cut operation; uses bzr repo
+|emptybranch.chk |Expected stream output from emptybranch test
+|emptybranch.sd  |Branchy repo with empty branch at top level
+|exiguous.chk    |Expected stream output from exiguous test
+|exiguous.sd     |Branchy repo with exiguous branch at top level
 |graft.chk       |Expected stream output from graft test
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |gsoc.chk        |Expected stream output from gsoc test
@@ -33,8 +37,6 @@ A .tst extension means it's a test driver script
 |uncoalesced.chk |Expected stream output from uncoalesced test
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
-|emptybranch.chk |Expected stream output from emptybranch test
-|emptybranch.sd  |Branchy repo with empty branch at top level
 |=============================================================================
 
 roundup-authors.txt is the auxiliary file used to test author mapping
