@@ -1196,15 +1196,15 @@ class Commit:
         return dict(self.properties).get("fossil", None)
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
-        st = "commit %s\n" % self.branch
+        st = u"commit %s\n" % self.branch
         if self.mark:
-            st += "mark %s\n" % self.mark
+            st += u"mark %s\n" % self.mark
         if self.authors:
             for author in self.authors:
-                st += "author %s\n" % author
+                st += u"author %s\n" % author
         if self.committer:
-            st += "committer %s\n" % self.committer
-        st += "data %d\n%s" % (len(self.comment), self.comment) 
+            st += u"committer %s\n" % self.committer
+        st += u"data %d\n%s" % (len(self.comment), self.comment) 
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
@@ -1844,7 +1844,7 @@ class Repository:
                     if "fossil" in dict(commit.properties):
                         complain("fossil property of %s overwritten" \
                                  % commit.mark)
-                    if type(event.cookie) == type(""):
+                    if type(event.cookie) in (type(""), type(u"")):
                         svnkey = "SVN:" + event.cookie
                         self.dollar_map[svnkey] = commit
                     else:
