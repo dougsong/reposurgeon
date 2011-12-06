@@ -1,6 +1,6 @@
 SVN-fs-dump-format-version: 2
 
-UUID: f53be6be-596c-4959-84c0-d19db5162005
+UUID: 149f4eb8-3932-40b9-9a0c-0b9fa2f7d3c6
 
 Revision-number: 0
 Prop-content-length: 56
@@ -9,7 +9,7 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2011-12-06T10:27:37.863860Z
+2011-12-06T10:37:20.431592Z
 PROPS-END
 
 Revision-number: 1
@@ -28,7 +28,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-06T10:27:38.160625Z
+2011-12-06T10:37:20.811581Z
 PROPS-END
 
 Node-path: branches
@@ -74,7 +74,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-06T10:27:38.685357Z
+2011-12-06T10:37:21.385643Z
 PROPS-END
 
 Node-path: trunk/README
@@ -91,13 +91,13 @@ This is a test Subversion repository
 
 
 Revision-number: 3
-Prop-content-length: 122
-Content-length: 122
+Prop-content-length: 170
+Content-length: 170
 
 K 7
 svn:log
-V 24
-Create an empty branch.
+V 72
+Creare an empty to-level branch for test purposes.  Should be tagified.
 
 K 10
 svn:author
@@ -106,10 +106,10 @@ esr
 K 8
 svn:date
 V 27
-2011-12-06T10:29:13.716863Z
+2011-12-06T10:38:15.375113Z
 PROPS-END
 
-Node-path: branches/emptybranch
+Node-path: emptybranch
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 2
