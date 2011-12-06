@@ -11,11 +11,10 @@
 # * RCS extraction
 # * Bitkeeper extraction.
 #
-import sys, os, cmd, tempfile, subprocess, glob, hashlib
+import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import readline, time, calendar, signal, shutil, copy, shlex
 import email.message, email.parser, email.utils
 import re, sre_constants
-
 import xml.etree.cElementTree as ET
 
 version="1.9"
@@ -3082,6 +3081,8 @@ class RepositoryList:
             for i in deletia:
                 self.repo.events.pop(i)
 
+profile_log = None
+
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     def __init__(self):
@@ -4822,8 +4823,31 @@ must resolve to exactly two commits.
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
 
+    #
+    # Profiling
+    #
+    def help_profile(self):
+        print("""
+Enable profiling. Must be one of the initial command-line arguments, and
+gathers statistics only on code executed via '-'.
+""")
+    def do_profile(self, line):
+        "Enable profiling."
+        global profile_log
+        profile_log = True
+        announce("profiling enabled.")
+        #if not profile_log:
+        #    raise Fatal("profile command requires a logfile agumment")
+
 if __name__ == '__main__':
     try:
+        def interactive():
+            global verbose
+            interpreter.use_rawinput = True
+            if verbose == 0:
+                verbose = 1
+            interpreter.cmdloop()
+            interpreter.use_rawinput = False
         interpreter = RepoSurgeon()
         interpreter.use_rawinput = False
         if not sys.argv[1:]:
@@ -4832,11 +4856,10 @@ if __name__ == '__main__':
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        interpreter.use_rawinput = True
-                        if verbose == 0:
-                            verbose = 1
-                        interpreter.cmdloop()
-                        interpreter.use_rawinput = False
+                        if profile_log:
+                            cProfile.run('interactive()')
+                        else:
+                            interactive()
                     else:
                         # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
