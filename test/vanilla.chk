@@ -45,6 +45,14 @@ Third revision.
 from :4
 M 100644 :5 README
 
+commit refs/heads/master
+mark :7
+author esr <esr> 1323084440 +0000
+committer esr <esr> 1323084440 +0000
+data 27
+Adding a property setting.
+from :6
+
 tag root
 from :2
 tagger esr <esr> 1322671315 +0000
@@ -52,12 +60,4 @@ data 144
 A vanilla repository - standard layout, linear history, no tags, no branches. 
 
 [[Tag from directory creation or copy commit at Subversion r1]]
-
-tag master
-from :6
-tagger esr <esr> 1323084440 +0000
-data 92
-Adding a property setting.
-
-[[Tag from directory creation or copy commit at Subversion r5]]
 
