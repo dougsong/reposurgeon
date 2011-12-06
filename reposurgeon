@@ -470,11 +470,11 @@ class SvnExtractor():
         if commit.branch in self.branchtips:
             # The easy case is that we've already seen a commit on this branch.
             commit.parents = [self.branchtips[commit.branch]]
-            if verbose >= DEBUG_EXTRACT:
-                announce("revision %s: parent from branch tip" % (chs,))
+            #if verbose >= DEBUG_EXTRACT:
+            #    announce("revision %s: parent from branch tip" % (chs,))
         else:
-            if verbose >= DEBUG_EXTRACT:
-                announce("revision %s: looking backward" % (chs,))
+            #if verbose >= DEBUG_EXTRACT:
+            #    announce("revision %s: looking backward" % (chs,))
             # This is the tricky bit.  We see a commit on a new branch.
             # We use the fact that new branches have to be created by
             # copy operations.  The first commit on a branch is always
@@ -1340,8 +1340,6 @@ class RepoStreamer:
                 self.filemap[revision] = {}
                 for rev in parents:
                     self.filemap[revision].update(self.filemap[rev])
-                if verbose >= DEBUG_EXTRACT:
-                    announce("revision %s: ancestral filemap %s" % (revision, self.filemap[revision],))
                 if present:
                     removed = set(self.filemap[revision].keys()) - set(present)
                     for path in present:
@@ -1353,19 +1351,12 @@ class RepoStreamer:
                             continue
                         newsig = signature(path)
                         if newsig.hashval in self.hash_to_mark:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("revision %s: %s has old signature %s" \
-                                         % (revision, path, newsig))
+                            #if verbose >= DEBUG_EXTRACT:
+                            #    announce("revision %s: %s has old hash" \
+                            #             % (revision, path))
                             # The file's hash corresponds to an existing
                             # blob; generate modify, copy, or rename as
                             # appropriate.
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("revision %s: %s not present = %s" % \
-                                         (revision, path, path not in self.filemap[revision]))
-                                if path in self.filemap[revision]:
-                                    announce("revision %s: %s mismatch = %s %s %s" % \
-                                             (revision, path, self.filemap[revision][path], newsig, self.filemap[revision][path]!=newsig))
-
                             if path not in self.filemap[revision] \
                                    or self.filemap[revision][path]!=newsig:
                                 if verbose >= DEBUG_EXTRACT:
