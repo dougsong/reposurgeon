@@ -288,10 +288,12 @@ class SvnExtractor():
                             else:
                                 sub = sub.text
                             parsed[attr] = sub
-                            for path in list(logentry.find("paths")):
-                                filepath = path.text
-                                action = path.get("action")
-                                parsed['pathops'][filepath[1:]] = action
+                            paths = logentry.find("paths")
+                            if paths is not None:
+                                for path in list(paths):
+                                    filepath = path.text
+                                    action = path.get("action")
+                                    parsed['pathops'][filepath[1:]] = action
 			# End of paths loop.
                         if verbose >= DEBUG_EXTRACT:
                             announce("revision %s: registering %s" \
