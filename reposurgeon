@@ -347,9 +347,10 @@ class SvnExtractor():
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
             for commit in repo.commits():
-                announce("%4s %2d '%s'" % \
+                announce("%4s %2d %2d '%s'" % \
                          (commit.mark,
                           len(commit.fileops),
+                          len(commit.properties),
                           commit.comment[:20].strip()))
         def tagify(commit, name, committish):
             assert not commit.fileops
@@ -358,17 +359,20 @@ class SvnExtractor():
                                    tagger=commit.committer,
                                    content=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
             repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
-        if not repo.commits()[0].fileops:
+        initial = repo.commits()[0]
+        # There will always be one property, the fossil revision
+        if not initial.fileops and len(initial.properties) <= 1:
             assert repo.events[0].__class__ == Reset
             if len(repo.commits()) >= 2:
                 repo.events.pop(0)
-                tagify(repo.commits()[0], "root", repo.commits()[1].mark)
+                tagify(initial, "root", repo.commits()[1].mark)
             else:
                 complain("could not tagify root commit.")
         if self.trunk == "trunk":
             for commit in repo.commits():
                 if not commit.fileops:
-                    if commit.parent_marks:
+                    # There will always be one property, the fossil revision
+                    if commit.parent_marks and len(commit.properties) <= 1:
                         tagify(commit,
                                os.path.basename(commit.branch),
                                commit.parent_marks[0])
