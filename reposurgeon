@@ -314,14 +314,14 @@ class SvnExtractor():
                 except:
                     raise Fatal("error while parsing Subversion properties.")
                 for target in dom.findall("target"):
-                    path = target.get("path")
+                    path = target.get("path")[len(self.svnroot)+1:]
                     for prop in target.findall("property"):
                         name = prop.get("name")
                         value = prop.text
                         if name == "svn:ignore":
                             commit.ignores = value
                         else:
-                            commit.properties.append((name + "#" + value))
+                            commit.properties.append((path + "#"+ name, value))
             baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
@@ -370,9 +370,9 @@ class SvnExtractor():
                 complain("could not tagify root commit.")
         if self.trunk == "trunk":
             for commit in repo.commits():
-                if not commit.fileops:
-                    # There will always be one property, the fossil revision
-                    if commit.parent_marks and len(commit.properties) <= 1:
+                # There will always be one property, the fossil revision
+                if not commit.fileops and len(commit.properties) <= 1:
+                    if commit.parent_marks:
                         tagify(commit,
                                os.path.basename(commit.branch),
                                commit.parent_marks[0])
@@ -529,6 +529,9 @@ class SvnExtractor():
     def get_authors(self, rev):
         "Return a list of ID/date strings for authors."
         return [self.get_committer(rev)]
+    def get_properties(self, rev):
+        "Return a list of properties for the commit."
+        return self.commits[rev].properties
 
 # More extractors go here
 
@@ -1415,6 +1418,7 @@ class RepoStreamer:
                     repo.events.append(reset)
                 #commit.fileops.sort(cmp=FileOp.compare)
                 commit.set_fossil(revision)
+                commit.properties += self.extractor.get_properties(revision) 
                 commit.mark = self.__newmark(revision)
                 if verbose >= DEBUG_EXTRACT:
                     announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
