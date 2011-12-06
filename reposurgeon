@@ -237,12 +237,6 @@ class SvnExtractor():
         with CriticalRegion():
             toprev = capture("svn up --quiet")
         # Fetch repo metadata
-        def getText(supnode):
-            rc = []
-            for node in supnode.childNodes:
-                if node.nodeType == node.TEXT_NODE:
-                    rc.append(node.data)
-            return ''.join(rc)
         with popen_or_die("svn info --xml") as fp:
             try:
                 info = ET.parse(fp).getroot()
@@ -1325,7 +1319,7 @@ class RepoStreamer:
         with Baton(prompt="Extracting", enable=progress) as self.baton:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
-            saved_umask = os.umask(0)
+            #saved_umask = os.umask(0)
             consume = copy.copy(self.extractor.get_revlist())
             while consume:
                 revision = consume.pop(0)
