@@ -69,10 +69,10 @@ svn-flat: clean
 svn-branchy: svn-flat
 	@cd test-checkout; set -x; \
 		svn mkdir trunk; svn mkdir tags; svn mkdir branches; \
-		svn commit -m "Directory layout.\n"; \
+		echo "Directory layout." | svn commit -F -; \
 		echo "This is a test Subversion repository" >trunk/README; \
 		svn add trunk/README; \
-		svn commit -m "Initial README content.\n"
+		echo "Initial README content." | svn commit -F -
 
 # TO-DO: We need a test load with an exiguous branch
 SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile
