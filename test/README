@@ -17,7 +17,7 @@ A .tst extension means it's a test driver script
 |gsoc.fi         |The Google Summer of Code branch of Roundup
 |gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
 |references.chk	 |Expected stream output from references test
-|references.fi   |Synthetic test load for CVS and Subversion reference co|okies,
+|references.fi   |Synthetic test load for CVS and Subversion reference cookies,
 |references.tst  |Tests reference lifting commands using references.fi 
 |roundup.chk     |Expected stream output from roundup test
 |roundup.fi      |Early segment of the Roundup tracker repo
@@ -31,8 +31,10 @@ A .tst extension means it's a test driver script
 |testrepo.fi     |Synthetic repo made to check deltion results
 |testrepo.tst    |Exercises all the deletion cases, with coverage checks
 |uncoalesced.chk |Expected stream output from uncoalesced test
-|uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project.
+|uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
+|emptybranch.chk |Expected stream output from emptybranch test
+|emptybranch.sd  |Branchy repo with empty branch at top level
 |=============================================================================
 
 roundup-authors.txt is the auxiliary file used to test author mapping

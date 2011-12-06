@@ -1,0 +1,118 @@
+SVN-fs-dump-format-version: 2
+
+UUID: f53be6be-596c-4959-84c0-d19db5162005
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-06T10:27:37.863860Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-06T10:27:38.160625Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-06T10:27:38.685357Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Create an empty branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-06T10:29:13.716863Z
+PROPS-END
+
+Node-path: branches/emptybranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
