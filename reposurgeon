@@ -62,9 +62,17 @@ version="1.9"
 #
 #  +--------+    +-------------+    +---------+    +-----------+    +--------+
 #  | Import |--->| Deserialize |--->| Operate |--->| Serialize |--->| Export |
-#  +--------+    +-------------+    +---------+    +-----------+    +--------+
+#  +--------+    +-------------+ A  +---------+    +-----------+    +--------+
+#       +-----------+            |
+#       | Extractor |------------+
+#       +-----------+
 #
 # The Import and Export boxes call methods in VCS.
+#
+# Extractor classes build the deserialized internal representation directly.
+# Each extractor class is a set of VCS-specific methods to be used by the
+# RepoStreamer driver class.
+#
 
 class VCS:
     "Class representing a version-control system."
