@@ -3081,8 +3081,6 @@ class RepositoryList:
             for i in deletia:
                 self.repo.events.pop(i)
 
-profile_log = None
-
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     def __init__(self):
@@ -3095,6 +3093,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         self.selection = []
         self.line = ""
         self.history = []
+        self.profile_log = None
     #
     # Housekeeping hooks.
     #
@@ -3683,6 +3682,18 @@ file in the blob.
                 continue
             else:
                 print("?      -      %s" % (event,)) 
+    def help_profile(self):
+        print("""
+Enable profiling. Must be one of the initial command-line arguments, and
+gathers statistics only on code executed via '-'.
+""")
+    def do_profile(self, line):
+        "Enable profiling."
+        assert line is not None # Pacify pylint
+        self.profile_log = True
+        announce("profiling enabled.")
+        #if not profile_log:
+        #    raise Fatal("profile command requires a logfile agumment")
 
     #
     # Information-gathering
@@ -4823,22 +4834,6 @@ must resolve to exactly two commits.
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
 
-    #
-    # Profiling
-    #
-    def help_profile(self):
-        print("""
-Enable profiling. Must be one of the initial command-line arguments, and
-gathers statistics only on code executed via '-'.
-""")
-    def do_profile(self, line):
-        "Enable profiling."
-        global profile_log
-        profile_log = True
-        announce("profiling enabled.")
-        #if not profile_log:
-        #    raise Fatal("profile command requires a logfile agumment")
-
 if __name__ == '__main__':
     try:
         def interactive():
@@ -4856,7 +4851,7 @@ if __name__ == '__main__':
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        if profile_log:
+                        if interpreter.profile_log:
                             cProfile.run('interactive()')
                         else:
                             interactive()

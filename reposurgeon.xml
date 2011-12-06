@@ -1203,6 +1203,14 @@ rebuilds, being stored in the file <filename>fossils</filename> under
 the repository subdirectory..</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>profile</command>
+</term>
+<listitem>
+<para>Enable profiling. Must be one of the initial command-line arguments, and
+gathers statistics only on code executed via '-'.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 </refsect1>
