@@ -1225,7 +1225,9 @@ individual extractors.</para>
 <application>reposurgeon</application> to read from a a Subversion
 checkout directory. Network access to the host repository will be
 required.  For better performance, use svnsync to make a local mirror
-of the repository and work on that.</para>
+of the repository and work on that. But be aware that the extractor 
+will nevertheless run very slowly, and slow down with increasing
+repository size.</para>
 
 <para><application>reposurgeon</application> tries to adapt to
 whatever directory layout it finds in the top level of the Subversion
