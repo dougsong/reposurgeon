@@ -75,7 +75,7 @@ svn-branchy: svn-flat
 		echo "Initial README content." | svn commit -F -
 
 # TO-DO: We need a test load with an exiguous branch
-SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile
+SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile emptybranch
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
