@@ -234,19 +234,34 @@ class SvnExtractor():
         # Warning! Can result in unexpectedly huge downloads
         # when called on a partial checkout!
         with CriticalRegion():
-            toprev = capture("svn up --quiet && svn info")
+            toprev = capture("svn up --quiet")
+        # Fetch repo metadata
+        def getText(supnode):
+            rc = []
+            for node in supnode.childNodes:
+                if node.nodeType == node.TEXT_NODE:
+                    rc.append(node.data)
+            return ''.join(rc)
+        with popen_or_die("svn info --xml") as fp:
+            try:
+                info = xml.dom.minidom.parse(fp)
+            except:
+                raise Fatal("error while parsing Subversion info.")
+        commit = info.getElementsByTagName("commit")[0]
+        toprev = commit.getAttribute("revision")
+        root = info.getElementsByTagName("root")[0]
         # Prepare to read the log in chunks so that the log analysis
         # phase doesn't just silently grind forever on large repositories.
-        m = re.search("Last Changed Rev: ([0-9]*)", toprev)
-        if not m:
-            raise Fatal("couldn't retrieve top revision number.")
+        if not toprev or not root:
+            raise Fatal("couldn't retrieve top revision number or repo root.")
         else:
             try:
-                toprev = int(m.group(1))
+                toprev = int(toprev)
             except ValueError:
-                raise Fatal("couldn't parse to revision, check svninfo.")
+                raise Fatal("couldn't parse top revision, check svninfo.")
+            self.svnroot = getText(root)
         if verbose >= DEBUG_EXTRACT:
-            announce("tip rev is %s" % toprev)
+            announce("root is %s, tip rev is %s" % (self.svnroot, toprev))
         CHUNK = 100
         intervals = [[str(i + 1), str((i + CHUNK))]
                      for i in range(0, toprev, CHUNK)]
@@ -262,16 +277,10 @@ class SvnExtractor():
                 except xml.parsers.expat.ExpatError:
                     raise Fatal("error while parsing Subversion log.")
                 log = dom.getElementsByTagName("log")[0]
-                def getText(supnode):
-                    rc = []
-                    for node in supnode.childNodes:
-                        if node.nodeType == node.TEXT_NODE:
-                            rc.append(node.data)
-                    return ''.join(rc)
                 for logentry in log.getElementsByTagName("logentry"):
                     parsed = {}
                     parsed["pathops"] = {}
-                    rev = parsed["revision"] = logentry.getAttribute("revision")
+                    rev = parsed["revision"] = logentry.getAttribute("revision").encode("ascii")
                     if rev not in self.commits:
                         for attr in ("author", "date", "msg"):
                             sub = logentry.getElementsByTagName(attr)
