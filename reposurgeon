@@ -313,7 +313,8 @@ class SvnExtractor():
                                     filepath = path.text
                                     action = path.get("action")
                                     parsed['pathops'][filepath[1:]] = action
-			# End of paths loop.
+                        if not parsed["author"]:
+                            parsed["author"] = "no-author"
                         if verbose >= DEBUG_EXTRACT:
                             announce("revision %s: registering %s" \
 				     % (rev, parsed))
