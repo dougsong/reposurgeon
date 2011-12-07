@@ -215,6 +215,18 @@ vcstypes = [
 
 class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
+    # Native Subversion properties that we don't suppress:
+    # svn:externals, svn:special, svn:mergeinfo.
+    # The reason for these suppressions is to avoid a huge volume
+    # of junk properties.  We want to let through other properties
+    # that might carry useful information.
+    IgnoreProperties = (
+        "svn:executable",
+        "svn:mime-type",
+        "svn:keywords",
+        "svn:eol-style",
+        "svn:needs-lock",
+        )
     def __init__(self):
         # These must be set for every extractor class
         self.name = "svn"
@@ -309,13 +321,20 @@ class SvnExtractor():
         # Compute the set of keys (revision numbers).
         self.revlist = self.commits.keys()
         self.revlist.sort(key=int)
-        # Because Subversion doesn't expose unversioned properties in XML,
-        # we have to make a special pass through to get them.
+        # Because Subversion doesn't expose properties in XML, we have
+        # to make a special pass through to get them.  A full
+        # recursive check on all revisions is hideously expensive,
+        # so on all commits but the last we try to catch only
+        # directory properties.
         for rev in self.revlist:
             commit = self.commits[rev]
+            if rev == self.revlist[-1]:
+                depth = "infinity"
+            else:
+                depth = "immediates"
             commit.ignores = None
-            with popen_or_die("svn proplist --xml -v -R -r%s %s" \
-                              % (rev, commit.branch)) as fp:
+            with popen_or_die("svn proplist --xml -v --depth=%s -r%s %s" \
+                              % (depth, rev, commit.branch)) as fp:
                 try:
                     dom = ET.parse(fp)
                 except:
@@ -327,7 +346,7 @@ class SvnExtractor():
                         value = prop.text
                         if name == "svn:ignore":
                             commit.ignores = value
-                        else:
+                        elif name not in SvnExtractor.IgnoreProperties:
                             commit.properties.append((path + "#"+ name, value))
             self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
