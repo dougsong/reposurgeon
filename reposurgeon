@@ -400,7 +400,7 @@ class SvnExtractor():
     def get_resetlist(self):
         "Return a dictionary of reset names with revisions as values."
         return []
-    def checkout(self, chs, filemap):
+    def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return its file list."
         os.chdir(self.topdir)
         # All the tricky stuff gets done here.  What we need to do is
@@ -429,14 +429,14 @@ class SvnExtractor():
         # revision earlier than any in which we have to generate any
         # fileops that need a nonempty branch.
         #
-        commit = self.commits[chs]
+        commit = self.commits[rev]
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: pathops '%s'" % (chs, commit.pathops))
+            announce("revision %s: pathops '%s'" % (rev, commit.pathops))
         if 'trunk' in commit.pathops:
             self.trunk = "trunk"
         if verbose >= DEBUG_COMMANDS:
-            announce("checking out %s" % chs)
-        capture("svn up -r%s" % chs)
+            announce("checking out %s" % rev)
+        capture("svn up -r%s" % rev)
         # The common prefix of the names could be the branch.
         # But it could also be some directory beneath the branch.
         # It could even be a truncated filename if all the files
@@ -454,7 +454,7 @@ class SvnExtractor():
                 elif os.path.isdir(common[0]):
                     commit.branch = common[0]
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: branch is '%s'" % (chs, commit.branch))
+            announce("revision %s: branch is '%s'" % (rev, commit.branch))
         # Now that we have the branch, we can get the directory contents
         # and the filelist.  This had to be done first because the branch
         # arguments to svnup and svn ls actually matter,
@@ -463,7 +463,7 @@ class SvnExtractor():
         if os.path.exists(branchdir):
             self.manifest += capture("svn ls -R %s" % branchdir).split()
             os.chdir(branchdir)
-        ignores = self.commits[chs].ignores
+        ignores = self.commits[rev].ignores
         if ignores:
             if verbose >= DEBUG_EXTRACT:
                 announce("generating .gitignore")
@@ -474,16 +474,16 @@ class SvnExtractor():
                 ofp.write(ignores)
             self.manifest.append(".gitignore")
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: files %s" % (chs, self.manifest))
+            announce("revision %s: files %s" % (rev, self.manifest))
         # Now compute the parent pointer. Someday, we may use mergeprops here.
         if commit.branch in self.branchtips:
             # The easy case is that we've already seen a commit on this branch.
             commit.parents = [self.branchtips[commit.branch]]
             #if verbose >= DEBUG_EXTRACT:
-            #    announce("revision %s: parent from branch tip" % (chs,))
+            #    announce("revision %s: parent from branch tip" % (rev,))
         else:
             #if verbose >= DEBUG_EXTRACT:
-            #    announce("revision %s: looking backward" % (chs,))
+            #    announce("revision %s: looking backward" % (rev,))
             # This is the tricky bit.  We see a commit on a new branch.
             # We use the fact that new branches have to be created by
             # copy operations.  The first commit on a branch is always
@@ -492,15 +492,15 @@ class SvnExtractor():
             # file map*. We have to find that one.
             lookfor = signature_map(self.manifest)
             for earlier in self.revlist:
-                if earlier == chs:
+                if earlier == rev:
                     break
                 elif filemap[earlier] == lookfor:
                     commit.parents = [earlier]
                     break
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: parents %s" % (chs, commit.parents,))
+            announce("revision %s: parents %s" % (rev, commit.parents,))
         # Finally, this commit becomes its branch tip, and we're done.
-        self.branchtips[commit.branch] = chs
+        self.branchtips[commit.branch] = rev
         return self.manifest
     def cleanup(self, rev, issued):
         "Cleanup after checkout."
