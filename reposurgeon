@@ -7,7 +7,6 @@
 # Requires Python 2.7.2 or newer.
 #
 # To do:
-# * Can we use Subversion merge properties to edit the DAG?
 # * RCS extraction
 # * Bitkeeper extraction.
 #
