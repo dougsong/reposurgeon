@@ -361,9 +361,12 @@ class SvnExtractor():
                     decoration = '+'
                 else:
                     decoration = '-'
+                msg = commit.msg
+                if msg == None:
+                    msg = ""
                 announce("%s %s %2d '%s'" % \
                          (commit.revision, decoration,
-                          len(commit.pathops), commit.msg[:20].strip()))
+                          len(commit.pathops), msg.strip()))
         self.baton.startcounter(countfmt)
         self.baton.twirl("revisions:")
     def pre_extract(self, repo):
@@ -381,11 +384,14 @@ class SvnExtractor():
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
             for commit in repo.commits():
+                msg = commit.msg
+                if msg == None:
+                    msg = ""
                 announce("%4s %2d %2d '%s'" % \
                          (commit.mark,
                           len(commit.fileops),
                           len(commit.properties),
-                          commit.comment[:20].strip()))
+                          msg.strip()))
         def tagify(commit, name, committish):
             assert not commit.fileops
             repo.events.append(Tag(name=name,
@@ -1399,7 +1405,10 @@ class RepoStreamer:
                 commit.branch = self.extractor.get_branch(revision)
                 commit.comment = self.extractor.get_comment(revision)
                 if verbose >= DEBUG_EXTRACT:
-                    announce("revision %s: comment '%s'" % (revision, commit.comment[:20].strip()))
+                    msg = commit.comment
+                    if msg == None:
+                        msg = ""
+                    announce("revision %s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
                 for rev in parents:
                     self.filemap[revision].update(self.filemap[rev])
