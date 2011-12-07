@@ -228,8 +228,10 @@ class SvnExtractor():
         self.trunk = ""
         self.tags = []
         self.manifest = []
+        self.baton = None
     def analyze(self, baton):
         "Analyze a Subversion repository for streaming."
+        self.baton = baton
         class SvnCommit:
             "Represent a Subversion commit."
             def __init__(self, **cargs):
@@ -244,6 +246,7 @@ class SvnExtractor():
         # when called on a partial checkout!
         with CriticalRegion():
             toprev = capture("svn up --quiet")
+        self.baton.twirl('+')
         # Fetch repo metadata
         with popen_or_die("svn info --xml") as fp:
             try:
@@ -258,6 +261,7 @@ class SvnExtractor():
             raise Fatal("couldn't retrieve top revision number or repo root.")
         else:
             try:
+                countfmt = "%%%dd of %s" % (len(toprev), toprev)
                 toprev = int(toprev)
             except ValueError:
                 raise Fatal("couldn't parse top revision, check svninfo.")
@@ -267,10 +271,10 @@ class SvnExtractor():
         intervals = [[str(i + 1), str((i + CHUNK))]
                      for i in range(0, toprev, CHUNK)]
         intervals[-1][1] = "HEAD"
+        self.baton.twirl('+')
         # Collect and parse all log information
         # This code includes no assumptions about branch structure.
         self.commits = {}
-        baton.twirl()
         for (lo, hi) in intervals:
             with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
                 try:
@@ -325,7 +329,7 @@ class SvnExtractor():
                             commit.ignores = value
                         else:
                             commit.properties.append((path + "#"+ name, value))
-            baton.twirl()
+            self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
                 commit = self.commits[rev]
@@ -336,11 +340,13 @@ class SvnExtractor():
                 announce("%s %s %2d '%s'" % \
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
+        self.baton.startcounter(countfmt)
     def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
         assert repo is not None # pacify pylint
     def post_extract(self, repo):
         assert repo is not None # pacify pylint
+        self.baton.endcounter()        
         os.chdir(self.topdir)
         os.system("svn up --quiet")
         # The copy commits used to create initial directories, tags,
@@ -585,6 +591,7 @@ class Baton:
     def __init__(self, prompt, endmsg='done', enable=False):
         self.prompt = prompt
         self.endmsg = endmsg
+        self.countfmt = None
         if enable:
             self.stream = sys.stdout
         else:
@@ -600,19 +607,30 @@ class Baton:
         self.count = 0
         self.time = time.time()
         return self
+    def startcounter(self, countfmt):
+        self.countfmt = countfmt
+        if self.stream:
+            self.count = 0
+    def endcounter(self):
+        if self.stream:
+            w = len(self.countfmt % self.count)
+            self.stream.write((" " * w) + ("\010" * w))
+            self.stream.flush()
+        self.countfmt = None
     def twirl(self, ch=None):
         "One twirl of the baton."
         if self.stream is None:
             return
         if os.isatty(self.stream.fileno()):
             if ch:
-                self.stream.write(ch)
+                update = ch
+            elif self.countfmt:
+                update = self.countfmt % self.count
             else:
-                self.stream.write("-/|\\"[self.count % 4])
-                self.stream.write("\010")
+                update = "-/|\\"[self.count % 4]
+            self.stream.write(update + ("\010" * len(update)))
             self.stream.flush()
         self.count = self.count + 1
-        return
     def __exit__(self, extype, value_unused, traceback_unused):
         if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
