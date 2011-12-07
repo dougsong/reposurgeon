@@ -1241,11 +1241,33 @@ repository size.</para>
 whatever directory layout it finds in the top level of the Subversion
 checkout directory. It can cope with a top level containing any
 nonempty subset of the standard directories (trunk, tags, branches)
-plus any number of exiguous branch directories. Top-level files in a
-branched repository will be stuffed into a synthetic branch named
-'root'. The tool can cope with a layout that has none of the standard
-directories; all content will in that case be considered a single
-unnamed branch with a linear history.</para>
+plus any number of exiguous branch directories.</para>
+
+<para>Here are the rules used for mapping subdirectories in a 
+Subversion repository to branches:</para>
+
+<orderedlist>
+<listitem><para>A repository is considered "flat" if it has no /trunk
+directory.  All commits in a flat repository are assigned to branch master.
+In this case, we're done; all the other rules apply to non-flat
+repos.</para></listitem>
+
+<listitem><para>/trunk always becomes the master branch.</para></listitem>
+
+<listitem><para>If there are /tags and /branches directories, each
+subdirectory of these is considered a potential branch.  All top-level
+directories other than /trunk, /tags, and /branches are also considered
+potential branches.</para></listitem>
+
+<listitem><para>Each potential branch is checked to see if it has
+commits on it after the initial creation or copy.  If there are such
+commits, it becomes a branch.  If not, it becomes a tag in order to
+preserve the commit metadata.  (In all cases, the name of the tag or
+branch is the basename of the directory.)</para></listitem>
+
+<listitem><para>Files in the top-level directory are assigned to a
+synthetic branch named 'root'.</para></listitem>
+</orderedlist>
 
 <para>Each commit that only creates or deletes directories (in
 particular, copy commits for tags and branches, and commits that only
