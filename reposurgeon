@@ -256,10 +256,12 @@ class SvnExtractor():
         # Havoc can ensue if the checkout directory is not up to date
         # Warning! Can result in unexpectedly huge downloads
         # when called on a partial checkout!
+        baton.twirl("update")
         with CriticalRegion():
             toprev = capture("svn up --quiet")
         self.baton.twirl('+')
         # Fetch repo metadata
+        baton.twirl("info")
         with popen_or_die("svn info --xml") as fp:
             try:
                 info = ET.parse(fp).getroot()
@@ -286,6 +288,7 @@ class SvnExtractor():
         self.baton.twirl('+')
         # Collect and parse all log information
         # This code includes no assumptions about branch structure.
+        baton.twirl("log")
         self.commits = {}
         for (lo, hi) in intervals:
             with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
@@ -318,6 +321,7 @@ class SvnExtractor():
                         self.commits[rev] = SvnCommit(**parsed)
                     baton.twirl()
             baton.twirl()
+        baton.twirl('+')
         # Compute the set of keys (revision numbers).
         self.revlist = self.commits.keys()
         self.revlist.sort(key=int)
@@ -326,6 +330,7 @@ class SvnExtractor():
         # recursive check on all revisions is hideously expensive,
         # so on all commits but the last we try to catch only
         # directory properties.
+        baton.twirl("properties")
         for rev in self.revlist:
             commit = self.commits[rev]
             if rev == self.revlist[-1]:
@@ -348,7 +353,8 @@ class SvnExtractor():
                             commit.ignores = value
                         elif name not in SvnExtractor.IgnoreProperties:
                             commit.properties.append((path + "#"+ name, value))
-            self.baton.twirl()
+                self.baton.twirl()
+        self.baton.twirl("+")
         if verbose >= DEBUG_EXTRACT:
             for rev in self.revlist:
                 commit = self.commits[rev]
@@ -360,6 +366,7 @@ class SvnExtractor():
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
         self.baton.startcounter(countfmt)
+        self.baton.twirl("revisions")
     def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
         assert repo is not None # pacify pylint
@@ -472,6 +479,7 @@ class SvnExtractor():
                     commit.branch = os.path.join(*common[0:2])
                 elif os.path.isdir(common[0]):
                     commit.branch = common[0]
+        self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             announce("revision %s: branch is '%s'" % (rev, commit.branch))
         # Now that we have the branch, we can get the directory contents
@@ -482,6 +490,7 @@ class SvnExtractor():
         if os.path.exists(branchdir):
             self.manifest += capture("svn ls -R %s" % branchdir).split()
             os.chdir(branchdir)
+        self.baton.twirl()
         ignores = self.commits[rev].ignores
         if ignores:
             if verbose >= DEBUG_EXTRACT:
@@ -516,6 +525,7 @@ class SvnExtractor():
                 elif filemap[earlier] == lookfor:
                     commit.parents = [earlier]
                     break
+        self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
             announce("revision %s: parents %s" % (rev, commit.parents,))
         # Finally, this commit becomes its branch tip, and we're done.
@@ -642,7 +652,9 @@ class Baton:
             return
         if os.isatty(self.stream.fileno()):
             if ch:
-                update = ch
+                self.stream.write(ch)
+                self.stream.flush()
+                return
             elif self.countfmt:
                 update = self.countfmt % self.count
             else:
