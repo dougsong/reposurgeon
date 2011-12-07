@@ -303,7 +303,7 @@ class SvnExtractor():
                         for attr in ("author", "date", "msg"):
                             sub = logentry.find(attr)
                             if sub is None:
-                                sub = None  # Author can be None for generated commits
+                                sub = ""  # Author can be None for generated commits
                             else:
                                 sub = sub.text
                             parsed[attr] = sub
