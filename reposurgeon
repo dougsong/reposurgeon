@@ -366,7 +366,7 @@ class SvnExtractor():
                          (commit.revision, decoration,
                           len(commit.pathops), commit.msg[:20].strip()))
         self.baton.startcounter(countfmt)
-        self.baton.twirl("revisions")
+        self.baton.twirl("revisions:")
     def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
         assert repo is not None # pacify pylint
