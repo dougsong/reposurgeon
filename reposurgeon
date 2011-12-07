@@ -1352,7 +1352,7 @@ def signature_map(paths):
 def capture(command):
     "Run a specified command, capturing the output."
     if verbose >= DEBUG_COMMANDS:
-        announce("capturing %s" % command)
+        announce("%s: capturing %s" % (rfc3339(time.time()), command))
     try:
         content = subprocess.check_output(command, shell=True)
     except (subprocess.CalledProcessError, OSError) as oe:
@@ -2813,9 +2813,9 @@ class popen_or_die:
     def __enter__(self):
         if verbose >= DEBUG_COMMANDS:
             if self.mode == "r":
-                announce("reading from '%s'%s" % (self.command, self.legend))
+                announce("%s: reading from '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
             else:
-                announce("writing to '%s'%s" % (self.command, self.legend))
+                announce("%s: writing to '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
         try:
             self.fp = os.popen(self.command, self.mode)
             return self.fp
