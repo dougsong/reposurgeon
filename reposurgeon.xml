@@ -1258,18 +1258,25 @@ apparent misfeature has been accepted so that
 that might have value; it is left up to the user to manually remove
 unwanted tags.</para>
 
+<para>The following per-file properties cannot be expressed in
+import-stream format and are discarded: svn:executable, svn:mime-type,
+svn:keywords, svn:eol-style, svn:needs-lock.</para>
+
+<para>Other file properties <emphasis>of the last commit
+only</emphasis> are preserved as per-commit properties using the
+properties extension, and will thus be visible and editable in the
+mailboxized view of commit metadata. (Due to volume of output from
+<command>svn proplist</command> attempting to collect file properties
+in every revision would bew unusably slow.)</para>
+
+<para>On commits before the last, directory properties of branch
+directories and their immedate subdirectories (<command>svn proplist
+--depth=immediate</command> are prserved.</para>
+
 <para>Per-directory svn:ignore properties become .gitignore files; if
 you're somehow managed to have an actual .gitignore file in a
 Subversion directory with an svn:ignore property, the file will get
 stepped on.</para>
-
-<para>All properties other than svn:ignore are preserved as per-commit
-properties using the properties extension, and will thus be visible
-and editable in the mailboxized view of commit metadata. Some
-preserved properties have no natural interpretation outside the
-Subversion system, but are kept anyway on the principle that
-<application>reposurgeon</application> should never discard any data
-or metadata that it's not told to.</para>
 
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
