@@ -385,7 +385,7 @@ class SvnExtractor():
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
             for commit in repo.commits():
-                msg = commit.msg
+                msg = commit.comment
                 if msg == None:
                     msg = ""
                 announce("%4s %2d %2d '%s'" % \
