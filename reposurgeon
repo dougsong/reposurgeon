@@ -212,6 +212,172 @@ vcstypes = [
 # particular, RFC3339/ISO8601 dates are good, so are RFC822 (email) dates,
 # and so is git's native integer-Unix-timetamp/timezone pairs.
 
+class GitExtractor:
+    "Repository extractor for the git version-control system."
+    # Regardless of what revision and branch was current at start,
+    # after the git extractor runs the head revision on the master branch
+    # will be checked out.
+    #
+    # The git extractor does not attempt to recover N ops,
+    # symbolic links, gitlinks, or directory fileops.
+    #
+    # To be streamed, a git repo must have <emphasis>local</emphasis>
+    # refs to all branches - in particular, local tracking branches
+    # corresponding to all remotes.
+    #
+    # Some of these limitations could be fixed, but the git extractor
+    # is not intended to replace git-fast-export; it only exists as a
+    # test for the generic RepoStreamer code and a model for future
+    # extractors.
+    def __init__(self):
+        # These must be set for every extractor class
+        self.name = "gitex"
+        self.subdirectory = ".gitex"
+        # These are internal
+        self.revlist = []
+        self.parents = {}
+        self.header = {}
+        self.meta = {}
+        self.tags = []
+        self.refs = {}
+    def analyze(self):
+        "Analyze a repository for streaming."
+        # Get the topologically-ordered list of revisions and parent hashes
+        with popen_or_die("git log --all --topo-order --reverse --format='%H %P'") as fp:
+            for line in fp:
+                fields = line.strip().split()
+                self.revlist.append(fields[0])
+                self.parents[fields[0]] = fields[1:]
+        self.baton.twirl()
+        # Next, all other per-commit data except branch IDs
+        with popen_or_die("git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'") as fp:
+            for line in fp:
+                (h, ci, ai) = line.strip().split('|')
+                self.meta[h] = {'ci':ci, 'ai':ai}
+        # Next, find all refs
+        for root, dirs, files in os.walk(".git/refs"):
+            for leaf in files:
+                assert dirs is not None  # Pacify pylint
+                ref = os.path.join(root, leaf)
+                with file(ref) as fp:
+                    self.refs[ref[5:]] = fp.read().strip()
+        self.baton.twirl()
+        # Next, grab all tag objects.
+        with popen_or_die("git tag -l") as fp:
+            for line in fp:
+                tag = line.strip()
+                with popen_or_die("git rev-parse %s" % tag) as fp:
+                    taghash = fp.read().strip()
+                # Annotated tags are first-class objects with their
+                # own hashes.  The hash of a lightweight tag is just
+                # the commit it points to. Handle both cases.
+                objecthash = taghash
+                with popen_or_die("git cat-file -p %s" % tag) as fp:
+                    comment = None
+                    ci = cd = None
+                    for line in fp:
+                        line = line.strip()
+                        if line.startswith("tagger "):
+                            line = line[len("tagger "):]
+                            (ci, cd) = line.replace("> ", ">!").split("!")
+                        elif line.startswith("object"):
+                            objecthash = line.split()[1]
+                        elif comment is None and not line:
+                            comment = ""
+                        elif type(comment) == type(""):
+                            comment += line + "\n"
+                            if objecthash != taghash:
+                                # Ugh.  This is a flaw in git cat-file's
+                                # design, I think. The date format here
+                                # should have been raw.
+                                tz = cd[-6:]
+                                cd = cd[:-6:]
+                                t = time.strptime(cd, "%a %b %d %H:%M:%S %Y")
+                                t = int(time.mktime(t))
+                                self.tags.append(Tag(name=tag,
+                                                     tagger=ci,
+                                                     date=str(t)+tz,
+                                                     comment=comment,
+                                                     referent=objecthash))
+                    self.refs["refs/tags/" + tag] = objecthash
+        self.baton.twirl()
+        # Color branches in the order the tips occur.  Emulate the
+        # git-export order.
+        refnames = self.refs.keys()
+        refnames.sort(key=lambda name: self.revlist.index(self.refs[name]))
+        for ref in refnames:
+            self.__branch_color(self.refs[ref], ref)
+        uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
+        if uncolored:
+            if verbose >= 1:
+                raise Fatal("missing branch attribute for: %s" % uncolored)
+            else:
+                raise Fatal("some branches do not have local ref names.")
+        self.baton.twirl()
+    def __metadata(self, rev, fmt):
+        with popen_or_die("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
+            return fp.read()[:-1]
+    def __branch_color(self, rev, color):
+        if rev.startswith("ref"):
+            return
+        while not 'branch' in self.meta[rev]:
+            self.meta[rev]['branch'] = color
+            parents = self.get_parents(rev)
+            if not parents:
+                break
+            elif len(parents) == 1:
+                # This case avoids blowing Python's stack by recursing
+                # too deep on large repos.
+                rev = parents[0]
+            else:
+                for parent in parents:
+                    self.__branch_color(parent, color)
+                break
+    def pre_dump(self, ofp):
+        "Hook for any setup actions required before streaming."
+        assert ofp  # Pacify pylint
+    def post_dump(self, ofp):
+        assert ofp
+        self.checkout("master")
+    def isclean(self):
+        "Return True if repo has no unsaved changes."
+        return not self.capture("git ls-files --modified")
+    def get_revlist(self):
+        "Return a list of commit ID strings in commit timestamp order."
+        return self.revlist
+    def get_taglist(self):
+        "Return a list of tag name strings."
+        return self.tags
+    def get_resetlist(self):
+        "Return a dictionary of reset names with revisions as values."
+        return [item for item in self.refs.items() if "/tags/" not in item[0]]
+    def checkout(self, rev):
+        "Check the directory out to a specified revision."
+        os.system("git checkout --quiet %s" % rev)
+        manifest = self.capture("git ls-files").split()
+        return manifest
+    def cleanup(self, rev, issued):
+        "Cleanup after checkout."
+        assert rev and (issued is not None) # Pacify pylint
+    def get_parents(self, rev):
+        "Return the list of commit IDs of a commit's parents."
+        return self.parents[rev]
+    def get_branch(self, rev):
+        return self.meta[rev]['branch']
+    def get_comment(self, rev):
+        "Return a commit's change comment as a string."
+        return self.__metadata(rev, "%B")
+    def get_committer(self, rev):
+        "Return the committer's ID/date as a string."
+        return self.meta[rev]['ci']
+    def get_authors(self, rev):
+        "Return the author's name and email address as a string."
+        return [self.meta[rev]['ai']]
+    def get_properties(self, rev):
+        "Return a list of properties for the commit."
+        assert rev is not None # Pacify pylint
+        return []
+
 class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
     # Native Subversion properties that we don't suppress:
@@ -572,6 +738,7 @@ class SvnExtractor():
                + self.commits[rev].date
     def get_authors(self, rev):
         "Return a list of ID/date strings for authors."
+        assert rev is not None # Pacify pylint
         return []
     def get_properties(self, rev):
         "Return a list of properties for the commit."
