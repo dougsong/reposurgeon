@@ -334,8 +334,9 @@ class GitExtractor:
         "Hook for any setup actions required before streaming."
         assert repo is not None  # Pacify pylint
     def post_extract(self, repo):
-        assert repo is not None  # Pacify pylint
-        os.system("git checkout master")
+        for event in repo.commits():
+            event.properties = []
+        os.system("git checkout --quiet master")
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return not capture("git ls-files --modified")
@@ -563,7 +564,7 @@ class SvnExtractor():
             repo.events.append(Tag(name=name,
                                    committish=committish,
                                    tagger=commit.committer,
-                                   content=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
+                                   comment=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
             repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
         initial = repo.commits()[0]
         # There will always be one property, the fossil revision
@@ -4753,7 +4754,7 @@ the commit's parent and the commit itself deleted.  Also,
                     self.chosen().events.append(Tag(name=m.group(1),
                                                     committish=event.mark,
                                                     tagger=copy.copy(event.committer),
-                                                    content="Tag deduced from bogus cvs2svn-generated commit.\n"))
+                                                    comment="Tag deduced from bogus cvs2svn-generated commit.\n"))
                 # One kind of pathological generated commit is empty.
                 if len(event.fileops) == 0:
                     announce("Nuking empty manufactured commit %s"%event.mark) 
