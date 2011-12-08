@@ -5,7 +5,6 @@ This is the trunk version of README, without modifications.
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1322682431 +0000
 committer esr <esr> 1322682431 +0000
 data 38
 README, base version on trunk branch.
@@ -18,7 +17,6 @@ This is the trunk version of README, with an illustrative modifications.
 
 commit refs/heads/master
 mark :4
-author esr <esr> 1322682994 +0000
 committer esr <esr> 1322682994 +0000
 data 24
 Second commit on trunk.
@@ -32,7 +30,6 @@ This is the branch version of README, after we've actually changed it.
 
 commit refs/heads/samplebranch
 mark :6
-author esr <esr> 1322683160 +0000
 committer esr <esr> 1322683160 +0000
 data 39
 First modification on the branch side.
@@ -47,7 +44,6 @@ This is the trunk version of README, with its typo removed.
 
 commit refs/heads/master
 mark :8
-author esr <esr> 1322683251 +0000
 committer esr <esr> 1322683251 +0000
 data 23
 Third commit on trunk.
@@ -63,7 +59,6 @@ Second modification to the README.
 
 commit refs/heads/samplebranch
 mark :10
-author esr <esr> 1322691357 +0000
 committer esr <esr> 1322691357 +0000
 data 40
 Create another node on the branch side.

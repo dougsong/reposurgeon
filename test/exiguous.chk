@@ -5,7 +5,6 @@ This is a test Subversion repository
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1323170744 +0000
 committer esr <esr> 1323170744 +0000
 data 24
 Initial README content.
@@ -20,7 +19,6 @@ This is a modification that goes in the branch version only.
 
 commit refs/heads/realbranch
 mark :4
-author esr <esr> 1323170893 +0000
 committer esr <esr> 1323170893 +0000
 data 55
 Modification on the branch so it doesn't get tagified.

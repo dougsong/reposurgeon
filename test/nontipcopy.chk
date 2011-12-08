@@ -9,7 +9,6 @@ at the top level.  Initially, the only content is this README.
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1322088164 +0000
 committer esr <esr> 1322088164 +0000
 data 21
 First content added.
@@ -28,7 +27,6 @@ Now we do ur first modification.
 
 commit refs/heads/master
 mark :4
-author esr <esr> 1322088260 +0000
 committer esr <esr> 1322088260 +0000
 data 32
 Our first content modification.
@@ -48,7 +46,6 @@ Now we do our first modification.
 
 commit refs/heads/master
 mark :6
-author esr <esr> 1322088662 +0000
 committer esr <esr> 1322088662 +0000
 data 24
 And our first typo fix.
@@ -62,7 +59,6 @@ This file only exists so repostreamer won't process this branch as a tag.
 
 commit refs/heads/sample-branch
 mark :8
-author esr <esr> 1322509428 +0000
 committer esr <esr> 1322509428 +0000
 data 48
 This is not a tag. Ceci n'est pas un pipe, too.
@@ -83,7 +79,6 @@ And our second content modification.
 
 commit refs/heads/master
 mark :10
-author esr <esr> 1322533305 +0000
 committer esr <esr> 1322533305 +0000
 data 66
 Another modification, to make the history graph more interesting.
@@ -97,7 +92,6 @@ data 6
 
 commit refs/heads/master
 mark :12
-author esr <esr> 1322533492 +0000
 committer esr <esr> 1322533492 +0000
 data 43
 This should commit some property settings.

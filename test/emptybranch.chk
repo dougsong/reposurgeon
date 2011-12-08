@@ -5,7 +5,6 @@ This is a test Subversion repository
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1323167841 +0000
 committer esr <esr> 1323167841 +0000
 data 24
 Initial README content.

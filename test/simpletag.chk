@@ -5,7 +5,6 @@ The quick brown fox jumped over the lazy dog.
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1322672566 +0000
 committer esr <esr> 1322672566 +0000
 data 33
 We're not exactly onomatopoetic.
@@ -19,7 +18,6 @@ Fourscore and seven years ago...
 
 commit refs/heads/master
 mark :4
-author esr <esr> 1322672628 +0000
 committer esr <esr> 1322672628 +0000
 data 41
 This revision exists to be a tag target.
@@ -33,7 +31,6 @@ This file exists to be a creattion example.
 
 commit refs/heads/master
 mark :6
-author esr <esr> 1322673194 +0000
 committer esr <esr> 1322673194 +0000
 data 25
 Our first file creation.
@@ -49,7 +46,6 @@ And another content modification.
 
 commit refs/heads/master
 mark :8
-author esr <esr> 1322673276 +0000
 committer esr <esr> 1322673276 +0000
 data 31
 A second content modification.
