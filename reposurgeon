@@ -1356,7 +1356,7 @@ class Commit:
             newprops.append((propkey, propval))
         modified |= (newprops != self.properties)
         self.properties = newprops
-        newcomment = msg.get_payload().strip() + "\n"
+        newcomment = msg.get_payload()
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
                 announce("in commit %d, comment is modified '%s' -> '%s'" \
