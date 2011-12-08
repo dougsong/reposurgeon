@@ -380,7 +380,7 @@ class SvnExtractor():
         os.system("svn up --quiet")
         # The copy commits used to create initial directories, tags,
         # and branches show up as commits with no fileops.  We
-        # turn them into tags to presrve the metadata while making
+        # turn them into tags to preserve the metadata while making
         # easy for the user to delete them if required.
         if verbose >= DEBUG_EXTRACT:
             announce("at post-extraction time:")
