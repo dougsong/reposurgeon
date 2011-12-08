@@ -8,7 +8,6 @@ This repository is branchless.  It includes ignore propety sets...
 reset refs/heads/root
 commit refs/heads/root
 mark :2
-author esr <esr> 1322694387 +0000
 committer esr <esr> 1322694387 +0000
 data 33
 First commit to branchless repo.
@@ -21,7 +20,6 @@ data 6
 
 commit refs/heads/root
 mark :4
-author esr <esr> 1322694494 +0000
 committer esr <esr> 1322694494 +0000
 data 47
 All this commit does is set an ignore property
@@ -36,7 +34,6 @@ Now we modiy the README just as a placeholder.
 
 commit refs/heads/root
 mark :6
-author esr <esr> 1322694572 +0000
 committer esr <esr> 1322694572 +0000
 data 29
 Modify the one visible file.
@@ -45,7 +42,6 @@ M 100644 :5 README
 
 commit refs/heads/root
 mark :7
-author esr <esr> 1322694685 +0000
 committer esr <esr> 1322694685 +0000
 data 126
 Time to delete the svn:ignore property.
@@ -64,7 +60,6 @@ Put another change here just so we have a commit after the property delete.
 
 commit refs/heads/root
 mark :9
-author esr <esr> 1322694737 +0000
 committer esr <esr> 1322694737 +0000
 data 12
 We're done.

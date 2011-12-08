@@ -5,7 +5,6 @@ This is a sample file.
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1322671432 +0000
 committer esr <esr> 1322671432 +0000
 data 16
 First revision.
@@ -20,7 +19,6 @@ This is our first line of modified content.
 
 commit refs/heads/master
 mark :4
-author esr <esr> 1322671521 +0000
 committer esr <esr> 1322671521 +0000
 data 17
 Second revision.
@@ -38,7 +36,6 @@ This is our second line of modified content.
 
 commit refs/heads/master
 mark :6
-author esr <esr> 1322671565 +0000
 committer esr <esr> 1322671565 +0000
 data 16
 Third revision.
@@ -47,7 +44,6 @@ M 100644 :5 README
 
 commit refs/heads/master
 mark :7
-author esr <esr> 1323084440 +0000
 committer esr <esr> 1323084440 +0000
 data 27
 Adding a property setting.

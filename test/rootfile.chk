@@ -5,7 +5,6 @@ This is a test Subversion repository
 
 commit refs/heads/master
 mark :2
-author esr <esr> 1322776643 +0000
 committer esr <esr> 1322776643 +0000
 data 24
 Initial README content.
@@ -18,7 +17,6 @@ This is an exiguous file which should be stoffed in a root branch on conversion.
 
 commit refs/heads/root
 mark :4
-author esr <esr> 1322776854 +0000
 committer esr <esr> 1322776854 +0000
 data 37
 This is our root-level file content.
@@ -34,7 +32,6 @@ One more brick in the wall...
 
 commit refs/heads/master
 mark :6
-author esr <esr> 1323037435 +0000
 committer esr <esr> 1323037435 +0000
 data 57
 Have some content on trunk after the root file creation.
