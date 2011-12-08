@@ -1809,13 +1809,23 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
     def fast_import(self, fp, progress=False):
-        "Initialize repo object from fast-import stream."
+        "Initialize the repo from a fast-import stream.."
         self.makedir()
         try:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
+                def ireadline():
+                    if linebuffers:
+                        line = linebuffers.pop()
+                    else:
+                        self.import_line += 1
+                        line = fp.readline()
+                    return line
+                def pushback(line):
+                    linebuffers.append(line)
                 def read_data(line=None):
+                    # Read a fast-import data section
                     if not line:
                         line = ireadline()
                     if line.startswith("data <<"):
@@ -1838,16 +1848,8 @@ class Repository:
                     if line != '\n':
                         pushback(line) # Data commands optionally end with LF
                     return data
-                def ireadline():
-                    if linebuffers:
-                        line = linebuffers.pop()
-                    else:
-                        self.import_line += 1
-                        line = fp.readline()
-                    return line
-                def pushback(line):
-                    linebuffers.append(line)
                 def parse_fileop_content(fileop):
+                    # Read a fast-import fileop
                     if fileop.ref[0] == ':':
                         self.backlink_blobs(fileop)
                     elif fileop.ref == 'inline':
