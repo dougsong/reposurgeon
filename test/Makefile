@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing fi-regress coalesce svn-regress
+all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 	@echo "No diff output is good news."
 
 buildregress: fi-regress svn-regress
@@ -61,9 +61,9 @@ coalesce:
 	@rm -f /tmp/regress
 
 GITLOADS = bs
-gitregress:
+git-regress:
 	@for test in $(GITLOADS); do \
-	    if (echo "Testing $${test}" >&2; \
+	    if (echo "Testing git-extractor on $${test}" >&2; \
 	    fi-to-fi) <$${test}.fi >/tmp/regress; \
 	    then diff -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
