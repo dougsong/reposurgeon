@@ -1858,177 +1858,187 @@ class Repository:
                         wfp.close()
                     else:
                         self.error("unknown content type in filemodify")
-                while True:
-                    line = ireadline()
-                    if not line:
-                        break
-                    elif not line.strip():
-                        continue
-                    elif line.startswith("blob"):
-                        blob = Blob(self)
+                # First, determine the input type
+                line = ireadline()
+                svnleader = "SVN-fs-dump-format-version: "
+                if line.startswith(svnleader):
+                    version = line[len(svnleader):][0]
+                    raise Fatal("Subversion version %s" % version)
+                else:
+                    pushback(line)
+                    # Beginning of fast-import stream parsing
+                    while True:
                         line = ireadline()
-                        if line.startswith("mark"):
-                            blob.mark = line[5:].strip()
-                            wfp = open(blob.blobfile(), "w")
-                            blobcontent = read_data()
-                            # Parse CVS and Subversion $-headers
-                            # There'd better not be more than one of these.
-                            for m in re.finditer(r"\$Id *:[^$]*\$",
-                                                 blobcontent):
-                                fields = m.group(0).split()
-                                # Save file basename and CVS version
-                                if fields[1].endswith(",v"):
-                                    # CVS revision
-                                    blob.cookie = (fields[1][:-2], fields[2])
-                                else:
-                                    # Subversion revision
-                                    blob.cookie = fields[1]
-                                self.write_fossils = True
-                            for m in re.finditer(r"\$Revision *: *([^$]*)\$",
-                                                 blobcontent):
-                                rev = m.group(0).strip()
-                                if '.' not in rev:
-                                    # Subversion revision
-                                    blob.cookie = rev
-                                    self.write_fossils = True
-                            wfp.write(blobcontent)
-                            wfp.close()
-                        else:
-                            self.error("missing mark after blob")
-                        self.events.append(blob)
-                        baton.twirl()
-                    elif line.startswith("data"):
-                        self.error("unexpected data object")
-                    elif line.startswith("commit"):
-                        commitbegin = self.import_line
-                        commit = Commit(self)
-                        commit.branch = line.split()[1]
-                        while True:
+                        if not line:
+                            break
+                        elif not line.strip():
+                            continue
+                        elif line.startswith("blob"):
+                            blob = Blob(self)
                             line = ireadline()
-                            if not line:
-                                break
-                            elif line.startswith("mark"):
-                                commit.mark = line[5:].strip()
-                            elif line.startswith("author"):
-                                try:
-                                    commit.authors.append(Attribution(line[7:]))
-                                except ValueError:
-                                    self.error("malformed author line")
-                            elif line.startswith("committer"):
-                                try:
-                                    commit.committer = Attribution(line[10:])
-                                except ValueError:
-                                    self.error("malformed committer line")
-                            elif line.startswith("property"):
-                                fields = line.split(" ")
-                                if len(fields) < 3:
-                                    self.error("malformed property line")
-                                elif len(fields) == 3:
-                                    commit.properties.append((fields[1], True))
-                                else:
-                                    name = fields[1]
-                                    length = int(fields[2])
-                                    value = " ".join(fields[3:])
-                                    if len(value) < length:
-                                        value += fp.read(length-len(value))
-                                        if fp.read(1) != '\n':
-                                            self.error("trailing junk on property value")
-                                    elif len(value) == length + 1:
-                                        value = value[:-1] # Trim '\n'
+                            if line.startswith("mark"):
+                                blob.mark = line[5:].strip()
+                                wfp = open(blob.blobfile(), "w")
+                                blobcontent = read_data()
+                                # Parse CVS and Subversion $-headers
+                                # There'd better not be more than one of these.
+                                for m in re.finditer(r"\$Id *:[^$]*\$",
+                                                     blobcontent):
+                                    fields = m.group(0).split()
+                                    # Save file basename and CVS version
+                                    if fields[1].endswith(",v"):
+                                        # CVS revision
+                                        blob.cookie = (fields[1][:-2], fields[2])
                                     else:
-                                        self.error("garbage length field on property line")
-                                    commit.properties.append((name, value))
-                            elif line.startswith("data"):
-                                commit.comment = read_data(line)
-                            elif line.startswith("from") or line.startswith("merge"):
-                                commit.parent_marks.append(line.split()[1])
-                            # Handling of file ops begins.
-                            elif line[0] in ("C", "D", "R"):
-                                commit.fileops.append(FileOp(commit).parse(line))
-                            elif line == "filedeleteall\n":
-                                commit.fileops.append(FileOp(commit).parse("deletall"))
-                            elif line[0] == "M":
-                                fileop = FileOp(commit).parse(line)
-                                commit.fileops.append(fileop)
-                                if fileop.mode == "160000":
-                                    # This is a submodule link.  The ref
-                                    # field is a SHA1 hash and the path
-                                    # is an external reference name.
-                                    # Don't try to collect data, just pass
-                                    # it through.
-                                    self.warn("submodule link")
-                                elif fileop.mode == "120000":
-                                    # This is a submodule link.  Don't
-                                    # try to collect data, just pass
-                                    # it through.
-                                    self.warn("symbolic link")
-                                else:
-                                    parse_fileop_content(fileop)
-                            elif line[0] == "N":
-                                fileop = FileOp(commit).parse(line)
-                                commit.fileops.append(fileop)
-                                parse_fileop_content(fileop)
-                            # Handling of file ops ends.
-                            elif line.isspace():
-                                # This handles slightly broken
-                                # exporters like the bzr-fast-export
-                                # one that may tack an extra LF onto
-                                # the end of data objects.  With it,
-                                # we don't drop out of the
-                                # commit-processing loop until we see
-                                # a *nonblank* line that doesn't match
-                                # a commit subpart.
-                                continue
+                                        # Subversion revision
+                                        blob.cookie = fields[1]
+                                    self.write_fossils = True
+                                for m in re.finditer(r"\$Revision *: *([^$]*)\$",
+                                                     blobcontent):
+                                    rev = m.group(0).strip()
+                                    if '.' not in rev:
+                                        # Subversion revision
+                                        blob.cookie = rev
+                                        self.write_fossils = True
+                                wfp.write(blobcontent)
+                                wfp.close()
                             else:
-                                # Dodgy bzr autodetection hook...
-                                if not self.vcs:
-                                    if "branch-nick" in dict(commit.properties):
-                                        for vcs in vcstypes:
-                                            if vcs.name == "bzr":
-                                                self.vcs = vcs
-                                                break
+                                self.error("missing mark after blob")
+                            self.events.append(blob)
+                            baton.twirl()
+                        elif line.startswith("data"):
+                            self.error("unexpected data object")
+                        elif line.startswith("commit"):
+                            commitbegin = self.import_line
+                            commit = Commit(self)
+                            commit.branch = line.split()[1]
+                            while True:
+                                line = ireadline()
+                                if not line:
+                                    break
+                                elif line.startswith("mark"):
+                                    commit.mark = line[5:].strip()
+                                elif line.startswith("author"):
+                                    try:
+                                        commit.authors.append(Attribution(line[7:]))
+                                    except ValueError:
+                                        self.error("malformed author line")
+                                elif line.startswith("committer"):
+                                    try:
+                                        commit.committer = Attribution(line[10:])
+                                    except ValueError:
+                                        self.error("malformed committer line")
+                                elif line.startswith("property"):
+                                    fields = line.split(" ")
+                                    if len(fields) < 3:
+                                        self.error("malformed property line")
+                                    elif len(fields) == 3:
+                                        commit.properties.append((fields[1], True))
+                                    else:
+                                        name = fields[1]
+                                        length = int(fields[2])
+                                        value = " ".join(fields[3:])
+                                        if len(value) < length:
+                                            value += fp.read(length-len(value))
+                                            if fp.read(1) != '\n':
+                                                self.error("trailing junk on property value")
+                                        elif len(value) == length + 1:
+                                            value = value[:-1] # Trim '\n'
+                                        else:
+                                            self.error("garbage length field on property line")
+                                        commit.properties.append((name, value))
+                                elif line.startswith("data"):
+                                    commit.comment = read_data(line)
+                                elif line.startswith("from") or line.startswith("merge"):
+                                    commit.parent_marks.append(line.split()[1])
+                                # Handling of file ops begins.
+                                elif line[0] in ("C", "D", "R"):
+                                    commit.fileops.append(FileOp(commit).parse(line))
+                                elif line == "filedeleteall\n":
+                                    commit.fileops.append(FileOp(commit).parse("deletall"))
+                                elif line[0] == "M":
+                                    fileop = FileOp(commit).parse(line)
+                                    commit.fileops.append(fileop)
+                                    if fileop.mode == "160000":
+                                        # This is a submodule link.  The ref
+                                        # field is a SHA1 hash and the path
+                                        # is an external reference name.
+                                        # Don't try to collect data, just pass
+                                        # it through.
+                                        self.warn("submodule link")
+                                    elif fileop.mode == "120000":
+                                        # This is a submodule link.  Don't
+                                        # try to collect data, just pass
+                                        # it through.
+                                        self.warn("symbolic link")
+                                    else:
+                                        parse_fileop_content(fileop)
+                                elif line[0] == "N":
+                                    fileop = FileOp(commit).parse(line)
+                                    commit.fileops.append(fileop)
+                                    parse_fileop_content(fileop)
+                                # Handling of file ops ends.
+                                elif line.isspace():
+                                    # This handles slightly broken
+                                    # exporters like the bzr-fast-export
+                                    # one that may tack an extra LF onto
+                                    # the end of data objects.  With it,
+                                    # we don't drop out of the
+                                    # commit-processing loop until we see
+                                    # a *nonblank* line that doesn't match
+                                    # a commit subpart.
+                                    continue
+                                else:
+                                    # Dodgy bzr autodetection hook...
+                                    if not self.vcs:
+                                        if "branch-nick" in dict(commit.properties):
+                                            for vcs in vcstypes:
+                                                if vcs.name == "bzr":
+                                                    self.vcs = vcs
+                                                    break
+                                    pushback(line)
+                                    break
+                            if not (commit.mark and commit.committer):
+                                self.import_line = commitbegin
+                                self.error("missing required fields in commit")
+                            if commit.mark is None:
+                                self.warn("unmarked commit")
+                            self.events.append(commit)
+                            baton.twirl()
+                        elif line.startswith("reset"):
+                            reset = Reset()
+                            reset.ref = line[6:].strip()
+                            line = ireadline()
+                            if line.startswith("from"):
+                                reset.committish = line[5:].strip()
+                            else:
                                 pushback(line)
-                                break
-                        if not (commit.mark and commit.committer):
-                            self.import_line = commitbegin
-                            self.error("missing required fields in commit")
-                        if commit.mark is None:
-                            self.warn("unmarked commit")
-                        self.events.append(commit)
-                        baton.twirl()
-                    elif line.startswith("reset"):
-                        reset = Reset()
-                        reset.ref = line[6:].strip()
-                        line = ireadline()
-                        if line.startswith("from"):
-                            reset.committish = line[5:].strip()
+                            self.events.append(reset)
+                            baton.twirl()
+                        elif line.startswith("tag"):
+                            tagger = None
+                            tagname = line[4:].strip()
+                            line = ireadline()
+                            if line.startswith("from"):
+                                referent = line[5:].strip()
+                            else:
+                                self.error("missing from after tag")
+                            line = ireadline()
+                            if line.startswith("tagger"):
+                                try:
+                                    tagger = Attribution(line[7:])
+                                except ValueError:
+                                    self.error("malformed tagger line")
+                            else:
+                                self.warn("missing tagger after from in tag")
+                                pushback(line)
+                            self.events.append(Tag(tagname,
+                                                   referent, tagger, read_data()))
+                            baton.twirl()
                         else:
-                            pushback(line)
-                        self.events.append(reset)
-                        baton.twirl()
-                    elif line.startswith("tag"):
-                        tagger = None
-                        tagname = line[4:].strip()
-                        line = ireadline()
-                        if line.startswith("from"):
-                            referent = line[5:].strip()
-                        else:
-                            self.error("missing from after tag")
-                        line = ireadline()
-                        if line.startswith("tagger"):
-                            try:
-                                tagger = Attribution(line[7:])
-                            except ValueError:
-                                self.error("malformed tagger line")
-                        else:
-                            self.warn("missing tagger after from in tag")
-                            pushback(line)
-                        self.events.append(Tag(tagname,
-                                               referent, tagger, read_data()))
-                        baton.twirl()
-                    else:
-                        # Simply pass through any line we don't understand.
-                        self.events.append(Passthrough(line))
+                            # Simply pass through any line we don't understand.
+                            self.events.append(Passthrough(line))
+                    # End of fast-import parsing
                 self.import_line = 0
             self.readtime = time.time()
             # Patch Reset timestamps in case this repo is ever merged.
