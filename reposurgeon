@@ -440,7 +440,7 @@ class SvnExtractor():
             raise Fatal("couldn't retrieve top revision number or repo root.")
         else:
             try:
-                countfmt = "%%%dd of %s" % (len(toprev), toprev)
+                countfmt = " %%%dd of %s" % (len(toprev), toprev)
                 toprev = int(toprev)
             except ValueError:
                 raise Fatal("couldn't parse top revision, check svninfo.")
