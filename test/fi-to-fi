@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# fi-to-fi - build repo from fast-import stream from stdin, repostream to stdout
+#
+# With the -n option, create a repo corresponding to the input file
+# and check out a working copy for editing, but do not stream the
+# result to stdout and do not delete the repo.
+#
+# With the -r option, expect the repo to exist, pick it
+# up with repostreamer, and throw the result to stdout; then
+# do not delete the repo.
+#
+# With the -g option, build a repo from the stream input and view it
+# for gitk.  Useful for eyeball-checking whether the DAG has the
+# shape you think it should.
+#
+# To add complexity to a test load, do -n, then edit the test repo with
+# Subversion, then use -d. Note: you must commit to force the repo to
+# be up to date before streaming it. 
+#
+BIN=${PWD}/..
+
+extract=True
+view=False
+stream=True
+cleanup=True
+
+# We want to be somewhere there won't be a repo above it
+testrepo=/tmp/test-repo
+
+while getopts gnr opt
+do
+    case $opt in
+	g) extract=True ;  view=True; stream=False ; cleanup=False ;;
+	n) extract=True ;  view=False; stream=False ; cleanup=False ;;
+        r) extract=False ; view=False; stream=True  ; cleanup=False ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+# Should we build a repo from the input file?
+if [ $extract = True ]
+then
+    rm -fr $testrepo; mkdir $testrepo
+    (cd $testrepo >/dev/null; git init >/dev/null; git fast-import --quiet) 
+fi
+
+# Should we view the repo?
+if [ $view = True ]
+then
+    (cd $testrepo >/dev/null; gitk --all --tags)
+fi
+
+# Should we stream the repo?
+if [ $stream = True ]
+then
+    (cd $testrepo >/dev/null; ${BIN}/repostreamer -q)
+fi
+
+# Should we clean up the test directory
+if [ $cleanup = True ]
+then
+    rm -fr $testrepo test-checkout
+fi
