@@ -200,8 +200,10 @@ vcstypes = [
 # ID don't matter to any of the code that will call the extractor, except that
 # IDs must be hashable so they can be dictionary keys.
 #
-# The 'name' and 'subdirectory' members must be set. The subdirectory member
-# is how an extractor recognizes what repositories it can consume.
+# The 'name'. 'subdirectory', and 'visible' members must be set. The
+# subdirectory member is how an extractor recognizes what repositories
+# it can consume.  If the visible member is false, the 'read' command
+# will ignore the existence of the extractor.
 #
 # The strings returned by get_committer() and get_authors() should look like
 #
@@ -231,8 +233,9 @@ class GitExtractor:
     # extractors.
     def __init__(self):
         # These must be set for every extractor class
-        self.name = "gitex"
-        self.subdirectory = ".gitex"
+        self.name = "git-extractor"
+        self.subdirectory = ".git"
+        self.visible = False
         # These are internal
         self.revlist = []
         self.parents = {}
@@ -396,6 +399,7 @@ class SvnExtractor():
         # These must be set for every extractor class
         self.name = "svn"
         self.subdirectory = ".svn"
+        self.visible = True
         # These are internal
         self.commits = None
         self.revlist = []
@@ -746,7 +750,7 @@ class SvnExtractor():
 
 # More extractors go here
 
-extractors = [SvnExtractor()]
+extractors = [SvnExtractor(), GitExtractor()]
 
 verbose         = 0
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
@@ -4016,7 +4020,7 @@ to the type of that repository.
             for vcs in vcstypes:
                 print(vcs)
             print("Other systems supported for read only: %s\n" \
-                  % " ".join(ext.name for ext in extractors))
+                  % " ".join(ext.name for ext in extractors if ext.visible))
         else:
             for repotype in vcstypes:
                 if line.lower() == repotype.name:
@@ -4025,7 +4029,7 @@ to the type of that repository.
                         self.chosen().vcs = self.preferred
                     break
             else:
-                complain("known types are %s." % " ".join([x.name for x in (vcstypes+extractors)]))
+                complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
         if verbose:
             if not self.preferred:
                 print("No preferred type has been set.")
