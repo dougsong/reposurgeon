@@ -572,7 +572,7 @@ class SvnExtractor():
                + self.commits[rev].date
     def get_authors(self, rev):
         "Return a list of ID/date strings for authors."
-        return [self.get_committer(rev)]
+        return []
     def get_properties(self, rev):
         "Return a list of properties for the commit."
         return self.commits[rev].properties
