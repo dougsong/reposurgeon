@@ -60,6 +60,16 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
+GITLOADS = bs
+gitregress:
+	@for test in $(GITLOADS); do \
+	    if (echo "Testing $${test}" >&2; \
+	    fi-to-fi) <$${test}.fi >/tmp/regress; \
+	    then diff -u $${test}.fi /tmp/regress; \
+	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	done
+	@rm -f /tmp/regress
+
 # Make a new repo and checkout directory to create a Subversion test load.
 # Reminder - a branch copy looks like this:
 # svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/foo

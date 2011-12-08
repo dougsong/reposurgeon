@@ -243,8 +243,10 @@ class GitExtractor:
         self.meta = {}
         self.tags = []
         self.refs = {}
-    def analyze(self):
-        "Analyze a repository for streaming."
+        self.baton = None
+    def analyze(self, baton):
+        "Analyze a git repository for streaming."
+        self.baton = baton
         # Get the topologically-ordered list of revisions and parent hashes
         with popen_or_die("git log --all --topo-order --reverse --format='%H %P'") as fp:
             for line in fp:
@@ -277,12 +279,11 @@ class GitExtractor:
                 objecthash = taghash
                 with popen_or_die("git cat-file -p %s" % tag) as fp:
                     comment = None
-                    ci = cd = None
+                    tagger = None
                     for line in fp:
                         line = line.strip()
                         if line.startswith("tagger "):
-                            line = line[len("tagger "):]
-                            (ci, cd) = line.replace("> ", ">!").split("!")
+                            tagger = line[len("tagger "):]
                         elif line.startswith("object"):
                             objecthash = line.split()[1]
                         elif comment is None and not line:
@@ -290,18 +291,11 @@ class GitExtractor:
                         elif type(comment) == type(""):
                             comment += line + "\n"
                             if objecthash != taghash:
-                                # Ugh.  This is a flaw in git cat-file's
-                                # design, I think. The date format here
-                                # should have been raw.
-                                tz = cd[-6:]
-                                cd = cd[:-6:]
-                                t = time.strptime(cd, "%a %b %d %H:%M:%S %Y")
-                                t = int(time.mktime(t))
+                                # committish isn't a mark; we'll fix that later
                                 self.tags.append(Tag(name=tag,
-                                                     tagger=ci,
-                                                     date=str(t)+tz,
+                                                     tagger=Attribution(tagger),
                                                      comment=comment,
-                                                     referent=objecthash))
+                                                     committish=objecthash))
                     self.refs["refs/tags/" + tag] = objecthash
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
@@ -336,15 +330,15 @@ class GitExtractor:
                 for parent in parents:
                     self.__branch_color(parent, color)
                 break
-    def pre_dump(self, ofp):
+    def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
-        assert ofp  # Pacify pylint
-    def post_dump(self, ofp):
-        assert ofp
-        self.checkout("master")
+        assert repo is not None  # Pacify pylint
+    def post_extract(self, repo):
+        assert repo is not None  # Pacify pylint
+        os.system("git checkout master")
     def isclean(self):
         "Return True if repo has no unsaved changes."
-        return not self.capture("git ls-files --modified")
+        return not capture("git ls-files --modified")
     def get_revlist(self):
         "Return a list of commit ID strings in commit timestamp order."
         return self.revlist
@@ -354,10 +348,11 @@ class GitExtractor:
     def get_resetlist(self):
         "Return a dictionary of reset names with revisions as values."
         return [item for item in self.refs.items() if "/tags/" not in item[0]]
-    def checkout(self, rev):
+    def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
+        assert filemap is not None # pacify pylint
         os.system("git checkout --quiet %s" % rev)
-        manifest = self.capture("git ls-files").split()
+        manifest = capture("git ls-files").split()
         return manifest
     def cleanup(self, rev, issued):
         "Cleanup after checkout."
@@ -1017,11 +1012,11 @@ class Blob:
 
 class Tag:
     "Represents an annotated tag."
-    def __init__(self, name, committish, tagger, content):
+    def __init__(self, name, committish, tagger, comment):
         self.name = name
         self.committish = committish
         self.tagger = tagger
-        self.comment = content
+        self.comment = comment
         self.color = None
     def when(self):
         "Imputed timestamp for sorting after merges."
@@ -1673,10 +1668,10 @@ class RepoStreamer:
                 reset.ref = resetname
                 reset.committish = self.markmap[revision]
                 reset.timestamp = last_time + 1
-                repo.append(reset)
+                repo.events.append(reset)
             # Last, append tag objects.
             tags = self.extractor.get_taglist()
-            tags.sort(key=lambda t: t.date)
+            tags.sort(key=lambda t: t.tagger.date)
             for tag in tags:
                 tag.committish = self.markmap.get(tag.committish)
                 repo.events.append(tag)
@@ -2861,6 +2856,9 @@ def rebuild_repo(repo, target, preferred):
     vcs = preferred or repo.vcs
     if not vcs:
         raise Recoverable("please prefer a repo type first")
+    if not hasattr(vcs, "exporter"):
+        raise Recoverable("%s repositories are supported for read only." \
+                          % preferred.name)
 
     # Create a new empty directory to do the rebuild in
     if not os.path.exists(target):
@@ -4022,7 +4020,7 @@ to the type of that repository.
             print("Other systems supported for read only: %s\n" \
                   % " ".join(ext.name for ext in extractors if ext.visible))
         else:
-            for repotype in vcstypes:
+            for repotype in vcstypes + extractors:
                 if line.lower() == repotype.name:
                     self.preferred = repotype
                     if self.chosen():
@@ -4155,7 +4153,6 @@ with command-line arguments).
 """)
     def do_read(self, line):
         "Read in a repository for surgery."
-        self.preferred = None
         if line:
             line = os.path.expanduser(line)
         if not line or line == '.':
