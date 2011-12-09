@@ -1765,12 +1765,11 @@ class StreamParser:
                 raise Fatal("can't handle symlinks yet.")
             elif prop not in StreamParser.IgnoreProperties:
                 commit.properties.append((path + "#" + prop, val))
-        # TODO: use this when we generare fileops
-        assert perms is not None
         # Now generate fileops.  "change" and "replace" are not documented at
         # trunk/notes/dump-load-format.txt in the Subversion repo, so
         # here are some things to know:
-        # * "change" is used for bare property changes
+        # * "change" is used for bare property changes on a directory,
+        #   and for modifying a file already in the tree.
         # * "replace" deletes the path before it is modified. The
         #   difference is relevant for directory copies.
         # TODO: handle svn:ignore
@@ -1780,22 +1779,34 @@ class StreamParser:
         if kind == "dir":
             # We only track these to spot inconsistencies.
             if action == "add":
-                commit.filemap[path] = None
-            elif action == "deletion":
-                if path in self.filemap[commit.revision]:
+                if path in commit.filemap:
+                    raise Fatal("add of existing file")
+                else:
+                    commit.filemap[path] = None
+            elif action == "delete":
+                if path in commit.filemap:
                     del commit.filemap[path]
                 else:
-                    raise Recoverable("delete of nonexistent directory %s." \
-                                      % path)
+                    raise Fatal("delete of nonexistent directory %s." % path)
+            # TODO: Handle copyfrom
         elif kind == "file":
-            if action in ("add", "replace"):
-                # TODO: replace with shared code 
-                blob = Blob(self.repo)
-                blob.mark = self.__newmark() 
-                wfp = open(blob.blobfile(), "w")
-                wfp.write(text)
-                wfp.close()
-                commit.filemap = blob.mark
+            if action in ("add", "change", "replace"):
+                if text is not None:
+                    blob = Blob(self.repo)
+                    blob.mark = self.__newmark() 
+                    with open(blob.blobfile(), "w") as wfp:
+                        wfp.write(text)
+                    commit.filemap[path] = blob.mark
+                    fileop = FileOp(commit)
+                    fileop.construct("M", perms, blob.mark, path)
+                    commit.fileops.append(fileop)
+            elif action == "delete":
+                assert text is None
+                fileop = FileOp(commit)
+                fileop.construct("D", path)
+                commit.fileops.append(fileop)
+            # TODO: Handle copyfrom
+
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
         commit = Commit(self.repo)
