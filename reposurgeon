@@ -1525,8 +1525,13 @@ class StreamParser:
                                     text = None
                                 elif line.startswith("Node-kind: "):
                                     kind = StreamParser.sd_body(line)
+                                    if kind not in ("file", "dir"):
+                                        self.error("unknown kind %s" % kind)
                                 elif line.startswith("Node-action: "):
                                     action = StreamParser.sd_body(line)
+                                    if action not in ("change", "add",
+                                                      "delete", "replace"):
+                                        self.error("unknown action %s" % action)
                                 elif line.startswith("Copyfrom-rev: "):
                                     copyfrom_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Copyfrom-path: "):
