@@ -1317,6 +1317,18 @@ class RepoStreamer:
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
+    # Native Subversion properties that we don't suppress:
+    # svn:externals, svn:mergeinfo, svn:executable.
+    # The reason for these suppressions is to avoid a huge volume
+    # of junk properties.  We want to let through other properties
+    # that might carry useful information.
+    IgnoreProperties = (
+        "svn:special",
+        "svn:mime-type",
+        "svn:keywords",
+        "svn:eol-style",
+        "svn:needs-lock",
+        )
     def __init__(self, repo):
         self.repo = repo
         self.import_line = 0
@@ -1324,6 +1336,7 @@ class StreamParser:
         self.ccount = 0
         self.linebuffers = []
         self.markmap = {}
+        self.filemap = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1760,8 +1773,24 @@ class StreamParser:
                         len(text or ""),
                         repr(text),
                         list(props.items())))
+            # First, handle per-file properties
+            perms = "100644"
+            for (prop, val) in props.items():
+                if prop == "svn:executable":
+                    perms = "100755"
+                elif prop == "svn:special":
+                    # TODO: Map this into a git symlink?
+                    raise Fatal("can't handle symlinks yet.")
+                elif prop not in StreamParser.IgnoreProperties:
+                    commit.properties.append((path + "#" + prop, val))
+            # Now generate fileops
+            # TODO: Find out what "replace" is supposed to do.
+            assert action in ("change", "add", "delete", "replace")
+            assert kind in (None, "file", "dir")
+            assert not (kind == None and action != "delete")
 
-# Generic repository -manipulation code begins here
+
+# Generic repository-manipulation code begins here
 
 class Repository:
     "Generic repository object."
