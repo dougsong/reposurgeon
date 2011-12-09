@@ -1684,42 +1684,16 @@ class RepoStreamer:
             self.extractor.post_extract(repo)
         return repo
 
-# Generic repository -manipulation code begins here
+# Stream parsing
 
-class Repository:
-    "Generic repository object."
-    def __init__(self, name=None):
-        self.name = name
-        self.readtime = time.time()
-        self.vcs = None
-        self.sourcedir = None
-        self.events = []    # A list of the events encountered, in order
+class StreamParser:
+    "Parse a fast-import stream or Subversion dump to populate a Repository."
+    def __init__(self, repo):
+        self.repo = repo
         self.import_line = 0
-        self.preserve_set = set([])
-        self.case_coverage = set([])
-        self.basedir = os.getcwd()
-        self.write_fossils = False
-        self.dollar_map = {}
         self.markseq = 0
         self.ccount = 0
         self.linebuffers = []
-    def cleanup(self):
-        "Release blob files associated with this repo."
-        nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
-    def subdir(self, name=None):
-        if name is None:
-            name = self.name
-        if not name:
-            return os.path.join(self.basedir, ".rs" + repr(os.getpid()))
-        else:
-            return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
-    def makedir(self):
-        try:
-            if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository fast import creates " + self.subdir())
-            os.mkdir(self.subdir())
-        except OSError:
-            self.error("can't create operating directory", atline=False)
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1732,96 +1706,12 @@ class Repository:
             print("reposurgeon: " + msg + " at line " + repr(self.import_line))
         else:
             print("reposurgeon: " + msg)
-    def size(self):
-        "Return the size of this import stream, for statistics display."
-        return sum([len(str(e)) for e in self.events])
-    def branchlist(self):
-        "Return a list of branchnames in this repo."
-        lst = []
-        for commit in self.commits():
-            if commit.branch not in lst:
-                lst.append(commit.branch)
-        return lst
-    def find(self, mark):
-        "Find an object index by mark"
-        for (ind, event) in enumerate(self.events):
-            if hasattr(event, "mark") and mark == event.mark:
-                return ind
-        return None
-    def objfind(self, mark):
-        "Find an object by mark"
-        for (ind, event) in enumerate(self.events):
-            if hasattr(event, "mark") and mark == event.mark:
-                return self.events[ind]
-        return None
-    def read_authormap(self, selection, fp):
-        "Read an author-mapping file and apply it to the repo."
-        authormap = {}
-        try:
-            for line in fp:
-                line = line.strip()
-                if not line:
-                    continue
-                (local, netwide) = line.strip().split('=')
-                (name, mail) = email.utils.parseaddr(netwide.strip())
-                if not mail:
-                    raise Fatal("can't recognize address in '%s'" % netwide)
-                authormap[local.strip()] = (name, mail)
-        except IOError:
-            raise Recoverable("couldn't open author-map file")
-        except ValueError:
-            raise Recoverable("bad author map syntax")
-        for ei in selection:
-            event = self.events[ei]
-            if isinstance(event, Commit):
-                event.committer.remap(authormap)
-                for author in event.authors:
-                    author.remap(authormap)
-            elif isinstance(event, Tag):
-                event.tagger.remap(authormap)
-    def write_authormap(self, selection, fp):
-        "List the identifiers we need."
-        contributors = set([])
-        for ei in selection:
-            event = self.events[ei]
-            if isinstance(event, Commit):
-                contributors.add(event.committer.who())
-                for author in event.authors:
-                    contributors.add(author.who())
-            elif isinstance(event, Tag):
-                contributors.add(event.tagger.who())
-        for contributor in contributors:
-            fp.write(contributor + "\n")
-    def read_fossilmap(self, fp):
-        "Read a fossil-references dump and initialize the repo's fossil map."
-        mark_map = {}
-        for event in self.commits():
-            mark_map[(event.committer.date.timestamp, event.committer.email)] = event
-        try:
-            for line in fp:
-                (fossil, timefield, person) = line.split()
-                when_who = (Date(timefield).timestamp, person)
-                if when_who in mark_map:
-                    mark_map[when_who].set_fossil(fossil)
-                else:
-                    complain("no mark matches fossil %s" % fossil)
-            del mark_map
-        except ValueError:
-            raise Recoverable("bad syntax in fossils file.")
-    def write_fossilmap(self, fp):
-        "Dump fossil references."
-        for commit in self.commits():
-            pdict = dict(commit.properties)
-            if "fossil" in pdict:
-                fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
-                                           commit.committer.date.rfc3339(),
-                                           commit.committer.email))
     def __newmark(self):
         self.markseq += 1
         return ":" + str(self.markseq)
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
-        self.makedir()
+        self.repo.makedir()
         try:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
@@ -1867,7 +1757,7 @@ class Repository:
                 def parse_fileop_content(fileop):
                     # Read a fast-import fileop
                     if fileop.ref[0] == ':':
-                        self.backlink_blobs(fileop)
+                        self.repo.backlink_blobs(fileop)
                     elif fileop.ref == 'inline':
                         wfp = open(fileop.inlinefile(), "w")
                         wfp.write(read_data())
@@ -1952,7 +1842,7 @@ class Repository:
                             props = readprops("commit", plen)
                             # Parsing of the revision header is done,
                             # use it to build a commit object
-                            commit = Commit(self)
+                            commit = Commit(self.repo)
                             commit.mark = self.__newmark()
                             if parent:
                                 commit.parent_marks = [parent]
@@ -1974,7 +1864,7 @@ class Repository:
                             commit.committer = Attribution("%s <%s@%s> %s" \
                                                            % (au, au, uuid, ad))
                             #commit.properties += list(props.items())
-                            self.events.append(commit)
+                            self.repo.events.append(commit)
                             parent = commit.mark
                             if verbose >= DEBUG_EXTRACT:
                                 announce("Commit header:\n" + str(commit))
@@ -2052,7 +1942,7 @@ class Repository:
                         elif not line.strip():
                             continue
                         elif line.startswith("blob"):
-                            blob = Blob(self)
+                            blob = Blob(self.repo)
                             line = ireadline()
                             if line.startswith("mark"):
                                 blob.mark = line[5:].strip()
@@ -2070,25 +1960,25 @@ class Repository:
                                     else:
                                         # Subversion revision
                                         blob.cookie = fields[1]
-                                    self.write_fossils = True
+                                    self.repo.write_fossils = True
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                      blobcontent):
                                     rev = m.group(0).strip()
                                     if '.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                        self.write_fossils = True
+                                        self.repo.write_fossils = True
                                 wfp.write(blobcontent)
                                 wfp.close()
                             else:
                                 self.error("missing mark after blob")
-                            self.events.append(blob)
+                            self.repo.events.append(blob)
                             baton.twirl()
                         elif line.startswith("data"):
                             self.error("unexpected data object")
                         elif line.startswith("commit"):
                             commitbegin = self.import_line
-                            commit = Commit(self)
+                            commit = Commit(self.repo)
                             commit.branch = line.split()[1]
                             while True:
                                 line = ireadline()
@@ -2168,11 +2058,11 @@ class Repository:
                                     continue
                                 else:
                                     # Dodgy bzr autodetection hook...
-                                    if not self.vcs:
+                                    if not self.repo.vcs:
                                         if "branch-nick" in dict(commit.properties):
                                             for vcs in vcstypes:
                                                 if vcs.name == "bzr":
-                                                    self.vcs = vcs
+                                                    self.repo.vcs = vcs
                                                     break
                                     pushback(line)
                                     break
@@ -2181,7 +2071,7 @@ class Repository:
                                 self.error("missing required fields in commit")
                             if commit.mark is None:
                                 self.warn("unmarked commit")
-                            self.events.append(commit)
+                            self.repo.events.append(commit)
                             baton.twirl()
                         elif line.startswith("reset"):
                             reset = Reset()
@@ -2191,7 +2081,7 @@ class Repository:
                                 reset.committish = line[5:].strip()
                             else:
                                 pushback(line)
-                            self.events.append(reset)
+                            self.repo.events.append(reset)
                             baton.twirl()
                         elif line.startswith("tag"):
                             tagger = None
@@ -2210,44 +2100,184 @@ class Repository:
                             else:
                                 self.warn("missing tagger after from in tag")
                                 pushback(line)
-                            self.events.append(Tag(tagname,
+                            self.repo.events.append(Tag(tagname,
                                                    referent, tagger, read_data()))
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.
-                            self.events.append(Passthrough(line))
+                            self.repo.events.append(Passthrough(line))
                     # End of fast-import parsing
                 self.import_line = 0
-            self.readtime = time.time()
-            # Patch Reset timestamps in case this repo is ever merged.
-            # This is another blatant hack. Try to keep them immediately 
-            # after things they refer to.
-            for (s, sevent) in enumerate(self.events):
-                if isinstance(sevent, Reset):
-                    if sevent.committish:
-                        for tevent in self.events:
-                            if isinstance(tevent, Commit):
-                                if tevent.mark == sevent.committish:
-                                    sevent.timestamp = tevent.when() + 1
-                                    break
-                    else:
-                        for tevent in self.events:
-                            if isinstance(tevent, Commit):
-                                if tevent.branch == sevent.ref:
-                                    sevent.timestamp = tevent.when() - 1
-                                    break
-                # Tuck Passthroughs right behind the first following commit 
-                elif isinstance(sevent, Passthrough) and sevent.timestamp != 0: 
-                    for (t, tevent) in enumerate(self.events):
-                        if isinstance(tevent, Commit) and t > s:
-                            sevent.timestamp = tevent.when() - 1
-                            break
-                elif isinstance(sevent, Blob):
-                    if not sevent.backreferences:
-                        complain("blob %s has no backreferences" % sevent.mark)
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
+
+# Generic repository -manipulation code begins here
+
+class Repository:
+    "Generic repository object."
+    def __init__(self, name=None):
+        self.name = name
+        self.readtime = time.time()
+        self.vcs = None
+        self.sourcedir = None
+        self.events = []    # A list of the events encountered, in order
+        self.preserve_set = set([])
+        self.case_coverage = set([])
+        self.basedir = os.getcwd()
+        self.write_fossils = False
+        self.dollar_map = {}
+    def cleanup(self):
+        "Release blob files associated with this repo."
+        nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
+    def subdir(self, name=None):
+        if name is None:
+            name = self.name
+        if not name:
+            return os.path.join(self.basedir, ".rs" + repr(os.getpid()))
+        else:
+            return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
+    def makedir(self):
+        try:
+            if verbose >= DEBUG_SHUFFLE:
+                self.warn("repository fast import creates " + self.subdir())
+            os.mkdir(self.subdir())
+        except OSError:
+            self.error("can't create operating directory", atline=False)
+    def size(self):
+        "Return the size of this import stream, for statistics display."
+        return sum([len(str(e)) for e in self.events])
+    def branchlist(self):
+        "Return a list of branchnames in this repo."
+        lst = []
+        for commit in self.commits():
+            if commit.branch not in lst:
+                lst.append(commit.branch)
+        return lst
+    def find(self, mark):
+        "Find an object index by mark"
+        for (ind, event) in enumerate(self.events):
+            if hasattr(event, "mark") and mark == event.mark:
+                return ind
+        return None
+    def objfind(self, mark):
+        "Find an object by mark"
+        for (ind, event) in enumerate(self.events):
+            if hasattr(event, "mark") and mark == event.mark:
+                return self.events[ind]
+        return None
+    def read_authormap(self, selection, fp):
+        "Read an author-mapping file and apply it to the repo."
+        authormap = {}
+        try:
+            for line in fp:
+                line = line.strip()
+                if not line:
+                    continue
+                (local, netwide) = line.strip().split('=')
+                (name, mail) = email.utils.parseaddr(netwide.strip())
+                if not mail:
+                    raise Fatal("can't recognize address in '%s'" % netwide)
+                authormap[local.strip()] = (name, mail)
+        except IOError:
+            raise Recoverable("couldn't open author-map file")
+        except ValueError:
+            raise Recoverable("bad author map syntax")
+        for ei in selection:
+            event = self.events[ei]
+            if isinstance(event, Commit):
+                event.committer.remap(authormap)
+                for author in event.authors:
+                    author.remap(authormap)
+            elif isinstance(event, Tag):
+                event.tagger.remap(authormap)
+    def write_authormap(self, selection, fp):
+        "List the identifiers we need."
+        contributors = set([])
+        for ei in selection:
+            event = self.events[ei]
+            if isinstance(event, Commit):
+                contributors.add(event.committer.who())
+                for author in event.authors:
+                    contributors.add(author.who())
+            elif isinstance(event, Tag):
+                contributors.add(event.tagger.who())
+        for contributor in contributors:
+            fp.write(contributor + "\n")
+    def read_fossilmap(self, fp):
+        "Read a fossil-references dump and initialize the repo's fossil map."
+        mark_map = {}
+        for event in self.commits():
+            mark_map[(event.committer.date.timestamp, event.committer.email)] = event
+        try:
+            for line in fp:
+                (fossil, timefield, person) = line.split()
+                when_who = (Date(timefield).timestamp, person)
+                if when_who in mark_map:
+                    mark_map[when_who].set_fossil(fossil)
+                else:
+                    complain("no mark matches fossil %s" % fossil)
+            del mark_map
+        except ValueError:
+            raise Recoverable("bad syntax in fossils file.")
+    def write_fossilmap(self, fp):
+        "Dump fossil references."
+        for commit in self.commits():
+            pdict = dict(commit.properties)
+            if "fossil" in pdict:
+                fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
+                                           commit.committer.date.rfc3339(),
+                                           commit.committer.email))
+    def fast_import(self, fp, progress=False):
+        StreamParser(self).fast_import(fp, progress)
+        self.readtime = time.time()
+        # Patch Reset timestamps in case this repo is ever merged.
+        # This is another blatant hack. Try to keep them immediately 
+        # after things they refer to.
+        for (s, sevent) in enumerate(self.events):
+            if isinstance(sevent, Reset):
+                if sevent.committish:
+                    for tevent in self.events:
+                        if isinstance(tevent, Commit):
+                            if tevent.mark == sevent.committish:
+                                sevent.timestamp = tevent.when() + 1
+                                break
+                else:
+                    for tevent in self.events:
+                        if isinstance(tevent, Commit):
+                            if tevent.branch == sevent.ref:
+                                sevent.timestamp = tevent.when() - 1
+                                break
+            # Tuck Passthroughs right behind the first following commit 
+            elif isinstance(sevent, Passthrough) and sevent.timestamp != 0: 
+                for (t, tevent) in enumerate(self.events):
+                    if isinstance(tevent, Commit) and t > s:
+                        sevent.timestamp = tevent.when() - 1
+                        break
+            elif isinstance(sevent, Blob):
+                if not sevent.backreferences:
+                    complain("blob %s has no backreferences" % sevent.mark)
+    def backlink_blobs(self, fileop):
+        "Link a blob to the commits it's involved in, via a fileop."
+        for obj in self.events:
+            if isinstance(obj, Blob) and obj.mark == fileop.ref:
+                obj.path = fileop.path
+                obj.backreferences.append(fileop.commit)
+                # This is a blatant hack.
+                # We need to impute a timestamp
+                # to each blob for sorting after
+                # merge operations. We want the
+                # blobs to tuck in close behind
+                # their first associated commits.
+                # So we do this and trust the
+                # stability of Python sort
+                # (guaranteed since Python 2.4).
+                if obj.timestamp is None \
+                       or obj.timestamp >= fileop.commit.when():
+                    obj.timestamp = fileop.commit.when()-1
+                break
+        else:
+            raise Fatal("no blob matches commit reference to %s" % fileop.ref)
     def parse_dollar_cookies(self):
         "Extract info about fossil references from CVS/SVN header cookies."
         if self.dollar_map:
@@ -2286,28 +2316,6 @@ class Repository:
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
-
-    def backlink_blobs(self, fileop):
-        "Link a blob to the commits it's involved in, via a fileop."
-        for obj in self.events:
-            if isinstance(obj, Blob) and obj.mark == fileop.ref:
-                obj.path = fileop.path
-                obj.backreferences.append(fileop.commit)
-                # This is a blatant hack.
-                # We need to impute a timestamp
-                # to each blob for sorting after
-                # merge operations. We want the
-                # blobs to tuck in close behind
-                # their first associated commits.
-                # So we do this and trust the
-                # stability of Python sort
-                # (guaranteed since Python 2.4).
-                if obj.timestamp is None \
-                       or obj.timestamp >= fileop.commit.when():
-                    obj.timestamp = fileop.commit.when()-1
-                break
-        else:
-            self.error("no blob matches commit reference to %s" % fileop.ref)
     def export_style(self):
         "How should we tune the export dump format?"
         if self.vcs:
@@ -2789,7 +2797,6 @@ class Repository:
         return
     def absorb(self, other):
         # Only vcstype, sourcedir, and basedir are not copied here
-        self.import_line += other.import_line
         self.preserve_set |= other.preserve_set
         self.case_coverage |= other.case_coverage
         # Strip feature events off the front, they have to stay in front.
