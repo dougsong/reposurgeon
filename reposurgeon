@@ -1701,6 +1701,7 @@ class Repository:
         self.dollar_map = {}
         self.markseq = 0
         self.ccount = 0
+        self.linebuffers = []
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1823,16 +1824,16 @@ class Repository:
         try:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
-                linebuffers = []
+                self.linebuffers = []
                 def ireadline():
-                    if linebuffers:
-                        line = linebuffers.pop()
+                    if self.linebuffers:
+                        line = self.linebuffers.pop()
                     else:
                         self.import_line += 1
                         line = fp.readline()
                     return line
                 def pushback(line):
-                    linebuffers.append(line)
+                    self.linebuffers.append(line)
                 def read_data(line=None):
                     # Read a fast-import data section
                     if not line:
@@ -1870,18 +1871,19 @@ class Repository:
                 def body(line):
                     # Parse the body from a Subversion header line
                     return line.split(":")[1].strip()
-                def consume_properties():
+                def consume_properties(target="commit"):
                     # Parse a Subversion properties section, return as dict.
                     # We don't need to rely on the length headers to be correct
                     # because of the PROPS-END trailer.
                     props = collections.OrderedDict()
                     tlen = plen = clen = -1
+                    stash = []
                     while True:
                         line = ireadline()
                         if verbose >= DEBUG_EXTRACT:
-                            announce("consume_properties: %s" % repr(line))
+                            announce("consume_properties, line %d: %s" % \
+                                     (self.import_line, repr(line)))
                         self.ccount += len(line)
-                        self.import_line += 1
                         if line.startswith("Prop-content-length: "):
                             plen = int(line.split()[1])
                             self.ccount = 0
@@ -1923,10 +1925,15 @@ class Repository:
                             self.ccount += len(value) + 1
                             props[key] = value
                             if verbose >= DEBUG_EXTRACT:
-                                announce("consume_properties: setting %s = %s"\
-                                         % (key, repr(value)))
+                                announce("consume_properties: on %s, setting %s = %s"\
+                                         % (target, key, repr(value)))
+                            elif ": " in line:
+                                # This is a header that we can't interpret
+                                stash.append(line)
                         else:
                             self.error("property key line '%s' garbled" % repr(line))
+                    # Put uninterpreted headers where caller will see them
+                    self.linebuffers += stash
                     # Again, this is not counting the first NL
                     if tlen == -1:
                         tlen = clen-plen-1
@@ -1943,7 +1950,8 @@ class Repository:
                         parent = None
                         line = ireadline()
                         if verbose >= DEBUG_EXTRACT:
-                            announce("revision parsing: %s" % repr(line))
+                            announce("revision parsing, line %d: %s" % \
+                                     (self.import_line, repr(line)))
                         if not line:
                             break
                         elif not line.strip():
@@ -1980,7 +1988,8 @@ class Repository:
                             while True:
                                 line = ireadline()
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("node parsing: %s" % repr(line))
+                                    announce("node parsing, line %d: %s" % \
+                                             (self.import_line, repr(line)))
                                 if not line:
                                     break
                                 elif line.startswith("Revision-number: "):
@@ -2002,12 +2011,19 @@ class Repository:
                                 elif line.startswith("Text-content-md5: "):
                                     pass
                                 elif line.startswith("Text-content-length: "):
-                                    pass
+                                    tlen = int(body(line))
                                 elif "ontent-length: " in line:
                                     pushback(line)
-                                    (props, tlen) = consume_properties()
-                                # More node processing goes here
-
+                                    (props, tlen) = consume_properties(path)
+                                elif not line.strip():
+                                    # Text content follows
+                                    text = fp.read(tlen)
+                                    assert fp.read(1) == "\n"
+                                    self.import_line += text.count('\n') + 1
+                                    if verbose >= DEBUG_EXTRACT:
+                                        announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s" \
+                                                 % (path, kind, action, copyfrom_rev, copyfrom_path, repr(text)))
+                                # More Node processing goes here
                             # End of Node processing
                         else:
                             self.error("expecting Revision-number or UUID")
