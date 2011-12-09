@@ -1334,6 +1334,7 @@ class StreamParser:
         )
     def __init__(self, repo):
         self.repo = repo
+        self.fp = None
         self.import_line = 0
         self.markseq = 0
         self.ccount = 0
@@ -1471,7 +1472,6 @@ class StreamParser:
                                     % version)
                     # Beginning of Subversion dump parsing
                     uuid = None
-                    parent = None
                     while True:
                         line = self.readline()
                         if not line:
@@ -1490,31 +1490,8 @@ class StreamParser:
                             self.sd_require_header("Content-length")
                             self.sd_require_spacer()
                             props = self.sd_read_props("commit", plen)
-                            # Parsing of the revision header is done,
-                            # use it to build a commit object
-                            commit = Commit(self.repo)
-                            commit.mark = self.__newmark(revision)
-                            if parent:
-                                commit.parent_marks = [parent]
-                            # Branch discrimination is better done as
-                            # postprocessing, when we have all the
-                            # file operations in core.
-                            commit.branch = "refs/heads/master"
-                            commit.properties.append(("fossil", revision))
-                            try:
-                                ad = props.pop("svn:date")
-                            except KeyError, key:
-                                self.error("missing required %s" % key)
-                            if "svn:author" in props:
-                                au = props.pop("svn:author")
-                            else:
-                                au = "no-author"
-                            if "svn:log" in props:
-                                commit.comment = props.pop("svn:log")
-                            commit.committer = Attribution("%s <%s@%s> %s" \
-                                                           % (au, au, uuid, ad))
-                            # Commit building is done.
-                            #
+                            # Parsing of the revision header is done
+                            commit = self.svn_commit(revision, uuid, props)
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
@@ -1574,16 +1551,7 @@ class StreamParser:
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
-                            # The commit has to get its mark created late
-                            # so it will be after its blobs get theirs.
-                            #commit.properties += list(props.items())
-                            self.repo.events.append(commit)
-                            parent = commit.mark
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("Commit header:\n" + str(commit))
-                            if verbose >= DEBUG_EXTRACT+1:
-                                announce("revision parsing, line %d: ends" % \
-                                     (self.import_line))
+                            self.svn_commit_mark(commit, revision)
                             # End Revision processing
                     # End of Subversion dump parsing
                 else:
@@ -1766,6 +1734,14 @@ class StreamParser:
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
+    #
+    # The rendezvous between parsing and object building for import
+    # streams is pretty trivial and best done inline in the parser
+    # because reposurgeon's internal structures are designed to match
+    # those entities. For Subversion dumpfiles, on the other hand,
+    # there's a fair bit of impedance-matching required.  That happens
+    # in the following three functions.
+    #
     def svn_action(self, commit,
                    path, kind, action, copyfrom_rev, copyfrom_path,
                    text, props):
@@ -1789,6 +1765,8 @@ class StreamParser:
                 raise Fatal("can't handle symlinks yet.")
             elif prop not in StreamParser.IgnoreProperties:
                 commit.properties.append((path + "#" + prop, val))
+        # TODO: use this when we generare fileops
+        assert perms is not None
         # Now generate fileops.  "change" and "replace" are not documented at
         # trunk/notes/dump-load-format.txt in the Subversion repo, so
         # here are some things to know:
@@ -1818,6 +1796,40 @@ class StreamParser:
                 wfp.write(text)
                 wfp.close()
                 commit.filemap = blob.mark
+    def svn_commit(self, revision, uuid, props):
+        "Build a commit from the Subversion properties for a revision record."
+        commit = Commit(self.repo)
+        if self.repo.events:
+            commit.parent_marks = [self.repo.events[-1].mark]
+        # Branch discrimination is better done as
+        # postprocessing, when we have all the
+        # file operations in core.
+        commit.branch = "refs/heads/master"
+        commit.properties.append(("fossil", revision))
+        try:
+            ad = props.pop("svn:date")
+        except KeyError, key:
+            self.error("missing required %s" % key)
+        if "svn:author" in props:
+            au = props.pop("svn:author")
+        else:
+            au = "no-author"
+        if "svn:log" in props:
+            commit.comment = props.pop("svn:log")
+        commit.committer = Attribution("%s <%s@%s> %s" \
+                                       % (au, au, uuid, ad))
+        commit.properties += list(props.items())
+        return commit
+    def svn_commit_mark(self, commit, revision):
+        "Mark a new commit and append it to the repo."
+        commit.mark = self.__newmark(revision)
+        # It's important that this happens after blob creation
+        self.repo.events.append(commit)
+        if verbose >= DEBUG_EXTRACT:
+            announce("Commit header:\n" + str(commit))
+        if verbose >= DEBUG_EXTRACT+1:
+            announce("revision parsing, line %d: ends" % \
+                 (self.import_line))
 
 # Generic repository-manipulation code begins here
 
