@@ -1889,7 +1889,13 @@ class Repository:
                     line = ireadline()
                     if line.strip():
                         self.error('found %s expecting blank line' % repr(line))
-		def consume_properties(target, checklength):
+                def readblob(length):
+                    content = fp.read(length)
+                    assert fp.read(1) == '\n'
+                    self.import_line += content.count('\n') + 1
+                    self.ccount += len(content) + 1
+                    return content
+		def readprops(target, checklength):
                     # Parse a Subversion properties section, return as an
                     # OrderedDict
                     props = collections.OrderedDict()
@@ -1897,7 +1903,7 @@ class Repository:
                     while self.ccount < checklength:
                         line = ireadline()
                         if verbose >= DEBUG_EXTRACT:
-                            announce("consume_properties, line %d: %s" % \
+                            announce("readprops, line %d: %s" % \
                                      (self.import_line, repr(line)))
                         if line.startswith("PROPS-END"):
                             if self.ccount != checklength:
@@ -1907,22 +1913,14 @@ class Repository:
                         elif not line.strip():
                             continue
                         elif line[0] == "K":
-                            # First read the key
-                            key = fp.read(int(line.split()[1]))
-                            assert fp.read(1) == '\n'
-                            self.import_line += key.count('\n') + 1
-                            self.ccount += len(key) + 1
-                            # Then the value
+                            key = readblob(int(line.split()[1]))
                             line = ireadline()
                             if line[0] != 'V':
                                 raise self.error("property value garbled")
-                            value = fp.read(int(line.split()[1]))
-                            assert fp.read(1) == '\n'
-                            self.import_line += value.count('\n') + 1
-                            self.ccount += len(value) + 1
+                            value = readblob(int(line.split()[1]))
                             props[key] = value
                             if verbose >= DEBUG_EXTRACT:
-                                announce("consume_properties: on %s, setting %s = %s"\
+                                announce("readprops: on %s, setting %s = %s"\
                                          % (target, key, repr(value)))
                     assert self.ccount == checklength
                     return props
@@ -1951,7 +1949,7 @@ class Repository:
                             plen = int(require_header("Prop-content-length"))
                             clen = int(require_header("Content-length"))
                             require_spacer()
-                            props = consume_properties("commit", plen)
+                            props = readprops("commit", plen)
                             # Parsing of the revision header is done,
                             # use it to build a commit object
                             commit = Commit(self)
@@ -1995,7 +1993,45 @@ class Repository:
                                 if line.startswith("Revision-number: "):
                                     break
                                 # Node processing begins
-
+                                if line.startswith("Node-path: "):
+                                    path = body(line)
+                                    kind = action = None
+                                    copyfrom_rev = copyfrom_path = None
+                                    plen = tlen = -1
+                                    content = None
+                                elif line.startswith("Node-kind: "):
+                                    kind = body(line)
+                                elif line.startswith("Node-action: "):
+                                    action = body(line)
+                                elif line.startswith("Copyfrom-rev: "):
+                                    copyfrom_rev = body(line)
+                                elif line.startswith("Copyfrom-path: "):
+                                    copyfrom_path = body(line)
+                                elif line.startswith("Text-copy-source-md5: "):
+                                    pass
+                                elif line.startswith("Text-content-md5: "):
+                                    pass
+                                elif line.startswith("Text-content-length: "):
+                                    tlen = int(body(line))
+                                elif line.startswith("Prop-content-length: "):
+                                    plen = int(body(line))
+                                elif line.startswith("Content-length: "):
+                                    require_spacer()
+                                    if plen > 0:
+                                        props = readprops(path, plen)
+                                    if tlen > 0:
+                                        text = readblob(tlen)
+                                        if verbose >= DEBUG_EXTRACT:
+                                            announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s, props=%s" \
+                                                     % (path, kind, action,
+                                                        copyfrom_rev,
+                                                        copyfrom_path,
+                                                        repr(text), props))
+                                else:
+                                    if verbose >= DEBUG_EXTRACT:
+                                        announce("node list parsing, line %d: uninterpreted line %s" % \
+                                             (self.import_line, repr(line)))
+                                    continue
                                 # Node processing ends
                             # Node list parsing ends
                             if verbose >= DEBUG_EXTRACT:
