@@ -1712,11 +1712,11 @@ class StreamParser:
         mark = ":" + str(self.markseq)
         self.markmap[revision] = mark
         return mark
-    def readline(self, fp):
+    def readline(self):
         if self.linebuffers:
             line = self.linebuffers.pop()
         else:
-            line = fp.readline()
+            line = self.fp.readline()
         self.ccount += len(line)
         self.import_line += 1
         return line
@@ -1724,125 +1724,126 @@ class StreamParser:
         self.ccount -= len(line)
         self.import_line -= 1
         self.linebuffers.append(line)
+    # Helpers for import-stream files
+    def fi_read_data(self, line=None):
+        "Read a fast-import data section."
+        if not line:
+            line = self.readline()
+        if line.startswith("data <<"):
+            delim = line[7:]
+            while True:
+                dataline = self.readline()
+                if dataline == delim:
+                    break
+                elif not dataline:
+                    raise Fatal("EOF while reading blob")
+        elif line.startswith("data"):
+            try:
+                count = int(line[5:])
+                data = self.fp.read(count)
+            except ValueError:
+                self.error("bad count in data")
+        else:
+            self.error("malformed data header %s" % repr(line))
+        line = self.readline()
+        if line != '\n':
+            self.pushback(line) # Data commands optionally end with LF
+        return data
+    def fi_parse_fileop(self, fileop):
+        # Read a fast-import fileop
+        if fileop.ref[0] == ':':
+            self.repo.backlink_blobs(fileop)
+        elif fileop.ref == 'inline':
+            wfp = open(fileop.inlinefile(), "w")
+            wfp.write(self.fi_read_data())
+            wfp.close()
+        else:
+            self.error("unknown content type in filemodify")
+    # Helpers for Subversion dumpfiles
+    @staticmethod
+    def sd_body(line):
+        # Parse the body from a Subversion header line
+        return line.split(":")[1].strip()
+    def sd_require_header(self, hdr):
+        # Consume a required header line
+        line = self.readline()
+        self.ccount += len(line)
+        if not line.startswith(hdr):
+            self.error('required %s header missing')
+        return StreamParser.sd_body(line)
+    def sd_require_spacer(self):
+        line = self.readline()
+        if line.strip():
+            self.error('found %s expecting blank line' % repr(line))
+    def sd_read_blob(self, length):
+        content = self.fp.read(length)
+        assert self.fp.read(1) == '\n'
+        self.import_line += content.count('\n') + 1
+        self.ccount += len(content) + 1
+        return content
+    def sd_read_props(self, target, checklength):
+        # Parse a Subversion properties section, return as an OrderedDict.
+        props = collections.OrderedDict()
+        self.ccount = 0
+        while self.ccount < checklength:
+            line = self.readline()
+            if verbose >= DEBUG_EXTRACT+1:
+                announce("readprops, line %d: %s" % \
+                         (self.import_line, repr(line)))
+            if line.startswith("PROPS-END"):
+                if self.ccount != checklength:
+                    self.error("expected %d property chars, got %d"\
+                               % (checklength, self.ccount))
+                break
+            elif not line.strip():
+                continue
+            elif line[0] == "K":
+                key = self.sd_read_blob(int(line.split()[1]))
+                line = self.readline()
+                if line[0] != 'V':
+                    raise self.error("property value garbled")
+                value = self.sd_read_blob(int(line.split()[1]))
+                props[key] = value
+                if verbose >= DEBUG_EXTRACT+1:
+                    announce("readprops: on %s, setting %s = %s"\
+                             % (target, key, repr(value)))
+        assert self.ccount == checklength
+        return props
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.repo.makedir()
         try:
+            self.fp = fp
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 self.linebuffers = []
-                # Helpers for import-stream files
-                def read_data(line=None):
-                    # Read a fast-import data section
-                    if not line:
-                        line = self.readline(fp)
-                    if line.startswith("data <<"):
-                        delim = line[7:]
-                        while True:
-                            dataline = fp.readline()
-                            if dataline == delim:
-                                break
-                            elif not dataline:
-                                raise Fatal("EOF while reading blob")
-                    elif line.startswith("data"):
-                        try:
-                            count = int(line[5:])
-                            data = fp.read(count)
-                        except ValueError:
-                            self.error("bad count in data")
-                    else:
-                        self.error("malformed data header %s" % repr(line))
-                    line = self.readline(fp)
-                    if line != '\n':
-                        self.pushback(line) # Data commands optionally end with LF
-                    return data
-                def parse_fileop_content(fileop):
-                    # Read a fast-import fileop
-                    if fileop.ref[0] == ':':
-                        self.repo.backlink_blobs(fileop)
-                    elif fileop.ref == 'inline':
-                        wfp = open(fileop.inlinefile(), "w")
-                        wfp.write(read_data())
-                        wfp.close()
-                    else:
-                        self.error("unknown content type in filemodify")
-                # Helpers for Subversion dumpfilesa
-                def body(line):
-                    # Parse the body from a Subversion header line
-                    return line.split(":")[1].strip()
-                def require_header(hdr):
-                    # Consume a required header line
-                    line = self.readline(fp)
-                    self.ccount += len(line)
-                    if not line.startswith(hdr):
-                        self.error('required %s header missing')
-                    return body(line)
-                def require_spacer():
-                    line = self.readline(fp)
-                    if line.strip():
-                        self.error('found %s expecting blank line' % repr(line))
-                def readblob(length):
-                    content = fp.read(length)
-                    assert fp.read(1) == '\n'
-                    self.import_line += content.count('\n') + 1
-                    self.ccount += len(content) + 1
-                    return content
-                def readprops(target, checklength):
-                    # Parse a Subversion properties section, return as an
-                    # OrderedDict
-                    props = collections.OrderedDict()
-                    self.ccount = 0
-                    while self.ccount < checklength:
-                        line = self.readline(fp)
-                        if verbose >= DEBUG_EXTRACT+1:
-                            announce("readprops, line %d: %s" % \
-                                     (self.import_line, repr(line)))
-                        if line.startswith("PROPS-END"):
-                            if self.ccount != checklength:
-                                self.error("expected %d property chars, got %d"\
-                                           % (checklength, self.ccount))
-                            break
-                        elif not line.strip():
-                            continue
-                        elif line[0] == "K":
-                            key = readblob(int(line.split()[1]))
-                            line = self.readline(fp)
-                            if line[0] != 'V':
-                                raise self.error("property value garbled")
-                            value = readblob(int(line.split()[1]))
-                            props[key] = value
-                            if verbose >= DEBUG_EXTRACT+1:
-                                announce("readprops: on %s, setting %s = %s"\
-                                         % (target, key, repr(value)))
-                    assert self.ccount == checklength
-                    return props
                 # First, determine the input type
-                line = self.readline(fp)
+                line = self.readline()
                 if line.startswith("SVN-fs-dump-format-version: "):
-                    if body(line) not in ("1", "2"):
+                    if StreamParser.sd_body(line) not in ("1", "2"):
                         raise Fatal("unsupported dump format version %s" \
                                     % version)
                     # Beginning of Subversion dump parsing
                     uuid = None
                     parent = None
                     while True:
-                        line = self.readline(fp)
+                        line = self.readline()
                         if not line:
                             break
                         elif not line.strip():
                             continue
                         elif line.startswith("UUID:"):
-                            uuid = body(line)
+                            uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
-                            revision = body(line)
-                            plen = int(require_header("Prop-content-length"))
-                            require_header("Content-length")
-                            require_spacer()
-                            props = readprops("commit", plen)
+                            revision = StreamParser.sd_body(line)
+                            plen = int(self.sd_require_header("Prop-content-length"))
+                            self.sd_require_header("Content-length")
+                            self.sd_require_spacer()
+                            props = self.sd_read_props("commit", plen)
                             # Parsing of the revision header is done,
                             # use it to build a commit object
                             commit = Commit(self.repo)
@@ -1875,7 +1876,7 @@ class StreamParser:
                             #
                             # Node list parsing begins
                             while True:
-                                line = self.readline(fp)
+                                line = self.readline()
                                 if verbose >= DEBUG_EXTRACT+1:
                                     announce("node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
@@ -1888,33 +1889,33 @@ class StreamParser:
                                     break
                                 # Node processing begins
                                 if line.startswith("Node-path: "):
-                                    path = body(line)
+                                    path = StreamParser.sd_body(line)
                                     kind = action = None
                                     copyfrom_rev = copyfrom_path = None
                                     plen = tlen = -1
                                     text = None
                                 elif line.startswith("Node-kind: "):
-                                    kind = body(line)
+                                    kind = StreamParser.sd_body(line)
                                 elif line.startswith("Node-action: "):
-                                    action = body(line)
+                                    action = StreamParser.sd_body(line)
                                 elif line.startswith("Copyfrom-rev: "):
-                                    copyfrom_rev = body(line)
+                                    copyfrom_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Copyfrom-path: "):
-                                    copyfrom_path = body(line)
+                                    copyfrom_path = StreamParser.sd_body(line)
                                 elif line.startswith("Text-copy-source-md5: "):
                                     pass
                                 elif line.startswith("Text-content-md5: "):
                                     pass
                                 elif line.startswith("Text-content-length: "):
-                                    tlen = int(body(line))
+                                    tlen = int(StreamParser.sd_body(line))
                                 elif line.startswith("Prop-content-length: "):
-                                    plen = int(body(line))
+                                    plen = int(StreamParser.sd_body(line))
                                 elif line.startswith("Content-length: "):
-                                    require_spacer()
+                                    self.sd_require_spacer()
                                     if plen > 0:
-                                        props = readprops(path, plen)
+                                        props = self.sd_read_props(path, plen)
                                     if tlen > 0:
-                                        text = readblob(tlen)
+                                        text = self.sd_read_blob(tlen)
                                     if verbose >= DEBUG_EXTRACT:
                                         announce("action: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
                                                  % (path, kind, action,
@@ -1939,18 +1940,18 @@ class StreamParser:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
                     while True:
-                        line = self.readline(fp)
+                        line = self.readline()
                         if not line:
                             break
                         elif not line.strip():
                             continue
                         elif line.startswith("blob"):
                             blob = Blob(self.repo)
-                            line = self.readline(fp)
+                            line = self.readline()
                             if line.startswith("mark"):
                                 blob.mark = line[5:].strip()
                                 wfp = open(blob.blobfile(), "w")
-                                blobcontent = read_data()
+                                blobcontent = self.fi_read_data()
                                 # Parse CVS and Subversion $-headers
                                 # There'd better not be more than one of these.
                                 for m in re.finditer(r"\$Id *:[^$]*\$",
@@ -1984,7 +1985,7 @@ class StreamParser:
                             commit = Commit(self.repo)
                             commit.branch = line.split()[1]
                             while True:
-                                line = self.readline(fp)
+                                line = self.readline()
                                 if not line:
                                     break
                                 elif line.startswith("mark"):
@@ -2019,7 +2020,7 @@ class StreamParser:
                                             self.error("garbage length field on property line")
                                         commit.properties.append((name, value))
                                 elif line.startswith("data"):
-                                    commit.comment = read_data(line)
+                                    commit.comment = self.fi_read_data(line)
                                 elif line.startswith("from") or line.startswith("merge"):
                                     commit.parent_marks.append(line.split()[1])
                                 # Handling of file ops begins.
@@ -2043,11 +2044,11 @@ class StreamParser:
                                         # it through.
                                         self.warn("symbolic link")
                                     else:
-                                        parse_fileop_content(fileop)
+                                        self.fi_parse_fileop(fileop)
                                 elif line[0] == "N":
                                     fileop = FileOp(commit).parse(line)
                                     commit.fileops.append(fileop)
-                                    parse_fileop_content(fileop)
+                                    self.fi_parse_fileop(fileop)
                                 # Handling of file ops ends.
                                 elif line.isspace():
                                     # This handles slightly broken
@@ -2079,7 +2080,7 @@ class StreamParser:
                         elif line.startswith("reset"):
                             reset = Reset()
                             reset.ref = line[6:].strip()
-                            line = self.readline(fp)
+                            line = self.readline()
                             if line.startswith("from"):
                                 reset.committish = line[5:].strip()
                             else:
@@ -2089,12 +2090,12 @@ class StreamParser:
                         elif line.startswith("tag"):
                             tagger = None
                             tagname = line[4:].strip()
-                            line = self.readline(fp)
+                            line = self.readline()
                             if line.startswith("from"):
                                 referent = line[5:].strip()
                             else:
                                 self.error("missing from after tag")
-                            line = self.readline(fp)
+                            line = self.readline()
                             if line.startswith("tagger"):
                                 try:
                                     tagger = Attribution(line[7:])
@@ -2104,7 +2105,8 @@ class StreamParser:
                                 self.warn("missing tagger after from in tag")
                                 self.pushback(line)
                             self.repo.events.append(Tag(tagname,
-                                                   referent, tagger, read_data()))
+                                                        referent, tagger,
+                                                        self.fi_read_data()))
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.
