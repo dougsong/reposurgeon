@@ -1545,14 +1545,11 @@ class StreamParser:
                                         props = self.sd_read_props(path, plen)
                                     if tlen > 0:
                                         text = self.sd_read_blob(tlen)
-                                    if verbose >= DEBUG_EXTRACT:
-                                        announce("action: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
-                                                 % (path, kind, action,
-                                                    copyfrom_rev,
-                                                    copyfrom_path,
-                                                    len(text or ""),
-                                                    repr(text),
-                                                    list(props.items())))
+                                    self.svn_action(commit,
+                                        path, kind, action,
+                                        copyfrom_rev,
+                                        copyfrom_path,
+                                        text, props)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -1745,6 +1742,19 @@ class StreamParser:
         except KeyboardInterrupt:
             nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
+    def svn_action(self, commit,
+                   path, kind, action, copyfrom_rev, copyfrom_path,
+                   text, props):
+        "Translate Subversion actions into import-stream file operations."
+        if verbose >= DEBUG_EXTRACT:
+            announce("action: commit=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
+                     % (commit.mark,
+                        path, kind, action,
+                        copyfrom_rev,
+                        copyfrom_path,
+                        len(text or ""),
+                        repr(text),
+                        list(props.items())))
 
 # Generic repository -manipulation code begins here
 
