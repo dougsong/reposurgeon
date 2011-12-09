@@ -1814,7 +1814,7 @@ class Repository:
                 fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
-    def __newmark(self, revision=None):
+    def __newmark(self):
         self.markseq += 1
         return ":" + str(self.markseq)
     def fast_import(self, fp, progress=False):
@@ -1878,6 +1878,8 @@ class Repository:
                     tlen = plen = clen = -1
                     while True:
                         line = ireadline()
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("consume_properties: %s" % repr(line))
                         self.ccount += len(line)
                         self.import_line += 1
                         if line.startswith("Prop-content-length: "):
@@ -1900,7 +1902,8 @@ class Repository:
                             # after the headers.  But we are supposed to
                             # count the PROPS-END\n at the end.
                             if self.ccount != plen + 1:
-                                self.error("expected %d chars of property data, got %d" % (plen, self.ccount))
+                                self.error("expected %d property chars, got %d"\
+                                           % (plen, self.ccount))
                             break
                         elif line[0] == "K":
                             # First read the key
@@ -1919,6 +1922,9 @@ class Repository:
                             self.import_line += value.count('\n') + 1
                             self.ccount += len(value) + 1
                             props[key] = value
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("consume_properties: setting %s = %s"\
+                                         % (key, repr(value)))
                         else:
                             self.error("property key line '%s' garbled" % repr(line))
                     # Again, this is not counting the first NL
@@ -1936,6 +1942,8 @@ class Repository:
                     while True:
                         parent = None
                         line = ireadline()
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("revision parsing: %s" % repr(line))
                         if not line:
                             break
                         elif not line.strip():
@@ -1966,37 +1974,41 @@ class Repository:
                             commit.committer = Attribution("%s <%s@%s> %s" \
                                                            % (au, au, uuid, ad))
                             #commit.properties += list(props.items())
-                            # Each Node turns into a fileop
-                            line = ireadline()
-                            if not line:
-                                break
-                            elif line.startswith("Revision-number: "):
-                                pushback(line)
-                                break
-                            path = kind = action = None
-                            copyfrom_rev = copyfrom_path = None
-                            tlen = plen = 0
-                            if line.startswith("Node-path: "):
-                                path = body(line)
-                            elif line.startswith("Node-action: "):
-                                action = body(line)
-                            elif line.startswith("Copyfrom-rev: "):
-                                copyfrom_rev = body(line)
-                            elif line.startswith("Copyfrom-path: "):
-                                copyfrom_path = body(line)
-                            elif line.startswith("Text-copy-source-md5: "):
-                                pass
-                            elif line.startswith("Text-content-md5: "):
-                                pass
-                            elif line.startswith("Text-content-length: "):
-                                pass
-                            elif "ontent-length: " in line:
-                                (props, tlen) = consume_properties()
-                            # More node processing goes here
-
-                            # End of Node processing
                             self.events.append(commit)
                             parent = commit.mark
+                            # Each Node turns into a fileop
+                            while True:
+                                line = ireadline()
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("node parsing: %s" % repr(line))
+                                if not line:
+                                    break
+                                elif line.startswith("Revision-number: "):
+                                    pushback(line)
+                                    break
+                                path = kind = action = None
+                                copyfrom_rev = copyfrom_path = None
+                                tlen = plen = 0
+                                if line.startswith("Node-path: "):
+                                    path = body(line)
+                                elif line.startswith("Node-action: "):
+                                    action = body(line)
+                                elif line.startswith("Copyfrom-rev: "):
+                                    copyfrom_rev = body(line)
+                                elif line.startswith("Copyfrom-path: "):
+                                    copyfrom_path = body(line)
+                                elif line.startswith("Text-copy-source-md5: "):
+                                    pass
+                                elif line.startswith("Text-content-md5: "):
+                                    pass
+                                elif line.startswith("Text-content-length: "):
+                                    pass
+                                elif "ontent-length: " in line:
+                                    pushback(line)
+                                    (props, tlen) = consume_properties()
+                                # More node processing goes here
+
+                            # End of Node processing
                         else:
                             self.error("expecting Revision-number or UUID")
                     # End of Subversion dump parsing
