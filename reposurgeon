@@ -1895,7 +1895,7 @@ class Repository:
                     self.import_line += content.count('\n') + 1
                     self.ccount += len(content) + 1
                     return content
-		def readprops(target, checklength):
+                def readprops(target, checklength):
                     # Parse a Subversion properties section, return as an
                     # OrderedDict
                     props = collections.OrderedDict()
@@ -1908,7 +1908,7 @@ class Repository:
                         if line.startswith("PROPS-END"):
                             if self.ccount != checklength:
                                 self.error("expected %d property chars, got %d"\
-                                           % (checklen, self.ccount))
+                                           % (checklength, self.ccount))
                             break
                         elif not line.strip():
                             continue
@@ -1947,7 +1947,7 @@ class Repository:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
                             plen = int(require_header("Prop-content-length"))
-                            clen = int(require_header("Content-length"))
+                            require_header("Content-length")
                             require_spacer()
                             props = readprops("commit", plen)
                             # Parsing of the revision header is done,
@@ -1999,7 +1999,7 @@ class Repository:
                                     kind = action = None
                                     copyfrom_rev = copyfrom_path = None
                                     plen = tlen = -1
-                                    content = None
+                                    text = None
                                 elif line.startswith("Node-kind: "):
                                     kind = body(line)
                                 elif line.startswith("Node-action: "):
@@ -2022,12 +2022,14 @@ class Repository:
                                         props = readprops(path, plen)
                                     if tlen > 0:
                                         text = readblob(tlen)
-                                        if verbose >= DEBUG_EXTRACT:
-                                            announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s, props=%s" \
-                                                     % (path, kind, action,
-                                                        copyfrom_rev,
-                                                        copyfrom_path,
-                                                        repr(text), list(props.items())))
+                                    if verbose >= DEBUG_EXTRACT:
+                                        announce("action: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
+                                                 % (path, kind, action,
+                                                    copyfrom_rev,
+                                                    copyfrom_path,
+                                                    len(text or ""),
+                                                    repr(text),
+                                                    list(props.items())))
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
