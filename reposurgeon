@@ -561,10 +561,14 @@ class SvnExtractor():
                           msg.strip()))
         def tagify(commit, name, committish):
             assert not commit.fileops
+            if not commit.comment:
+                pref = ""
+            else:
+                pref = commit.comment + "\n"
             repo.events.append(Tag(name=name,
                                    committish=committish,
                                    tagger=commit.committer,
-                                   comment=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
+                                   comment=pref + "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
             repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
         initial = repo.commits()[0]
         # There will always be one property, the fossil revision
