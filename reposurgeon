@@ -1847,10 +1847,10 @@ class Repository:
     def makedir(self):
         try:
             if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository fast import creates " + self.subdir())
+                announce("repository fast import creates " + self.subdir())
             os.mkdir(self.subdir())
         except OSError:
-            self.error("can't create operating directory", atline=False)
+            raise Fatal("can't create operating directory")
     def size(self):
         "Return the size of this import stream, for statistics display."
         return sum([len(str(e)) for e in self.events])
@@ -2064,7 +2064,7 @@ class Repository:
         try:
             # Can fail if the target directory exists.
             if verbose >= DEBUG_SHUFFLE:
-                self.warn("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
+                announce("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
         except OSError as e:
