@@ -1712,6 +1712,18 @@ class StreamParser:
         mark = ":" + str(self.markseq)
         self.markmap[revision] = mark
         return mark
+    def readline(self, fp):
+        if self.linebuffers:
+            line = self.linebuffers.pop()
+        else:
+            line = fp.readline()
+        self.ccount += len(line)
+        self.import_line += 1
+        return line
+    def pushback(self, line):
+        self.ccount -= len(line)
+        self.import_line -= 1
+        self.linebuffers.append(line)
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.repo.makedir()
@@ -1719,24 +1731,11 @@ class StreamParser:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 self.linebuffers = []
-                # Generic helper code
-                def ireadline():
-                    if self.linebuffers:
-                        line = self.linebuffers.pop()
-                    else:
-                        line = fp.readline()
-                    self.ccount += len(line)
-                    self.import_line += 1
-                    return line
-                def pushback(line):
-                    self.ccount -= len(line)
-                    self.import_line -= 1
-                    self.linebuffers.append(line)
                 # Helpers for import-stream files
                 def read_data(line=None):
                     # Read a fast-import data section
                     if not line:
-                        line = ireadline()
+                        line = self.readline(fp)
                     if line.startswith("data <<"):
                         delim = line[7:]
                         while True:
@@ -1753,9 +1752,9 @@ class StreamParser:
                             self.error("bad count in data")
                     else:
                         self.error("malformed data header %s" % repr(line))
-                    line = ireadline()
+                    line = self.readline(fp)
                     if line != '\n':
-                        pushback(line) # Data commands optionally end with LF
+                        self.pushback(line) # Data commands optionally end with LF
                     return data
                 def parse_fileop_content(fileop):
                     # Read a fast-import fileop
@@ -1773,13 +1772,13 @@ class StreamParser:
                     return line.split(":")[1].strip()
                 def require_header(hdr):
                     # Consume a required header line
-                    line = ireadline()
+                    line = self.readline(fp)
                     self.ccount += len(line)
                     if not line.startswith(hdr):
                         self.error('required %s header missing')
                     return body(line)
                 def require_spacer():
-                    line = ireadline()
+                    line = self.readline(fp)
                     if line.strip():
                         self.error('found %s expecting blank line' % repr(line))
                 def readblob(length):
@@ -1794,7 +1793,7 @@ class StreamParser:
                     props = collections.OrderedDict()
                     self.ccount = 0
                     while self.ccount < checklength:
-                        line = ireadline()
+                        line = self.readline(fp)
                         if verbose >= DEBUG_EXTRACT+1:
                             announce("readprops, line %d: %s" % \
                                      (self.import_line, repr(line)))
@@ -1807,7 +1806,7 @@ class StreamParser:
                             continue
                         elif line[0] == "K":
                             key = readblob(int(line.split()[1]))
-                            line = ireadline()
+                            line = self.readline(fp)
                             if line[0] != 'V':
                                 raise self.error("property value garbled")
                             value = readblob(int(line.split()[1]))
@@ -1818,7 +1817,7 @@ class StreamParser:
                     assert self.ccount == checklength
                     return props
                 # First, determine the input type
-                line = ireadline()
+                line = self.readline(fp)
                 if line.startswith("SVN-fs-dump-format-version: "):
                     if body(line) not in ("1", "2"):
                         raise Fatal("unsupported dump format version %s" \
@@ -1827,7 +1826,7 @@ class StreamParser:
                     uuid = None
                     parent = None
                     while True:
-                        line = ireadline()
+                        line = self.readline(fp)
                         if not line:
                             break
                         elif not line.strip():
@@ -1876,7 +1875,7 @@ class StreamParser:
                             #
                             # Node list parsing begins
                             while True:
-                                line = ireadline()
+                                line = self.readline(fp)
                                 if verbose >= DEBUG_EXTRACT+1:
                                     announce("node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
@@ -1885,7 +1884,7 @@ class StreamParser:
                                 elif not line.strip():
                                     continue
                                 if line.startswith("Revision-number: "):
-                                    pushback(line)
+                                    self.pushback(line)
                                     break
                                 # Node processing begins
                                 if line.startswith("Node-path: "):
@@ -1937,17 +1936,17 @@ class StreamParser:
                             # End Revision processing
                     # End of Subversion dump parsing
                 else:
-                    pushback(line)
+                    self.pushback(line)
                     # Beginning of fast-import stream parsing
                     while True:
-                        line = ireadline()
+                        line = self.readline(fp)
                         if not line:
                             break
                         elif not line.strip():
                             continue
                         elif line.startswith("blob"):
                             blob = Blob(self.repo)
-                            line = ireadline()
+                            line = self.readline(fp)
                             if line.startswith("mark"):
                                 blob.mark = line[5:].strip()
                                 wfp = open(blob.blobfile(), "w")
@@ -1985,7 +1984,7 @@ class StreamParser:
                             commit = Commit(self.repo)
                             commit.branch = line.split()[1]
                             while True:
-                                line = ireadline()
+                                line = self.readline(fp)
                                 if not line:
                                     break
                                 elif line.startswith("mark"):
@@ -2068,7 +2067,7 @@ class StreamParser:
                                                 if vcs.name == "bzr":
                                                     self.repo.vcs = vcs
                                                     break
-                                    pushback(line)
+                                    self.pushback(line)
                                     break
                             if not (commit.mark and commit.committer):
                                 self.import_line = commitbegin
@@ -2080,22 +2079,22 @@ class StreamParser:
                         elif line.startswith("reset"):
                             reset = Reset()
                             reset.ref = line[6:].strip()
-                            line = ireadline()
+                            line = self.readline(fp)
                             if line.startswith("from"):
                                 reset.committish = line[5:].strip()
                             else:
-                                pushback(line)
+                                self.pushback(line)
                             self.repo.events.append(reset)
                             baton.twirl()
                         elif line.startswith("tag"):
                             tagger = None
                             tagname = line[4:].strip()
-                            line = ireadline()
+                            line = self.readline(fp)
                             if line.startswith("from"):
                                 referent = line[5:].strip()
                             else:
                                 self.error("missing from after tag")
-                            line = ireadline()
+                            line = self.readline(fp)
                             if line.startswith("tagger"):
                                 try:
                                     tagger = Attribution(line[7:])
@@ -2103,7 +2102,7 @@ class StreamParser:
                                     self.error("malformed tagger line")
                             else:
                                 self.warn("missing tagger after from in tag")
-                                pushback(line)
+                                self.pushback(line)
                             self.repo.events.append(Tag(tagname,
                                                    referent, tagger, read_data()))
                             baton.twirl()
