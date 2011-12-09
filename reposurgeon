@@ -1825,15 +1825,20 @@ class Repository:
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 self.linebuffers = []
+                # Generic helper code
                 def ireadline():
                     if self.linebuffers:
                         line = self.linebuffers.pop()
                     else:
-                        self.import_line += 1
                         line = fp.readline()
+                    self.ccount += len(line)
+                    self.import_line += 1
                     return line
                 def pushback(line):
+                    self.ccount -= len(line)
+                    self.import_line -= 1
                     self.linebuffers.append(line)
+                # Helpers for import-stream files
                 def read_data(line=None):
                     # Read a fast-import data section
                     if not line:
@@ -1868,45 +1873,38 @@ class Repository:
                         wfp.close()
                     else:
                         self.error("unknown content type in filemodify")
+                # Helpers for Subversion dumpfilesa
                 def body(line):
                     # Parse the body from a Subversion header line
                     return line.split(":")[1].strip()
-                def consume_properties(target="commit"):
-                    # Parse a Subversion properties section, return as dict.
-                    # We don't need to rely on the length headers to be correct
-                    # because of the PROPS-END trailer.
+                def require_header(hdr):
+                    # Consume a required header line
+                    line = ireadline()
+                    self.ccount += len(line)
+                    if not line.startswith(hdr):
+                        self.error('required %s header missing')
+                    return body(line)
+                def require_spacer():
+                    line = ireadline()
+                    if line.strip():
+                        self.error('found %s expecting blank line' % repr(line))
+		def consume_properties(target, checklength):
+                    # Parse a Subversion properties section, return as an
+                    # OrderedDict
                     props = collections.OrderedDict()
-                    tlen = plen = clen = -1
-                    stash = []
-                    while True:
+                    self.ccount = 0
+                    while self.ccount < checklength:
                         line = ireadline()
                         if verbose >= DEBUG_EXTRACT:
                             announce("consume_properties, line %d: %s" % \
                                      (self.import_line, repr(line)))
-                        self.ccount += len(line)
-                        if line.startswith("Prop-content-length: "):
-                            plen = int(line.split()[1])
-                            self.ccount = 0
-                            continue
-                        elif line.startswith("Text-content-length: "):
-                            tlen = int(line.split()[1])
-                            self.ccount = 0
-                            continue
-                        elif line.startswith("Content-length: "):
-                            clen = int(line.split()[1])
-                            self.ccount = 0
-                            continue
+                        if line.startswith("PROPS-END"):
+                            if self.ccount != checklength:
+                                self.error("expected %d property chars, got %d"\
+                                           % (checklen, self.ccount))
+                            break
                         elif not line.strip():
                             continue
-                        elif line.startswith("PROPS-END"):
-                            # The reason for the +1 offset is apparently
-                            # we're not supposed to count the first NL
-                            # after the headers.  But we are supposed to
-                            # count the PROPS-END\n at the end.
-                            if self.ccount != plen + 1:
-                                self.error("expected %d property chars, got %d"\
-                                           % (plen, self.ccount))
-                            break
                         elif line[0] == "K":
                             # First read the key
                             key = fp.read(int(line.split()[1]))
@@ -1914,12 +1912,10 @@ class Repository:
                             self.import_line += key.count('\n') + 1
                             self.ccount += len(key) + 1
                             # Then the value
-                            line = fp.readline()
-                            self.ccount += len(line)
-                            self.import_line += 1
+                            line = ireadline()
                             if line[0] != 'V':
                                 raise self.error("property value garbled")
-                            value  = fp.read(int(line.split()[1]))
+                            value = fp.read(int(line.split()[1]))
                             assert fp.read(1) == '\n'
                             self.import_line += value.count('\n') + 1
                             self.ccount += len(value) + 1
@@ -1927,20 +1923,8 @@ class Repository:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("consume_properties: on %s, setting %s = %s"\
                                          % (target, key, repr(value)))
-                            elif ": " in line:
-                                # This is a header that we can't interpret
-                                stash.append(line)
-                        else:
-                            self.error("property key line '%s' garbled" % repr(line))
-                    # Put uninterpreted headers where caller will see them
-                    self.linebuffers += stash
-                    # Again, this is not counting the first NL
-                    if tlen == -1:
-                        tlen = clen-plen
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("consume_properties line %d: exiting with tlen=%d."\
-                                         % (self.import_line, tlen))
-                    return (props, tlen)
+                    assert self.ccount == checklength
+                    return props
                 # First, determine the input type
                 line = ireadline()
                 if line.startswith("SVN-fs-dump-format-version: "):
@@ -1950,11 +1934,7 @@ class Repository:
                     # Beginning of Subversion dump parsing
                     uuid = None
                     while True:
-                        parent = None
                         line = ireadline()
-                        if verbose >= DEBUG_EXTRACT:
-                            announce("revision parsing, line %d: %s" % \
-                                     (self.import_line, repr(line)))
                         if not line:
                             break
                         elif not line.strip():
@@ -1962,87 +1942,20 @@ class Repository:
                         elif line.startswith("UUID:"):
                             uuid = body(line)
                         elif line.startswith("Revision-number: "):
-                            commit = Commit(self)
-                            commit.mark = self.__newmark()
-                            if parent:
-                                commit.parent_marks = [parent]
-                            # Branch discrimination is better done as
-                            # postprocessing, when we have all the
-                            # file operations in core.
-                            commit.branch = "refs/heads/master"
-                            commit.properties = (("fossil", body(line)))
-                            (props, tlen) = consume_properties()
-                            try:
-                                ad = props.pop("svn:date")
-                            except KeyError, key:
-                                self.error("missing required %s" % key)
-                            if "svn:author" in props:
-                                au = props.pop("svn:author")
-                            else:
-                                au = "no-author"
-                            if "svn:log" in props:
-                                commit.comment = props.pop("svn:log")
-                            commit.committer = Attribution("%s <%s@%s> %s" \
-                                                           % (au, au, uuid, ad))
-                            #commit.properties += list(props.items())
-                            self.events.append(commit)
-                            parent = commit.mark
-                            # Each revision record contains a list of Nodes
-                            while True:
-                                # There's a spacer line before each Nodes starts
-                                spacer = ireadline()
-                                if spacer != '\n':
-                                    self.error("malformed spacer line")
-                                elif verbose >= DEBUG_EXTRACT:
-                                    announce("node list parsing, line %d: looking for Node" % \
-                                             self.import_line)
-                                line = ireadline()
-                                pushback(line)
-                                if line.startswith("Revision-number: "):
-                                    break
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("node list parsing, line %d: begins" % \
-                                             self.import_line)
-                                path = kind = action = None
-                                copyfrom_rev = copyfrom_path = None
-                                tlen = plen = 0
-                                while True:
-                                    line = ireadline()
-                                    if verbose >= DEBUG_EXTRACT:
-                                        announce("node parsing, line %d: %s" % \
-                                                 (self.import_line, repr(line)))
-                                    if not line:
-                                        break
-                                    elif line.startswith("Revision-number: "):
-                                        pushback(line)
-                                        break
-                                    if line.startswith("Node-path: "):
-                                        path = body(line)
-                                    elif line.startswith("Node-action: "):
-                                        action = body(line)
-                                    elif line.startswith("Copyfrom-rev: "):
-                                        copyfrom_rev = body(line)
-                                    elif line.startswith("Copyfrom-path: "):
-                                        copyfrom_path = body(line)
-                                    elif line.startswith("Text-copy-source-md5: "):
-                                        pass
-                                    elif line.startswith("Text-content-md5: "):
-                                        pass
-                                    elif line.startswith("Text-content-length: "):
-                                        tlen = int(body(line))
-                                    elif "ontent-length: " in line:
-                                        pushback(line)
-                                        (props, tlen) = consume_properties(path)
-                                        text = fp.read(tlen)
-                                        self.import_line += text.count('\n') + 1
-                                        if verbose >= DEBUG_EXTRACT:
-                                            announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s" \
-                                                     % (path, kind, action, copyfrom_rev, copyfrom_path, repr(text)))
-                                        break
-                                # Node processing ends here
-                            # Node list processing wnds here
-                        else:
-                            self.error("expecting Revision-number or UUID")
+                            # Begin Revision processing
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision parsing, line %d: begins" % \
+                                     (self.import_line))
+                            plen = int(require_header("Prop-content-length"))
+                            clen = int(require_header("Content-length"))
+                            require_spacer()
+                            props = consume_properties("commit", plen)
+
+
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("revision parsing, line %d: ends" % \
+                                     (self.import_line))
+                            # End Revision processing
                     # End of Subversion dump parsing
                 else:
                     pushback(line)
