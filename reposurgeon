@@ -1983,7 +1983,20 @@ class Repository:
                             # Commit building is done.
                             #
                             # Node list parsing begins
+                            while True:
+                                line = ireadline()
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("node list parsing, line %d: looking for Node" % \
+                                             self.import_line)
+                                if not line:
+                                    break
+                                elif not line.strip():
+                                    continue
+                                if line.startswith("Revision-number: "):
+                                    break
+                                # Node processing begins
 
+                                # Node processing ends
                             # Node list parsing ends
                             if verbose >= DEBUG_EXTRACT:
                                 announce("revision parsing, line %d: ends" % \
