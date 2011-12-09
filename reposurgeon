@@ -11,7 +11,7 @@
 # * Bitkeeper extraction.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
-import readline, time, calendar, signal, shutil, copy, shlex
+import readline, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
 import re, sre_constants
 import xml.etree.cElementTree as ET
@@ -1695,6 +1695,7 @@ class Repository:
         self.basedir = os.getcwd()
         self.write_fossils = False
         self.dollar_map = {}
+        self.ccount = 0
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -1812,6 +1813,7 @@ class Repository:
         "Initialize the repo from a fast-import stream.."
         self.makedir()
         try:
+            self.ccount = 0
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
@@ -1821,9 +1823,11 @@ class Repository:
                     else:
                         self.import_line += 1
                         line = fp.readline()
+                    self.ccount += len(line)
                     return line
                 def pushback(line):
                     linebuffers.append(line)
+                    self.ccount -= len(line)
                 def read_data(line=None):
                     # Read a fast-import data section
                     if not line:
@@ -1858,12 +1862,90 @@ class Repository:
                         wfp.close()
                     else:
                         self.error("unknown content type in filemodify")
+                def body(line):
+                    # Parse the body from a Subversion header line
+                    return line.split(":")[1].strip()
+                def consume_properties():
+                    # Parse a Subversion properties section, return as dict.
+                    # We don't need to rely on the length headers to be correct
+                    # because of the PROPS-END trailer.
+                    props = collections.OrderedDict()
+                    while True:
+                        line = ireadline()
+                        if line.startswith("Prop-content-length: "):
+                            continue
+                        elif line.startswith("Content-length: "):
+                            continue
+                        elif not line.strip():
+                            continue
+                        elif line.startswith("PROPS-END"):
+                            break
+                        elif line[0] == "K":
+                            key = fp.read(int(line.split()[1]))
+                            assert fp.read(1) == '\n'
+                            line = fp.readline()
+                            self.import_line += key.count('\n') + 2
+                            if line[0] != 'V':
+                                raise self.error("property value garbled")
+                            value  = fp.read(int(line.split()[1]))
+                            assert fp.read(1) == '\n'
+                            self.import_line += value.count('\n') + 1
+                            props[key] = value
+                        else:
+                            self.error("property key line '%s' garbled" % repr(line))
+                    return props
                 # First, determine the input type
                 line = ireadline()
-                svnleader = "SVN-fs-dump-format-version: "
-                if line.startswith(svnleader):
-                    version = line[len(svnleader):][0]
-                    raise Fatal("Subversion version %s" % version)
+                if line.startswith("SVN-fs-dump-format-version: "):
+                    if body(line) not in ("1", "2"):
+                        raise Fatal("unsupported dump format version %s" \
+                                    % version)
+                    # Beginning of Subversion dump parsing
+                    uuid = None
+                    while True:
+                        line = ireadline()
+                        if not line:
+                            break
+                        elif not line.strip():
+                            continue
+                        elif line.startswith("UUID:"):
+                            uuid = body(line)
+                        elif line.startswith("Revision-number: "):
+                            commit = Commit(self)
+                            # Branch discrimination is better done as
+                            # postprocessing, when we have all the
+                            # file operations in core.
+                            commit.branch = "refs/heads/master"
+                            commit.properties = (("fossil", body(line)))
+                            props = consume_properties()
+                            try:
+                                ad = props.pop("svn:date")
+                            except KeyError, key:
+                                self.error("missing required %s" % key)
+                            if "svn:author" in props:
+                                au = props.pop("svn:author")
+                            else:
+                                au = "no-author"
+                            if "svn:log" in props:
+                                commit.comment = props.pop("svn:log")
+                            commit.committer = Attribution("%s <%s@%s> %s" \
+                                                           % (au, au, uuid, ad))
+                            #commit.properties += list(props.items())
+                            # Each Node turns into a fileop
+                            line = ireadline()
+                            if not line:
+                                break
+                            elif not line.strip():
+                                continue
+                            elif line.startswith("Revision-number: "):
+                                pushback(line)
+                                break
+                            # MORE NODE PARSING GOES HERE
+                            # End of Node processing
+                            self.events.append(commit)
+                        else:
+                            self.error("expecting Revision-number or UUID")
+                    # End of Subversion dump parsing
                 else:
                     pushback(line)
                     # Beginning of fast-import stream parsing
