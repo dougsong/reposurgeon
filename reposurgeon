@@ -1695,6 +1695,7 @@ class Repository:
         self.basedir = os.getcwd()
         self.write_fossils = False
         self.dollar_map = {}
+        self.markseq = 0
         self.ccount = 0
     def cleanup(self):
         "Release blob files associated with this repo."
@@ -1809,11 +1810,13 @@ class Repository:
                 fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
+    def __newmark(self, revision=None):
+        self.markseq += 1
+        return ":" + str(self.markseq)
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.makedir()
         try:
-            self.ccount = 0
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 linebuffers = []
@@ -1823,11 +1826,9 @@ class Repository:
                     else:
                         self.import_line += 1
                         line = fp.readline()
-                    self.ccount += len(line)
                     return line
                 def pushback(line):
                     linebuffers.append(line)
-                    self.ccount -= len(line)
                 def read_data(line=None):
                     # Read a fast-import data section
                     if not line:
@@ -1870,30 +1871,50 @@ class Repository:
                     # We don't need to rely on the length headers to be correct
                     # because of the PROPS-END trailer.
                     props = collections.OrderedDict()
+                    plen = clen = 0
                     while True:
                         line = ireadline()
+                        self.ccount += len(line)
+                        self.import_line += 1
                         if line.startswith("Prop-content-length: "):
+                            plen = int(line.split()[1])
+                            self.ccount = 0
                             continue
                         elif line.startswith("Content-length: "):
+                            clen = int(line.split()[1])
+                            self.ccount = 0
                             continue
                         elif not line.strip():
                             continue
                         elif line.startswith("PROPS-END"):
+                            # The reason for the +1 offset is apparently
+                            # we're not supposed to count the first NL
+                            # after the headers.  But we are supposed to
+                            # count the PROPS-END\n at the end.
+                            if self.ccount != plen + 1:
+                                self.error("expected %d chars of property data, got %d" % (plen, self.ccount))
                             break
                         elif line[0] == "K":
+                            # First read the key
                             key = fp.read(int(line.split()[1]))
                             assert fp.read(1) == '\n'
+                            self.import_line += key.count('\n') + 1
+                            self.ccount += len(key) + 1
+                            # Then the value
                             line = fp.readline()
-                            self.import_line += key.count('\n') + 2
+                            self.ccount += len(line)
+                            self.import_line += 1
                             if line[0] != 'V':
                                 raise self.error("property value garbled")
                             value  = fp.read(int(line.split()[1]))
                             assert fp.read(1) == '\n'
                             self.import_line += value.count('\n') + 1
+                            self.ccount += len(value) + 1
                             props[key] = value
                         else:
                             self.error("property key line '%s' garbled" % repr(line))
-                    return props
+                    # Again, this is not counting the first NL
+                    return (props, clen-plen-1)
                 # First, determine the input type
                 line = ireadline()
                 if line.startswith("SVN-fs-dump-format-version: "):
@@ -1903,6 +1924,7 @@ class Repository:
                     # Beginning of Subversion dump parsing
                     uuid = None
                     while True:
+                        parent = None
                         line = ireadline()
                         if not line:
                             break
@@ -1912,12 +1934,15 @@ class Repository:
                             uuid = body(line)
                         elif line.startswith("Revision-number: "):
                             commit = Commit(self)
+                            commit.mark = self.__newmark()
+                            if parent:
+                                commit.parent_marks = [parent]
                             # Branch discrimination is better done as
                             # postprocessing, when we have all the
                             # file operations in core.
                             commit.branch = "refs/heads/master"
                             commit.properties = (("fossil", body(line)))
-                            props = consume_properties()
+                            (props, tlen) = consume_properties()
                             try:
                                 ad = props.pop("svn:date")
                             except KeyError, key:
@@ -1943,6 +1968,7 @@ class Repository:
                             # MORE NODE PARSING GOES HERE
                             # End of Node processing
                             self.events.append(commit)
+                            parent = commit.mark
                         else:
                             self.error("expecting Revision-number or UUID")
                     # End of Subversion dump parsing
