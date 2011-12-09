@@ -1936,7 +1936,10 @@ class Repository:
                     self.linebuffers += stash
                     # Again, this is not counting the first NL
                     if tlen == -1:
-                        tlen = clen-plen-1
+                        tlen = clen-plen
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("consume_properties line %d: exiting with tlen=%d."\
+                                         % (self.import_line, tlen))
                     return (props, tlen)
                 # First, determine the input type
                 line = ireadline()
@@ -1984,47 +1987,60 @@ class Repository:
                             #commit.properties += list(props.items())
                             self.events.append(commit)
                             parent = commit.mark
-                            # Each Node turns into a fileop
+                            # Each revision record contains a list of Nodes
                             while True:
+                                # There's a spacer line before each Nodes starts
+                                spacer = ireadline()
+                                if spacer != '\n':
+                                    self.error("malformed spacer line")
+                                elif verbose >= DEBUG_EXTRACT:
+                                    announce("node list parsing, line %d: looking for Node" % \
+                                             self.import_line)
                                 line = ireadline()
+                                pushback(line)
+                                if line.startswith("Revision-number: "):
+                                    break
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("node parsing, line %d: %s" % \
-                                             (self.import_line, repr(line)))
-                                if not line:
-                                    break
-                                elif line.startswith("Revision-number: "):
-                                    pushback(line)
-                                    break
+                                    announce("node list parsing, line %d: begins" % \
+                                             self.import_line)
                                 path = kind = action = None
                                 copyfrom_rev = copyfrom_path = None
                                 tlen = plen = 0
-                                if line.startswith("Node-path: "):
-                                    path = body(line)
-                                elif line.startswith("Node-action: "):
-                                    action = body(line)
-                                elif line.startswith("Copyfrom-rev: "):
-                                    copyfrom_rev = body(line)
-                                elif line.startswith("Copyfrom-path: "):
-                                    copyfrom_path = body(line)
-                                elif line.startswith("Text-copy-source-md5: "):
-                                    pass
-                                elif line.startswith("Text-content-md5: "):
-                                    pass
-                                elif line.startswith("Text-content-length: "):
-                                    tlen = int(body(line))
-                                elif "ontent-length: " in line:
-                                    pushback(line)
-                                    (props, tlen) = consume_properties(path)
-                                elif not line.strip():
-                                    # Text content follows
-                                    text = fp.read(tlen)
-                                    assert fp.read(1) == "\n"
-                                    self.import_line += text.count('\n') + 1
+                                while True:
+                                    line = ireadline()
                                     if verbose >= DEBUG_EXTRACT:
-                                        announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s" \
-                                                 % (path, kind, action, copyfrom_rev, copyfrom_path, repr(text)))
-                                # More Node processing goes here
-                            # End of Node processing
+                                        announce("node parsing, line %d: %s" % \
+                                                 (self.import_line, repr(line)))
+                                    if not line:
+                                        break
+                                    elif line.startswith("Revision-number: "):
+                                        pushback(line)
+                                        break
+                                    if line.startswith("Node-path: "):
+                                        path = body(line)
+                                    elif line.startswith("Node-action: "):
+                                        action = body(line)
+                                    elif line.startswith("Copyfrom-rev: "):
+                                        copyfrom_rev = body(line)
+                                    elif line.startswith("Copyfrom-path: "):
+                                        copyfrom_path = body(line)
+                                    elif line.startswith("Text-copy-source-md5: "):
+                                        pass
+                                    elif line.startswith("Text-content-md5: "):
+                                        pass
+                                    elif line.startswith("Text-content-length: "):
+                                        tlen = int(body(line))
+                                    elif "ontent-length: " in line:
+                                        pushback(line)
+                                        (props, tlen) = consume_properties(path)
+                                        text = fp.read(tlen)
+                                        self.import_line += text.count('\n') + 1
+                                        if verbose >= DEBUG_EXTRACT:
+                                            announce("building fileop: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%s" \
+                                                     % (path, kind, action, copyfrom_rev, copyfrom_path, repr(text)))
+                                        break
+                                # Node processing ends here
+                            # Node list processing wnds here
                         else:
                             self.error("expecting Revision-number or UUID")
                     # End of Subversion dump parsing
