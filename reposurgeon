@@ -1442,7 +1442,8 @@ class Commit:
                 st += u"author %s\n" % author
         if self.committer:
             st += u"committer %s\n" % self.committer
-        st += u"data %d\n%s" % (len(self.comment), self.comment) 
+        if self.comment is not None:
+            st += u"data %d\n%s" % (len(self.comment), self.comment) 
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
@@ -1933,6 +1934,7 @@ class Repository:
                                     % version)
                     # Beginning of Subversion dump parsing
                     uuid = None
+                    parent = None
                     while True:
                         line = ireadline()
                         if not line:
@@ -1950,8 +1952,39 @@ class Repository:
                             clen = int(require_header("Content-length"))
                             require_spacer()
                             props = consume_properties("commit", plen)
+                            # Parsing of the revision header is done,
+                            # use it to build a commit object
+                            commit = Commit(self)
+                            commit.mark = self.__newmark()
+                            if parent:
+                                commit.parent_marks = [parent]
+                            # Branch discrimination is better done as
+                            # postprocessing, when we have all the
+                            # file operations in core.
+                            commit.branch = "refs/heads/master"
+                            commit.properties = (("fossil", body(line)),)
+                            try:
+                                ad = props.pop("svn:date")
+                            except KeyError, key:
+                                self.error("missing required %s" % key)
+                            if "svn:author" in props:
+                                au = props.pop("svn:author")
+                            else:
+                                au = "no-author"
+                            if "svn:log" in props:
+                                commit.comment = props.pop("svn:log")
+                            commit.committer = Attribution("%s <%s@%s> %s" \
+                                                           % (au, au, uuid, ad))
+                            #commit.properties += list(props.items())
+                            self.events.append(commit)
+                            parent = commit.mark
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("Commit header:\n" + str(commit))
+                            # Commit building is done.
+                            #
+                            # Node list parsing begins
 
-
+                            # Node list parsing ends
                             if verbose >= DEBUG_EXTRACT:
                                 announce("revision parsing, line %d: ends" % \
                                      (self.import_line))
