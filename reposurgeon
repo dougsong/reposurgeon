@@ -861,6 +861,7 @@ class Commit:
         self.fileops = []            # blob and file operation list
         self.properties = []         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
+        self.filemap = {}            # Used when building from a Subversion dump
         self.color = None
     def when(self):
         "Imputed timestamp for sorting after merges."
@@ -1318,12 +1319,14 @@ class RepoStreamer:
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     # Native Subversion properties that we don't suppress:
-    # svn:externals, svn:mergeinfo, svn:executable.
-    # The reason for these suppressions is to avoid a huge volume
-    # of junk properties.  We want to let through other properties
-    # that might carry useful information.
+    # svn:externals, svn:mergeinfo.  The reason for these suppressions
+    # is to avoid a huge volume of junk file properties - cvs2svn
+    # in particular generates them like mad.  We want to let through other
+    # properties that might carry useful information.
     IgnoreProperties = (
-        "svn:special",
+        "svn:executable",  # We special-case this one elsewhere
+        "svn:ignore",      # We special-case this one elsewhere
+        "svn:special",     # We special-case this one elsewhere
         "svn:mime-type",
         "svn:keywords",
         "svn:eol-style",
@@ -1349,10 +1352,11 @@ class StreamParser:
             print("reposurgeon: " + msg + " at line " + repr(self.import_line))
         else:
             print("reposurgeon: " + msg)
-    def __newmark(self, revision):
+    def __newmark(self, revision=None):
         self.markseq += 1
         mark = ":" + str(self.markseq)
-        self.markmap[revision] = mark
+        if revision:
+            self.markmap[revision] = mark
         return mark
     def readline(self):
         if self.linebuffers:
@@ -1496,7 +1500,7 @@ class StreamParser:
                             # postprocessing, when we have all the
                             # file operations in core.
                             commit.branch = "refs/heads/master"
-                            commit.properties = (("fossil", revision),)
+                            commit.properties.append(("fossil", revision))
                             try:
                                 ad = props.pop("svn:date")
                             except KeyError, key:
@@ -1509,11 +1513,6 @@ class StreamParser:
                                 commit.comment = props.pop("svn:log")
                             commit.committer = Attribution("%s <%s@%s> %s" \
                                                            % (au, au, uuid, ad))
-                            #commit.properties += list(props.items())
-                            self.repo.events.append(commit)
-                            parent = commit.mark
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("Commit header:\n" + str(commit))
                             # Commit building is done.
                             #
                             # Node list parsing begins
@@ -1575,6 +1574,13 @@ class StreamParser:
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
+                            # The commit has to get its mark created late
+                            # so it will be after its blobs get theirs.
+                            #commit.properties += list(props.items())
+                            self.repo.events.append(commit)
+                            parent = commit.mark
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("Commit header:\n" + str(commit))
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: ends" % \
                                      (self.import_line))
@@ -1773,22 +1779,45 @@ class StreamParser:
                         len(text or ""),
                         repr(text),
                         list(props.items())))
-            # First, handle per-file properties
-            perms = "100644"
-            for (prop, val) in props.items():
-                if prop == "svn:executable":
-                    perms = "100755"
-                elif prop == "svn:special":
-                    # TODO: Map this into a git symlink?
-                    raise Fatal("can't handle symlinks yet.")
-                elif prop not in StreamParser.IgnoreProperties:
-                    commit.properties.append((path + "#" + prop, val))
-            # Now generate fileops
-            # TODO: Find out what "replace" is supposed to do.
-            assert action in ("change", "add", "delete", "replace")
-            assert kind in (None, "file", "dir")
-            assert not (kind == None and action != "delete")
-
+        # First, handle per-file properties
+        perms = "100644"
+        for (prop, val) in props.items():
+            if prop == "svn:executable":
+                perms = "100755"
+            elif prop == "svn:special":
+                # TODO: Map this into a git symlink?
+                raise Fatal("can't handle symlinks yet.")
+            elif prop not in StreamParser.IgnoreProperties:
+                commit.properties.append((path + "#" + prop, val))
+        # Now generate fileops.  "change" and "replace" are not documented at
+        # trunk/notes/dump-load-format.txt in the Subversion repo, so
+        # here are some things to know:
+        # * "change" is used for bare property changes
+        # * "replace" deletes the path before it is modified. The
+        #   difference is relevant for directory copies.
+        # TODO: handle svn:ignore
+        assert action in ("change", "add", "delete", "replace")
+        assert kind in (None, "file", "dir")
+        assert not (kind == None and action != "delete")
+        if kind == "dir":
+            # We only track these to spot inconsistencies.
+            if action == "add":
+                commit.filemap[path] = None
+            elif action == "deletion":
+                if path in self.filemap[commit.revision]:
+                    del commit.filemap[path]
+                else:
+                    raise Recoverable("delete of nonexistent directory %s." \
+                                      % path)
+        elif kind == "file":
+            if action in ("add", "replace"):
+                # TODO: replace with shared code 
+                blob = Blob(self.repo)
+                blob.mark = self.__newmark() 
+                wfp = open(blob.blobfile(), "w")
+                wfp.write(text)
+                wfp.close()
+                commit.filemap = blob.mark
 
 # Generic repository-manipulation code begins here
 
