@@ -1902,7 +1902,7 @@ class Repository:
                     self.ccount = 0
                     while self.ccount < checklength:
                         line = ireadline()
-                        if verbose >= DEBUG_EXTRACT:
+                        if verbose >= DEBUG_EXTRACT+1:
                             announce("readprops, line %d: %s" % \
                                      (self.import_line, repr(line)))
                         if line.startswith("PROPS-END"):
@@ -1919,7 +1919,7 @@ class Repository:
                                 raise self.error("property value garbled")
                             value = readblob(int(line.split()[1]))
                             props[key] = value
-                            if verbose >= DEBUG_EXTRACT:
+                            if verbose >= DEBUG_EXTRACT+1:
                                 announce("readprops: on %s, setting %s = %s"\
                                          % (target, key, repr(value)))
                     assert self.ccount == checklength
@@ -1943,7 +1943,7 @@ class Repository:
                             uuid = body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
-                            if verbose >= DEBUG_EXTRACT:
+                            if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
                             plen = int(require_header("Prop-content-length"))
@@ -1983,14 +1983,15 @@ class Repository:
                             # Node list parsing begins
                             while True:
                                 line = ireadline()
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("node list parsing, line %d: looking for Node" % \
-                                             self.import_line)
+                                if verbose >= DEBUG_EXTRACT+1:
+                                    announce("node list parsing, line %d: %s" % \
+                                             (self.import_line, repr(line)))
                                 if not line:
                                     break
                                 elif not line.strip():
                                     continue
                                 if line.startswith("Revision-number: "):
+                                    pushback(line)
                                     break
                                 # Node processing begins
                                 if line.startswith("Node-path: "):
@@ -2026,15 +2027,15 @@ class Repository:
                                                      % (path, kind, action,
                                                         copyfrom_rev,
                                                         copyfrom_path,
-                                                        repr(text), props))
+                                                        repr(text), list(props.items())))
                                 else:
-                                    if verbose >= DEBUG_EXTRACT:
+                                    if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
                                              (self.import_line, repr(line)))
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
-                            if verbose >= DEBUG_EXTRACT:
+                            if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: ends" % \
                                      (self.import_line))
                             # End Revision processing
