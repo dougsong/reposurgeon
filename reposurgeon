@@ -1694,6 +1694,7 @@ class StreamParser:
         self.markseq = 0
         self.ccount = 0
         self.linebuffers = []
+        self.markmap = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1706,9 +1707,11 @@ class StreamParser:
             print("reposurgeon: " + msg + " at line " + repr(self.import_line))
         else:
             print("reposurgeon: " + msg)
-    def __newmark(self):
+    def __newmark(self, revision):
         self.markseq += 1
-        return ":" + str(self.markseq)
+        mark = ":" + str(self.markseq)
+        self.markmap[revision] = mark
+        return mark
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.repo.makedir()
@@ -1836,6 +1839,7 @@ class StreamParser:
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
+                            revision = body(line)
                             plen = int(require_header("Prop-content-length"))
                             require_header("Content-length")
                             require_spacer()
@@ -1843,14 +1847,14 @@ class StreamParser:
                             # Parsing of the revision header is done,
                             # use it to build a commit object
                             commit = Commit(self.repo)
-                            commit.mark = self.__newmark()
+                            commit.mark = self.__newmark(revision)
                             if parent:
                                 commit.parent_marks = [parent]
                             # Branch discrimination is better done as
                             # postprocessing, when we have all the
                             # file operations in core.
                             commit.branch = "refs/heads/master"
-                            commit.properties = (("fossil", body(line)),)
+                            commit.properties = (("fossil", revision),)
                             try:
                                 ad = props.pop("svn:date")
                             except KeyError, key:
