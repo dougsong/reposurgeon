@@ -1871,13 +1871,17 @@ class Repository:
                     # We don't need to rely on the length headers to be correct
                     # because of the PROPS-END trailer.
                     props = collections.OrderedDict()
-                    plen = clen = 0
+                    tlen = plen = clen = -1
                     while True:
                         line = ireadline()
                         self.ccount += len(line)
                         self.import_line += 1
                         if line.startswith("Prop-content-length: "):
                             plen = int(line.split()[1])
+                            self.ccount = 0
+                            continue
+                        elif line.startswith("Text-content-length: "):
+                            tlen = int(line.split()[1])
                             self.ccount = 0
                             continue
                         elif line.startswith("Content-length: "):
@@ -1914,7 +1918,9 @@ class Repository:
                         else:
                             self.error("property key line '%s' garbled" % repr(line))
                     # Again, this is not counting the first NL
-                    return (props, clen-plen-1)
+                    if tlen == -1:
+                        tlen = clen-plen-1
+                    return (props, tlen)
                 # First, determine the input type
                 line = ireadline()
                 if line.startswith("SVN-fs-dump-format-version: "):
@@ -1960,12 +1966,30 @@ class Repository:
                             line = ireadline()
                             if not line:
                                 break
-                            elif not line.strip():
-                                continue
                             elif line.startswith("Revision-number: "):
                                 pushback(line)
                                 break
-                            # MORE NODE PARSING GOES HERE
+                            path = kind = action = None
+                            copyfrom_rev = copyfrom_path = None
+                            tlen = plen = 0
+                            if line.startswith("Node-path: "):
+                                path = body(line)
+                            elif line.startswith("Node-action: "):
+                                action = body(line)
+                            elif line.startswith("Copyfrom-rev: "):
+                                copyfrom_rev = body(line)
+                            elif line.startswith("Copyfrom-path: "):
+                                copyfrom_path = body(line)
+                            elif line.startswith("Text-copy-source-md5: "):
+                                pass
+                            elif line.startswith("Text-content-md5: "):
+                                pass
+                            elif line.startswith("Text-content-length: "):
+                                pass
+                            elif "ontent-length: " in line:
+                                (props, tlen) = consume_properties()
+                            # More node processing goes here
+
                             # End of Node processing
                             self.events.append(commit)
                             parent = commit.mark
