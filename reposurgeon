@@ -2232,6 +2232,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
     def fast_import(self, fp, progress=False):
+        "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
         self.readtime = time.time()
         # Patch Reset timestamps in case this repo is ever merged.
