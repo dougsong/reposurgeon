@@ -1817,6 +1817,7 @@ class StreamParser:
                     blob.mark = self.__newmark() 
                     with open(blob.blobfile(), "w") as wfp:
                         wfp.write(text)
+                    self.repo.events.append(blob) 
                     commit.filemap[path] = blob.mark
                     fileop = FileOp(commit)
                     fileop.construct("M", perms, blob.mark, path)
@@ -1865,8 +1866,12 @@ class StreamParser:
         return commit
     def svn_commit_mark(self, commit, revision):
         "Mark a new commit, link it to parents, and append it to the repo."
-        if self.repo.events:
-            commit.parent_marks = [self.repo.events[-1].mark]
+        # Zero revision is never interesting - no operations, no comment, no
+        # author, it's just a start marker for a non-incremental dump.
+        if revision == "0": 
+            return
+        #if self.repo.events:
+        #    commit.parent_marks = [self.repo.events[-1].mark]
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
