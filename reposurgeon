@@ -1456,6 +1456,12 @@ class StreamParser:
                              % (target, key, repr(value)))
         assert self.ccount == checklength
         return props
+    def sd_revision_to_commit(self, revision):
+        for commit in self.repo.events:
+            if dict(commit.properties)["fossil"] == revision:
+                return commit
+        else:
+            raise Fatal("invalid reference to revision %s" % revision)
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.repo.makedir()
@@ -1765,6 +1771,14 @@ class StreamParser:
                 raise Fatal("can't handle symlinks yet.")
             elif prop not in StreamParser.IgnoreProperties:
                 commit.properties.append((path + "#" + prop, val))
+        assert action in ("change", "add", "delete", "replace")
+        assert kind in (None, "file", "dir")
+        assert not (kind == None and action != "delete")
+        # We'll need the filemap from the preceding revision.
+        if self.repo.events:
+            commit.filemap = copy.copy(self.repo.events[-1].filemap)
+        else:
+            commit.filemap = {}
         # Now generate fileops.  "change" and "replace" are not documented at
         # trunk/notes/dump-load-format.txt in the Subversion repo, so
         # here are some things to know:
@@ -1773,25 +1787,32 @@ class StreamParser:
         # * "replace" deletes the path before it is modified. The
         #   difference is relevant for directory copies.
         # TODO: handle svn:ignore
-        assert action in ("change", "add", "delete", "replace")
-        assert kind in (None, "file", "dir")
-        assert not (kind == None and action != "delete")
         if kind == "dir":
             # We only track these to spot inconsistencies.
+            # os.sep is appended to avoid weird collisions with path prefixes.
+            path += os.sep
             if action == "add":
                 if path in commit.filemap:
-                    raise Fatal("add of existing file")
+                    raise Fatal("add of existing directory")
                 else:
                     commit.filemap[path] = None
-            elif action == "delete":
+            elif action in ("delete", "replace"):
                 if path in commit.filemap:
                     del commit.filemap[path]
                 else:
                     raise Fatal("delete of nonexistent directory %s." % path)
-            # TODO: Handle copyfrom
+            if copyfrom_path:
+                source_commit = self.sd_revision_to_commit(copyfrom_rev)
+                if (copyfrom_path + os.sep) not in source_commit.filemap:
+                    raise Fatal("%s not present in source commit %s" % \
+                                (copyfrom_path, copyfrom_rev))
+            # TODO: Generate copyfrom fileops
         elif kind == "file":
             if action in ("add", "change", "replace"):
                 if text is not None:
+                    if action == "add":
+                        if path in commit.filemap:
+                            raise Fatal("add of existing file")
                     blob = Blob(self.repo)
                     blob.mark = self.__newmark() 
                     with open(blob.blobfile(), "w") as wfp:
@@ -1804,8 +1825,25 @@ class StreamParser:
                 assert text is None
                 fileop = FileOp(commit)
                 fileop.construct("D", path)
+                if path in commit.filemap:
+                    del commit.filemap[path]
+                else:
+                    raise Fatal("delete of nonexistent file %s." % path)
                 commit.fileops.append(fileop)
-            # TODO: Handle copyfrom
+            if copyfrom_path:
+                source_commit = self.sd_revision_to_commit(copyfrom_rev)
+                if copyfrom_path not in source_commit.filemap:
+                    raise Fatal("%s not present in source commit %s" % \
+                                (copyfrom_path, copyfrom_rev))
+                else:
+                    copymark = source_commit.filemap[copyfrom_path]
+                fileop = FileOp(commit)
+                # We don't use C here because there is no guarantee the
+                # file is in-tree at the time of this commit; it could
+                # previously have been deleted.
+                fileop.construct("M", perms, copymark, path)
+                commit.fileops.append(fileop)
+                
 
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
