@@ -1778,11 +1778,6 @@ class StreamParser:
         assert action in ("change", "add", "delete", "replace")
         assert kind in (None, "file", "dir")
         assert not (kind == None and action != "delete")
-        # We'll need the filemap from the preceding revision.
-        if self.repo.events:
-            commit.filemap = copy.copy(self.repo.events[-1].filemap)
-        else:
-            commit.filemap = {}
         # Now generate fileops.  "change" and "replace" are not documented at
         # trunk/notes/dump-load-format.txt in the Subversion repo, so
         # here are some things to know:
@@ -1792,19 +1787,6 @@ class StreamParser:
         #   difference is relevant for directory copies.
         # TODO: handle svn:ignore
         if kind == "dir":
-            # We only track these to spot inconsistencies.
-            # os.sep is appended to avoid weird collisions with path prefixes.
-            path += os.sep
-            if action == "add":
-                if path in commit.filemap:
-                    raise Fatal("add of existing directory")
-                else:
-                    commit.filemap[path] = None
-            elif action in ("delete", "replace"):
-                if path in commit.filemap:
-                    del commit.filemap[path]
-                else:
-                    raise Fatal("delete of nonexistent directory %s." % path)
             if copyfrom_path:
                 source_commit = self.sd_revision_to_commit(copyfrom_rev)
                 if (copyfrom_path + os.sep) not in source_commit.filemap:
@@ -1814,9 +1796,6 @@ class StreamParser:
         elif kind == "file":
             if action in ("add", "change", "replace"):
                 if text is not None:
-                    if action == "add":
-                        if path in commit.filemap:
-                            raise Fatal("add of existing file")
                     blob = Blob(self.repo)
                     blob.mark = self.__newmark() 
                     with open(blob.blobfile(), "w") as wfp:
@@ -1831,10 +1810,6 @@ class StreamParser:
                 assert text is None
                 fileop = FileOp(commit)
                 fileop.construct("D", path)
-                if path in commit.filemap:
-                    del commit.filemap[path]
-                else:
-                    raise Fatal("delete of nonexistent file %s." % path)
                 commit.fileops.append(fileop)
             if copyfrom_path:
                 source_commit = self.sd_revision_to_commit(copyfrom_rev)
