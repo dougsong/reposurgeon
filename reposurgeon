@@ -1755,6 +1755,8 @@ class StreamParser:
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
         commit = Commit(self.repo)
+        # Build a linear history for the whole repo.
+        # We'll branchify it later.
         if self.parent:
             commit.parent_marks = [self.parent.mark]
             commit.filemap = copy.copy(self.parent.filemap)
@@ -1814,8 +1816,11 @@ class StreamParser:
         #   difference is relevant for directory copies.
         # TODO: handle svn:ignore
         # TODO: construct test cases for both file and directory copyfroms
+        # TODO: construct test cases for delete.
+        # TODO: will this work if Node-kind is missing?
         if kind == "dir":
             # We only track these to spot inconsistencies.
+            # If optional the Node-path header is missing, we might miss some.
             # os.sep is appended to avoid weird collisions with path prefixes.
             path += os.sep
             if action == "add":
@@ -1829,6 +1834,12 @@ class StreamParser:
                 else:
                     raise Fatal("delete of nonexistent directory %s." % path)
             if copyfrom_path:
+                if "action" == "replace":
+                    for candidate in self.filemap:
+                        if candidate.startswith(path):
+                            fileop = FileOp(commit)
+                            fileop.construct("D", candidate)
+                            commit.fileops.append(fileop)
                 source_commit = self.sd_revision_to_commit(copyfrom_rev)
                 for (sourcepath, mark) in source_commit.filemap.items():
                     if sourcepath.startswith(copyfrom_path + os.sep): 
