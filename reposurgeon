@@ -1752,6 +1752,27 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following three functions.
     #
+    def svn_commit(self, revision, uuid, props):
+        "Build a commit from the Subversion properties for a revision record."
+        commit = Commit(self.repo)
+        if self.parent:
+            commit.parent_marks = [self.parent.mark]
+            commit.filemap = copy.copy(self.parent.filemap)
+        commit.properties.append(("fossil", revision))
+        try:
+            ad = props.pop("svn:date")
+        except KeyError, key:
+            self.error("missing required %s" % key)
+        if "svn:author" in props:
+            au = props.pop("svn:author")
+        else:
+            au = "no-author"
+        if "svn:log" in props:
+            commit.comment = props.pop("svn:log")
+        commit.committer = Attribution("%s <%s@%s> %s" \
+                                       % (au, au, uuid, ad))
+        commit.properties += list(props.items())
+        return commit
     def svn_action(self, commit,
                    path, kind, action, copyfrom_rev, copyfrom_path,
                    text, props):
@@ -1766,6 +1787,7 @@ class StreamParser:
                         repr(text),
                         list(props.items())))
         # First, handle per-file properties
+        # TODO: Construct svn:executable test case.
         perms = "100644"
         for (prop, val) in props.items():
             if prop == "svn:executable":
@@ -1786,13 +1808,15 @@ class StreamParser:
         # * "replace" deletes the path before it is modified. The
         #   difference is relevant for directory copies.
         # TODO: handle svn:ignore
+        # TODO: construct test cases for both file and directory copyfroms
         if kind == "dir":
             if copyfrom_path:
                 source_commit = self.sd_revision_to_commit(copyfrom_rev)
-                if (copyfrom_path + os.sep) not in source_commit.filemap:
-                    raise Fatal("%s not present in source commit %s" % \
-                                (copyfrom_path, copyfrom_rev))
-            # TODO: Generate copyfrom fileops
+                for (sourcepath, mark) in source_commit.filemap.items():
+                    if sourcepath.startswith(copyfrom_path + os.sep): 
+                        fileop = FileOp(commit)
+                        fileop.construct("M", perms, mark, path)
+                        self.repo.backlink_blobs(fileop)
         elif kind == "file":
             if action in ("add", "change", "replace"):
                 if text is not None:
@@ -1825,24 +1849,6 @@ class StreamParser:
                 fileop.construct("M", perms, copymark, path)
                 self.repo.backlink_blobs(fileop)
                 commit.fileops.append(fileop)
-    def svn_commit(self, revision, uuid, props):
-        "Build a commit from the Subversion properties for a revision record."
-        commit = Commit(self.repo)
-        commit.properties.append(("fossil", revision))
-        try:
-            ad = props.pop("svn:date")
-        except KeyError, key:
-            self.error("missing required %s" % key)
-        if "svn:author" in props:
-            au = props.pop("svn:author")
-        else:
-            au = "no-author"
-        if "svn:log" in props:
-            commit.comment = props.pop("svn:log")
-        commit.committer = Attribution("%s <%s@%s> %s" \
-                                       % (au, au, uuid, ad))
-        commit.properties += list(props.items())
-        return commit
     def svn_commit_mark(self, commit, revision):
         "Mark a new commit, link it to a parent, and append it to the repo."
         # Zero revision is never interesting - no operations, no comment, no
@@ -1854,9 +1860,7 @@ class StreamParser:
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
-        if self.parent:
-            commit.parent_marks = [self.parent]
-        self.parent = commit.mark
+        self.parent = commit
         self.repo.events.append(commit)
         if verbose >= DEBUG_EXTRACT:
             announce("Commit header:\n" + str(commit))
