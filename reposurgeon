@@ -1848,12 +1848,6 @@ class StreamParser:
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
         commit = Commit(self.repo)
-        if self.repo.events:
-            commit.parent_marks = [self.repo.events[-1].mark]
-        # Branch discrimination is better done as
-        # postprocessing, when we have all the
-        # file operations in core.
-        commit.branch = "refs/heads/master"
         commit.properties.append(("fossil", revision))
         try:
             ad = props.pop("svn:date")
@@ -1870,9 +1864,12 @@ class StreamParser:
         commit.properties += list(props.items())
         return commit
     def svn_commit_mark(self, commit, revision):
-        "Mark a new commit and append it to the repo."
-        commit.mark = self.__newmark(revision)
+        "Mark a new commit, link it to parents, and append it to the repo."
+        if self.repo.events:
+            commit.parent_marks = [self.repo.events[-1].mark]
+        commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
+        commit.mark = self.__newmark(revision)
         self.repo.events.append(commit)
         if verbose >= DEBUG_EXTRACT:
             announce("Commit header:\n" + str(commit))
