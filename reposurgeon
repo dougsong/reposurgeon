@@ -1019,11 +1019,11 @@ class Commit:
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print("%d: %-20s" % (i, str(op)))
-    def __manifest(self):
+    def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         ancestors = {}
         for commit in self.parents():
-            ancestors.update(commit.__manifest())
+            ancestors.update(commit.manifest())
         for fileop in self.fileops:
             if fileop.op == 'M':
                 ancestors[fileop.path] = fileop.ref
@@ -1044,7 +1044,7 @@ class Commit:
         try:
             sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
-            for (path, mark) in self.__manifest().items():
+            for (path, mark) in self.manifest().items():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
