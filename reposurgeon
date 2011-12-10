@@ -1288,7 +1288,7 @@ class RepoStreamer:
                     reset.ref = commit.branch
                     reset.timestamp = commit.when()-1
                     repo.events.append(reset)
-                #commit.fileops.sort(cmp=FileOp.compare)
+                commit.fileops.sort(cmp=FileOp.compare)
                 commit.set_fossil(revision)
                 commit.properties += self.extractor.get_properties(revision) 
                 commit.mark = self.__newmark(revision)
