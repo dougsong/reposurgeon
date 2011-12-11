@@ -335,7 +335,7 @@ class GitExtractor:
         assert repo is not None  # Pacify pylint
     def post_extract(self, repo):
         for event in repo.commits():
-            event.properties = []
+            event.properties = collections.OrderedDict()
         os.system("git checkout --quiet master")
     def isclean(self):
         "Return True if repo has no unsaved changes."
@@ -375,7 +375,7 @@ class GitExtractor:
     def get_properties(self, rev):
         "Return a list of properties for the commit."
         assert rev is not None # Pacify pylint
-        return []
+        return collections.OrderedDict()
 
 # More extractors go here
 
@@ -859,7 +859,7 @@ class Commit:
         self.parent_marks = []       # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
-        self.properties = []         # commit properties (extension)
+        self.properties = collections.OrderedDict()         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
     def when(self):
@@ -906,7 +906,7 @@ class Commit:
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, "Author" + repr(2+i))
         self.committer.email_out(msg, "Committer")
-        for (name, value) in self.properties:
+        for (name, value) in self.properties.items():
             hdr = "-".join([s.capitalize() for s in name.split("-")])
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
@@ -975,7 +975,7 @@ class Commit:
                                   % (int(msg["Event-Number"]), hdr))
                         self.authors[i].date = date
                         modified = True
-        newprops = []
+        newprops = collections.OrderedDict()
         for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
@@ -986,7 +986,7 @@ class Commit:
             else:
                 propval = propval.replace(r"\n", "\n")
                 propval = propval.replace(r"\t", "\t")
-            newprops.append((propkey, propval))
+            newprops[propkey] = propval
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload()
@@ -1054,13 +1054,13 @@ class Commit:
         return directory
     def set_fossil(self, value):
         "Set the commit's fossil property (for reference-lifting)."
-        oldval = dict(self.properties).get("fossil")
+        oldval = self.properties.get("fossil")
         if oldval is not None and oldval != value:
             complain("fossil property of %s overwritten, %s to %s" \
                      % (self.mark, oldval, value))
-        self.properties.append(("fossil", value))
+        self.properties["fossil"] = value
     def get_fossil(self):
-        return dict(self.properties).get("fossil", None)
+        return self.properties.get("fossil")
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = u"commit %s\n" % self.branch
@@ -1080,7 +1080,7 @@ class Commit:
         for ancestor in self.parent_marks[1:]:
             st += "merge %s\n" % ancestor
         if write_properties:
-            for (name, value) in self.properties:
+            for (name, value) in self.properties.items():
                 if value in (True, False):
                     if value:
                         st += "property %s\n" % name
@@ -1289,7 +1289,7 @@ class RepoStreamer:
                     repo.events.append(reset)
                 commit.fileops.sort(cmp=FileOp.compare)
                 commit.set_fossil(revision)
-                commit.properties += self.extractor.get_properties(revision) 
+                commit.properties.update(self.extractor.get_properties(revision)) 
                 commit.mark = self.__newmark(revision)
                 if verbose >= DEBUG_EXTRACT:
                     announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
@@ -1752,7 +1752,7 @@ class StreamParser:
                                     if len(fields) < 3:
                                         self.error("malformed property line")
                                     elif len(fields) == 3:
-                                        commit.properties.append((fields[1], True))
+                                        commit.properties[fields[1]] = True
                                     else:
                                         name = fields[1]
                                         length = int(fields[2])
@@ -1765,7 +1765,7 @@ class StreamParser:
                                             value = value[:-1] # Trim '\n'
                                         else:
                                             self.error("garbage length field on property line")
-                                        commit.properties.append((name, value))
+                                        commit.properties[name] = value
                                 elif line.startswith("data"):
                                     commit.comment = self.fi_read_data(line)
                                 elif line.startswith("from") or line.startswith("merge"):
@@ -1810,7 +1810,7 @@ class StreamParser:
                                 else:
                                     # Dodgy bzr autodetection hook...
                                     if not self.repo.vcs:
-                                        if "branch-nick" in dict(commit.properties):
+                                        if "branch-nick" in commit.properties:
                                             for vcs in vcstypes:
                                                 if vcs.name == "bzr":
                                                     self.repo.vcs = vcs
@@ -1895,7 +1895,7 @@ class StreamParser:
             commit.comment = props.pop("svn:log")
         commit.committer = Attribution("%s <%s@%s> %s" \
                                        % (au, au, uuid, ad))
-        commit.properties += list(props.items())
+        commit.properties += list(props.items()).sorted()
         return commit
     def svn_action(self, commit, revision,
                    path, kind, action, copyfrom_rev, copyfrom_path,
@@ -1951,7 +1951,7 @@ class StreamParser:
                         # Map to git symlink and hope it flies
                         perms = "120000"
                     elif prop not in StreamParser.IgnoreProperties:
-                        commit.properties.append((path + "#" + prop, val))
+                        commit.properties[path + "#" + prop] = val
             trace.set_perms(perms)
             # Actions on directories
             if kind == "dir":
@@ -2141,9 +2141,8 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for commit in self.commits():
-            pdict = dict(commit.properties)
-            if "fossil" in pdict:
-                fp.write("%s\t%s\t%s\n" % (pdict["fossil"],
+            if "fossil" in commit.properties:
+                fp.write("%s\t%s\t%s\n" % (commit.properties["fossil"],
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
     def fast_import(self, fp, progress=False):
@@ -2217,7 +2216,7 @@ class Repository:
                     seen.add(event.cookie)
                     event.backreferences.sort(key=lambda e: e.when())
                     commit = event.backreferences[0]
-                    if "fossil" in dict(commit.properties):
+                    if "fossil" in commit.properties:
                         complain("fossil property of %s overwritten" \
                                  % commit.mark)
                     if type(event.cookie) in (type(""), type(u"")):
@@ -5053,8 +5052,8 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
         if "lift" in rest:
             fossilmap = {}
             for commit in repo.commits():
-                if "fossil" in dict(commit.properties):
-                    fossilmap[dict(commit.properties)["fossil"]] = commit
+                if "fossil" in commit.properties:
+                    fossilmap[commit.properties["fossil"]] = commit
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
