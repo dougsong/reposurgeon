@@ -1433,6 +1433,8 @@ class StreamParser:
             if newmark != self.mark:
                 self.modified = True
             self.mark = newmark
+        def clone(self):
+            return copy.copy(self)
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             self.modified = self.new = False
         def __str__(self):
@@ -1977,13 +1979,18 @@ class StreamParser:
                                 fileop = FileOp(commit)
                                 fileop.construct("D", candidate.path)
                                 commit.fileops.append(fileop)
-                    for (sourcepath, trace) in self.filemap[copyfrom_rev].items():
-                        if sourcepath.startswith(copyfrom_path + os.sep): 
-                            fileop = FileOp(commit)
-                            # TODO: reroot isn't defined yet
-                            fileop.construct("M", trace.perms, trace.mark,
-                                             reroot(sourcepath, path))
-                            self.repo.backlink_blobs(fileop)
+                    for (source, trace) in self.filemap[copyfrom_rev].items():
+                        if source.startswith(copyfrom_path + os.sep):
+                            with trace.clone() as newtrace:
+                                fileop = FileOp(commit)
+                                dest = os.join(path,
+                                               source[len(copyfrom_path+os.sep):])
+                                fileop.construct("M",
+                                                 newtrace.perms,
+                                                 newtrace.mark,
+                                                 dest)
+                                self.filemap[revision][dest] = newtrace
+                                self.repo.backlink_blobs(fileop)
             # Actions on files
             elif kind == "file":
                 if action in ("add", "change", "replace"):
