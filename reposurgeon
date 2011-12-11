@@ -1457,6 +1457,10 @@ class StreamParser:
             self.copyfrom_path = None
             self.text = None
             self.props = None
+    class RevisionAction(Commit):
+        def __init__(self, repo):
+            Commit.__init__(self, repo)
+            self.nodes = []
     # Native Subversion properties that we don't suppress:
     # svn:externals, svn:mergeinfo.  The reason for these suppressions
     # is to avoid a huge volume of junk file properties - cvs2svn
@@ -1686,7 +1690,7 @@ class StreamParser:
                                         node.props = self.sd_read_props(node.path, plen)
                                     if tlen > 0:
                                         node.text = self.sd_read_blob(tlen)
-                                    self.svn_action(commit, revision, node)
+                                    commit.nodes.append(node)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -1891,7 +1895,7 @@ class StreamParser:
     #
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
-        commit = Commit(self.repo)
+        commit = StreamParser.RevisionAction(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
         # it later.  Each revision gets a filemap that represents the
         # state of an entire checkout at that revision.
@@ -2063,6 +2067,8 @@ class StreamParser:
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
             return
+        for node in commit.nodes:
+            self.svn_action(commit, revision, node)
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
