@@ -1895,7 +1895,7 @@ class StreamParser:
             commit.comment = props.pop("svn:log")
         commit.committer = Attribution("%s <%s@%s> %s" \
                                        % (au, au, uuid, ad))
-        commit.properties += list(props.items()).sorted()
+        commit.properties.update(props)
         return commit
     def svn_action(self, commit, revision,
                    path, kind, action, copyfrom_rev, copyfrom_path,
@@ -1941,9 +1941,12 @@ class StreamParser:
                 else:
                     del self.filemap[revision][path]
             # Handle per-file and per-directory properties
-            # TODO: empty properties section on a path clears its property set.
             perms = "100644"
             if props is not None:
+                # Empty properties section on a path clears its property set.
+                for pathprop in props:
+                    if pathprop.startswith(path + "#"):
+                        del props[pathprop]
                 for (prop, val) in props.items():
                     if prop == "svn:executable":
                         perms = "100755"
