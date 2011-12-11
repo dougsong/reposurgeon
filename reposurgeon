@@ -1420,6 +1420,9 @@ class StreamParser:
             self.props = props
         def isdir(self):
             return self.mark is None
+        def __str__(self):
+            return "<Trace(%s, %s, %s>" % \
+                   (self.mark, self.perms, list(self.props.items()))
     # Native Subversion properties that we don't suppress:
     # svn:externals, svn:mergeinfo.  The reason for these suppressions
     # is to avoid a huge volume of junk file properties - cvs2svn
