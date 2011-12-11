@@ -84,17 +84,18 @@ svn-branchy: svn-flat
 		svn add trunk/README; \
 		echo "Initial README content." | svn commit -F -
 
+# The 'prefer git' suppresses writing out properties.
 SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile \
 	emptybranch exiguous
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
-	    sd-to-fi <$${test}.sd >$${test}.chk; \
+	    reposurgeon "read $${test}.sd" "prefer git" "write" >$${test}.chk; \
 	done
 svn-regress:
 	@for test in $(SVNLOADS); do \
-	    if (echo "Testing $${test}" >&2; \
-	    sd-to-fi) <$${test}.sd >/tmp/regress; \
+	    if echo "Testing $${test}" >&2; \
+	    reposurgeon "read $${test}.sd" "prefer git" "write" >/tmp/regress; \
 	    then diff -u $${test}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	    mkdir /tmp/reposteamer$$$$ ; \
