@@ -1473,6 +1473,8 @@ class StreamParser:
         self.filemap = {}       # Per-revision map of the reposutory's files
         self.parent = None
         self.branches = {}
+        self.copyset = None
+        self.branchlink = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1912,6 +1914,8 @@ class StreamParser:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
         commit.properties.update(props)
+        # Prepare for branch tracking
+        self.copyset = set([])
         return commit
     def svn_action(self, commit, revision,
                    path, kind, action, copyfrom_rev, copyfrom_path,
@@ -2049,21 +2053,28 @@ class StreamParser:
                         fileop.construct("M", trace.perms, trace.mark, path)
                         self.repo.backlink_blobs(fileop)
                         commit.fileops.append(fileop)
+            # This will used for branch re-rooting later
+            if copyfrom_rev:
+                self.copyset.add(copyfrom_rev)
     def svn_commit_mark(self, commit, revision):
         "Mark a new commit, link it to a parent, and append it to the repo."
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
             return
-        #if self.repo.events:
-        #    commit.parent_marks = [self.repo.events[-1].mark]
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
         self.parent = revision
         self.repo.events.append(commit)
-        if verbose >= DEBUG_EXTRACT:
-            announce("Commit header:\n" + str(commit))
+        # This is the dodgest part of the logic.  What
+        # we're doing here is decducing links between what
+        # will later become branches on the basis of copies.
+        if len(self.copyset) == 1:
+            self.branchlink[revision] = list(self.copyset)[0]
+        elif len(self.copyset) > 1:
+            raise Fatal("revision %s: mixed copy from revisions %s" % \
+                        (revision, self.copyset))
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if not commit.comment:
@@ -2082,8 +2093,8 @@ class StreamParser:
                 msg = commit.comment
                 if msg == None:
                     msg = ""
-                announce("%4s %2d %2d '%s'" % \
-                         (commit.mark,
+                announce("r%-4s %4s %2d %2d '%s'" % \
+                         (commit.get_fossil(), commit.mark,
                           len(commit.fileops),
                           len(commit.properties),
                           msg.strip()))
@@ -2102,7 +2113,7 @@ class StreamParser:
         if verbose >= DEBUG_EXTRACT:
             announce("Branches: %s\n" % (self.branches,))
         if self.branches:
-            branchroots = {}
+            branchroots = []
             for commit in self.repo.commits():
                 common = os.path.commonprefix(list(commit.paths()))
                 for branch in self.branches:
@@ -2119,23 +2130,29 @@ class StreamParser:
                     commit.branch = "root"
                     self.branches["root"] = None
                 if self.branches[commit.branch] is None:
-                    branchroots[commit.branch] = commit
+                    branchroots.append(commit)
                     commit.parent_marks = []
                 else:
                     commit.parent_marks = [self.branches[commit.branch]]
                 self.branches[commit.branch] = commit.mark
-            # TODO: re-root branches here
+            # Re-root branches here using the branchlink info
+            for root in branchroots:
+                if root.get_fossil() in self.branchlink:
+                    root.parent_marks = self.markmap[self.branchlink[root.get_fossil()]]
+                else:
+                    complain("can't find parent for revision %s" \
+                             % root.get_fossil())
             # Now pretty up the branch names
             for commit in self.repo.commits():
                 if commit.branch == "root":
                     commit.branch = os.path.join("refs", "heads", "root")
-                elif branch.startswith("tags" + os.sep):
-                    return branch
-                elif branch == "trunk/":
+                elif commit.branch.startswith("tags" + os.sep):
+                    return commit.branch
+                elif commit.branch == "trunk" + os.sep:
                     commit.branch = os.path.join("refs", "heads", "master")
                 else:
                     commit.branch = os.path.join("refs", "heads",
-                                                 os.path.basename(branch))
+                                                 os.path.basename(commit.branch))
         self.repo.renumber()
 
 # Generic repository-manipulation code begins here
