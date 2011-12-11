@@ -1911,12 +1911,13 @@ class StreamParser:
                         copyfrom_path,
                         len(text or ""),
                         repr(text),
-                        not props or list(props.items())))
+                        list(props.items()) if props else None))
         assert action in ("change", "add", "delete", "replace")
         assert kind in (None, "file", "dir")
         assert not (kind == None and action != "delete")
-        # Recover some information that may have been elided due to an
-        # optional header. This is why we keep directories in the filemap.
+        # Recover some information that may have been elided due to a
+        # header being optional. This is why we keep directories in
+        # the filemap.
         if kind is None:
             if path in self.filemap.revision[revision]:
                 if self.filemap.revision[revision][path].isdir():
@@ -1936,7 +1937,7 @@ class StreamParser:
                     raise Fatal("add of existing path")
             if action == "delete":
                 if trace.new:
-                    raise Fatal("delete of nonexistent directory %s." % path)
+                    raise Fatal("delete of nonexistent path %s." % path)
                 else:
                     del self.filemap[revision][path]
             # Handle per-file and per-directory properties
@@ -1980,6 +1981,7 @@ class StreamParser:
                             fileop.construct("M", trace.perms, trace.mark,
                                              reroot(sourcepath, path))
                             self.repo.backlink_blobs(fileop)
+            # Actions on files
             elif kind == "file":
                 if action in ("add", "change", "replace"):
                     if text is not None:
