@@ -390,6 +390,8 @@ DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in}
 DEBUG_MERGE     = 3    # Debug mark assignments in merging
 DEBUG_LEXER     = 4    # Debug selection-language parsing
 
+global_options = {}
+
 def screenwidth():
     "Return the current width of the terminal window."
     with popen_or_die('stty size', 'r') as tp:
@@ -1896,8 +1898,11 @@ class StreamParser:
             au = "no-author"
         if "svn:log" in props:
             commit.comment = props.pop("svn:log")
-        commit.committer = Attribution("%s <%s@%s> %s" \
-                                       % (au, au, uuid, ad))
+        if global_options["use_uuid"]:
+            attribution = "%s <%s@%s> %s" % (au, au, uuid, ad)
+        else:
+            attribution = "%s <%s> %s" % (au, au, ad)
+        commit.committer = Attribution(attribution)
         commit.properties.update(props)
         return commit
     def svn_action(self, commit, revision,
@@ -3483,6 +3488,12 @@ class RepositoryList:
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
+    Options = (
+        ("use_uuid", """\
+    If set, use Subversion UUID when faking up email addresses, a la git-svn.
+Otherwise, fake up addresses the way git cvs-import does it.
+"""),
+        )
     def __init__(self):
         cmd.Cmd.__init__(self)
         RepositoryList.__init__(self)
@@ -3494,6 +3505,8 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         self.line = ""
         self.history = []
         self.profile_log = None
+        for option in dict(RepoSurgeon.Options):
+            global_options[option] = False
     #
     # Housekeeping hooks.
     #
@@ -5232,6 +5245,43 @@ must resolve to exactly two commits.
         command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
+        #
+        # Setting options
+        #
+    def help_set(self):
+        print("""
+Set a boolean option to control reposurgeon's behavior.   With no arguments,
+displays the state of all flags. The following flags are defined:
+""")
+        for (opt, expl) in RepoSurgeon.Options:
+            print(opt + ":\n" + expl)
+    def do_set(self, line):
+        if not line.strip():
+            for opt in dict(RepoSurgeon.Options):
+                print("\t%s = %s" % (opt, global_options.get(opt, False)))
+        else:
+            for option in line.split():
+                if option not in dict(RepoSurgeon.Options):
+                    complain("no such option as '%s'" % option)
+                else:
+                    global_options[option] = True
+    def help_clear(self):
+        print("""
+Clear a boolean option to control reposurgeon's behavior.   With no arguments,
+displays the state of all flags. The following flags are defined:
+""")
+        for (opt, expl) in RepoSurgeon.Options:
+            print(opt + ":\n" + expl)
+    def do_clear(self, line):
+        if not line.strip():
+            for opt in dict(RepoSurgeon.Options):
+                print("\t%s = %s" % (opt, global_options.get(opt, False)))
+        else:
+            for option in line.split():
+                if option not in dict(RepoSurgeon.Options):
+                    complain("no such option as '%s'" % option)
+                else:
+                    global_options[option] = False
 
 if __name__ == '__main__':
     try:
