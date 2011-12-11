@@ -861,7 +861,6 @@ class Commit:
         self.fileops = []            # blob and file operation list
         self.properties = []         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
-        self.filemap = {}            # Used when building from a Subversion dump
         self.color = None
     def when(self):
         "Imputed timestamp for sorting after merges."
@@ -1411,6 +1410,16 @@ class RepoStreamer:
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
+    class Trace:
+        "All the metadata we need to retain across revisions about a file."
+        def __init__(self, mark, perms="100644", props=None):
+            self.mark = mark
+            self.perms = perms
+            if props is None:
+                props={}
+            self.props = props
+        def isdir(self):
+            return self.mark is None
     # Native Subversion properties that we don't suppress:
     # svn:externals, svn:mergeinfo.  The reason for these suppressions
     # is to avoid a huge volume of junk file properties - cvs2svn
@@ -1465,6 +1474,8 @@ class StreamParser:
         self.ccount -= len(line)
         self.import_line -= 1
         self.linebuffers.append(line)
+    def filepaths(self, revision):
+        return [path for path in self.filemap.get(revision, [])]
     # Helpers for import-stream files
     def fi_read_data(self, line=None):
         "Read a fast-import data section."
@@ -1551,11 +1562,16 @@ class StreamParser:
         assert self.ccount == checklength
         return props
     def sd_revision_to_commit(self, revision):
-        for commit in self.repo.events:
+        for commit in self.repo.commits():
             if dict(commit.properties)["fossil"] == revision:
                 return commit
         else:
             raise Fatal("invalid reference to revision %s" % revision)
+    def sd_commit_to_revision(self, commit):
+        return dict(commit.properties)["fossil"]
+    #
+    # The main event
+    #
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream.."
         self.repo.makedir()
@@ -1852,7 +1868,9 @@ class StreamParser:
         # We'll branchify it later.
         if self.parent:
             commit.parent_marks = [self.parent.mark]
-            commit.filemap = copy.copy(self.parent.filemap)
+            self.filemap[revision] = copy.copy(self.filemap.get(self.sd_commit_to_revision(self.parent), {}))
+        else:
+            self.filemap[revision] = {}
         commit.properties.append(("fossil", revision))
         try:
             ad = props.pop("svn:date")
@@ -1881,12 +1899,14 @@ class StreamParser:
                         len(text or ""),
                         repr(text),
                         list(props.items())))
-        # First, handle per-file properties
+        revision = self.sd_commit_to_revision(commit)
+        # First, handle per-file and per-directory properties
         # TODO: Construct svn:executable test case.
-        perms = "100644"
+        # TODO: empty properties section on a path clears its property set.
+        # perms = "100644"
         for (prop, val) in props.items():
             if prop == "svn:executable":
-                perms = "100755"
+                self.filemap[revision][path].perms = "100755"
             elif prop == "svn:special":
                 # TODO: Map this into a git symlink?
                 raise Fatal("can't handle symlinks yet.")
@@ -1895,11 +1915,6 @@ class StreamParser:
         assert action in ("change", "add", "delete", "replace")
         assert kind in (None, "file", "dir")
         assert not (kind == None and action != "delete")
-        # We'll need the filemap from the preceding revision.
-        if self.repo.events:
-            commit.filemap = copy.copy(self.repo.events[-1].filemap)
-        else:
-            commit.filemap = {}
         # Now generate fileops.  "change" and "replace" are not documented at
         # trunk/notes/dump-load-format.txt in the Subversion repo, so
         # here are some things to know:
@@ -1917,67 +1932,73 @@ class StreamParser:
             # os.sep is appended to avoid weird collisions with path prefixes.
             path += os.sep
             if action == "add":
-                if path in commit.filemap:
+                if path in self.filepaths(revision):
                     raise Fatal("add of existing directory")
                 else:
-                    commit.filemap[path] = None
+                    self.filemap[revision][path] = StreamParser.Trace(mark=None)
             elif action in ("delete", "replace"):
-                if path in commit.filemap:
-                    del commit.filemap[path]
+                if path in self.filepaths(revision):
+                    del self.filemap[revision][path]
                 else:
                     raise Fatal("delete of nonexistent directory %s." % path)
             if copyfrom_path:
                 if "action" == "replace":
-                    for candidate in self.filemap:
-                        if candidate.startswith(path):
+                    for candidate in self.filepaths(revision):
+                        if candidate.path.startswith(path):
                             fileop = FileOp(commit)
-                            fileop.construct("D", candidate)
+                            fileop.construct("D", candidate.path)
                             commit.fileops.append(fileop)
                 source_commit = self.sd_revision_to_commit(copyfrom_rev)
-                for (sourcepath, mark) in source_commit.filemap.items():
+                for (sourcepath, trace) in source_self.filemap[revision].items():
                     if sourcepath.startswith(copyfrom_path + os.sep): 
                         fileop = FileOp(commit)
-                        fileop.construct("M", perms, mark, path)
+                        # TODO: reroot isn't defined yet
+                        fileop.construct("M", trace.perms, trace.mark,
+                                         reroot(sourcepath, path))
                         self.repo.backlink_blobs(fileop)
         elif kind == "file":
             if action in ("add", "change", "replace"):
                 if text is not None:
                     if action == "add":
-                        if path in commit.filemap:
+                        if path in self.filepaths(revision):
                             raise Fatal("add of existing file")
                     blob = Blob(self.repo)
                     blob.mark = self.__newmark() 
                     with open(blob.blobfile(), "w") as wfp:
                         wfp.write(text)
-                    self.repo.events.append(blob) 
-                    commit.filemap[path] = blob.mark
+                    self.repo.events.append(blob)
+                    if action == "add":
+                        self.filemap[revision][path] = StreamParser.Trace(blob.mark)
                     fileop = FileOp(commit)
-                    fileop.construct("M", perms, blob.mark, path)
+                    fileop.construct("M",
+                                     self.filemap[revision][path].perms,
+                                     self.filemap[revision][path].mark,
+                                     path)
                     self.repo.backlink_blobs(fileop)
                     commit.fileops.append(fileop)
             elif action == "delete":
                 assert text is None
                 fileop = FileOp(commit)
                 fileop.construct("D", path)
-                if path in commit.filemap:
-                    del commit.filemap[path]
+                if path in self.filemap[revision]:
+                    del self.filemap[revision][path]
                 else:
                     raise Fatal("delete of nonexistent file %s." % path)
                 commit.fileops.append(fileop)
             if copyfrom_path:
-                source_commit = self.sd_revision_to_commit(copyfrom_rev)
-                if copyfrom_path not in source_commit.filemap:
+                if copyfrom_path not in self.filepaths(copyfrom_rev):
                     raise Fatal("%s not present in source commit %s" % \
                                 (copyfrom_path, copyfrom_rev))
                 else:
-                    copymark = source_commit.filemap[copyfrom_path]
-                fileop = FileOp(commit)
-                # We don't use C here because there is no guarantee the
-                # file is in-tree at the time of this commit; it could
-                # previously have been deleted.
-                fileop.construct("M", perms, copymark, path)
-                self.repo.backlink_blobs(fileop)
-                commit.fileops.append(fileop)
+                    trace = self.filemap[revision][path]
+                    trace.mark = self.filemap[copyfrom_rev][copyfrom_path].mark
+                    fileop = FileOp(commit)
+                    # We don't use C here because there is no guarantee the
+                    # file is in-tree at the time of this commit; it could
+                    # previously have been deleted.
+                    fileop.construct("M", trace.perms, trace.mark, path)
+                    self.repo.backlink_blobs(fileop)
+                    commit.fileops.append(fileop)
     def svn_commit_mark(self, commit, revision):
         "Mark a new commit, link it to a parent, and append it to the repo."
         # Zero revision is never interesting - no operations, no comment, no
