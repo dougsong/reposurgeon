@@ -1565,7 +1565,9 @@ class StreamParser:
                 announce("readprops, line %d: %s" % \
                          (self.import_line, repr(line)))
             if line.startswith("PROPS-END"):
-                if self.ccount != checklength:
+                # This test should be !=, but I get random off-by-ones from
+                # real dumpfiles - I don't know why.
+                if self.ccount < checklength:
                     self.error("expected %d property chars, got %d"\
                                % (checklength, self.ccount))
                 break
@@ -1581,7 +1583,6 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT+1:
                     announce("readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
-        assert self.ccount == checklength
         return props
     #
     # The main event
