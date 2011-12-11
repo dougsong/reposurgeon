@@ -1408,16 +1408,18 @@ class RepoStreamer:
 # to the same directory; [?Subversion client tools never generate such
 # mixed copies, but I have seen the results of cvs2svn doing it?]. 
 
+# TODO: construct test cases for both file and directory copyfroms
+# TODO: construct test cases for delete.
+# TODO: Construct svn:executable test case.
+
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class Trace:
         "All the metadata we need to retain across revisions about a file."
-        def __init__(self, mark, perms="100644", props=None):
-            self.mark = mark
-            self.perms = perms
-            if props is None:
-                props={}
-            self.props = props
+        def __init__(self):
+            self.mark = None
+            self.perms = "100644"
+            self.props = {}
         def isdir(self):
             return self.mark is None
         def __str__(self):
@@ -1867,7 +1869,7 @@ class StreamParser:
             self.filemap[revision] = copy.copy(self.filemap.get(self.parent,{}))
         else:
             self.filemap[revision] = {}
-        commit.properties.append(("fossil", revision))
+        commit.set_fossil(revision)
         try:
             ad = props.pop("svn:date")
         except KeyError, key:
@@ -1886,18 +1888,17 @@ class StreamParser:
                    path, kind, action, copyfrom_rev, copyfrom_path,
                    text, props):
         "Translate Subversion actions into import-stream file operations."
-        # if props is Nome, no proprty section.
+        # if props is None, no property section.
         # if text is None, no text section.
         if verbose >= DEBUG_EXTRACT:
-            announce("action: commit=%s, revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
-                     % (commit.mark,
-                        revision,
+            announce("action: revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
+                     % (revision,
                         path, kind, action,
                         copyfrom_rev,
                         copyfrom_path,
                         len(text or ""),
                         repr(text),
-                        list(props.items())))
+                        props and list(props.items())))
         # Recover some information that may have been elided due to an
         # optional header. This is why we keep directories in the filemap.
         if kind is None:
@@ -1905,9 +1906,8 @@ class StreamParser:
                 if self.filemap.revision[revision][path].isdir():
                     kind = "dir"
         # First, handle per-file and per-directory properties
-        # TODO: Construct svn:executable test case.
         # TODO: empty properties section on a path clears its property set.
-        # perms = "100644"
+        perms = "100644"
         if props is not None:
             for (prop, val) in props.items():
                 if prop == "svn:executable":
@@ -1920,32 +1920,26 @@ class StreamParser:
         assert action in ("change", "add", "delete", "replace")
         assert kind in (None, "file", "dir")
         assert not (kind == None and action != "delete")
-        # Now generate fileops.  "change" and "replace" are not documented at
-        # trunk/notes/dump-load-format.txt in the Subversion repo, so
-        # here are some things to know:
-        # * "change" is used for bare property changes on a directory,
-        #   and for modifying a file already in the tree.
-        # * "replace" deletes the path before it is modified. The
-        #   difference is relevant for directory copies.
-        # TODO: handle svn:ignore
-        # TODO: construct test cases for both file and directory copyfroms
-        # TODO: construct test cases for delete.
-        # TODO: will this work if Node-kind is missing?
         if kind == "dir":
-            # We only track these to spot inconsistencies.
-            # If optional the Node-path header is missing, we might miss some.
             # os.sep is appended to avoid weird collisions with path prefixes.
             path += os.sep
             if action == "add":
                 if path in self.filepaths(revision):
                     raise Fatal("add of existing directory")
                 else:
-                    self.filemap[revision][path] = StreamParser.Trace(mark=None)
+                    # Trace defaults to no mark, e.g. a directory
+                    self.filemap[revision][path] = StreamParser.Trace()
             elif action in ("delete", "replace"):
                 if path in self.filepaths(revision):
                     del self.filemap[revision][path]
                 else:
                     raise Fatal("delete of nonexistent directory %s." % path)
+            # Action "change" just falls through to here
+            if props:
+                # TODO: svn:ignore gets handled here.
+                # There are no other directory properties that can
+                # turn into fileops.
+                pass
             if copyfrom_path:
                 if "action" == "replace":
                     for candidate in self.filepaths(revision):
@@ -1963,23 +1957,23 @@ class StreamParser:
         elif kind == "file":
             if action in ("add", "change", "replace"):
                 if text is not None:
-                    if action == "add":
-                        if path in self.filepaths(revision):
-                            raise Fatal("add of existing file")
                     blob = Blob(self.repo)
                     blob.mark = self.__newmark() 
                     with open(blob.blobfile(), "w") as wfp:
                         wfp.write(text)
                     self.repo.events.append(blob)
                     if action == "add":
-                        self.filemap[revision][path] = StreamParser.Trace(blob.mark)
-                    fileop = FileOp(commit)
-                    fileop.construct("M",
-                                     self.filemap[revision][path].perms,
-                                     self.filemap[revision][path].mark,
-                                     path)
-                    self.repo.backlink_blobs(fileop)
-                    commit.fileops.append(fileop)
+                        if path in self.filepaths(revision):
+                            raise Fatal("add of existing file")
+                        self.filemap[revision][path] = StreamParser.Trace()
+                    self.filemap[revision][path].mark = blob.mark
+                fileop = FileOp(commit)
+                fileop.construct("M",
+                                 self.filemap[revision][path].perms,
+                                 self.filemap[revision][path].mark,
+                                 path)
+                self.repo.backlink_blobs(fileop)
+                commit.fileops.append(fileop)
             elif action == "delete":
                 assert text is None
                 fileop = FileOp(commit)
