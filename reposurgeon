@@ -1020,6 +1020,12 @@ class Commit:
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print("%d: %-20s" % (i, str(op)))
+    def paths(self):
+        "Return the set of all paths touched by this commit."
+        pathset = set([])
+        for fileop in self.fileops:
+            pathset |= fileop.paths()
+        return pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         ancestors = {}
@@ -1465,7 +1471,8 @@ class StreamParser:
         self.linebuffers = []
         self.markmap = {}       # Revision-to-mark map
         self.filemap = {}       # Per-revision map of the reposutory's files
-        self.parent = None      
+        self.parent = None
+        self.branches = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1967,6 +1974,8 @@ class StreamParser:
             trace.set_perms(perms)
             # Actions on directories
             if kind == "dir":
+                if path == 'trunk' + os.sep:
+                    self.branches['trunk' + os.sep] = None
                 if action == "replace":
                     if trace.new:
                         raise Fatal("replace of nonexistent directory %s." \
@@ -1980,6 +1989,15 @@ class StreamParser:
                     # turn into fileops.
                     pass
                 if copyfrom_path:
+                    if self.branches:
+                        if path.count(os.sep) == 2:
+                            if path.startswith("tags" + os.sep):
+                                self.branches[path] = None
+                            elif path.startswith("branches" + os.sep):
+                                self.branches[path] = None
+                        elif path.count(os.sep) == 1:
+                            # Exiguous top-level branch
+                            self.branches[path] = None
                     if "action" == "replace":
                         for candidate in self.filepaths(revision):
                             if candidate.path.startswith(path):
@@ -2046,9 +2064,8 @@ class StreamParser:
         self.repo.events.append(commit)
         if verbose >= DEBUG_EXTRACT:
             announce("Commit header:\n" + str(commit))
-    def svn_tagify(self, commit, name, committish, legend):
+    def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
-        assert not commit.fileops
         if not commit.comment:
             pref = ""
         else:
@@ -2070,6 +2087,7 @@ class StreamParser:
                           len(commit.fileops),
                           len(commit.properties),
                           msg.strip()))
+        # First, turn the root commit into a tag
         initial = self.repo.commits()[0]
         # There will always be one property, the fossil revision
         if not initial.fileops and len(initial.properties) >= 1:
@@ -2080,6 +2098,44 @@ class StreamParser:
                                 "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % initial.get_fossil())
             else:
                 complain("could not tagify root commit.")
+        # Now, branch analysis.
+        if verbose >= DEBUG_EXTRACT:
+            announce("Branches: %s\n" % (self.branches,))
+        if self.branches:
+            branchroots = {}
+            for commit in self.repo.commits():
+                common = os.path.commonprefix(list(commit.paths()))
+                for branch in self.branches:
+                    if common.startswith(branch):
+                        commit.branch = branch
+                        for fileop in commit.fileops:
+                            if fileop.op in ("M", "D"):
+                                fileop.path = fileop.path[len(branch):]
+                            elif fileop.op in ("R", "C"):
+                                fileop.source = fileop.source[len(branch):]
+                                fileop.target = fileop.target[len(branch):]
+                        break
+                else:
+                    commit.branch = "root"
+                    self.branches["root"] = None
+                if self.branches[commit.branch] is None:
+                    branchroots[commit.branch] = commit
+                    commit.parent_marks = []
+                else:
+                    commit.parent_marks = [self.branches[commit.branch]]
+                self.branches[commit.branch] = commit.mark
+            # TODO: re-root branches here
+            # Now pretty up the branch names
+            for commit in self.repo.commits():
+                if commit.branch == "root":
+                    commit.branch = os.path.join("refs", "heads", "root")
+                elif branch.startswith("tags" + os.sep):
+                    return branch
+                elif branch == "trunk/":
+                    commit.branch = os.path.join("refs", "heads", "master")
+                else:
+                    commit.branch = os.path.join("refs", "heads",
+                                                 os.path.basename(branch))
         self.repo.renumber()
 
 # Generic repository-manipulation code begins here
