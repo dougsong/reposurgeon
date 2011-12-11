@@ -2074,6 +2074,7 @@ class StreamParser:
                                 "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % initial.get_fossil())
             else:
                 complain("could not tagify root commit.")
+        self.repo.renumber()
 
 # Generic repository-manipulation code begins here
 
