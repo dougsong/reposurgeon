@@ -1627,7 +1627,7 @@ class StreamParser:
                                     kind = action = None
                                     copyfrom_rev = copyfrom_path = None
                                     plen = tlen = -1
-                                    text = None
+                                    text = props = None
                                 elif line.startswith("Node-kind: "):
                                     kind = StreamParser.sd_body(line)
                                     if kind not in ("file", "dir"):
@@ -1890,6 +1890,8 @@ class StreamParser:
                    path, kind, action, copyfrom_rev, copyfrom_path,
                    text, props):
         "Translate Subversion actions into import-stream file operations."
+        # if props is Nome, no proprty section.
+        # if text is None, no text section.
         if verbose >= DEBUG_EXTRACT:
             announce("action: commit=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
                      % (commit.mark,
@@ -1904,14 +1906,15 @@ class StreamParser:
         # TODO: Construct svn:executable test case.
         # TODO: empty properties section on a path clears its property set.
         # perms = "100644"
-        for (prop, val) in props.items():
-            if prop == "svn:executable":
-                self.filemap[revision][path].perms = "100755"
-            elif prop == "svn:special":
-                # TODO: Map this into a git symlink?
-                raise Fatal("can't handle symlinks yet.")
-            elif prop not in StreamParser.IgnoreProperties:
-                commit.properties.append((path + "#" + prop, val))
+        if props is not None:
+            for (prop, val) in props.items():
+                if prop == "svn:executable":
+                    self.filemap[revision][path].perms = "100755"
+                elif prop == "svn:special":
+                    # TODO: Map this into a git symlink?
+                    raise Fatal("can't handle symlinks yet.")
+                elif prop not in StreamParser.IgnoreProperties:
+                    commit.properties.append((path + "#" + prop, val))
         assert action in ("change", "add", "delete", "replace")
         assert kind in (None, "file", "dir")
         assert not (kind == None and action != "delete")
