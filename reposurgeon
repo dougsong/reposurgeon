@@ -1564,14 +1564,6 @@ class StreamParser:
                              % (target, key, repr(value)))
         assert self.ccount == checklength
         return props
-    def sd_revision_to_commit(self, revision):
-        for commit in self.repo.commits():
-            if dict(commit.properties)["fossil"] == revision:
-                return commit
-        else:
-            raise Fatal("invalid reference to revision %s" % revision)
-    def sd_commit_to_revision(self, commit):
-        return dict(commit.properties)["fossil"]
     #
     # The main event
     #
@@ -1658,11 +1650,11 @@ class StreamParser:
                                         props = self.sd_read_props(path, plen)
                                     if tlen > 0:
                                         text = self.sd_read_blob(tlen)
-                                    self.svn_action(commit,
-                                        path, kind, action,
-                                        copyfrom_rev,
-                                        copyfrom_path,
-                                        text, props)
+                                    self.svn_action(commit, revision,
+                                                    path, kind, action,
+                                                    copyfrom_rev,
+                                                    copyfrom_path,
+                                                    text, props)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -1867,8 +1859,9 @@ class StreamParser:
     def svn_commit(self, revision, uuid, props):
         "Build a commit from the Subversion properties for a revision record."
         commit = Commit(self.repo)
-        # Build a linear history for the whole repo.
-        # We'll branchify it later.
+        # Build a linear history for the whole repo.  We'll branchify
+        # it later.  Each revision gets a filemap that represents the
+        # state of an entire checkout at that revision.
         if self.parent:
             commit.parent_marks = [self.markmap[self.parent]]
             self.filemap[revision] = copy.copy(self.filemap.get(self.parent,{}))
@@ -1889,22 +1882,28 @@ class StreamParser:
                                        % (au, au, uuid, ad))
         commit.properties += list(props.items())
         return commit
-    def svn_action(self, commit,
+    def svn_action(self, commit, revision,
                    path, kind, action, copyfrom_rev, copyfrom_path,
                    text, props):
         "Translate Subversion actions into import-stream file operations."
         # if props is Nome, no proprty section.
         # if text is None, no text section.
         if verbose >= DEBUG_EXTRACT:
-            announce("action: commit=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
+            announce("action: commit=%s, revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
                      % (commit.mark,
+                        revision,
                         path, kind, action,
                         copyfrom_rev,
                         copyfrom_path,
                         len(text or ""),
                         repr(text),
                         list(props.items())))
-        revision = self.sd_commit_to_revision(commit)
+        # Recover some information that may have been elided due to an
+        # optional header. This is why we keep directories in the filemap.
+        if kind is None:
+            if path in self.filemap.revision[revision]:
+                if self.filemap.revision[revision][path].isdir():
+                    kind = "dir"
         # First, handle per-file and per-directory properties
         # TODO: Construct svn:executable test case.
         # TODO: empty properties section on a path clears its property set.
@@ -1954,8 +1953,7 @@ class StreamParser:
                             fileop = FileOp(commit)
                             fileop.construct("D", candidate.path)
                             commit.fileops.append(fileop)
-                source_commit = self.sd_revision_to_commit(copyfrom_rev)
-                for (sourcepath, trace) in source_self.filemap[revision].items():
+                for (sourcepath, trace) in self.filemap[copyfrom_rev].items():
                     if sourcepath.startswith(copyfrom_path + os.sep): 
                         fileop = FileOp(commit)
                         # TODO: reroot isn't defined yet
