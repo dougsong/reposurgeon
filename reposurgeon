@@ -1441,9 +1441,9 @@ class StreamParser:
         self.markseq = 0
         self.ccount = 0
         self.linebuffers = []
-        self.markmap = {}
-        self.filemap = {}
-        self.parent = None
+        self.markmap = {}       # Revision-to-mark map
+        self.filemap = {}       # Per-revision map of the reposutory's files
+        self.parent = None      
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1867,8 +1867,8 @@ class StreamParser:
         # Build a linear history for the whole repo.
         # We'll branchify it later.
         if self.parent:
-            commit.parent_marks = [self.parent.mark]
-            self.filemap[revision] = copy.copy(self.filemap.get(self.sd_commit_to_revision(self.parent), {}))
+            commit.parent_marks = [self.markmap[self.parent]]
+            self.filemap[revision] = copy.copy(self.filemap.get(self.parent,{}))
         else:
             self.filemap[revision] = {}
         commit.properties.append(("fossil", revision))
@@ -2010,7 +2010,7 @@ class StreamParser:
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
-        self.parent = commit
+        self.parent = revision
         self.repo.events.append(commit)
         if verbose >= DEBUG_EXTRACT:
             announce("Commit header:\n" + str(commit))
