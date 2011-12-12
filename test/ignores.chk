@@ -1,10 +1,9 @@
 blob
 mark :1
 data 112
-This repository is branchless.  It includes ignore propety sets...
+This repository is branchless.  It includes ignore property sets...
 
 ...which should turn into .gitignore files.
-
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322694387 +0000
@@ -42,11 +41,10 @@ M 100644 :5 README
 commit refs/heads/master
 mark :7
 committer esr <esr> 1322694685 +0000
-data 126
+data 103
 Time to delete the svn:ignore property.
 
-The result we want is that .gitignore is no longer
-generated into the file manifest.
+The result we want is that .gitignore is no longer generated.
 from :6
 D .gitignore
 

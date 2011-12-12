@@ -97,7 +97,7 @@ Content-length: 170
 K 7
 svn:log
 V 72
-Creare an empty to-level branch for test purposes.  Should be tagified.
+Create an empty to-level branch for test purposes.  Should be tagified.
 
 K 10
 svn:author

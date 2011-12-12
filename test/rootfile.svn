@@ -113,12 +113,12 @@ Node-kind: file
 Node-action: add
 Prop-content-length: 10
 Text-content-length: 81
-Text-content-md5: 2da26cacf64e76f56d1f1eb6ac548c03
-Text-content-sha1: 81f177e8bea729fac504bc7007d11d6cf75e41f6
+Text-content-md5: 7fdf0726bdd9fa5a35478ac0d9f18b49
+Text-content-sha1: 3c98bc6469db7d837f0c5ddf0fe6054607521655
 Content-length: 91
 
 PROPS-END
-This is an exiguous file which should be stoffed in a root branch on conversion.
+This is an exiguous file which should be stuffed in a root branch on conversion.
 
 
 Revision-number: 4

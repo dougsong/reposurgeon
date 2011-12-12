@@ -22,7 +22,7 @@ tag emptybranch
 from :2
 tagger esr <esr> 1323167895 +0000
 data 137
-Creare an empty to-level branch for test purposes.  Should be tagified.
+Create an empty to-level branch for test purposes.  Should be tagified.
 
 [[Tag from directory creation or copy commit at Subversion r3]]
 

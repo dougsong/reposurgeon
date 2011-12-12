@@ -36,15 +36,14 @@ Node-kind: file
 Node-action: add
 Prop-content-length: 10
 Text-content-length: 112
-Text-content-md5: 4ab5aeeaebc3e3f8ff43c3fae94c1d20
-Text-content-sha1: 82e607016fe2378042f9110f406712528e516031
+Text-content-md5: 85d680f9380fc4be3d57640c4e52a900
+Text-content-sha1: 57b3966e1d30a1ebb20813eb71b49c529276b02f
 Content-length: 122
 
 PROPS-END
-This repository is branchless.  It includes ignore propety sets...
+This repository is branchless.  It includes ignore property sets...
 
 ...which should turn into .gitignore files.
-
 
 Revision-number: 2
 Prop-content-length: 145
@@ -111,16 +110,15 @@ Now we modiy the README just as a placeholder.
 
 
 Revision-number: 4
-Prop-content-length: 225
-Content-length: 225
+Prop-content-length: 202
+Content-length: 202
 
 K 7
 svn:log
-V 126
+V 103
 Time to delete the svn:ignore property.
 
-The result we want is that .gitignore is no longer
-generated into the file manifest.
+The result we want is that .gitignore is no longer generated.
 
 K 10
 svn:author
