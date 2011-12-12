@@ -1340,11 +1340,16 @@ class RepoStreamer:
 #
 # First, syntax.  It is implied, but not expressed, that Revision and Node
 # records are in an RFC822-like format - headers followed by a spacer line
-# followed by a body.  Each header set ends with an Content-Length header
-# giving the length of the record body in chars *excluding the spacer line*.
-# (Exception: a node describing a copy operation ends with a Node-copyfrom-path
-# line and has no content.) A Revision record begins with a Revision-number
-# header; a Node record begins with a Node-path header.
+# followed by a body.  A Revision record begins with a Revision-number
+# line; a Node record begins with a Node-path line.
+#
+# Each header normally ends with a Content-Length line giving the
+# length of the record body in chars *excluding the spacer line*.
+# But some records can never have a body and thus have no content
+# length. A node describing a copy operation ends with a Node-copyfrom-path
+# line and has no content. A node describing a delete action ends with the
+# Node-action line and has no content. Both these records must still be
+# followed by soacer lines.
 #
 # The body of a Revision record consists entirely of a property
 # section.  The body of a Node record consists of an optional property
