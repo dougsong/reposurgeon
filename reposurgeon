@@ -1432,7 +1432,7 @@ class RepoStreamer:
 # a Content-length header.  This is erroneous (node records can end with
 # a Node-copyfrom-path line) and may represent a bug.
 
-# TODO: construct test cases for both file and directory copyfroms
+# TODO: construct test cases for both file copyfroms
 # TODO: construct test cases for delete.
 # TODO: Construct svn:executable test case.
 
@@ -2119,7 +2119,7 @@ class StreamParser:
             # This will used for branch re-rooting later
             if node.copyfrom_rev:
                 copyset.add(node.copyfrom_rev)
-        commit.branch = "refs/heads/master"
+        commit.branch = os.path.join("refs", "heads", "master") + os.sep
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
         self.parent = revision
@@ -2176,12 +2176,7 @@ class StreamParser:
         # Now, branch analysis.
         if verbose >= DEBUG_EXTRACT:
             announce("Branches: %s" % (self.branches,))
-        if not self.branches:
-            # TODO: stop doing this and let the branch name default to master
-            # (once we get all the regression tests working again.)
-            for commit in self.repo.commits():
-                commit.branch = "root"
-        else:
+        if self.branches:
             # Don't leave the linear relationships in place
             for commit in self.repo.commits():
                 commit.parent_marks = []
