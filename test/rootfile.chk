@@ -13,7 +13,7 @@ M 100644 :1 README
 blob
 mark :3
 data 81
-This is an exiguous file which should be stoffed in a root branch on conversion.
+This is an exiguous file which should be stuffed in a root branch on conversion.
 
 reset refs/heads/root
 commit refs/heads/root
