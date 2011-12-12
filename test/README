@@ -1,7 +1,7 @@
 = Notes on the test machinery = 
 
 A .fi extension means it's a git fast-import stream.  
-An .sd extension means it's a Subversion repo dump.
+An .svn extension means it's a Subversion repo dump.
 A .chk extension means it's expected output from a test
 A .tst extension means it's a test driver script
 
@@ -18,28 +18,28 @@ from foo.sd.  Here is a summary of the test sources:
 |=============================================================================
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |cut.fi          |Test load for cut operation; uses bzr repo
-|emptybranch.sd  |Branchy repo with empty branch at top level
-|exiguous.sd     |Branchy repo with exiguous branch at top level
+|emptybranch.svn |Branchy repo with empty branch at top level
+|exiguous.svn    |Branchy repo with exiguous branch at top level
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |gsoc.fi         |The Google Summer of Code branch of Roundup
 |gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
-|nontipcopy.sd   |Two branches, with the creation right after a tag copy.
+|nontipcopy.svn  |Two branches, with the creation right after a tag copy.
 |references.fi   |Synthetic test load for CVS and Subversion reference cookies,
 |references.tst  |Tests reference lifting commands using references.fi 
-|rootfile.sd     |Branchy layout with a file at the root level.
+|rootfile.svn    |Branchy layout with a file at the root level.
 |roundup.fi      |Early segment of the Roundup tracker repo
 |roundup.tst     |Test to see how it renders  the two different botched starts
-|samplebranch.sd |Two-branch history with interleaved commits.
+|samplebranch.svn|Two-branch history with interleaved commits.
 |simple.fi       |Earlier version of the reposurgeon repo, kept as a test
 |simple.tst      |Test expression interpreter and basic operations
-|simpletag.sd    |Standard layout. Linear. A couple of tags and no branches.
+|simpletag.svn   |Standard layout. Linear. A couple of tags and no branches.
 |testmerge.tst   |Test merge on bzr and testrepo
 |testrepo.fi     |Synthetic repo made to check deltion results
 |testrepo.tst    |Exercises all the deletion cases, with coverage checks
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
-|vanilla.sd      |Standard layout. Linear. Simplest case, no tags or branches.
+|vanilla.svn     |Standard layout. Linear. Simplest case, no tags or branches.
 |=============================================================================
 
 roundup-authors.txt is the auxiliary file used to test author mapping

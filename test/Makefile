@@ -3,9 +3,9 @@
 all: clean roundtrip mailboxing fi-regress coalesce git-regress #svn-regress
 	@echo "No diff output is good news."
 
-.SUFFIXES: .sd .chk
+.SUFFIXES: .svn .chk
 
-.sd.chk:
+.svn.chk:
 	reposurgeon "read $<" "prefer git" "write $@"
 
 buildregress: fi-regress svn-regress
@@ -97,12 +97,12 @@ SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile \
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
-	    reposurgeon "read $${test}.sd" "prefer git" "write" >$${test}.chk; \
+	    reposurgeon "read $${test}.svn" "prefer git" "write" >$${test}.chk; \
 	done
 svn-regress:
 	@for test in $(SVNLOADS); do \
 	    if echo "Testing $${test}" >&2; \
-	    reposurgeon "read $${test}.sd" "prefer git" "write" >/tmp/regress; \
+	    reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress; \
 	    then diff -u $${test}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	    mkdir /tmp/reposteamer$$$$ ; \
