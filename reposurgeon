@@ -1697,6 +1697,7 @@ class StreamParser:
                                         node.props = self.sd_read_props(node.path, plen)
                                     if tlen > 0:
                                         node.text = self.sd_read_blob(tlen)
+                                    commit.nodes.append(node)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -2028,8 +2029,8 @@ class StreamParser:
                             if source.startswith(node.copyfrom_path + os.sep):
                                 with trace.clone() as newtrace:
                                     fileop = FileOp(commit)
-                                    dest = os.join(node.path,
-                                                   source[len(node.copyfrom_path+os.sep):])
+                                    dest = os.path.join(node.path,
+                                                        source[len(node.copyfrom_path+os.sep):])
                                     fileop.construct("M",
                                                      newtrace.perms,
                                                      newtrace.mark,
