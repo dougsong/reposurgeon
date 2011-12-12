@@ -6,10 +6,6 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-# To do:
-# * RCS extraction
-# * Bitkeeper extraction.
-#
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import readline, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
