@@ -2026,7 +2026,8 @@ class StreamParser:
                                     fileop.construct("D", candidate.path)
                                     commit.fileops.append(fileop)
                         for (source, trace) in self.filemap[node.copyfrom_rev].items():
-                            if source.startswith(node.copyfrom_path + os.sep):
+                            if source.startswith(node.copyfrom_path + os.sep) \
+                                   and trace.mark:
                                 with trace.clone() as newtrace:
                                     fileop = FileOp(commit)
                                     dest = os.path.join(node.path,
@@ -2163,8 +2164,13 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
                 for commit in self.repo.commits():
-                    announce("r%-4s %4s %2d %2d '%s'" % \
-                             (commit.get_fossil(), commit.mark,
+                    if commit.parent_marks:
+                        ancestor = commit.parent_marks[0]
+                    else:
+                        ancestor = '-'
+                    announce("r%-4s %4s %4s %2d %2d '%s'" % \
+                             (commit.get_fossil(),
+                              commit.mark, ancestor,
                               len(commit.fileops),
                               len(commit.properties),
                               commit.branch))
