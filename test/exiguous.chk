@@ -17,6 +17,7 @@ This is a test Subversion repository
 
 This is a modification that goes in the branch version only.
 
+reset refs/heads/realbranch
 commit refs/heads/realbranch
 mark :4
 committer esr <esr> 1323170893 +0000

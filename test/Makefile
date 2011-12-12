@@ -1,10 +1,11 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing fi-regress coalesce git-regress #svn-regress
+all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 	@echo "No diff output is good news."
 
 .SUFFIXES: .svn .chk
 
+# The 'prefer git' suppresses writing out properties.
 .svn.chk:
 	reposurgeon "read $<" "prefer git" "write $@"
 
@@ -91,13 +92,12 @@ svn-branchy: svn-flat
 svn-dump:
 	svnadmin dump test-repo 
 
-# The 'prefer git' suppresses writing out properties.
-SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile \
-	emptybranch exiguous
+SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy \
+	emptybranch exiguous # rootfile
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
-	    reposurgeon "read $${test}.svn" "prefer git" "write" >$${test}.chk; \
+	    rm -f $${test}.chk && make --quiet $${test}.chk; \
 	done
 svn-regress:
 	@for test in $(SVNLOADS); do \
