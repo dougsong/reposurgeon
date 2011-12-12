@@ -1229,14 +1229,8 @@ dumpfiles or dump from a Subversion repository (not a checkout
 directory). You can usually use use svnsync to make a local mirror of
 the repository you are interested in. <application>reposurgeon</application>
 cannot write a Subversion repository, but history read from one can be
-exported to ant VCS for which <application>reposurgeon</application> has
-an import.</para>
-
-<para><application>reposurgeon</application> tries to adapt to
-whatever directory layout it finds in the top level of the Subversion
-checkout directory. It can cope with a top level containing any
-nonempty subset of the standard directories (trunk, tags, branches)
-plus any number of exiguous branch directories.</para>
+exported to any VCS for which <application>reposurgeon</application> has
+an importer specified.</para>
 
 <para>Here are the rules used for mapping subdirectories in a 
 Subversion repository to branches:</para>
@@ -1276,19 +1270,15 @@ that might have value; it is left up to the user to manually remove
 unwanted tags.</para>
 
 <para>The following per-file properties cannot be expressed in
-import-stream format and are discarded: svn:mime-type,
-svn:keywords, svn:eol-style, svn:needs-lock. The svn:executable
-property is translated.</para>
+import-stream format and are discarded: svn:mime-type, svn:keywords,
+svn:eol-style, svn:needs-lock. The svn:executable property is
+translated into permission settings in the input stream.</para>
 
 <para>Other file properties are preserved as per-commit properties
 using the properties extension, and will thus be visible and editable
 in the mailboxized view of commit metadata. (Due to volume of output
 from <command>svn proplist</command> attempting to collect file
 properties in every revision would bew unusably slow.)</para>
-
-<para>On commits before the last, directory properties of branch
-directories and their immedate subdirectories (<command>svn proplist
---depth=immediate</command> are prserved.</para>
 
 <para>Per-directory svn:ignore properties become .gitignore files; if
 you're somehow managed to have an actual .gitignore file in a
