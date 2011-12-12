@@ -85,7 +85,8 @@ class VCS:
                  importer,
                  checkout,
                  preserve,
-                 authormap):
+                 authormap,
+                 notes):
         self.name = name
         self.subdirectory = subdirectory
         self.exporter = exporter
@@ -97,6 +98,7 @@ class VCS:
         self.checkout = checkout
         self.preserve = preserve
         self.authormap = authormap
+        self.notes = notes
     def __repr__(self):
         return "         Name: " + str(self.name) + "\n" \
              + " Subdirectory: " + str(self.subdirectory) + "\n" \
@@ -108,7 +110,8 @@ class VCS:
              + "     Importer: " + str(self.importer) + "\n" \
              + "     Checkout: " + str(self.checkout) + "\n" \
              + "     Preserve: " + str(self.preserve) + "\n" \
-             + "    Authormap: " + str(self.authormap) + "\n"
+             + "    Authormap: " + str(self.authormap) + "\n" \
+             + "        Notes: " + str(self.notes) + "\n"
 
 # Most knowledge about specific version-control systems lives in the
 # following class list. Exception; there's a git-specific hook in the
@@ -144,12 +147,6 @@ class VCS:
 #
 # %(basename) is replaced with the basename of the repo directory.
 #
-# Subversion/RCS/CVS aren't in this table because exporting from them
-# requires fixups of usernames in the committer information to full
-# email addresses.  Trying to handle that entirely inside this tool
-# would be excessively messy, so we don't. Instead we let the user
-# transform dump files and cope with the export/import himself.
-#
 vcstypes = [
     VCS(name="git",
         subdirectory=".git",
@@ -161,8 +158,9 @@ vcstypes = [
         checkout="git checkout",
         lister="git ls-files",
         preserve=set(['.git/config', '.git/hooks']),
-        authormap=".git/cvs-authors"),
-    # The bzr import/export methods require the bzr-fast-import plugin.
+        authormap=".git/cvs-authors",
+        notes="The authormap is not required, but will be used if present."),
+    # 
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
@@ -173,8 +171,8 @@ vcstypes = [
         importer="bzr fast-import -",
         checkout="bzr checkout",
         preserve=set([]),
-        authormap=None),
-    # The hg export-import methods are not part of stock hg
+        authormap=None,
+        notes="Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
     VCS(name="hg",
         subdirectory=".hg",
@@ -186,7 +184,20 @@ vcstypes = [
         importer="hg fastimport %(tempfile)s",
         checkout="hg checkout",
         preserve=set([".hg/hgrc"]),
-        authormap=None),
+        authormap=None,
+        notes="The hg export-import methods are not part of stock Mercurial."),
+    VCS(name="svn",
+        subdirectory="locks",
+        exporter="svnadmin dump",
+        styleflags=tuple([]),
+        properties=False,
+        initializer=None,
+        importer=None,
+        checkout=None,
+        lister=None,
+        preserve=set([]),
+        authormap=None,
+        notes="Read-only. Run from the repository, not a checkout directory."),
     ]
 
 # How to write extractor classes:
@@ -3197,7 +3208,7 @@ def rebuild_repo(repo, target, preferred):
     vcs = preferred or repo.vcs
     if not vcs:
         raise Recoverable("please prefer a repo type first")
-    if not hasattr(vcs, "exporter"):
+    if not hasattr(vcs, "exporter") or vcs.importer is None:
         raise Recoverable("%s repositories are supported for read only." \
                           % preferred.name)
 
@@ -4366,8 +4377,9 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
-            print("Other systems supported for read only: %s\n" \
-                  % " ".join(ext.name for ext in extractors if ext.visible))
+            if [ext for ext in extractors if ext.visible]:
+                print("Other systems supported for read only: %s\n" \
+                      % " ".join(ext.name for ext in extractors if ext.visible))
         else:
             for repotype in vcstypes + extractors:
                 if line.lower() == repotype.name:
