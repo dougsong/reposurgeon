@@ -1428,8 +1428,7 @@ class RepoStreamer:
 # a Content-length header.  This is erroneous (node records can end with
 # a Node-copyfrom-path line) and may represent a bug.
 
-# TODO: construct test cases for both file copyfroms
-# TODO: construct test cases for delete.
+# TODO: construct test cases for file copyfrom
 # TODO: Construct svn:executable test case.
 
 class StreamParser:
@@ -1689,7 +1688,10 @@ class StreamParser:
                                     node.action = StreamParser.sd_body(line)
                                     if node.action not in ("change", "add",
                                                       "delete", "replace"):
-                                        self.error("unknown action %s" % node.action)
+                                        self.error("unknown action %s" \
+                                                   % node.action)
+                                    if node.action == "delete":
+                                        commit.nodes.append(node)
                                 elif line.startswith("Node-copyfrom-rev: "):
                                     node.copyfrom_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Node-copyfrom-path: "):
@@ -1963,9 +1965,11 @@ class StreamParser:
             # header being optional. This is why we keep directories in
             # the filemap.
             if node.kind is None:
-                if node.path in self.filemap.revision[revision]:
-                    if self.filemap.revision[revision][node.path].isdir():
+                if node.path in self.filemap[revision]:
+                    if self.filemap[revision][node.path].isdir():
                         node.kind = "dir"
+                    else:
+                        node.kind = "file"
                 else:
                     raise Fatal("revision %s: null kind on nonexistent %s" % \
                                 (revision, node.path))
@@ -2094,7 +2098,7 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
-                        del self.filemap[revision][node.path]
+                        #del self.filemap[revision][node.path]
                     if node.copyfrom_path:
                         if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
                             raise Fatal("%s not present in source commit %s" % \
