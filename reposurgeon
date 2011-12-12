@@ -1416,6 +1416,10 @@ class RepoStreamer:
 # copyfroms to the same directory, even mixed directory and file copies
 # to the same directory; [?Subversion client tools never generate such
 # mixed copies, but I have seen the results of cvs2svn doing it?]. 
+#
+# Note: The Subversion notes show a Node record always endong with
+# a Content-length header.  This is erroneous (node records can end with
+# a Node-copyfrom-path line) and may represent a bug.
 
 # TODO: construct test cases for both file and directory copyfroms
 # TODO: construct test cases for delete.
