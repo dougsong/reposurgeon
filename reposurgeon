@@ -2116,6 +2116,10 @@ class StreamParser:
         if verbose >= DEBUG_EXTRACT:
             announce("Branches: %s\n" % (self.branches,))
         if self.branches:
+            # Don't leave the linear relationships in place
+            for commit in self.repo.commits():
+                commit.parent_marks = []
+            # Instead, determine a branch for each commit...
             branchroots = []
             for commit in self.repo.commits():
                 common = os.path.commonprefix([node.path for node in commit.nodes])
@@ -2132,6 +2136,8 @@ class StreamParser:
                 else:
                     commit.branch = "root"
                     self.branches["root"] = None
+            # ...then rebuild parent links so they follow the branches
+            for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
                     commit.parent_marks = []
@@ -2145,6 +2151,17 @@ class StreamParser:
                 else:
                     complain("can't find parent for revision %s (mark %s)" \
                              % (root.get_fossil(), root.mark))
+            if verbose >= DEBUG_EXTRACT:
+                announce("after branch analysis:")
+                for commit in self.repo.commits():
+                    msg = commit.comment
+                    if msg == None:
+                        msg = ""
+                        announce("r%-4s %4s %2d %2d '%s'" % \
+                                 (commit.get_fossil(), commit.mark,
+                                  len(commit.fileops),
+                                  len(commit.properties),
+                                  commit.branch))
             # Now pretty up the branch names
             for commit in self.repo.commits():
                 if commit.branch == "root":
