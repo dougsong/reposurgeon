@@ -52,6 +52,6 @@ roundup-authors.txt is the auxiliary file used to test author mapping
 
    svn copy file://${PWD}/test-repo/trunk file://${PWD}/test-repo/tags/foo
 
-3. sd-to-fi -d will dump the new test load to stdout.
+3. 'make svn-dump' will dump the new test load to stdout.
 
 

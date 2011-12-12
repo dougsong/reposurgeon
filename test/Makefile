@@ -83,6 +83,8 @@ svn-branchy: svn-flat
 		echo "This is a test Subversion repository" >trunk/README; \
 		svn add trunk/README; \
 		echo "Initial README content." | svn commit -F -
+svn-dump:
+	svnadmin dump test-repo 
 
 # The 'prefer git' suppresses writing out properties.
 SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy rootfile \
