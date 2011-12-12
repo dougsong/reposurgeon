@@ -1486,7 +1486,6 @@ class StreamParser:
         self.filemap = {}       # Per-revision map of the reposutory's files
         self.parent = None
         self.branches = {}
-        self.copyset = None
         self.branchlink = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
@@ -1922,7 +1921,6 @@ class StreamParser:
         commit.committer = Attribution(attribution)
         commit.properties.update(props)
         # Prepare for branch tracking
-        self.copyset = set([])
         return commit
     def svn_action(self, commit, revision, node):
         "Translate Subversion actions into import-stream file operations."
@@ -2058,17 +2056,18 @@ class StreamParser:
                         fileop.construct("M", trace.perms, trace.mark, node.path)
                         self.repo.backlink_blobs(fileop)
                         commit.fileops.append(fileop)
-            # This will used for branch re-rooting later
-            if node.copyfrom_rev:
-                self.copyset.add(node.copyfrom_rev)
     def svn_commit_mark(self, commit, revision):
         "Mark a new commit, link it to a parent, and append it to the repo."
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
             return
+        copyset = set([])
         for node in commit.nodes:
             self.svn_action(commit, revision, node)
+            # This will used for branch re-rooting later
+            if node.copyfrom_rev:
+                copyset.add(node.copyfrom_rev)
         commit.branch = "refs/heads/master"
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
@@ -2077,11 +2076,11 @@ class StreamParser:
         # This is the dodgest part of the logic.  What
         # we're doing here is decducing links between what
         # will later become branches on the basis of copies.
-        if len(self.copyset) == 1:
-            self.branchlink[revision] = list(self.copyset)[0]
-        elif len(self.copyset) > 1:
+        if len(copyset) == 1:
+            self.branchlink[revision] = list(copyset)[0]
+        elif len(copyset) > 1:
             raise Fatal("revision %s: mixed copy from revisions %s" % \
-                        (revision, self.copyset))
+                        (revision, copyset))
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if not commit.comment:
