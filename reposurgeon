@@ -1432,7 +1432,6 @@ class StreamParser:
         def __init__(self):
             self.mark = None
             self.perms = "100644"
-            self.props = None
             self.new = True
             self.modified = False
         def __enter__(self):
@@ -1452,12 +1451,7 @@ class StreamParser:
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             self.modified = self.new = False
         def __str__(self):
-            if self.props:
-                propshow = list(self.props.items())
-            else:
-                propshow = None
-            return "<Trace(%s, %s, %s>" % \
-                   (self.mark, self.perms, propshow)
+            return "<Trace(%s, %s)>" % (self.mark, self.perms)
     class NodeAction:
         def __init__(self):
             self.path = None
@@ -2010,7 +2004,10 @@ class StreamParser:
                         else:
                             del self.filemap[revision][node.path]
                     # Action "change" just falls through to here
-                    if node.props:
+                    if node.props is not None:
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("revision %s: setting properties %s on %s" \
+                                     % (revision, node.path, node.props))
                         # svn.ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
@@ -2034,17 +2031,11 @@ class StreamParser:
                                                  newtrace.mark,
                                                  gitignore_path)
                                 self.repo.backlink_blobs(fileop)
-                            commit.fileops.append(fileop)
-                    elif node.props is not None:
-                        if trace.props is not None \
-                               and "svn:ignore" in trace.props:
-                            gitignore_path = os.path.join(node.path,
-                                                          ".gitignore")
+                        else:
                             del self.filemap[revision][gitignore_path]
                             fileop = FileOp(commit)
-                            fileop.construct("D", node.path)
-                            commit.fileops.append(fileop)
-                    trace.props = node.props
+                            fileop.construct("D", gitignore_path)
+                        commit.fileops.append(fileop)
                     # Handle directory copies used for branching and tags
                     if node.copyfrom_path:
                         if self.branches:
