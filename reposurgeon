@@ -1804,9 +1804,9 @@ class RepoStreamer:
 # to the same directory; [?Subversion client tools never generate such
 # mixed copies, but I have seen the results of cvs2svn doing it?]. 
 #
-# Note: The Subversion notes show a Node record always endong with
+# Note: The Subversion notes show a Node record always ending with
 # a Content-length header.  This is erroneous (node records can end with
-# a Node-copyfrom-path line) and may represent a bug.
+# a Node-copyfrom-path or Node-action line) and may represent a bug.
 
 # TODO: construct test cases for file copyfrom
 # TODO: Construct svn:executable test case.
