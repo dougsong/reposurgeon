@@ -1432,6 +1432,7 @@ class StreamParser:
         def __init__(self):
             self.mark = None
             self.perms = "100644"
+            self.props = None
             self.new = True
             self.modified = False
         def __enter__(self):
@@ -1960,7 +1961,7 @@ class StreamParser:
                     if self.filemap.revision[revision][node.path].isdir():
                         node.kind = "dir"
                 else:
-                    raise Fatal("rebvision %s: null kind on nonexistent %s" % \
+                    raise Fatal("revision %s: null kind on nonexistent %s" % \
                                 (revision, node.path))
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == "dir":
@@ -2005,10 +2006,42 @@ class StreamParser:
                             del self.filemap[revision][node.path]
                     # Action "change" just falls through to here
                     if node.props:
-                        # TODO: svn:ignore gets handled here.
+                        # svn.ignore gets handled here,
+                        if node.path == os.sep:
+                            gitignore_path = ".gitignore"
+                        else:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
                         # There are no other directory properties that can
                         # turn into fileops.
-                        pass
+                        if "svn:ignore" in node.props:
+                            blob = Blob(self.repo)
+                            blob.mark = self.__newmark() 
+                            with open(blob.blobfile(), "w") as wfp:
+                                wfp.write(node.props["svn:ignore"])
+                            self.repo.events.append(blob)
+                            with StreamParser.Trace() as newtrace:
+                                newtrace.path = gitignore_path
+                                newtrace.set_mark(blob.mark)
+                                self.filemap[revision][newtrace.path] = newtrace
+                                fileop = FileOp(commit)
+                                fileop.construct("M",
+                                                 newtrace.perms,
+                                                 newtrace.mark,
+                                                 newtrace.path)
+                                self.repo.backlink_blobs(fileop)
+                            commit.fileops.append(fileop)
+                    elif node.props == {}:
+                        if trace.props is not None \
+                               and "svn:ignore" in trace.props:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
+                            del self.filemap[revision][gitignore_path]
+                            fileop = FileOp(commit)
+                            fileop.construct("D", node.path)
+                            commit.fileops.append(fileop)
+                    trace.props = node.props
+                    # Handle directory copies used for branching and tags
                     if node.copyfrom_path:
                         if self.branches:
                             if node.path.count(os.sep) == 2:
@@ -2058,6 +2091,7 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
+                        del self.filemap[revision][node.path]
                     if node.copyfrom_path:
                         if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
                             raise Fatal("%s not present in source commit %s" % \
@@ -2135,7 +2169,12 @@ class StreamParser:
         # Now, branch analysis.
         if verbose >= DEBUG_EXTRACT:
             announce("Branches: %s" % (self.branches,))
-        if self.branches:
+        if not self.branches:
+            # TODO: stop doing this and let the branch name default to master
+            # (once we get all the regressiion tests working again.)
+            for commit in self.repo.commits():
+                commit.branch = "root"
+        else:
             # Don't leave the linear relationships in place
             for commit in self.repo.commits():
                 commit.parent_marks = []
@@ -2194,16 +2233,16 @@ class StreamParser:
                                     os.path.basename(commit.branch[:-1]),
                                     commit.parent_marks[0],
                                     "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
-            # Now pretty up the branch names
-            for commit in self.repo.commits():
-                if commit.branch == "root":
-                    commit.branch = os.path.join("refs", "heads", "root")
-                elif commit.branch.startswith("tags" + os.sep):
-                    return commit.branch
-                elif commit.branch == "trunk" + os.sep:
-                    commit.branch = os.path.join("refs", "heads", "master")
-                else:
-                    commit.branch = os.path.join("refs", "heads",
+        # Now pretty up the branch names
+        for commit in self.repo.commits():
+            if commit.branch == "root":
+                commit.branch = os.path.join("refs", "heads", "root")
+            elif commit.branch.startswith("tags" + os.sep):
+                return commit.branch
+            elif commit.branch == "trunk" + os.sep:
+                commit.branch = os.path.join("refs", "heads", "master")
+            else:
+                commit.branch = os.path.join("refs", "heads",
                                                  os.path.basename(commit.branch[:-1]))
         self.repo.renumber()
 
