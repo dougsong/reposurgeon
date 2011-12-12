@@ -65,7 +65,9 @@ repostory history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.</para>
 
 <para>At time of writing the following VCSes are supported through exporters: 
-git itself, hg, and bzr. Subversion is supported through an extractor.</para>
+git itself, hg, and bzr. Subversion repositories can be imported but not
+exported. A test extractor exists for git, but is normally diabled in
+favor of the regular exporter.</para>
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNINGS</title>
@@ -298,12 +300,13 @@ and manipulate the in-core list and the selection.</para>
 </term>
 <listitem><para>With a directory-name argument, this command attempts
 to read in the contents of a repository in any supported
-version-control system under that directory; read with no
-arguments does this in the current directory. If the argument is the
-name of a plain file, it will be read in as a fast-import stream. With
-an argument of <quote>-</quote>, this command reads a fast-import
-stream from standard input (this will be useful in filters constructed
-with command-line arguments).</para>
+version-control system under that directory; read with no arguments
+does this in the current directory. If the argument is the name of a
+plain file, it will be read in as a fast-import stream or Subversion
+dumpfile. With an argument of <quote>-</quote>, this command reads a
+fast-import stream or Subversion dumpfile from standard input (this
+will be useful in filters constructed with command-line
+arguments).</para>
 
 <para>If the read location is a git repository and contains a 
 <filename>.git/cvsauthors</filename> file (such as is left in in place
@@ -845,7 +848,7 @@ when a human does it.</para>
 
 <para>A Subversion cookie is a comment substring of the form
 [[SVN:ddddd]] (example: [[SVN:2355]] with the revision read directly
-via the Subversion extractor, deduced from git-svn metadata, or
+via the Subversion exporter, deduced from git-svn metadata, or
 matching a $Revision$ header embedded in blob data for the
 filename.</para>
 
@@ -1215,27 +1218,15 @@ gathers statistics only on code executed via '-'.</para>
 </refsect2>
 </refsect1>
 
-<refsect1 id='extractors'><title>WORKING WITH EXTRACTORS</title>
+<refsect1 id='subversion'><title>WORKING WITH SUBVERSION</title>
 
-<para>Presently, <command>reposurgeon</command> supports one extractor 
-for the Subversion VCS.  More may be added in the future.</para>
-
-<para>The most important limit of working with a repository type supported
-by an extractor is that <command>reposurgeon</command> can only read
-such repositories, not write them.</para>
-
-<para>The remainder of this section describes problems specific to
-individual extractors.</para>
-
-<refsect2 id='subversion'><title>Subversion</title>
-
-<para>To run the Subversion extractor, ask
-<application>reposurgeon</application> to read from a a Subversion
-checkout directory. Network access to the host repository will be
-required.  For better performance, use svnsync to make a local mirror
-of the repository and work on that. But be aware that the extractor 
-will nevertheless run very slowly, and slow down with increasing
-repository size.</para>
+<para><application>reposurgeon</application> can read Subversion
+dumpfiles or dump from a Subversion repository (not a checkout
+directory). You can usually use use svnsync to make a local mirror of
+the repository you are interested in. <application>reposurgeon</application>
+cannot write a Subversion repository, but history read from one can be
+exported to ant VCS for which <application>reposurgeon</application> has
+an import.</para>
 
 <para><application>reposurgeon</application> tries to adapt to
 whatever directory layout it finds in the top level of the Subversion
@@ -1281,15 +1272,15 @@ that might have value; it is left up to the user to manually remove
 unwanted tags.</para>
 
 <para>The following per-file properties cannot be expressed in
-import-stream format and are discarded: svn:executable, svn:mime-type,
-svn:keywords, svn:eol-style, svn:needs-lock.</para>
+import-stream format and are discarded: svn:mime-type,
+svn:keywords, svn:eol-style, svn:needs-lock. The svn:executable
+property is translated.</para>
 
-<para>Other file properties <emphasis>of the last commit
-only</emphasis> are preserved as per-commit properties using the
-properties extension, and will thus be visible and editable in the
-mailboxized view of commit metadata. (Due to volume of output from
-<command>svn proplist</command> attempting to collect file properties
-in every revision would bew unusably slow.)</para>
+<para>Other file properties are preserved as per-commit properties
+using the properties extension, and will thus be visible and editable
+in the mailboxized view of commit metadata. (Due to volume of output
+from <command>svn proplist</command> attempting to collect file
+properties in every revision would bew unusably slow.)</para>
 
 <para>On commits before the last, directory properties of branch
 directories and their immedate subdirectories (<command>svn proplist
@@ -1303,12 +1294,6 @@ stepped on.</para>
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
 
-<para>Regardless of what revision or branch was current at start,
-before and after <application>reposurgeon</application> runs the
-latest (svn up) revision will be checked out. This could lead to an
-unexpectedly large download on a partial checkout.</para>
-
-</refsect2>
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>
@@ -1352,11 +1337,11 @@ summary-plus-continuation form.]]</para>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
 
-<para>Guarantee: Editing with <command>reposurgeon</command> never
-changes the hash of a commit object unless (a) you edit the commit, or
-(b) it is a descendant of an edited commit in a VCS that includes
-parent hashes in the input of a child object's hash (git and hg both
-do this).</para>
+<para>Guarantee: In DVCses that use commit hashes, editing with
+<command>reposurgeon</command> never changes the hash of a commit
+object unless (a) you edit the commit, or (b) it is a descendant of an
+edited commit in a VCS that includes parent hashes in the input of a
+child object's hash (git and hg both do this).</para>
 
 <para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
@@ -1399,13 +1384,6 @@ expect.  Look for your content under the subdirectory 'trunk'.</para>
 operation that modifies any commit upstream of the target of the 
 tag will invalidate it.</para>
 
-<para>Limitation: Subversion/RCS/CVS aren't directly supported because
-exporting from them requires fixups of usernames in the committer
-information to full email addresses.  Trying to handle that entirely
-inside this tool would be excessively messy, so we don't. Instead we
-let the user transform repo-command streams and cope with the
-export/import separately.</para>
-
 <para>Limitation: Stock git (at least as of version 1.7.3.2) will choke on
 property extension commands. Accordingly, <command>reposurgeon</command> 
 omits them when rebuilding a repo with git type.</para>
@@ -1420,7 +1398,7 @@ Wiki tools page</ulink> for a large collection of such tools.</para>
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
 
 <para><command>reposurgeon</command> relies on importers and exporters 
-associated with the VCSes it supports,</para>
+associated with the VCSes it supports.</para>
 
 <variablelist>
 <varlistentry>
@@ -1436,6 +1414,12 @@ associated with the VCSes it supports,</para>
 <listitem>
 <para>Requires core hg, the hg-fastimport plugin, and the third-party 
 hg-fast-export.py script.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>svn</term>
+<listitem>
+<para>Read only, via <command>svnadmin dump</command>.</para>
 </listitem>
 </varlistentry>
 </variablelist>
