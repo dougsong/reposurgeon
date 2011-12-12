@@ -1382,10 +1382,11 @@ tag will invalidate it.</para>
 property extension commands. Accordingly, <command>reposurgeon</command> 
 omits them when rebuilding a repo with git type.</para>
 
+<!-- was: https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools -->
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 <command>reposurgeon</command>. See the <ulink
-url="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools">Git
+url="https://git.wiki.kernel.org/articles/i/n/t/Interfaces,_frontends,_and_tools.html">Git
 Wiki tools page</ulink> for a large collection of such tools.</para>
 </refsect1>
 
