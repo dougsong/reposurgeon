@@ -2031,11 +2031,12 @@ class StreamParser:
                                                  newtrace.mark,
                                                  gitignore_path)
                                 self.repo.backlink_blobs(fileop)
-                        else:
+                                commit.fileops.append(fileop)
+                        elif gitignore_path in self.filemap[revision]:
                             del self.filemap[revision][gitignore_path]
                             fileop = FileOp(commit)
                             fileop.construct("D", gitignore_path)
-                        commit.fileops.append(fileop)
+                            commit.fileops.append(fileop)
                     # Handle directory copies used for branching and tags
                     if node.copyfrom_path:
                         if self.branches:
