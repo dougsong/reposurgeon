@@ -182,6 +182,7 @@ vcstypes = [
         preserve=set([".hg/hgrc"]),
         authormap=None,
         notes="The hg export-import methods are not part of stock Mercurial."),
+    # If we ever implement an exporter, don't forget to preserve hooks/.  
     VCS(name="svn",
         subdirectory="locks",
         exporter="svnadmin dump",
