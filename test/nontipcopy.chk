@@ -63,7 +63,7 @@ mark :8
 committer esr <esr> 1322509428 +0000
 data 48
 This is not a tag. Ceci n'est pas un pipe, too.
-from :6
+from :2
 M 100644 :7 placeholder
 
 blob
@@ -116,7 +116,7 @@ Crearte a sample tag at revision 2.
 [[Tag from directory creation or copy commit at Subversion r5]]
 
 tag sample-branch
-from :6
+from :2
 tagger esr <esr> 1322509253 +0000
 data 90
 This is a sample branch.

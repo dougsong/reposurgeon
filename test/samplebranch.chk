@@ -28,6 +28,7 @@ mark :5
 data 71
 This is the branch version of README, after we've actually changed it.
 
+reset refs/heads/samplebranch
 commit refs/heads/samplebranch
 mark :6
 committer esr <esr> 1322683160 +0000

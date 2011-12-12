@@ -3,6 +3,11 @@
 all: clean roundtrip mailboxing fi-regress coalesce git-regress #svn-regress
 	@echo "No diff output is good news."
 
+.SUFFIXES: .sd .chk
+
+.sd.chk:
+	reposurgeon "read $<" "prefer git" "write $@"
+
 buildregress: fi-regress svn-regress
 
 clean:
