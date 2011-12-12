@@ -2155,9 +2155,11 @@ class StreamParser:
                     commit.parent_marks = [self.branches[commit.branch]]
                 self.branches[commit.branch] = commit.mark
             # Re-root branches here using the branchlink info
+            if verbose >= DEBUG_EXTRACT:
+                announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             for root in branchroots:
                 if root.get_fossil() in self.branchlink:
-                    root.parent_marks = self.markmap[self.branchlink[root.get_fossil()]]
+                    root.parent_marks = [self.markmap[self.branchlink[root.get_fossil()]]]
                 elif root.branch != ("trunk" + os.sep):
                     complain("can't connect branch or tag %s to trunk" \
                              % root.branch)
