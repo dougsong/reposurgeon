@@ -1452,8 +1452,12 @@ class StreamParser:
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             self.modified = self.new = False
         def __str__(self):
+            if self.props:
+                propshow = list(self.props.items())
+            else:
+                propshow = None
             return "<Trace(%s, %s, %s>" % \
-                   (self.mark, self.perms, list(self.props.items()))
+                   (self.mark, self.perms, propshow)
     class NodeAction:
         def __init__(self):
             self.path = None
@@ -2022,17 +2026,16 @@ class StreamParser:
                                 wfp.write(node.props["svn:ignore"])
                             self.repo.events.append(blob)
                             with StreamParser.Trace() as newtrace:
-                                newtrace.path = gitignore_path
                                 newtrace.set_mark(blob.mark)
-                                self.filemap[revision][newtrace.path] = newtrace
+                                self.filemap[revision][gitignore_path] = newtrace
                                 fileop = FileOp(commit)
                                 fileop.construct("M",
                                                  newtrace.perms,
                                                  newtrace.mark,
-                                                 newtrace.path)
+                                                 gitignore_path)
                                 self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
-                    elif node.props == {}:
+                    elif node.props is not None:
                         if trace.props is not None \
                                and "svn:ignore" in trace.props:
                             gitignore_path = os.path.join(node.path,
