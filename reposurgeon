@@ -2098,6 +2098,7 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
+                        # Already done up above
                         #del self.filemap[revision][node.path]
                     if node.copyfrom_path:
                         if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
