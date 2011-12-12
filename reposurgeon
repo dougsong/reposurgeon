@@ -2204,7 +2204,7 @@ class StreamParser:
                     commit.branch = os.path.join("refs", "heads", "master")
                 else:
                     commit.branch = os.path.join("refs", "heads",
-                                                 os.path.basename(commit.branch))
+                                                 os.path.basename(commit.branch[:-1]))
         self.repo.renumber()
 
 # Generic repository-manipulation code begins here
