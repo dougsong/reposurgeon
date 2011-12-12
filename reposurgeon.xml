@@ -65,10 +65,13 @@ particular, <command>reposurgeon</command> can be used to move a
 repostory history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.</para>
 
-<para>At time of writing the following VCSes are supported through exporters: 
-git itself, hg, and bzr. Subversion repositories can be imported but not
-exported. A test extractor exists for git, but is normally diabled in
-favor of the regular exporter.</para>
+<para>At time of writing the following VCSes are supported through
+exporters: git itself, hg, and bzr. Subversion repositories can be
+imported but not exported. A test extractor exists for git, but is
+normally disabled in favor of the regular exporter. A Subversion
+extractor existed in an unreleased version of
+<command>reposurgeon</command>, but due to extremely poor performance
+it was discarded in favor of parsing dumpfiles.</para>
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNINGS</title>
