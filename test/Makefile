@@ -105,8 +105,8 @@ svn-regress:
 	    reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress; \
 	    then diff -u $${test}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
-	    mkdir /tmp/reposteamer$$$$ ; \
-	    (cd /tmp/reposteamer$$$$; git init --quiet; git fast-import --quiet) </tmp/regress; \
-	    rm -fr /tmp/reposteamer$$$$ ; \
+	    mkdir /tmp/reposurgeon$$$$ ; \
+	    (cd /tmp/reposurgeon$$$$; git init --quiet; git fast-import --quiet) </tmp/regress; \
+	    rm -fr /tmp/reposurgeon$$$$ ; \
 	done
 	@rm -f /tmp/regress
