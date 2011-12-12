@@ -2065,10 +2065,14 @@ class StreamParser:
                         else:
                             trace.set_mark(self.filemap[node.copyfrom_rev][node.copyfrom_path].mark)
                             fileop = FileOp(commit)
-                            # We don't use C here because there is no guarantee the
-                            # file is in-tree at the time of this commit; it could
-                            # previously have been deleted.
-                            fileop.construct("M", trace.perms, trace.mark, node.path)
+                            # We don't use C here because there is no
+                            # guarantee the file is in-tree at the
+                            # time of this commit; it could previously
+                            # have been deleted.
+                            fileop.construct("M",
+                                             trace.perms,
+                                             trace.mark,
+                                             node.path)
                             self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # This will used for branch re-rooting later
@@ -2089,6 +2093,10 @@ class StreamParser:
                         (revision, copyset))
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
+        if verbose >= DEBUG_EXTRACT:
+            announce("tagifying: %s" % commit.mark)
+        if commit.fileops:
+            raise Fatal("Attempting to tagify a commit with fileops.")
         if not commit.comment:
             pref = ""
         else:
@@ -2097,7 +2105,9 @@ class StreamParser:
                                committish=committish,
                                tagger=commit.committer,
                                comment=pref + legend))
-        self.repo.delete([self.repo.events.index(commit)], ["obliterate"], quiet=True)
+        self.repo.delete([self.repo.events.index(commit)],
+                         ["obliterate"],
+                         quiet=True)
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
         if verbose >= DEBUG_EXTRACT:
@@ -2176,6 +2186,14 @@ class StreamParser:
                               len(commit.fileops),
                               len(commit.properties),
                               commit.branch))
+            # Tagify all branch-root commits, they don't carry any
+            # information other than their metadata.
+            for commit in self.repo.commits():
+                if commit in branchroots and commit.branch != ("trunk"+os.sep):
+                    self.svn_tagify(commit,
+                                    os.path.basename(commit.branch[:-1]),
+                                    commit.parent_marks[0],
+                                    "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
             # Now pretty up the branch names
             for commit in self.repo.commits():
                 if commit.branch == "root":
