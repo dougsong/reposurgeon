@@ -383,12 +383,12 @@ extractors = [GitExtractor()]
 
 verbose         = 0
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
-DEBUG_SHUFFLE   = 2    # Debug file and directory handling
-DEBUG_DELETE    = 3    # Debug canonicalization after deletes
-DEBUG_COMMANDS  = 3    # Show commands as they are executed
-DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
-DEBUG_MERGE     = 3    # Debug mark assignments in merging
-DEBUG_LEXER     = 4    # Debug selection-language parsing
+DEBUG_SHUFFLE   = 3    # Debug file and directory handling
+DEBUG_DELETE    = 4    # Debug canonicalization after deletes
+DEBUG_COMMANDS  = 4    # Show commands as they are executed
+DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_MERGE     = 4    # Debug mark assignments in merging
+DEBUG_LEXER     = 5    # Debug selection-language parsing
 
 global_options = {}
 
