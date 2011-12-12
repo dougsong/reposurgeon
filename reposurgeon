@@ -2178,7 +2178,7 @@ class StreamParser:
             announce("Branches: %s" % (self.branches,))
         if not self.branches:
             # TODO: stop doing this and let the branch name default to master
-            # (once we get all the regressiion tests working again.)
+            # (once we get all the regression tests working again.)
             for commit in self.repo.commits():
                 commit.branch = "root"
         else:
@@ -2186,7 +2186,6 @@ class StreamParser:
             for commit in self.repo.commits():
                 commit.parent_marks = []
             # Instead, determine a branch for each commit...
-            branchroots = []
             for commit in self.repo.commits():
                 common = os.path.commonprefix([node.path for node in commit.nodes])
                 for branch in self.branches:
@@ -2203,6 +2202,7 @@ class StreamParser:
                     commit.branch = "root"
                     self.branches["root"] = None
             # ...then rebuild parent links so they follow the branches
+            branchroots = []
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
