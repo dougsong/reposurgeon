@@ -1922,149 +1922,146 @@ class StreamParser:
         commit.properties.update(props)
         # Prepare for branch tracking
         return commit
-    def svn_action(self, commit, revision, node):
-        "Translate Subversion actions into import-stream file operations."
-        # if props is None, no property section.
-        # if text is None, no text section.
-        if verbose >= DEBUG_EXTRACT:
-            announce("action: revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
-                     % (revision,
-                        node.path, node.kind, node.action,
-                        node.copyfrom_rev,
-                        node.copyfrom_path,
-                        len(node.text or ""),
-                        repr(node.text),
-                        list(node.props.items()) if node.props else None))
-        assert node.action in ("change", "add", "delete", "replace")
-        assert node.kind in (None, "file", "dir")
-        assert not (node.kind == None and node.action != "delete")
-        # Recover some information that may have been elided due to a
-        # header being optional. This is why we keep directories in
-        # the filemap.
-        if node.kind is None:
-            if node.path in self.filemap.revision[revision]:
-                if self.filemap.revision[revision][node.path].isdir():
-                    node.kind = "dir"
-            else:
-                raise Fatal("rebvision %s: null kind on nonexistent %s" % \
-                            (revision, node.path))
-        # os.sep is appended to avoid collisions with path prefixes.
-        if node.kind == "dir":
-            node.path += os.sep
-        # We're going to hack this path, get a filemap record for it
-        with self.filemap[revision].get(node.path, StreamParser.Trace()) as trace:
-            if node.action == "add":
-                if trace.new:
-                    self.filemap[revision][node.path] = trace
-                else:
-                    raise Fatal("add of existing path")
-            if node.action == "delete":
-                if trace.new:
-                    raise Fatal("delete of nonexistent path %s." % node.path)
-                else:
-                    del self.filemap[revision][node.path]
-            # Handle per-file and per-directory properties
-            perms = "100644"
-            if node.props is not None:
-                # Empty properties section on a path clears its property set.
-                for pathprop in node.props:
-                    if pathprop.startswith(node.path + "#"):
-                        del node.props[pathprop]
-                for (prop, val) in node.props.items():
-                    if prop == "svn:executable":
-                        perms = "100755"
-                    elif prop == "svn:special":
-                        # Map to git symlink and hope it flies
-                        perms = "120000"
-                    elif prop not in StreamParser.IgnoreProperties:
-                        commit.properties[node.path + "#" + prop] = val
-            trace.set_perms(perms)
-            # Actions on directories
-            if node.kind == "dir":
-                if node.path == 'trunk' + os.sep:
-                    self.branches['trunk' + os.sep] = None
-                if node.action == "replace":
-                    if trace.new:
-                        raise Fatal("replace of nonexistent directory %s." \
-                                    % node.path)
-                    else:
-                        del self.filemap[revision][node.path]
-                # Action "change" just falls through to here
-                if node.props:
-                    # TODO: svn:ignore gets handled here.
-                    # There are no other directory properties that can
-                    # turn into fileops.
-                    pass
-                if node.copyfrom_path:
-                    if self.branches:
-                        if node.path.count(os.sep) == 2:
-                            if node.path.startswith("tags" + os.sep):
-                                self.branches[node.path] = None
-                            elif node.path.startswith("branches" + os.sep):
-                                self.branches[node.path] = None
-                        elif node.path.count(os.sep) == 1:
-                            # Exiguous top-level branch
-                            self.branches[node.path] = None
-                    if "action" == "replace":
-                        for candidate in self.filepaths(revision):
-                            if candidate.path.startswith(node.path):
-                                fileop = FileOp(commit)
-                                fileop.construct("D", candidate.path)
-                                commit.fileops.append(fileop)
-                    for (source, trace) in self.filemap[node.copyfrom_rev].items():
-                        if source.startswith(node.copyfrom_path + os.sep):
-                            with trace.clone() as newtrace:
-                                fileop = FileOp(commit)
-                                dest = os.join(node.path,
-                                               source[len(node.copyfrom_path+os.sep):])
-                                fileop.construct("M",
-                                                 newtrace.perms,
-                                                 newtrace.mark,
-                                                 dest)
-                                self.filemap[revision][dest] = newtrace
-                                self.repo.backlink_blobs(fileop)
-            # Actions on files
-            elif node.kind == "file":
-                if node.action in ("add", "change", "replace"):
-                    if node.text is not None:
-                        blob = Blob(self.repo)
-                        blob.mark = self.__newmark() 
-                        with open(blob.blobfile(), "w") as wfp:
-                            wfp.write(node.text)
-                        self.repo.events.append(blob)
-                        self.filemap[revision][node.path].set_mark(blob.mark)
-                    if trace.modified:
-                        fileop = FileOp(commit)
-                        fileop.construct("M", trace.perms, trace.mark, node.path)
-                        self.repo.backlink_blobs(fileop)
-                        commit.fileops.append(fileop)
-                elif node.action == "delete":
-                    assert node.text is None
-                    fileop = FileOp(commit)
-                    fileop.construct("D", node.path)
-                    commit.fileops.append(fileop)
-                if node.copyfrom_path:
-                    if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
-                        raise Fatal("%s not present in source commit %s" % \
-                                    (node.copyfrom_path, node.copyfrom_rev))
-                    else:
-                        trace.set_mark(self.filemap[node.copyfrom_rev][node.copyfrom_path].mark)
-                        fileop = FileOp(commit)
-                        # We don't use C here because there is no guarantee the
-                        # file is in-tree at the time of this commit; it could
-                        # previously have been deleted.
-                        fileop.construct("M", trace.perms, trace.mark, node.path)
-                        self.repo.backlink_blobs(fileop)
-                        commit.fileops.append(fileop)
     def svn_commit_mark(self, commit, revision):
-        "Mark a new commit, link it to a parent, and append it to the repo."
+        "Translate Subversion actions into import-stream file operations."
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
             return
         copyset = set([])
         for node in commit.nodes:
-            self.svn_action(commit, revision, node)
+            # if props is None, no property section.
+            # if text is None, no text section.
+            if verbose >= DEBUG_EXTRACT:
+                announce("action: revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
+                         % (revision,
+                            node.path, node.kind, node.action,
+                            node.copyfrom_rev,
+                            node.copyfrom_path,
+                            len(node.text or ""),
+                            repr(node.text),
+                            list(node.props.items()) if node.props else None))
+            assert node.action in ("change", "add", "delete", "replace")
+            assert node.kind in (None, "file", "dir")
+            assert not (node.kind == None and node.action != "delete")
+            # Recover some information that may have been elided due to a
+            # header being optional. This is why we keep directories in
+            # the filemap.
+            if node.kind is None:
+                if node.path in self.filemap.revision[revision]:
+                    if self.filemap.revision[revision][node.path].isdir():
+                        node.kind = "dir"
+                else:
+                    raise Fatal("rebvision %s: null kind on nonexistent %s" % \
+                                (revision, node.path))
+            # os.sep is appended to avoid collisions with path prefixes.
+            if node.kind == "dir":
+                node.path += os.sep
+            # We're going to hack this path, get a filemap record for it
+            with self.filemap[revision].get(node.path, StreamParser.Trace()) as trace:
+                if node.action == "add":
+                    if trace.new:
+                        self.filemap[revision][node.path] = trace
+                    else:
+                        raise Fatal("add of existing path")
+                if node.action == "delete":
+                    if trace.new:
+                        raise Fatal("delete of nonexistent path %s." % node.path)
+                    else:
+                        del self.filemap[revision][node.path]
+                # Handle per-file and per-directory properties
+                perms = "100644"
+                if node.props is not None:
+                    # Empty properties section on a path clears its property set.
+                    for pathprop in node.props:
+                        if pathprop.startswith(node.path + "#"):
+                            del node.props[pathprop]
+                    for (prop, val) in node.props.items():
+                        if prop == "svn:executable":
+                            perms = "100755"
+                        elif prop == "svn:special":
+                            # Map to git symlink and hope it flies
+                            perms = "120000"
+                        elif prop not in StreamParser.IgnoreProperties:
+                            commit.properties[node.path + "#" + prop] = val
+                trace.set_perms(perms)
+                # Actions on directories
+                if node.kind == "dir":
+                    if node.path == 'trunk' + os.sep:
+                        self.branches['trunk' + os.sep] = None
+                    if node.action == "replace":
+                        if trace.new:
+                            raise Fatal("replace of nonexistent directory %s." \
+                                        % node.path)
+                        else:
+                            del self.filemap[revision][node.path]
+                    # Action "change" just falls through to here
+                    if node.props:
+                        # TODO: svn:ignore gets handled here.
+                        # There are no other directory properties that can
+                        # turn into fileops.
+                        pass
+                    if node.copyfrom_path:
+                        if self.branches:
+                            if node.path.count(os.sep) == 2:
+                                if node.path.startswith("tags" + os.sep):
+                                    self.branches[node.path] = None
+                                elif node.path.startswith("branches" + os.sep):
+                                    self.branches[node.path] = None
+                            elif node.path.count(os.sep) == 1:
+                                # Exiguous top-level branch
+                                self.branches[node.path] = None
+                        if "action" == "replace":
+                            for candidate in self.filepaths(revision):
+                                if candidate.path.startswith(node.path):
+                                    fileop = FileOp(commit)
+                                    fileop.construct("D", candidate.path)
+                                    commit.fileops.append(fileop)
+                        for (source, trace) in self.filemap[node.copyfrom_rev].items():
+                            if source.startswith(node.copyfrom_path + os.sep):
+                                with trace.clone() as newtrace:
+                                    fileop = FileOp(commit)
+                                    dest = os.join(node.path,
+                                                   source[len(node.copyfrom_path+os.sep):])
+                                    fileop.construct("M",
+                                                     newtrace.perms,
+                                                     newtrace.mark,
+                                                     dest)
+                                    self.filemap[revision][dest] = newtrace
+                                    self.repo.backlink_blobs(fileop)
+                # Actions on files
+                elif node.kind == "file":
+                    if node.action in ("add", "change", "replace"):
+                        if node.text is not None:
+                            blob = Blob(self.repo)
+                            blob.mark = self.__newmark() 
+                            with open(blob.blobfile(), "w") as wfp:
+                                wfp.write(node.text)
+                            self.repo.events.append(blob)
+                            self.filemap[revision][node.path].set_mark(blob.mark)
+                        if trace.modified:
+                            fileop = FileOp(commit)
+                            fileop.construct("M", trace.perms, trace.mark, node.path)
+                            self.repo.backlink_blobs(fileop)
+                            commit.fileops.append(fileop)
+                    elif node.action == "delete":
+                        assert node.text is None
+                        fileop = FileOp(commit)
+                        fileop.construct("D", node.path)
+                        commit.fileops.append(fileop)
+                    if node.copyfrom_path:
+                        if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
+                            raise Fatal("%s not present in source commit %s" % \
+                                        (node.copyfrom_path, node.copyfrom_rev))
+                        else:
+                            trace.set_mark(self.filemap[node.copyfrom_rev][node.copyfrom_path].mark)
+                            fileop = FileOp(commit)
+                            # We don't use C here because there is no guarantee the
+                            # file is in-tree at the time of this commit; it could
+                            # previously have been deleted.
+                            fileop.construct("M", trace.perms, trace.mark, node.path)
+                            self.repo.backlink_blobs(fileop)
+                            commit.fileops.append(fileop)
             # This will used for branch re-rooting later
             if node.copyfrom_rev:
                 copyset.add(node.copyfrom_rev)
