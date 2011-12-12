@@ -315,7 +315,7 @@ arguments).</para>
 <para>If the read location is a git repository and contains a 
 <filename>.git/cvsauthors</filename> file (such as is left in in place
 by <command>git cvsimport -A</command>) that file will be read in as
-if it had been given to the <command>authormap read</command>.</para>
+if it had been given to the <command>authors read</command>.</para>
 
 <para>If the read location is a directory, and its repository
 subdirectory has a file named <filename>fossils</filename>, that file
@@ -1211,7 +1211,23 @@ the repository subdirectory..</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>profile</command>
+<term><command>set </command>
+          [<command>option</command>]
+</term>
+<listitem>
+<para>Turn on an option flag.  With no arguments, list all options</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>clear </command>
+          [<command>option</command>]
+</term>
+<listitem>
+<para>Turn off an option flag.  With no arguments, list all options</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>profile</command> 
 </term>
 <listitem>
 <para>Enable profiling. Must be one of the initial command-line arguments, and
@@ -1276,9 +1292,7 @@ translated into permission settings in the input stream.</para>
 
 <para>Other file properties are preserved as per-commit properties
 using the properties extension, and will thus be visible and editable
-in the mailboxized view of commit metadata. (Due to volume of output
-from <command>svn proplist</command> attempting to collect file
-properties in every revision would bew unusably slow.)</para>
+in the mailboxized view of commit metadata.</para>
 
 <para>Per-directory svn:ignore properties become .gitignore files; if
 you're somehow managed to have an actual .gitignore file in a
@@ -1287,6 +1301,14 @@ stepped on.</para>
 
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
+
+<para>Normally, Subversion local usernames are mapped in the style of
+git cvs-import; thus user "foo" becomes "foo &lt;foo&gt;", which is
+sufficient to pacify git and other systems that require email
+addresses.  With the option "use-uuid", udernames are mapped in the
+git-svn style, with the repository's UUID used as a fake domain in the
+email address. Both forms can be remapped to real address using
+the <command>authors read</command> command.</para>
 
 </refsect1>
 
