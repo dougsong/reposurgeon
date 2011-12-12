@@ -2071,7 +2071,7 @@ class StreamParser:
         self.parent = revision
         self.repo.events.append(commit)
         # This is the dodgest part of the logic.  What
-        # we're doing here is decducing links between what
+        # we're doing here is deducing links between what
         # will later become branches on the basis of copies.
         if len(copyset) == 1:
             self.branchlink[revision] = list(copyset)[0]
@@ -2143,8 +2143,8 @@ class StreamParser:
                 if root.get_fossil() in self.branchlink:
                     root.parent_marks = self.markmap[self.branchlink[root.get_fossil()]]
                 else:
-                    complain("can't find parent for revision %s" \
-                             % root.get_fossil())
+                    complain("can't find parent for revision %s (mark %s)" \
+                             % (root.get_fossil(), root.mark))
             # Now pretty up the branch names
             for commit in self.repo.commits():
                 if commit.branch == "root":
