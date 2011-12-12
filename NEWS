@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.0:
-     reposurgon can now read Subversion repositories directly.
+     reposurgon can now read Subversion dump files and repositories directly.
      Added 'import_marks' command.
 
 1.9: 2011-11-14
