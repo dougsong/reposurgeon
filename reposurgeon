@@ -2114,7 +2114,7 @@ class StreamParser:
                 complain("could not tagify root commit.")
         # Now, branch analysis.
         if verbose >= DEBUG_EXTRACT:
-            announce("Branches: %s\n" % (self.branches,))
+            announce("Branches: %s" % (self.branches,))
         if self.branches:
             # Don't leave the linear relationships in place
             for commit in self.repo.commits():
@@ -2148,20 +2148,17 @@ class StreamParser:
             for root in branchroots:
                 if root.get_fossil() in self.branchlink:
                     root.parent_marks = self.markmap[self.branchlink[root.get_fossil()]]
-                else:
-                    complain("can't find parent for revision %s (mark %s)" \
-                             % (root.get_fossil(), root.mark))
+                elif root.branch != ("trunk" + os.sep):
+                    complain("can't connect branch or tag %s to trunk" \
+                             % root.branch)
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
                 for commit in self.repo.commits():
-                    msg = commit.comment
-                    if msg == None:
-                        msg = ""
-                        announce("r%-4s %4s %2d %2d '%s'" % \
-                                 (commit.get_fossil(), commit.mark,
-                                  len(commit.fileops),
-                                  len(commit.properties),
-                                  commit.branch))
+                    announce("r%-4s %4s %2d %2d '%s'" % \
+                             (commit.get_fossil(), commit.mark,
+                              len(commit.fileops),
+                              len(commit.properties),
+                              commit.branch))
             # Now pretty up the branch names
             for commit in self.repo.commits():
                 if commit.branch == "root":
@@ -4454,7 +4451,7 @@ anything other than a plain file. The default selection is all events.
         if not line:
             line = '-'
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=verbose>0)
+            self.chosen().fast_export(self.selection, sys.stdout, progress=verbose==1)
         else:
             try:
                 with open(line, "w") as out:
