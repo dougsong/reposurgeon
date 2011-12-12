@@ -2236,10 +2236,13 @@ class StreamParser:
             # information other than their metadata.
             for commit in self.repo.commits():
                 if commit in branchroots and commit.branch != ("trunk"+os.sep):
-                    self.svn_tagify(commit,
-                                    os.path.basename(commit.branch[:-1]),
-                                    commit.parent_marks[0],
-                                    "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
+                    if not commit.parent_marks:
+                        complain("Can't tagify commit %s" % commit.mark)
+                    else:
+                        self.svn_tagify(commit,
+                                        os.path.basename(commit.branch[:-1]),
+                                        commit.parent_marks[0],
+                                        "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
         # Now pretty up the branch names
         for commit in self.repo.commits():
             if commit.branch == "root":
