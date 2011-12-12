@@ -1335,8 +1335,9 @@ class RepoStreamer:
 # records are in an RFC822-like format - headers followed by a spacer line
 # followed by a body.  Each header set ends with an Content-Length header
 # giving the length of the record body in chars *excluding the spacer line*.
-# A Revision record begins with a Revision-number header; a Node record
-# begins with a Node-path header.
+# (Exception: a node describing a copy operation ends with a Node-copyfrom-path
+# line and has no content.) A Revision record begins with a Revision-number
+# header; a Node record begins with a Node-path header.
 #
 # The body of a Revision record consists entirely of a property
 # section.  The body of a Node record consists of an optional property
@@ -1671,13 +1672,16 @@ class StreamParser:
                                     if node.action not in ("change", "add",
                                                       "delete", "replace"):
                                         self.error("unknown action %s" % node.action)
-                                elif line.startswith("Copyfrom-rev: "):
+                                elif line.startswith("Node-copyfrom-rev: "):
                                     node.copyfrom_rev = StreamParser.sd_body(line)
-                                elif line.startswith("Copyfrom-path: "):
+                                elif line.startswith("Node-copyfrom-path: "):
                                     node.copyfrom_path = StreamParser.sd_body(line)
+                                    commit.nodes.append(node)
                                 elif line.startswith("Text-copy-source-md5: "):
                                     pass
                                 elif line.startswith("Text-content-md5: "):
+                                    pass
+                                elif line.startswith("Text-content-sha1: "):
                                     pass
                                 elif line.startswith("Text-content-length: "):
                                     tlen = int(StreamParser.sd_body(line))
@@ -1689,7 +1693,6 @@ class StreamParser:
                                         node.props = self.sd_read_props(node.path, plen)
                                     if tlen > 0:
                                         node.text = self.sd_read_blob(tlen)
-                                    commit.nodes.append(node)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -2090,6 +2093,7 @@ class StreamParser:
                                comment=pref + legend))
         self.repo.delete([self.repo.events.index(commit)], ["obliterate"], quiet=True)
     def svn_postprocess(self):
+        "Perform topological analysis, define branches, lift tags."
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
             for commit in self.repo.commits():
