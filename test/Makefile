@@ -92,8 +92,7 @@ svn-branchy: svn-flat
 svn-dump:
 	svnadmin dump test-repo 
 
-SVNLOADS = vanilla simpletag samplebranch ignores nontipcopy \
-	emptybranch exiguous # rootfile
+SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
 	    echo "Remaking $${test}.chk"; \
