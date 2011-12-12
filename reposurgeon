@@ -2118,7 +2118,7 @@ class StreamParser:
         if self.branches:
             branchroots = []
             for commit in self.repo.commits():
-                common = os.path.commonprefix(list(commit.paths()))
+                common = os.path.commonprefix([node.path for node in commit.nodes])
                 for branch in self.branches:
                     if common.startswith(branch):
                         commit.branch = branch
