@@ -1,0 +1,147 @@
+SVN-fs-dump-format-version: 2
+
+UUID: a89b072f-293a-4b37-bfe0-8af3cc8d94ea
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-12T16:27:37.034454Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-12T16:27:37.406481Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-12T16:27:37.972750Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 169
+Content-length: 169
+
+K 7
+svn:log
+V 71
+Create a doomed file so we can delete it and see the fileop generated.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-12T16:31:13.099049Z
+PROPS-END
+
+Node-path: trunk/doomed
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 77
+Text-content-md5: 5fb695f0937f01dd9ef5b510a04a194d
+Text-content-sha1: 52b4127f8b738b3be6457a7ab517c75dec6e2b70
+Content-length: 87
+
+PROPS-END
+This file is doomed.  It exists only so we can check translation of deletes.
+
+
+Revision-number: 4
+Prop-content-length: 175
+Content-length: 175
+
+K 7
+svn:log
+V 77
+The import stream representation of this commit should have a delete fileop.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-12T16:33:05.716827Z
+PROPS-END
+
+Node-path: trunk/doomed
+Node-action: delete
+
+
