@@ -2210,6 +2210,14 @@ class StreamParser:
                 else:
                     commit.parent_marks = [self.branches[commit.branch]]
                 self.branches[commit.branch] = commit.mark
+            # The root branch is special. It wasn't made by a copy, so
+            # we didn't get the information to connect it to trunk in the
+            # last phase.
+            if "root" in self.branches:
+                for commit in self.repo.commits():
+                    if commit.branch == "root":
+                        break
+                self.branchlink[commit.get_fossil()] = self.repo.commits()[0].get_fossil()
             # Re-root branches here using the branchlink info
             if verbose >= DEBUG_EXTRACT:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
@@ -2232,10 +2240,14 @@ class StreamParser:
                               len(commit.fileops),
                               len(commit.properties),
                               commit.branch))
-            # Tagify all branch-root commits, they don't carry any
-            # information other than their metadata.
+            # Tagify normal branch-root commits, they don't carry any
+            # information other than their metadata. The exceptions
+            # are trunk and root (if the later exists); neither is
+            # the result of a normal copy operation.
             for commit in self.repo.commits():
-                if commit in branchroots and commit.branch != ("trunk"+os.sep):
+                if commit in branchroots \
+                       and commit.branch != ("trunk"+os.sep) \
+                       and commit.branch != "root":
                     if not commit.parent_marks:
                         complain("Can't tagify commit %s" % commit.mark)
                     else:

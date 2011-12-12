@@ -15,13 +15,14 @@ mark :3
 data 81
 This is an exiguous file which should be stoffed in a root branch on conversion.
 
+reset refs/heads/root
 commit refs/heads/root
 mark :4
 committer esr <esr> 1322776854 +0000
 data 37
 This is our root-level file content.
+from :2
 M 100644 :3 EXIGUOUS
-M 100644 :1 trunk/README
 
 blob
 mark :5
