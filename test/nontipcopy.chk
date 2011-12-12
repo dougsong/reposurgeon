@@ -57,6 +57,7 @@ mark :7
 data 74
 This file only exists so repostreamer won't process this branch as a tag.
 
+reset refs/heads/sample-branch
 commit refs/heads/sample-branch
 mark :8
 committer esr <esr> 1322509428 +0000
