@@ -1,10 +1,8 @@
 #!/bin/sh
 #
-# fi-to-fi - build repo from fast-import stream from stdin, stream to stdout
+# fi-to-fi - build repo from fast-import stream on stdin, stream to stdout
 #
-# Note: This is *only* intended as a regression test for the Repostreamer
-# wrapper class. It forces use of GitExtractor, which is not intended
-# for production use.
+# Intended for reposurgeon roundtripping tests.
 #
 # With the -n option, create a repo corresponding to the input file
 # and check out a working copy for editing, but do not stream the
@@ -58,7 +56,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/reposurgeon "prefer git-extractor" "read $testrepo" "write"
+    ${BIN}/reposurgeon "prefer git" "read $testrepo" "write"
 fi
 
 # Should we clean up the test directory
