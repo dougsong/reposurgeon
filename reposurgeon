@@ -1463,6 +1463,14 @@ class StreamParser:
             self.copyfrom_path = None
             self.text = None
             self.props = None
+        def __str__(self):
+            return "<NodeAction: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s>" \
+                         % (self.path, self.kind, self.action,
+                            self.copyfrom_rev,
+                            self.copyfrom_path,
+                            len(self.text or ""),
+                            repr(self.text),
+                            self.props)
     class RevisionAction(Commit):
         def __init__(self, repo):
             Commit.__init__(self, repo)
@@ -1942,14 +1950,7 @@ class StreamParser:
             # if props is None, no property section.
             # if text is None, no text section.
             if verbose >= DEBUG_EXTRACT:
-                announce("action: revision=%s, path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s, props=%s" \
-                         % (revision,
-                            node.path, node.kind, node.action,
-                            node.copyfrom_rev,
-                            node.copyfrom_path,
-                            len(node.text or ""),
-                            repr(node.text),
-                            list(node.props.items()) if node.props else None))
+                announce("revision=%s, %s" % (revision, node))
             assert node.action in ("change", "add", "delete", "replace")
             assert node.kind in (None, "file", "dir")
             assert not (node.kind == None and node.action != "delete")
