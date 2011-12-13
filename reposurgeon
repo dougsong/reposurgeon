@@ -2465,9 +2465,7 @@ class StreamParser:
                             del self.filemap[revision][node.path]
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
-                            if node.text is None:
-                                complain("r%s: missing text for path %s" \
-                                         % (revision, node.path))
+                            assert node.text is not None
                             if node.path in self.filemap[revision]:
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
