@@ -2299,7 +2299,7 @@ class StreamParser:
     # because reposurgeon's internal structures are designed to match
     # those entities. For Subversion dumpfiles, on the other hand,
     # there's a fair bit of impedance-matching required.  That happens
-    # in the following function.
+    # in the following functions.
     #
     def svn_commit(self, revision, nodes, revprops):
         "Translate Subversion actions into import-stream file operations."
