@@ -2100,9 +2100,7 @@ class StreamParser:
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
-                            commit = self.svn_commit(revision, uuid, props)
-                            commit.nodes = nodes
-                            self.svn_commit_mark(commit, revision)
+                            self.svn_commit(uuid, revision, nodes, props)
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
@@ -2295,10 +2293,10 @@ class StreamParser:
     # because reposurgeon's internal structures are designed to match
     # those entities. For Subversion dumpfiles, on the other hand,
     # there's a fair bit of impedance-matching required.  That happens
-    # in the following three functions.
+    # in the following function.
     #
-    def svn_commit(self, revision, uuid, props):
-        "Build a commit from the Subversion properties for a revision record."
+    def svn_commit(self, uuid, revision, nodes, props):
+        "Translate Subversion actions into import-stream file operations."
         commit = StreamParser.RevisionAction(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
         # it later.  Each revision gets a filemap that represents the
@@ -2325,10 +2323,7 @@ class StreamParser:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
         commit.properties.update(props)
-        # Prepare for branch tracking
-        return commit
-    def svn_commit_mark(self, commit, revision):
-        "Translate Subversion actions into import-stream file operations."
+        commit.nodes = nodes
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
