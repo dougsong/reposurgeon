@@ -2339,30 +2339,15 @@ class StreamParser:
             # the filemap.
             if node.kind is None:
                 if node.path in self.filemap[revision]:
-                    if self.filemap[revision][node.path].isdir():
-                        node.kind = "dir"
-                    else:
+                    if node.path in self.filemap[revision]:
                         node.kind = "file"
-                else:
-                    complain("r%s: null kind on nonexistent %s" % \
-                             (revision, node.path))
+                    else:
+                        node.kind = "dir"
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == "dir":
                 node.path += os.sep
             # We're going to hack this path, get a filemap record for it
             with self.filemap[revision].get(node.path, StreamParser.Trace()) as trace:
-                if node.action == "add":
-                    if trace.new:
-                        self.filemap[revision][node.path] = trace
-                    else:
-                        complain("r%s: add of existing path %s" \
-                                 % (revision, node.path))
-                if node.action == "delete":
-                    if trace.new:
-                        complain("r%s: delete of nonexistent %s %s." \
-                                 % (revision, node.kind, node.path))
-                    else:
-                        del self.filemap[revision][node.path]
                 # Handle per-file and per-directory properties
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
@@ -2439,6 +2424,7 @@ class StreamParser:
                                     fileop = FileOp(commit)
                                     fileop.construct("D", candidate.path)
                                     commit.fileops.append(fileop)
+                                    del self.filepaths[revision]
                         for (source, trace) in self.filemap[node.copyfrom_rev].items():
                             if source.startswith(node.copyfrom_path + os.sep) \
                                    and trace.mark:
@@ -2455,6 +2441,11 @@ class StreamParser:
                 # Actions on files
                 elif node.kind == "file":
                     if node.action in ("add", "change", "replace"):
+                        if node.action == "add":
+                            if node.path in self.filemap[revision]:
+                                complain("r%s: add of existing path %s" \
+                                         % (revision, node.path))
+                            self.filemap[revision][node.path] = trace
                         if node.text is not None:
                             blob = Blob(self.repo)
                             blob.mark = self.__newmark() 
@@ -2472,8 +2463,11 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
-                        # Already done up above
-                        #del self.filemap[revision][node.path]
+                        if node.path not in self.filemap[revision]:
+                            complain("r%s: delete of nonexistent %s %s." \
+                                 % (revision, node.kind, node.path))
+                        else:
+                            del self.filemap[revision][node.path]
                     if node.copyfrom_path:
                         if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
                             raise Fatal("%s not present in source commit %s" % \
