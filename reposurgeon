@@ -2336,10 +2336,9 @@ class StreamParser:
             # the filemap.
             if node.kind is None:
                 if node.path in self.filemap[revision]:
-                    if node.path in self.filemap[revision]:
-                        node.kind = "file"
-                    else:
-                        node.kind = "dir"
+                    node.kind = "file"
+                else:
+                    node.kind = "dir"
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == "dir":
                 node.path += os.sep
