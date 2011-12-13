@@ -1773,7 +1773,7 @@ class RepoStreamer:
 # means only the file properties change.
 #
 # The "add" action is used to add new directories and file content.
-# Directory adds never have text content or a copyfrom source; file
+# Directory adds never have text content [?or a copyfrom source?]; file
 # adds always have one or the other.  Either type may have properties
 # [?but the Subversion client tools never generate an add node with
 # properties?].
