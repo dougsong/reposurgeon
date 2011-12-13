@@ -185,7 +185,7 @@ vcstypes = [
     # If we ever implement an exporter, don't forget to preserve hooks/.  
     VCS(name="svn",
         subdirectory="locks",
-        exporter="svnadmin dump",
+        exporter="svnadmin dump .",
         styleflags=tuple([]),
         properties=False,
         initializer=None,
@@ -2285,7 +2285,7 @@ class StreamParser:
                     # End of fast-import parsing
                 self.import_line = 0
         except KeyboardInterrupt:
-            nuke(self.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
+            nuke(self.repo.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
             raise KeyboardInterrupt
     #
     # The rendezvous between parsing and object building for import
@@ -2396,7 +2396,7 @@ class StreamParser:
                     if node.props is not None:
                         if verbose >= DEBUG_EXTRACT:
                             announce("revision %s: setting properties %s on %s" \
-                                     % (revision, node.path, node.props))
+                                     % (revision, node.props, node.path))
                         # svn.ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
@@ -2506,11 +2506,13 @@ class StreamParser:
         # This is the dodgest part of the logic.  What
         # we're doing here is deducing links between what
         # will later become branches on the basis of copies.
-        if len(copyset) == 1:
-            self.branchlink[revision] = list(copyset)[0]
-        elif len(copyset) > 1:
-            raise Fatal("revision %s: mixed copy from revisions %s" % \
-                        (revision, copyset))
+        if copyset:
+            copyset = list(copyset)
+            if len(copyset) > 1:
+                copyset.sort()
+                complain("revision %s: mixed copy from r%s, choosing %s" % \
+                         (revision, copyset, copyset[0]))
+            self.branchlink[revision] = copyset[0]
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
