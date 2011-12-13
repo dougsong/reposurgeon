@@ -2437,34 +2437,6 @@ class StreamParser:
                                     self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
-                    if node.action in ("add", "change", "replace"):
-                        if node.action == "add":
-                            if node.path in self.filemap[revision]:
-                                complain("r%s: add of existing path %s" \
-                                         % (revision, node.path))
-                            self.filemap[revision][node.path] = trace
-                        if node.text is not None:
-                            blob = Blob(self.repo)
-                            blob.mark = self.__newmark() 
-                            with open(blob.blobfile(), "w") as wfp:
-                                wfp.write(node.text)
-                            self.repo.events.append(blob)
-                            self.filemap[revision][node.path].set_mark(blob.mark)
-                        if trace.modified:
-                            fileop = FileOp(commit)
-                            fileop.construct("M", trace.perms, trace.mark, node.path)
-                            self.repo.backlink_blobs(fileop)
-                            commit.fileops.append(fileop)
-                    elif node.action == "delete":
-                        assert node.text is None
-                        fileop = FileOp(commit)
-                        fileop.construct("D", node.path)
-                        commit.fileops.append(fileop)
-                        if node.path not in self.filemap[revision]:
-                            complain("r%s: delete of nonexistent %s %s." \
-                                 % (revision, node.kind, node.path))
-                        else:
-                            del self.filemap[revision][node.path]
                     if node.copyfrom_path:
                         if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
                             raise Fatal("%s not present in source commit %s" % \
@@ -2480,6 +2452,34 @@ class StreamParser:
                                              trace.perms,
                                              trace.mark,
                                              node.path)
+                            self.repo.backlink_blobs(fileop)
+                            commit.fileops.append(fileop)
+                    elif node.action == "delete":
+                        assert node.text is None
+                        fileop = FileOp(commit)
+                        fileop.construct("D", node.path)
+                        commit.fileops.append(fileop)
+                        if node.path not in self.filemap[revision]:
+                            complain("r%s: delete of nonexistent %s %s." \
+                                 % (revision, node.kind, node.path))
+                        else:
+                            del self.filemap[revision][node.path]
+                    elif node.action in ("add", "change", "replace"):
+                        if node.action == "add":
+                            if node.path in self.filemap[revision]:
+                                complain("r%s: add of existing path %s" \
+                                         % (revision, node.path))
+                            self.filemap[revision][node.path] = trace
+                        if node.text is not None:
+                            blob = Blob(self.repo)
+                            blob.mark = self.__newmark() 
+                            with open(blob.blobfile(), "w") as wfp:
+                                wfp.write(node.text)
+                            self.repo.events.append(blob)
+                            self.filemap[revision][node.path].set_mark(blob.mark)
+                        if trace.modified:
+                            fileop = FileOp(commit)
+                            fileop.construct("M", trace.perms, trace.mark, node.path)
                             self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # This will used for branch re-rooting later
