@@ -2507,35 +2507,22 @@ class StreamParser:
         commit.mark = self.__newmark(revision)
         self.parent = revision
         self.repo.events.append(commit)
-        # This is the dodgest part of the logic.  What
-        # we're doing here is deducing links between what
-        # will later become branches on the basis of copies.
-        # We get here only if the nodes include at least one
-        # directory copy.
-        if copyset:
-            copyset = list(copyset)
-            if len(copyset) != 0:
-                noncopies = [node for node in commit.nodes \
-                             if node.copyfrom_rev is None]
-                copies = [node for node in commit.nodes \
-                          if node.copyfrom_rev is not None]
-                copies.sort(key=lambda node: int(node.copyfrom_rev))
-                if len(copies) == 1 and not noncopies:
-                    self.branchlink[revision] = copies[0].copyfrom_rev
-                else:
-                    complain("mixed copy to r%s:" % revision)
-                    for node in copies:
-                        complain("%4s: %s@r%s %s %s" % (node.kind,
-                                                        node.copyfrom_path,
-                                                        node.copyfrom_rev,
-                                                        node.action,
-                                                        node.path))
-                    if noncopies:
-                        complain("%d additional non-copy operations." \
-                                 % len(noncopies))
-                    self.branchlink[revision] = copies[0].copyfrom_rev
-                    complain("linking r%s back to r%s" % (revision,
-                                                          self.branchlink[revision]))
+        # Deduce links between what will later become branches on the
+        # basis of copies. This is tricky because a revision can be
+        # the target of multiple copies.  Humans don't abuse this
+        # because tracking multiple copies is too hard to do in a slow
+        # organic brain, but tools like cvs2svn can generate large
+        # sets of them. cvs2svn seems to try to copy each file and
+        # directory from the commit corresponding to the CVS revision
+        # where the file was last changed before the copy, which may
+        # be substantially erlier than the CVS revision corresponding
+        # to the copy). Fortunately, we can resolve such sets by the
+        # simple expedient of picking the *latest* revision in them!
+        copies = [node for node in commit.nodes \
+                  if node.copyfrom_rev is not None]
+        if copies:
+            copies.sort(key=lambda node: int(node.copyfrom_rev))
+            self.branchlink[revision] = copies[-1].copyfrom_rev
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
