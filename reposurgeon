@@ -1813,12 +1813,9 @@ class StreamParser:
         def __init__(self):
             self.mark = None
             self.perms = "100644"
-            self.new = True
             self.modified = False
         def __enter__(self):
             return self
-        def isdir(self):
-            return self.mark is None
         def set_perms(self, newperms):
             if newperms != self.perms:
                 self.modified = True
@@ -1830,7 +1827,7 @@ class StreamParser:
         def clone(self):
             return copy.copy(self)
         def __exit__(self, extype_unused, value_unused, traceback_unused):
-            self.modified = self.new = False
+            self.modified = False
         def __str__(self):
             return "<Trace(%s, %s)>" % (self.mark, self.perms)
     class NodeAction:
