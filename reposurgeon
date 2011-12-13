@@ -2040,7 +2040,7 @@ class StreamParser:
                             self.sd_require_spacer()
                             props = self.sd_read_props("commit", plen)
                             # Parsing of the revision header is done
-                            commit = self.svn_commit(revision, uuid, props)
+                            nodes = []
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
@@ -2070,12 +2070,12 @@ class StreamParser:
                                         self.error("unknown action %s" \
                                                    % node.action)
                                     if node.action == "delete":
-                                        commit.nodes.append(node)
+                                        nodes.append(node)
                                 elif line.startswith("Node-copyfrom-rev: "):
                                     node.copyfrom_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Node-copyfrom-path: "):
                                     node.copyfrom_path = StreamParser.sd_body(line)
-                                    commit.nodes.append(node)
+                                    nodes.append(node)
                                 elif line.startswith("Text-copy-source-md5: "):
                                     pass
                                 elif line.startswith("Text-content-md5: "):
@@ -2092,7 +2092,7 @@ class StreamParser:
                                         node.props = self.sd_read_props(node.path, plen)
                                     if tlen > 0:
                                         node.text = self.sd_read_blob(tlen)
-                                    commit.nodes.append(node)
+                                    nodes.append(node)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -2100,6 +2100,8 @@ class StreamParser:
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
+                            commit = self.svn_commit(revision, uuid, props)
+                            commit.nodes = nodes
                             self.svn_commit_mark(commit, revision)
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: ends" % \
