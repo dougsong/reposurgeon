@@ -574,20 +574,13 @@ class SvnExtractor():
                           len(commit.fileops),
                           len(commit.properties),
                           msg.strip()))
-        def tagify(commit, name, committish):
-            assert not commit.fileops
-            repo.events.append(Tag(name=name,
-                                   committish=committish,
-                                   tagger=commit.committer,
-                                   comment=commit.comment + "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil()))
-            repo.delete([repo.events.index(commit)], ["obliterate"], quiet=True)
         initial = repo.commits()[0]
         # There will always be one property, the fossil revision
         if not initial.fileops and len(initial.properties) <= 1:
             assert repo.events[0].__class__ == Reset
             if len(repo.commits()) >= 2:
                 repo.events.pop(0)
-                tagify(initial, "root", repo.commits()[1].mark)
+                repo.tagify(initial, "root", repo.commits()[1].mark)
             else:
                 complain("could not tagify root commit.")
         if self.trunk == "trunk":
@@ -595,9 +588,10 @@ class SvnExtractor():
                 # There will always be one property, the fossil revision
                 if not commit.fileops and len(commit.properties) <= 1:
                     if commit.parent_marks:
-                        tagify(commit,
-                               os.path.basename(commit.branch),
-                               commit.parent_marks[0])
+                        repo.tagify(commit,
+                                    os.path.basename(commit.branch),
+                                    commit.parent_marks[0],
+                                    "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
                     else:
                         complain("revision %s, mark %s: could not tagify parentless commit." % (commit.get_fossil(), commit.mark))
         repo.renumber()
