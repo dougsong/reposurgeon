@@ -2295,7 +2295,7 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following function.
     #
-    def svn_commit(self, uuid, revision, nodes, props):
+    def svn_commit(self, uuid, revision, nodes, revprops):
         "Translate Subversion actions into import-stream file operations."
         commit = StreamParser.RevisionAction(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
@@ -2308,21 +2308,21 @@ class StreamParser:
             self.filemap[revision] = {}
         commit.set_fossil(revision)
         try:
-            ad = props.pop("svn:date")
+            ad = revprops.pop("svn:date")
         except KeyError, key:
             self.error("missing required %s" % key)
-        if "svn:author" in props:
-            au = props.pop("svn:author")
+        if "svn:author" in revprops:
+            au = revprops.pop("svn:author")
         else:
             au = "no-author"
-        if "svn:log" in props:
-            commit.comment = props.pop("svn:log")
+        if "svn:log" in revprops:
+            commit.comment = revprops.pop("svn:log")
         if global_options["use_uuid"]:
             attribution = "%s <%s@%s> %s" % (au, au, uuid, ad)
         else:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
-        commit.properties.update(props)
+        commit.properties.update(revprops)
         commit.nodes = nodes
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
@@ -2330,8 +2330,8 @@ class StreamParser:
             return
         copyset = set([])
         for node in commit.nodes:
-            # if props is None, no property section.
-            # if text is None, no text section.
+            # if node.props is None, no property section.
+            # if node.text is None, no text section.
             if verbose >= DEBUG_EXTRACT:
                 announce("revision=%s, %s" % (revision, node))
             assert node.action in ("change", "add", "delete", "replace")
