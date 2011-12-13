@@ -2297,7 +2297,7 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def svn_commit(self, revision, revprops):
+    def svn_commit(self, revision):
         "Translate Subversion actions into import-stream file operations."
         commit = Commit(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
@@ -2310,21 +2310,21 @@ class StreamParser:
             self.filemap[revision] = {}
         commit.set_fossil(revision)
         try:
-            ad = revprops.pop("svn:date")
+            ad = self.revisions[revision].props.pop("svn:date")
         except KeyError, key:
             self.error("missing required %s" % key)
-        if "svn:author" in revprops:
-            au = revprops.pop("svn:author")
+        if "svn:author" in self.revisions[revision].props:
+            au = self.revisions[revision].props.pop("svn:author")
         else:
             au = "no-author"
-        if "svn:log" in revprops:
-            commit.comment = revprops.pop("svn:log")
+        if "svn:log" in self.revisions[revision].props:
+            commit.comment = self.revisions[revision].props.pop("svn:log")
         if global_options["use_uuid"]:
             attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
         else:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
-        commit.properties.update(revprops)
+        commit.properties.update(self.revisions[revision].props)
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
@@ -2537,8 +2537,8 @@ class StreamParser:
                          quiet=True)
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
-        for (revision, record) in self.revisions.items():
-            self.svn_commit(revision, record.props)
+        for revision in self.revisions:
+            self.svn_commit(revision)
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
             for commit in self.repo.commits():
