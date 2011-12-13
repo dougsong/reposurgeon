@@ -1811,7 +1811,6 @@ class RepoStreamer:
 # a Node-copyfrom-path or Node-action line) and may represent a bug.
 
 # TODO: construct test cases for file copyfrom
-# TODO: Construct svn:executable test case.
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
@@ -2371,12 +2370,12 @@ class StreamParser:
                     else:
                         del self.filemap[revision][node.path]
                 # Handle per-file and per-directory properties
-                perms = "100644"
                 if node.props is not None:
-                    # Empty properties section on a path clears its property set.
+                    # Empty properties section on a path clears its properties
                     for pathprop in node.props:
                         if pathprop.startswith(node.path + "#"):
                             del node.props[pathprop]
+                    perms = "100644"
                     for (prop, val) in node.props.items():
                         if prop == "svn:executable":
                             perms = "100755"
@@ -2385,7 +2384,7 @@ class StreamParser:
                             perms = "120000"
                         elif prop not in StreamParser.IgnoreProperties:
                             commit.properties[node.path + "#" + prop] = val
-                trace.set_perms(perms)
+                    trace.set_perms(perms)
                 # Actions on directories
                 if node.kind == "dir":
                     if node.path == 'trunk' + os.sep:
