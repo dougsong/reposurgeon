@@ -2388,11 +2388,10 @@ class StreamParser:
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
                     if node.action == "replace":
-                        if trace.new:
-                            raise Fatal("replace of nonexistent directory %s." \
-                                        % node.path)
-                        else:
-                            del self.filemap[revision][node.path]
+                        # Replace on a directory seems to be a no-op,
+                        # since VCSes that speak fast-import don't
+                        # track directories as such.
+                        pass
                     # Action "change" just falls through to here
                     if node.props is not None:
                         if verbose >= DEBUG_EXTRACT:
