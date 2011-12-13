@@ -2673,6 +2673,9 @@ class StreamParser:
                 issued.add(event.branch)
             self.repo.events.append(event)
         self.repo.renumber()
+        # Finish by discarding nodes to cut memory usage
+        for commit in self.repo.commits():
+            del commit.nodes
 
 # Generic repository-manipulation code begins here
 
