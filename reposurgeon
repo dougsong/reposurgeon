@@ -2497,7 +2497,7 @@ class StreamParser:
                             self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # This will used for branch re-rooting later
-            if node.copyfrom_rev:
+            if node.copyfrom_rev and node.kind == "dir":
                 copyset.add(node.copyfrom_rev)
         commit.branch = os.path.join("refs", "heads", "master") + os.sep
         # It's important that this happens after blob creation
@@ -2507,13 +2507,32 @@ class StreamParser:
         # This is the dodgest part of the logic.  What
         # we're doing here is deducing links between what
         # will later become branches on the basis of copies.
+        # We get here only if the nodes include at least one
+        # directory copy.
         if copyset:
             copyset = list(copyset)
-            if len(copyset) > 1:
-                copyset.sort()
-                complain("revision %s: mixed copy from r%s, choosing %s" % \
-                         (revision, copyset, copyset[0]))
-            self.branchlink[revision] = copyset[0]
+            if len(copyset) != 0:
+                noncopies = [node for node in commit.nodes \
+                             if node.copyfrom_rev is None]
+                copies = [node for node in commit.nodes \
+                          if node.copyfrom_rev is not None]
+                copies.sort(key=lambda node: int(node.copyfrom_rev))
+                if len(copies) == 1 and not noncopies:
+                    self.branchlink[revision] = copies[0].copyfrom_rev
+                else:
+                    complain("mixed copy to r%s:" % revision)
+                    for node in copies:
+                        complain("%4s: %s@r%s %s %s" % (node.kind,
+                                                        node.copyfrom_path,
+                                                        node.copyfrom_rev,
+                                                        node.action,
+                                                        node.path))
+                    if noncopies:
+                        complain("%d additional non-copy operations." \
+                                 % len(noncopies))
+                    self.branchlink[revision] = copies[0].copyfrom_rev
+                    complain("linking r%s back to r%s" % (revision,
+                                                          self.branchlink[revision]))
     def svn_tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
