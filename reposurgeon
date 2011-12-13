@@ -499,7 +499,7 @@ class SvnExtractor():
                         if not parsed["author"]:
                             parsed["author"] = "no-author"
                         if verbose >= DEBUG_EXTRACT:
-                            announce("revision %s: registering %s" \
+                            announce("r%s: registering %s" \
 				     % (rev, parsed))
                         self.commits[rev] = SvnCommit(**parsed)
                     baton.twirl()
@@ -640,7 +640,7 @@ class SvnExtractor():
         #
         commit = self.commits[rev]
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: pathops '%s'" % (rev, commit.pathops))
+            announce("r%s: pathops '%s'" % (rev, commit.pathops))
         if 'trunk' in commit.pathops:
             self.trunk = "trunk"
         if verbose >= DEBUG_COMMANDS:
@@ -664,7 +664,7 @@ class SvnExtractor():
                     commit.branch = common[0]
         self.baton.twirl()
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: branch is '%s'" % (rev, commit.branch))
+            announce("r%s: branch is '%s'" % (rev, commit.branch))
         # Now that we have the branch, we can get the directory contents
         # and the filelist.  This had to be done first because the branch
         # arguments to svnup and svn ls actually matter,
@@ -685,16 +685,16 @@ class SvnExtractor():
                 ofp.write(ignores)
             self.manifest.append(".gitignore")
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: files %s" % (rev, self.manifest))
+            announce("r%s: files %s" % (rev, self.manifest))
         # Now compute the parent pointer. Someday, we may use mergeprops here.
         if commit.branch in self.branchtips:
             # The easy case is that we've already seen a commit on this branch.
             commit.parents = [self.branchtips[commit.branch]]
             #if verbose >= DEBUG_EXTRACT:
-            #    announce("revision %s: parent from branch tip" % (rev,))
+            #    announce("r%s: parent from branch tip" % (rev,))
         else:
             #if verbose >= DEBUG_EXTRACT:
-            #    announce("revision %s: looking backward" % (rev,))
+            #    announce("r%s: looking backward" % (rev,))
             # This is the tricky bit.  We see a commit on a new branch.
             # We use the fact that new branches have to be created by
             # copy operations.  The first commit on a branch is always
@@ -710,7 +710,7 @@ class SvnExtractor():
                     break
         self.baton.progress()
         if verbose >= DEBUG_EXTRACT:
-            announce("revision %s: parents %s" % (rev, commit.parents,))
+            announce("r%s: parents %s" % (rev, commit.parents,))
         # Finally, this commit becomes its branch tip, and we're done.
         self.branchtips[commit.branch] = rev
         return self.manifest
@@ -1596,7 +1596,7 @@ class RepoStreamer:
                     msg = commit.comment
                     if msg == None:
                         msg = ""
-                    announce("revision %s: comment '%s'" % (revision, msg.strip()))
+                    announce("r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
                 for rev in parents:
                     self.filemap[revision].update(self.filemap[rev])
@@ -1606,13 +1606,13 @@ class RepoStreamer:
                         if os.path.isdir(path):
                             continue
                         if not os.path.exists(path):
-                            announce("revision %s: expected path %s does not exist!" % \
+                            announce("r%s: expected path %s does not exist!" % \
                                      (revision, path))
                             continue
                         newsig = signature(path)
                         if newsig.hashval in self.hash_to_mark:
                             #if verbose >= DEBUG_EXTRACT:
-                            #    announce("revision %s: %s has old hash" \
+                            #    announce("r%s: %s has old hash" \
                             #             % (revision, path))
                             # The file's hash corresponds to an existing
                             # blob; generate modify, copy, or rename as
@@ -1620,7 +1620,7 @@ class RepoStreamer:
                             if path not in self.filemap[revision] \
                                    or self.filemap[revision][path]!=newsig:
                                 if verbose >= DEBUG_EXTRACT:
-                                    announce("revision %s: update for %s" % (revision, path))
+                                    announce("r%s: update for %s" % (revision, path))
                                 for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
@@ -1646,7 +1646,7 @@ class RepoStreamer:
                         else:
                             # Content hash doesn't match any existing blobs
                             if verbose >= DEBUG_EXTRACT:
-                                announce("revision %s: %s has new hash" \
+                                announce("r%s: %s has new hash" \
                                          % (revision, path))
                             blobmark = self.__newmark()
                             self.hash_to_mark[newsig.hashval] = blobmark
@@ -1678,7 +1678,7 @@ class RepoStreamer:
                 commit.properties.update(self.extractor.get_properties(revision)) 
                 commit.mark = self.__newmark(revision)
                 if verbose >= DEBUG_EXTRACT:
-                    announce("revision %s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
+                    announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.events.append(commit)
             # Now append reset objects
             resets = self.extractor.get_resetlist()
@@ -2344,7 +2344,7 @@ class StreamParser:
                     else:
                         node.kind = "file"
                 else:
-                    complain("revision %s: null kind on nonexistent %s" % \
+                    complain("r%s: null kind on nonexistent %s" % \
                              (revision, node.path))
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == "dir":
@@ -2355,10 +2355,11 @@ class StreamParser:
                     if trace.new:
                         self.filemap[revision][node.path] = trace
                     else:
-                        raise Fatal("add of existing path %s" % node.path)
+                        complain("r%s: add of existing path %s" \
+                                 % (revision, node.path))
                 if node.action == "delete":
                     if trace.new:
-                        complain("revision %s: delete of nonexistent %s %s." \
+                        complain("r%s: delete of nonexistent %s %s." \
                                  % (revision, node.kind, node.path))
                     else:
                         del self.filemap[revision][node.path]
@@ -2390,7 +2391,7 @@ class StreamParser:
                     # Action "change" just falls through to here
                     if node.props is not None:
                         if verbose >= DEBUG_EXTRACT:
-                            announce("revision %s: setting properties %s on %s" \
+                            announce("r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
                         # svn.ignore gets handled here,
                         if node.path == os.sep:
