@@ -1854,6 +1854,10 @@ class StreamParser:
                             len(self.text or ""),
                             repr(self.text),
                             self.props)
+    class RevisionRecord:
+        def __init__(self, nodes, props):
+            self.nodes = nodes
+            self.props = props
     class RevisionAction(Commit):
         def __init__(self, repo):
             Commit.__init__(self, repo)
@@ -1879,11 +1883,14 @@ class StreamParser:
         self.markseq = 0
         self.ccount = 0
         self.linebuffers = []
+        # Everying below here is Subversion-specific
         self.markmap = {}       # Revision-to-mark map
-        self.filemap = {}       # Per-revision map of the reposutory's files
+        self.filemap = {}       # Per-revision map of the repository's files
         self.parent = None
         self.branches = {}
         self.branchlink = {}
+        self.uuid = None
+        self.revisions = collections.OrderedDict()
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2020,7 +2027,6 @@ class StreamParser:
                         raise Fatal("unsupported dump format version %s" \
                                     % version)
                     # Beginning of Subversion dump parsing
-                    uuid = None
                     while True:
                         line = self.readline()
                         if not line:
@@ -2028,7 +2034,7 @@ class StreamParser:
                         elif not line.strip():
                             continue
                         elif line.startswith("UUID:"):
-                            uuid = StreamParser.sd_body(line)
+                            self.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             if verbose >= DEBUG_EXTRACT+1:
@@ -2100,7 +2106,7 @@ class StreamParser:
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
-                            self.svn_commit(uuid, revision, nodes, props)
+                            self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
@@ -2295,7 +2301,7 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following function.
     #
-    def svn_commit(self, uuid, revision, nodes, revprops):
+    def svn_commit(self, revision, nodes, revprops):
         "Translate Subversion actions into import-stream file operations."
         commit = StreamParser.RevisionAction(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
@@ -2318,7 +2324,7 @@ class StreamParser:
         if "svn:log" in revprops:
             commit.comment = revprops.pop("svn:log")
         if global_options["use_uuid"]:
-            attribution = "%s <%s@%s> %s" % (au, au, uuid, ad)
+            attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
         else:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
@@ -2549,6 +2555,8 @@ class StreamParser:
                          quiet=True)
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
+        for (revision, record) in self.revisions.items():
+            self.svn_commit(revision, record.nodes, record.props)
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
             for commit in self.repo.commits():
