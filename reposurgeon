@@ -2083,9 +2083,9 @@ class StreamParser:
                                     plen = int(StreamParser.sd_body(line))
                                 elif line.startswith("Content-length: "):
                                     self.sd_require_spacer()
-                                    if plen > 0:
+                                    if plen > -1:
                                         node.props = self.sd_read_props(node.path, plen)
-                                    if tlen > 0:
+                                    if tlen > -1:
                                         node.text = self.sd_read_blob(tlen)
                                     nodes.append(node)
                                 else:
@@ -2465,6 +2465,9 @@ class StreamParser:
                             del self.filemap[revision][node.path]
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
+                            if node.text is None:
+                                complain("r%s: missing text for path %s" \
+                                         % (revision, node.path))
                             if node.path in self.filemap[revision]:
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
