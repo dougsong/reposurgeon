@@ -21,6 +21,7 @@ from foo.sd.  Here is a summary of the test sources:
 |deletion.svn    |Tests translation of file deletions
 |emptybranch.svn |Branchy repo with empty branch at top level
 |exiguous.svn    |Branchy repo with exiguous branch at top level
+|filecopy.svn	 |Test to make sure file copies don't confuse branch detection.
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |gsoc.fi         |The Google Summer of Code branch of Roundup
 |gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
