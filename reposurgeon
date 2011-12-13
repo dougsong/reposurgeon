@@ -147,7 +147,7 @@ vcstypes = [
     VCS(name="git",
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-        styleflags=("nl-after-commit",),
+        styleflags=set(["nl-after-commit"]),
         properties=False,
         initializer="git init",
         importer="git fast-import",
@@ -160,7 +160,7 @@ vcstypes = [
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
-        styleflags=("export-progress", "nl-after-comment",),
+        styleflags=set(["export-progress", "nl-after-comment"]),
         properties=True,
         initializer=None,
         lister=None,
@@ -173,7 +173,9 @@ vcstypes = [
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags=("nl-after-comment", "nl-after-commit", "export-progress"),
+        styleflags=set(["nl-after-comment",
+                        "nl-after-commit",
+                        "export-progress"]),
         properties=False,
         initializer="hg init",
         lister="hg locate",
@@ -186,7 +188,7 @@ vcstypes = [
     VCS(name="svn",
         subdirectory="locks",
         exporter="svnadmin dump .",
-        styleflags=tuple([]),
+        styleflags=set(["export-progress"]),
         properties=False,
         initializer=None,
         importer=None,
@@ -2356,8 +2358,8 @@ class StreamParser:
                         raise Fatal("add of existing path %s" % node.path)
                 if node.action == "delete":
                     if trace.new:
-                        complain("delete of nonexistent %s %s." \
-                                 % (node.kind, node.path))
+                        complain("revision %s: delete of nonexistent %s %s." \
+                                 % (revision, node.kind, node.path))
                     else:
                         del self.filemap[revision][node.path]
                 # Handle per-file and per-directory properties
