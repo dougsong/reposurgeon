@@ -1,0 +1,222 @@
+SVN-fs-dump-format-version: 2
+
+UUID: aea7b2af-9eb3-4379-aa13-42c4997873f1
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-13T00:58:41.243886Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T00:58:41.582397Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T00:58:42.298511Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 147
+Content-length: 147
+
+K 7
+svn:log
+V 49
+Create a hello-world script, not yet executable.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T01:02:19.704704Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 32
+Text-content-md5: 044da061ee8e419c43d6e377e969eece
+Text-content-sha1: b7bbda01475357c71f8de7278128e095634135d0
+Content-length: 42
+
+PROPS-END
+#!/bin/sh
+
+echo "Hello, world!"
+
+
+Revision-number: 4
+Prop-content-length: 169
+Content-length: 169
+
+K 7
+svn:log
+V 71
+This is a commit after doing 'svn propset svn:executable 'true' hello'
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T01:06:47.369580Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: change
+Prop-content-length: 39
+Content-length: 39
+
+K 14
+svn:executable
+V 4
+true
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 210
+Content-length: 210
+
+K 7
+svn:log
+V 111
+Modify the script in a trivial way.
+
+The actual purpose of this commit is to demonstrate property persistance.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T01:08:54.240871Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: change
+Text-content-length: 34
+Text-content-md5: d84bcf7a6a5ac2179fbbfa55646e9930
+Text-content-sha1: d1087104b3a7ec3555e40a7dfd3475149bf89f5f
+Content-length: 34
+
+#!/bin/sh
+
+echo "Goodbye, world!"
+
+
+Revision-number: 6
+Prop-content-length: 234
+Content-length: 234
+
+K 7
+svn:log
+V 135
+A commit after doing 'svn propdel svn:executable hello'.
+
+Should produce a fileop that changes the permissions back to non-executable.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-13T01:19:08.884497Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
