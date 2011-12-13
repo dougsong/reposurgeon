@@ -1810,8 +1810,6 @@ class RepoStreamer:
 # a Content-length header.  This is erroneous (node records can end with
 # a Node-copyfrom-path or Node-action line) and may represent a bug.
 
-# TODO: construct test cases for file copyfrom
-
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class Trace:
