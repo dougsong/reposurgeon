@@ -1713,6 +1713,9 @@ class RepoStreamer:
 # vague. The following notes fill in some gaps and document the assumptions
 # on which reposurgeon's code is based.
 #
+# Below, [? ?] flags assertions I am using but relatively unsure
+# of. These need to be checked further
+#
 # First, syntax.  It is implied, but not expressed, that Revision and Node
 # records are in an RFC822-like format - headers followed by a spacer line
 # followed by a body.  A Revision record begins with a Revision-number
@@ -1723,8 +1726,9 @@ class RepoStreamer:
 # But some records can never have a body and thus have no content
 # length. A node describing a copy operation ends with a Node-copyfrom-path
 # line and has no content. A node describing a delete action ends with the
-# Node-action line and has no content. Both these records must still be
-# followed by soacer lines.
+# Node-action line and has no content. Each of these records must still be
+# followed by a spacer line.  [?These are the only records that can end
+# without a Conent-Length line.?]
 #
 # The body of a Revision record consists entirely of a property
 # section.  The body of a Node record consists of an optional property
@@ -1738,7 +1742,7 @@ class RepoStreamer:
 # Prop-content-length.
 #
 # A properties section consists of a sequence of paired K and V (key and
-# value) reccords.  The header of each record is a body length.  The body
+# value) records.  The header of each record is a body length.  The body
 # begins on the next line and is an uninterpreted byte stream of the
 # specified length.  A spacer \n is always inserted after the body
 # so the next K or V record (or the terminator) will begin at the start
@@ -1772,8 +1776,6 @@ class RepoStreamer:
 # file node changes the contents of the file; an absent text section
 # means only the file properties change.
 #
-# Below, [??] flags assertions I am relatively unsure of.
-#
 # The "add" action is used to add new directories and file content.
 # Directory adds never have text content; file adds always do.  Either type
 # may have properties [?but the Subversion client tools never generate
@@ -1788,7 +1790,7 @@ class RepoStreamer:
 #
 # The "replace" action [?is only issued with directory copies, and?]
 # signifies that the existing contents of the directory should be
-# removed before the copy?]
+# removed before the copy.
 #
 # Interpreting copyfrom_path for file copies is straightforward; the
 # target pathname gets the contents of the source pathname.
@@ -1802,7 +1804,7 @@ class RepoStreamer:
 # A single revision may include multiple copyfrom nodes, even multiple
 # copyfroms to the same directory, even mixed directory and file copies
 # to the same directory; [?Subversion client tools never generate such
-# mixed copies, but I have seen the results of cvs2svn doing it?]. 
+# mixed copies, but?] I have seen the results of cvs2svn doing it. 
 #
 # Note: The Subversion notes show a Node record always ending with
 # a Content-length header.  This is erroneous (node records can end with
