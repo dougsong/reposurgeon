@@ -2350,8 +2350,8 @@ class StreamParser:
                     else:
                         node.kind = "file"
                 else:
-                    raise Fatal("revision %s: null kind on nonexistent %s" % \
-                                (revision, node.path))
+                    complain("revision %s: null kind on nonexistent %s" % \
+                             (revision, node.path))
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == "dir":
                 node.path += os.sep
@@ -2361,10 +2361,11 @@ class StreamParser:
                     if trace.new:
                         self.filemap[revision][node.path] = trace
                     else:
-                        raise Fatal("add of existing path")
+                        raise Fatal("add of existing path %s" % node.path)
                 if node.action == "delete":
                     if trace.new:
-                        raise Fatal("delete of nonexistent path %s." % node.path)
+                        complain("delete of nonexistent %s %s." \
+                                 % (node.kind, node.path))
                     else:
                         del self.filemap[revision][node.path]
                 # Handle per-file and per-directory properties
