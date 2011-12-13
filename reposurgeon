@@ -1724,7 +1724,7 @@ class RepoStreamer:
 # line and has no content. A node describing a delete action ends with the
 # Node-action line and has no content. Each of these records must still be
 # followed by a spacer line.  [?These are the only records that can end
-# without a Conent-Length line.?]
+# without a Comment-Length line.?]
 #
 # The body of a Revision record consists entirely of a property
 # section.  The body of a Node record consists of an optional property
@@ -1773,9 +1773,10 @@ class RepoStreamer:
 # means only the file properties change.
 #
 # The "add" action is used to add new directories and file content.
-# Directory adds never have text content; file adds always do.  Either type
-# may have properties [?but the Subversion client tools never generate
-# an add node with properties?].
+# Directory adds never have text content or a copyfrom source; file
+# adds always have one or the other.  Either type may have properties
+# [?but the Subversion client tools never generate an add node with
+# properties?].
 #
 # The "change" action changes text or properties or both.  It may also
 # be used on a directory copy, meaning that the contents of the copy
