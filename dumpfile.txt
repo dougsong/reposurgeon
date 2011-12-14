@@ -125,7 +125,7 @@ Each Revision record is followed by one or more Node records.
 Node records have the following sequence of header lines:
 
 -------------------------------------------------------------------
-Node-path: path/to/node/in/filesystem
+Node-path: <path/to/node/in/filesystem>
 [Node-kind: {file | dir}]
 Node-action: {change | add | delete | replace}
 [Node-copyfrom-rev: <rev>]
@@ -138,6 +138,8 @@ Node-action: {change | add | delete | replace}
 !
 -------------------------------------------------------------------
 
+Bracketing in [] indicates optional lines; { | } is an alternation group.
+
 Dump decoders should be prepared for the optional lines after
 Node-action to be in any order, except that Content-length is 
 always last if it present.
@@ -146,18 +148,20 @@ A Node record describes an action on a path relative to the repository
 root, and always begins with the Node-path specification.
 
 The Node-kind line indicates whether the path is a file or directory.
-It may be (and usually is) absent if the node action is a delete.  
+The header value will be one of the strings "file" or "dir". 
+This header may be (and usually is) absent if the node action is a delete.  
 
 The Node-action line is always present and specifies the type of
-operation for this node.  The operations will be described in
-detail later in this document.
+operation for this node.  The header value is one of the strings
+"change", "add", "delete", or "replace".  These operations will be
+described in detail later in this document.
 
 Either both the Node-copyfrom-rev and Node-copyfrom-path lines will be
 present, or neither will be.  They pair to describe a copy source for
-the node; copy-source semantics will be described in detail later in
+the node. Copy-source semantics will be described in detail later in
 this document.
 
-The Text-content-md5 and Text-copy-source-md5 lines are hash integety
+The Text-content-md5 and Text-copy-source-md5 lines are hash integrity
 checks and will be present only if Text-content-length and the copfyrom
 pair (respectively) are also present. A decoder may use them to verify
 that the source content they refer to has not been corrupted.
@@ -241,9 +245,9 @@ section or from a copy source (that is, a copy-path and copy-revision
 pair).
 
 Giving a copy source appends the node to the flow of which that source
-is part; when you 'add', or 'replace' with a copy source,
-the content at the path becomes a copy of the source (but see below
-for a qualification about directories).
+is part; when you 'add' or 'replace' with a copy source, the content
+at the path becomes a copy of the source (but see below for a
+qualification about directories).
 
 Giving a text section also changes the content of the flow. In the
 (unusual) case that a node has both a copy source and a text section,
@@ -251,7 +255,7 @@ the correct semantics is to attach the path to the source flow and
 then change the content.
 
 An add operation creates a new flow for a file or directory.  If a
-flow already exists at that path, the operation fails The initial
+flow already exists at that path, the operation fails. The initial
 content for the new flow may come from a text section attached to the
 Node record, or from a copy source.  A Node record representing an add
 operation may have a property section.  Directory adds never have text
@@ -260,12 +264,10 @@ the other, but not both.
 
 A delete operation deletes a flow and its content. If the path is a
 file, the file is deleted.  If the path is a directory, the directory
-and all its children are deleted.
-
-If a flow does not exist at that path, the delete operation fails.  A
-delete Node record may not have text, properties, or a copy source.  A
-subsequent add at the same path will create a new and different flow
-with its own history.
+and all its children are deleted. If a flow does not exist at that
+path, the delete operation fails.  A delete Node record may not have
+text, properties, or a copy source.  A subsequent add at the same path
+will create a new and different flow with its own history.
 
 A change operation changes properties on a file or directory path.  If
 a flow does not exist at that path, the operation fails.  A change
@@ -277,7 +279,7 @@ source. When a replace has a copy source, it produces a new flow
 with history extending back through the copy source. A Node record
 representing a replace operation may have a property section.
 
-The main reason "replace exists" is because it helps sequential
+The main reason "replace" exists is because it helps sequential
 processors of the dump stream avoid possibly notifying about multiple
 actions on the same path.
 
