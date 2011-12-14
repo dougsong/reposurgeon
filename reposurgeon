@@ -1736,8 +1736,8 @@ class StreamParser:
             self.path = None
             self.kind = None
             self.action = None
-            self.copyfrom_rev = None
-            self.copyfrom_path = None
+            self.from_rev = None
+            self.from_path = None
             self.text = None
             self.props = None
         def __str__(self):
@@ -1745,8 +1745,8 @@ class StreamParser:
                 shorten = None
             else:
                 shorten = "%d:%s" % (len(self.text), repr(self.text[:10]))
-            if self.copyfrom_rev:
-                copyfrom = "r%s %s" % (self.copyfrom_rev, self.copyfrom_path)
+            if self.from_rev:
+                copyfrom = "r%s %s" % (self.from_rev, self.from_path)
             else:
                 copyfrom = None
             if self.props:
@@ -1977,9 +1977,9 @@ class StreamParser:
                                     if node.action == "delete":
                                         nodes.append(node)
                                 elif line.startswith("Node-copyfrom-rev: "):
-                                    node.copyfrom_rev = StreamParser.sd_body(line)
+                                    node.from_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Node-copyfrom-path: "):
-                                    node.copyfrom_path = StreamParser.sd_body(line)
+                                    node.from_path = StreamParser.sd_body(line)
                                     nodes.append(node)
                                 elif line.startswith("Text-copy-source-md5: "):
                                     pass
@@ -2240,12 +2240,12 @@ class StreamParser:
                 assert node.action in ("change", "add", "delete", "replace")
                 assert node.text is not None or \
                        node.props is not None or \
-                       node.copyfrom_rev or \
+                       node.from_rev or \
                        (node.kind != "file" and node.action in ("add","delete"))
-                assert (node.copyfrom_rev is None) == (node.copyfrom_path is None)
+                assert (node.from_rev is None) == (node.from_path is None)
                 assert node.kind in (None, "file", "dir")
                 assert node.kind != None or node.action == "delete"
-                assert node.action in ("add","replace") or not node.copyfrom_rev
+                assert node.action in ("add","replace") or not node.from_rev
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
@@ -2324,7 +2324,7 @@ class StreamParser:
                             fileop.construct("D", gitignore_path)
                             commit.fileops.append(fileop)
                     # Handle directory copies used for branching and tags
-                    if node.copyfrom_path:
+                    if node.from_path:
                         if self.branches:
                             if node.path.count(os.sep) == 2:
                                 if node.path.startswith("tags" + os.sep):
@@ -2341,13 +2341,13 @@ class StreamParser:
                                     fileop.construct("D", candidate.path)
                                     commit.fileops.append(fileop)
                                     del self.filepaths[revision]
-                        for (source, trace) in self.filemap[node.copyfrom_rev].items():
-                            if source.startswith(node.copyfrom_path + os.sep):
+                        for (source, trace) in self.filemap[node.from_rev].items():
+                            if source.startswith(node.from_path + os.sep):
                                 assert trace.mark
                                 with trace.clone() as newtrace:
                                     fileop = FileOp(commit)
                                     dest = os.path.join(node.path,
-                                                        source[len(node.copyfrom_path+os.sep):])
+                                                        source[len(node.from_path+os.sep):])
                                     fileop.construct("M",
                                                      newtrace.perms,
                                                      newtrace.mark,
@@ -2356,12 +2356,12 @@ class StreamParser:
                                     self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
-                    if node.copyfrom_path:
-                        if node.copyfrom_path not in self.filepaths(node.copyfrom_rev):
+                    if node.from_path:
+                        if node.from_path not in self.filepaths(node.from_rev):
                             raise Fatal("%s not present in source commit %s" % \
-                                        (node.copyfrom_path, node.copyfrom_rev))
+                                        (node.from_path, node.from_rev))
                         else:
-                            trace.set_mark(self.filemap[node.copyfrom_rev][node.copyfrom_path].mark)
+                            trace.set_mark(self.filemap[node.from_rev][node.from_path].mark)
                             fileop = FileOp(commit)
                             # We don't use C here because there is no
                             # guarantee the file is in-tree at the
@@ -2403,8 +2403,8 @@ class StreamParser:
                             self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # This will used for branch re-rooting later
-            if node.copyfrom_rev and node.kind == "dir":
-                copyset.add(node.copyfrom_rev)
+            if node.from_rev and node.kind == "dir":
+                copyset.add(node.from_rev)
         commit.branch = os.path.join("refs", "heads", "master") + os.sep
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
@@ -2422,10 +2422,10 @@ class StreamParser:
         # to the copy). Fortunately, we can resolve such sets by the
         # simple expedient of picking the *latest* revision in them!
         copies = [node for node in self.revisions[revision].nodes \
-                  if node.copyfrom_rev is not None]
+                  if node.from_rev is not None]
         if copies:
-            copies.sort(key=lambda node: int(node.copyfrom_rev))
-            self.branchlink[revision] = copies[-1].copyfrom_rev
+            copies.sort(key=lambda node: int(node.from_rev))
+            self.branchlink[revision] = copies[-1].from_rev
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
         for revision in self.revisions:
