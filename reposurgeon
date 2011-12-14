@@ -1731,6 +1731,7 @@ class StreamParser:
             self.modified = False
         def __str__(self):
             return "<Trace(%s, %s)>" % (self.mark, self.perms)
+        __repr__ = __str__
     class NodeAction:
         def __init__(self):
             self.path = None
@@ -1821,7 +1822,10 @@ class StreamParser:
         self.import_line -= 1
         self.linebuffers.append(line)
     def filepaths(self, revision):
-        return [path for path in self.filemap.get(revision, [])]
+        return self.filemap[revision].keys()
+    def children(self, revision, parent):
+        return [(path, trace) for (path, trace) in self.filemap[revision].items() \
+                if path.startswith(parent)]
     # Helpers for import-stream files
     def fi_read_data(self, line=None):
         "Read a fast-import data section."
@@ -2284,45 +2288,50 @@ class StreamParser:
                 if node.kind == "dir":
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
-                    if node.action == "replace":
-                        # Replace on a directory seems to be a no-op,
-                        # since VCSes that speak fast-import don't
-                        # track directories as such.
+                    if node.action == "add":
+                        # No-op, since stream format doesn't track
+                        # empty directories.
                         pass
-                    # Action "change" just falls through to here
-                    if node.props is not None:
-                        if verbose >= DEBUG_EXTRACT:
-                            announce("r%s: setting properties %s on %s" \
-                                     % (revision, node.props, node.path))
-                        # svn.ignore gets handled here,
-                        if node.path == os.sep:
-                            gitignore_path = ".gitignore"
-                        else:
-                            gitignore_path = os.path.join(node.path,
-                                                          ".gitignore")
-                        # There are no other directory properties that can
-                        # turn into fileops.
-                        if "svn:ignore" in node.props:
-                            blob = Blob(self.repo)
-                            blob.mark = self.__newmark() 
-                            with open(blob.blobfile(), "w") as wfp:
-                                wfp.write(node.props["svn:ignore"])
-                            self.repo.events.append(blob)
-                            with StreamParser.Trace() as newtrace:
-                                newtrace.set_mark(blob.mark)
-                                self.filemap[revision][gitignore_path] = newtrace
-                                fileop = FileOp(commit)
-                                fileop.construct("M",
-                                                 newtrace.perms,
-                                                 newtrace.mark,
-                                                 gitignore_path)
-                                self.repo.backlink_blobs(fileop)
-                                commit.fileops.append(fileop)
-                        elif gitignore_path in self.filemap[revision]:
-                            del self.filemap[revision][gitignore_path]
+                    elif node.action in ("delete", "replace"):
+                        for child in self.children(revision, node.path):
+                            del self.filemap[revision][child]
                             fileop = FileOp(commit)
-                            fileop.construct("D", gitignore_path)
+                            fileop.construct("D", child)
                             commit.fileops.append(fileop)
+                    elif node.action == "change":
+                        if node.props is not None:
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("r%s: setting properties %s on %s" \
+                                         % (revision, node.props, node.path))
+                            # svn.ignore gets handled here,
+                            if node.path == os.sep:
+                                gitignore_path = ".gitignore"
+                            else:
+                                gitignore_path = os.path.join(node.path,
+                                                              ".gitignore")
+                            # There are no other directory properties that can
+                            # turn into fileops.
+                            if "svn:ignore" in node.props:
+                                blob = Blob(self.repo)
+                                blob.mark = self.__newmark() 
+                                with open(blob.blobfile(), "w") as wfp:
+                                    wfp.write(node.props["svn:ignore"])
+                                self.repo.events.append(blob)
+                                with StreamParser.Trace() as newtrace:
+                                    newtrace.set_mark(blob.mark)
+                                    self.filemap[revision][gitignore_path] = newtrace
+                                    fileop = FileOp(commit)
+                                    fileop.construct("M",
+                                                     newtrace.perms,
+                                                     newtrace.mark,
+                                                     gitignore_path)
+                                    self.repo.backlink_blobs(fileop)
+                                    commit.fileops.append(fileop)
+                            elif gitignore_path in self.filemap[revision]:
+                                del self.filemap[revision][gitignore_path]
+                                fileop = FileOp(commit)
+                                fileop.construct("D", gitignore_path)
+                                commit.fileops.append(fileop)
                     # Handle directory copies used for branching and tags
                     if node.from_path:
                         if self.branches:
@@ -2334,15 +2343,8 @@ class StreamParser:
                             elif node.path.count(os.sep) == 1:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
-                        if "action" == "replace":
-                            for candidate in self.filepaths(revision):
-                                if candidate.path.startswith(node.path):
-                                    fileop = FileOp(commit)
-                                    fileop.construct("D", candidate.path)
-                                    commit.fileops.append(fileop)
-                                    del self.filepaths[revision]
-                        for (source, trace) in self.filemap[node.from_rev].items():
-                            if source.startswith(node.from_path + os.sep):
+                        for (source, trace) in self.children(node.from_rev,
+                                                             node.from_path + os.sep):
                                 assert trace.mark
                                 with trace.clone() as newtrace:
                                     fileop = FileOp(commit)
