@@ -2324,8 +2324,8 @@ class StreamParser:
                                     commit.fileops.append(fileop)
                                     del self.filepaths[revision]
                         for (source, trace) in self.filemap[node.copyfrom_rev].items():
-                            if source.startswith(node.copyfrom_path + os.sep) \
-                                   and trace.mark:
+                            if source.startswith(node.copyfrom_path + os.sep):
+                                assert trace.mark
                                 with trace.clone() as newtrace:
                                     fileop = FileOp(commit)
                                     dest = os.path.join(node.path,
