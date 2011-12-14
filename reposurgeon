@@ -2246,7 +2246,7 @@ class StreamParser:
                 assert node.text is not None or \
                        node.props is not None or \
                        node.from_rev or \
-                       (node.kind != "file" and node.action in ("add","delete"))
+                       node.action in ("add", "delete")
                 assert (node.from_rev is None) == (node.from_path is None)
                 assert node.kind in (None, "file", "dir")
                 assert node.kind != None or node.action == "delete"
