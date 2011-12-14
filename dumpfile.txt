@@ -1,6 +1,6 @@
 = How to interpret Subversion dumpfiles =
 Eric S. Raymond <esr@thyrsus.com>
-v0.2, 2011-12-14
+v0.3, 2011-12-14
 
 == Introduction ==
 
@@ -17,15 +17,9 @@ another version-control system.
 
 Open questions:
 
-1. Is delete on a directory with children expected to succeed or fail?
+1. Is replace on a nonexistent path expected to fail?
 
-2. Is replace on a nonexistent path expected ro fail?
-
-3. Is add on an existing path expected to fail?
-
-4. What are the detailed semantics of "change" with copyfrom?  I
-understand the no-copyfrom case - on a file it's an ordnary text 
-modification, on a directory a pure property change. 
+2. Is add on an existing path expected to fail?
 
 == Syntax ==
 
@@ -209,9 +203,17 @@ Content is what file paths point at (one timewise slice of a flow). It
 is the payload of program source code, documents, images, and so forth
 that a version control system actually manages.
 
-A node describes a change in properties, the addition or deletion
+A Node record describes a change in properties, the addition or deletion
 of a flow, or a change in content.  It nust do at least one of these things,
 otherwise it would be a no-op and omitted.
+
+Terminological node: in Subversion-speak, the term "node" is
+historically ambiguous.  Sometimes it refers to what this document
+calls a "flow", and sometimes it refers to the internal per-revision
+structure that a Node record represents (that is, just one action in a
+flow).  For clarity, most of this document avoids the term "node" in
+favor of the more specific "flow" and "Node record", but knowing 
+about this issue will help if you read the Ancient History section.
 
 === The kinds of operations ===
 
@@ -220,7 +222,7 @@ otherwise it would be a no-op and omitted.
 |                           |   add    | delete | replace  |  change  |
 |Can have text section?     | optional |   no   | optional | optional |
 |Can have property section? | optional |   no   | optional | optional |
-|Can have copy source?      | optional |   no   | optional | optional |
+|Can have copy source?      | optional |   no   | optional |    no    |
 |======================================================================
 
 .Directory operations
@@ -231,10 +233,10 @@ otherwise it would be a no-op and omitted.
 |Can have copy source?      | optional |   no   | optional |    no    |
 |======================================================================
 
-A node represents an operation that does one of four things: add,
+A Node record represents an operation that does one of four things: add,
 delete, change, or replace.
 
-Nodes can carry content in one (or both!) of two ways: from a text
+Node records can carry content in one (or both!) of two ways: from a text
 section or from a copy source (that is, a copy-path and copy-revision
 pair).
 
@@ -243,26 +245,27 @@ is part; when you 'add', or 'replace' with a copy source,
 the content at the path becomes a copy of the source (but see below
 for a qualification about directories).
 
-[See the open question about the semantics of "change"]
-
 Giving a text section also changes the content of the flow. In the
 (unusual) case that a node has both a copy source and a text section,
 the correct semantics is to attach the path to the source flow and
 then change the content.
 
-An add operation creates a new flow for a file or directory.
-If a flow already exists at that path, the operation fails
-The initial content for the new flow may come from a text section
-attached to the node, or from a copy source.  A node representing an
-add operation may have a property section.  Directory adds never have
-text content, but may have a copyfrom source; file adds always have
-one or the other, but not both.
+An add operation creates a new flow for a file or directory.  If a
+flow already exists at that path, the operation fails The initial
+content for the new flow may come from a text section attached to the
+Node record, or from a copy source.  A Node record representing an add
+operation may have a property section.  Directory adds never have text
+content, but may have a copyfrom source; file adds always have one or
+the other, but not both.
 
-A delete operation deletes a flow and its content.  If a flow does not
-exist at that path, the operation fails.  If a flow does not exist at
-that path, the operation fails.  A delete node may not have text,
-properties, or a copy source.  A subsequent add at the same path will
-create a new and different flow with its own history.
+A delete operation deletes a flow and its content. If the path is a
+file, the file is deleted.  If the path is a directory, the directory
+and all its children are deleted.
+
+If a flow does not exist at that path, the delete operation fails.  A
+delete Node record may not have text, properties, or a copy source.  A
+subsequent add at the same path will create a new and different flow
+with its own history.
 
 A change operation changes properties on a file or directory path.  If
 a flow does not exist at that path, the operation fails.  A change
@@ -271,7 +274,7 @@ node must have properties, and may not have text or a copy source.
 A replace operation behaves exactly like a delete followed by an add
 (destroying an old flow, producing a new one) when it has no copy
 source. When a replace has a copy source, it produces a new flow
-with history extending back through the copy source. A node
+with history extending back through the copy source. A Node record
 representing a replace operation may have a property section.
 
 The main reason "replace exists" is because it helps sequential
@@ -311,10 +314,10 @@ Node-copyfrom-path: a/b/c
 
 the file a/b/c/d will have been be copied to x/y/z/d.
 
-A single revision may include multiple copyfrom nodes, even multiple
+A single revision may include multiple copyfrom Node records, even multiple
 copyfroms to the same directory, even mixed directory and file copies
 to the same directory. 
- 
+
 === Properties and persistence ===
 
 The properties section of a Revision record consists of some subset
@@ -326,11 +329,11 @@ persistent, once set, until modified by a future property
 section on the same path.
 
 Normally, a dumpfile re-lists the entire property set for a directory
-or file in every node record that changes any part of it. (But see
+or file in every Node record that changes any part of it. (But see
 the material on delta dumps for an exception.)
 
 This implies that to delete a given property from a path, a dumpfile
-generator will issue a node with all other properties listed in it;
+generator will issue a Node record with all other properties listed in it;
 to delete all properties from a path, the dumpfile generator will
 simply issue a node with an empty properties section. Note that this
 is different from an *absent* properties section, which will change
@@ -419,7 +422,7 @@ following:
 1. The format starts with the new version number of the dump format
    ("SVN-fs-dump-format-version: 3\n").
 
-2. There are several new optional headers for node changes:
+2. There are several new optional headers for Node records:
 
 -------------------------------------------------------------------
 [Text-delta: true|false]
@@ -432,13 +435,13 @@ following:
 
 The default value for the boolean headers is "false".  If the value is
 set to "true", then the text and property contents will be treated
-as deltas against the previous contents of the node (as determined
+as deltas against the previous contents of the flow (as determined
 by copy history for adds with history, or by the value in the
 previous revision for changes--just as with commits).
 
 Property deltas have the same format as regular property lists except
 that (1) properties with the same value as in the previous contents of
-the node are not printed, and (2) deleted properties will be written
+the flow are not printed, and (2) deleted properties will be written
 out as
 
 D <name length>
