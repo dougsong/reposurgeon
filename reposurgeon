@@ -2236,11 +2236,21 @@ class StreamParser:
         for node in self.revisions[revision].nodes:
             # if node.props is None, no property section.
             # if node.text is None, no text section.
+            try:
+                assert node.action in ("change", "add", "delete", "replace")
+                assert node.text is not None or \
+                       node.props is not None or \
+                       node.copyfrom_rev or \
+                       (node.kind != "file" and node.action in ("add","delete"))
+                assert (node.copyfrom_rev is None) == (node.copyfrom_path is None)
+                assert node.kind in (None, "file", "dir")
+                assert node.kind != None or node.action == "delete"
+                assert node.action in ("add","replace") or not node.copyfrom_rev
+            except AssertionError:
+                raise Fatal("forbidden operation in dump stream at r%s: %s" \
+                            % (revision, node))
             if verbose >= DEBUG_EXTRACT:
-                announce("revision=%s, %s" % (revision, node))
-            assert node.action in ("change", "add", "delete", "replace")
-            assert node.kind in (None, "file", "dir")
-            assert not (node.kind == None and node.action != "delete")
+                announce("r%s: %s" % (revision, node))
             # Recover some information that may have been elided due to a
             # header being optional. This is why we keep directories in
             # the filemap.
