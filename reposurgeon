@@ -1741,14 +1741,22 @@ class StreamParser:
             self.text = None
             self.props = None
         def __str__(self):
-            shorten = self.text and self.text[:10]
-            return "<NodeAction: path=%s, kind=%s, action=%s, copyfrom_rev=%s, copyfrom_path=%s, text=%d:%s..., props=%s>" \
-                         % (self.path, self.kind, self.action,
-                            self.copyfrom_rev,
-                            self.copyfrom_path,
-                            len(self.text or ""),
-                            repr(shorten),
-                            self.props)
+            if self.text is None:
+                shorten = None
+            else:
+                shorten = "%d:%s" % (len(self.text), repr(self.text[:10]))
+            if self.copyfrom_rev:
+                copyfrom = "r%s %s" % (self.copyfrom_rev, self.copyfrom_path)
+            else:
+                copyfrom = None
+            if self.props:
+                # Trim off the OrderedDict wrapper
+                showprops = str(self.props)[12:-1]
+            else:
+                showprops = None
+            return "<NodeAction: %s %s %s, from=%s, text=%s..., props=%s>" \
+                         % (self.action, self.kind, self.path, copyfrom,
+                            shorten, showprops)
     class RevisionRecord:
         def __init__(self, nodes, props):
             self.nodes = nodes
