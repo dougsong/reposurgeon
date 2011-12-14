@@ -1,14 +1,17 @@
 = How to interpret Subversion dumpfiles =
+Eric S. Raymond <esr@thyrsus.com>
+v0.2, 2011-12-13
 
 == Introduction ==
 
-The Subversion dumpfile format is documented at
+The Subversion dumpfile format was first documented at
 
 https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
 
-but there are a number of points on which that document is incomplete or
-vague. The following notes fill in some gaps and document the assumptions
-on which the code of reposurgeon is based.
+but there are a number of points on which that document is incomplete
+or vague.  This document incorporates those notes, expands them, and
+is intended to replace them.  The goal is that is be sufficient for
+people writing dumpfile interpreters.
 
 Below, [? ?] flags assertions I am using but relatively unsure
 of. These need to be checked further.
@@ -21,12 +24,12 @@ Subversion dumpfiles are plain byte streams. The structural parts are
 ASCII.  Text sections and property key/value pairs may be interpreted
 as binary data in any encoding by client tools.
 
-A dumpfile consists of four kinds of records.  A record is a span or
-RFC822-style header lines (each consisting of a key. followed by a
-colon, followed by text data to end of line), followed by an empty spacer
-line, followed optionally by a body section.  If the body section is
-present, another empty spacer line separates it from the following 
-record.
+A dumpfile consists of four kinds of records.  A record is a group of
+RFC822-style header lines (each consisting of a key, followed by a
+colon, followed by text data to end of line), followed by an empty
+spacer line, followed optionally by a body section.  If the body
+section is present, another empty spacer line separates it from the
+following record.
 
 For forward compatibility, unrecognized headers are ignored.
 
@@ -44,7 +47,7 @@ SVN-fs-dump-format-version: <N>\n
 -------------------------------------------------------------------
 
 where <n> is replaced by the dump format version. Except where 
-specified, the descrioptions in this document aapply to all
+specified, the descriptions in this document aapply to all
 versions of the format.
 
 Versions 2 and later may have a UUID record following the version
@@ -72,7 +75,7 @@ a mandatory empty spacer line.  <P> gives the length in bytes of the
 following property section. <L> gives the body length of the entire
 Revision record.  These two numbers will be *identical* for a Revision
 record; the Content-length header is added for the benefit of software
-that can parse RFC-822 records.
+that can parse RFC-822 messages.
 
 A revision record is followed by one or more Node records (see below).
 
@@ -131,7 +134,8 @@ Node-action: {change | add | delete | replace}
 -------------------------------------------------------------------
 
 Dump decoders should be prepared for the optional lines after
-Node-action to be in any order.
+Node-action to be in any order, except that Content-length is 
+always last if it present.
 
 A Node record describes an action on a path relative to the repository
 root, and always begins with the Node-path specification.
@@ -143,10 +147,10 @@ The Node-action line is always present and specifies the type of
 operation for this node.  The operations will be described in
 detail later in this document.
 
-Either both the Node-copyfrom-rev and Node-copyfrom-path lines
-will be present, or neither will be.  They pair to describe 
-a copy source for the node; this will be described in detail
-later in this document.
+Either both the Node-copyfrom-rev and Node-copyfrom-path lines will be
+present, or neither will be.  They pair to describe a copy source for
+the node; copy-source semantics will be described in detail later in
+this document.
 
 The Text-content-md5 and Text-copy-source-md5 lines are hash integety
 checks and will be present only if Text-content-length and the copfyrom
@@ -160,8 +164,8 @@ Prop-content-length will be present only when there is a properties section.
 
 Content-length will be present if there is either a text or a
 properties section.  This is not always the case.  In particular, 
-a delete operation can have neither.  Some other operations that use
-copyfrom sources may also have neither.
+a delete operation cannot have either.  Some other operations that use
+copyfrom sources may also not have either.
 
 Again, the '!' stands in for a mandatory empty line following the
 RFC822-style headers. A body may follow
@@ -171,8 +175,8 @@ RFC822-style headers. A body may follow
 === The kinds of things ===
 
 There are four kinds of things described by a dumpfile: paths,
-properties, content, and containers.  The distinctions among content,
-paths, and container matters for understanding some operations.
+properties, content, and flows.  The distinctions among content,
+paths, and flows matter for understanding some operations.
 
 A path is a filesystem location.  There are two kinds of paths
 in a dumpfile; node paths and copy sources.
@@ -183,12 +187,12 @@ with "svn:". Others are not interpreted by Subversion; they may
 may be set and read for the convenience of other applications, such
 as repository browsers or translators.
 
-A container is a sequence of revisions of a file path [?or directory?]
-that is considered to be a unit of history for change-tracking
-purposes.  Creating a container tells Subversion that you want to
-track the history of the paths it contains. Destroying a container
-breaks the chain of history; changes will not be tracked across the
-break.
+A flow is a sequence of revisions of a file or directory path that is
+considered to be a unit of history for change-tracking purposes.
+Creating a flow tells Subversion that you want to track the history of
+the path or paths it contains. Destroying a flow breaks the chain of
+history; changes will not be tracked across the break, even if another
+flow is created at the same path.
 
 Content is what file paths point at. It is the payload of program
 source code, documents, images, and so forth that a version control
@@ -196,30 +200,51 @@ system actually manages.
 
 === The kinds of operations ===
 
+.File operations
+|======================================================================
+|                           |   add    | delete | replace  |  change  |
+|Can have text section?     | optional |   no   | optional | optional |
+|Can have property section? | optional |   no   | optional | optional |
+|Can have copy source?      | optional |   no   | optional | optional |
+|======================================================================
+
+.Directory operations
+|======================================================================
+|                           |   add    | delete | replace  |  change  |
+|Can have text section?     |    no    |   no   |   no     |    no    |
+|Can have property section? | optional |   no   | optional | required |
+|Can have copy source?      | optional |   no   | optional |    no    |
+|======================================================================
+
 A node represents an operation that does one of four things: add,
 delete, change, or replace.
 
-An add operation creates a new container (a file or directory).  The
-content for the new container may come from a text section attached to
-the node, or from a copy source.  A node representing an add operation
-may have a property section.  Directory adds never have text content,
-but may have a copyfrom source; file adds always have one or the other
-but not both.
+Nodes can carry content in one (or both!)  of two ways: from a text
+section or from a copy source (that is, a copy-path and copy-revision
+pair). Giving a copy source appends the node to the flow of which that
+source is part.
 
-A delete operation deletes a container and its content.  A delete
-node may not have text, properties, or a copy sourse.  A subsequent
-add at the same path will create a new and different container with
+An add operation creates a new flow for a file or directory.
+The initial content for the new flow may come from a text section
+attached to the node, or from a copy source.  A node representing an
+add operation may have a property section.  Directory adds never have
+text content, but may have a copyfrom source; file adds always have
+one or the other, but not both.
+
+A delete operation deletes a flow and its content.  A delete
+node may not have text, properties, or a copy source.  A subsequent
+add at the same path will create a new and different flow with
 its own history.
 
 A change operation changes properties on a file or directory path.  A
-change node must have properies, and may not have text or a copy
+change node must have properties, and may not have text or a copy
 source.
 
-[?A replace operation behaves like a delete followed by an add
-when it has no copy source?]  When a replace has a copy source,
-it produces a new container with history extending back through
-the copy source. A node representing a replace operation may 
-have a property section.
+A replace operation behaves exactly like a delete followed by an add
+(destroying an old flow, producing a new one) when it has no copy
+source. When a replace has a copy source, it produces a new flow
+with history extending back through the copy source. A node
+representing a replace operation may have a property section.
 
 It is even possible to have a replace with a copyfrom source *and*
 text, such as would result from this on the client side:
@@ -244,7 +269,7 @@ The key thing to know about Node properties is that they are
 persistent, once set, until modified by a future property 
 section on the same path.
 
-Normally, the format re-lists the entire property set for a directory
+Normally, a dumpfile re-lists the entire property set for a directory
 or file in every node record that changes any part of it. (But see
 the material on delta dumps for an exception.)
 
@@ -260,19 +285,9 @@ no properties and will be associated with a change to content!
 
 ===================================================================
 
-Then, semantics.  The three areas where the existing documentation
-is somewhat vague are (a) the persistence of properties, and in
-particular how to delete them, (b) the meaning of the actions ("change",
-"add", "delete", "replace"), and interpretation of (c) copypath/copyrev
-properties.
-
 Text sections work the same way.  When present, a text section on a
 file node changes the contents of the file; an absent text section
 means only the file properties change.
-
-  Either type may have properties
-[?but the Subversion client tools never generate an add node with
-properties?].
 
 Interpreting copyfrom_path for file copies is straightforward; the
 target pathname gets the contents of the source pathname.
