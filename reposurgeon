@@ -2181,7 +2181,7 @@ class StreamParser:
                     # End of fast-import parsing
                 self.import_line = 0
         except KeyboardInterrupt:
-            nuke(self.repo.subdir(), "reposurgeon: import interrupted, removing %s" % self.subdir())
+            nuke(self.repo.subdir(), "reposurgeon: import interrupted, removing %s" % self.repo.subdir())
             raise KeyboardInterrupt
     #
     # The rendezvous between parsing and object building for import
