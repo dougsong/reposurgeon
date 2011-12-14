@@ -1762,6 +1762,12 @@ class StreamParser:
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
+            self.filemap = {}
+        def filepaths(self):
+            return self.filemap.keys()
+        def children(self, parent):
+            return [path for path in self.filemap.keys() \
+                    if path.startswith(parent)]
     # Native Subversion properties that we don't suppress:
     # svn:externals, svn:mergeinfo.  The reason for these suppressions
     # is to avoid a huge volume of junk file properties - cvs2svn
@@ -1785,7 +1791,6 @@ class StreamParser:
         self.linebuffers = []
         # Everying below here is Subversion-specific
         self.markmap = {}       # Revision-to-mark map
-        self.filemap = {}       # Per-revision map of the repository's files
         self.parent = None
         self.branches = {}
         self.branchlink = {}
@@ -1821,11 +1826,6 @@ class StreamParser:
         self.ccount -= len(line)
         self.import_line -= 1
         self.linebuffers.append(line)
-    def filepaths(self, revision):
-        return self.filemap[revision].keys()
-    def children(self, revision, parent):
-        return [path for path in self.filemap[revision].keys() \
-                if path.startswith(parent)]
     # Helpers for import-stream files
     def fi_read_data(self, line=None):
         "Read a fast-import data section."
@@ -2206,38 +2206,39 @@ class StreamParser:
     #
     def svn_commit(self, revision):
         "Translate Subversion actions into import-stream file operations."
+        record = self.revisions[revision]
         commit = Commit(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
         # it later.  Each revision gets a filemap that represents the
         # state of an entire checkout at that revision.
         if self.parent:
             commit.parent_marks = [self.markmap[self.parent]]
-            self.filemap[revision] = copy.copy(self.filemap.get(self.parent,{}))
+            record.filemap = copy.copy(self.revisions[self.parent].filemap)
         else:
-            self.filemap[revision] = {}
+            record.filemap = {}
         commit.set_fossil(revision)
         try:
-            ad = self.revisions[revision].props.pop("svn:date")
+            ad = record.props.pop("svn:date")
         except KeyError, key:
             self.error("missing required %s" % key)
-        if "svn:author" in self.revisions[revision].props:
-            au = self.revisions[revision].props.pop("svn:author")
+        if "svn:author" in record.props:
+            au = record.props.pop("svn:author")
         else:
             au = "no-author"
-        if "svn:log" in self.revisions[revision].props:
-            commit.comment = self.revisions[revision].props.pop("svn:log")
+        if "svn:log" in record.props:
+            commit.comment = record.props.pop("svn:log")
         if global_options["use_uuid"]:
             attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
         else:
             attribution = "%s <%s> %s" % (au, au, ad)
         commit.committer = Attribution(attribution)
-        commit.properties.update(self.revisions[revision].props)
+        commit.properties.update(record.props)
         # Zero revision is never interesting - no operations, no comment, no
         # author, it's just a start marker for a non-incremental dump.
         if revision == "0": 
             return
         copyset = set([])
-        for node in self.revisions[revision].nodes:
+        for node in record.nodes:
             # if node.props is None, no property section.
             # if node.text is None, no text section.
             try:
@@ -2259,7 +2260,7 @@ class StreamParser:
             # header being optional. This is why we keep directories in
             # the filemap.
             if node.kind is None:
-                if node.path in self.filemap[revision]:
+                if node.path in record.filemap:
                     node.kind = "file"
                 else:
                     node.kind = "dir"
@@ -2267,7 +2268,7 @@ class StreamParser:
             if node.kind == "dir":
                 node.path += os.sep
             # We're going to hack this path, get a filemap record for it
-            with self.filemap[revision].get(node.path, StreamParser.Trace()) as trace:
+            with record.filemap.get(node.path, StreamParser.Trace()) as trace:
                 # Handle per-file and per-directory properties
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
@@ -2293,8 +2294,8 @@ class StreamParser:
                         # empty directories.
                         pass
                     elif node.action in ("delete", "replace"):
-                        for child in self.children(revision, node.path):
-                            del self.filemap[revision][child]
+                        for child in record.children(node.path):
+                            del record.filemap[child]
                             fileop = FileOp(commit)
                             fileop.construct("D", child)
                             commit.fileops.append(fileop)
@@ -2319,7 +2320,7 @@ class StreamParser:
                                 self.repo.events.append(blob)
                                 with StreamParser.Trace() as newtrace:
                                     newtrace.set_mark(blob.mark)
-                                    self.filemap[revision][gitignore_path] = newtrace
+                                    record.filemap[gitignore_path] = newtrace
                                     fileop = FileOp(commit)
                                     fileop.construct("M",
                                                      newtrace.perms,
@@ -2327,8 +2328,8 @@ class StreamParser:
                                                      gitignore_path)
                                     self.repo.backlink_blobs(fileop)
                                     commit.fileops.append(fileop)
-                            elif gitignore_path in self.filemap[revision]:
-                                del self.filemap[revision][gitignore_path]
+                            elif gitignore_path in record.filemap:
+                                del record.filemap[gitignore_path]
                                 fileop = FileOp(commit)
                                 fileop.construct("D", gitignore_path)
                                 commit.fileops.append(fileop)
@@ -2343,9 +2344,9 @@ class StreamParser:
                             elif node.path.count(os.sep) == 1:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
-                        for source in self.children(node.from_rev,
-                                                    node.from_path + os.sep):
-                            trace = self.filemap[revision][source]
+                        source_record = self.revisions[node.from_rev]
+                        for source in source_record.children(node.from_path + os.sep):
+                            trace = source_record.filemap[source]
                             assert trace.mark
                             with trace.clone() as newtrace:
                                 fileop = FileOp(commit)
@@ -2355,16 +2356,17 @@ class StreamParser:
                                                      newtrace.perms,
                                                      newtrace.mark,
                                                      dest)
-                                self.filemap[revision][dest] = newtrace
+                                record.filemap[dest] = newtrace
                                 self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
                     if node.from_path:
-                        if node.from_path not in self.filepaths(node.from_rev):
+                        source_record = self.revisions[node.from_rev]
+                        if node.from_path not in source_record.filepaths():
                             raise Fatal("%s not present in source commit %s" % \
                                         (node.from_path, node.from_rev))
                         else:
-                            trace.set_mark(self.filemap[node.from_rev][node.from_path].mark)
+                            trace.set_mark(source_record.filemap[node.from_path].mark)
                             fileop = FileOp(commit)
                             # We don't use C here because there is no
                             # guarantee the file is in-tree at the
@@ -2381,25 +2383,25 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
-                        if node.path not in self.filemap[revision]:
+                        if node.path not in record.filemap:
                             complain("r%s: delete of nonexistent %s %s." \
                                  % (revision, node.kind, node.path))
                         else:
-                            del self.filemap[revision][node.path]
+                            del record.filemap[node.path]
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
                             assert node.text is not None
-                            if node.path in self.filemap[revision]:
+                            if node.path in record.filemap:
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
-                            self.filemap[revision][node.path] = trace
+                            record.filemap[node.path] = trace
                         if node.text is not None:
                             blob = Blob(self.repo)
                             blob.mark = self.__newmark() 
                             with open(blob.blobfile(), "w") as wfp:
                                 wfp.write(node.text)
                             self.repo.events.append(blob)
-                            self.filemap[revision][node.path].set_mark(blob.mark)
+                            record.filemap[node.path].set_mark(blob.mark)
                         if trace.modified:
                             fileop = FileOp(commit)
                             fileop.construct("M", trace.perms, trace.mark, node.path)
@@ -2424,8 +2426,7 @@ class StreamParser:
         # be substantially earlier than the CVS revision corresponding
         # to the copy). Fortunately, we can resolve such sets by the
         # simple expedient of picking the *latest* revision in them!
-        copies = [node for node in self.revisions[revision].nodes \
-                  if node.from_rev is not None]
+        copies = [node for node in record.nodes if node.from_rev is not None]
         if copies:
             copies.sort(key=lambda node: int(node.from_rev))
             self.branchlink[revision] = copies[-1].from_rev
