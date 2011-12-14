@@ -2360,41 +2360,29 @@ class StreamParser:
                                 self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
-                    if node.from_path:
-                        source_record = self.revisions[node.from_rev]
-                        if node.from_path not in source_record.filepaths():
-                            raise Fatal("%s not present in source commit %s" % \
-                                        (node.from_path, node.from_rev))
-                        else:
-                            trace.set_mark(source_record.filemap[node.from_path].mark)
-                            fileop = FileOp(commit)
-                            # We don't use C here because there is no
-                            # guarantee the file is in-tree at the
-                            # time of this commit; it could previously
-                            # have been deleted.
-                            fileop.construct("M",
-                                             trace.perms,
-                                             trace.mark,
-                                             node.path)
-                            self.repo.backlink_blobs(fileop)
-                            commit.fileops.append(fileop)
-                    elif node.action == "delete":
+                    if node.action == "delete":
                         assert node.text is None
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
                         if node.path not in record.filemap:
-                            complain("r%s: delete of nonexistent %s %s." \
-                                 % (revision, node.kind, node.path))
+                            raise Fatal("r%s: delete of nonexistent %s %s." \
+                                        % (revision, node.kind, node.path))
                         else:
                             del record.filemap[node.path]
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
-                            assert node.text is not None
                             if node.path in record.filemap:
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
                             record.filemap[node.path] = trace
+                        if node.from_path:
+                            source = self.revisions[node.from_rev]
+                            if node.from_path not in source.filepaths():
+                                raise Fatal("%s not in source commit %s" % \
+                                            (node.from_path, node.from_rev))
+                            else:
+                                trace.set_mark(source.filemap[node.from_path].mark)
                         if node.text is not None:
                             blob = Blob(self.repo)
                             blob.mark = self.__newmark() 
