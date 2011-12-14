@@ -51,7 +51,7 @@ looks like this:
 SVN-fs-dump-format-version: <N>\n
 -------------------------------------------------------------------
 
-where <n> is replaced by the dump format version. Except where 
+where <N> is replaced by the dump format version. Except where 
 specified, the descriptions in this document aapply to all
 versions of the format.
 
