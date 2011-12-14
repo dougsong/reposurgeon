@@ -1824,7 +1824,7 @@ class StreamParser:
     def filepaths(self, revision):
         return self.filemap[revision].keys()
     def children(self, revision, parent):
-        return [(path, trace) for (path, trace) in self.filemap[revision].items() \
+        return [path for path in self.filemap[revision].keys() \
                 if path.startswith(parent)]
     # Helpers for import-stream files
     def fi_read_data(self, line=None):
@@ -2343,19 +2343,20 @@ class StreamParser:
                             elif node.path.count(os.sep) == 1:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
-                        for (source, trace) in self.children(node.from_rev,
-                                                             node.from_path + os.sep):
-                                assert trace.mark
-                                with trace.clone() as newtrace:
-                                    fileop = FileOp(commit)
-                                    dest = os.path.join(node.path,
-                                                        source[len(node.from_path+os.sep):])
-                                    fileop.construct("M",
+                        for source in self.children(node.from_rev,
+                                                    node.from_path + os.sep):
+                            trace = self.filemap[revision][source]
+                            assert trace.mark
+                            with trace.clone() as newtrace:
+                                fileop = FileOp(commit)
+                                dest = os.path.join(node.path,
+                                                    source[len(node.from_path+os.sep):])
+                                fileop.construct("M",
                                                      newtrace.perms,
                                                      newtrace.mark,
                                                      dest)
-                                    self.filemap[revision][dest] = newtrace
-                                    self.repo.backlink_blobs(fileop)
+                                self.filemap[revision][dest] = newtrace
+                                self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
                     if node.from_path:
