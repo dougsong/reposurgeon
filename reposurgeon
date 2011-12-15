@@ -2384,7 +2384,7 @@ class StreamParser:
                                 # earlier revision, and svnadmin load didn't
                                 # choke on it. So disable the check if there
                                 # is a from path.
-                                if not node.frompath:
+                                if not node.from_path:
                                     complain("r%s: add of existing path %s" \
                                              % (revision, node.path))
                             record.filemap[node.path] = trace
