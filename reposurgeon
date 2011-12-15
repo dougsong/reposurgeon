@@ -1462,7 +1462,8 @@ class Commit:
         if self.committer:
             st += u"committer %s\n" % self.committer
         if self.comment is not None:
-            st += u"data %d\n%s" % (len(self.comment), self.comment) 
+            st += u"data %d\n" % len(self.comment)
+            st += self.comment
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
