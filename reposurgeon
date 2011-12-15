@@ -4629,10 +4629,8 @@ gathers statistics only on code executed via '-'.
     def do_profile(self, line):
         "Enable profiling."
         assert line is not None # Pacify pylint
-        self.profile_log = True
+        self.profile_log = line
         announce("profiling enabled.")
-        #if not profile_log:
-        #    raise Fatal("profile command requires a logfile agumment")
 
     #
     # Information-gathering
@@ -5827,10 +5825,13 @@ if __name__ == '__main__':
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        if interpreter.profile_log:
-                            cProfile.run('interactive()')
-                        else:
+                        if interpreter.profile_log is None:
                             interactive()
+                        elif interpreter.profile_log:
+                            cProfile.run('interactive()', \
+                                         interpreter.profile_log)
+                        else:
+                            cProfile.run('interactive()')
                     else:
                         # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
