@@ -2418,10 +2418,12 @@ class StreamParser:
         # be substantially earlier than the CVS revision corresponding
         # to the copy). Fortunately, we can resolve such sets by the
         # simple expedient of picking the *latest* revision in them!
-        copies = [node for node in record.nodes if node.from_rev is not None]
-        if copies:
-            copies.sort(key=lambda node: int(node.from_rev))
-            self.branchlink[revision] = copies[-1].from_rev
+        if revision not in self.branchlink:
+            copies = [node for node in record.nodes \
+                      if node.from_rev is not None]
+            if copies:
+                copies.sort(key=lambda node: int(node.from_rev))
+                self.branchlink[revision] = copies[-1].from_rev
     def svn_postprocess(self, baton):
         "Perform topological analysis, define branches, lift tags."
         # This code can eat your processor, so we make it give up
@@ -2447,7 +2449,7 @@ class StreamParser:
                          (commit.get_fossil(), commit.mark,
                           len(commit.fileops),
                           len(commit.properties),
-                          msg.strip()))
+                          msg.strip()[:20]))
         baton.twirl("+")
         # First, turn the root commit into a tag
         initial = self.repo.commits()[0]
