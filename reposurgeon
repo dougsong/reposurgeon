@@ -2430,8 +2430,6 @@ class StreamParser:
         if copies:
             copies.sort(key=lambda node: int(node.from_rev))
             self.branchlink[revision] = copies[-1].from_rev
-        # Reduce the working set
-        self.revisions[revision].nodes = None    # Reduce working set.
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
         # This code can eat your processor, so we make it give up
@@ -2445,6 +2443,8 @@ class StreamParser:
             for revision in self.revisions:
                 self.svn_commit(revision)
                 baton.bumpcounter()
+                # Reduce the working set
+                self.revisions[revision]
             baton.endcounter()
             if verbose >= DEBUG_EXTRACT:
                 announce("at post-parsing time:")
