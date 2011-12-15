@@ -2381,16 +2381,8 @@ class StreamParser:
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
                             if node.path in record.filemap:
-                                # It's technically illegal for a stream to
-                                # add an existing path.  But I've seen where
-                                # cv2svn generated these in a weird case of
-                                # a copy from a file of the same name at an
-                                # earlier revision, and svnadmin load didn't
-                                # choke on it. So disable the check if there
-                                # is a from path.
-                                if not node.from_path:
-                                    complain("r%s: add of existing path %s" \
-                                             % (revision, node.path))
+                                complain("r%s: add of existing path %s" \
+                                         % (revision, node.path))
                             record.filemap[node.path] = trace
                         if node.from_path:
                             source = self.revisions[node.from_rev]
