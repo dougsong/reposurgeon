@@ -1246,6 +1246,7 @@ class Commit:
         self.properties = collections.OrderedDict()         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
+        self.common = None           # Used only by the Subversion parser
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.committer.date.timestamp
@@ -2408,6 +2409,7 @@ class StreamParser:
                             self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # Node loop ends
+        commit.common = os.path.commonprefix([node.path for node in record.nodes])
         commit.branch = os.path.join("refs", "heads", "master") + os.sep
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
@@ -2476,9 +2478,8 @@ class StreamParser:
                     commit.parent_marks = []
                 # Instead, determine a branch for each commit...
                 for commit in self.repo.commits():
-                    common = os.path.commonprefix([node.path for node in self.revisions[commit.get_fossil()].nodes])
                     for branch in self.branches:
-                        if common.startswith(branch):
+                        if commit.common.startswith(branch):
                             commit.branch = branch
                             for fileop in commit.fileops:
                                 if fileop.op in ("M", "D"):
