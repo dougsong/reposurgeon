@@ -2436,14 +2436,14 @@ class StreamParser:
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
-        with Baton("Postprocessing", enable=(verbose==1)) as baton:
+        with Baton("analyzing", enable=(verbose==1)) as baton:
             toprev = len(self.revisions)
             countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
             baton.startcounter(countfmt)
             baton.twirl("revisions:")
             for revision in self.revisions:
                 self.svn_commit(revision)
-                baton.twirl()
+                baton.bumpcounter()
             baton.endcounter()
             if verbose >= DEBUG_EXTRACT:
                 announce("at post-parsing time:")
