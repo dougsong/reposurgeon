@@ -1748,10 +1748,6 @@ class StreamParser:
             self.blob = None
             self.props = None
         def __str__(self):
-            if self.text is None:
-                shorten = None
-            else:
-                shorten = "%d:%s" % (len(self.text), repr(self.text[:10]))
             if self.from_rev:
                 copyfrom = "r%s %s" % (self.from_rev, self.from_path)
             else:
@@ -1761,9 +1757,9 @@ class StreamParser:
                 showprops = str(self.props)[12:-1]
             else:
                 showprops = None
-            return "<NodeAction: %s %s %s, from=%s, text=%s..., props=%s>" \
-                         % (self.action, self.kind, self.path, copyfrom,
-                            shorten, showprops)
+            return "<NodeAction: %s %s %s, from=%s, props=%s>" \
+                         % (self.action, self.kind, self.path,
+                            copyfrom, showprops)
     class RevisionRecord:
         def __init__(self, nodes, props):
             self.nodes = nodes
