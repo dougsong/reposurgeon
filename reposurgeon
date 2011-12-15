@@ -989,13 +989,8 @@ class Blob:
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
-        self.backreferences = []
         self.colors = []
         self.cookie = None
-    def attach(self, commit):
-        self.backreferences.append(commit)
-    def release(self, commit):
-        self.backreferences.remove(commit)
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
@@ -1614,13 +1609,11 @@ class RepoStreamer:
                                         if oldpath in removed:
                                             op = FileOp(commit)
                                             op.construct('R', oldpath, path)
-                                            repo.backlink_blobs(op)
                                             commit.fileops.append(op)
                                             del self.filemap[revision][oldpath]
                                         elif oldpath != path:
                                             op = FileOp(commit)
                                             op.construct('C', oldpath, path)
-                                            repo.backlink_blobs(op)
                                             commit.fileops.append(op)
                                         break
                                 else:
@@ -1629,7 +1622,6 @@ class RepoStreamer:
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
                                                  path)
-                                    repo.backlink_blobs(op)
                                     commit.fileops.append(op)
                         else:
                             # Content hash doesn't match any existing blobs
@@ -1647,7 +1639,6 @@ class RepoStreamer:
                             # Its new fileop is added to the commit
                             op = FileOp(commit)
                             op.construct('M', newsig.perms, blobmark, path)
-                            repo.backlink_blobs(op)
                             commit.fileops.append(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
@@ -1835,7 +1826,7 @@ class StreamParser:
     def fi_parse_fileop(self, fileop):
         # Read a fast-import fileop
         if fileop.ref[0] == ':':
-            self.repo.backlink_blobs(fileop)
+            pass
         elif fileop.ref == 'inline':
             wfp = open(fileop.inlinefile(), "w")
             wfp.write(self.fi_read_data())
@@ -2313,7 +2304,6 @@ class StreamParser:
                                                      newtrace.perms,
                                                      newtrace.mark,
                                                      gitignore_path)
-                                    self.repo.backlink_blobs(fileop)
                                     commit.fileops.append(fileop)
                             elif gitignore_path in record.filemap:
                                 del record.filemap[gitignore_path]
@@ -2344,7 +2334,6 @@ class StreamParser:
                                                      newtrace.mark,
                                                      dest)
                                 record.filemap[dest] = newtrace
-                                self.repo.backlink_blobs(fileop)
                 # Actions on files
                 elif node.kind == "file":
                     if node.action == "delete":
@@ -2377,7 +2366,6 @@ class StreamParser:
                         if trace.modified:
                             fileop = FileOp(commit)
                             fileop.construct("M", trace.perms, trace.mark, node.path)
-                            self.repo.backlink_blobs(fileop)
                             commit.fileops.append(fileop)
             # Node loop ends
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
@@ -2700,19 +2688,6 @@ class Repository:
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
         self.readtime = time.time()
-        for (s, sevent) in enumerate(self.events):
-            if isinstance(sevent, Blob):
-                if not sevent.backreferences:
-                    complain("blob %s has no backreferences" % sevent.mark)
-    def backlink_blobs(self, fileop):
-        "Link a blob to the commits it's involved in, via a fileop."
-        for obj in self.events:
-            if isinstance(obj, Blob) and obj.mark == fileop.ref:
-                obj.path = fileop.path
-                obj.attach(fileop.commit)
-                break
-        else:
-            raise Fatal("no blob matches fileop reference to %s" % fileop.ref)
     def parse_dollar_cookies(self):
         "Extract info about fossil references from CVS/SVN header cookies."
         if self.dollar_map:
@@ -2809,16 +2784,6 @@ class Repository:
     #
     # Delete machinery begins here
     #
-    def __acquire_fileop(self, fileop, commit):
-        if fileop.op == "M":
-            bi = self.find(fileop.ref)
-            assert(isinstance(self.events[bi], Blob))
-            self.events[bi].attach(commit)
-    def __release_fileop(self, fileop, commit):
-        if fileop.op == "M":
-            bi = self.find(fileop.ref)
-            assert(isinstance(self.events[bi], Blob))
-            self.events[bi].release(commit)
     def __ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestry chain."
         count = 0
@@ -3037,10 +3002,6 @@ class Repository:
                                 identical = event.children()[0].branch == event.branch        
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
-                # Cut its blobs loose.
-                # They'll be re-attached if the fileops move
-                for fileop in event.fileops:
-                    self.__release_fileop(fileop, event)
                 # Reparent each child
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
@@ -3051,7 +3012,6 @@ class Repository:
                         # needing resolution.
                         for fileop in event.fileops:
                             fileop.commit = child
-                            self.__acquire_fileop(fileop, child)
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
                 # We might be trying to hand the event's fileops to parents.
@@ -3062,7 +3022,6 @@ class Repository:
                         # resolution.
                         for fileop in event.fileops:
                             fileop.commit = parent
-                            self.__acquire_fileop(fileop, parent)
                             # On a pushback (but not a push forward)
                             # we might have moved the fileop so it's
                             # now referred to before its actual
@@ -3119,7 +3078,6 @@ class Repository:
                         if "coalesce" in policy:
                             # Remove all but the last M.
                             while len(oplist) > 1:
-                                self.__release_fileop(event.fileops[oplist[0]], event)
                                 event.fileops.pop(oplist.pop(0))
                         if verbose >= DEBUG_DELETE:
                             print("Commit %d, after applying policy:" % (ei +1,))
@@ -3775,13 +3733,6 @@ class RepositoryList:
                 event.color = None
             if hasattr(event, "colors"):
                 event.colors = []
-        # Clean up backreferences
-        for event in early.events:
-            if isinstance(event, Blob):
-                event.backreferences = [x for x in event.backreferences if x.color == 'early']
-        for event in late.events:
-            if isinstance(event, Blob):
-                event.backreferences = [x for x in event.backreferences if x.color == 'late']
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
         # Add the split results to the repo list. 
@@ -3904,7 +3855,6 @@ class RepositoryList:
                     blobs.reverse()
                     for blob in blobs:
                         blob.deletehook = blob.clone(expunged)
-                        blob.release(event)
                         newevent = event.clone(expunged)
                         newevent.fileops = keepers
                         event.deletehook = newevent
@@ -3937,8 +3887,14 @@ class RepositoryList:
             if hasattr(event, "parent_marks"):
                 event.parent_marks = [e for e in event.parent_marks if e in keeper_marks]
         self.repolist.append(expunged)
+        backreferences = collections.Counter()
+        for event in self.repo.events:
+            if isinstance(event, Commit):
+                for fileop in event.fileops:
+                    if fileop.op == 'M':
+                        backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not e.backreferences)) for e in self.repo.events]
+        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events]
         deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
