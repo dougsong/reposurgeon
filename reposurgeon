@@ -2730,9 +2730,12 @@ class Repository:
                 if event.cookie in seen:
                     continue
                 else:
+                    # The first commit immediately after this blob
+                    for ei in range(self.find(event.mark), len(self.events)):
+                        if isinstance(self.events[ei], Commit):
+                            commit = self.events[ei]
+                            break
                     seen.add(event.cookie)
-                    event.backreferences.sort(key=lambda e: int(e.mark[1:]))
-                    commit = event.backreferences[0]
                     if "fossil" in commit.properties:
                         complain("fossil property of %s overwritten" \
                                  % commit.mark)
