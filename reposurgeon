@@ -2424,8 +2424,14 @@ class StreamParser:
             self.branchlink[revision] = copies[-1].from_rev
     def svn_postprocess(self):
         "Perform topological analysis, define branches, lift tags."
+        # This code can eat your processor, so we make it give up
+        # its timeslice at reasonable intervals. Needed because
+        # it doesn't hit the disk.
+        def relax():
+            time.sleep(0)
         for revision in self.revisions:
             self.svn_commit(revision)
+            relax()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
             for commit in self.repo.commits():
@@ -2446,6 +2452,7 @@ class StreamParser:
                                  "root",
                                  self.repo.commits()[1].mark,
                                  "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % initial.get_fossil())
+                relax()
             else:
                 complain("could not tagify root commit.")
         # Now, branch analysis.
@@ -2480,6 +2487,7 @@ class StreamParser:
                 else:
                     commit.parent_marks = [self.branches[commit.branch]]
                 self.branches[commit.branch] = commit.mark
+                relax()
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
             # last phase.
@@ -2497,6 +2505,7 @@ class StreamParser:
                 elif root.branch != ("trunk" + os.sep):
                     complain("can't connect branch or tag %s to trunk" \
                              % root.branch)
+                relax()
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
                 for commit in self.repo.commits():
@@ -2525,6 +2534,7 @@ class StreamParser:
                                          os.path.basename(commit.branch[:-1]),
                                          commit.parent_marks[0],
                                          "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
+                        relax()
         # Now pretty up the branch names
         for commit in self.repo.commits():
             if commit.branch == "root":
@@ -2536,6 +2546,7 @@ class StreamParser:
             else:
                 commit.branch = os.path.join("refs", "heads",
                                                  os.path.basename(commit.branch[:-1]))
+            relax()
         # Issue resets when required
         save_events = self.repo.events
         self.repo.events = []
