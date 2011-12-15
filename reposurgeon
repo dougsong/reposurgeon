@@ -1951,7 +1951,10 @@ class StreamParser:
                             self.sd_require_spacer()
                             props = self.sd_read_props("commit", plen)
                             # Parsing of the revision header is done
+                            node = None # pacify pylint
                             nodes = []
+                            in_header = False
+                            plen = tlen = -1
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
@@ -1961,15 +1964,27 @@ class StreamParser:
                                 if not line:
                                     break
                                 elif not line.strip():
-                                    continue
-                                if line.startswith("Revision-number: "):
+                                    if not in_header:
+                                        continue
+                                    else:
+                                        if plen > -1:
+                                            node.props = self.sd_read_props(node.path, plen)
+                                        if tlen > -1:
+                                            text = self.sd_read_blob(tlen)
+                                            node.blob = Blob(self.repo)
+                                            with open(node.blob.blobfile(), "w") as wfp:
+                                                wfp.write(text)
+                                        nodes.append(node)
+                                        in_header = False
+                                elif line.startswith("Revision-number: "):
                                     self.pushback(line)
                                     break
                                 # Node processing begins
-                                if line.startswith("Node-path: "):
+                                elif line.startswith("Node-path: "):
                                     node = StreamParser.NodeAction()
                                     node.path = StreamParser.sd_body(line)
                                     plen = tlen = -1
+                                    in_header = True
                                 elif line.startswith("Node-kind: "):
                                     node.kind = StreamParser.sd_body(line)
                                     if node.kind not in ("file", "dir"):
@@ -1980,33 +1995,22 @@ class StreamParser:
                                                       "delete", "replace"):
                                         self.error("unknown action %s" \
                                                    % node.action)
-                                    if node.action == "delete":
-                                        nodes.append(node)
                                 elif line.startswith("Node-copyfrom-rev: "):
                                     node.from_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Node-copyfrom-path: "):
                                     node.from_path = StreamParser.sd_body(line)
-                                    nodes.append(node)
                                 elif line.startswith("Text-copy-source-md5: "):
-                                    pass
+                                    continue
                                 elif line.startswith("Text-content-md5: "):
-                                    pass
+                                    continue
                                 elif line.startswith("Text-content-sha1: "):
-                                    pass
+                                    continue
                                 elif line.startswith("Text-content-length: "):
                                     tlen = int(StreamParser.sd_body(line))
                                 elif line.startswith("Prop-content-length: "):
                                     plen = int(StreamParser.sd_body(line))
                                 elif line.startswith("Content-length: "):
-                                    self.sd_require_spacer()
-                                    if plen > -1:
-                                        node.props = self.sd_read_props(node.path, plen)
-                                    if tlen > -1:
-                                        text = self.sd_read_blob(tlen)
-                                        node.blob = Blob(self.repo)
-                                        with open(node.blob.blobfile(), "w") as wfp:
-                                            wfp.write(text)
-                                    nodes.append(node)
+                                    continue
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
@@ -2439,7 +2443,7 @@ class StreamParser:
             self.svn_commit(revision)
             baton.bumpcounter()
             # Reduce the working set
-            self.revisions[revision]
+            #self.revisions[revision]
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
