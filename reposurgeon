@@ -989,7 +989,6 @@ class Blob:
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
-        self.timestamp = None
         self.backreferences = []
         self.colors = []
         self.cookie = None
@@ -997,9 +996,6 @@ class Blob:
         self.backreferences.append(commit)
     def release(self, commit):
         self.backreferences.remove(commit)
-    def when(self):
-        "Imputed timestamp for sorting after merges."
-        return self.timestamp
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
@@ -1036,9 +1032,6 @@ class Tag:
         self.tagger = tagger
         self.comment = comment
         self.color = None
-    def when(self):
-        "Imputed timestamp for sorting after merges."
-        return self.tagger.date.timestamp
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1101,10 +1094,6 @@ class Reset:
     def __init__(self):
         self.ref = None
         self.committish = None
-        self.timestamp = None
-    def when(self):
-        "Imputed timestamp for sorting after merges."
-        return self.timestamp
     def __str__(self):
         "Dump this reset in import-stream format."
         st = "reset %s\n" % self.ref
@@ -1490,10 +1479,6 @@ class Passthrough:
     "Represents a passthrough line."
     def __init__(self, line):
         self.text = line
-        self.timestamp = None
-        # These must always be at start of file, so make them sort oldest.
-        if line.startswith("feature") or line.startswith("option"):
-            self.timestamp = 0
     def email_out(self, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1502,9 +1487,6 @@ class Passthrough:
         return str(msg)
     def email_in(self, msg):
         self.text = msg.get_payload()
-    def when(self):
-        "Imputed timestamp for sorting after merges."
-        return self.timestamp
     def __str__(self):
         "Dump this passthrough in import-stream format."
         return self.text
@@ -1677,7 +1659,6 @@ class RepoStreamer:
                 if not parents and commit.branch != "refs/heads/master":
                     reset = Reset()
                     reset.ref = commit.branch
-                    reset.timestamp = commit.when()-1
                     repo.events.append(reset)
                 commit.fileops.sort(cmp=FileOp.compare)
                 commit.set_fossil(revision)
@@ -1689,12 +1670,10 @@ class RepoStreamer:
             # Now append reset objects
             resets = self.extractor.get_resetlist()
             resets.sort(key=lambda (k, v): v)
-            last_time = repo.commits()[0].when()
             for (resetname, revision) in resets:
                 reset = Reset()
                 reset.ref = resetname
                 reset.committish = self.markmap[revision]
-                reset.timestamp = last_time + 1
                 repo.events.append(reset)
             # Last, append tag objects.
             tags = self.extractor.get_taglist()
@@ -2721,30 +2700,8 @@ class Repository:
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
         self.readtime = time.time()
-        # Patch Reset timestamps in case this repo is ever merged.
-        # This is another blatant hack. Try to keep them immediately 
-        # after things they refer to.
         for (s, sevent) in enumerate(self.events):
-            if isinstance(sevent, Reset):
-                if sevent.committish:
-                    for tevent in self.events:
-                        if isinstance(tevent, Commit):
-                            if tevent.mark == sevent.committish:
-                                sevent.timestamp = tevent.when() + 1
-                                break
-                else:
-                    for tevent in self.events:
-                        if isinstance(tevent, Commit):
-                            if tevent.branch == sevent.ref:
-                                sevent.timestamp = tevent.when() - 1
-                                break
-            # Tuck Passthroughs right behind the first following commit 
-            elif isinstance(sevent, Passthrough) and sevent.timestamp != 0: 
-                for (t, tevent) in enumerate(self.events):
-                    if isinstance(tevent, Commit) and t > s:
-                        sevent.timestamp = tevent.when() - 1
-                        break
-            elif isinstance(sevent, Blob):
+            if isinstance(sevent, Blob):
                 if not sevent.backreferences:
                     complain("blob %s has no backreferences" % sevent.mark)
     def backlink_blobs(self, fileop):
@@ -2753,18 +2710,6 @@ class Repository:
             if isinstance(obj, Blob) and obj.mark == fileop.ref:
                 obj.path = fileop.path
                 obj.attach(fileop.commit)
-                # This is a blatant hack.
-                # We need to impute a timestamp
-                # to each blob for sorting after
-                # merge operations. We want the
-                # blobs to tuck in close behind
-                # their first associated commits.
-                # So we do this and trust the
-                # stability of Python sort
-                # (guaranteed since Python 2.4).
-                if obj.timestamp is None \
-                       or obj.timestamp >= fileop.commit.when():
-                    obj.timestamp = fileop.commit.when()-1
                 break
         else:
             raise Fatal("no blob matches fileop reference to %s" % fileop.ref)
@@ -2786,7 +2731,7 @@ class Repository:
                     continue
                 else:
                     seen.add(event.cookie)
-                    event.backreferences.sort(key=lambda e: e.when())
+                    event.backreferences.sort(key=lambda e: int(e.mark[1:]))
                     commit = event.backreferences[0]
                     if "fossil" in commit.properties:
                         complain("fossil property of %s overwritten" \
@@ -2858,17 +2803,6 @@ class Repository:
     def earliest(self):
         "Return the date of earlist commit."
         return self.commits()[0].committer.date
-    def sort(self):
-        "Sort commits into as close to time order as parent pointers allow."
-        for event in self.events:
-            if hasattr(event, "children"):
-                for child in event.children():
-                    if child.when() < event.when():
-                        raise Recoverable("times of %s and %s are out of order" \
-                                      % (event.mark, child.mark))
-        self.events.sort(key=lambda e: e.when())
-        self.events = [x for x in self.events if not isinstance(x, Tag) ] \
-                      + [x for x in self.events if isinstance(x, Tag)]
     #
     # Delete machinery begins here
     #
@@ -3195,8 +3129,10 @@ class Repository:
     # Delete machinery ends here
     #
     def front_events(self):
-        "Return options, features, and any other events with  a zero timestamp."
-        return [e for e in self.events if e.when() == 0]
+        "Return options, features."
+        return [e for e in self.events \
+                if isinstance(e, Passthrough) \
+                and (e.text.startswith("option") or e.text.startswith("feature"))]
     def renumber(self):
         "Renumber the marks in a repo."
         marklist = []
@@ -3290,8 +3226,8 @@ class Repository:
         self.preserve_set |= other.preserve_set
         self.case_coverage |= other.case_coverage
         # Strip feature events off the front, they have to stay in front.
-        while other[0].when() == 0:
-            front = [x for x in self.events if x.when() == 0]
+        while isinstance(other[0], Passthrough):
+            front = [x for x in self.events if isinstance(x, Passthrough)]
             self.events.insert(len(front), other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
