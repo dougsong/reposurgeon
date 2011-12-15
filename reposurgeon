@@ -2520,11 +2520,12 @@ class StreamParser:
                     announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
                 baton.twirl("+")
                 for root in branchroots:
-                    if root.get_fossil() in self.branchlink:
-                        root.parent_marks = [self.markmap[self.branchlink[root.get_fossil()]]]
+                    rootrev = root.get_fossil()
+                    if rootrev in self.branchlink:
+                        root.parent_marks = [self.markmap[self.branchlink[rootrev]]]
                     elif root.branch != ("trunk" + os.sep):
-                        complain("can't connect branch or tag %s to trunk" \
-                                 % root.branch)
+                        complain("r%s: can't connect %s to trunk" \
+                                 % (rootrev, root.branch))
                     baton.twirl()
                 baton.twirl("+")
                 if verbose >= DEBUG_EXTRACT:
