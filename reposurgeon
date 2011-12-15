@@ -985,7 +985,7 @@ class Attribution:
 
 class Blob:
     "Represent a detached blob of data referenced by a mark."
-    def __init__(self, repo):
+    def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
@@ -1744,7 +1744,7 @@ class StreamParser:
             self.action = None
             self.from_rev = None
             self.from_path = None
-            self.text = None
+            self.blob = None
             self.props = None
         def __str__(self):
             if self.text is None:
@@ -2005,7 +2005,10 @@ class StreamParser:
                                     if plen > -1:
                                         node.props = self.sd_read_props(node.path, plen)
                                     if tlen > -1:
-                                        node.text = self.sd_read_blob(tlen)
+                                        text = self.sd_read_blob(tlen)
+                                        node.blob = Blob(self.repo)
+                                        with open(node.blob.blobfile(), "w") as wfp:
+                                            wfp.write(text)
                                     nodes.append(node)
                                 else:
                                     if verbose >= DEBUG_EXTRACT+1:
@@ -2245,10 +2248,10 @@ class StreamParser:
         copyset = set([])
         for node in record.nodes:
             # if node.props is None, no property section.
-            # if node.text is None, no text section.
+            # if node.blob is None, no text section.
             try:
                 assert node.action in ("change", "add", "delete", "replace")
-                assert node.text is not None or \
+                assert node.blob is not None or \
                        node.props is not None or \
                        node.from_rev or \
                        node.action in ("add", "delete")
@@ -2366,7 +2369,7 @@ class StreamParser:
                 # Actions on files
                 elif node.kind == "file":
                     if node.action == "delete":
-                        assert node.text is None
+                        assert node.blob is None
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
@@ -2396,13 +2399,10 @@ class StreamParser:
                                             (node.from_path, node.from_rev))
                             else:
                                 trace.set_mark(source.filemap[node.from_path].mark)
-                        if node.text is not None:
-                            blob = Blob(self.repo)
-                            blob.mark = self.__newmark() 
-                            with open(blob.blobfile(), "w") as wfp:
-                                wfp.write(node.text)
-                            self.repo.events.append(blob)
-                            record.filemap[node.path].set_mark(blob.mark)
+                        if node.blob is not None:
+                            node.blob.mark = self.__newmark() 
+                            self.repo.events.append(node.blob)
+                            record.filemap[node.path].set_mark(node.blob.mark)
                         if trace.modified:
                             fileop = FileOp(commit)
                             fileop.construct("M", trace.perms, trace.mark, node.path)
