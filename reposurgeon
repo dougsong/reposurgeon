@@ -2795,8 +2795,8 @@ class Repository:
                     if "fossil" in commit.properties:
                         complain("fossil property of %s overwritten" \
                                  % commit.mark)
-                    if type(event.cookie) in (type(""), type(u"")):
-                        svnkey = "SVN:" + event.cookie.encode('ascii')
+                    if type(event.cookie) == type(""):
+                        svnkey = "SVN:" + event.cookie
                         self.dollar_map[svnkey] = commit
                     else:
                         (basename, cvsref) = event.cookie
