@@ -2512,12 +2512,13 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
+            nonempty = set([c for c in self.repo.commits() if c.fileops]) 
             for root in branchroots:
                 rootrev = root.get_fossil()
                 if rootrev in self.branchlink:
                     root.parent_marks = [self.markmap[self.branchlink[rootrev]]]
-                elif root.branch != ("trunk" + os.sep):
-                    complain("r%s: can't connect %s to trunk" \
+                elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
+                    complain("r%s: can't connect nonempty %s to trunk" \
                              % (rootrev, root.branch))
                 baton.twirl()
             baton.twirl("+")
