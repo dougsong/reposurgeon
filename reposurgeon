@@ -993,6 +993,10 @@ class Blob:
         self.backreferences = []
         self.colors = []
         self.cookie = None
+    def attach(self, commit):
+        self.backreferences.append(commit)
+    def release(self, commit):
+        self.backreferences.remove(commit)
     def when(self):
         "Imputed timestamp for sorting after merges."
         return self.timestamp
@@ -2714,7 +2718,7 @@ class Repository:
         for obj in self.events:
             if isinstance(obj, Blob) and obj.mark == fileop.ref:
                 obj.path = fileop.path
-                obj.backreferences.append(fileop.commit)
+                obj.attach(fileop.commit)
                 # This is a blatant hack.
                 # We need to impute a timestamp
                 # to each blob for sorting after
@@ -2838,12 +2842,12 @@ class Repository:
         if fileop.op == "M":
             bi = self.find(fileop.ref)
             assert(isinstance(self.events[bi], Blob))
-            self.events[bi].backreferences.append(commit)
+            self.events[bi].attach(commit)
     def __release_fileop(self, fileop, commit):
         if fileop.op == "M":
             bi = self.find(fileop.ref)
             assert(isinstance(self.events[bi], Blob))
-            self.events[bi].backreferences.remove(commit)
+            self.events[bi].release(commit)
     def __ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestry chain."
         count = 0
@@ -3927,7 +3931,7 @@ class RepositoryList:
                     blobs.reverse()
                     for blob in blobs:
                         blob.deletehook = blob.clone(expunged)
-                        blob.backreferences.remove(event)
+                        blob.release(event)
                         newevent = event.clone(expunged)
                         newevent.fileops = keepers
                         event.deletehook = newevent
