@@ -2403,8 +2403,8 @@ class StreamParser:
         for revision in self.revisions:
             self.svn_commit(revision)
             baton.bumpcounter()
-            # Reduce the working set
-            #self.revisions[revision]
+            # Reduce the working set...must keep filemaps around
+            del self.revisions[revision].nodes
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
