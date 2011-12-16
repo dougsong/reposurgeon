@@ -2312,11 +2312,9 @@ class StreamParser:
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
-            if verbose >= DEBUG_EXTRACT:
-                announce("r%s: %s" % (revision, node))
             # Recover some information that may have been elided due to a
             # header being optional.
-            if node.kind is SD_NONE:
+            if node.kind == SD_NONE:
                 if self.filemap.member_of(revision, node.path):
                     node.kind = SD_FILE
                 else:
@@ -2324,6 +2322,8 @@ class StreamParser:
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == SD_DIR:
                 node.path += os.sep
+            if verbose >= DEBUG_EXTRACT:
+                announce("r%s: %s" % (revision, node))
             # We're going to hack this path, get a filemap record for it
             with self.filemap.retrieve(revision, node.path, lambda: StreamParser.Trace()) as trace:
                 # Handle per-file and per-directory properties
@@ -2351,6 +2351,13 @@ class StreamParser:
                         # empty directories.
                         pass
                     elif node.action in (SD_DELETE, SD_REPLACE):
+                        # Deleting an entire branch directory become a
+                        # no-op.
+                        if node.action == SD_DELETE and \
+                               node.path in self.branches:
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("r%s: suppressing branch tip delete of %s" % (revision, node.path))
+                            continue
                         for (child, unused) in self.filemap.children(revision, node.path):
                             assert unused is not None
                             if verbose >= DEBUG_EXTRACT:
