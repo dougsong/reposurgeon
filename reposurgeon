@@ -1187,7 +1187,10 @@ class FileOp:
     def __str__(self):
         "Dump this fileop in import-stream format."
         if self.op == "M":
-            st = " ".join((self.op, self.mode, self.ref)) + " "
+            showmode = self.mode
+            if type(self.mode) == type(0):
+                showmode = "%06o" % self.mode
+            st = " ".join((self.op, showmode, self.ref)) + " "
             if len(self.path.split()) > 1:
                 st += '"' + self.path + '"'
             else:
@@ -1765,7 +1768,7 @@ class StreamParser:
         "All the metadata we need to retain across revisions about a file."
         def __init__(self):
             self.mark = None
-            self.perms = "100644"
+            self.perms = 0o100644
             self.modified = False
         def __enter__(self):
             return self
@@ -2334,13 +2337,13 @@ class StreamParser:
                     for pathprop in node.props:
                         if pathprop.startswith(node.path + "#"):
                             del node.props[pathprop]
-                    perms = "100644"
+                    perms = 0o100644
                     for (prop, val) in node.props.items():
                         if prop == "svn:executable":
-                            perms = "100755"
+                            perms = 0o100755
                         elif prop == "svn:special":
                             # Map to git symlink and hope it flies
-                            perms = "120000"
+                            perms = 0o120000
                         elif prop not in StreamParser.IgnoreProperties:
                             commit.properties[node.path + "#" + prop] = val
                     trace.set_perms(perms)
