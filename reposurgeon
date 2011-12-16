@@ -2329,6 +2329,8 @@ class StreamParser:
                         pass
                     elif node.action in ("delete", "replace"):
                         for (child, unused) in self.filemap.children(revision, node.path):
+                            if verbose >= DEBUG_EXTRACT:
+                                announce("r%s: deleting %s" % (revision, child))
                             self.filemap.remove(revision, child)
                             fileop = FileOp(commit)
                             fileop.construct("D", child)
