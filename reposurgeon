@@ -1591,10 +1591,17 @@ set gets huge."""
         path = intern(path)
         return revision in self.storage and path in self.storage.get(revision)
     def filepaths(self, revision):
-        return self.storage[revision].keys()
+        revision = intern(revision)
+        for path in self.storage[revision].keys():
+            yield path
+        raise StopIteration
     def children(self, revision, parent):
-        return [(path, value) for (path, value) in self.storage[revision].items() \
-                if path.startswith(parent)]
+        revision = intern(revision)
+        parent = intern(parent)
+        for (path, value) in self.storage[revision].items():
+            if path.startswith(parent):
+                yield (path, value)
+        raise StopIteration
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
