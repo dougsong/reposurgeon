@@ -2550,6 +2550,7 @@ class StreamParser:
             self.repo.events.append(event)
             baton.twirl()
         baton.twirl("+")
+        baton.twirl("renumbering")
         self.repo.renumber()
         baton.twirl("+")
 
