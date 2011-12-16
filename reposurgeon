@@ -1590,11 +1590,6 @@ set gets huge."""
         revision = intern(revision)
         path = intern(path)
         return revision in self.storage and path in self.storage.get(revision)
-    def filepaths(self, revision):
-        revision = intern(revision)
-        for path in self.storage[revision].keys():
-            yield path
-        raise StopIteration
     def children(self, revision, parent):
         revision = intern(revision)
         parent = intern(parent)
