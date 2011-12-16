@@ -705,7 +705,7 @@ class SvnExtractor():
             for earlier in self.revlist:
                 if earlier == rev:
                     break
-                elif filemap[earlier] == lookfor:
+                elif filemap.revision(earlier) == lookfor:
                     commit.parents = [earlier]
                     break
         self.baton.progress()
@@ -1537,6 +1537,74 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
+class FileMap:
+    """Object store indexed by file path and version. Used because
+extractors for changeset-oriented systems like Subversion need to
+track which files have existed at given revisions. And they need to do
+it space-efficiently - in repos with thousands of commits the data
+set gets huge."""
+    def __init__(self):
+        self.storage = {}
+    def register(self, revision, path, payload):
+        #sys.stderr.write("register(%s, %s, %s)\n" % (revision, path, payload))
+        path = intern(path)
+        revision = intern(revision)
+        if revision not in self.storage:
+            self.storage[revision] = {}
+        self.storage[revision][path] = payload
+    def retrieve(self, revision, path, factory=None):
+        #sys.stderr.write("retrieve(%s, %s)\n" % (revision, path))
+        path = intern(path)
+        revision = intern(revision)
+        retrieved = None
+        if revision in self.storage:
+            retrieved = self.storage[revision].get(path)
+        if retrieved:
+            return retrieved
+        if factory:
+            return factory()
+        return None
+    def remove(self, revision, path):
+        #sys.stderr.write("remove(%s, %s)\n" % (revision, path))
+        path = intern(path)
+        revision = intern(revision)
+        if revision in self.storage:
+            del self.storage[revision][path]
+    def revision(self, revision):
+        "Return the portion of the filemap relevant to the specified revision."
+        #sys.stderr.write("revision(%s)\n" % (revision,))
+        revision = intern(revision)
+        return self.storage[revision]
+    def revision_items(self, revision):
+        "Return the slice of the filemap relevant to the specified revision."
+        revision = intern(revision)
+        sys.stderr.write("revision_items(%s) = %s\n" % (revision,self.storage[revision].items()))
+        return self.storage[revision].items()
+    def derive(self, revision, parents):
+        "Create a new revision filemap that is the union of the parent maps."
+        revision = intern(revision)
+        parents = [intern(rev) for rev in parents]
+        self.storage[revision] = {}
+        for rev in parents:
+            if rev in self.storage:
+                for path in self.storage[rev]:
+                    self.storage[revision][path] = self.storage[rev][path]
+        #sys.stderr.write("derive(%s) = %s\n" % (revision,self.storage[revision]))
+        return self.storage[revision]
+    def member_of(self, revision, path):
+        #sys.stderr.write("member_of(%s, %s) = %s\n" % (revision,
+        #                                             path,
+        #                                             path in self.storage[revision]))
+        revision = intern(revision)
+        path = intern(path)
+        return path in self.storage[revision]
+    def filepaths(self, revision):
+        #sys.stderr.write("filepaths(%s) = %s" % (revision, self.storage[revision].keys()))
+        return self.storage[revision].keys()
+    def children(self, revision, parent):
+        return [(path, value) for (path, value) in self.storage[revision].items() \
+                if path.startswith(parent)]
+
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
     def __init__(self, extractor):
@@ -1544,7 +1612,7 @@ class RepoStreamer:
         self.tagseq = 0
         self.commits = {}
         self.markmap = {}
-        self.filemap = {}
+        self.filemap = FileMap()
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
@@ -1580,11 +1648,9 @@ class RepoStreamer:
                     if msg == None:
                         msg = ""
                     announce("r%s: comment '%s'" % (revision, msg.strip()))
-                self.filemap[revision] = {}
-                for rev in parents:
-                    self.filemap[revision].update(self.filemap[rev])
+                expected = self.filemap.derive(revision, parents)
                 if present:
-                    removed = set(self.filemap[revision].keys()) - set(present)
+                    removed = set(expected.keys()) - set(present)
                     for path in present:
                         if os.path.isdir(path):
                             continue
@@ -1600,21 +1666,27 @@ class RepoStreamer:
                             # The file's hash corresponds to an existing
                             # blob; generate modify, copy, or rename as
                             # appropriate.
-                            if path not in self.filemap[revision] \
-                                   or self.filemap[revision][path]!=newsig:
+                            if self.filemap.retrieve(revision, path) != newsig:
                                 if verbose >= DEBUG_EXTRACT:
                                     announce("r%s: update for %s" % (revision, path))
-                                for (oldpath, oldsig) in self.filemap[revision].items():
+                                for (oldpath, oldsig) in self.filemap.items(revision):
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp(commit)
                                             op.construct('R', oldpath, path)
                                             commit.fileops.append(op)
-                                            del self.filemap[revision][oldpath]
+                                            self.filemap.remove(revision,
+                                                                oldpath)
+                                            self.filemap.register(revision,
+                                                                  path,
+                                                                  oldsig)
                                         elif oldpath != path:
                                             op = FileOp(commit)
                                             op.construct('C', oldpath, path)
                                             commit.fileops.append(op)
+                                            self.filemap.record(revision,
+                                                                path,
+                                                                oldsig)
                                         break
                                 else:
                                     op = FileOp(commit)
@@ -1640,12 +1712,12 @@ class RepoStreamer:
                             op = FileOp(commit)
                             op.construct('M', newsig.perms, blobmark, path)
                             commit.fileops.append(op)
-                        self.filemap[revision][path] = newsig
+                        self.filemap.register(revision, path, newsig)
                     for tbd in removed:
                         op = FileOp(commit)
                         op.construct('D', tbd)
                         commit.fileops.append(op)
-                        del self.filemap[revision][tbd]
+                        self.filemap.remove(revision, tbd)
                 self.extractor.cleanup(revision, True)
                 if not parents and commit.branch != "refs/heads/master":
                     reset = Reset()
@@ -1734,12 +1806,6 @@ class StreamParser:
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
-            self.filemap = {}
-        def filepaths(self):
-            return self.filemap.keys()
-        def children(self, parent):
-            return [path for path in self.filemap.keys() \
-                    if path.startswith(parent)]
     # Native Subversion properties that we don't suppress:
     # svn:externals, svn:mergeinfo.  The reason for these suppressions
     # is to avoid a huge volume of junk file properties - cvs2svn
@@ -1768,6 +1834,7 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
+        self.filemap = FileMap()
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2188,11 +2255,10 @@ class StreamParser:
         record = self.revisions[revision]
         commit = Commit(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
-        # it later.  Each revision gets a filemap that represents the
-        # state of an entire checkout at that revision.
+        # it later.
         if self.parent:
             commit.parent_marks = [self.markmap[self.parent]]
-            record.filemap = copy.copy(self.revisions[self.parent].filemap)
+            self.filemap.derive(revision, [self.parent])
         else:
             record.filemap = {}
         commit.set_fossil(revision)
@@ -2235,10 +2301,9 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %s" % (revision, node))
             # Recover some information that may have been elided due to a
-            # header being optional. This is why we keep directories in
-            # the filemap.
+            # header being optional.
             if node.kind is None:
-                if node.path in record.filemap:
+                if self.filemap.member_of(revision, node.path):
                     node.kind = "file"
                 else:
                     node.kind = "dir"
@@ -2246,7 +2311,7 @@ class StreamParser:
             if node.kind == "dir":
                 node.path += os.sep
             # We're going to hack this path, get a filemap record for it
-            with record.filemap.get(node.path, StreamParser.Trace()) as trace:
+            with self.filemap.retrieve(revision, node.path, lambda: StreamParser.Trace()) as trace:
                 # Handle per-file and per-directory properties
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
@@ -2272,8 +2337,8 @@ class StreamParser:
                         # empty directories.
                         pass
                     elif node.action in ("delete", "replace"):
-                        for child in record.children(node.path):
-                            del record.filemap[child]
+                        for (child, unused) in self.filemap.children(revision, node.path):
+                            self.filemap.remove(revision, child)
                             fileop = FileOp(commit)
                             fileop.construct("D", child)
                             commit.fileops.append(fileop)
@@ -2298,7 +2363,9 @@ class StreamParser:
                                 self.repo.events.append(blob)
                                 with StreamParser.Trace() as newtrace:
                                     newtrace.set_mark(blob.mark)
-                                    record.filemap[gitignore_path] = newtrace
+                                    self.filemap.register(revision,
+                                                          gitignore_path,
+                                                          newtrace)
                                     fileop = FileOp(commit)
                                     fileop.construct("M",
                                                      newtrace.perms,
@@ -2306,7 +2373,7 @@ class StreamParser:
                                                      gitignore_path)
                                     commit.fileops.append(fileop)
                             elif gitignore_path in record.filemap:
-                                del record.filemap[gitignore_path]
+                                self.filemap.remove(revision, gitignore_path)
                                 fileop = FileOp(commit)
                                 fileop.construct("D", gitignore_path)
                                 commit.fileops.append(fileop)
@@ -2321,9 +2388,7 @@ class StreamParser:
                             elif node.path.count(os.sep) == 1:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
-                        source_record = self.revisions[node.from_rev]
-                        for source in source_record.children(node.from_path + os.sep):
-                            trace = source_record.filemap[source]
+                        for (source, trace) in self.filemap.children(node.from_rev, node.from_path + os.sep):
                             assert trace.mark
                             with trace.clone() as newtrace:
                                 fileop = FileOp(commit)
@@ -2333,7 +2398,7 @@ class StreamParser:
                                                      newtrace.perms,
                                                      newtrace.mark,
                                                      dest)
-                                record.filemap[dest] = newtrace
+                                self.filemap.register(revision, dest, newtrace)
                 # Actions on files
                 elif node.kind == "file":
                     if node.action == "delete":
@@ -2341,28 +2406,29 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
-                        if node.path not in record.filemap:
+                        if not self.filemap.member_of(revision, node.path):
                             raise Fatal("r%s: delete of nonexistent %s %s." \
                                         % (revision, node.kind, node.path))
                         else:
-                            del record.filemap[node.path]
+                            self.filemap.remove(revision, node.path)
                     elif node.action in ("add", "change", "replace"):
                         if node.action == "add":
-                            if node.path in record.filemap:
+                            if self.filemap.member_of(revision, node.path):
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
-                            record.filemap[node.path] = trace
+                            self.filemap.register(revision, node.path, trace)
                         if node.from_path:
-                            source = self.revisions[node.from_rev]
-                            if node.from_path not in source.filepaths():
+                            if not self.filemap.member_of(node.from_rev,node.from_path):
                                 raise Fatal("%s not in source commit %s" % \
                                             (node.from_path, node.from_rev))
                             else:
-                                trace.set_mark(source.filemap[node.from_path].mark)
+                                oldtrace = self.filemap.retrieve(node.from_rev, node.from_path)
+                                trace.set_mark(oldtrace.mark)
                         if node.blob is not None:
                             node.blob.mark = self.__newmark() 
                             self.repo.events.append(node.blob)
-                            record.filemap[node.path].set_mark(node.blob.mark)
+                            newtrace = self.filemap.retrieve(revision, node.path)
+                            newtrace.set_mark(node.blob.mark)
                         if trace.modified:
                             fileop = FileOp(commit)
                             fileop.construct("M", trace.perms, trace.mark, node.path)
@@ -2403,9 +2469,10 @@ class StreamParser:
         for revision in self.revisions:
             self.svn_commit(revision)
             baton.bumpcounter()
-            # Reduce the working set...must keep filemaps around
-            del self.revisions[revision].nodes
-            del self.revisions[revision].props
+            # Reduce the working set
+            del self.revisions[revision]
+            # Given up our scheduler slot
+            time.sleep(0)
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
