@@ -1546,14 +1546,12 @@ set gets huge."""
     def __init__(self):
         self.storage = {}
     def register(self, revision, path, payload):
-        #sys.stderr.write("register(%s, %s, %s)\n" % (revision, path, payload))
         path = intern(path)
         revision = intern(revision)
         if revision not in self.storage:
             self.storage[revision] = {}
         self.storage[revision][path] = payload
     def retrieve(self, revision, path, factory=None):
-        #sys.stderr.write("retrieve(%s, %s)\n" % (revision, path))
         path = intern(path)
         revision = intern(revision)
         retrieved = None
@@ -1565,20 +1563,18 @@ set gets huge."""
             return factory()
         return None
     def remove(self, revision, path):
-        #sys.stderr.write("remove(%s, %s)\n" % (revision, path))
         path = intern(path)
         revision = intern(revision)
         if revision in self.storage:
             del self.storage[revision][path]
     def revision(self, revision):
         "Return the portion of the filemap relevant to the specified revision."
-        #sys.stderr.write("revision(%s)\n" % (revision,))
+        sys.stderr.write("revision(%s)\n" % (revision,))
         revision = intern(revision)
         return self.storage[revision]
     def revision_items(self, revision):
         "Return the slice of the filemap relevant to the specified revision."
         revision = intern(revision)
-        sys.stderr.write("revision_items(%s) = %s\n" % (revision,self.storage[revision].items()))
         return self.storage[revision].items()
     def derive(self, revision, parents):
         "Create a new revision filemap that is the union of the parent maps."
@@ -1589,17 +1585,12 @@ set gets huge."""
             if rev in self.storage:
                 for path in self.storage[rev]:
                     self.storage[revision][path] = self.storage[rev][path]
-        #sys.stderr.write("derive(%s) = %s\n" % (revision,self.storage[revision]))
         return self.storage[revision]
     def member_of(self, revision, path):
-        #sys.stderr.write("member_of(%s, %s) = %s\n" % (revision,
-        #                                             path,
-        #                                             path in self.storage[revision]))
         revision = intern(revision)
         path = intern(path)
-        return path in self.storage[revision]
+        return revision in self.storage and path in self.storage.get(revision)
     def filepaths(self, revision):
-        #sys.stderr.write("filepaths(%s) = %s" % (revision, self.storage[revision].keys()))
         return self.storage[revision].keys()
     def children(self, revision, parent):
         return [(path, value) for (path, value) in self.storage[revision].items() \
@@ -2372,7 +2363,8 @@ class StreamParser:
                                                      newtrace.mark,
                                                      gitignore_path)
                                     commit.fileops.append(fileop)
-                            elif gitignore_path in record.filemap:
+                            elif self.filemap.member_of(revision,
+                                                        gitignore_path):
                                 self.filemap.remove(revision, gitignore_path)
                                 fileop = FileOp(commit)
                                 fileop.construct("D", gitignore_path)
