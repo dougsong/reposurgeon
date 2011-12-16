@@ -1749,6 +1749,16 @@ class RepoStreamer:
 #
 # See also dumpfile.txt in this directory
 
+# Use numeric codes rather than (un-interned) strings
+# to reduce working-set size.
+SD_NONE = 0
+SD_FILE = 1
+SD_DIR = 2
+SD_ADD = 1
+SD_DELETE = 2
+SD_CHANGE = 3
+SD_REPLACE = 4
+
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class Trace:
@@ -1774,10 +1784,20 @@ class StreamParser:
         def __str__(self):
             return "<Trace(%s, %s)>" % (self.mark, self.perms)
         __repr__ = __str__
+    ActionValues = {
+        "add": SD_ADD,
+        "delete": SD_DELETE,
+        "change": SD_CHANGE,
+        "replace": SD_REPLACE,
+        }
+    PathTypeValues = {
+        "file": SD_FILE,
+        "dir": SD_DIR,
+        }
     class NodeAction:
         def __init__(self):
             self.path = None
-            self.kind = None
+            self.kind = SD_NONE
             self.action = None
             self.from_rev = None
             self.from_path = None
@@ -2018,12 +2038,14 @@ class StreamParser:
                                     in_header = True
                                 elif line.startswith("Node-kind: "):
                                     node.kind = StreamParser.sd_body(line)
-                                    if node.kind not in ("file", "dir"):
-                                        self.error("unknown kind %s" % node.kind)
+                                    node.kind = StreamParser.PathTypeValues[node.kind]
+                                    if node.kind is None:
+                                        self.error("unknown kind %s"%node.kind)
                                 elif line.startswith("Node-action: "):
                                     node.action = StreamParser.sd_body(line)
-                                    if node.action not in ("change", "add",
-                                                      "delete", "replace"):
+                                    node.action = StreamParser.ActionValues.get(node.action)
+                                    
+                                    if node.action is None:
                                         self.error("unknown action %s" \
                                                    % node.action)
                                 elif line.startswith("Node-copyfrom-rev: "):
@@ -2280,15 +2302,15 @@ class StreamParser:
             # if node.props is None, no property section.
             # if node.blob is None, no text section.
             try:
-                assert node.action in ("change", "add", "delete", "replace")
+                assert node.action in (SD_CHANGE, SD_ADD, SD_DELETE, SD_REPLACE)
                 assert node.blob is not None or \
                        node.props is not None or \
                        node.from_rev or \
-                       node.action in ("add", "delete")
+                       node.action in (SD_ADD, SD_DELETE)
                 assert (node.from_rev is None) == (node.from_path is None)
-                assert node.kind in (None, "file", "dir")
-                assert node.kind != None or node.action == "delete"
-                assert node.action in ("add","replace") or not node.from_rev
+                assert node.kind in (SD_NONE, SD_FILE, SD_DIR)
+                assert node.kind != SD_NONE or node.action == SD_DELETE
+                assert node.action in (SD_ADD, SD_REPLACE) or not node.from_rev
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
@@ -2296,13 +2318,13 @@ class StreamParser:
                 announce("r%s: %s" % (revision, node))
             # Recover some information that may have been elided due to a
             # header being optional.
-            if node.kind is None:
+            if node.kind is SD_NONE:
                 if self.filemap.member_of(revision, node.path):
-                    node.kind = "file"
+                    node.kind = SD_FILE
                 else:
-                    node.kind = "dir"
+                    node.kind = SD_DIR
             # os.sep is appended to avoid collisions with path prefixes.
-            if node.kind == "dir":
+            if node.kind == SD_DIR:
                 node.path += os.sep
             # We're going to hack this path, get a filemap record for it
             with self.filemap.retrieve(revision, node.path, lambda: StreamParser.Trace()) as trace:
@@ -2323,22 +2345,23 @@ class StreamParser:
                             commit.properties[node.path + "#" + prop] = val
                     trace.set_perms(perms)
                 # Actions on directories
-                if node.kind == "dir":
+                if node.kind == SD_DIR:
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
-                    if node.action == "add":
+                    if node.action == SD_ADD:
                         # No-op, since stream format doesn't track
                         # empty directories.
                         pass
-                    elif node.action in ("delete", "replace"):
+                    elif node.action in (SD_DELETE, SD_REPLACE):
                         for (child, unused) in self.filemap.children(revision, node.path):
+                            assert unused is not None
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: deleting %s" % (revision, child))
                             self.filemap.remove(revision, child)
                             fileop = FileOp(commit)
                             fileop.construct("D", child)
                             commit.fileops.append(fileop)
-                    elif node.action == "change":
+                    elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: setting properties %s on %s" \
@@ -2397,8 +2420,8 @@ class StreamParser:
                                                      dest)
                                 self.filemap.register(revision, dest, newtrace)
                 # Actions on files
-                elif node.kind == "file":
-                    if node.action == "delete":
+                elif node.kind == SD_FILE:
+                    if node.action == SD_DELETE:
                         assert node.blob is None
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
@@ -2408,8 +2431,8 @@ class StreamParser:
                                         % (revision, node.kind, node.path))
                         else:
                             self.filemap.remove(revision, node.path)
-                    elif node.action in ("add", "change", "replace"):
-                        if node.action == "add":
+                    elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
+                        if node.action == SD_ADD:
                             if self.filemap.member_of(revision, node.path):
                                 complain("r%s: add of existing path %s" \
                                          % (revision, node.path))
