@@ -1593,10 +1593,11 @@ set gets huge."""
     def children(self, revision, parent):
         revision = intern(revision)
         parent = intern(parent)
+        kids = []
         for (path, value) in self.storage[revision].items():
             if path.startswith(parent):
-                yield (path, value)
-        raise StopIteration
+                kids.append((path, value))
+        return kids
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
