@@ -1757,10 +1757,10 @@ class RepoStreamer:
 SD_NONE = 0
 SD_FILE = 1
 SD_DIR = 2
-SD_ADD = 1
-SD_DELETE = 2
-SD_CHANGE = 3
-SD_REPLACE = 4
+SD_ADD = 0
+SD_DELETE = 1
+SD_CHANGE = 2
+SD_REPLACE = 3
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
@@ -1787,17 +1787,10 @@ class StreamParser:
         def __str__(self):
             return "<Trace(%s, %s)>" % (self.mark, self.perms)
         __repr__ = __str__
-    ActionValues = {
-        "add": SD_ADD,
-        "delete": SD_DELETE,
-        "change": SD_CHANGE,
-        "replace": SD_REPLACE,
-        }
-    PathTypeValues = {
-        "file": SD_FILE,
-        "dir": SD_DIR,
-        }
+    # If these don't match the constants above, havoc will ensue
     class NodeAction:
+        ActionValues = ("add", "delete", "change", "replace")
+        PathTypeValues = ("none", "file", "dir")
         def __init__(self):
             self.path = None
             self.kind = SD_NONE
@@ -1817,7 +1810,9 @@ class StreamParser:
             else:
                 showprops = None
             return "<NodeAction: %s %s %s, from=%s, props=%s>" \
-                         % (self.action, self.kind, self.path,
+                         % (StreamParser.NodeAction.ActionValues[self.action],
+                            StreamParser.NodeAction.PathTypeValues[self.kind],
+                            self.path,
                             copyfrom, showprops)
     class RevisionRecord:
         def __init__(self, nodes, props):
@@ -2041,12 +2036,12 @@ class StreamParser:
                                     in_header = True
                                 elif line.startswith("Node-kind: "):
                                     node.kind = StreamParser.sd_body(line)
-                                    node.kind = StreamParser.PathTypeValues[node.kind]
+                                    node.kind = StreamParser.NodeAction.PathTypeValues.index(node.kind)
                                     if node.kind is None:
                                         self.error("unknown kind %s"%node.kind)
                                 elif line.startswith("Node-action: "):
                                     node.action = StreamParser.sd_body(line)
-                                    node.action = StreamParser.ActionValues.get(node.action)
+                                    node.action = StreamParser.NodeAction.ActionValues.index(node.action)
                                     
                                     if node.action is None:
                                         self.error("unknown action %s" \
