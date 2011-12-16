@@ -2273,8 +2273,6 @@ class StreamParser:
         if self.parent:
             commit.parent_marks = [self.markmap[self.parent]]
             self.filemap.derive(revision, [self.parent])
-        else:
-            record.filemap = {}
         commit.set_fossil(revision)
         try:
             ad = record.props.pop("svn:date")
