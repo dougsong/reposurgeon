@@ -2405,6 +2405,7 @@ class StreamParser:
             baton.bumpcounter()
             # Reduce the working set...must keep filemaps around
             del self.revisions[revision].nodes
+            del self.revisions[revision].props
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
