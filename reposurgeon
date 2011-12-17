@@ -1560,7 +1560,7 @@ set gets huge."""
     def register(self, revision, path, payload):
         "Register metadata for a specified path and revision."
         stashname = self.__stashname(revision, path)
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("register(r%s, %s, %s)" % (revision, path, payload))
         if not os.path.exists(os.path.dirname(stashname)):
             os.makedirs(os.path.dirname(stashname))
@@ -1571,7 +1571,7 @@ set gets huge."""
         stashname = self.__stashname(revision, path)
         with open(stashname, "r") as ifp:
             payload = cPickle.load(ifp)
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("retrieve(r%s, %s) -> %s" % (revision, path, payload))
         return payload
     def remove(self, revision, path):
@@ -1580,14 +1580,14 @@ set gets huge."""
         # this as its only file - that's an unusual case in
         # a source-code repo, and directory entries are cheap.
         stashname = self.__stashname(revision, path)
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("remove(r%s, %s)" % (revision, path))
         os.remove(stashname)
         os.rmdir(os.path.dirname(stashname))
     def derive(self, revision, parents):
         "Create a new revision filemap that is the union of the parent maps."
         # TODO: Presently only handles single-parent case.
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("derive(r%s, %s)" % (revision, parents))
         if os.path.exists(self.__revname(parents[0])):
             shutil.copytree(self.__revname(parents[0]),
@@ -1596,7 +1596,7 @@ set gets huge."""
     def member_of(self, revision, path):
         "Is a specified path in the specified revision?"
         ismember = os.path.exists(self.__stashname(revision, path))
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("member_of(r%s, %s) = %s" % (revision, path, ismember))
         return ismember
     def __clipper(self, rev, dir):
@@ -1620,7 +1620,7 @@ set gets huge."""
         if os.path.isdir(stashname):
             for dir in FileMap.dirwalk(stashname):
                 subtree.append(self.__clipper(revision, dir))
-        if verbose >= DEBUG_EXTRACT:
+        if verbose >= DEBUG_EXTRACT+1:
             announce("children(r%s, %s) = %s" % (revision, parent, subtree))
         return subtree
 
