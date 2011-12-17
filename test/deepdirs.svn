@@ -259,7 +259,7 @@ Content-length: 172
 K 7
 svn:log
 V 74
-Test to see how recursive delere that is not a branch copy is translated.
+Test to see how recursive delete that is not a branch copy is translated.
 
 K 10
 svn:author

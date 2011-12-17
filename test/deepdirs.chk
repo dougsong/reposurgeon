@@ -65,7 +65,7 @@ commit refs/heads/master
 mark :11
 committer esr <esr> 1324129806 +0000
 data 74
-Test to see how recursive delere that is not a branch copy is translated.
+Test to see how recursive delete that is not a branch copy is translated.
 from :10
 D foo/child1
 D foo/bar/child3
