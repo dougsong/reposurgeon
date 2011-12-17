@@ -1541,22 +1541,13 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
-def dirwalk(dir):
-    "walk a directory tree, using a generator"
-    for f in os.listdir(dir):
-        fullpath = os.path.join(dir,f)
-        if os.path.isdir(fullpath) and not os.path.islink(fullpath):
-            for x in dirwalk(fullpath):  # recurse into subdir
-                yield x
-        else:
-            yield fullpath
-
 class FileMap:
     """Object store indexed by file path and version. Used because
 extractors for changeset-oriented systems like Subversion need to
 track which files have existed at given revisions. And they need to do
 it space-efficiently - in repos with thousands of commits the data
 set gets huge."""
+    FileTag = "metadata"
     def __init__(self, basedir):
         self.basedir = basedir[len(os.getcwd())+1:]
         self.storage = {}
@@ -1565,7 +1556,7 @@ set gets huge."""
         return os.path.join(self.basedir, revision)
     def __stashname(self, revision, path):
         "Return the metadata file for any given path in the history."
-        return os.path.join(self.__revname(revision), path, "metadata")
+        return os.path.join(self.__revname(revision), path, FileMap.FileTag)
     def register(self, revision, path, payload):
         "Register metadata for a specified path and revision."
         stashname = self.__stashname(revision, path)
@@ -1608,15 +1599,27 @@ set gets huge."""
         if verbose >= DEBUG_EXTRACT:
             announce("member_of(r%s, %s) = %s" % (revision, path, ismember))
         return ismember
+    def __clipper(self, rev, dir):
+        "Trim our housekeeping stuff off a path in the filestore."
+        return dir[len(self.basedir+os.sep+rev+os.sep):-len(os.sep+FileMap.FileTag)]
+    @staticmethod
+    def dirwalk(dir):
+        "Walk a directory tree, using a generator"
+        for f in os.listdir(dir):
+            fullpath = os.path.join(dir,f)
+            if os.path.isdir(fullpath) and not os.path.islink(fullpath):
+                for x in FileMap.dirwalk(fullpath):  # recurse into subdir
+                    yield x
+            else:
+                yield fullpath
     def children(self, revision, parent):
         "Return a list of the children of a specified node."
         # TODO: turn this into an iterator generator
         subtree = []
         stashname = os.path.dirname(self.__stashname(revision, parent))
         if os.path.isdir(stashname):
-            for d in dirwalk(stashname):
-                # TODO: Ugh...clean up unpleasant magic
-                subtree.append(d[len(self.basedir + revision) + 2:-9])
+            for dir in FileMap.dirwalk(stashname):
+                subtree.append(self.__clipper(revision, dir))
         if verbose >= DEBUG_EXTRACT:
             announce("children(r%s, %s) = %s" % (revision, parent, subtree))
         return subtree
