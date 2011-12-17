@@ -2173,8 +2173,8 @@ class StreamParser:
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
                                     commit.fileops.append(FileOp(commit).parse(line))
-                                elif line == "filedeleteall\n":
-                                    commit.fileops.append(FileOp(commit).parse("deletall"))
+                                elif line == "deleteall\n":
+                                    commit.fileops.append(FileOp(commit).parse("deleteall"))
                                 elif line[0] == "M":
                                     fileop = FileOp(commit).parse(line)
                                     commit.fileops.append(fileop)
@@ -2357,12 +2357,19 @@ class StreamParser:
                     # empty directories.
                     pass
                 elif node.action in (SD_DELETE, SD_REPLACE):
-                    # Deleting an entire branch directory become a
-                    # no-op.
                     if node.action == SD_DELETE and \
                            node.path in self.branches:
                         if verbose >= DEBUG_EXTRACT:
-                            announce("r%s: suppressing branch tip delete of %s" % (revision, node.path))
+                            announce("r%s: deleteall %s" % (revision,
+                                                            node.path))
+                        # It's arguable that the right thing to do with a
+                        # Subversion branch tip delete is to remove it,
+                        # leaving the branch tip live but inactive. But
+                        # that's a policy decision we shouldn't force
+                        # at this low a level.
+                        fileop = FileOp(commit)
+                        fileop.construct("deleteall", node.path[:-1])
+                        commit.fileops.append(fileop)
                         continue
                     for (child, unused) in self.filemap.children(revision, node.path):
                         assert unused is not None
