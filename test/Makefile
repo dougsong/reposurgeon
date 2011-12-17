@@ -90,7 +90,7 @@ svn-branchy: svn-flat
 		svn add trunk/README; \
 		echo "Initial README content." | svn commit -F -
 svn-dump:
-	svnadmin dump test-repo 
+	@svnadmin dump test-repo 
 
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
 svn-buildregress:
