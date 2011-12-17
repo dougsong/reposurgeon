@@ -1541,6 +1541,16 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
+def dirwalk(dir):
+    "walk a directory tree, using a generator"
+    for f in os.listdir(dir):
+        fullpath = os.path.join(dir,f)
+        if os.path.isdir(fullpath) and not os.path.islink(fullpath):
+            for x in dirwalk(fullpath):  # recurse into subdir
+                yield x
+        else:
+            yield fullpath
+
 class FileMap:
     """Object store indexed by file path and version. Used because
 extractors for changeset-oriented systems like Subversion need to
@@ -1589,6 +1599,8 @@ set gets huge."""
     def derive(self, revision, parents):
         "Create a new revision filemap that is the union of the parent maps."
         # TODO: Presently only handles single-parent case.
+        if verbose >= DEBUG_EXTRACT:
+            announce("derive(r%s, %s)" % (revision, parents))
         if os.path.exists(self.__revname(parents[0])):
             shutil.copytree(self.__revname(parents[0]),
                             self.__revname(revision))
@@ -1602,14 +1614,15 @@ set gets huge."""
     def children(self, revision, parent):
         "Return a list of the children of a specified node."
         subtree = []
-        if parent.endswith(os.sep):
-            stashname = self.__stashname(revision, parent)
-            os.path.walk(stashname,
-                         lambda arg, dir, names: subtree.extend(map(lambda x: os.path.normpath(os.path.join(stashname, x)), names)),
-                         None)
+        stashname = os.path.dirname(self.__stashname(revision, parent))
+        if os.path.isdir(stashname):
+            sys.stderr.write("Directory dump\n")
+            os.system("ls %s" % stashname)
+            for d in dirwalk(stashname):
+                subtree.append(d)
         if verbose >= DEBUG_EXTRACT:
             announce("children(r%s, %s) = %s" % (revision, parent, subtree))
-        return subtree
+        return 
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
