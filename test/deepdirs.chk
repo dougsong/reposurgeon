@@ -1,0 +1,110 @@
+blob
+mark :1
+data 37
+This is a test Subversion repository
+
+commit refs/heads/master
+mark :2
+committer esr <esr> 1324128964 +0000
+data 24
+Initial README content.
+M 100644 :1 README
+
+blob
+mark :3
+data 53
+This is the example child3 in the foo/bar directory.
+
+blob
+mark :4
+data 51
+This is the example child1 from the foo directory.
+
+blob
+mark :5
+data 51
+This is the example child2 from the foo directory.
+
+commit refs/heads/master
+mark :6
+committer esr <esr> 1324129126 +0000
+data 79
+Create an directory with a subdirectory for recursive copy and delete testing.
+from :2
+M 100644 :3 foo/bar/child3
+M 100644 :4 foo/child1
+M 100644 :5 foo/child2
+
+blob
+mark :7
+data 17
+Modified README.
+
+commit refs/heads/master
+mark :8
+committer esr <esr> 1324129213 +0000
+data 77
+Put some distance between the directory creation and the copy we'll do next.
+from :6
+M 100644 :7 README
+
+blob
+mark :9
+data 23
+Twice-modified README.
+
+commit refs/heads/master
+mark :10
+committer esr <esr> 1324129698 +0000
+data 23
+Another spacer commit.
+from :8
+M 100644 :9 README
+
+commit refs/heads/master
+mark :11
+committer esr <esr> 1324129806 +0000
+data 74
+Test to see how recursive delere that is not a branch copy is translated.
+from :10
+D foo/child1
+D foo/bar/child3
+D foo/child2
+
+blob
+mark :12
+data 24
+Thrice-modified README.
+
+commit refs/heads/master
+mark :13
+committer esr <esr> 1324129973 +0000
+data 27
+Yet another spacer commit.
+from :11
+M 100644 :12 README
+
+commit refs/heads/master
+mark :14
+committer esr <esr> 1324130052 +0000
+data 45
+A Subversion file copy back from the branch.
+from :13
+M 100644 :3 child3
+
+tag root
+from :2
+tagger esr <esr> 1324128964 +0000
+data 83
+Directory layout.
+
+[[Tag from directory creation or copy commit at Subversion r1]]
+
+tag foocopy
+from :8
+tagger esr <esr> 1324129558 +0000
+data 110
+Test of Subversion directory copy to branch.
+
+[[Tag from directory creation or copy commit at Subversion r5]]
+

@@ -1558,7 +1558,7 @@ track which files have existed at given revisions. And they need to do
 it space-efficiently - in repos with thousands of commits the data
 set gets huge."""
     def __init__(self, basedir):
-        self.basedir = basedir
+        self.basedir = basedir[len(os.getcwd())+1:]
         self.storage = {}
     def __revname(self, revision):
         "Return the top level of a revision's metadata directory."
@@ -1575,14 +1575,11 @@ set gets huge."""
             os.makedirs(os.path.dirname(stashname))
         with open(stashname, "w") as ofp:
             cPickle.dump(payload, ofp)
-    def retrieve(self, revision, path, factory=None):
+    def retrieve(self, revision, path):
         "Retrieve metadata for a specified path and revision."
         stashname = self.__stashname(revision, path)
-        if os.path.exists(stashname):
-            with open(stashname, "r") as ifp:
-                payload = cPickle.load(ifp)
-        else:
-            payload = factory()
+        with open(stashname, "r") as ifp:
+            payload = cPickle.load(ifp)
         if verbose >= DEBUG_EXTRACT:
             announce("retrieve(r%s, %s) -> %s" % (revision, path, payload))
         return payload
@@ -1613,16 +1610,16 @@ set gets huge."""
         return ismember
     def children(self, revision, parent):
         "Return a list of the children of a specified node."
+        # TODO: turn this into an iterator generator
         subtree = []
         stashname = os.path.dirname(self.__stashname(revision, parent))
         if os.path.isdir(stashname):
-            sys.stderr.write("Directory dump\n")
-            os.system("ls %s" % stashname)
             for d in dirwalk(stashname):
-                subtree.append(d)
+                # TODO: Ugh...clean up unpleasant magic
+                subtree.append(d[len(self.basedir + revision) + 2:-9])
         if verbose >= DEBUG_EXTRACT:
             announce("children(r%s, %s) = %s" % (revision, parent, subtree))
-        return 
+        return subtree
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
@@ -2343,7 +2340,10 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %s" % (revision, node))
             # We're going to hack this path, get a filemap record for it
-            orig = self.filemap.retrieve(revision, node.path, lambda: Trace())
+            if self.filemap.member_of(revision, node.path): 
+                orig = self.filemap.retrieve(revision, node.path)
+            else:
+                orig = Trace()
             trace = orig.clone()
             # Handle per-file and per-directory properties
             if node.props is not None:
@@ -2384,8 +2384,7 @@ class StreamParser:
                         fileop.construct("deleteall", node.path[:-1])
                         commit.fileops.append(fileop)
                         continue
-                    for (child, unused) in self.filemap.children(revision, node.path):
-                        assert unused is not None
+                    for child in self.filemap.children(revision, node.path):
                         if verbose >= DEBUG_EXTRACT:
                             announce("r%s: deleting %s" % (revision, child))
                         self.filemap.remove(revision, child)
@@ -2441,14 +2440,15 @@ class StreamParser:
                         elif node.path.count(os.sep) == 1:
                             # Exiguous top-level branch
                             self.branches[node.path] = None
-                    for (source, subtrace) in self.filemap.children(node.from_rev, node.from_path + os.sep):
+                    for source in self.filemap.children(node.from_rev, node.from_path + os.sep):
+                        subtrace = self.filemap.retrieve(node.from_rev, source)
                         assert subtrace.mark
                         fileop = FileOp(commit)
                         dest = os.path.join(node.path,
                                             source[len(node.from_path+os.sep):])
                         fileop.construct("M",
-                                             newtrace.perms,
-                                             newtrace.mark,
+                                             subtrace.perms,
+                                             subtrace.mark,
                                              dest)
                         self.filemap.register(revision, dest, subtrace)
             # Actions on files
