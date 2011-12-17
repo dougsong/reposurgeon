@@ -1777,21 +1777,16 @@ class Trace:
     def __init__(self):
         self.mark = None
         self.perms = 0o100644
-        self.modified = False
-    def __enter__(self):
-        return self
     def set_perms(self, newperms):
-        if newperms != self.perms:
-            self.modified = True
         self.perms = newperms
     def set_mark(self, newmark):
-        if newmark != self.mark:
-            self.modified = True
         self.mark = newmark
     def clone(self):
         return copy.copy(self)
-    def __exit__(self, extype_unused, value_unused, traceback_unused):
-        self.modified = False
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+    def __ne__(self, other):
+        return self.__dict__ != other.__dict__
     def __str__(self):
         return "<Trace(%s, %06o)>" % (self.mark, self.perms)
     __repr__ = __str__
@@ -2335,139 +2330,146 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %s" % (revision, node))
             # We're going to hack this path, get a filemap record for it
-            with self.filemap.retrieve(revision, node.path, lambda: Trace()) as trace:
-                # Handle per-file and per-directory properties
-                if node.props is not None:
-                    # Empty properties section on a path clears its properties
-                    for pathprop in node.props:
-                        if pathprop.startswith(node.path + "#"):
-                            del node.props[pathprop]
-                    perms = 0o100644
-                    for (prop, val) in node.props.items():
-                        if prop == "svn:executable":
-                            perms = 0o100755
-                        elif prop == "svn:special":
-                            # Map to git symlink and hope it flies
-                            perms = 0o120000
-                        elif prop not in StreamParser.IgnoreProperties:
-                            commit.properties[node.path + "#" + prop] = val
-                    trace.set_perms(perms)
-                # Actions on directories
-                if node.kind == SD_DIR:
-                    if node.path == 'trunk' + os.sep:
-                        self.branches['trunk' + os.sep] = None
-                    if node.action == SD_ADD:
-                        # No-op, since stream format doesn't track
-                        # empty directories.
-                        pass
-                    elif node.action in (SD_DELETE, SD_REPLACE):
-                        # Deleting an entire branch directory become a
-                        # no-op.
-                        if node.action == SD_DELETE and \
-                               node.path in self.branches:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: suppressing branch tip delete of %s" % (revision, node.path))
-                            continue
-                        for (child, unused) in self.filemap.children(revision, node.path):
-                            assert unused is not None
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: deleting %s" % (revision, child))
-                            self.filemap.remove(revision, child)
-                            fileop = FileOp(commit)
-                            fileop.construct("D", child)
-                            commit.fileops.append(fileop)
-                    elif node.action == SD_CHANGE:
-                        if node.props is not None:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: setting properties %s on %s" \
-                                         % (revision, node.props, node.path))
-                            # svn.ignore gets handled here,
-                            if node.path == os.sep:
-                                gitignore_path = ".gitignore"
-                            else:
-                                gitignore_path = os.path.join(node.path,
-                                                              ".gitignore")
-                            # There are no other directory properties that can
-                            # turn into fileops.
-                            if "svn:ignore" in node.props:
-                                blob = Blob(self.repo)
-                                blob.mark = self.__newmark() 
-                                with open(blob.blobfile(), "w") as wfp:
-                                    wfp.write(node.props["svn:ignore"])
-                                self.repo.events.append(blob)
-                                with Trace() as newtrace:
-                                    newtrace.set_mark(blob.mark)
-                                    self.filemap.register(revision,
-                                                          gitignore_path,
-                                                          newtrace)
-                                    fileop = FileOp(commit)
-                                    fileop.construct("M",
-                                                     newtrace.perms,
-                                                     newtrace.mark,
-                                                     gitignore_path)
-                                    commit.fileops.append(fileop)
-                            elif self.filemap.member_of(revision,
-                                                        gitignore_path):
-                                self.filemap.remove(revision, gitignore_path)
-                                fileop = FileOp(commit)
-                                fileop.construct("D", gitignore_path)
-                                commit.fileops.append(fileop)
-                    # Handle directory copies used for branching and tags
-                    if node.from_path:
-                        if self.branches:
-                            if node.path.count(os.sep) == 2:
-                                if node.path.startswith("tags" + os.sep):
-                                    self.branches[node.path] = None
-                                elif node.path.startswith("branches" + os.sep):
-                                    self.branches[node.path] = None
-                            elif node.path.count(os.sep) == 1:
-                                # Exiguous top-level branch
-                                self.branches[node.path] = None
-                        for (source, trace) in self.filemap.children(node.from_rev, node.from_path + os.sep):
-                            assert trace.mark
-                            with trace.clone() as newtrace:
-                                fileop = FileOp(commit)
-                                dest = os.path.join(node.path,
-                                                    source[len(node.from_path+os.sep):])
-                                fileop.construct("M",
-                                                     newtrace.perms,
-                                                     newtrace.mark,
-                                                     dest)
-                                self.filemap.register(revision, dest, newtrace)
-                # Actions on files
-                elif node.kind == SD_FILE:
-                    if node.action == SD_DELETE:
-                        assert node.blob is None
+            orig = self.filemap.retrieve(revision, node.path, lambda: Trace())
+            trace = orig.clone()
+            # Handle per-file and per-directory properties
+            if node.props is not None:
+                # Empty properties section on a path clears its properties
+                for pathprop in node.props:
+                    if pathprop.startswith(node.path + "#"):
+                        del node.props[pathprop]
+                perms = 0o100644
+                for (prop, val) in node.props.items():
+                    if prop == "svn:executable":
+                        perms = 0o100755
+                    elif prop == "svn:special":
+                        # Map to git symlink and hope it flies
+                        perms = 0o120000
+                    elif prop not in StreamParser.IgnoreProperties:
+                        commit.properties[node.path + "#" + prop] = val
+                trace.set_perms(perms)
+            # Actions on directories
+            if node.kind == SD_DIR:
+                if node.path == 'trunk' + os.sep:
+                    self.branches['trunk' + os.sep] = None
+                if node.action == SD_ADD:
+                    # No-op, since stream format doesn't track
+                    # empty directories.
+                    pass
+                elif node.action in (SD_DELETE, SD_REPLACE):
+                    # Deleting an entire branch directory become a
+                    # no-op.
+                    if node.action == SD_DELETE and \
+                           node.path in self.branches:
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: suppressing branch tip delete of %s" % (revision, node.path))
+                        continue
+                    for (child, unused) in self.filemap.children(revision, node.path):
+                        assert unused is not None
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: deleting %s" % (revision, child))
+                        self.filemap.remove(revision, child)
                         fileop = FileOp(commit)
-                        fileop.construct("D", node.path)
+                        fileop.construct("D", child)
                         commit.fileops.append(fileop)
-                        if not self.filemap.member_of(revision, node.path):
-                            raise Fatal("r%s: delete of nonexistent %s %s." \
-                                        % (revision, node.kind, node.path))
+                    continue
+                elif node.action == SD_CHANGE:
+                    if node.props is not None:
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: setting properties %s on %s" \
+                                     % (revision, node.props, node.path))
+                        # svn.ignore gets handled here,
+                        if node.path == os.sep:
+                            gitignore_path = ".gitignore"
                         else:
-                            self.filemap.remove(revision, node.path)
-                    elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
-                        if node.action == SD_ADD:
-                            if self.filemap.member_of(revision, node.path):
-                                complain("r%s: add of existing path %s" \
-                                         % (revision, node.path))
-                            self.filemap.register(revision, node.path, trace)
-                        if node.from_path:
-                            if not self.filemap.member_of(node.from_rev,node.from_path):
-                                raise Fatal("%s not in source commit %s" % \
-                                            (node.from_path, node.from_rev))
-                            else:
-                                oldtrace = self.filemap.retrieve(node.from_rev, node.from_path)
-                                trace.set_mark(oldtrace.mark)
-                        if node.blob is not None:
-                            node.blob.mark = self.__newmark() 
-                            self.repo.events.append(node.blob)
-                            newtrace = self.filemap.retrieve(revision, node.path)
-                            newtrace.set_mark(node.blob.mark)
-                        if trace.modified:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
+                        # There are no other directory properties that can
+                        # turn into fileops.
+                        if "svn:ignore" in node.props:
+                            blob = Blob(self.repo)
+                            blob.mark = self.__newmark() 
+                            with open(blob.blobfile(), "w") as wfp:
+                                wfp.write(node.props["svn:ignore"])
+                            self.repo.events.append(blob)
+                            newtrace = Trace()
+                            newtrace.set_mark(blob.mark)
+                            self.filemap.register(revision,
+                                                  gitignore_path,
+                                                  newtrace)
                             fileop = FileOp(commit)
-                            fileop.construct("M", trace.perms, trace.mark, node.path)
+                            fileop.construct("M",
+                                             newtrace.perms,
+                                             newtrace.mark,
+                                             gitignore_path)
                             commit.fileops.append(fileop)
+                            
+                        elif self.filemap.member_of(revision,
+                                                    gitignore_path):
+                            self.filemap.remove(revision, gitignore_path)
+                            fileop = FileOp(commit)
+                            fileop.construct("D", gitignore_path)
+                            commit.fileops.append(fileop)
+                # Handle directory copies used for branching and tags
+                if node.from_path:
+                    if self.branches:
+                        if node.path.count(os.sep) == 2:
+                            if node.path.startswith("tags" + os.sep):
+                                self.branches[node.path] = None
+                            elif node.path.startswith("branches" + os.sep):
+                                self.branches[node.path] = None
+                        elif node.path.count(os.sep) == 1:
+                            # Exiguous top-level branch
+                            self.branches[node.path] = None
+                    for (source, subtrace) in self.filemap.children(node.from_rev, node.from_path + os.sep):
+                        assert subtrace.mark
+                        fileop = FileOp(commit)
+                        dest = os.path.join(node.path,
+                                            source[len(node.from_path+os.sep):])
+                        fileop.construct("M",
+                                             newtrace.perms,
+                                             newtrace.mark,
+                                             dest)
+                        self.filemap.register(revision, dest, subtrace)
+            # Actions on files
+            elif node.kind == SD_FILE:
+                if node.action == SD_DELETE:
+                    assert node.blob is None
+                    fileop = FileOp(commit)
+                    fileop.construct("D", node.path)
+                    commit.fileops.append(fileop)
+                    if not self.filemap.member_of(revision, node.path):
+                        raise Fatal("r%s: delete of nonexistent %s %s." \
+                                    % (revision, node.kind, node.path))
+                    else:
+                        self.filemap.remove(revision, node.path)
+                elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
+                    if node.action == SD_ADD:
+                        if self.filemap.member_of(revision, node.path):
+                            raise Fatal("r%s: add of existing path %s" \
+                                        % (revision, node.path))
+                    if node.from_path:
+                        if not self.filemap.member_of(node.from_rev,node.from_path):
+                            raise Fatal("%s not in source commit %s" % \
+                                        (node.from_path, node.from_rev))
+                        else:
+                            oldtrace = self.filemap.retrieve(node.from_rev,
+                                                             node.from_path)
+                            trace.set_mark(oldtrace.mark)
+                    if node.blob is not None:
+                        node.blob.mark = self.__newmark() 
+                        self.repo.events.append(node.blob)
+                        trace.set_mark(node.blob.mark)
+                    if trace != orig:
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s %s: modified %s -> %s" % (revision, node.path, orig, trace))
+                        fileop = FileOp(commit)
+                        fileop.construct("M",
+                                         trace.perms,
+                                         trace.mark,
+                                         node.path)
+                        commit.fileops.append(fileop)
+                    self.filemap.register(revision, node.path, trace)
             # Node loop ends
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
         commit.branch = os.path.join("refs", "heads", "master") + os.sep
