@@ -91,8 +91,8 @@ This is the trunk version of README, without modifications.
 
 
 Revision-number: 3
-Prop-content-length: 141
-Content-length: 141
+Prop-content-length: 142
+Content-length: 142
 
 K 7
 svn:log
@@ -237,5 +237,28 @@ Content-length: 107
 This is the branch version of README, after we've actually changed it.
 
 Second modification to the README.
+
+
+Revision-number: 8
+Prop-content-length: 172
+Content-length: 172
+
+K 7
+svn:log
+V 74
+This is an example of a branch tip delete which should become a deletall.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:13:36.240933Z
+PROPS-END
+
+Node-path: branches/samplebranch
+Node-action: delete
 
 

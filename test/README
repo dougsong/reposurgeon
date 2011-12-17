@@ -50,10 +50,16 @@ roundup-authors.txt is the auxiliary file used to test author mapping
 
 1. To create a new Subversion test repo, 'make svn-flat' or 'make svn-branchy'.
 
-2. To copy trunk, creating a tag named 'foo'
+2. To clone an existing test load foo.svn into the test repo, 'svn -n <foo.svn'
+
+3. To copy trunk, creating a tag named 'foo'
 
    svn copy file://${PWD}/test-repo/trunk file://${PWD}/test-repo/tags/foo
 
-3. 'make svn-dump' will dump the new test load to stdout.
+4. To delete a branch foo
+
+   svn delete file://${PWD}/test-repo/branches/foo
+
+4. 'make svn-dump' will dump the new test load to stdout.
 
 
