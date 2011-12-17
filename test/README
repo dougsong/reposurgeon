@@ -19,6 +19,8 @@ from foo.sd.  Here is a summary of the test sources:
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |cut.fi          |Test load for cut operation; uses bzr repo
 |deletion.svn    |Tests translation of file deletions
+|deepdirs.svn    |Branchy repo with directory copy and delete
+|deleteall.fi    |Tests roundtripping of deleteall operation 
 |emptybranch.svn |Branchy repo with empty branch at top level
 |exiguous.svn    |Branchy repo with exiguous branch at top level
 |filecopy.svn	 |Test to make sure file copies don't confuse branch detection.
@@ -60,6 +62,6 @@ roundup-authors.txt is the auxiliary file used to test author mapping
 
    svn delete file://${PWD}/test-repo/branches/foo
 
-4. 'make svn-dump' will dump the new test load to stdout.
+5. 'make svn-dump' will dump the new test load to stdout.
 
 
