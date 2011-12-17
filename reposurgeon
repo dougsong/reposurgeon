@@ -2905,7 +2905,7 @@ class Repository:
         "Return a list of the repository commit objects."
         return [e for e in self.events if isinstance(e, Commit)]
     def earliest(self):
-        "Return the date of earlist commit."
+        "Return the date of earliest commit."
         return self.commits()[0].committer.date
     #
     # Delete machinery begins here
