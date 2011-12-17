@@ -1,0 +1,335 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 5c3fd614-50fe-4fba-9326-fc420a15a30a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-17T13:36:03.785519Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:36:04.132591Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:36:04.732594Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 177
+Content-length: 177
+
+K 7
+svn:log
+V 79
+Create an directory with a subdirectory for recursive copy and delete testing.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:38:46.866332Z
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/foo/bar
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/foo/bar/child3
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 53
+Text-content-md5: ee85c24a6a3f5d8753a2d9c0008b3f67
+Text-content-sha1: aadfc0b2e8635829c008ff276f15f90c7265c01a
+Content-length: 63
+
+PROPS-END
+This is the example child3 in the foo/bar directory.
+
+
+Node-path: trunk/foo/child1
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 51
+Text-content-md5: 265bf7b4672744ac4453b12c20a2713d
+Text-content-sha1: ba5c8277348ad89d0cdcc3b73328f4e88b5aa9c8
+Content-length: 61
+
+PROPS-END
+This is the example child1 from the foo directory.
+
+
+Node-path: trunk/foo/child2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 51
+Text-content-md5: 78ac9f239146530851c7f3984c8be860
+Text-content-sha1: 6898f07777b3ad1c69bcdd198171616f2d3e8ed0
+Content-length: 61
+
+PROPS-END
+This is the example child2 from the foo directory.
+
+
+Revision-number: 4
+Prop-content-length: 175
+Content-length: 175
+
+K 7
+svn:log
+V 77
+Put some distance between the directory creation and the copy we'll do next.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:40:13.815732Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 17
+Text-content-md5: 313a6598232e1ceb570c7f1664469e5c
+Text-content-sha1: 07d71b83d2fcf6417d63ef9991c88351055e3f0d
+Content-length: 17
+
+Modified README.
+
+
+Revision-number: 5
+Prop-content-length: 143
+Content-length: 143
+
+K 7
+svn:log
+V 45
+Test of Subversion directory copy to branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:45:58.373872Z
+PROPS-END
+
+Node-path: branches/foocopy
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: trunk/foo
+
+
+Revision-number: 6
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+Another spacer commit.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:48:18.030195Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 23
+Text-content-md5: d7d1671df0668993229e5f0e40ed1699
+Text-content-sha1: b3a2a57178254d5af7ec84cac3c798604ed89581
+Content-length: 23
+
+Twice-modified README.
+
+
+Revision-number: 7
+Prop-content-length: 172
+Content-length: 172
+
+K 7
+svn:log
+V 74
+Test to see how recursive delere that is not a branch copy is translated.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:50:06.252693Z
+PROPS-END
+
+Node-path: trunk/foo
+Node-action: delete
+
+
+Revision-number: 8
+Prop-content-length: 125
+Content-length: 125
+
+K 7
+svn:log
+V 27
+Yet another spacer commit.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:52:53.000874Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 24
+Text-content-md5: ea1308185fd0de6b541e23976cf36d39
+Text-content-sha1: 39f8cff49ab654d16df958415f9fc1af6559fbf7
+Content-length: 24
+
+Thrice-modified README.
+
+
+Revision-number: 9
+Prop-content-length: 143
+Content-length: 143
+
+K 7
+svn:log
+V 45
+A Subversion file copy back from the branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-17T13:54:12.157275Z
+PROPS-END
+
+Node-path: trunk/child3
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: branches/foocopy/bar/child3
+Text-copy-source-md5: ee85c24a6a3f5d8753a2d9c0008b3f67
+Text-copy-source-sha1: aadfc0b2e8635829c008ff276f15f90c7265c01a
+
+
