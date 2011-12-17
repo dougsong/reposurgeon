@@ -6,7 +6,7 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
+import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import readline, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
 import re, sre_constants
@@ -705,6 +705,7 @@ class SvnExtractor():
             for earlier in self.revlist:
                 if earlier == rev:
                     break
+                # This won't work with the new FileMap object
                 elif filemap.revision(earlier) == lookfor:
                     commit.parents = [earlier]
                     break
@@ -1546,61 +1547,69 @@ extractors for changeset-oriented systems like Subversion need to
 track which files have existed at given revisions. And they need to do
 it space-efficiently - in repos with thousands of commits the data
 set gets huge."""
-    def __init__(self):
+    def __init__(self, basedir):
+        self.basedir = basedir
         self.storage = {}
+    def __revname(self, revision):
+        "Return the top level of a revision's metadata directory."
+        return os.path.join(self.basedir, revision)
+    def __stashname(self, revision, path):
+        "Return the metadata file for any given path in the history."
+        return os.path.join(self.__revname(revision), path, "metadata")
     def register(self, revision, path, payload):
-        path = intern(path)
-        revision = intern(revision)
-        if revision not in self.storage:
-            self.storage[revision] = {}
-        self.storage[revision][path] = payload
+        "Register metadata for a specified path and revision."
+        stashname = self.__stashname(revision, path)
+        if verbose >= DEBUG_EXTRACT:
+            announce("register(r%s, %s, %s)" % (revision, path, payload))
+        if not os.path.exists(os.path.dirname(stashname)):
+            os.makedirs(os.path.dirname(stashname))
+        with open(stashname, "w") as ofp:
+            cPickle.dump(payload, ofp)
     def retrieve(self, revision, path, factory=None):
-        path = intern(path)
-        revision = intern(revision)
-        retrieved = None
-        if revision in self.storage:
-            retrieved = self.storage[revision].get(path)
-        if retrieved:
-            return retrieved
-        if factory:
-            return factory()
-        return None
+        "Retrieve metadata for a specified path and revision."
+        stashname = self.__stashname(revision, path)
+        if os.path.exists(stashname):
+            with open(stashname, "r") as ifp:
+                payload = cPickle.load(ifp)
+        else:
+            payload = factory()
+        if verbose >= DEBUG_EXTRACT:
+            announce("retrieve(r%s, %s) -> %s" % (revision, path, payload))
+        return payload
     def remove(self, revision, path):
-        path = intern(path)
-        revision = intern(revision)
-        if revision in self.storage:
-            del self.storage[revision][path]
-    def revision(self, revision):
-        "Return the portion of the filemap relevant to the specified revision."
-        sys.stderr.write("revision(%s)\n" % (revision,))
-        revision = intern(revision)
-        return self.storage[revision]
-    def revision_items(self, revision):
-        "Return the slice of the filemap relevant to the specified revision."
-        revision = intern(revision)
-        return self.storage[revision].items()
+        "Remove a file path from the map."
+        # Does not scavenge directories that might have had
+        # this as its only file - that's an unusual case in
+        # a source-code repo, and directory entries are cheap.
+        stashname = self.__stashname(revision, path)
+        if verbose >= DEBUG_EXTRACT:
+            announce("remove(r%s, %s)" % (revision, path))
+        os.remove(stashname)
+        os.rmdir(os.path.dirname(stashname))
     def derive(self, revision, parents):
         "Create a new revision filemap that is the union of the parent maps."
-        revision = intern(revision)
-        parents = [intern(rev) for rev in parents]
-        self.storage[revision] = {}
-        for rev in parents:
-            if rev in self.storage:
-                for path in self.storage[rev]:
-                    self.storage[revision][path] = self.storage[rev][path]
-        return self.storage[revision]
+        # TODO: Presently only handles single-parent case.
+        if os.path.exists(self.__revname(parents[0])):
+            shutil.copytree(self.__revname(parents[0]),
+                            self.__revname(revision))
+        return self.children(revision, "")
     def member_of(self, revision, path):
-        revision = intern(revision)
-        path = intern(path)
-        return revision in self.storage and path in self.storage.get(revision)
+        "Is a specified path in the specified revision?"
+        ismember = os.path.exists(self.__stashname(revision, path))
+        if verbose >= DEBUG_EXTRACT:
+            announce("member_of(r%s, %s) = %s" % (revision, path, ismember))
+        return ismember
     def children(self, revision, parent):
-        revision = intern(revision)
-        parent = intern(parent)
-        kids = []
-        for (path, value) in self.storage[revision].items():
-            if path.startswith(parent):
-                kids.append((path, value))
-        return kids
+        "Return a list of the children of a specified node."
+        subtree = []
+        if parent.endswith(os.sep):
+            stashname = self.__stashname(revision, parent)
+            os.path.walk(stashname,
+                         lambda arg, dir, names: subtree.extend(map(lambda x: os.path.normpath(os.path.join(stashname, x)), names)),
+                         None)
+        if verbose >= DEBUG_EXTRACT:
+            announce("children(r%s, %s) = %s" % (revision, parent, subtree))
+        return subtree
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
@@ -1609,7 +1618,7 @@ class RepoStreamer:
         self.tagseq = 0
         self.commits = {}
         self.markmap = {}
-        self.filemap = FileMap()
+        self.filemap = None
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
@@ -1623,6 +1632,7 @@ class RepoStreamer:
         if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         repo.makedir()
+        self.filemap = FileMap(repo.subdir())
         with Baton(prompt="Extracting", enable=progress) as self.baton:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
@@ -1762,31 +1772,32 @@ SD_DELETE = 1
 SD_CHANGE = 2
 SD_REPLACE = 3
 
+class Trace:
+    "All the metadata we need to retain across revisions about a file."
+    def __init__(self):
+        self.mark = None
+        self.perms = 0o100644
+        self.modified = False
+    def __enter__(self):
+        return self
+    def set_perms(self, newperms):
+        if newperms != self.perms:
+            self.modified = True
+        self.perms = newperms
+    def set_mark(self, newmark):
+        if newmark != self.mark:
+            self.modified = True
+        self.mark = newmark
+    def clone(self):
+        return copy.copy(self)
+    def __exit__(self, extype_unused, value_unused, traceback_unused):
+        self.modified = False
+    def __str__(self):
+        return "<Trace(%s, %06o)>" % (self.mark, self.perms)
+    __repr__ = __str__
+
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
-    class Trace:
-        "All the metadata we need to retain across revisions about a file."
-        def __init__(self):
-            self.mark = None
-            self.perms = 0o100644
-            self.modified = False
-        def __enter__(self):
-            return self
-        def set_perms(self, newperms):
-            if newperms != self.perms:
-                self.modified = True
-            self.perms = newperms
-        def set_mark(self, newmark):
-            if newmark != self.mark:
-                self.modified = True
-            self.mark = newmark
-        def clone(self):
-            return copy.copy(self)
-        def __exit__(self, extype_unused, value_unused, traceback_unused):
-            self.modified = False
-        def __str__(self):
-            return "<Trace(%s, %s)>" % (self.mark, self.perms)
-        __repr__ = __str__
     # If these don't match the constants above, havoc will ensue
     class NodeAction:
         ActionValues = ("add", "delete", "change", "replace")
@@ -1846,7 +1857,7 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
-        self.filemap = FileMap()
+        self.filemap = None
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -1980,6 +1991,7 @@ class StreamParser:
                     if StreamParser.sd_body(line) not in ("1", "2"):
                         raise Fatal("unsupported dump format version %s" \
                                     % version)
+                    self.filemap = FileMap(self.repo.subdir())
                     # Beginning of Subversion dump parsing
                     while True:
                         line = self.readline()
@@ -2323,7 +2335,7 @@ class StreamParser:
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %s" % (revision, node))
             # We're going to hack this path, get a filemap record for it
-            with self.filemap.retrieve(revision, node.path, lambda: StreamParser.Trace()) as trace:
+            with self.filemap.retrieve(revision, node.path, lambda: Trace()) as trace:
                 # Handle per-file and per-directory properties
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
@@ -2383,7 +2395,7 @@ class StreamParser:
                                 with open(blob.blobfile(), "w") as wfp:
                                     wfp.write(node.props["svn:ignore"])
                                 self.repo.events.append(blob)
-                                with StreamParser.Trace() as newtrace:
+                                with Trace() as newtrace:
                                     newtrace.set_mark(blob.mark)
                                     self.filemap.register(revision,
                                                           gitignore_path,
