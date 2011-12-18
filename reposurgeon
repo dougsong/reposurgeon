@@ -1811,6 +1811,7 @@ class StreamParser:
         ActionValues = ("add", "delete", "change", "replace")
         PathTypeValues = ("none", "file", "dir")
         def __init__(self):
+            self.revision = None
             self.path = None
             self.kind = SD_NONE
             self.action = None
@@ -1818,6 +1819,7 @@ class StreamParser:
             self.from_path = None
             self.blob = None
             self.props = None
+            self.history = None
         def __str__(self):
             if self.from_rev:
                 copyfrom = "r%s %s" % (self.from_rev, self.from_path)
@@ -1828,11 +1830,13 @@ class StreamParser:
                 showprops = str(self.props)[12:-1]
             else:
                 showprops = None
-            return "<NodeAction: %s %s %s, from=%s, props=%s>" \
-                         % (StreamParser.NodeAction.ActionValues[self.action],
+            return "<NodeAction: r%s %s %s %s, from=%s, props=%s>" \
+                         % (self.revision,
+                            StreamParser.NodeAction.ActionValues[self.action],
                             StreamParser.NodeAction.PathTypeValues[self.kind],
                             self.path,
-                            copyfrom, showprops)
+                            copyfrom,
+                            showprops)
     class RevisionRecord:
         def __init__(self, nodes, props):
             self.nodes = nodes
@@ -1865,7 +1869,7 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
-        self.filemap = None
+        self.histories = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2043,6 +2047,7 @@ class StreamParser:
                                             node.blob = Blob(self.repo)
                                             with open(node.blob.blobfile(), "w") as wfp:
                                                 wfp.write(text)
+                                        node.revision = revision
                                         nodes.append(node)
                                         in_header = False
                                 elif line.startswith("Revision-number: "):
@@ -2330,6 +2335,7 @@ class StreamParser:
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
+            # THIS CODE WILL BE REPLACED
             # Recover some information that may have been elided due to a
             # header being optional.
             if node.kind == SD_NONE:
@@ -2337,6 +2343,20 @@ class StreamParser:
                     node.kind = SD_FILE
                 else:
                     node.kind = SD_DIR
+            # CODE TO BE REPLACED ENDS
+            # Thread this record onto the filetree map.
+            # Refer it back to the longest prefix we can find 
+            segments = node.path.split(os.sep)
+            for i in range(len(segments)):
+                prefix = os.sep.join(segments[:-i])
+                if prefix in self.histories:
+                    node.history = self.histories[prefix]
+                    # Recover some information that may have been
+                    # elided due to a header being optional.
+                    if node.kind == SD_NONE:
+                        node.kind = node.history.kind
+            assert node.kind in (SD_FILE, SD_DIR)
+            self.histories[node.path] = node
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == SD_DIR:
                 node.path += os.sep
