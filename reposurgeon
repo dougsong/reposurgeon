@@ -1550,7 +1550,6 @@ set gets huge."""
     FileTag = "metadata"
     def __init__(self, basedir):
         self.basedir = basedir[len(os.getcwd())+1:]
-        self.storage = {}
     def __revname(self, revision):
         "Return the top level of a revision's metadata directory."
         return os.path.join(self.basedir, revision)
@@ -1599,14 +1598,14 @@ set gets huge."""
         if verbose >= DEBUG_EXTRACT+1:
             announce("member_of(r%s, %s) = %s" % (revision, path, ismember))
         return ismember
-    def __clipper(self, rev, dir):
+    def __clipper(self, rev, cdir):
         "Trim our housekeeping stuff off a path in the filestore."
-        return dir[len(self.basedir+os.sep+rev+os.sep):-len(os.sep+FileMap.FileTag)]
+        return cdir[len(self.basedir+os.sep+rev+os.sep):-len(os.sep+FileMap.FileTag)]
     @staticmethod
-    def dirwalk(dir):
+    def dirwalk(cdir):
         "Walk a directory tree, using a generator"
-        for f in os.listdir(dir):
-            fullpath = os.path.join(dir,f)
+        for f in os.listdir(cdir):
+            fullpath = os.path.join(cdir,f)
             if os.path.isdir(fullpath) and not os.path.islink(fullpath):
                 for x in FileMap.dirwalk(fullpath):  # recurse into subdir
                     yield x
@@ -1618,8 +1617,8 @@ set gets huge."""
         subtree = []
         stashname = os.path.dirname(self.__stashname(revision, parent))
         if os.path.isdir(stashname):
-            for dir in FileMap.dirwalk(stashname):
-                subtree.append(self.__clipper(revision, dir))
+            for cdir in FileMap.dirwalk(stashname):
+                subtree.append(self.__clipper(revision, cdir))
         if verbose >= DEBUG_EXTRACT+1:
             announce("children(r%s, %s) = %s" % (revision, parent, subtree))
         return subtree
