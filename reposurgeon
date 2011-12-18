@@ -2341,13 +2341,8 @@ class StreamParser:
                 node.path += os.sep
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %s" % (revision, node))
-            # We're going to hack this path, get a filemap record for it
-            if self.filemap.member_of(revision, node.path): 
-                orig = self.filemap.retrieve(revision, node.path)
-            else:
-                orig = Trace()
-            trace = orig.clone()
             # Handle per-file and per-directory properties
+            perms = None
             if node.props is not None:
                 # Empty properties section on a path clears its properties
                 for pathprop in node.props:
@@ -2362,7 +2357,6 @@ class StreamParser:
                         perms = 0o120000
                     elif prop not in StreamParser.IgnoreProperties:
                         commit.properties[node.path + "#" + prop] = val
-                trace.set_perms(perms)
             # Actions on directories
             if node.kind == SD_DIR:
                 if node.path == 'trunk' + os.sep:
@@ -2470,6 +2464,12 @@ class StreamParser:
                         if self.filemap.member_of(revision, node.path):
                             raise Fatal("r%s: add of existing path %s" \
                                         % (revision, node.path))
+                        orig = Trace()
+                    else:
+                        orig = self.filemap.retrieve(revision, node.path)
+                    trace = orig.clone()
+                    if perms:
+                        trace.set_perms(perms)
                     if node.from_path:
                         if not self.filemap.member_of(node.from_rev,node.from_path):
                             raise Fatal("%s not in source commit %s" % \
