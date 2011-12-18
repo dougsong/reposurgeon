@@ -2335,26 +2335,22 @@ class StreamParser:
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
-            # THIS CODE WILL BE REPLACED
-            # Recover some information that may have been elided due to a
-            # header being optional.
-            if node.kind == SD_NONE:
-                if self.filemap.member_of(revision, node.path):
-                    node.kind = SD_FILE
-                else:
-                    node.kind = SD_DIR
-            # CODE TO BE REPLACED ENDS
             # Thread this record onto the filetree map.
             # Refer it back to the longest prefix we can find 
-            segments = node.path.split(os.sep)
-            for i in range(len(segments)):
+            segments = node.path.split(os.sep) + ["dummy"]
+            for i in range(1, len(segments)):
                 prefix = os.sep.join(segments[:-i])
                 if prefix in self.histories:
                     node.history = self.histories[prefix]
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("r%s: relating %s to %s (%s)" \
+                                 % (revision, node.path,
+                                    node.history.revision, prefix))
                     # Recover some information that may have been
                     # elided due to a header being optional.
                     if node.kind == SD_NONE:
                         node.kind = node.history.kind
+                    break
             assert node.kind in (SD_FILE, SD_DIR)
             self.histories[node.path] = node
             # os.sep is appended to avoid collisions with path prefixes.
