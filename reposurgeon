@@ -387,7 +387,7 @@ class GitExtractor:
         assert rev is not None # Pacify pylint
         return collections.OrderedDict()
 
-# WARNING: The following extractor is not used and may have bitrotted!
+# WARNING: The following extractor is not used and has bitrotted!
 #
 # It is included only as a coding example for people who want to write
 # extractors for other version-control systems. It was replaced by the
@@ -705,7 +705,8 @@ class SvnExtractor():
             for earlier in self.revlist:
                 if earlier == rev:
                     break
-                # This won't work with the new FileMap object
+                # THIS NO LONGER WORKS!
+                # We should do something like an MD5 content hash check here.
                 elif filemap.revision(earlier) == lookfor:
                     commit.parents = [earlier]
                     break
@@ -2418,7 +2419,6 @@ class StreamParser:
                                              newtrace.mark,
                                              gitignore_path)
                             commit.fileops.append(fileop)
-                            
                         elif self.filemap.member_of(revision,
                                                     gitignore_path):
                             self.filemap.remove(revision, gitignore_path)
