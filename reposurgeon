@@ -2501,19 +2501,38 @@ class StreamParser:
         "Perform topological analysis, define branches, lift tags."
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
-        # First pass: Find the locations of all directory copies
+        # First pass: Find all directory copies
         baton.startcounter(countfmt)
         baton.twirl("copies:")
         copynodes = []
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
-                if node.kind == SD_DIR and node.from_path is not None:
+                if node.from_path is not None:
                     copynodes.append(node)
             baton.twirl()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
-        # Second pass: build history links
+        # Second pass: build file manifests
+        baton.startcounter(countfmt)
+        baton.twirl("manifests:")
+        filemap = set([])
+        for revision in self.revisions:
+            record = self.revisions[revision]
+            for node in record.nodes:
+                if node.action == SD_ADD and node.kind == SD_FILE:
+                    filemap.add(node.path)
+                elif node.action == SD_DELETE:
+                    filemap.discard(node.path)
+                for copynode in copynodes:
+                    if copynode.from_rev == revision:
+                        copynode.from_set = set([])
+                        for path in filemap:
+                            # TODO: We probably don't want the entire path here
+                            if path.startswith(copynode.from_path):
+                                copynode.from_set.add(path)
+        baton.endcounter()
+        # Third pass: build history links
         baton.startcounter(countfmt)
         baton.twirl("histories:")
         for revision in self.revisions:
