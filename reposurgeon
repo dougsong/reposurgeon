@@ -2536,13 +2536,11 @@ class StreamParser:
                     filemap.add(node.path)
                 elif node.action == SD_DELETE:
                     filemap.discard(node.path)
-                    deletia = set([])
+                    node.from_set = set([])
                     for path in copy.copy(filemap):
                         if path.startswith(node.path + os.sep):
-                           deletia.add(path)
-                    filemap -= deletia
-            if verbose >= DEBUG_EXTRACT:
-                announce("at %s I see %s" % (revision, filemap))
+                           filemap.add(path)
+                    filemap -= node.from_set
             if revision in source_revisions:
                 filemaps[revision] = copy.copy(filemap)
             baton.bumpcounter()
@@ -2561,7 +2559,7 @@ class StreamParser:
                         filemaps[copynode.revision].add(os.path.join(copynode.path, suffix))
             baton.twirl()
         baton.twirl('+')
-        # Fourth pass: build from sets in each copy record.
+        # Fourth pass: build from sets in each directory copy record.
         baton.twirl("filemaps2")
         for copynode in copynodes:
             copynode.from_set = set([])
