@@ -55,7 +55,7 @@ Twice-modified README.
 
 commit refs/heads/master
 mark :10
-committer esr <esr> 1324129698 +0000
+committer esr <esr> 1324319931 +0000
 data 23
 Another spacer commit.
 from :8
@@ -63,9 +63,11 @@ M 100644 :9 README
 
 commit refs/heads/master
 mark :11
-committer esr <esr> 1324129806 +0000
-data 74
+committer esr <esr> 1324320054 +0000
+data 136
 Test to see how recursive delete that is not a branch copy is translated.
+
+The command was "svn remove foo" run in the trunk directory.
 from :10
 D foo/child1
 D foo/bar/child3
@@ -78,7 +80,7 @@ Thrice-modified README.
 
 commit refs/heads/master
 mark :13
-committer esr <esr> 1324129973 +0000
+committer esr <esr> 1324320090 +0000
 data 27
 Yet another spacer commit.
 from :11
@@ -86,9 +88,13 @@ M 100644 :12 README
 
 commit refs/heads/master
 mark :14
-committer esr <esr> 1324130052 +0000
-data 45
+committer esr <esr> 1324320228 +0000
+data 174
 A Subversion file copy back from the branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-repo/trunk
 from :13
 M 100644 :3 child3
 
@@ -102,9 +108,13 @@ Directory layout.
 
 tag foocopy
 from :8
-tagger esr <esr> 1324129558 +0000
-data 110
-Test of Subversion directory copy to branch.
+tagger esr <esr> 1324319862 +0000
+data 213
+Directory copy to branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
 
 [[Tag from directory creation or copy commit at Subversion r5]]
 

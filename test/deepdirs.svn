@@ -197,13 +197,17 @@ Modified README.
 
 
 Revision-number: 5
-Prop-content-length: 143
-Content-length: 143
+Prop-content-length: 247
+Content-length: 247
 
 K 7
 svn:log
-V 45
-Test of Subversion directory copy to branch.
+V 148
+Directory copy to branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
 
 K 10
 svn:author
@@ -212,7 +216,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-17T13:45:58.373872Z
+2011-12-19T18:37:42.212506Z
 PROPS-END
 
 Node-path: branches/foocopy
@@ -238,7 +242,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-17T13:48:18.030195Z
+2011-12-19T18:38:51.408273Z
 PROPS-END
 
 Node-path: trunk/README
@@ -253,13 +257,15 @@ Twice-modified README.
 
 
 Revision-number: 7
-Prop-content-length: 172
-Content-length: 172
+Prop-content-length: 235
+Content-length: 235
 
 K 7
 svn:log
-V 74
+V 136
 Test to see how recursive delete that is not a branch copy is translated.
+
+The command was "svn remove foo" run in the trunk directory.
 
 K 10
 svn:author
@@ -268,7 +274,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-17T13:50:06.252693Z
+2011-12-19T18:40:54.288953Z
 PROPS-END
 
 Node-path: trunk/foo
@@ -291,7 +297,7 @@ esr
 K 8
 svn:date
 V 27
-2011-12-17T13:52:53.000874Z
+2011-12-19T18:41:30.914181Z
 PROPS-END
 
 Node-path: trunk/README
@@ -306,13 +312,17 @@ Thrice-modified README.
 
 
 Revision-number: 9
-Prop-content-length: 143
-Content-length: 143
+Prop-content-length: 273
+Content-length: 273
 
 K 7
 svn:log
-V 45
+V 174
 A Subversion file copy back from the branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-repo/trunk
 
 K 10
 svn:author
@@ -321,13 +331,13 @@ esr
 K 8
 svn:date
 V 27
-2011-12-17T13:54:12.157275Z
+2011-12-19T18:43:48.500976Z
 PROPS-END
 
 Node-path: trunk/child3
 Node-kind: file
 Node-action: add
-Node-copyfrom-rev: 5
+Node-copyfrom-rev: 8
 Node-copyfrom-path: branches/foocopy/bar/child3
 Text-copy-source-md5: ee85c24a6a3f5d8753a2d9c0008b3f67
 Text-copy-source-sha1: aadfc0b2e8635829c008ff276f15f90c7265c01a
