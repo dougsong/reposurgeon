@@ -2501,8 +2501,18 @@ class StreamParser:
         "Perform topological analysis, define branches, lift tags."
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
-        # Fist pass: collect file manifests for copies
-
+        # First pass: Find the locations of all directory copies
+        baton.startcounter(countfmt)
+        baton.twirl("copies:")
+        copynodes = []
+        for revision in self.revisions:
+            record = self.revisions[revision]
+            for node in record.nodes:
+                if node.kind == SD_DIR and node.from_path is not None:
+                    copynodes.append(node)
+            baton.twirl()
+            copynodes.sort(key=lambda n: n.from_rev)
+        baton.endcounter()
         # Second pass: build history links
         baton.startcounter(countfmt)
         baton.twirl("histories:")
@@ -2554,6 +2564,7 @@ class StreamParser:
                 # os.sep is appended to avoid collisions with path prefixes.
                 if node.kind == SD_DIR:
                     node.path += os.sep
+        baton.endcounter()
         # Third pass: build commits
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
