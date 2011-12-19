@@ -2335,29 +2335,38 @@ class StreamParser:
             except AssertionError:
                 raise Fatal("forbidden operation in dump stream at r%s: %s" \
                             % (revision, node))
+            if verbose >= DEBUG_EXTRACT:
+                announce("r%s: %s" % (revision, node))
             # Thread this record onto the filetree map.
-            # Refer it back to the longest prefix we can find 
-            segments = node.path.split(os.sep) + ["dummy"]
-            for i in range(1, len(segments)):
-                prefix = os.sep.join(segments[:-i])
-                if prefix in self.histories:
-                    node.history = self.histories[prefix]
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("r%s: relating %s to %s (%s)" \
-                                 % (revision, node.path,
-                                    node.history.revision, prefix))
-                    # Recover some information that may have been
-                    # elided due to a header being optional.
-                    if node.kind == SD_NONE:
-                        node.kind = node.history.kind
-                    break
+            # First, special case if the file was a copy target.
+            # Note: this can fail if the source was created
+            # by a directory copy.
+            if node.kind == SD_FILE and node.from_path:
+                for pnode in self.revisions[node.from_rev].nodes:
+                    if pnode.path == node.from_path:
+                        node.history = pnode
+                        break
+            else:
+                # Refer it back to the longest prefix we can find
+                segments = node.path.split(os.sep) + ["dummy"]
+                for i in range(1, len(segments)):
+                    prefix = os.sep.join(segments[:-i])
+                    if prefix in self.histories:
+                        node.history = self.histories[prefix]
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: relating %s to %s (%s)" \
+                                     % (revision, node.path,
+                                        node.history.revision, prefix))
+                        # Recover some information that may have been
+                        # elided due to a header being optional.
+                        if node.kind == SD_NONE:
+                            node.kind = node.history.kind
+                        break
             assert node.kind in (SD_FILE, SD_DIR)
             self.histories[node.path] = node
             # os.sep is appended to avoid collisions with path prefixes.
             if node.kind == SD_DIR:
                 node.path += os.sep
-            if verbose >= DEBUG_EXTRACT:
-                announce("r%s: %s" % (revision, node))
             # Handle per-file and per-directory properties
             perms = None
             if node.props is not None:
@@ -2544,8 +2553,6 @@ class StreamParser:
         for revision in self.revisions:
             self.svn_commit(revision)
             baton.bumpcounter()
-            # Reduce the working set
-            del self.revisions[revision]
             # Given up our scheduler slot
             time.sleep(0)
         baton.endcounter()
