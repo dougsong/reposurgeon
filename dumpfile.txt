@@ -1,6 +1,6 @@
 = How to interpret Subversion dumpfiles =
 Eric S. Raymond <esr@thyrsus.com>
-v0.3, 2011-12-14
+v0.3, 2011-12-19
 
 == Introduction ==
 
@@ -20,6 +20,9 @@ Open questions:
 1. Is replace on a nonexistent path expected to fail?
 
 2. Is add on an existing path expected to fail?
+
+3. In a copyfrom node, is it possible to have a file source and a
+   directory target?  Or vice-versa?
 
 == Syntax ==
 
