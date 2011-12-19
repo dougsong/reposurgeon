@@ -1820,6 +1820,7 @@ class StreamParser:
             self.blob = None
             self.props = None
             self.history = None
+            self.from_set = None
         def __str__(self):
             if self.from_rev:
                 copyfrom = "r%s %s" % (self.from_rev, self.from_path)
@@ -1837,6 +1838,7 @@ class StreamParser:
                             self.path,
                             copyfrom,
                             showprops)
+        __repr__ = __str__
     class RevisionRecord:
         def __init__(self, nodes, props):
             self.nodes = nodes
@@ -2503,19 +2505,29 @@ class StreamParser:
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
         # First pass: Find all directory copies
         baton.startcounter(countfmt)
-        baton.twirl("copies:")
+        baton.twirl("copynodes:")
         copynodes = []
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
-                if node.from_path is not None:
+                if node.from_path is not None and node.kind == SD_DIR:
                     copynodes.append(node)
-            baton.twirl()
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("copynode at %s" % node)
+            baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
-        # Second pass: build file manifests
+        # Second pass: build filemaps, part 1.
+        # Keeping a filemap for each revision gets prohibitively
+        # expensive.  So we keep around only those that are identified
+        # as directory copy sources.
         baton.startcounter(countfmt)
-        baton.twirl("manifests:")
+        baton.twirl("filemaps1:")
+        filemaps = {}
+        source_revisions = [node.from_rev for node in copynodes]
+        if verbose >= DEBUG_EXTRACT:
+            announce("copynodes: %s" % repr([str(node) for node in copynodes]))
+            announce("source revisions %s" % source_revisions)
         filemap = set([])
         for revision in self.revisions:
             record = self.revisions[revision]
@@ -2524,15 +2536,43 @@ class StreamParser:
                     filemap.add(node.path)
                 elif node.action == SD_DELETE:
                     filemap.discard(node.path)
-                for copynode in copynodes:
-                    if copynode.from_rev == revision:
-                        copynode.from_set = set([])
-                        for path in filemap:
-                            # TODO: We probably don't want the entire path here
-                            if path.startswith(copynode.from_path):
-                                copynode.from_set.add(path)
+                    deletia = set([])
+                    for path in copy.copy(filemap):
+                        if path.startswith(node.path + os.sep):
+                           deletia.add(path)
+                    filemap -= deletia
+            if verbose >= DEBUG_EXTRACT:
+                announce("at %s I see %s" % (revision, filemap))
+            if revision in source_revisions:
+                filemaps[revision] = copy.copy(filemap)
+            baton.bumpcounter()
         baton.endcounter()
-        # Third pass: build history links
+        if verbose >= DEBUG_EXTRACT:
+            announce("filemaps %s" % filemaps)
+        # Third pass: Build filemaps, part 2.
+        # Update each source filemap by incorporating all the
+        # copies that have it as a target.
+        baton.twirl("filemaps2")
+        for copynode in copynodes:
+            if copynode.revision in source_revisions:
+                for path in filemaps[copynode.from_rev]:
+                    if path.startswith(copynode.from_path + os.sep):
+                        suffix = path[len(copynode.from_path+os.sep):]
+                        filemaps[copynode.revision].add(os.path.join(copynode.path, suffix))
+            baton.twirl()
+        baton.twirl('+')
+        # Fourth pass: build from sets in each copy record.
+        baton.twirl("filemaps2")
+        for copynode in copynodes:
+            copynode.from_set = set([])
+            for path in filemaps[copynode.from_rev]:
+                if path.startswith(copynode.from_path + os.sep):
+                    suffix = path[len(copynode.from_path+os.sep):]
+                    copynode.from_set.add(os.path.join(copynode.path, suffix))
+            if not copynode.from_set:
+                raise Fatal("empty from set for %s" % copynode)
+        baton.twirl('+')
+        # Fifth pass: build history links
         baton.startcounter(countfmt)
         baton.twirl("histories:")
         for revision in self.revisions:
@@ -3483,12 +3523,12 @@ def read_repo(source, preferred):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
-        repo.fast_import(sys.stdin, progress=verbose>0)
+        repo.fast_import(sys.stdin, progress=verbose==1)
     elif not os.path.exists(source):
         raise Recoverable("%s does not exist" % source)
     elif not os.path.isdir(source):
         repo = Repository()
-        repo.fast_import(open(source), progress=verbose>0)
+        repo.fast_import(open(source), progress=verbose==1)
     else:
         if verbose >= DEBUG_SHUFFLE:
             if preferred:
