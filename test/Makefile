@@ -12,7 +12,7 @@ all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 buildregress: fi-regress svn-regress
 
 clean:
-	rm -fr .rs* test-repo test-checkout
+	rm -fr .rs* test-repo test-checkout *~
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
