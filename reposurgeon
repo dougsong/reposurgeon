@@ -1822,22 +1822,17 @@ class StreamParser:
             self.history = None
             self.from_set = None
         def __str__(self):
+            tell = "<NodeAction: r%s %s %s %s " \
+                   % (self.revision,
+                      StreamParser.NodeAction.ActionValues[self.action],
+                      StreamParser.NodeAction.PathTypeValues[self.kind],
+                      self.path)
             if self.from_rev:
-                copyfrom = "r%s %s" % (self.from_rev, self.from_path)
-            else:
-                copyfrom = None
+                tell += "from=%s:%s %s " % (self.from_rev, self.from_path, self.from_set)
             if self.props:
                 # Trim off the OrderedDict wrapper
-                showprops = str(self.props)[12:-1]
-            else:
-                showprops = None
-            return "<NodeAction: r%s %s %s %s, from=%s, props=%s>" \
-                         % (self.revision,
-                            StreamParser.NodeAction.ActionValues[self.action],
-                            StreamParser.NodeAction.PathTypeValues[self.kind],
-                            self.path,
-                            copyfrom,
-                            showprops)
+                tell += "%s " % str(self.props)[12:-1]
+            return tell[:-1] + ">"
         __repr__ = __str__
     class RevisionRecord:
         def __init__(self, nodes, props):
