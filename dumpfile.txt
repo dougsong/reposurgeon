@@ -264,24 +264,16 @@ Giving a text section also changes the content of the flow. In the
 the correct semantics is to attach the path to the source flow and
 then change the content.
 
-An add operation creates a new flow for a file or directory.  If a
-flow already exists at that path, the operation fails. The initial
-content for the new flow may come from a text section attached to the
-Node record, or from a copy source.  A Node record representing an add
-operation may have a property section.  Directory adds never have text
-content, but may have a copyfrom source; file adds always have one or
-the other, but not both.
+An add operation creates a new flow for a file or directory. See the
+table above for possible operand combinations.
 
 A delete operation deletes a flow and its content. If the path is a
 file, the file is deleted.  If the path is a directory, the directory
-and all its children are deleted. If a flow does not exist at that
-path, the delete operation fails.  A delete Node record may not have
-text, properties, or a copy source.  A subsequent add at the same path
+and all its children are deleted. A subsequent add at the same path
 will create a new and different flow with its own history.
 
-A change operation changes properties on a file or directory path.  If
-a flow does not exist at that path, the operation fails.  A change
-node must have properties, and may not have text or a copy source.
+A change operation changes properties on a file or directory path. See the
+table above for possible operand combinations.
 
 A replace operation behaves exactly like a delete followed by an add
 (destroying an old flow, producing a new one) when it has no copy
