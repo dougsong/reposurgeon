@@ -4,16 +4,21 @@ v0.4, 2011-12-20
 
 == Introduction ==
 
-The Subversion dumpfile format was first documented at
+The Subversion dumpfile format is a serializaed description of the
+actions required to (re)build a version history. from scratch.
+
+It was first documented at
 
 https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
 
 but there are a number of points on which that document is incomplete
 or vague.  This document incorporates those notes, expands them, and
-is intended to replace them.  The goal is that it be sufficient for
-people writing dumpfile interpreters to emulate the actions the
-dumpfile describes on a versioned filesystem-like store, such as
-another version-control system.
+is intended to replace them.  
+
+The goal of this document is that it be sufficient for people writing
+dumpfile interpreters to emulate the actions the dumpfile describes on
+a versioned filesystem-like store, such as another version-control
+system.
 
 == Syntax ==
 
