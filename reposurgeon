@@ -2340,6 +2340,8 @@ class StreamParser:
                         commit.properties[node.path + "#" + prop] = val
             # Actions on directories
             if node.kind == SD_DIR:
+                # os.sep is appended to avoid collisions with path prefixes.
+                node.path += os.sep
                 if node.path == 'trunk' + os.sep:
                     self.branches['trunk' + os.sep] = None
                 if node.action == SD_ADD:
@@ -2584,7 +2586,7 @@ class StreamParser:
                 raise Fatal("empty from set for %s" % copynode)
         del filemaps
         baton.twirl('+')
-        # Fourth pass: build history links
+        # Build history links
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 4")
         baton.startcounter(countfmt)
@@ -2629,14 +2631,13 @@ class StreamParser:
                                             node.history.revision, prefix))
                             break
                 self.histories[node.path] = node
-                # os.sep is appended to avoid collisions with path prefixes.
-                if node.kind == SD_DIR:
-                    node.path += os.sep
         baton.endcounter()
-        # Third pass: build commits
+        # Build commits
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
+        if verbose >= DEBUG_EXTRACT+1:
+            announce("Pass 5")
         baton.startcounter(countfmt)
         baton.twirl("commits:")
         for revision in self.revisions:
