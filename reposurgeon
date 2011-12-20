@@ -345,7 +345,7 @@ class GitExtractor:
         assert repo is not None  # Pacify pylint
     def post_extract(self, repo):
         for event in repo.commits():
-            event.properties = OrderedMap()
+            event.properties = collections.OrderedDict()
         os.system("git checkout --quiet master")
     def isclean(self):
         "Return True if repo has no unsaved changes."
@@ -869,15 +869,6 @@ class Baton:
                               % (time.time() - self.time, self.endmsg))
         return False
 
-class OrderedMap(collections.OrderedDict):
-    "Override the base class's odd and slightly broken __str__ method."
-    def __repr__(self):
-        if not self:
-            return '{}'
-        else:
-            return "{" + collections.OrderedDict.__repr__(self)[12:-2] + "}"
-    __str__ = __repr__
-
 class RepoSurgeonEmail(email.message.Message):
     "Specialized email message with a distinguishing starter."
     def __init__(self, **kwargs):
@@ -1241,7 +1232,7 @@ class Commit:
         self.parent_marks = []       # List of parent nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
-        self.properties = OrderedMap()         # commit properties (extension)
+        self.properties = collections.OrderedDict()         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
         self.color = None
         self.common = None           # Used only by the Subversion parser
@@ -1358,7 +1349,7 @@ class Commit:
                                   % (int(msg["Event-Number"]), hdr))
                         self.authors[i].date = date
                         modified = True
-        newprops = OrderedMap()
+        newprops = collections.OrderedDict()
         for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
@@ -1874,7 +1865,7 @@ class StreamParser:
         self.branches = {}
         self.branchlink = {}
         self.uuid = None
-        self.revisions = OrderedMap()
+        self.revisions = collections.OrderedDict()
         self.filemap = None
         self.histories = {}
     def error(self, msg, atline=True):
@@ -1966,7 +1957,7 @@ class StreamParser:
         return content
     def sd_read_props(self, target, checklength):
         # Parse a Subversion properties section, return as an OrderedDict.
-        props = OrderedMap()
+        props = collections.OrderedDict()
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
@@ -2544,7 +2535,7 @@ class StreamParser:
                     node.from_set = set([])
                     for path in copy.copy(filemap):
                         if path.startswith(node.path + os.sep):
-                           filemap.discard(path)
+                            filemap.discard(path)
                     filemap -= node.from_set
             if revision in source_revisions:
                 filemaps[revision] = copy.copy(filemap)
