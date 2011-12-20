@@ -1822,7 +1822,7 @@ class StreamParser:
             self.history = None
             self.from_set = None
         def __str__(self):
-            tell = "<NodeAction: r%s %s %s %s " \
+            tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
                       StreamParser.NodeAction.ActionValues[self.action],
                       StreamParser.NodeAction.PathTypeValues[self.kind],
@@ -1831,7 +1831,7 @@ class StreamParser:
                 tell += "from=%s:%s %s " % (self.from_rev, self.from_path, self.from_set)
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
-                tell += "%s " % str(self.props)[12:-1]
+                tell += "%s " % self.props
             return tell[:-1] + ">"
         __repr__ = __str__
     class RevisionRecord:
@@ -2499,6 +2499,8 @@ class StreamParser:
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
         # First pass: Find all directory copies
+        if verbose >= DEBUG_EXTRACT:
+            announce("Pass 1")
         baton.startcounter(countfmt)
         baton.twirl("copynodes:")
         copynodes = []
@@ -2516,13 +2518,12 @@ class StreamParser:
         # Keeping a filemap for each revision gets prohibitively
         # expensive.  So we keep around only those that are identified
         # as directory copy sources.
+        if verbose >= DEBUG_EXTRACT:
+            announce("Pass 2")
         baton.startcounter(countfmt)
         baton.twirl("filemaps1:")
         filemaps = {}
         source_revisions = [node.from_rev for node in copynodes]
-        if verbose >= DEBUG_EXTRACT:
-            announce("copynodes: %s" % repr([str(node) for node in copynodes]))
-            announce("source revisions %s" % source_revisions)
         filemap = set([])
         for revision in self.revisions:
             record = self.revisions[revision]
@@ -2545,6 +2546,8 @@ class StreamParser:
         # Third pass: Build filemaps, part 2.
         # Update each source filemap by incorporating all the
         # copies that have it as a target.
+        if verbose >= DEBUG_EXTRACT:
+            announce("Pass 3")
         baton.twirl("filemaps2")
         for copynode in copynodes:
             if copynode.revision in source_revisions:
@@ -2555,6 +2558,8 @@ class StreamParser:
             baton.twirl()
         baton.twirl('+')
         # Fourth pass: build from sets in each directory copy record.
+        if verbose >= DEBUG_EXTRACT:
+            announce("Pass 4")
         baton.twirl("filemaps2")
         for copynode in copynodes:
             copynode.from_set = set([])
@@ -2566,6 +2571,8 @@ class StreamParser:
                 raise Fatal("empty from set for %s" % copynode)
         baton.twirl('+')
         # Fifth pass: build history links
+        if verbose >= DEBUG_EXTRACT:
+            announce("Pass 5")
         baton.startcounter(countfmt)
         baton.twirl("histories:")
         for revision in self.revisions:
