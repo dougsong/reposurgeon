@@ -4,23 +4,16 @@ v0.4, 2011-12-20
 
 == Introduction ==
 
-The Subversion dumpfile format is a serializaed description of the
+The Subversion dumpfile format is a serialized description of the
 actions required to (re)build a version history. from scratch.
-
-It was first documented at
-
-https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
-
-but there are a number of points on which that document is incomplete
-or vague.  This document incorporates those notes, expands them, and
-is intended to replace them.  
 
 The goal of this document is that it be sufficient for people writing
 dumpfile interpreters to emulate the actions the dumpfile describes on
 a versioned filesystem-like store, such as another version-control
-system.
+system.  It derives from and incorporates some incomplete notes from 
+before r39883.
 
-Open questions:
+This documentation is still a work in progress. Open questions:
 
 1. Is it true that a replace operation on a directory *must*
 have a copyfrom source?
@@ -34,6 +27,10 @@ someone fill me in on the history?
 
 Please note that since 0.3 I have added a short section on
 implementation pragmatics.
+
+Also note that the section on the semantics of kinds of operations 
+documents a minor bug at r39883 in the behavior of "add", which 
+should be fixed.
 
 == Syntax ==
 
