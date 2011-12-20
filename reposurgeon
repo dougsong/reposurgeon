@@ -2480,6 +2480,7 @@ class StreamParser:
         # It's important that this happens after blob creation
         commit.mark = self.__newmark(revision)
         self.parent = revision
+        commit.fileops.sort(cmp=FileOp.compare)
         self.repo.events.append(commit)
         # Deduce links between what will later become branches on the
         # basis of copies. This is tricky because a revision can be
