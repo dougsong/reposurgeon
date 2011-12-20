@@ -1828,7 +1828,9 @@ class StreamParser:
                       StreamParser.NodeAction.PathTypeValues[self.kind],
                       self.path)
             if self.from_rev:
-                tell += "from=%s~%s %s " % (self.from_rev, self.from_path, self.from_set)
+                tell += "from=%s~%s " % (self.from_rev, self.from_path)
+            if self.from_set:
+                tell += "sources=%s " % self.from_set
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 tell += "%s " % self.props
@@ -2549,9 +2551,8 @@ class StreamParser:
                         filemap.discard(node.path)
                         node.from_set.add(node.path)
                     else:
-                        for path in copy.copy(filemap):
+                        for path in filemap:
                             if path.startswith(node.path + os.sep):
-                                filemap.discard(path)
                                 node.from_set.add(path)
                         if not node.from_set:
                             raise Fatal("empty from set for %s" % node)
