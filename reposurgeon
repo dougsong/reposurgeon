@@ -1829,7 +1829,7 @@ class StreamParser:
                       self.path)
             if self.from_rev:
                 tell += "from=%s:%s %s " % (self.from_rev, self.from_path, self.from_set)
-            if self.props:
+            if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 tell += "%s " % str(self.props)[12:-1]
             return tell[:-1] + ">"
