@@ -2550,6 +2550,8 @@ class StreamParser:
                     if node.path in filemap:
                         filemap.discard(node.path)
                         node.from_set.add(node.path)
+                        if node.kind == SD_NONE:
+                            node.kind = SD_FILE
                     else:
                         for path in filemap:
                             if path.startswith(node.path + os.sep):
@@ -2557,6 +2559,8 @@ class StreamParser:
                         if not node.from_set:
                             raise Fatal("empty from set for %s" % node)
                         filemap -= node.from_set
+                        if node.kind == SD_NONE:
+                            node.kind = SD_DIR
             if revision in source_revisions:
                 filemaps[revision] = copy.copy(filemap)
             baton.bumpcounter()
@@ -2597,7 +2601,7 @@ class StreamParser:
                            node.from_rev or \
                            node.action in (SD_ADD, SD_DELETE)
                     assert (node.from_rev is None) == (node.from_path is None)
-                    assert node.kind in (SD_NONE, SD_FILE, SD_DIR)
+                    assert node.kind in (SD_FILE, SD_DIR)
                     assert node.kind != SD_NONE or node.action == SD_DELETE
                     assert node.action in (SD_ADD, SD_REPLACE) or not node.from_rev
                 except AssertionError:
@@ -2623,12 +2627,7 @@ class StreamParser:
                                 announce("r%s: relating %s to %s (%s)" \
                                          % (revision, node.path,
                                             node.history.revision, prefix))
-                            # Recover some information that may have been
-                            # elided due to a header being optional.
-                            if node.kind == SD_NONE:
-                                node.kind = node.history.kind
                             break
-                assert node.kind in (SD_FILE, SD_DIR)
                 self.histories[node.path] = node
                 # os.sep is appended to avoid collisions with path prefixes.
                 if node.kind == SD_DIR:
