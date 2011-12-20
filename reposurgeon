@@ -2498,7 +2498,7 @@ class StreamParser:
         "Perform topological analysis, define branches, lift tags."
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
-        # First pass: Find all directory copies
+        # Find all copy sources
         if verbose >= DEBUG_EXTRACT:
             announce("Pass 1")
         baton.startcounter(countfmt)
@@ -2507,27 +2507,35 @@ class StreamParser:
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
-                if node.from_path is not None and node.kind == SD_DIR:
+                if node.from_path is not None:
                     copynodes.append(node)
                     if verbose >= DEBUG_EXTRACT:
                         announce("copynode at %s" % node)
             baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
-        # Second pass: build filemaps, part 1.
+        # Build filemaps.
         # Keeping a filemap for each revision gets prohibitively
         # expensive.  So we keep around only those that are identified
         # as directory copy sources.
         if verbose >= DEBUG_EXTRACT:
             announce("Pass 2")
         baton.startcounter(countfmt)
-        baton.twirl("filemaps1:")
+        baton.twirl("filemaps:")
         filemaps = {}
         source_revisions = [node.from_rev for node in copynodes]
         filemap = set([])
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
+                # Mutate the filemap according to copies
+                if node.from_rev:
+                    assert int(node.from_rev) < int(revision)
+                    for path in filemaps[node.from_rev]:
+                        if path.startswith(node.from_path + os.sep):
+                            suffix = path[len(node.from_path+os.sep):]
+                            filemap.add(os.path.join(node.path, suffix))
+                # Mutate the filemap according to adds and deletes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap.add(node.path)
                 elif node.action == SD_DELETE:
@@ -2543,36 +2551,25 @@ class StreamParser:
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("filemaps %s" % filemaps)
-        # Third pass: Build filemaps, part 2.
-        # Update each source filemap by incorporating all the
-        # copies that have it as a target.
+        # Build from sets in each directory copy record.
         if verbose >= DEBUG_EXTRACT:
             announce("Pass 3")
-        baton.twirl("filemaps2")
-        for copynode in copynodes:
-            if copynode.revision in source_revisions:
-                for path in filemaps[copynode.from_rev]:
-                    if path.startswith(copynode.from_path + os.sep):
-                        suffix = path[len(copynode.from_path+os.sep):]
-                        filemaps[copynode.revision].add(os.path.join(copynode.path, suffix))
-            baton.twirl()
-        baton.twirl('+')
-        # Fourth pass: build from sets in each directory copy record.
-        if verbose >= DEBUG_EXTRACT:
-            announce("Pass 4")
-        baton.twirl("filemaps2")
+        baton.twirl("copysets")
         for copynode in copynodes:
             copynode.from_set = set([])
             for path in filemaps[copynode.from_rev]:
-                if path.startswith(copynode.from_path + os.sep):
-                    suffix = path[len(copynode.from_path+os.sep):]
-                    copynode.from_set.add(os.path.join(copynode.path, suffix))
+                if copynode.kind == SD_DIR:
+                    if path.startswith(copynode.from_path + os.sep):
+                        suffix = path[len(copynode.from_path+os.sep):]
+                        copynode.from_set.add(os.path.join(copynode.path, suffix))
+                elif node.kind == SD_FILE:
+                    copynode.from_set.add(copynode.path)
             if not copynode.from_set:
                 raise Fatal("empty from set for %s" % copynode)
         baton.twirl('+')
-        # Fifth pass: build history links
+        # Fourth pass: build history links
         if verbose >= DEBUG_EXTRACT:
-            announce("Pass 5")
+            announce("Pass 4")
         baton.startcounter(countfmt)
         baton.twirl("histories:")
         for revision in self.revisions:
