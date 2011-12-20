@@ -2496,6 +2496,11 @@ class StreamParser:
                 self.branchlink[revision] = copies[-1].from_rev
     def svn_postprocess(self, baton):
         "Perform topological analysis, define branches, lift tags."
+        # Much of the hair that follows is motivated by a desire to
+        # keep the working set small.  I originally tied a naive
+        # approach that kept the code really simple, but it meant
+        # I had to keep filemaps for every revision - that blew up
+        # to huge sizes and crappy performance on large repos.
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
         # Find all copy sources
