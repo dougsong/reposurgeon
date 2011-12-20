@@ -20,6 +20,11 @@ dumpfile interpreters to emulate the actions the dumpfile describes on
 a versioned filesystem-like store, such as another version-control
 system.
 
+Open questions:
+
+1. Is it true that a replace operation on a directory *must*
+hve a copyfrom source?
+
 == Syntax ==
 
 === Encoding and delimiters ===
@@ -242,7 +247,7 @@ twice _in two different revisions_ succeeds silently.
 |                           |   add    | delete | replace  |  change  |
 |Can have text section?     |    no    |   no   |   no     |    no    |
 |Can have property section? | optional |   no   | optional | required |
-|Can have copy source?      | optional |   no   | optional |    no    |
+|Can have copy source?      | optional |   no   | required |    no    |
 |Fails on existent path     |   yes    |   no   |    no    |    no    |   
 |Fails on non-existent path |    no    |  yes   |   yes    |   yes    |   
 |======================================================================
@@ -349,6 +354,18 @@ to delete all properties from a path, the dumpfile generator will
 simply issue a node with an empty properties section. Note that this
 is different from an *absent* properties section, which will change
 no properties and will be associated with a change to content!
+
+=== Implementation pragmatics ===
+
+Because directory operations with copyfroms don't specify all the file
+paths they modify, an interpreter for this format must build a map of
+the paths in the file store it is manipulating, and update that map as
+it processes each Node record.
+
+On a repository with thousands of commits, the per-revision list of
+maps can become quite large. For space economy, the file map for each 
+revision can be discarded after it is processed *unless it is a source
+revision for a copyfrom*. 
 
 == An example ==
 
@@ -517,7 +534,6 @@ A proposal for an svn filesystem dump/restore format.
      independently of any internal node-id schema, or any DB storage
      backend.  In other words, we're talking about the basic ideas in
      our original "design spec" from May 2000.
-
 
 === Format Semantics ===
 
