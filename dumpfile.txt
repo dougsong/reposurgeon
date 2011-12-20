@@ -1,6 +1,6 @@
 = How to interpret Subversion dumpfiles =
 Eric S. Raymond <esr@thyrsus.com>
-v0.3, 2011-12-19
+v0.4, 2011-12-20
 
 == Introduction ==
 
@@ -14,15 +14,6 @@ is intended to replace them.  The goal is that it be sufficient for
 people writing dumpfile interpreters to emulate the actions the
 dumpfile describes on a versioned filesystem-like store, such as
 another version-control system.
-
-Open questions:
-
-1. Is replace on a nonexistent path expected to fail?
-
-2. Is add on an existing path expected to fail?
-
-3. In a copyfrom node, is it possible to have a file source and a
-   directory target?  Or vice-versa?
 
 == Syntax ==
 
@@ -214,6 +205,10 @@ A Node record describes a change in properties, the addition or deletion
 of a flow, or a change in content.  It nust do at least one of these things,
 otherwise it would be a no-op and omitted.
 
+When no copyfrom is present, and the action isn't an add or copy, then
+the kind of the thing identified by (PATH, REVISION) must agree with
+the kind of the thing identified by (PATH, -1+REVISION).
+
 Terminological node: in Subversion-speak, the term "node" is
 historically ambiguous.  Sometimes it refers to what this document
 calls a "flow", and sometimes it refers to the internal per-revision
@@ -230,7 +225,12 @@ about this issue will help if you read the Ancient History section.
 |Can have text section?     | optional |   no   | optional | optional |
 |Can have property section? | optional |   no   | optional | optional |
 |Can have copy source?      | optional |   no   | optional |    no    |
+|Fails on existent path     |   yes*   |   no   |    no    |    no    |   
+|Fails on non-existent path |    no    |  yes   |   yes    |   yes    |   
 |======================================================================
+
+* As of December 2011 there is a minor bug: Adding a file with history
+twice _in two different revisions_ succeeds silently.
 
 .Directory operations
 |======================================================================
@@ -238,6 +238,8 @@ about this issue will help if you read the Ancient History section.
 |Can have text section?     |    no    |   no   |   no     |    no    |
 |Can have property section? | optional |   no   | optional | required |
 |Can have copy source?      | optional |   no   | optional |    no    |
+|Fails on existent path     |   yes    |   no   |    no    |    no    |   
+|Fails on non-existent path |    no    |  yes   |   yes    |   yes    |   
 |======================================================================
 
 A Node record represents an operation that does one of four things: add,
@@ -296,7 +298,14 @@ $ echo "Replacement text" > dir/file.txt
 $ svn ci -m "Replace dir/file.txt with a copy of otherdir/otherfile.txt and replace its text, too."
 -------------------------------------------------------------------
 
+$Subversion filesystems do not allow the root directory ("/") to be
+deleted or replaced.
+
 === Some details about copyfroms ===
+
+The source and target of a copyfrom are always of like kind; that is,
+Subversion dump will never generate a node with a source type of file
+and a target type of directory or vice-versa.
 
 Interpreting copyfrom_path for file copies is straightforward; the
 target pathname gets the contents of the source pathname.
