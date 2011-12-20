@@ -473,7 +473,7 @@ class SvnExtractor():
         baton.twirl("log")
         self.commits = {}
         for (lo, hi) in intervals:
-            with popen_or_die("svn log --xml -v -r%s:%s" % (lo, hi)) as fp:
+            with popen_or_die("svn log --xml -v -r%s %s" % (lo, hi)) as fp:
                 try:
                     log = ET.parse(fp).getroot()
                 except:
@@ -1828,7 +1828,7 @@ class StreamParser:
                       StreamParser.NodeAction.PathTypeValues[self.kind],
                       self.path)
             if self.from_rev:
-                tell += "from=%s:%s %s " % (self.from_rev, self.from_path, self.from_set)
+                tell += "from=%s~%s %s " % (self.from_rev, self.from_path, self.from_set)
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 tell += "%s " % self.props
@@ -2319,7 +2319,7 @@ class StreamParser:
             return
         for node in record.nodes:
             if verbose >= DEBUG_EXTRACT:
-                announce("r%s: %s" % (revision, node))
+                announce(str(node))
             # Handle per-file and per-directory properties
             perms = None
             if node.props is not None:
@@ -2433,14 +2433,14 @@ class StreamParser:
                     fileop.construct("D", node.path)
                     commit.fileops.append(fileop)
                     if not self.filemap.member_of(revision, node.path):
-                        raise Fatal("r%s: delete of nonexistent %s %s." \
-                                    % (revision, node.kind, node.path))
+                        raise Fatal("r%s~%s: delete of nonexistent path." \
+                                    % (revision, node.path))
                     else:
                         self.filemap.remove(revision, node.path)
                 elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
                     if node.action == SD_ADD:
                         if self.filemap.member_of(revision, node.path):
-                            raise Fatal("r%s: add of existing path %s" \
+                            raise Fatal("r%s~%s: add of existing path." \
                                         % (revision, node.path))
                         orig = Trace()
                     else:
@@ -2462,7 +2462,7 @@ class StreamParser:
                         trace.set_mark(node.blob.mark)
                     if trace != orig:
                         if verbose >= DEBUG_EXTRACT:
-                            announce("r%s %s: modified %s -> %s" % (revision, node.path, orig, trace))
+                            announce("r%s~%s: modified %s -> %s" % (revision, node.path, orig, trace))
                         fileop = FileOp(commit)
                         fileop.construct("M",
                                          trace.perms,
@@ -2572,6 +2572,7 @@ class StreamParser:
                     copynode.from_set.add(copynode.path)
             if not copynode.from_set:
                 raise Fatal("empty from set for %s" % copynode)
+        del filemaps
         baton.twirl('+')
         # Fourth pass: build history links
         if verbose >= DEBUG_EXTRACT:
