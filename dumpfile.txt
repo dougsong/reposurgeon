@@ -23,7 +23,17 @@ system.
 Open questions:
 
 1. Is it true that a replace operation on a directory *must*
-hve a copyfrom source?
+have a copyfrom source?
+
+2. In the Credits section I note that portions of this document are
+derived from notes by Ben Sussman, and mention the people who have
+helpfully answered questions.  I would also like to credit the
+original designers of the format (at least one of whom must have been
+Greg Stein) and attach a date to the original design discussion. Can
+someone fill me in on the history?
+
+Please note that since 0.3 I have added a short section on
+implementation pragmatics.
 
 == Syntax ==
 
@@ -496,14 +506,14 @@ version 1, but miss the Props-content-length and Text-content-length
 fields in the block header. In those days there *always* was a
 properties block.
 
-This note is included for historical completness only, at is it highly
+This note is included for historical completeness only, at is it highly
 unlikely that any Subversion instances that old remain in production.
 
 == Credits ==
 
 This derives in part from an earlier document by Ben Sussman.
-
-[Designers of the format should be credited here.]
+C. Michael Pilato, Daniel Shahaf, and Steve Butler answered
+questions about format interpretation.
 
 == Ancient history ==
 
