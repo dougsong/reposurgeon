@@ -2539,12 +2539,18 @@ class StreamParser:
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap.add(node.path)
                 elif node.action == SD_DELETE:
-                    filemap.discard(node.path)
                     node.from_set = set([])
-                    for path in copy.copy(filemap):
-                        if path.startswith(node.path + os.sep):
-                            filemap.discard(path)
-                    filemap -= node.from_set
+                    if node.path in filemap:
+                        filemap.discard(node.path)
+                        node.from_set.add(node.path)
+                    else:
+                        for path in copy.copy(filemap):
+                            if path.startswith(node.path + os.sep):
+                                filemap.discard(path)
+                                node.from_set.add(path)
+                        if not node.from_set:
+                            raise Fatal("empty from set for %s" % node)
+                        filemap -= node.from_set
             if revision in source_revisions:
                 filemaps[revision] = copy.copy(filemap)
             baton.bumpcounter()
