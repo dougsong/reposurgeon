@@ -2544,7 +2544,7 @@ class StreamParser:
                     node.from_set = set([])
                     for path in copy.copy(filemap):
                         if path.startswith(node.path + os.sep):
-                           filemap.add(path)
+                           filemap.discard(path)
                     filemap -= node.from_set
             if revision in source_revisions:
                 filemaps[revision] = copy.copy(filemap)
