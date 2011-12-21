@@ -2288,35 +2288,8 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def svn_commit(self, revision, record):
+    def svn_commit(self, revision, record, commit):
         "Translate Subversion actions into import-stream file operations."
-        commit = Commit(self.repo)
-        # Build a linear history for the whole repo.  We'll branchify
-        # it later.
-        if self.parent:
-            commit.parent_marks = [self.markmap[self.parent]]
-            self.filemap.derive(revision, [self.parent])
-        commit.set_fossil(revision)
-        try:
-            ad = record.props.pop("svn:date")
-        except KeyError, key:
-            self.error("missing required %s" % key)
-        if "svn:author" in record.props:
-            au = record.props.pop("svn:author")
-        else:
-            au = "no-author"
-        if "svn:log" in record.props:
-            commit.comment = record.props.pop("svn:log")
-        if global_options["use_uuid"]:
-            attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
-        else:
-            attribution = "%s <%s> %s" % (au, au, ad)
-        commit.committer = Attribution(attribution)
-        commit.properties.update(record.props)
-        # Zero revision is never interesting - no operations, no comment, no
-        # author, it's just a start marker for a non-incremental dump.
-        if revision == "0": 
-            return
         for node in record.nodes:
             if verbose >= DEBUG_EXTRACT:
                 announce(str(node))
@@ -2612,7 +2585,34 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
-            self.svn_commit(revision, record)
+            commit = Commit(self.repo)
+            # Build a linear history for the whole repo.  We'll branchify
+            # it later.
+            if self.parent:
+                commit.parent_marks = [self.markmap[self.parent]]
+                self.filemap.derive(revision, [self.parent])
+            commit.set_fossil(revision)
+            try:
+                ad = record.props.pop("svn:date")
+            except KeyError, key:
+                self.error("missing required %s" % key)
+            if "svn:author" in record.props:
+                au = record.props.pop("svn:author")
+            else:
+                au = "no-author"
+            if "svn:log" in record.props:
+                commit.comment = record.props.pop("svn:log")
+            if global_options["use_uuid"]:
+                attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
+            else:
+                attribution = "%s <%s> %s" % (au, au, ad)
+            commit.committer = Attribution(attribution)
+            commit.properties.update(record.props)
+            # Zero revision is never interesting - no operations, no comment, no
+            # author, it's just a start marker for a non-incremental dump.
+            if revision == "0": 
+                continue
+            self.svn_commit(revision, record, commit)
             baton.bumpcounter()
             # Given up our scheduler slot
             time.sleep(0)
