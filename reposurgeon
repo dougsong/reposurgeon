@@ -2586,11 +2586,15 @@ class StreamParser:
                 raise Fatal("empty from set for %s" % copynode)
         del filemaps
         baton.twirl('+')
-        # Build history links
+        baton.endcounter()
+        # Build commits
+        # This code can eat your processor, so we make it give up
+        # its timeslice at reasonable intervals. Needed because
+        # it doesn't hit the disk.
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 4")
         baton.startcounter(countfmt)
-        baton.twirl("histories:")
+        baton.twirl("commits:")
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
@@ -2609,16 +2613,6 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
-        baton.endcounter()
-        # Build commits
-        # This code can eat your processor, so we make it give up
-        # its timeslice at reasonable intervals. Needed because
-        # it doesn't hit the disk.
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("Pass 5")
-        baton.startcounter(countfmt)
-        baton.twirl("commits:")
-        for revision in self.revisions:
             self.svn_commit(revision)
             baton.bumpcounter()
             # Given up our scheduler slot
@@ -4956,9 +4950,9 @@ that directory.
 If the argument is the name of a plain file, it will be read in as a
 fast-import stream.
 
-With an argument of <quote>-</quote>, this command reads a fast-import
-stream from standard input (this will be useful in filters constructed
-with command-line arguments).
+With an argument of '-', this command reads a fast-import stream from
+standard input (this will be useful in filters constructed with
+command-line arguments).
 """)
     def do_read(self, line):
         "Read in a repository for surgery."
