@@ -2555,16 +2555,19 @@ class StreamParser:
                         commit.fileops.append(fileop)
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
                         if node.action == SD_ADD and not node.from_path:
-                            node.perms = setperms or 0o100644
+                            node.perms = 0o100644
                         else:
                             node.history = self.linkback(node)
                             assert node.history
                             node.mark = node.history.mark
-                            node.perms = setperms or node.history.perms
+                            node.perms = node.history.perms
+                        changedperms = (setperms != node.perms)
+                        if setperms:
+                            node.perms = setperms
                         if node.blob is not None:
                             node.mark = node.blob.mark = self.__newmark()
                             self.repo.events.append(node.blob)
-                        if node.blob is not None or setperms or node.from_path:
+                        if node.blob is not None or changedperms or node.from_path:
                             fileop = FileOp(commit)
                             fileop.construct("M",
                                              node.perms,
