@@ -2288,6 +2288,29 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
+    def linkback(self, revision, path):
+        "Find latest modification of the specified path previous to revision."
+        if verbose >= DEBUG_EXTRACT:
+            announce("linkback(%s, %s)" % (path, revision))
+        # Walk back through previous revisions
+        rev = int(revision)
+        for prev in [str(rev-i) for i in range(1, rev)]:
+            for pnode in self.revisions[prev].nodes:
+                if pnode.action == SD_DELETE:
+                    continue
+                elif pnode.path == path:
+                    assert pnode.kind == SD_FILE
+                    if pnode.from_rev:
+                        return self.linkback(pnode.from_rev, pnode.from_path)
+                    else:
+                        return pnode
+                elif pnode.from_rev and path.startswith(pnode.path):
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("recursed in %s" % pnode) 
+                    return self.linkback(pnode.from_rev,
+                                         os.path.join(pnode.from_path,
+                                                      path[len(pnode.path):]))
+        return None
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         # Much of the hair that follows is motivated by a desire to
@@ -2556,6 +2579,17 @@ class StreamParser:
                             orig = Trace()
                         else:
                             orig = self.filemap.retrieve(revision, node.path)
+                        if node.from_path or node.action != SD_ADD:
+                            if node.from_rev:
+                                srevision = node.from_rev
+                            else:
+                                srevision = revision
+                            if node.from_path:
+                                spath = node.from_path
+                            else:
+                                spath = node.path
+                            node.history = self.linkback(srevision, spath)
+                            assert node.history
                         trace = orig.clone()
                         if perms:
                             trace.set_perms(perms)
