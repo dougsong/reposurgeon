@@ -2596,6 +2596,8 @@ class StreamParser:
                                                              SD_REPLACE):
                             node.history = self.linkback(node)
                             assert node.history
+                            node.mark = node.history.mark
+                            assert node.history.mark
                             
                         trace = orig.clone()
                         if perms:
@@ -2609,7 +2611,7 @@ class StreamParser:
                                                                  node.from_path)
                                 trace.set_mark(oldtrace.mark)
                         if node.blob is not None:
-                            node.blob.mark = self.__newmark() 
+                            node.mark = node.blob.mark = self.__newmark() 
                             self.repo.events.append(node.blob)
                             trace.set_mark(node.blob.mark)
                         if trace != orig:
