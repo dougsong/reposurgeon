@@ -2564,7 +2564,7 @@ class StreamParser:
                         if node.blob is not None:
                             node.mark = node.blob.mark = self.__newmark()
                             self.repo.events.append(node.blob)
-                        if node.blob is not None or setperms:
+                        if node.blob is not None or setperms or node.from_path:
                             fileop = FileOp(commit)
                             fileop.construct("M",
                                              node.perms,
