@@ -2288,9 +2288,8 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def svn_commit(self, revision):
+    def svn_commit(self, revision, record):
         "Translate Subversion actions into import-stream file operations."
-        record = self.revisions[revision]
         commit = Commit(self.repo)
         # Build a linear history for the whole repo.  We'll branchify
         # it later.
@@ -2613,7 +2612,7 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
-            self.svn_commit(revision)
+            self.svn_commit(revision, record)
             baton.bumpcounter()
             # Given up our scheduler slot
             time.sleep(0)
