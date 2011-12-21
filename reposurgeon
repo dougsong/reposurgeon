@@ -2487,7 +2487,7 @@ class StreamParser:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: setting properties %s on %s" \
                                          % (revision, node.props, node.path))
-                            # svn.ignore gets handled here,
+                            # svn:ignore gets handled here,
                             if node.path == os.sep:
                                 gitignore_path = ".gitignore"
                             else:
@@ -2497,27 +2497,23 @@ class StreamParser:
                             # turn into fileops.
                             if "svn:ignore" in node.props:
                                 blob = Blob(self.repo)
-                                blob.mark = self.__newmark() 
                                 with open(blob.blobfile(), "w") as wfp:
                                     wfp.write(node.props["svn:ignore"])
-                                self.repo.events.append(blob)
-                                newtrace = Trace()
-                                newtrace.set_mark(blob.mark)
-                                self.filemap.register(revision,
-                                                      gitignore_path,
-                                                      newtrace)
-                                fileop = FileOp(commit)
-                                fileop.construct("M",
-                                                 newtrace.perms,
-                                                 newtrace.mark,
-                                                 gitignore_path)
-                                commit.fileops.append(fileop)
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = gitignore_path
+                                newnode.revision = revision
+                                newnode.action = SD_ADD
+                                newnode.kind = SD_FILE
+                                newnode.blob = blob
+                                record.nodes.append(newnode)
                             elif self.filemap.member_of(revision,
                                                         gitignore_path):
-                                self.filemap.remove(revision, gitignore_path)
-                                fileop = FileOp(commit)
-                                fileop.construct("D", gitignore_path)
-                                commit.fileops.append(fileop)
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = gitignore_path
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                record.nodes.append(newnode)
                     # Handle directory copies used for branching and tags
                     if node.from_path:
                         if self.branches:
