@@ -1785,25 +1785,6 @@ SD_DELETE = 1
 SD_CHANGE = 2
 SD_REPLACE = 3
 
-class Trace:
-    "All the metadata we need to retain across revisions about a file."
-    def __init__(self):
-        self.mark = None
-        self.perms = 0o100644
-    def set_perms(self, newperms):
-        self.perms = newperms
-    def set_mark(self, newmark):
-        self.mark = newmark
-    def clone(self):
-        return copy.copy(self)
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-    def __ne__(self, other):
-        return self.__dict__ != other.__dict__
-    def __str__(self):
-        return "<Trace(%s, %06o)>" % (self.mark, self.perms)
-    __repr__ = __str__
-
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     # If these don't match the constants above, havoc will ensue
@@ -1872,7 +1853,6 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
-        self.filemap = None
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2006,7 +1986,6 @@ class StreamParser:
                     if StreamParser.sd_body(line) not in ("1", "2"):
                         raise Fatal("unsupported dump format version %s" \
                                     % version)
-                    self.filemap = FileMap(self.repo.subdir())
                     # Beginning of Subversion dump parsing
                     while True:
                         line = self.readline()
@@ -2404,8 +2383,7 @@ class StreamParser:
             for path in filemaps[copynode.from_rev]:
                 if copynode.kind == SD_DIR:
                     if path.startswith(copynode.from_path + os.sep):
-                        suffix = path[len(copynode.from_path+os.sep):]
-                        copynode.from_set.add(os.path.join(copynode.path, suffix))
+                        copynode.from_set.add(path)
                 elif node.kind == SD_FILE:
                     copynode.from_set.add(copynode.path)
             if not copynode.from_set:
@@ -2444,7 +2422,6 @@ class StreamParser:
             # it later.
             if self.parent:
                 commit.parent_marks = [self.markmap[self.parent]]
-                self.filemap.derive(revision, [self.parent])
             commit.set_fossil(revision)
             try:
                 ad = record.props.pop("svn:date")
@@ -2470,19 +2447,19 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-file and per-directory properties
-                perms = None
+                setperms = None
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
                     for pathprop in node.props:
                         if pathprop.startswith(node.path + "#"):
                             del node.props[pathprop]
-                    perms = 0o100644
+                    setperms = 0o100644
                     for (prop, val) in node.props.items():
                         if prop == "svn:executable":
-                            perms = 0o100755
+                            setperms = 0o100755
                         elif prop == "svn:special":
                             # Map to git symlink and hope it flies
-                            perms = 0o120000
+                            setperms = 0o120000
                         elif prop not in StreamParser.IgnoreProperties:
                             commit.properties[node.path + "#" + prop] = val
                 # Actions on directories
@@ -2510,10 +2487,9 @@ class StreamParser:
                             fileop.construct("deleteall", node.path[:-1])
                             commit.fileops.append(fileop)
                             continue
-                        for child in self.filemap.children(revision, node.path):
+                        for child in node.from_set:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: deleting %s" % (revision, child))
-                            self.filemap.remove(revision, child)
                             fileop = FileOp(commit)
                             fileop.construct("D", child)
                             commit.fileops.append(fileop)
@@ -2542,8 +2518,7 @@ class StreamParser:
                                 newnode.kind = SD_FILE
                                 newnode.blob = blob
                                 record.nodes.append(newnode)
-                            elif self.filemap.member_of(revision,
-                                                        gitignore_path):
+                            elif self.inner_linkback(revision, gitignore_path):
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = gitignore_path
                                 newnode.revision = revision
@@ -2561,17 +2536,16 @@ class StreamParser:
                             elif node.path.count(os.sep) == 1:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
-                        for source in self.filemap.children(node.from_rev, node.from_path + os.sep):
-                            subtrace = self.filemap.retrieve(node.from_rev, source)
-                            assert subtrace.mark
+                        for source in node.from_set:
+                            subnode = self.inner_linkback(node.from_rev, source)
+                            assert subnode and subnode.mark and subnode.perms
                             fileop = FileOp(commit)
                             dest = os.path.join(node.path,
                                                 source[len(node.from_path+os.sep):])
                             fileop.construct("M",
-                                                 subtrace.perms,
-                                                 subtrace.mark,
+                                                 subnode.perms,
+                                                 subnode.mark,
                                                  dest)
-                            self.filemap.register(revision, dest, subtrace)
                 # Actions on files
                 elif node.kind == SD_FILE:
                     if node.action == SD_DELETE:
@@ -2579,54 +2553,24 @@ class StreamParser:
                         fileop = FileOp(commit)
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
-                        if not self.filemap.member_of(revision, node.path):
-                            raise Fatal("r%s~%s: delete of nonexistent path." \
-                                        % (revision, node.path))
-                        else:
-                            self.filemap.remove(revision, node.path)
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
-                        if node.action == SD_ADD:
-                            if self.filemap.member_of(revision, node.path):
-                                raise Fatal("r%s~%s: add of existing path." \
-                                            % (revision, node.path))
-                            orig = Trace()
+                        if node.action == SD_ADD and not node.from_path:
+                            node.perms = setperms or 0o100644
                         else:
-                            orig = self.filemap.retrieve(revision, node.path)
-                        if node.from_path or node.action in (SD_CHANGE,
-                                                             SD_REPLACE):
                             node.history = self.linkback(node)
                             assert node.history
                             node.mark = node.history.mark
-                            assert node.history.mark
-                            node.perms = node.history.perms
-                            assert node.history.perms
-                            
-                        trace = orig.clone()
-                        if perms:
-                            trace.set_perms(perms)
-                        if node.from_path:
-                            if not self.filemap.member_of(node.from_rev,node.from_path):
-                                raise Fatal("%s not in source commit %s" % \
-                                            (node.from_path, node.from_rev))
-                            else:
-                                oldtrace = self.filemap.retrieve(node.from_rev,
-                                                                 node.from_path)
-                                trace.set_mark(oldtrace.mark)
+                            node.perms = setperms or node.history.perms
                         if node.blob is not None:
                             node.mark = node.blob.mark = self.__newmark()
-                            node.perms = perms or 0o100644
                             self.repo.events.append(node.blob)
-                            trace.set_mark(node.blob.mark)
-                        if trace != orig:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s~%s: modified %s -> %s" % (revision, node.path, orig, trace))
+                        if node.blob is not None or setperms:
                             fileop = FileOp(commit)
                             fileop.construct("M",
-                                             trace.perms,
-                                             trace.mark,
+                                             node.perms,
+                                             node.mark,
                                              node.path)
                             commit.fileops.append(fileop)
-                        self.filemap.register(revision, node.path, trace)
                 # Node loop ends
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
