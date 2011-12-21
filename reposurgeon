@@ -1811,6 +1811,7 @@ class StreamParser:
         ActionValues = ("add", "delete", "change", "replace")
         PathTypeValues = ("none", "file", "dir")
         def __init__(self):
+            # These are set during parsing
             self.revision = None
             self.path = None
             self.kind = SD_NONE
@@ -1819,8 +1820,11 @@ class StreamParser:
             self.from_path = None
             self.blob = None
             self.props = None
+            # These are set during the analysis phase
             self.history = None
             self.from_set = None
+            self.mark = None
+            self.perms = None
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
@@ -2588,9 +2592,11 @@ class StreamParser:
                             orig = Trace()
                         else:
                             orig = self.filemap.retrieve(revision, node.path)
-                        if node.from_path or node.action != SD_ADD:
+                        if node.from_path or node.action in (SD_CHANGE,
+                                                             SD_REPLACE):
                             node.history = self.linkback(node)
                             assert node.history
+                            
                         trace = orig.clone()
                         if perms:
                             trace.set_perms(perms)
