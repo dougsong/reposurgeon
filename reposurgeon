@@ -2598,6 +2598,8 @@ class StreamParser:
                             assert node.history
                             node.mark = node.history.mark
                             assert node.history.mark
+                            node.perms = node.history.perms
+                            assert node.history.perms
                             
                         trace = orig.clone()
                         if perms:
@@ -2611,7 +2613,8 @@ class StreamParser:
                                                                  node.from_path)
                                 trace.set_mark(oldtrace.mark)
                         if node.blob is not None:
-                            node.mark = node.blob.mark = self.__newmark() 
+                            node.mark = node.blob.mark = self.__newmark()
+                            node.perms = perms or 0o100644
                             self.repo.events.append(node.blob)
                             trace.set_mark(node.blob.mark)
                         if trace != orig:
