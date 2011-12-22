@@ -1803,7 +1803,6 @@ class StreamParser:
             self.blob = None
             self.props = None
             # These are set during the analysis phase
-            self.history = None
             self.from_set = None
             self.mark = None
             self.perms = None
@@ -2560,10 +2559,10 @@ class StreamParser:
                         if node.action == SD_ADD and not node.from_path:
                             node.perms = 0o100644
                         else:
-                            node.history = self.linkback(node)
-                            assert node.history
-                            node.mark = node.history.mark
-                            node.perms = node.history.perms
+                            ancestor = self.linkback(node)
+                            assert ancestor
+                            node.mark = ancestor.mark
+                            node.perms = ancestor.perms
                         changedperms = (setperms != node.perms)
                         if setperms:
                             node.perms = setperms
