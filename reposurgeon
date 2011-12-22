@@ -2554,8 +2554,24 @@ class StreamParser:
                         if node.action == SD_ADD and not node.from_path:
                             node.perms = 0o100644
                         else:
-                            # Find the latest modification of the specified path
-                            # previous to revision.
+                            # Problem code begins here. In the easy case, this
+                            # node record included both text and a property
+                            # section and we don't have to worry about the
+                            # node's ancestry.
+                            #
+                            # But we can have a node with text that wants to
+                            # inherit properties, or a node that changes
+                            # proprties for which we don't have a mark.  In
+                            # these cases we need to know the node's ancestry.
+                            # 
+                            # Ideally, find_node() would always work for this.
+                            # The problem, as usual, is cvs2svn. It sometimes
+                            # generates op sequences that, when you chase the
+                            # ancestry pointers, lead nowhere. There's an
+                            # example, branches/reportbuf/drivers/belkin-hid.c,
+                            # at commit 274 of the NUT repo. So we want to
+                            # skip the ancestry lookup whenever possible.
+                            #
                             if node.from_rev:
                                 ancestor = self.find_node(
                                     node.from_rev,
