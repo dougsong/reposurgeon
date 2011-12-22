@@ -2571,19 +2571,20 @@ class StreamParser:
                             # at commit 274 of the NUT repo. So we want to
                             # skip the ancestry lookup whenever possible.
                             #
-                            if node.from_rev:
-                                ancestor = self.find_node(
-                                    node.from_rev,
-                                    node.from_path)
-                            else:
-                                ancestor = self.find_node(
-                                    str(int(node.revision)-1),
-                                    node.path)
-                            if not ancestor:
-                                raise Fatal("up to r%s, failed to find %s" \
-                                            % (revision, node.path))
-                            node.mark = ancestor.mark
-                            node.perms = ancestor.perms
+                            if node.blob is None or setperms is None:
+                                if node.from_rev:
+                                    ancestor = self.find_node(
+                                        node.from_rev,
+                                        node.from_path)
+                                else:
+                                    ancestor = self.find_node(
+                                        str(int(node.revision)-1),
+                                        node.path)
+                                if not ancestor:
+                                    raise Fatal("up to r%s, failed to find %s" \
+                                                % (revision, node.path))
+                                node.mark = ancestor.mark
+                                node.perms = ancestor.perms
                         changedperms = (setperms != node.perms)
                         if setperms:
                             node.perms = setperms
