@@ -2271,13 +2271,6 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def linkback(self, node):
-        "Find latest modification of the specified path previous to revision."
-        if node.from_rev:
-            return self.find_node(node.from_rev, node.from_path)
-        else:
-            return self.find_node(str(int(node.revision)-1),
-                                         node.path)
     def find_node(self, revision, path):
         if verbose >= DEBUG_EXTRACT:
             announce("find_node(%s, %s)" % (revision, path))
@@ -2559,7 +2552,16 @@ class StreamParser:
                         if node.action == SD_ADD and not node.from_path:
                             node.perms = 0o100644
                         else:
-                            ancestor = self.linkback(node)
+                            # Find the latest modification of the specified path
+                            # previous to revision.
+                            if node.from_rev:
+                                ancestor = self.find_node(
+                                    node.from_rev,
+                                    node.from_path)
+                            else:
+                                ancestor = self.find_node(
+                                    str(int(node.revision)-1),
+                                    node.path)
                             assert ancestor
                             node.mark = ancestor.mark
                             node.perms = ancestor.perms
