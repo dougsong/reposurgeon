@@ -16,8 +16,8 @@ before r39883.
 This documentation is still a work in progress. Open questions:
 
 1. In the Credits section I note that portions of this document are
-derived from notes by Ben Sussman, and mention the people who have
-helpfully answered questions.  I would also like to credit the
+derived from notes by Ben Collins-Sussman, and mention the people who
+have helpfully answered questions.  I would also like to credit the
 original designers of the format (at least one of whom must have been
 Greg Stein) and attach a date to the original design discussion. Can
 someone fill me in on the history?
