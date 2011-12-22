@@ -1220,6 +1220,7 @@ class FileOp:
         else:
             raise Fatal("unexpected fileop %s while writing" % self.op)
         return st
+    __repr__ = __str__
 
 class Commit:
     "Generic commit object."
@@ -2733,6 +2734,17 @@ class StreamParser:
                                                  os.path.basename(commit.branch[:-1]))
             baton.twirl()
         baton.twirl("+")
+        # cvs2svn likes to crap out sequences of deletes followed by
+        # filecopies on the same node when it's generating tag commits.
+        # These are lots of examples of this in the nut.svn test load.
+        # These show up as redundant (D, M) fileop pairs. We can optimize
+        # them out by using the canonicalizer from the delete machinery.
+        for commit in self.repo.commits():
+            if [fileop for fileop in commit.fileops if fileop is None]:
+                raise Fatal("Null fileop at r%s" % commit.get_fossil())
+            self.repo.canonicalize(commit)
+            baton.twirl()
+        baton.twirl("+")
         # Issue resets when required
         baton.twirl("resets")
         save_events = self.repo.events
@@ -3152,7 +3164,7 @@ class Repository:
                             coverage.add(case)
             if not mutated:
                 break
-        commit.fileops = [x for x in commit.fileops if x is not None]
+            commit.fileops = [x for x in commit.fileops if x is not None]
         return coverage
     def delete(self, selected, policy, quiet=False):
         "Delete commits, handling multiple Ms on a file with specified policy"
