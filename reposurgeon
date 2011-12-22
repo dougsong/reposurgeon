@@ -2328,6 +2328,7 @@ class StreamParser:
             baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
+        baton.twirl('+')
         # Build filemaps.
         # Keeping a filemap for each revision gets prohibitively
         # expensive.  So we keep around only those that are identified
@@ -2363,8 +2364,6 @@ class StreamParser:
                         for path in filemap:
                             if path.startswith(node.path + os.sep):
                                 node.from_set.add(path)
-                        if not node.from_set:
-                            raise Fatal("empty from set for %s" % node)
                         filemap -= node.from_set
                         if node.kind == SD_NONE:
                             node.kind = SD_DIR
