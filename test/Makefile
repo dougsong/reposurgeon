@@ -9,7 +9,7 @@ all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 .svn.chk:
 	reposurgeon "read $<" "prefer git" "write $@"
 
-buildregress: fi-regress svn-regress
+buildregress: fi-buildregress svn-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout *~

@@ -215,9 +215,9 @@ commit 21, mark :28:
 1: M 100644 :24 bar    
 2: M 100644 :27 README 
 commit 23, mark :32:
-0: M 100644 :31 bar    
-1: M 100644 :24 renamed1
-2: M 100644 :24 copy1  
+0: M 100644 :24 renamed1
+1: M 100644 :24 copy1  
+2: M 100644 :31 bar    
 commit 25, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1, 2, 3, 4, 6]
