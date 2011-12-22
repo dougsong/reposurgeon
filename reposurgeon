@@ -3056,13 +3056,14 @@ class Repository:
         # But we have to leave deletealls in place, since they affect right ops
         elif pair == ("deleteall", "M"):
             return (False, left, right, None, 7)
-        # These cases should be impossible
+        # These cases should be impossible.  But cvs2svn actually generates
+        # adjacent deletes into Subversion dumpfiles witch turn into (D, D).
         elif left.op == "deleteall" and right.op != "M":
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
-        if left.op == "D" and right.op == "D":
+        elif left.op == "D" and right.op == "D":
             return (False, left, right, "Two Ds of %s?" % left.path, -2)
-        if left.op == "D" and right.op in ("R", "C"):
+        elif left.op == "D" and right.op in ("R", "C"):
             if left.path == right.source:
                 return (False, left, right,
                         "R or C of %s after deletion?" % left.path, -3)
