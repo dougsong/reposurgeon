@@ -1115,9 +1115,9 @@ class FileOp:
     # in case they are all deleted and the directory changes to a file
     # or symlink.'
     def __pathname__(self):
-        if hasattr(self, 'path'):
+        if self.path:
             return self.path
-        elif hasattr(self, 'source'):
+        elif self.source:
             return self.source
         elif self.op == 'deleteall':
             return ""
