@@ -2581,7 +2581,7 @@ class StreamParser:
                                     node.path)
                             if not ancestor:
                                 raise Fatal("up to r%s, failed to find %s" \
-                                            % (revision, path))
+                                            % (revision, node.path))
                             node.mark = ancestor.mark
                             node.perms = ancestor.perms
                         changedperms = (setperms != node.perms)
