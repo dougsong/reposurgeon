@@ -3158,7 +3158,7 @@ class Repository:
                             commit.fileops[j] = newb
                             if verbose >= DEBUG_DELETE:
                                 announce("During canonicalization:")
-                                commit.fileop_dump(ei)
+                                commit.fileop_dump(j)
                             if warn:
                                 self.warn(warn, atline=False)
                             coverage.add(case)
