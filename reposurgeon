@@ -2561,31 +2561,50 @@ class StreamParser:
                             node.mark = node.blob.mark = self.__newmark()
                             self.repo.events.append(node.blob)
                             self.hashmap[node.content_hash] = node.mark
-                        # Ideally, find_node() would always work for
-                        # looking up the ancestor's mark.  The
-                        # problem, as usual, is cvs2svn. It sometimes
-                        # generates op sequences that, when you chase
-                        # the ancestry pointers, lead nowhere. There's
-                        # an example,
-                        # branches/reportbuf/drivers/belkin-hid.c, at
-                        # commit 274 of the NUT repo. So we want to
-                        # skip the ancestry lookup whenever possible.
-                        # Conveniently, the Subversion stream format
-                        # provides us with hashes that can be used for
-                        # chaining to copy sources.
                         elif node.from_hash:
                             try:
                                 node.mark = self.hashmap[node.from_hash]
                             except KeyError:
                                 raise Fatal("couldn't find copy source for %s" \
                                             % node)
+                        elif node.from_path:
+                            # A copy node is somehow missing its hash.
+                            # We're probably about to lose horribly...
+                            ancestor = self.find_node(node.from_rev,
+                                                      node.from_path)
+                            if not ancestor:
+                                raise Fatal("failed to find copy source r%s~%s"\
+                                            % (node.from_rev, node.from_path))
+                            node.mark = ancestor.mark
                         else:
+                            # The node is a pure property change with
+                            # neither blob nor copy source.
+                            #
+                            # If we get here we're in trouble.  The
+                            # problem, as usual, is cvs2svn. It
+                            # sometimes generates op sequences that,
+                            # when you chase the ancestry pointers,
+                            # lead nowhere, which is why we prefer to key
+                            # on copy-source hashes. There's an example,
+                            # branches/reportbuf/drivers/belkin-hid.c,
+                            # at commit 274 of the NUT repo.
+                            #
+                            # But maybe it'll all come good...
                             ancestor = self.find_node(
                                 str(int(node.revision)-1),
                                 node.path)
                             if not ancestor:
-                                raise Fatal("up to r%s, failed to find %s" \
-                                            % (revision, node.path))
+                                # One last desperate try.  If this is
+                                # a pure property change, we may be able to
+                                # just ignore it.
+                                if "svn:executable" not in node.props \
+                                   and "svn:special" not in node.props \
+                                   and node.path not in self.permissions:
+                                    continue
+                                else:
+                                    complain("r%s~%s: permissions may be lost" \
+                                         % (revision, node.path))
+                                    continue
                             node.mark = ancestor.mark
                         assert node.mark
                         # TODO: check if copyfrom is supposed to inherit perms
@@ -2593,7 +2612,9 @@ class StreamParser:
                             perms = self.permissions.get(node.from_path)
                         else:
                             perms = self.permissions.get(node.path)
-                        if node.blob is not None or (perms != oldperms) or node.from_path:
+                        if node.blob is not None \
+                               or (perms != oldperms) \
+                               or node.from_hash:
                             fileop = FileOp(commit)
                             fileop.construct("M",
                                              perms or 0o100644,
