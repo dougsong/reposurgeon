@@ -3052,7 +3052,7 @@ class Repository:
         #
         # Delete followed by modify undoes delete, since M carries whole files. 
         elif pair == ("D", "M"):
-            return (True, right, None, None, 6)
+            return (True, None, right, None, 6)
         # But we have to leave deletealls in place, since they affect right ops
         elif pair == ("deleteall", "M"):
             return (False, left, right, None, 7)
@@ -3062,7 +3062,7 @@ class Repository:
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
         elif left.op == "D" and right.op == "D":
-            return (False, left, right, "Two Ds of %s?" % left.path, -2)
+            return (True, left, None, None, -2)
         elif left.op == "D" and right.op in ("R", "C"):
             if left.path == right.source:
                 return (False, left, right,
@@ -3151,9 +3151,9 @@ class Repository:
                         continue
                     if i < j and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
+                        if verbose >= DEBUG_DELETE:
+                            announce("Reduction case %d fired on %s" % (case, (i,j)))
                         if modified:
-                            if verbose >= DEBUG_DELETE:
-                                announce("Reduction case %d fired on %s" % (case, (i,j)))
                             mutated = True
                             commit.fileops[i] = newa
                             commit.fileops[j] = newb
@@ -3161,7 +3161,7 @@ class Repository:
                                 announce("During canonicalization:")
                                 commit.fileop_dump(j)
                             if warn:
-                                self.warn(warn, atline=False)
+                                complain(warn)
                             coverage.add(case)
             if not mutated:
                 break
