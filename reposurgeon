@@ -2551,9 +2551,8 @@ class StreamParser:
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
-                        if node.action == SD_ADD and not node.from_path:
-                            node.perms = 0o100644
-                        else:
+                        node.perms = 0o100644
+                        if node.action != SD_ADD or node.from_path:
                             # Problem code begins here. In the easy case, this
                             # node record included both text and a property
                             # section and we don't have to worry about the
