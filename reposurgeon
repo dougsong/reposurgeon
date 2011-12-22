@@ -1806,7 +1806,6 @@ class StreamParser:
             # These are set during the analysis phase
             self.from_set = None
             self.mark = None
-            self.perms = None
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
@@ -1854,6 +1853,7 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
+        self.permissions = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2443,19 +2443,20 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-file and per-directory properties
-                setperms = None
+                oldperms = self.permissions.get(node.path)
                 if node.props is not None:
                     # Empty properties section on a path clears its properties
                     for pathprop in node.props:
                         if pathprop.startswith(node.path + "#"):
                             del node.props[pathprop]
-                    setperms = 0o100644
+                    if node.path in self.permissions:
+                        del self.permissions[node.path]
                     for (prop, val) in node.props.items():
                         if prop == "svn:executable":
-                            setperms = 0o100755
+                            self.permissions[node.path] = 0o100755
                         elif prop == "svn:special":
                             # Map to git symlink and hope it flies
-                            setperms = 0o120000
+                            self.permissions[node.path] = 0o120000
                         elif prop not in StreamParser.IgnoreProperties:
                             commit.properties[node.path + "#" + prop] = val
                 # Actions on directories
@@ -2534,14 +2535,15 @@ class StreamParser:
                                 self.branches[node.path] = None
                         for source in node.from_set:
                             subnode = self.find_node(node.from_rev, source)
-                            if not (subnode and subnode.mark and subnode.perms):
+                            if not (subnode and subnode.mark):
                                 raise Fatal("up to r%s, failed to find subnode %s" \
                                             % (revision, path))
                             fileop = FileOp(commit)
                             dest = os.path.join(node.path,
                                                 source[len(node.from_path+os.sep):])
                             fileop.construct("M",
-                                                 subnode.perms,
+                                                 self.permissions.get(subnode.path,
+                                                                      0o100644),
                                                  subnode.mark,
                                                  dest)
                 # Actions on files
@@ -2552,7 +2554,6 @@ class StreamParser:
                         fileop.construct("D", node.path)
                         commit.fileops.append(fileop)
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
-                        node.perms = 0o100644
                         if node.action != SD_ADD or node.from_path:
                             # Problem code begins here. In the easy case, this
                             # node record included both text and a property
@@ -2572,7 +2573,7 @@ class StreamParser:
                             # at commit 274 of the NUT repo. So we want to
                             # skip the ancestry lookup whenever possible.
                             #
-                            if node.blob is None or setperms is None:
+                            if node.blob is None:
                                 if node.from_rev:
                                     ancestor = self.find_node(
                                         node.from_rev,
@@ -2585,17 +2586,18 @@ class StreamParser:
                                     raise Fatal("up to r%s, failed to find %s" \
                                                 % (revision, node.path))
                                 node.mark = ancestor.mark
-                                node.perms = ancestor.perms
-                        changedperms = (setperms != node.perms)
-                        if setperms:
-                            node.perms = setperms
                         if node.blob is not None:
                             node.mark = node.blob.mark = self.__newmark()
                             self.repo.events.append(node.blob)
-                        if node.blob is not None or changedperms or node.from_path:
+                        # TODO: check if copyfrom is supposed to inherit perms
+                        if node.from_path:
+                            perms = self.permissions.get(node.from_path)
+                        else:
+                            perms = self.permissions.get(node.path)
+                        if node.blob is not None or (perms != oldperms) or node.from_path:
                             fileop = FileOp(commit)
                             fileop.construct("M",
-                                             node.perms,
+                                             perms or 0o100644,
                                              node.mark,
                                              node.path)
                             commit.fileops.append(fileop)
