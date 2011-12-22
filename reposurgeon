@@ -2389,7 +2389,6 @@ class StreamParser:
                 raise Fatal("empty from set for %s" % copynode)
         del filemaps
         baton.twirl('+')
-        baton.endcounter()
         # Build commits
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
