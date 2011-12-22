@@ -28,8 +28,9 @@ from foo.sd.  Here is a summary of the test sources:
 |gsoc.fi         |The Google Summer of Code branch of Roundup
 |gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
-|nontipcopy.svn  |Two branches, with the creation right after a tag copy.
-|references.fi   |Synthetic test load for CVS and Subversion reference cookies,
+|nontipcopy.svn  |Two branches, with the creation right after a tag copy
+|nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it
+|references.fi   |Synthetic test load for CVS and Subversion reference cookies
 |references.tst  |Tests reference lifting commands using references.fi 
 |rootfile.svn    |Branchy layout with a file at the root level.
 |roundup.fi      |Early segment of the Roundup tracker repo
