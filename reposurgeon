@@ -3114,10 +3114,9 @@ class Repository:
         # Case not covered
         #
         raise Fatal("can't compose op '%s' and '%s'" % (left, right))
-    def canonicalize(self, ei):
+    def canonicalize(self, commit):
         "Canonicalize the list of file operations in this commit."
         coverage = set([])
-        commit = self.events[ei]
         # Handling deleteall operations is simple
         lastdeleteall = None
         for (i, a) in enumerate(commit.fileops):
@@ -3266,7 +3265,7 @@ class Repository:
                     if verbose >= DEBUG_DELETE:
                         announce("Before canonicalization:")
                         event.fileop_dump(ei)
-                    self.case_coverage |= self.canonicalize(ei)
+                    self.case_coverage |= self.canonicalize(self.events[ei])
                     if verbose >= DEBUG_DELETE:
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
