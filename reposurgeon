@@ -2585,6 +2585,9 @@ class StreamParser:
                                 newnode.action = SD_ADD
                                 newnode.kind = SD_FILE
                                 newnode.blob = blob
+                                # Must append rather than simply performing.
+                                # Otherwise when the propert is unset we
+                                # won't have the right thing happen.
                                 record.nodes.append(newnode)
                             elif self.find_node(revision, gitignore_path):
                                 newnode = StreamParser.NodeAction()
