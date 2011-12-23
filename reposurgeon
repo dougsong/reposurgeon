@@ -2321,7 +2321,9 @@ class StreamParser:
                     self.permissions[path] = 0o120000
                 elif prop not in StreamParser.IgnoreProperties:
                     commit.properties[path + "#" + prop] = val
-    def perform_node(self, node, commit, oldperms):
+    def perform_node(self, node, commit):
+        oldperms = self.permissions.get(node.path)
+        self.setprops(commit, node.props, node.path)
         if node.action == SD_DELETE:
             assert node.blob is None
             fileop = FileOp(commit)
@@ -2528,8 +2530,6 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-file and per-directory properties
-                oldperms = self.permissions.get(node.path)
-                self.setprops(commit, node.props, node.path)
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
@@ -2608,21 +2608,18 @@ class StreamParser:
                                 # Exiguous top-level branch
                                 self.branches[node.path] = None
                         for source in node.from_set:
-                            subnode = self.find_node(node.from_rev, source)
-                            if not (subnode and subnode.mark):
-                                raise Fatal("up to r%s, failed to find subnode %s" \
-                                            % (revision, path))
-                            fileop = FileOp(commit)
-                            dest = os.path.join(node.path,
-                                                source[len(node.from_path+os.sep):])
-                            fileop.construct("M",
-                                                 self.permissions.get(subnode.path,
-                                                                      0o100644),
-                                                 subnode.mark,
-                                                 dest)
+                            subnode = StreamParser.NodeAction()
+                            subnode.path = os.path.join(node.path,
+                                                        source[len(node.from_path+os.sep):])
+                            subnode.revision = revision
+                            subnode.from_path = source
+                            subnode.from_rev = node.from_rev
+                            subnode.action = SD_ADD
+                            subnode.kind = SD_FILE
+                            self.perform_node(subnode, commit)
                 # Actions on files
                 elif node.kind == SD_FILE:
-                    self.perform_node(node, commit, oldperms)
+                    self.perform_node(node, commit)
                 # Node loop ends
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
