@@ -2304,6 +2304,23 @@ class StreamParser:
                                                os.path.join(pnode.from_path,
                                                             path[len(pnode.path):]))
         return None
+    def setprops(self, commit, props, path):
+        "Interpret a property section."
+        if props is not None:
+            # Empty properties section on a path clears its properties
+            for pathprop in props:
+                if pathprop.startswith(path + "#"):
+                    del props[pathprop]
+            if path in self.permissions:
+                del self.permissions[path]
+            for (prop, val) in props.items():
+                if prop == "svn:executable":
+                    self.permissions[path] = 0o100755
+                elif prop == "svn:special":
+                    # Map to git symlink and hope it flies
+                    self.permissions[path] = 0o120000
+                elif prop not in StreamParser.IgnoreProperties:
+                    commit.properties[path + "#" + prop] = val
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         # Much of the hair that follows is motivated by a desire to
@@ -2447,21 +2464,7 @@ class StreamParser:
                     announce(str(node))
                 # Handle per-file and per-directory properties
                 oldperms = self.permissions.get(node.path)
-                if node.props is not None:
-                    # Empty properties section on a path clears its properties
-                    for pathprop in node.props:
-                        if pathprop.startswith(node.path + "#"):
-                            del node.props[pathprop]
-                    if node.path in self.permissions:
-                        del self.permissions[node.path]
-                    for (prop, val) in node.props.items():
-                        if prop == "svn:executable":
-                            self.permissions[node.path] = 0o100755
-                        elif prop == "svn:special":
-                            # Map to git symlink and hope it flies
-                            self.permissions[node.path] = 0o120000
-                        elif prop not in StreamParser.IgnoreProperties:
-                            commit.properties[node.path + "#" + prop] = val
+                self.setprops(commit, node.props, node.path)
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
@@ -2607,7 +2610,6 @@ class StreamParser:
                                     continue
                             node.mark = ancestor.mark
                         assert node.mark
-                        # TODO: check if copyfrom is supposed to inherit perms
                         if node.from_path:
                             perms = self.permissions.get(node.from_path)
                         else:
