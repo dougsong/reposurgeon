@@ -3,6 +3,7 @@
 2.0:
      reposurgon can now read Subversion dump files and repositories directly.
      Added 'import_marks' command.
+     Added new auxiliary script, svngrab, for mirroring Subversion repos.
 
 1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.
