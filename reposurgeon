@@ -2322,14 +2322,13 @@ class StreamParser:
                 elif prop not in StreamParser.IgnoreProperties:
                     commit.properties[path + "#" + prop] = val
     def perform_node(self, node, commit):
-        oldperms = self.permissions.get(node.path)
-        self.setprops(commit, node.props, node.path)
         if node.action == SD_DELETE:
             assert node.blob is None
             fileop = FileOp(commit)
             fileop.construct("D", node.path)
             commit.fileops.append(fileop)
         elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
+            oldperms = self.permissions.get(node.path)
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
                 self.repo.events.append(node.blob)
@@ -2377,6 +2376,7 @@ class StreamParser:
                         return
                 node.mark = ancestor.mark
             assert node.mark
+            self.setprops(commit, node.props, node.path)
             if node.from_path:
                 perms = self.permissions.get(node.from_path)
             else:
