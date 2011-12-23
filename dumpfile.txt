@@ -210,7 +210,8 @@ considered to be a single history for change-tracking purposes.
 Creating a flow tells Subversion that you want to track the history of
 the path or paths it contains. Destroying a flow breaks the chain of
 history; changes will not be tracked across the break, even if another
-flow is created at the same path.
+flow is created at the same path.  A copy operation creates a new
+flow connected to the flow from which it was copied.
 
 Content is what file paths point at (one timewise slice of a flow). It
 is the payload of program source code, documents, images, and so forth
