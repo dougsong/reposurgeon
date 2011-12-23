@@ -2332,12 +2332,13 @@ class StreamParser:
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
                 self.repo.events.append(node.blob)
-                self.hashmap[node.content_hash] = node.mark
+                self.hashmap[node.content_hash] = node
             elif node.from_hash:
                 try:
-                    node.mark = self.hashmap[node.from_hash]
+                    ancestor = self.hashmap[node.from_hash]
                 except KeyError:
                     raise Fatal("couldn't find copy source for %s" % node)
+                node.mark = ancestor.mark
             elif node.from_path:
                 # A copy node is somehow missing its hash.
                 # We're probably about to lose horribly...
