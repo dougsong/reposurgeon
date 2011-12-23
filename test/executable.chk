@@ -114,7 +114,7 @@ data 78
 The translated 'goodbye' fileop for this revision should have executable set.
 from :12
 M 100644 :13 README
-M 100644 :14 goodbye
+M 100755 :14 goodbye
 
 tag root
 from :2
