@@ -1855,7 +1855,6 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
-        self.permissions = {}
         self.hashmap = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
@@ -2276,6 +2275,13 @@ class StreamParser:
     # in the following functions.
     #
     def find_node(self, revision, path):
+        "Find the node for path which is visible at the specified revision."
+        # This isn't reliable.  The problem, as usual, is cvs2svn. It
+        # sometimes generates op sequences that, when you chase the
+        # ancestry pointers, lead nowhere, which is why we prefer to
+        # key on copy-source hashes. There's an example,
+        # branches/reportbuf/drivers/belkin-hid.c, at commit 274 of
+        # the NUT repo.
         if verbose >= DEBUG_EXTRACT:
             announce("find_node(%s, %s)" % (revision, path))
         # Walk back through previous revisions
@@ -2304,23 +2310,16 @@ class StreamParser:
                                                os.path.join(pnode.from_path,
                                                             path[len(pnode.path):]))
         return None
-    def setprops(self, commit, props, path):
-        "Interpret a property section."
-        if props is not None:
-            # Empty properties section on a path clears its properties
-            for pathprop in props:
-                if pathprop.startswith(path + "#"):
-                    del props[pathprop]
-            if path in self.permissions:
-                del self.permissions[path]
-            for (prop, val) in props.items():
-                if prop == "svn:executable":
-                    self.permissions[path] = 0o100755
-                elif prop == "svn:special":
-                    # Map to git symlink and hope it flies
-                    self.permissions[path] = 0o120000
-                elif prop not in StreamParser.IgnoreProperties:
-                    commit.properties[path + "#" + prop] = val
+    @staticmethod
+    def node_permissions(node):
+        "Fileop permissions from not properties"
+        if node.props:
+            if "svn:executable" in node.props:
+                return 0o100755
+            elif "svn:special" in node.props:
+                # Map to git symlink and hope it flies
+                return 0o120000
+        return 0o100644
     def perform_node(self, node, commit):
         if node.action == SD_DELETE:
             assert node.blob is None
@@ -2328,64 +2327,53 @@ class StreamParser:
             fileop.construct("D", node.path)
             commit.fileops.append(fileop)
         elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
-            oldperms = self.permissions.get(node.path)
+            # Try to figure out who the ancestor of this node is.
+            if node.from_hash:
+                ancestor = self.hashmap[node.from_hash]
+            elif node.from_path:
+                # A copy node is somehow missing its hash.
+                ancestor = self.find_node(node.from_rev, node.from_path)
+            elif node.action != SD_ADD:
+                # Ordinary inheritance, no node copy.
+                ancestor = self.find_node(str(int(node.revision)-1), node.path)
+            else:
+                ancestor = None
+            # Cope with properties
+            if ancestor and ancestor.props is not None:
+                newprops = copy.copy(ancestor.props)
+                if node.props is not None:
+                    newprops.update(node.props)
+                node.props = newprops
+            if node.props:
+                for (prop, val) in node.props.items():
+                    if prop not in StreamParser.IgnoreProperties:
+                        commit.properties[node.path + "#" + prop] = val
+            # Time for fileop generation
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
                 self.repo.events.append(node.blob)
                 self.hashmap[node.content_hash] = node
-            elif node.from_hash:
-                try:
-                    ancestor = self.hashmap[node.from_hash]
-                except KeyError:
-                    raise Fatal("couldn't find copy source for %s" % node)
-                node.mark = ancestor.mark
-            elif node.from_path:
-                # A copy node is somehow missing its hash.
-                # We're probably about to lose horribly...
-                ancestor = self.find_node(node.from_rev,
-                                          node.from_path)
-                if not ancestor:
-                    raise Fatal("failed to find copy source r%s~%s"\
-                                % (node.from_rev, node.from_path))
+            elif ancestor:
                 node.mark = ancestor.mark
             else:
-                # The node is a pure property change with
-                # neither blob nor copy source.
-                #
-                # If we get here we're in trouble.  The
-                # problem, as usual, is cvs2svn. It
-                # sometimes generates op sequences that,
-                # when you chase the ancestry pointers,
-                # lead nowhere, which is why we prefer to key
-                # on copy-source hashes. There's an example,
-                # branches/reportbuf/drivers/belkin-hid.c,
-                # at commit 274 of the NUT repo.
-                #
-                # But maybe it'll all come good...
-                ancestor = self.find_node(str(int(node.revision)-1), node.path)
-                if not ancestor:
-                    # One last desperate try.  If this is
-                    # a pure property change, we may be able to
-                    # just ignore it.
-                    if "svn:executable" not in node.props \
-                       and "svn:special" not in node.props \
-                       and node.path not in self.permissions:
-                        return
-                    else:
-                        complain("r%s~%s: permissions may be lost" \
-                             % (node.revision, node.path))
-                        return
-                node.mark = ancestor.mark
+                # No ancestor, no blob. Has to be a pure property change.
+                # There's no way to figure out what mark to use in a
+                # fileop.
+                complain("r%s~%s: permission information may be lost." \
+                         % (node.revision, node.path))
+                return
             assert node.mark
-            self.setprops(commit, node.props, node.path)
-            if node.from_path:
-                perms = self.permissions.get(node.from_path)
+            # Time for fileop generation
+            perms = self.node_permissions(node)
+            if not ancestor:
+                permschanged = True
             else:
-                perms = self.permissions.get(node.path)
-            if node.blob is not None or (perms != oldperms) or node.from_hash:
+                oldperms = self.node_permissions(ancestor)
+                permschanged = (perms != oldperms)
+            if node.blob is not None or permschanged or node.from_hash:
                 fileop = FileOp(commit)
                 fileop.construct("M",
-                                 perms or 0o100644,
+                                 perms,
                                  node.mark,
                                  node.path)
                 commit.fileops.append(fileop)
