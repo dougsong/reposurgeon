@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# svngrab - use svnsync to grab a copy of a Subversion repo
+#
+# Requires a single argument which is an SVN URL, e.g something like
+# svn://svn.hercules-390.org/hercules or svn://svn.debian.org/nut.
+#
+# Creates a local mirror of the repository in a directory named
+# after the last segment of the URL: that is, the second example
+# above would be unpacked into a local directory named 'nut'.
+#
+# If the local mirror already exists, it is updated.
+#
+svnurl=$1
+local=`basename $svnurl`
+
+if [ ! -d "$local" ]
+then
+    svnadmin create $local
+    cat >$local/hooks/pre-revprop-change <<EOF
+#!/bin/sh
+exit 0;
+EOF
+    chmod a+x $local/hooks/pre-revprop-change
+    svnsync init file://${PWD}/$local $svnurl
+fi
+svnsync synchronize file://${PWD}/$local
