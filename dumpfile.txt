@@ -1,6 +1,6 @@
 = How to interpret Subversion dumpfiles =
-Eric S. Raymond <esr@thyrsus.com>
-v0.6, 2011-12-23
+
+Version 0.6, 2011-12-23
 
 == Introduction ==
 
@@ -13,16 +13,7 @@ a versioned filesystem-like store, such as another version-control
 system.  It derives from and incorporates some incomplete notes from 
 before r39883.
 
-This documentation is still a work in progress. Open questions:
-
-1. In the Credits section I note that portions of this document are
-derived from notes by Ben Collins-Sussman, and mention the people who
-have helpfully answered questions.  I would also like to credit the
-original designers of the format (at least one of whom must have been
-Greg Stein) and attach a date to the original design discussion. Can
-someone fill me in on the history?
-
-2. In interpreting a Node record which has both a copyfrom source and
+1. In interpreting a Node record which has both a copyfrom source and
 a property section, it is possible that the copy source node itself
 has a property section.  How are they to be combined?
 
@@ -504,12 +495,6 @@ properties block.
 
 This note is included for historical completeness only, at is it highly
 unlikely that any Subversion instances that old remain in production.
-
-== Credits ==
-
-This derives in part from an earlier document by Ben Sussman.
-C. Michael Pilato, Daniel Shahaf, and Steve Butler answered
-questions about format interpretation.
 
 == Ancient history ==
 
