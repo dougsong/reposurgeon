@@ -1856,6 +1856,7 @@ class StreamParser:
         self.uuid = None
         self.revisions = collections.OrderedDict()
         self.hashmap = {}
+        self.permissions = {}
     def error(self, msg, atline=True):
         "Throw fatal error during parsing."
         if atline:
@@ -2347,15 +2348,6 @@ class StreamParser:
                 ancestor = self.find_node(str(int(node.revision)-1), node.path)
             else:
                 ancestor = None
-            # Record popeties onto the commit *before* merging, so we
-            # only pay in the stream file when properties change.  
-            self.record_props(commit, node)
-            # Now merge properties forward.
-            if ancestor and ancestor.props is not None:
-                newprops = copy.copy(ancestor.props)
-                if node.props is not None:
-                    newprops.update(node.props)
-                node.props = newprops
             # Time for fileop generation
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
@@ -2372,19 +2364,22 @@ class StreamParser:
                 return
             assert node.mark
             # Time for fileop generation
-            perms = self.node_permissions(node)
-            if not ancestor:
-                permschanged = True
+            if ancestor:
+                perms = oldperms = self.permissions.get(ancestor.path,
+                                                        0o100644)
             else:
-                oldperms = self.node_permissions(ancestor)
-                permschanged = (perms != oldperms)
-            if node.blob is not None or permschanged or node.from_hash:
+                perms = oldperms = 0o100644
+            if node.props is not None:
+                perms = self.node_permissions(node)
+            if node.blob is not None or (perms != oldperms) or node.from_hash:
+                assert perms
                 fileop = FileOp(commit)
                 fileop.construct("M",
                                  perms,
                                  node.mark,
                                  node.path)
                 commit.fileops.append(fileop)
+            self.permissions[node.path] = perms
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         # Much of the hair that follows is motivated by a desire to
@@ -2527,6 +2522,7 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-file and per-directory properties
+                self.record_props(commit, node)
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
@@ -2560,7 +2556,6 @@ class StreamParser:
                             commit.fileops.append(fileop)
                         continue
                     elif node.action == SD_CHANGE:
-                        self.record_props(commit, node)
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: setting properties %s on %s" \
