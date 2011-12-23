@@ -5620,7 +5620,7 @@ extracted and made the value of a per-commit property named 'svn',
 which becomes visible and editable. Also, change refs/remotes/svn branch
 names to corresponding local ones and lift tip tag commits to actual
 tag objects (replicating what svn2git does to clean up the
-repository). Finally, enables writing of the fassil-reference map when
+repository). Finally, enables writing of the fossil-reference map when
 the repo is written or rebuilt.
 """)
     def do_gitsvnparse(self, line):
