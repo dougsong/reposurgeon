@@ -2508,7 +2508,7 @@ class StreamParser:
                 au = "no-author"
             if "svn:log" in record.props:
                 commit.comment = record.props.pop("svn:log")
-            if global_options["use_uuid"]:
+            if global_options["svn_use_uuid"]:
                 attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
             else:
                 attribution = "%s <%s> %s" % (au, au, ad)
@@ -2667,95 +2667,97 @@ class StreamParser:
                 baton.twirl()
             else:
                 complain("could not tagify root commit.")
-        baton.twirl("branches")
-        # Now, branch analysis.
-        if verbose >= DEBUG_EXTRACT:
-            announce("Branches: %s" % (self.branches,))
-        if self.branches:
-            # Don't leave the linear relationships in place
-            for commit in self.repo.commits():
-                commit.parent_marks = []
-            # Instead, determine a branch for each commit...
-            for commit in self.repo.commits():
-                for branch in self.branches:
-                    if commit.common.startswith(branch):
-                        commit.branch = branch
-                        for fileop in commit.fileops:
-                            if fileop.op in ("M", "D"):
-                                fileop.path = fileop.path[len(branch):]
-                            elif fileop.op in ("R", "C"):
-                                fileop.source = fileop.source[len(branch):]
-                                fileop.target = fileop.target[len(branch):]
-                        break
-                else:
-                    commit.branch = "root"
-                    self.branches["root"] = None
-                baton.twirl()
-            baton.twirl("+")
-            # ...then rebuild parent links so they follow the branches
-            branchroots = []
-            for commit in self.repo.commits():
-                if self.branches[commit.branch] is None:
-                    branchroots.append(commit)
+        if not global_options['svn_nobranch']:
+            baton.twirl("branches")
+            # Now, branch analysis.
+            if verbose >= DEBUG_EXTRACT:
+                announce("Branches: %s" % (self.branches,))
+            if self.branches:
+                # Don't leave the linear relationships in place
+                for commit in self.repo.commits():
                     commit.parent_marks = []
-                else:
-                    commit.parent_marks = [self.branches[commit.branch]]
-                self.branches[commit.branch] = commit.mark
-                baton.twirl()
-            baton.twirl("+")
-            # The root branch is special. It wasn't made by a copy, so
-            # we didn't get the information to connect it to trunk in the
-            # last phase.
-            if "root" in self.branches:
+                # Instead, determine a branch for each commit...
                 for commit in self.repo.commits():
-                    if commit.branch == "root":
-                        break
-                self.branchlink[commit.get_fossil()] = self.repo.commits()[0].get_fossil()
-            baton.twirl("+")
-            # Re-root branches here using the branchlink info
-            if verbose >= DEBUG_EXTRACT:
-                announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
-            baton.twirl("+")
-            nonempty = set([c for c in self.repo.commits() if c.fileops]) 
-            for root in branchroots:
-                rootrev = root.get_fossil()
-                if rootrev in self.branchlink:
-                    root.parent_marks = [self.markmap[self.branchlink[rootrev]]]
-                elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
-                    complain("r%s: can't connect nonempty %s to trunk" \
-                             % (rootrev, root.branch))
-                baton.twirl()
-            baton.twirl("+")
-            if verbose >= DEBUG_EXTRACT:
-                announce("after branch analysis:")
-                for commit in self.repo.commits():
-                    if commit.parent_marks:
-                        ancestor = commit.parent_marks[0]
+                    for branch in self.branches:
+                        if commit.common.startswith(branch):
+                            commit.branch = branch
+                            for fileop in commit.fileops:
+                                if fileop.op in ("M", "D"):
+                                    fileop.path = fileop.path[len(branch):]
+                                elif fileop.op in ("R", "C"):
+                                    fileop.source = fileop.source[len(branch):]
+                                    fileop.target = fileop.target[len(branch):]
+                            break
                     else:
-                        ancestor = '-'
-                    announce("r%-4s %4s %4s %2d %2d '%s'" % \
-                             (commit.get_fossil(),
-                              commit.mark, ancestor,
-                              len(commit.fileops),
-                              len(commit.properties),
-                              commit.branch))
-            baton.twirl("tagifying")
-            # Tagify normal branch-root commits, they don't carry any
-            # information other than their metadata. The exceptions
-            # are trunk and root (if the later exists); neither is
-            # the result of a normal copy operation.
-            for commit in self.repo.commits():
-                if commit in branchroots \
-                       and commit.branch != ("trunk"+os.sep) \
-                       and commit.branch != "root" \
-                       and commit.parent_marks \
-                       and not commit.fileops:
-                    self.repo.tagify(commit,
-                                     os.path.basename(commit.branch[:-1]),
-                                     commit.parent_marks[0],
-                                     "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
+                        commit.branch = "root"
+                        self.branches["root"] = None
                     baton.twirl()
-            baton.twirl("+")
+                baton.twirl("+")
+                # ...then rebuild parent links so they follow the branches
+                branchroots = []
+                for commit in self.repo.commits():
+                    if self.branches[commit.branch] is None:
+                        branchroots.append(commit)
+                        commit.parent_marks = []
+                    else:
+                        commit.parent_marks = [self.branches[commit.branch]]
+                    self.branches[commit.branch] = commit.mark
+                    baton.twirl()
+                baton.twirl("+")
+                # The root branch is special. It wasn't made by a copy, so
+                # we didn't get the information to connect it to trunk in the
+                # last phase.
+                if "root" in self.branches:
+                    for commit in self.repo.commits():
+                        if commit.branch == "root":
+                            break
+                    self.branchlink[commit.get_fossil()] = self.repo.commits()[0].get_fossil()
+                baton.twirl("+")
+                # Re-root branches here using the branchlink info
+                if verbose >= DEBUG_EXTRACT:
+                    announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
+                baton.twirl("+")
+                nonempty = set([c for c in self.repo.commits() if c.fileops]) 
+                for root in branchroots:
+                    rootrev = root.get_fossil()
+                    if rootrev in self.branchlink:
+                        root.parent_marks = [self.markmap[self.branchlink[rootrev]]]
+                    elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
+                        complain("r%s: can't connect nonempty %s to trunk" \
+                                 % (rootrev, root.branch))
+                    baton.twirl()
+                baton.twirl("+")
+                if verbose >= DEBUG_EXTRACT:
+                    announce("after branch analysis:")
+                    for commit in self.repo.commits():
+                        if commit.parent_marks:
+                            ancestor = commit.parent_marks[0]
+                        else:
+                            ancestor = '-'
+                        announce("r%-4s %4s %4s %2d %2d '%s'" % \
+                                 (commit.get_fossil(),
+                                  commit.mark, ancestor,
+                                  len(commit.fileops),
+                                  len(commit.properties),
+                                  commit.branch))
+                baton.twirl("tagifying")
+                # Tagify normal branch-root commits, they don't carry any
+                # information other than their metadata. The exceptions
+                # are trunk and root (if the later exists); neither is
+                # the result of a normal copy operation.
+                for commit in self.repo.commits():
+                    if commit in branchroots \
+                           and commit.branch != ("trunk"+os.sep) \
+                           and commit.branch != "root" \
+                           and commit.parent_marks \
+                           and not commit.fileops:
+                        self.repo.tagify(commit,
+                                         os.path.basename(commit.branch[:-1]),
+                                         commit.parent_marks[0],
+                                         "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.get_fossil())
+                        baton.twirl()
+                baton.twirl("+")
+        # Code controlled by svn_nobranch option ends.
         baton.twirl("polishing")
         # Now pretty up the branch names
         for commit in self.repo.commits():
@@ -4155,9 +4157,14 @@ class RepositoryList:
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     Options = (
-        ("use_uuid", """\
+        ("svn_use_uuid", """\
     If set, use Subversion UUID when faking up email addresses, a la git-svn.
 Otherwise, fake up addresses the way git cvs-import does it.
+"""),
+        ("svn_nobranch", """\
+    If set, don't perform branch analysis when lifting a Subversion repo. Leave
+it as a linear sequence of commits. This may be useful if the repo has an
+unusual topology and you intend to do your own branch surgery.
 """),
         )
     def __init__(self):
