@@ -2320,6 +2320,15 @@ class StreamParser:
                 # Map to git symlink and hope it flies
                 return 0o120000
         return 0o100644
+    @staticmethod
+    def record_props(commit, node):
+        "Record path properties onto a commit."
+        if node.props:
+            for (prop, val) in node.props.items():
+                if prop not in StreamParser.IgnoreProperties:
+                    commit.properties[node.path + "#" + prop] = val
+        elif node.props is not None:
+            commit.properties[node.path] = None
     def perform_node(self, node, commit):
         if node.action == SD_DELETE:
             assert node.blob is None
@@ -2338,16 +2347,15 @@ class StreamParser:
                 ancestor = self.find_node(str(int(node.revision)-1), node.path)
             else:
                 ancestor = None
-            # Cope with properties
+            # Record popeties onto the commit *before* merging, so we
+            # only pay in the stream file when properties change.  
+            self.record_props(commit, node)
+            # Now merge properties forward.
             if ancestor and ancestor.props is not None:
                 newprops = copy.copy(ancestor.props)
                 if node.props is not None:
                     newprops.update(node.props)
                 node.props = newprops
-            if node.props:
-                for (prop, val) in node.props.items():
-                    if prop not in StreamParser.IgnoreProperties:
-                        commit.properties[node.path + "#" + prop] = val
             # Time for fileop generation
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
@@ -2552,6 +2560,7 @@ class StreamParser:
                             commit.fileops.append(fileop)
                         continue
                     elif node.action == SD_CHANGE:
+                        self.record_props(commit, node)
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: setting properties %s on %s" \
