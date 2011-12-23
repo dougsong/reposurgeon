@@ -220,3 +220,142 @@ Content-length: 10
 PROPS-END
 
 
+Revision-number: 7
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+Another spacer commit.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-23T02:41:07.814932Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 108
+Text-content-md5: 0855ca99e864029050a7e7a9450b9362
+Text-content-sha1: b45d981141dcd39a1790f3cb077da326493f21e6
+Content-length: 108
+
+This is a test Subversion repository
+
+Now we're going to investigate the behavior of properties under copy.
+
+
+Revision-number: 8
+Prop-content-length: 149
+Content-length: 149
+
+K 7
+svn:log
+V 51
+svn propset svn:executable 'true' hello
+
+...again.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-23T02:41:58.829646Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: change
+Prop-content-length: 36
+Content-length: 36
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+
+
+Revision-number: 9
+Prop-content-length: 130
+Content-length: 130
+
+K 7
+svn:log
+V 32
+Perform 'svn cp hello goodbye'.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-23T02:43:07.411655Z
+PROPS-END
+
+Node-path: trunk/goodbye
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 8
+Node-copyfrom-path: trunk/hello
+Text-copy-source-md5: d84bcf7a6a5ac2179fbbfa55646e9930
+Text-copy-source-sha1: d1087104b3a7ec3555e40a7dfd3475149bf89f5f
+
+
+Revision-number: 10
+Prop-content-length: 176
+Content-length: 176
+
+K 7
+svn:log
+V 78
+The translated 'goodbye' fileop for this revision should have executable set.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-23T02:46:59.669046Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 95
+Text-content-md5: a17a484ca9bbcc5d846b32f46b9fc835
+Text-content-sha1: 3b554cc84432c096e0848c2402652a05ddac06f8
+Content-length: 95
+
+This is a test Subversion repository
+
+After the copy, goodbye has the svn:executable property.
+
+
+Node-path: trunk/goodbye
+Node-kind: file
+Node-action: change
+Text-content-length: 40
+Text-content-md5: d8372e0d96a378b5b4cba98f1ab4f25b
+Text-content-sha1: 8f331995996b8e1249ef8c5a6e30c83665b850db
+Content-length: 40
+
+#!/bin/sh
+
+echo "Goodbye, cruel world!"
+
+
