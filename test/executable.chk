@@ -60,6 +60,62 @@ Should produce a fileop that changes the permissions back to non-executable.
 from :7
 M 100644 :6 hello
 
+blob
+mark :9
+data 108
+This is a test Subversion repository
+
+Now we're going to investigate the behavior of properties under copy.
+
+commit refs/heads/master
+mark :10
+committer esr <esr> 1324608067 +0000
+data 23
+Another spacer commit.
+from :8
+M 100644 :9 README
+
+commit refs/heads/master
+mark :11
+committer esr <esr> 1324608118 +0000
+data 51
+svn propset svn:executable 'true' hello
+
+...again.
+from :10
+M 100755 :6 hello
+
+commit refs/heads/master
+mark :12
+committer esr <esr> 1324608187 +0000
+data 32
+Perform 'svn cp hello goodbye'.
+from :11
+M 100755 :6 goodbye
+
+blob
+mark :13
+data 95
+This is a test Subversion repository
+
+After the copy, goodbye has the svn:executable property.
+
+blob
+mark :14
+data 40
+#!/bin/sh
+
+echo "Goodbye, cruel world!"
+
+commit refs/heads/master
+mark :15
+committer esr <esr> 1324608419 +0000
+data 78
+The translated 'goodbye' fileop for this revision should have executable set.
+from :12
+M 100644 :13 README
+M 100644 :14 goodbye
+
 tag root
 from :2
 tagger esr <esr> 1323737921 +0000
