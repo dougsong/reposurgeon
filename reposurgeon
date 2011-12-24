@@ -5645,11 +5645,19 @@ a start on building an authors file.
         elif fields[0] == "read" and len(fields) == 1:
             self.chosen().read_authormap(self.selection, sys.stdin)
         elif fields[0] == "read":
-            with open(fields[1]) as fp:
-                self.chosen().read_authormap(self.selection, fp)
+            try:
+                with open(fields[1]) as fp:
+                    self.chosen().read_authormap(self.selection, fp)
+            except IOError:
+                raise Recoverable("authors file %s could not be read." \
+                                  % fields[1])
         else:
-            with open(fields[0]) as fp:
-                self.chosen().read_authormap(self.selection, fp)
+            try:
+                with open(fields[0]) as fp:
+                    self.chosen().read_authormap(self.selection, fp)
+            except IOError:
+                raise Recoverable("authors file %s could not be read." \
+                                  % fields[0])
 
     #
     # Reference lifting
