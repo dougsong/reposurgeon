@@ -2321,15 +2321,6 @@ class StreamParser:
                 # Map to git symlink and hope it flies
                 return 0o120000
         return 0o100644
-    @staticmethod
-    def record_props(commit, node):
-        "Record path properties onto a commit."
-        if node.props:
-            for (prop, val) in node.props.items():
-                if prop not in StreamParser.IgnoreProperties:
-                    commit.properties[node.path + "#" + prop] = val
-        elif node.props is not None:
-            commit.properties[node.path] = None
     def perform_node(self, node, commit):
         if node.action == SD_DELETE:
             assert node.blob is None
@@ -2522,7 +2513,12 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-file and per-directory properties
-                self.record_props(commit, node)
+                if node.props:
+                    for (prop, val) in node.props.items():
+                        if prop not in StreamParser.IgnoreProperties:
+                            commit.properties[node.path + "#" + prop] = val
+                elif node.props is not None:
+                    commit.properties[node.path] = ""
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
