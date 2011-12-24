@@ -2,7 +2,7 @@
 
 2.0:
      reposurgon can now read Subversion dump files and repositories directly.
-     The cvspurge command has become redundant and is now gone.
+     The cvspurge and gitsvnparse commands have been removed.
      Added 'import_marks' command.
      It is now possible to alter parent marks with the "edit" command.
      Added new auxiliary script, svngrab, for mirroring Subversion repos.
