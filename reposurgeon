@@ -1850,6 +1850,7 @@ class StreamParser:
         self.linebuffers = []
         # Everying below here is Subversion-specific
         self.markmap = {}       # Revision-to-mark map
+        self.mark_counter = collections.Counter()
         self.parent = None
         self.branches = {}
         self.branchlink = {}
@@ -2342,6 +2343,7 @@ class StreamParser:
             # Time for fileop generation
             if node.blob is not None:
                 node.mark = node.blob.mark = self.__newmark()
+                self.mark_counter[node.mark] += 1
                 self.repo.events.append(node.blob)
                 self.hashmap[node.content_hash] = node
             elif ancestor:
@@ -2369,6 +2371,7 @@ class StreamParser:
                                  perms,
                                  node.mark,
                                  node.path)
+                self.mark_counter[node.mark] += 1
                 commit.fileops.append(fileop)
             self.permissions[node.path] = perms
     def svn_process(self, baton):
@@ -2610,6 +2613,26 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     self.perform_node(node, commit)
                 # Node loop ends
+            # Suppress junk commits manufactured by cvs2svn
+            if "commit was manufactured by cvs2svn" in commit.comment:
+                for fileop in commit.fileops:
+                    # Commit can't have any unique file modifications.
+                    # Normally it just duplicates the ones in its parent, but
+                    # sometimes has references to far-past versions of stuff.
+                    if self.mark_counter[fileop.ref] > 1:
+                        continue
+                    # I don't know why cvs2svn generates deletes into these,
+                    # but they're pretty obviously spurious.
+                    elif fileop.op == 'D':
+                        continue
+                    else:
+                        # Fail safely - any fileop not matching the previous
+                        # tests means the commit should be emitted.  This
+                        # means we never throw away content modifications
+                        break
+                else:
+                    # Suppress this commit
+                    continue
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
             # It's important that this happens after blob creation
