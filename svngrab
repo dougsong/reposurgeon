@@ -29,6 +29,6 @@ elif [ -d "$operand/locks" ]
 then
     svnsync synchronize file://${PWD}/$operand
 else
-    echo "svngrab: $operand doesn't look like a Subversion repository."
+    echo "svngrab: $operand does not look like a Subversion repository."
     exit 1
 fi
