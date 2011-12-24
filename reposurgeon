@@ -2506,6 +2506,8 @@ class StreamParser:
                 au = "no-author"
             if "svn:log" in record.props:
                 commit.comment = record.props.pop("svn:log")
+                if not commit.comment.endswith("\n"):
+                    commit.comment += "\n"
             if global_options["svn_use_uuid"]:
                 attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
             else:
