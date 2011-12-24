@@ -2,31 +2,33 @@
 #
 # svngrab - use svnsync to grab a copy of a Subversion repo
 #
-# Initially equires a single argument which is an SVN URL, e.g something like
-# svn://svn.hercules-390.org/hercules or svn://svn.debian.org/nut.
+# Initially requires a single argument, either an SVN URL, e.g something like
+# svn://svn.hercules-390.org/hercules or svn://svn.debian.org/nut,
+# or the name of a local mirror directory created by a previous run.
 #
-# Creates a local mirror of the repository in a directory named
+# The first run creates a local mirror of the repository in a directory named
 # after the last segment of the URL: that is, the second example
 # above would be unpacked into a local directory named 'nut-mirror'.
 #
-# If the local mirror already exists, it is updated.
+# Later runs can update the local mirror by giving the mirror directory name. 
 #
-svnurl=$1
-local=`basename $svnurl`-mirror
+operand=$1
 
-if [ ! -d "$local" ]
+if [ `expr "$operand" : "svn://"` = 6 ]
 then
+    local=`basename $operand`-mirror
     svnadmin create $local
     cat >$local/hooks/pre-revprop-change <<EOF
 #!/bin/sh
 exit 0;
 EOF
     chmod a+x $local/hooks/pre-revprop-change
-    svnsync init file://${PWD}/$local $svnurl
-elif [ -d "$local/locks" ]
-then
+    svnsync init file://${PWD}/$local $operand
     svnsync synchronize file://${PWD}/$local
+elif [ -d "$operand/locks" ]
+then
+    svnsync synchronize file://${PWD}/$operand
 else
-    echo "svngrab: $local doesn't look like a Subversion repository."
+    echo "svngrab: $operand doesn't look like a Subversion repository."
     exit 1
 fi
