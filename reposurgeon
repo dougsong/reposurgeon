@@ -1276,6 +1276,7 @@ class Commit:
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Branch"] = self.branch
+        msg["Parents"] = " ".join(self.parent_marks)
         if self.authors:
             self.authors[0].email_out(msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
@@ -1299,6 +1300,9 @@ class Commit:
         if self.branch != msg["Branch"]:
             modified = True
         self.branch = msg["Branch"]
+        if self.parent_marks != msg["Parents"].split():
+            modified = True
+        self.parent_marks = msg["Parents"].split()
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
         if not newemail:
             raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
