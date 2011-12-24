@@ -5602,56 +5602,6 @@ component from every path."""
     #
     # Artifact Removal
     #
-    def help_cvspurge(self):
-        print("""
-Purge cruft created by cvs2svn conversions.  This looks for dummy
-commits created by cvs2svn with one parent that were created within 10
-seconds of the parent, have stereotyped comments and either no fileops
-or all delete fileops.  The branch attribute of the commit is given to
-the commit's parent and the commit itself deleted.
-""")
-    def do_cvspurge(self, line):
-        "Purge cruft created by cvs2svn."
-        # Now somewhat redundant with stream reading, maybe should go away. 
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        manufactured = "This commit was manufactured by cvs2svn to create"
-        deletion_set = []
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            if isinstance(event, Commit):
-                # Look at only manufactured commits
-                if len(event.parents()) != 1 or \
-                   event.when() - event.parents()[0].when() >= 10 or \
-                   not manufactured in event.comment:
-                    continue
-                # Generate appropriate tag
-                m = re.search("create tag '([^']*)'", event.comment)
-                if m:
-                    self.chosen().events.append(Tag(name=m.group(1),
-                                                    committish=event.mark,
-                                                    tagger=copy.copy(event.committer),
-                                                    comment="Tag deduced from bogus cvs2svn-generated commit.\n"))
-                # One kind of pathological generated commit is empty.
-                if len(event.fileops) == 0:
-                    announce("Nuking empty manufactured commit %s"%event.mark) 
-                    deletion_set.append(ei)
-                    continue
-                # Another just nukes every file in sight
-                for fileop in event.fileops:
-                    if fileop.op != 'D':
-                        break
-                else:
-                    announce("Nuking all-delete manufactured commit %s" % event.mark)
-                    deletion_set.append(ei)
-                    continue
-                announce("Manufactured commit %s survived" % event.mark)
-        self.chosen().delete(deletion_set, ["obliterate", "tagback"])
-        if verbose >= 1:
-            announce("%d commits obliterated." % len(deletion_set))
-                        
     def help_gitsvnparse(self):
         print("""
 Interpret final comment lines of commits beginning with 'git-svn-id:'
