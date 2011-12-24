@@ -5595,10 +5595,11 @@ Purge cruft created by cvs2svn conversions.  This looks for dummy
 commits created by cvs2svn with one parent that were created within 10
 seconds of the parent, have stereotyped comments and either no fileops
 or all delete fileops.  The branch attribute of the commit is given to
-the commit's parent and the commit itself deleted.  Also,
+the commit's parent and the commit itself deleted.
 """)
     def do_cvspurge(self, line):
-        "Purge cruft created by cvs2svn and re-map CVS references."
+        "Purge cruft created by cvs2svn."
+        # Now somewhat redundant with stream reading, maybe should go away. 
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -5651,6 +5652,7 @@ the repo is written or rebuilt.
 """)
     def do_gitsvnparse(self, line):
         "Interpret and strip git-svn ID lines."
+        # Now somewhat redundant with stream reading, maybe should go away. 
         assert line is not None   # Pacify pylint
         if not self.chosen():
             complain("no repo has been chosen.")
