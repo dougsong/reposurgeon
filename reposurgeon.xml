@@ -974,29 +974,6 @@ associated with repository conversions from order systems.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>cvspurge</command>
-          [<emphasis>selection-set</emphasis>]              
-</term>
-<listitem>
-<para>
-Purge cruft created by cvs2svn conversions.  Takes a selection-set argument,
-but the default to the entire selected repo is probably what you want.</para>
-
-<para>This looks for dummy commits created by cvs2svn with one parent
-that were created within 10 seconds of their parent and contain
-"manufactured by cvs2svn" in the comment.  For each such commit,
-a tag object is with appropriate metadata generated and attached.</para>
-
-<para>If the commit either has no fileops at all or a fileop set
-consisting entirely of deletes, the commit is marked for deletion;
-otherwise a warning is emitted. At deletion time, if the commit was
-created to represent a tag, the branch attribute of the commit) is
-given to the commit's parent and the generated tag object is
-re-pointed at the parent. The commit itself is unconditionally
-deleted.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><command>authors</command>
           [<emphasis>selection-set</emphasis>]
           [<command>read</command>|<command>write</command>]
