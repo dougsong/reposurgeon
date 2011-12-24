@@ -52,6 +52,12 @@ itself, hg, and bzr. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
 
+<para><command>reposurgeon</command> can also read - but not write -
+dumpfiles produced by Subversion. It can thus be used to lift
+Subversion repositories to any VCS that it has output support
+for.</para>
+
+<!--
 <para>In order to deal with version-control systems that do not have
 fast-export equivalents, <command>reposurgeon</command> can also host
 extractor code that reads repositories directly.  For each
@@ -65,13 +71,15 @@ particular, <command>reposurgeon</command> can be used to move a
 repostory history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.</para>
 
+A test extractor exists for git, but is normally disabled in favor of
+the regular exporter. A Subversion extractor existed in an unreleased
+version of <command>reposurgeon</command>, but due to extremely poor
+performance it was discarded in favor of parsing dumpfiles.
+-->
+
 <para>At time of writing the following VCSes are supported through
-exporters: git itself, hg, and bzr. Subversion repositories can be
-imported but not exported. A test extractor exists for git, but is
-normally disabled in favor of the regular exporter. A Subversion
-extractor existed in an unreleased version of
-<command>reposurgeon</command>, but due to extremely poor performance
-it was discarded in favor of parsing dumpfiles.</para>
+both importers and exporters: git itself, hg, and bzr. Subversion
+repositories can be imported but not exported.</para>
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNINGS</title>
@@ -419,8 +427,9 @@ depends on the repository type, and can be displayed with the
 
 <para>If <command>reposurgeon</command> has a nonempty fossil map,
 it will be written to a file named <filename>fossils</filename> 
-in the repository subdirectory as though by a a 
-<filename>fossil write</filename> command.</para>
+in the repository subdirectory as though by a 
+<filename>fossil write</filename> command. (This will normally 
+be the case for Subversion and CVS conversions.)</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -874,11 +883,10 @@ being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
 <command>reposurgeon</command> internally builds a fossil-reference
 map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
-places: (1) metadata from a repository if an extractor was used, (2)
-cvs2svn:rev properties if the repostory was read from a Subversion dump
-stream, (3) $Id$ and $Revision$ headers in repository files, and (4) the
-<filename>.git/cvs-revisions</filename> created by <command>git
-cvsimport</command>.</para>
+places: (1) cvs2svn:rev properties if the repostory was read from a
+Subversion dump stream, (2) $Id$ and $Revision$ headers in repository
+files, and (3) the <filename>.git/cvs-revisions</filename> created by
+<command>git cvsimport</command>.</para>
 
 <para>The workflow for lifting possible references is this: first,
 find possible CVS and Subversion references with the
@@ -1254,7 +1262,7 @@ git-svn style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
 the <command>authors read</command> command.</para>
 
-<para>Reading a Subversion stream writing of the fossil map as
+<para>Reading a Subversion stream enables writing of the fossil map as
 'fossil' passthroughs when the repo is written to a stream
 file.</para>
 </refsect1>
