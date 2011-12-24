@@ -874,9 +874,10 @@ being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
 <command>reposurgeon</command> internally builds a fossil-reference
 map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
-places: (1) Metadata from a repository if an extractor was used, (2)
-git-svn metadata headers (when gitsvnparse is called), (3) $Id$ and
-$Revision$ headers in repository files, and (4) the
+places: (1) metadata from a repository if an extractor was used, (2)
+cvs2svn:rev properties if the repostory was read from a Subversion dump
+stream,  (3) git-svn metadata headers (when gitsvnparse is called), 
+(4) $Id$ and $Revision$ headers in repository files, and (5) the
 <filename>.git/cvs-revisions</filename> created by <command>git
 cvsimport</command>.</para>
 
