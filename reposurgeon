@@ -3764,8 +3764,14 @@ def rebuild_repo(repo, target, preferred):
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
         if repo.write_fossils:
-            with open(os.path.join(vcs.subdirectory, "fossils"), "w") as wfp:
-                repo.write_fossilmap(wfp)
+            try:
+                fossilfile = os.path.join(vcs.subdirectory, "fossils")
+                with open(fossilfile, "w") as wfp:
+                    repo.write_fossilmap(wfp)
+            except IOError:
+                raise Recoverable("fossils file %s could not be written." \
+                                  % fossilfile)
+
         do_or_die(vcs.checkout, "repository_checkout")
         if verbose:
             announce("rebuild is complete.")
@@ -4661,11 +4667,14 @@ unusual topology and you intend to do your own branch surgery.
             # Fall through
         (tfdesc, tfname) = tempfile.mkstemp()
         assert tfdesc > -1    # pacify pylint
-        with open(tfname, "w") as tfp:
-            for i in selection:
-                event = self.chosen()[i]
-                if hasattr(event, "email_out"):
-                    tfp.write(event.email_out(i))
+        try:
+            with open(tfname, "w") as tfp:
+                for i in selection:
+                    event = self.chosen()[i]
+                    if hasattr(event, "email_out"):
+                        tfp.write(event.email_out(i))
+        except IOError:
+            raise Recoverable("write of editor tempfile failed")
         if os.system(editor + " " + tfname):
             raise Recoverable("%s returned a failure status" % editor)
         else:
@@ -5640,8 +5649,12 @@ a start on building an authors file.
         if not fields or (fields[0] == "write" and len(fields) == 1):
             self.chosen().write_authormap(self.selection, sys.stdout)
         elif fields[0] == "write":
-            with open(fields[1], "w") as wfp:
-                self.chosen().write_authormap(self.selection, wfp)            
+            try:
+                with open(fields[1], "w") as wfp:
+                    self.chosen().write_authormap(self.selection, wfp)
+            except IOError:
+                raise Recoverable("authors file %s could not be written." \
+                                  % fields[1])
         elif fields[0] == "read" and len(fields) == 1:
             self.chosen().read_authormap(self.selection, sys.stdin)
         elif fields[0] == "read":
