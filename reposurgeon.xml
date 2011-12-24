@@ -876,8 +876,7 @@ map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
 places: (1) metadata from a repository if an extractor was used, (2)
 cvs2svn:rev properties if the repostory was read from a Subversion dump
-stream,  (3) git-svn metadata headers (when gitsvnparse is called), 
-(4) $Id$ and $Revision$ headers in repository files, and (5) the
+stream, (3) $Id$ and $Revision$ headers in repository files, and (4) the
 <filename>.git/cvs-revisions</filename> created by <command>git
 cvsimport</command>.</para>
 
@@ -889,40 +888,6 @@ cookies into action stamps (using the information in the
 fossil-reference map) without having to do the lookup by hand.</para>
 
 <variablelist>
-<varlistentry>
-<term><command>gitsvnparse</command>
-</term>
-<listitem>
-<para>Interpret final comment lines of commits beginning with
-'git-svn-id:' as git-svn metadata lines and remove them.  If present,
-the Subversion commit ID is extracted and made the value of a
-per-commit property named 'svn', which becomes visible; also, the
-association between that Subversion revision and its commit becomes
-part of the fossil map.</para>
-
-<para>Also, change refs/remotes/svn branch names to corresponding
-local ones and lift tip tag commits without file opations to actual
-tag objects (replicating what <command>svn2git</command> does to clean
-up a repository after translation).</para>
-
-<para>Finally, detect delete/modify sequences that are actually renames 
-and turn them into renames.</para>
-
-<para>The command modifier "strip" suppresses saving the 'svn'
-property. This option was required for older versions of this tool
-that did not automatically suppress writing properties to importers
-that couldn't handle them: it has been retained for backwards
-compatibility.</para>
-
-<para>Also, enables writing of the fossil map as 'fossil' passthroughs when
-the repo is written to a stream file.</para>
-
-<para>Note: in earlier version of <command>reposugeon</command> this
-command took a selection set of events to modify, defaulting to all
-events. It now always converts the entire repo, and no longer takes
-a selection set.</para>
-</listitem>
-</varlistentry>
 <varlistentry>
 <term><command>references</command>
           [<emphasis>selection-set</emphasis>]
@@ -942,12 +907,12 @@ associated with that blob, as described in <xref
 linkend='style'/>.</para>
 
 <para>It is not guaranteed that every such reference will be resolved,
-or even that any at all will be. Generally, if the repo contains git-svn
-headers and <command>gitsvnparse</command> has been called, every SVN
-cookie will resolve. CVS references are less likely to be resolvable.</para>  
+or even that any at all will be. Normally all references in history
+from a Subversion repository will resolve, but CVS references are less
+likely to be resolvable.</para>
 
-<para>Also, enables writing of the fossil map as 'fossil' passthroughs
-when the repo is written to a stream file.</para>
+<para>Also, this command enables writing of the fossil map as 'fossil'
+passthroughs when the repo is written to a stream file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1005,15 +970,6 @@ or dump created by cvs2git or by git-svn invoked without -A.</para>
 argument: write each unique committer, author, and tagger (no file
 argument sends the report to standard output). This may be helpful as
 a start on building an authors file.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term><command>gitsvnparse strip</command>
-          [<emphasis>selection-set</emphasis>]
-</term>
-<listitem>
-<para>The <command>gitsvnparse</command> (previously described) will strip
-out git-svn metadata lines when given the 'strip' modifier.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -1298,6 +1254,9 @@ git-svn style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
 the <command>authors read</command> command.</para>
 
+<para>Reading a Subversion stream writing of the fossil map as
+'fossil' passthroughs when the repo is written to a stream
+file.</para>
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>

@@ -25,13 +25,9 @@ from foo.sd.  Here is a summary of the test sources:
 |exiguous.svn    |Branchy repo with exiguous branch at top level
 |filecopy.svn	 |Test to make sure file copies don't confuse branch detection.
 |graft.tst       |Grafts together the bzr and testrepo repositories
-|gsoc.fi         |The Google Summer of Code branch of Roundup
-|gsoc.tst        |Tests authors & readmap commands using gsoc.fi 
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
 |nontipcopy.svn  |Two branches, with the creation right after a tag copy
 |nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it
-|references.fi   |Synthetic test load for CVS and Subversion reference cookies
-|references.tst  |Tests reference lifting commands using references.fi 
 |rootfile.svn    |Branchy layout with a file at the root level.
 |roundup.fi      |Early segment of the Roundup tracker repo
 |roundup.tst     |Test to see how it renders  the two different botched starts
@@ -46,8 +42,6 @@ from foo.sd.  Here is a summary of the test sources:
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
 |vanilla.svn     |Standard layout. Linear. Simplest case, no tags or branches.
 |=============================================================================
-
-roundup-authors.txt is the auxiliary file used to test author mapping
 
 === Making new Subversion test loads ===
 
