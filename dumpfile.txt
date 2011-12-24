@@ -1,6 +1,6 @@
 = How to interpret Subversion dumpfiles =
 
-Version 0.6, 2011-12-23
+Version 0.7, 2011-12-24
 
 == Introduction ==
 
