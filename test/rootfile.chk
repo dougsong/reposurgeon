@@ -42,8 +42,8 @@ M 100644 :5 README
 tag root
 from :2
 tagger esr <esr> 1322776641 +0000
-data 82
+data 60
 Directory layout
 
-[[Tag from directory creation or copy commit at Subversion r1]]
+[[Tag from root commit at Subversion r1]]
 

@@ -2670,7 +2670,7 @@ class StreamParser:
                 self.repo.tagify(initial,
                                  "root",
                                  self.repo.commits()[1].mark,
-                                 "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % initial.fossil_id)
+                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
                 baton.twirl()
             else:
                 complain("could not tagify root commit.")
@@ -2765,6 +2765,17 @@ class StreamParser:
                         baton.twirl()
                 baton.twirl("+")
         # Code controlled by svn_nobranch option ends.
+        #
+        # Now we need to tagify all other commits without fileops, because
+        # git is going to just discard them when we build a live repo and
+        # they might possibly contain interesting metadata.  Usually they're
+        # just debris from tagging, though.
+        for commit in self.repo.commits():
+            if not commit.fileops:
+                self.repo.tagify(commit,
+                                 "emptycommit-%s" % commit.fossil_id,
+                                 commit.parent_marks[0],
+                                 "[[Tag from zero-commit fileop at Subversion r%s]]\n" % commit.fossil_id)
         baton.twirl("polishing")
         # Now pretty up the branch names
         for commit in self.repo.commits():

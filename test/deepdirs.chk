@@ -101,10 +101,10 @@ M 100644 :3 child3
 tag root
 from :2
 tagger esr <esr> 1324128964 +0000
-data 83
+data 61
 Directory layout.
 
-[[Tag from directory creation or copy commit at Subversion r1]]
+[[Tag from root commit at Subversion r1]]
 
 tag foocopy
 from :8
