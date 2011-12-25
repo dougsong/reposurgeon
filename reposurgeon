@@ -5172,8 +5172,12 @@ before any individual event is updated.
         for (i, message) in enumerate(update_list):
             if "Event-Number" not in message:
                 raise Recoverable("missing event number in update %d" % i)
-            eventnum = int(message["Event-Number"]) - 1
+            try:
+                eventnum = int(message["Event-Number"]) - 1
+            except ValueError:
+                raise Fatal("event number garbled in update %d" % (i+1,))
             if eventnum < 0 or eventnum >= len(self.chosen()):
+                    
                 raise Fatal("event number %d out of range in update %d" % (eventnum, i+1))
             event = self.chosen()[eventnum]
             if not hasattr(event, "email_in"):
