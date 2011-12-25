@@ -279,15 +279,29 @@ commands in versions up to 1.9 were obsoleted by the ability to read
 Subversion repositories directly and have been removed. The equivalent
 fixups are now done, and done better, at repository read time.)</p>
 
-<p>If you forgot to specify an authors file with -A at conversion
-time, or couldn't do that because you were using <code>cvs2git</code>,
-you can use the <code>authors read</code> command to perform the
-operation with <code>reposurgeon</code>.</p>
+<p>Here's a checklist of manual cleanup steps. Tips on how to do them
+with reposurgeon follow.</p>
 
-<p>The <code>edit</code> command is good for (1) fixing up
-multiline comments and (2) tweaking the comments on the tag objects
-generated from branches when a Subversion repository is loaded.
-In reposurgeon 1.8 or later, try "edit multiline".</p>
+<ol>
+<li>Map author IDs from local to DVCS form.</li>
+<li>Check for leftover cvs2svn junk commits and remove them if possible.</li>
+<li>Remove delete-only tip commits.</li>
+<li>Review generated tags, pruning as appropriate.</li>
+<li>Massage comments into summary-line-plus-continuation form.</li>
+<li>Lift references in commit comments.</p>
+<li>Look for branch merge points and patch parent marks to make them.</li>
+<li>Fix up or remove $-keyword cookies in the latest revision.</li>
+<li>For the record, make a commit noting time and date of the repo lift.</li>
+<li>If your target was git, run  <code>git gc &#45;&#45;aggressive</code>.</li>
+</ol>
+
+<p>Most of the work will be in the comment-fixup and reference-lifting
+stages. I find, however, that they normally takes only a couple of
+hours even on very large repos with thousands of commits. An entire
+conversion is usually less than a day of work.</p>
+
+<p>You can use the <code>authors read</code> command to perform the
+author-ID mapping operation with <code>reposurgeon</code>.</p>
 
 <p>The command <code>list /cvs2svn/</code> will show you all remaining
 <code>cvs2svn</code> artifacts.  Some can be deleted; a clue to look
@@ -301,15 +315,31 @@ comment and move on.</p>
 show you tip commits which may contain only deletes and
 deletealls.</p>
 
+<p>Tags can be inspected with <code>inspect =T</code>. Junk tags can
+be removed with the <code>delete</code> commmand. Tag comments can be
+modified with <code>edit</code>.
+
+<p>The <code>edit</code> command is also good for fixing up multiline
+comments. In reposurgeon 1.8 or later, try "edit multiline".</p>
+
+<p>See the documentation of the <code>references</code> command; for
+details on how fix up Subversion and CVS changeset references in
+comments so they're still meaningful.</p>
+
 <p>The <code>reposurgeon</code> command <code>edit</code> will also
 allow you to add a parent mark to a commit.  This can be used to merge
 Subversion branches when you can detect this is appropriate using
 mergeinfo properties.</p>
 
-<p>Also, read the documentation of the <code>references</code>
-command; reposurgeon has facilities for reference-lifting - fixing up
-Subversion and CVS changeset references in comments so they're still
-meaningful.</p>
+<p>One minor feature you lose in moving from CVS or Subversion to a
+DVCS is keyword expansion.  You should go through the last revision of
+the code and remove $Id$, $Date$, $Revision$, and other keyword
+cookies lest they become unhelpful fossils. A command like <code>grep -R
+'$[A-Z]' .</code> may be helpful.</p>
+
+<p>It's good practice to leave a commit in the stream noting the date 
+and time of the repo lift.  See the next section on conversion
+comments for discussion.</p>
 
 <p>Experiments with reposurgeon suggest that <code>git import</code>
 doesn't try to pack or otherwise optimize for space when it populates
@@ -341,6 +371,9 @@ by cvs2svn have been removed, commit references have been mapped into
 a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]
 </blockquote>
+
+<p>You should also, as previously noted, leave a comment in the normal
+commit sequence noting the switchover.</p>
 
 <h2 id="recovery">Nonsurgical cleanup steps</h2>
 
