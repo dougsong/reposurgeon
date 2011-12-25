@@ -396,18 +396,6 @@ class GitExtractor:
 
 class SvnExtractor():
     "Repository extractor for the Subversion version-control system."
-    # Native Subversion properties that we don't suppress:
-    # svn:externals, svn:special, svn:mergeinfo.
-    # The reason for these suppressions is to avoid a huge volume
-    # of junk properties.  We want to let through other properties
-    # that might carry useful information.
-    IgnoreProperties = (
-        "svn:executable",
-        "svn:mime-type",
-        "svn:keywords",
-        "svn:eol-style",
-        "svn:needs-lock",
-        )
     def __init__(self):
         # These must be set for every extractor class
         self.name = "svn"
@@ -2517,22 +2505,13 @@ class StreamParser:
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
-                # Handle per-file and per-directory properties.
+                # Handle per-path properties.
                 if node.props:
                     if "cvs2svn:cvs-rev" in node.props:
                         cvskey = "CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.dollar_map[cvskey] = commit
-                        # Deleting these is a bit questionable, philosophically.
-                        # It would be better never to throw away metadata.  But
-                        # they clutter up malboxized listings something awful.
                         del node.props["cvs2svn:cvs-rev"]
-                    for (prop, val) in node.props.items():
-                        # See previous comment...
-                        if prop not in StreamParser.IgnoreProperties:
-                            commit.properties[node.path + "#" + prop] = val
-                elif node.props is not None:
-                    commit.properties[node.path] = ""
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
