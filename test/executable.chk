@@ -119,8 +119,8 @@ M 100755 :14 goodbye
 tag root
 from :2
 tagger esr <esr> 1323737921 +0000
-data 83
+data 61
 Directory layout.
 
-[[Tag from directory creation or copy commit at Subversion r1]]
+[[Tag from root commit at Subversion r1]]
 

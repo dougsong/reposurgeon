@@ -55,10 +55,10 @@ M 100644 :7 README
 tag root
 from :2
 tagger esr <esr> 1322672455 +0000
-data 95
+data 73
 Linear history with tip tags.
 
-[[Tag from directory creation or copy commit at Subversion r1]]
+[[Tag from root commit at Subversion r1]]
 
 tag tag1
 from :4
