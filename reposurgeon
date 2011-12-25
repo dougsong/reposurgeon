@@ -2811,6 +2811,7 @@ class StreamParser:
         baton.twirl("renumbering")
         self.repo.renumber()
         baton.twirl("+")
+        self.repo.write_fossils = True
 
 # Generic repository-manipulation code begins here
 
@@ -2923,7 +2924,7 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for commit in self.commits():
-            if self.fossil_id:
+            if commit.fossil_id:
                 fp.write("%s\t%s\t%s\n" % (commit.fossil_id,
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
