@@ -6,6 +6,8 @@
 #
 # Requires Python 2.7.2 or newer.
 #
+# TODO: git extractor is broken
+#
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import readline, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
@@ -3580,8 +3582,10 @@ def read_repo(source, preferred):
                 continue
             subdir = os.path.join(source, possible.subdirectory)
             if os.path.exists(subdir) and os.path.isdir(subdir):
-                extractor = possible
-                hitcount += 1
+                if possible.visible or preferred \
+                       and possible.name == preferred.name:
+                    extractor = possible
+                    hitcount += 1
         if hitcount == 0:
             raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
         elif hitcount > 1:
@@ -5073,7 +5077,12 @@ dump.
         self.set_selection_set(line, list(range(len(self.chosen()))))
         for ei in self.selection:
             event = self.chosen().events[ei]
-            sys.stdout.write(repr(ei+1) + ": " + (72 * "=") + "\n")
+            header = "Event %s, " % repr(ei+1)
+            if hasattr(event, "fossil_id"):
+                header += "Fossil-ID %s, " % event.fossil_id
+            header = header[:-2]
+            header += " " + ((72 - len(header)) * "=") + "\n"
+            sys.stdout.write(header)
             if isinstance(event, Commit):
                 sys.stdout.write(event.dump(write_properties=True))
             else:
