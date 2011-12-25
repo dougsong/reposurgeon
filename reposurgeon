@@ -2180,12 +2180,8 @@ class StreamParser:
                                         # Don't try to collect data, just pass
                                         # it through.
                                         self.warn("submodule link")
-                                    elif fileop.mode == "120000":
-                                        # This is a submodule link.  Don't
-                                        # try to collect data, just pass
-                                        # it through.
-                                        self.warn("symbolic link")
                                     else:
+                                        # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == "N":
                                     fileop = FileOp(commit).parse(line)
@@ -2309,7 +2305,8 @@ class StreamParser:
             if "svn:executable" in node.props:
                 return 0o100755
             elif "svn:special" in node.props:
-                # Map to git symlink and hope it flies
+                # Map to git symlink, which behaves the same way.
+                # Blob contents is the path the link should resolve to. 
                 return 0o120000
         return 0o100644
     def perform_node(self, node, commit):
