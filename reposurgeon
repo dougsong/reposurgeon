@@ -3633,6 +3633,20 @@ def read_repo(source, preferred):
                 if os.path.exists(fossils):
                     with open(fossils) as rfp:
                         repo.read_fossilmap(rfp)
+                if vcs.lister:
+                    def fileset(exclude):
+                        allfiles = []
+                        for root, dirs, files in os.walk("."):
+                            allfiles += [os.path.join(root, name)[2:] for name in files]
+                            for exdir in exclude:
+                                if exdir in dirs:
+                                    dirs.remove(exdir)
+                        return set(allfiles)
+                    with popen_or_die(vcs.lister) as fp:
+                        repofiles = set(fp.read().split())
+                    allfiles = fileset(exclude=[vcs.subdirectory]\
+                                       + glob.glob(".rs*"))
+                    repo.preserve_set = allfiles - repofiles
                 # kluge: git-specific hook
                 if repo.vcs.name == "git":
                     if os.path.exists(".git/cvs-revisions"):
@@ -3783,19 +3797,6 @@ def rebuild_repo(repo, target, preferred):
                     announce("no preservations.")
             else:
                 preserve = repo.preserve_set.copy()
-                if vcs and vcs.lister:
-                    def fileset(exclude):
-                        allfiles = []
-                        for root, dirs, files in os.walk("."):
-                            allfiles += [os.path.join(root, name)[2:] for name in files]
-                            for exdir in exclude:
-                                if exdir in dirs:
-                                    dirs.remove(exdir)
-                        return set(allfiles)
-                    with popen_or_die(vcs.lister) as fp:
-                        repofiles = set(fp.read().split())
-                    allfiles = fileset(exclude=[vcs.subdirectory]+glob.glob(".rs*"))
-                    preserve = allfiles - repofiles
             # This is a critical region.  Ignore all signals until we're done.
             with CriticalRegion():
                 # Move the unmodified repo contents in target to the
