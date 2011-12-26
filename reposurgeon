@@ -5158,7 +5158,10 @@ before any individual event is updated.
         "Accept a mailbox file representing object metadata and update from it."
         infile = line.strip()
         if infile and infile != '-':
-            fp = open(infile)
+            try:
+                fp = open(infile)
+            except IOError:
+                raise Recoverable("couldn't read %s" % infile)
         else:
             fp = sys.stdin
         update_list = []
