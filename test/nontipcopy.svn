@@ -167,13 +167,13 @@ Now we do our first modification.
 
 
 Revision-number: 5
-Prop-content-length: 134
-Content-length: 134
+Prop-content-length: 133
+Content-length: 133
 
 K 7
 svn:log
-V 36
-Crearte a sample tag at revision 2.
+V 35
+Create a sample tag at revision 2.
 
 K 10
 svn:author

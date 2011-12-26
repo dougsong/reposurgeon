@@ -2761,7 +2761,7 @@ class StreamParser:
                         self.repo.tagify(commit,
                                          os.path.basename(commit.branch[:-1]),
                                          commit.parent_marks[0],
-                                         "[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.fossil_id)
+                                         "[[Tag from branch root at Subversion r%s]]\n" % commit.fossil_id)
                         baton.twirl()
                 baton.twirl("+")
         # Code controlled by svn_nobranch option ends.

@@ -63,16 +63,16 @@ Linear history with tip tags.
 tag tag1
 from :4
 tagger esr <esr> 1322672941 +0000
-data 89
+data 67
 This is an example tag.
 
-[[Tag from directory creation or copy commit at Subversion r4]]
+[[Tag from branch root at Subversion r4]]
 
 tag tag2
 from :8
 tagger esr <esr> 1322673346 +0000
-data 85
+data 63
 Create a second tag
 
-[[Tag from directory creation or copy commit at Subversion r7]]
+[[Tag from branch root at Subversion r7]]
 
