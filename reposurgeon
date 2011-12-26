@@ -3792,11 +3792,6 @@ def rebuild_repo(repo, target, preferred):
         assert(os.path.abspath(savedir))
 
         if staging != target:
-            if not repo.preserve_set:
-                if verbose:
-                    announce("no preservations.")
-            else:
-                preserve = repo.preserve_set.copy()
             # This is a critical region.  Ignore all signals until we're done.
             with CriticalRegion():
                 # Move the unmodified repo contents in target to the
@@ -3813,16 +3808,19 @@ def rebuild_repo(repo, target, preferred):
                               os.path.join(target, sub))
                 if verbose:
                     announce("modified repo moved to %s." % os.path.relpath(target))
-                    for sub in preserve:
-                        src = os.path.join(savedir, sub)
-                        dst = os.path.join(target, sub)
-                        if os.path.exists(src):
-                            if os.path.isdir(src):
-                                shutil.copytree(src, dst)
-                            else:
-                                shutil.copy2(src, dst)
-                    if verbose:
-                        announce("preserved files restored.")
+            if repo.preserve_set:
+                for sub in repo.preserve_set:
+                    src = os.path.join(savedir, sub)
+                    dst = os.path.join(target, sub)
+                    if os.path.exists(src):
+                        if os.path.isdir(src):
+                            shutil.copytree(src, dst)
+                        else:
+                            shutil.copy2(src, dst)
+                if verbose:
+                    announce("preserved files restored.")
+            elif verbose:
+                announce("no preservations.")
     finally:
         os.chdir(here)
         if staging != target:
