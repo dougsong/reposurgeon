@@ -53,8 +53,10 @@ A vanilla repository - standard layout, linear history, no tags, no branches.
 tag emptycommit-5
 from :6
 tagger esr <esr> 1323084440 +0000
-data 77
+data 151
 Adding a property setting.
 
-[[Tag from zero-commit fileop at Subversion r5]]
+[[Tag from zero-fileop commit at Subversion r5:
+<NodeAction: r5 change file 'trunk/README' properties=[('foo', 'bar')]>
+]]
 
