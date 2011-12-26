@@ -1810,7 +1810,10 @@ class StreamParser:
             #    tell += "sources=%s " % self.from_set
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
-                tell += "%s " % self.props
+                showprops = repr(self.props)
+                if showprops.startswith("OrderedDict("):
+                    showprops = showprops[12:-1]
+                tell += "properties=%s " % showprops
             return tell[:-1] + ">"
         __repr__ = __str__
     class RevisionRecord:
@@ -2772,10 +2775,17 @@ class StreamParser:
         # just debris from tagging, though.
         for commit in self.repo.commits():
             if not commit.fileops:
+                legend = "[[Tag from zero-fileop commit at Subversion r%s" \
+                         % commit.fossil_id
+                if self.revisions[commit.fossil_id].nodes:
+                    legend += ":\n"
+                    for node in self.revisions[commit.fossil_id].nodes:
+                        legend += str(node) + "\n"
+                legend += "]]\n"
                 self.repo.tagify(commit,
                                  "emptycommit-%s" % commit.fossil_id,
                                  commit.parent_marks[0],
-                                 "[[Tag from zero-commit fileop at Subversion r%s]]\n" % commit.fossil_id)
+                                 legend)
         baton.twirl("polishing")
         # Now pretty up the branch names
         for commit in self.repo.commits():
