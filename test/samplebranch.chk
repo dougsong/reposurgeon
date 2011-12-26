@@ -85,8 +85,8 @@ This repo illustrates simple branching with interleaved commits.
 tag samplebranch
 from :2
 tagger esr <esr> 1322682540 +0000
-data 109
+data 87
 A branch created for illustrative purposes.
 
-[[Tag from directory creation or copy commit at Subversion r3]]
+[[Tag from branch root at Subversion r3]]
 
