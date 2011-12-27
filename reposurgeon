@@ -7,6 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 # TODO: git extractor is broken
+# TODO: Attempt merge detection?
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import readline, time, calendar, signal, shutil, copy, shlex, collections
@@ -1334,15 +1335,15 @@ class Commit:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
                         if verbose >= DEBUG_EMAILIN:
-                            announce("in commit %d, Author is modified" \
-                                  % (int(msg["Event-Number"])))
+                            announce("in commit %s, Author #%d is modified" \
+                                  % (msg["Event-Number"], i+1))
                         modified = True
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if date != self.authors[i].date:
                         if verbose >= DEBUG_EMAILIN:
-                            announce("in event %d, %s-Date is modified" \
-                                  % (int(msg["Event-Number"]), hdr))
+                            announce("in event %s, %s-Date #%d is modified" \
+                                  % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
         if "Fossil-ID" in msg:
