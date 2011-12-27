@@ -2,4 +2,5 @@
 read nut.svn
 authors read nut-authors
 mailbox_in nut.mbox
+references lift
 write
