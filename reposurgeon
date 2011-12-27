@@ -2482,6 +2482,7 @@ class StreamParser:
             if self.parent:
                 commit.parent_marks = [self.markmap[self.parent]]
             commit.fossil_id = revision
+            self.repo.dollar_map["SVN:%s" % revision] = commit
             try:
                 ad = record.props.pop("svn:date")
             except KeyError, key:
@@ -5734,15 +5735,12 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
         repo.parse_dollar_cookies()
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "lift" in rest:
-            fossilmap = {}
-            for commit in repo.commits():
-                fossilmap[commit.fossil_id] = commit
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: fossilmap.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.dollar_map.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: fossilmap.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.dollar_map.get(p)),
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
