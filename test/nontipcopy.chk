@@ -107,7 +107,7 @@ Initial repo layout.
 
 [[Tag from root commit at Subversion r1]]
 
-tag sample-tag
+tag sample-tag-root
 from :2
 tagger esr <esr> 1322408285 +0000
 data 78
@@ -115,7 +115,7 @@ Create a sample tag at revision 2.
 
 [[Tag from branch root at Subversion r5]]
 
-tag sample-branch
+tag sample-branch-root
 from :2
 tagger esr <esr> 1322509253 +0000
 data 68

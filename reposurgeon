@@ -580,7 +580,7 @@ class SvnExtractor():
                 if not commit.fileops:
                     if commit.parent_marks:
                         repo.tagify(commit,
-                                    os.path.basename(commit.branch),
+                                    os.path.basename(commit.branch) + "-root",
                                     commit.parent_marks[0],
                                     "\n[[Tag from directory creation or copy commit at Subversion r%s]]\n" % commit.fossil_id)
                     else:
@@ -2762,7 +2762,7 @@ class StreamParser:
                            and commit.parent_marks \
                            and not commit.fileops:
                         self.repo.tagify(commit,
-                                         os.path.basename(commit.branch[:-1]),
+                                         os.path.basename(commit.branch[:-1]) + "-root",
                                          commit.parent_marks[0],
                                          "[[Tag from branch root at Subversion r%s]]\n" % commit.fossil_id)
                         baton.twirl()
