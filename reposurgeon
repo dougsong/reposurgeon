@@ -2480,7 +2480,7 @@ class StreamParser:
             if self.parent:
                 commit.parent_marks = [self.markmap[self.parent]]
             commit.fossil_id = revision
-            self.repo.references_map["SVN:%s" % revision] = commit
+            self.repo.fossil_map["SVN:%s" % revision] = commit
             try:
                 ad = record.props.pop("svn:date")
             except KeyError, key:
@@ -2511,7 +2511,7 @@ class StreamParser:
                     if "cvs2svn:cvs-rev" in node.props:
                         cvskey = "CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
-                        self.repo.references_map[cvskey] = commit
+                        self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
                 # Actions on directories
                 if node.kind == SD_DIR:
@@ -2847,7 +2847,7 @@ class Repository:
         self.basedir = os.getcwd()
         self.write_fossils = False
         self.dollar_map = {}        # From dollar cookies in files
-        self.references_map = {}    # From anything that doesn't survive rebuild
+        self.fossil_map = {}    # From anything that doesn't survive rebuild
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -2927,25 +2927,27 @@ class Repository:
             fp.write(contributor + "\n")
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
-        mark_map = {}
+        commit_map = {}
         for event in self.commits():
-            mark_map[(event.committer.date.timestamp, event.committer.email)] = event
+            commit_map[(event.committer.date.timestamp, event.committer.email)] = event
         try:
             for line in fp:
                 (fossil, timefield, person) = line.split()
                 when_who = (Date(timefield).timestamp, person)
-                if when_who in mark_map:
-                    mark_map[when_who].fossil_id = fossil
+                if when_who in commit_map:
+                    self.fossil_map[fossil] = commit_map[when_who]
+                    if fossil.startswith("SVN:"):
+                        commit_map[when_who].fossil_id = fossil[4:]
                 else:
                     complain("no mark matches fossil %s" % fossil)
-            del mark_map
+            del commit_map
         except ValueError:
             raise Recoverable("bad syntax in fossils file.")
     def write_fossilmap(self, fp):
         "Dump fossil references."
-        for commit in self.commits():
+        for (cookie, commit) in self.fossil_map.items():
             if commit.fossil_id:
-                fp.write("%s\t%s\t%s\n" % (commit.fossil_id,
+                fp.write("%s\t%s\t%s\n" % (cookie,
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email))
     def tagify(self, commit, name, committish, legend=""):
@@ -5737,9 +5739,9 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.references_map.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.fossil_map.get(p) or repo.dollar_map.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: repo.references_map.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.fossil_map.get(p) or repo.dollar_map.get(p)),
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
