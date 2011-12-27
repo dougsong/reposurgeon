@@ -2109,14 +2109,12 @@ class StreamParser:
                                     else:
                                         # Subversion revision
                                         blob.cookie = fields[1]
-                                    self.repo.write_fossils = True
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                      blobcontent):
                                     rev = m.group(0).strip()
                                     if '.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                        self.repo.write_fossils = True
                                 wfp.write(blobcontent)
                                 wfp.close()
                             else:
@@ -2482,7 +2480,7 @@ class StreamParser:
             if self.parent:
                 commit.parent_marks = [self.markmap[self.parent]]
             commit.fossil_id = revision
-            self.repo.dollar_map["SVN:%s" % revision] = commit
+            self.repo.references_map["SVN:%s" % revision] = commit
             try:
                 ad = record.props.pop("svn:date")
             except KeyError, key:
@@ -2513,7 +2511,7 @@ class StreamParser:
                     if "cvs2svn:cvs-rev" in node.props:
                         cvskey = "CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
-                        self.repo.dollar_map[cvskey] = commit
+                        self.repo.references_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
                 # Actions on directories
                 if node.kind == SD_DIR:
@@ -2848,7 +2846,8 @@ class Repository:
         self.case_coverage = set([])
         self.basedir = os.getcwd()
         self.write_fossils = False
-        self.dollar_map = {}
+        self.dollar_map = {}        # From dollar cookies in files
+        self.references_map = {}    # From anything that doesn't survive rebuild
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -5738,9 +5737,9 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.dollar_map.get(p)),
+                      lambda p: repo.references_map.get(p) or repo.dollar_map.get(p)),
                      ("SVN:[0-9]+",
-                      lambda p: repo.dollar_map.get(p)),
+                      lambda p: repo.references_map.get(p) or repo.dollar_map.get(p)),
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
