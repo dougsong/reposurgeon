@@ -60,7 +60,7 @@ Linear history with tip tags.
 
 [[Tag from root commit at Subversion r1]]
 
-tag tag1
+tag tag1-root
 from :4
 tagger esr <esr> 1322672941 +0000
 data 67
@@ -68,7 +68,7 @@ This is an example tag.
 
 [[Tag from branch root at Subversion r4]]
 
-tag tag2
+tag tag2-root
 from :8
 tagger esr <esr> 1322673346 +0000
 data 63

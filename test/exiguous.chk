@@ -34,7 +34,7 @@ Directory layout.
 
 [[Tag from root commit at Subversion r1]]
 
-tag realbranch
+tag realbranch-root
 from :2
 tagger esr <esr> 1323170783 +0000
 data 96

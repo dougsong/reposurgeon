@@ -18,7 +18,7 @@ Directory layout.
 
 [[Tag from root commit at Subversion r1]]
 
-tag emptybranch
+tag emptybranch-root
 from :2
 tagger esr <esr> 1323167895 +0000
 data 115

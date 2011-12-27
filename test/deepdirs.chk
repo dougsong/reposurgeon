@@ -106,7 +106,7 @@ Directory layout.
 
 [[Tag from root commit at Subversion r1]]
 
-tag foocopy
+tag foocopy-root
 from :8
 tagger esr <esr> 1324319862 +0000
 data 191
