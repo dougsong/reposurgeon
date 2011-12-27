@@ -3,7 +3,7 @@
 #
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README NEWS COPYING reposurgeon reposurgeon.xml reposurgeon.1 svngrab
+SOURCES = README NEWS COPYING reposurgeon reposurgeon.xml reposurgeon.1 svnpull
 SOURCES += Makefile control reposturgeon.png
 
 all: reposurgeon.1

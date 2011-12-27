@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# svngrab - use svnsync to grab a copy of a Subversion repo
+# svnpull - use svnsync to grab a copy of a Subversion repo
 #
 # Initially requires a single argument, either an SVN URL, e.g something like
 # svn://svn.hercules-390.org/hercules or svn://svn.debian.org/nut,

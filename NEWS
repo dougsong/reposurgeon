@@ -5,7 +5,7 @@
      The cvspurge and gitsvnparse commands have been removed.
      Added 'import_marks' command.
      It is now possible to alter parent marks with the "edit" command.
-     Added new auxiliary script, svngrab, for mirroring Subversion repos.
+     Added new auxiliary script, svnpull, for mirroring Subversion repos.
 
 1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.
