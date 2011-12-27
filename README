@@ -7,7 +7,7 @@ and subtrees from repo history. The original motivation for
 reposurgeon was to clean up artifacts created by repository
 conversions.
 
-An auxiliary script, svngrab, assists in mirroring Subversion repositories.
+An auxiliary script, svnpull, assists in mirroring Subversion repositories.
 
 To test the correctness of this software, ensure that pylint
 is installed and then type type 'make check'
