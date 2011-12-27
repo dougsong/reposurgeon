@@ -5736,8 +5736,7 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
         if "lift" in rest:
             fossilmap = {}
             for commit in repo.commits():
-                if "fossil" in commit.properties:
-                    fossilmap[commit.fossil_id] = commit
+                fossilmap[commit.fossil_id] = commit
             hits = 0
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
