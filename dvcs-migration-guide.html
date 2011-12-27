@@ -285,10 +285,10 @@ with reposurgeon follow.</p>
 <ol>
 <li>Map author IDs from local to DVCS form.</li>
 <li>Check for leftover cvs2svn junk commits and remove them if possible.</li>
+<li>Lift references in commit comments.</p>
+<li>Massage comments into summary-line-plus-continuation form.</li>
 <li>Remove delete-only tip commits.</li>
 <li>Review generated tags, pruning as appropriate.</li>
-<li>Massage comments into summary-line-plus-continuation form.</li>
-<li>Lift references in commit comments.</p>
 <li>Look for branch merge points and patch parent marks to make them.</li>
 <li>Fix up or remove $-keyword cookies in the latest revision.</li>
 <li>For the record, make a commit noting time and date of the repo lift.</li>
@@ -311,6 +311,13 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
+<p>See the documentation of the <code>references</code> command; for
+details on how fix up Subversion and CVS changeset references in
+comments so they're still meaningful.</p>
+
+<p>The <code>edit multiline</code> command is good for fixing up
+multiline comments.</p>
+
 <p>The <code>reposurgeon</code> command <code>inspect =H</code> will
 show you tip commits which may contain only deletes and
 deletealls.</p>
@@ -318,13 +325,6 @@ deletealls.</p>
 <p>Tags can be inspected with <code>inspect =T</code>. Junk tags can
 be removed with the <code>delete</code> commmand. Tag comments can be
 modified with <code>edit</code>.
-
-<p>The <code>edit</code> command is also good for fixing up multiline
-comments. In reposurgeon 1.8 or later, try "edit multiline".</p>
-
-<p>See the documentation of the <code>references</code> command; for
-details on how fix up Subversion and CVS changeset references in
-comments so they're still meaningful.</p>
 
 <p>The <code>reposurgeon</code> command <code>edit</code> will also
 allow you to add a parent mark to a commit.  This can be used to merge
