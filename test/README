@@ -38,11 +38,11 @@ from foo.sd.  Here is a summary of the test sources:
 |simple.fi       |Earlier version of the reposurgeon repo, kept as a test
 |simple.tst      |Test expression interpreter and basic operations
 |simpletag.svn   |Standard layout. Linear. A couple of tags and no branches.
-|testmerge.tst   |Test merge on bzr and testrepo
 |testrepo.fi     |Synthetic repo made to check deltion results
 |testrepo.tst    |Exercises all the deletion cases, with coverage checks
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
+|unite.tst       |Test unite on bzr and testrepo
 |vanilla.svn     |Standard layout. Linear. Simplest case, no tags or branches.
 |=============================================================================
 

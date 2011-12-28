@@ -783,12 +783,12 @@ an offset literal of +0 or -0.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>merge</command>
+<term><command>unite</command>
         <emphasis>reponame</emphasis>...
 </term>
 <listitem>
-<para>Merge repositories. Name any number of loaded repositories; they will
-be merged into one union repo and removed from the load list.  The
+<para>Unite repositories. Name any number of loaded repositories; they will
+be united into one union repo and removed from the load list.  The
 union repo will be selected.</para>
 
 <para>Before merging, the repos will be sorted by date of first commit.  The
@@ -808,7 +808,7 @@ type.</para>
         <emphasis>reponame</emphasis>.
 </term>
 <listitem>
-<para>For when merge doesn't give you enough control.  The selection set
+<para>For when unite doesn't give you enough control.  The selection set
 must be of size 1, identifying a single commit in the currently
 selected repo.  A following argument must be a repository name.
 Labels and branches in the named repo are prefixed with its name; then
