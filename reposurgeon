@@ -2550,8 +2550,7 @@ class StreamParser:
                         # empty directories.
                         pass
                     elif node.action in (SD_DELETE, SD_REPLACE):
-                        if node.action == SD_DELETE and \
-                               node.path in self.branches:
+                        if node.path in self.branches:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: deleteall %s" % (revision,
                                                                 node.path))
@@ -2563,14 +2562,14 @@ class StreamParser:
                             fileop = FileOp(commit)
                             fileop.construct("deleteall", node.path[:-1])
                             commit.fileops.append(fileop)
-                            continue
-                        for child in node.from_set:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: deleting %s" % (revision, child))
-                            fileop = FileOp(commit)
-                            fileop.construct("D", child)
-                            commit.fileops.append(fileop)
-                        continue
+                        else:
+                            for child in node.from_set:
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("r%s: deleting %s" \
+                                             % (revision, child))
+                                fileop = FileOp(commit)
+                                fileop.construct("D", child)
+                                commit.fileops.append(fileop)
                     elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
