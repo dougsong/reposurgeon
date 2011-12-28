@@ -1857,6 +1857,7 @@ class StreamParser:
         self.hashmap = {}
         self.permissions = {}
         self.warnings = []
+        self.has_properties = set([])
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2529,14 +2530,15 @@ class StreamParser:
                     for (prop, val) in node.props.items():
                         if prop not in StreamParser.IgnoreProperties:
                             if not latch:
-                                self.gripe("r%s~%s properties:" \
+                                self.gripe("r%s~%s properties set:" \
                                            % (node.revision, node.path))
                                 latch = True
                             self.gripe("\t%s = '%s'" % (prop, val))
-                    # TODO: we don't show where properies are cleared yet
-                    #if not latch:
-                    #    announce("r%s~%s property section present but empty." \
-                    #             % (node.revision, node.path))
+                            self.has_properties.add(node.path)
+                    if node.path in self.has_properties and not latch:
+                        self.has_properties.discard(node.path)
+                        announce("r%s~%s: properties cleared." \
+                                 % (node.revision, node.path))
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
