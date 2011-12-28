@@ -5625,14 +5625,25 @@ component from every path."""
             raise Recoverable("merge requires a singleton commit.")
         lookfor = operand.manifest()
         def contains(larger, smaller):
-            union = copy.copy(larger)
-            union.update(smaller)
-            return union == larger 
+            for path in smaller:
+                if path not in larger:
+                    sys.stderr.write("merge failed on %s (missing)\n" % path)
+                    return False
+                if int(smaller[path][1:]) > int(larger[path][1:]):
+                    sys.stderr.write("merge failed on %s (stale)\n" % path)
+                    return False
+            return True
         for ei in range(mi+1, len(repo.events)):
             event = repo.events[ei]
-            if isinstance(event, Commit) and contains(event.manifest(),lookfor):
-                announce("merge point at %s" % event.mark)
-                break
+            if isinstance(event, Commit):
+                sys.stderr.write(str(event))
+                sys.stderr.write("branch - trunk: %s\n" \
+                                 % (set(lookfor.items()) - set(event.manifest().items())))
+                sys.stderr.write("trunk - branch: %s\n" \
+                                 % (set(event.manifest().items())- set(lookfor.items())))
+                if contains(event.manifest(),lookfor):
+                    announce("merge point at %s" % event.mark)
+                    break
         else:
             announce("no merge point found")
 
