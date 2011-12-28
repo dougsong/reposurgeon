@@ -1855,18 +1855,25 @@ class StreamParser:
         self.revisions = collections.OrderedDict()
         self.hashmap = {}
         self.permissions = {}
-    def error(self, msg, atline=True):
+        self.warnings = []
+    def error(self, msg):
         "Throw fatal error during parsing."
         if atline:
             raise Fatal(msg + " at line " + repr(self.import_line))
         else:
             raise Fatal(msg)
-    def warn(self, msg, atline=True):
-        "Display a parse warning."
-        if atline and self.import_line:
-            print("reposurgeon: " + msg + " at line " + repr(self.import_line))
+    def warn(self, msg):
+        "Display a parse warning associated with a line."
+        if self.import_line:
+            self.complain(msg + " at line " + repr(self.import_line))
         else:
-            print("reposurgeon: " + msg)
+            self.complain(msg)
+    def gripe(self, msg):
+        "Display or queue up an error message."
+        if verbose == 1:
+            self.warnings.append(msg)
+        else:
+            complain(msg)
     def __newmark(self, revision=None):
         self.markseq += 1
         mark = ":" + str(self.markseq)
@@ -2256,6 +2263,9 @@ class StreamParser:
                             self.repo.events.append(Passthrough(line))
                     # End of fast-import parsing
                 self.import_line = 0
+            if self.warnings:
+                for warning in self.warnings:
+                    complain(warning)
         except KeyboardInterrupt:
             nuke(self.repo.subdir(), "reposurgeon: import interrupted, removing %s" % self.repo.subdir())
             raise KeyboardInterrupt
@@ -2344,8 +2354,8 @@ class StreamParser:
                 # No ancestor, no blob. Has to be a pure property change.
                 # There's no way to figure out what mark to use in a
                 # fileop.
-                complain("r%s~%s: permission information may be lost." \
-                         % (node.revision, node.path))
+                self.gripe("r%s~%s: permission information may be lost." \
+                              % (node.revision, node.path))
                 return
             assert node.mark
             # Time for fileop generation
@@ -2511,7 +2521,7 @@ class StreamParser:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
                 # Handle per-path properties.
-                if node.props:
+                if node.props is not None:
                     if "cvs2svn:cvs-rev" in node.props:
                         cvskey = "CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
@@ -2679,7 +2689,7 @@ class StreamParser:
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
                 baton.twirl()
             else:
-                complain("could not tagify root commit.")
+                self.gripe("could not tagify root commit.")
         if not global_options['svn_nobranch']:
             baton.twirl("branches")
             # Now, branch analysis.
@@ -2736,8 +2746,8 @@ class StreamParser:
                     if rootrev in self.branchlink:
                         root.parent_marks = [self.markmap[self.branchlink[rootrev]]]
                     elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
-                        complain("r%s: can't connect nonempty %s to trunk" \
-                                 % (rootrev, root.branch))
+                        self.gripe("r%s: can't connect nonempty %s to trunk" \
+                                   % (rootrev, root.branch))
                     baton.twirl()
                 baton.twirl("+")
                 if verbose >= DEBUG_EXTRACT:
@@ -3041,13 +3051,13 @@ class Repository:
         if os.path.exists(filename):
             self.preserve_set.add(filename)
         else:
-            self.error("%s doesn't exist" % filename, atline=False)
+            raise Recoverable("%s doesn't exist" % filename)
     def unpreserve(self, filename):
         "Remove a path from the preserve set."
         if filename in self.preserve_set:
             self.preserve_set.remove(filename)
         else:
-            self.error("%s doesn't exist" % filename, atline=False)
+            raise Recoverable("%s doesn't exist" % filename)
     def preservable(self):
         "Return the repo's preserve set."
         return self.preserve_set
