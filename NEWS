@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.0:
-     reposurgon can now read Subversion dump files and repositories directly.
+     reposurgeon can now read Subversion dump files and repositories directly.
      The cvspurge and gitsvnparse commands have been removed.
      Added 'import_marks' command.
      It is now possible to alter parent marks with the "edit" command.
