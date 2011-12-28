@@ -105,7 +105,9 @@ svn-regress:
 	    then diff -u $${test}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	    mkdir /tmp/reposurgeon$$$$ ; \
-	    (cd /tmp/reposurgeon$$$$; git init --quiet; git fast-import --quiet) </tmp/regress; \
+	    (cd /tmp/reposurgeon$$$$; \
+		git init --quiet; \
+		grep -v '^reposurgeon:' /tmp/regress | git fast-import --quiet); \
 	    rm -fr /tmp/reposurgeon$$$$ ; \
 	done
 	@rm -f /tmp/regress

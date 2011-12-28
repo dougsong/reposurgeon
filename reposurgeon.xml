@@ -1231,7 +1231,8 @@ Subversion directory with an svn:ignore property, the file will get
 stepped on.</para>
 
 <para>All other properties are discarded. (This may change in a 
-future release.)</para>
+future release.) <application>reposurgeon</application> will 
+issue warnings about property settings at conversion time.</para>
 
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
