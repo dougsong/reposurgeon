@@ -5649,7 +5649,11 @@ component from every path."""
             raise Recoverable("merge requires a singleton selection set.")
         for mi in self.selection:
             if not isinstance(repo.events[mi], Commit):
-                raise Recoverable("merge requires commit argument(s).")
+                self.selection.remove(mi)
+        if not self.selection:
+            raise Recoverable("merge requires commit argument(s).")
+        self.selection = list(self.selection)
+        self.selection.sort()
         bi = list(self.selection)[0]
         tip = repo.events[bi]
         tipfiles = tip.manifest()
@@ -5671,7 +5675,7 @@ component from every path."""
                 announce("no merge point found.")
         else:
             # Merge point specified, audit for correctness
-            ti = list(self.selection)[1]
+            ti = list(self.selection)[-1]
             target = repo.events[ti]
             targetfiles = target.manifest()
             missing = []
