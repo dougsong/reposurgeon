@@ -2954,7 +2954,7 @@ class Repository:
     def tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
-            announce("tagifying: %s" % commit.mark)
+            announce("tagifying: %s -> %s" % (commit.mark, name))
         if commit.fileops:
             raise Fatal("Attempting to tagify a commit with fileops.")
         if not commit.comment:
