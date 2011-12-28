@@ -6,6 +6,7 @@
      Added 'import_marks' command.
      It is now possible to alter parent marks with the "edit" command.
      Added new auxiliary script, svnpull, for mirroring Subversion repos.
+     Repo 'merge' changed to 'unite' to avoid confusion with branch merges.
 
 1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.

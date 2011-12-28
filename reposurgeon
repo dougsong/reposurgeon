@@ -756,7 +756,7 @@ DEBUG_SHUFFLE   = 3    # Debug file and directory handling
 DEBUG_DELETE    = 4    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 4    # Show commands as they are executed
 DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
-DEBUG_MERGE     = 4    # Debug mark assignments in merging
+DEBUG_UNITE     = 4    # Debug mark assignments in merging
 DEBUG_LEXER     = 5    # Debug selection-language parsing
 
 global_options = {}
@@ -1228,7 +1228,7 @@ class Commit:
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
     def when(self):
-        "Imputed timestamp for sorting after merges."
+        "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
     def moveto(self, repo):
         "Change the repo this commit is associated with."
@@ -3027,7 +3027,7 @@ class Repository:
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
-                    if verbose >= DEBUG_MERGE:
+                    if verbose >= DEBUG_UNITE:
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
@@ -3399,7 +3399,7 @@ class Repository:
                 if hasattr(event, fld) and getattr(event, fld):
                     old = getattr(event, fld)
                     new = remark(old)
-                    if verbose >= DEBUG_MERGE:
+                    if verbose >= DEBUG_UNITE:
                         announce("renumbering %s -> %s in %s.%s" % (old, new,
                                                                     event.__class__.__name__,
                                                                     fld))
@@ -3407,13 +3407,13 @@ class Repository:
             if isinstance(event, Commit):
                 for (i, old) in enumerate(event.parent_marks):
                     new = remark(old)
-                    if verbose >= DEBUG_MERGE:
+                    if verbose >= DEBUG_UNITE:
                         announce("renumbering %s -> %s in parents" % (old, new))
                     event.parent_marks[i] = new
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = remark(fileop.ref)
-                        if verbose >= DEBUG_MERGE:
+                        if verbose >= DEBUG_UNITE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
     def uniquify(self, color):
@@ -3429,7 +3429,7 @@ class Repository:
                 if isinstance(event, objtype):
                     old = getattr(event, attr)
                     new = old + "-" + color
-                    if verbose >= DEBUG_MERGE:
+                    if verbose >= DEBUG_UNITE:
                         announce("moving %s -> %s in %s.%s"
                                  % (old, new,
                                     objtype.__name__,
@@ -3445,7 +3445,7 @@ class Repository:
                         raise Fatal("field not in mark format")
                     else:
                         new = old + "-" + color
-                        if verbose >= DEBUG_MERGE:
+                        if verbose >= DEBUG_UNITE:
                             announce("moving %s -> %s in %s.%s"
                                      % (old, new,
                                         event.__class__.__name__,
@@ -3455,13 +3455,13 @@ class Repository:
             if isinstance(event, Commit):
                 for (j, old) in enumerate(event.parent_marks):
                     new = old + "-" + color
-                    if verbose >= DEBUG_MERGE:
+                    if verbose >= DEBUG_UNITE:
                         announce("moving %s -> %s in parents" % (old, new))
                     event.parent_marks[j] = new
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
-                        if verbose >= DEBUG_MERGE:
+                        if verbose >= DEBUG_UNITE:
                             announce("moving %s -> %s in fileop"
                                      % (fileop.ref, new))
                         fileop.ref = new
@@ -4032,8 +4032,8 @@ class RepositoryList:
         self.repo.cleanup()
         self.remove_by_name(self.repo.name)
         return True
-    def merge(self, factors):
-        "Merge multiple repos into a union repo."
+    def unite(self, factors):
+        "Unite multiple repos into a union repo."
         factors.sort(key=lambda x: x.earliest())
         roots = [x.commits()[0] for x in factors]
         union = Repository("+".join([r.name for r in factors]))
@@ -5514,10 +5514,10 @@ original commit.
             if verbose:
                 self.do_inspect(repr(where+1) + "," + repr(where+2))
 
-    def help_merge(self):
+    def help_unite(self):
         print("""
-Merge repositories. Name any number of loaded repositories; they will
-be merged into one union repo and removed from the load list.  The
+Unite repositories. Name any number of loaded repositories; they will
+be united into one union repo and removed from the load list.  The
 union repo will be selected.
 
 Before merging, the repos will be sorted by date of first commit.  The
@@ -5530,8 +5530,8 @@ The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
 type.
 """)
-    def do_merge(self, line):
-        "Merge repos together."
+    def do_unite(self, line):
+        "Unite repos together."
         self.unchoose()
         factors = []
         for name in line.split():
@@ -5541,14 +5541,14 @@ type.
             else:
                 factors.append(repo)
         if not factors or len(factors) < 2: 
-            raise Recoverable("merge requires repo name arguments")
-        self.merge(factors)
+            raise Recoverable("unite requires repo name arguments")
+        self.unite(factors)
         if verbose:
             self.do_choose('')
 
     def help_graft(self):
         print("""
-For when merge doesn't give you enough control.  The selection set
+For when unite doesn't give you enough control.  The selection set
 must be of size 1, identifying a single commit in the currently
 selected repo.  A following argument must be a repository name.
 Labels and branches in the named repo are prefixed with its name; then
