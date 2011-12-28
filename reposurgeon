@@ -5576,19 +5576,6 @@ list.
         self.chosen().graft(graft_repo, graft_point)
         self.remove_by_name(graft_repo.name)
 
-    def help_sort(self):
-        print("""Sort events in the selected repo by timestamp, unless
-doing so would put a child before a parent. May be useful after a
-graft operation; a sorted repo tends to display more nicely in tools
-which exibit the graph structure. Does not take a selection set.""")
-    def do_sort(self, line):
-        "Sort events by timestamp."
-        assert line is not None      # Pacify pylint
-        if self.chosen():
-            self.chosen().sort()
-        else:
-            complain("no repo has been chosen.")
-
     def help_paths(self):
         """Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). With the 'sub'

@@ -818,23 +818,6 @@ list.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>sort</command>
-</term>
-<listitem>
-<para>Sort events in the selected repo by timestamp, unless doing so
-would put a child before a parent in which case it throws an error
-listing the out-of-order commit pair. All parent-child relationships
-are preserved. Commit hashes are not modified.</para>
-
-<para>May be useful after a graft operation; a sorted repo tends to
-display more nicely in browsing tools which exibit the graph
-structure.</para>
-
-<para>Does not take a selection set; always operates on the entire
-repository.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><command>paths</command>
 </term>
 <listitem>
