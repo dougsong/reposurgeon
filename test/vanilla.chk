@@ -1,4 +1,4 @@
-reposurgeon: r5~trunk/README properties:
+reposurgeon: r5~trunk/README properties set:
 reposurgeon: 	foo = 'bar'
 blob
 mark :1
