@@ -1150,7 +1150,9 @@ class FileOp:
             return set([self.path])
         elif self.op in ("R", "C"):
             return set([self.source, self.target])
-        elif self.op == "N":
+        # Ugh...this isn't right for deleteall, but since we don't expect
+        # to see that except at branch tips we'll ignore it for now.
+        elif self.op in ("N", "deleteall"):
             return set([])
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
@@ -5201,7 +5203,7 @@ before any individual event is updated.
             if not modified:
                 announce("no events modified.")
             else:
-                announce("modified events are %s." % (modified,))
+                announce("%d modified events." % (len(modified),))
 
     def help_edit(self):
         print("""
