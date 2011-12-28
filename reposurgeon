@@ -1825,18 +1825,19 @@ class StreamParser:
             self.nodes = nodes
             self.props = props
     # Native Subversion properties that we don't suppress:
-    # svn:externals, svn:mergeinfo.  The reason for these suppressions
-    # is to avoid a huge volume of junk file properties - cvs2svn
-    # in particular generates them like mad.  We want to let through other
-    # properties that might carry useful information.
+    # svn:externals, svn:mergeinfo.
+    # The reason for these suppressions is to avoid a huge volume of
+    # junk file properties - cvs2svn in particular generates them like
+    # mad.  We want to let through other properties that might carry
+    # useful information.
     IgnoreProperties = (
         "svn:executable",  # We special-case this one elsewhere
         "svn:ignore",      # We special-case this one elsewhere
         "svn:special",     # We special-case this one elsewhere
         "svn:mime-type",
         "svn:keywords",
-        "svn:eol-style",
         "svn:needs-lock",
+        "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         )
     def __init__(self, repo):
         self.repo = repo
@@ -1858,10 +1859,7 @@ class StreamParser:
         self.warnings = []
     def error(self, msg):
         "Throw fatal error during parsing."
-        if atline:
-            raise Fatal(msg + " at line " + repr(self.import_line))
-        else:
-            raise Fatal(msg)
+        raise Fatal(msg + " at line " + repr(self.import_line))
     def warn(self, msg):
         "Display a parse warning associated with a line."
         if self.import_line:
@@ -2527,6 +2525,18 @@ class StreamParser:
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
+                    latch = False
+                    for (prop, val) in node.props.items():
+                        if prop not in StreamParser.IgnoreProperties:
+                            if not latch:
+                                self.gripe("r%s~%s properties:" \
+                                           % (node.revision, node.path))
+                                latch = True
+                            self.gripe("\t%s = '%s'" % (prop, val))
+                    # TODO: we don't show where properies are cleared yet
+                    #if not latch:
+                    #    announce("r%s~%s property section present but empty." \
+                    #             % (node.revision, node.path))
                 # Actions on directories
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path prefixes.
