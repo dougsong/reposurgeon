@@ -2604,6 +2604,8 @@ class Repository:
                 line = line.strip()
                 if not line:
                     continue
+                if line.startswith('#'):
+                    continue
                 (local, netwide) = line.strip().split('=')
                 (name, mail) = email.utils.parseaddr(netwide.strip())
                 if not mail:
