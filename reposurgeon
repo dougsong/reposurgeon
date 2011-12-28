@@ -1402,6 +1402,7 @@ class Commit:
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         ancestors = {}
+        sys.setrecursionlimit(len(self.repo.events) * 2)
         for commit in self.parents():
             ancestors.update(commit.manifest())
         for fileop in self.fileops:
@@ -5608,6 +5609,33 @@ component from every path."""
                 print "\n".join(modified)
             except IndexError:
                 raise Recoverable("no / in sup path.")
+
+    def do_merge(self, line):
+        "Find future merge point for a specified branch. (Experimental)"
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        self.set_selection_set(line, list(range(len(repo.events))))
+        if len(self.selection) != 1:
+            raise Recoverable("merge requires a singleton selection set.")
+        mi = list(self.selection)[0]
+        operand = repo.events[mi]
+        if not isinstance(operand, Commit):
+            raise Recoverable("merge requires a singleton commit.")
+        lookfor = operand.manifest()
+        def contains(larger, smaller):
+            union = copy.copy(larger)
+            union.update(smaller)
+            return union == larger 
+        for ei in range(mi+1, len(repo.events)):
+            event = repo.events[ei]
+            if isinstance(event, Commit) and contains(event.manifest(),lookfor):
+                announce("merge point at %s" % event.mark)
+                break
+        else:
+            announce("no merge point found")
+
     #
     # Artifact Removal
     #
