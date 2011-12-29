@@ -5638,8 +5638,29 @@ component from every path."""
             except IndexError:
                 raise Recoverable("no / in sup path.")
 
+    def help_merge(self):
+        """Merge branches. Takes a selection set argument, ignoring all but
+the lowest (source) and highest (target) members; also, optional modifiers
+'perform' and 'force'.
+
+The simplest form of the command takes a singleton selection set,
+interpreted as a source commit, and looks at each later commit as a
+target to see if a clean merge is possible.  A clean merge is deemed
+to be possible if every file in the source revision is present in the
+target revision and the target-revision content of every file occuring
+in the the source revision is either that of the source revision or a
+later blob.
+
+If the selection set has two members, the second (higher-numbered)
+even is taken as the target commit and checked to see if a clean merge
+is possible.  The output from the command says if it is, and if not
+what missing and out-of-date files would make the merge unclean.
+
+If the 'perform' modifier is given and a cleamn merge is available, it is
+performed.  If both 'perform' and 'force' modifiers are given, the merge
+is performed even if is not clean.
+""" 
     def do_merge(self, line):
-        "Find future merge point for a specified commit. (Experimental)"
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -5669,10 +5690,12 @@ component from every path."""
                         if int(tipfiles[path][1:]) > int(targetfiles[path][1:]):
                             break
                     else:
-                        announce("%s can merge at %s" % (tip.mark, target.mark))
+                        announce("%s can merge clean at %s" % (tip.mark, target.mark))
+                        merge_clean = True
                         break
             else:
                 announce("no merge point found.")
+                return
         else:
             # Merge point specified, audit for correctness
             ti = list(self.selection)[-1]
@@ -5686,22 +5709,23 @@ component from every path."""
                 if int(tipfiles[path][1:]) > int(targetfiles[path][1:]):
                     stale.append(path)
             if not missing and not stale:
-                announce("%s can merge at target %s" \
+                announce("%s can merge clean at target %s" \
                          % (tip.mark, target.mark))
                 merge_clean = True
             else:
-                announce("%s cannot merge at target %s" \
+                announce("%s cannot merge clean at target %s" \
                          % (tip.mark, target.mark))
                 if missing:
                     announce("target %s is missing these files: %s" \
                              % (target.mark, " ".join(missing)))
                 if stale:
-                    announce("target %s is out of date on theses file: %s" \
+                    announce("target %s is out of date on these files: %s" \
                              % (target.mark, " ".join(stale)))
                 merge_clean = False
-            if "perform" in rest and (merge_clean or "force" in rest):
-                target.parent_marks.append(tip.marks)
-                announce("%s added as a parent of %s" % (tip.mark,target.mark))
+        # User may want merge performed or even forced
+        if "perform" in rest and (merge_clean or "force" in rest):
+            target.parent_marks.append(tip.mark)
+            announce("%s added as a parent of %s" % (tip.mark,target.mark))
 
     #
     # Artifact Removal
