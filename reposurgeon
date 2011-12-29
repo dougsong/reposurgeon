@@ -7,7 +7,6 @@
 # Requires Python 2.7.2 or newer.
 #
 # TODO: git extractor is broken
-# TODO: Attempt merge detection?
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import readline, time, calendar, signal, shutil, copy, shlex, collections
