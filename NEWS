@@ -7,6 +7,7 @@
      It is now possible to alter parent marks with the "edit" command.
      Added new auxiliary script, svnpull, for mirroring Subversion repos.
      Repo 'merge' changed to 'unite' to avoid confusion with branch merges.
+     The new 'merge' command can in fact do branch merges.
      The unreliable 'sort' command has been removed.
 
 1.9: 2011-11-14
