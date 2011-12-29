@@ -1849,6 +1849,7 @@ class StreamParser:
         # Everying below here is Subversion-specific
         self.markmap = {}       # Revision-to-mark map
         self.mark_counter = collections.Counter()
+        #self.branch_copies = collections.Counter()
         self.parent = None
         self.branches = {}
         self.branchlink = {}
@@ -2615,6 +2616,14 @@ class StreamParser:
                     # Handle directory copies used for branching and tags
                     if node.from_path:
                         newbranch = node.path
+                        # Don't allow directory copies to step on pre-existung
+                        # content.  
+                        #if self.branch_copies[node.path]:
+                        #    newbranch = newbranch[:-1] + "-" + str(self.branch_copies[node.path])
+                        #    self.gripe("r%s~%s: synthetic branch" \
+                        #               % (node.revision, newbranch))
+                        #if node.from_set:
+                        #    self.branch_copies[node.path] += 1
                         if self.branches:
                             if newbranch.count(os.sep) == 2:
                                 if newbranch.startswith("tags" + os.sep):
