@@ -5690,20 +5690,26 @@ is performed even if is not clean.
             return False
         if len(self.selection) == 1:
             # Look for a merge point anywhere forward of the specified commit
-            for ei in range(bi+1, len(repo.events)):
-                target = repo.events[ei]
-                if isinstance(target, Commit):
-                    targetfiles = target.manifest()
-                    for path in tipfiles:
-                        if path not in targetfiles:
+            merge_clean = False
+            with Baton("Seeking merge point", enable=verbose>=1) as baton:
+                last = len(self.events)
+                countfmt = " %%%dd of %d" % (len(str(last)), last)
+                baton.startcounter(countfmt)
+                for ei in range(bi+1, len(repo.events)):
+                    target = repo.events[ei]
+                    if isinstance(target, Commit):
+                        targetfiles = target.manifest()
+                        for path in tipfiles:
+                            if path not in targetfiles:
+                                break
+                            elif not mergeable(path, tipfiles, targetfiles, target):
+                                break
+                        else:
+                            announce("%s can merge clean at %s" % (tip.mark, target.mark))
+                            merge_clean = True
                             break
-                        elif not mergeable(path, tipfiles, targetfiles, target):
-                            break
-                    else:
-                        announce("%s can merge clean at %s" % (tip.mark, target.mark))
-                        merge_clean = True
-                        break
-            else:
+                    baton.bumpcounter()
+            if not merge_clean:
                 announce("no merge point found.")
                 return
         else:
