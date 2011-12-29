@@ -5648,8 +5648,8 @@ interpreted as a source commit, and looks at each later commit as a
 target to see if a clean merge is possible.  A clean merge is deemed
 to be possible if every file in the source revision is present in the
 target revision and the target-revision content of every file occuring
-in the the source revision is either that of the source revision or a
-later blob.
+in the the source revision is either that of the source revision or was
+modified by the target commit itself.
 
 If the selection set has two members, the second (higher-numbered)
 even is taken as the target commit and checked to see if a clean merge
@@ -5678,6 +5678,16 @@ is performed even if is not clean.
         bi = list(self.selection)[0]
         tip = repo.events[bi]
         tipfiles = tip.manifest()
+        def mergeable(path, tipfiles, targetfiles, target):
+            # If tarhetfile matches tipfile, OK
+            if tipfiles[path] == targetfiles[path]:
+                return True
+            # Tricky case -target file must have been modified
+            # in the target commit itelf.
+            for fileop in target.fileops:
+                if fileop.op == 'M' and fileop.path == path:
+                    return True
+            return False
         if len(self.selection) == 1:
             # Look for a merge point anywhere forward of the specified commit
             for ei in range(bi+1, len(repo.events)):
@@ -5687,7 +5697,7 @@ is performed even if is not clean.
                     for path in tipfiles:
                         if path not in targetfiles:
                             break
-                        if int(tipfiles[path][1:]) > int(targetfiles[path][1:]):
+                        if mergeable(path, tipfiles, targetfiles, target):
                             break
                     else:
                         announce("%s can merge clean at %s" % (tip.mark, target.mark))
@@ -5706,7 +5716,7 @@ is performed even if is not clean.
             for path in tipfiles:
                 if path not in targetfiles:
                     missing.append(path)
-                if int(tipfiles[path][1:]) > int(targetfiles[path][1:]):
+                if mergeable(path, tipfiles, targetfiles, target):
                     stale.append(path)
             if not missing and not stale:
                 announce("%s can merge clean at target %s" \
