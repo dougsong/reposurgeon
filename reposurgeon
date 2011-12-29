@@ -814,9 +814,9 @@ class Baton:
         self.count = 0
         self.time = time.time()
         return self
-    def startcounter(self, countfmt):
+    def startcounter(self, countfmt, initial=1):
         self.countfmt = countfmt
-        self.counter = 1
+        self.counter = initial
     def bumpcounter(self):
         if self.stream is None:
             return
@@ -5679,7 +5679,7 @@ is performed even if is not clean.
         tip = repo.events[bi]
         tipfiles = tip.manifest()
         def mergeable(path, tipfiles, targetfiles, target):
-            # If tarhetfile matches tipfile, OK
+            # If targetfile matches tipfile, OK
             if tipfiles[path] == targetfiles[path]:
                 return True
             # Tricky case -target file must have been modified
@@ -5692,9 +5692,9 @@ is performed even if is not clean.
             # Look for a merge point anywhere forward of the specified commit
             merge_clean = False
             with Baton("Seeking merge point", enable=verbose>=1) as baton:
-                last = len(self.events)
+                last = len(repo.events)
                 countfmt = " %%%dd of %d" % (len(str(last)), last)
-                baton.startcounter(countfmt)
+                baton.startcounter(countfmt, bi+1)
                 for ei in range(bi+1, len(repo.events)):
                     target = repo.events[ei]
                     if isinstance(target, Commit):
@@ -5705,11 +5705,12 @@ is performed even if is not clean.
                             elif not mergeable(path, tipfiles, targetfiles, target):
                                 break
                         else:
-                            announce("%s can merge clean at %s" % (tip.mark, target.mark))
                             merge_clean = True
                             break
                     baton.bumpcounter()
-            if not merge_clean:
+            if merge_clean:
+                announce("%s can merge clean at %s" % (tip.mark, target.mark))
+            else:
                 announce("no merge point found.")
                 return
         else:
