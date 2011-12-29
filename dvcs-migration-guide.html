@@ -287,7 +287,7 @@ with reposurgeon follow.</p>
 <li>Check for leftover cvs2svn junk commits and remove them if possible.</li>
 <li>Lift references in commit comments.</p>
 <li>Massage comments into summary-line-plus-continuation form.</li>
-<li>Remove delete-only tip commits.</li>
+<li>Remove delete-only tip commits where appropriate.</li>
 <li>Review generated tags, pruning as appropriate.</li>
 <li>Look for branch merge points and patch parent marks to make them.</li>
 <li>Fix up or remove $-keyword cookies in the latest revision.</li>
@@ -326,10 +326,10 @@ deletealls.</p>
 be removed with the <code>delete</code> commmand. Tag comments can be
 modified with <code>edit</code>.
 
-<p>The <code>reposurgeon</code> command <code>edit</code> will also
-allow you to add a parent mark to a commit.  This can be used to merge
-Subversion branches when you can detect this is appropriate using
-mergeinfo properties.</p>
+<p>Version 2.x and later of <code>reposurgeon</code> have a new
+<code>merge</code> command spercifically for performing branch merges.
+The <code>edit</code> command will also allow you to add a parent mark
+to a commit.</p>
 
 <p>One minor feature you lose in moving from CVS or Subversion to a
 DVCS is keyword expansion.  You should go through the last revision of
