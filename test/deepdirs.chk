@@ -109,12 +109,11 @@ Directory layout.
 tag foocopy-root
 from :8
 tagger esr <esr> 1324319862 +0000
-data 191
+data 149
 Directory copy to branch.
 
 The command that produced this was:
 
 svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
 
-[[Tag from branch root at Subversion r5]]
 

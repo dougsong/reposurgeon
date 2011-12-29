@@ -72,10 +72,9 @@ Directory layout.
 tag testbranch-root
 from :2
 tagger esr <esr> 1323742103 +0000
-data 159
+data 117
 Create testbranch. The command was:
 
 svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch
 
-[[Tag from branch root at Subversion r3]]
 

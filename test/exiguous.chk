@@ -37,8 +37,7 @@ Directory layout.
 tag realbranch-root
 from :2
 tagger esr <esr> 1323170783 +0000
-data 96
+data 54
 We're going to put some real content on this branch.
 
-[[Tag from branch root at Subversion r3]]
 

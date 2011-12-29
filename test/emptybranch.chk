@@ -21,8 +21,7 @@ Directory layout.
 tag emptybranch-root
 from :2
 tagger esr <esr> 1323167895 +0000
-data 115
+data 73
 Create an empty to-level branch for test purposes.  Should be tagified.
 
-[[Tag from branch root at Subversion r3]]
 
