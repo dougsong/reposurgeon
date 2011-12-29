@@ -5656,7 +5656,7 @@ even is taken as the target commit and checked to see if a clean merge
 is possible.  The output from the command says if it is, and if not
 what missing and out-of-date files would make the merge unclean.
 
-If the 'perform' modifier is given and a cleamn merge is available, it is
+If the 'perform' modifier is given and a clean merge is available, it is
 performed.  If both 'perform' and 'force' modifiers are given, the merge
 is performed even if is not clean.
 """ 
