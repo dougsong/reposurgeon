@@ -843,8 +843,8 @@ interpreted as a source commit, and looks at each later commit as a
 target to see if a clean merge is possible.  A clean merge is deemed
 to be possible if every file in the source revision is present in the
 target revision and the target-revision content of every file occuring
-in the the source revision is either that of the source revision or a
-later blob.</para>
+in the the source revision is either that of the source revision or was
+modified by the target commit itself.</para>
 
 <para>If the selection set has two members, the second (higher-numbered)
 even is taken as the target commit and checked to see if a clean merge
