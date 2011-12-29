@@ -750,13 +750,14 @@ class SvnExtractor():
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_EXTRACT   = 2    # Debug repo-extractor logic
-DEBUG_SHUFFLE   = 3    # Debug file and directory handling
-DEBUG_DELETE    = 4    # Debug canonicalization after deletes
-DEBUG_COMMANDS  = 4    # Show commands as they are executed
-DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
-DEBUG_UNITE     = 4    # Debug mark assignments in merging
-DEBUG_LEXER     = 5    # Debug selection-language parsing
+DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-granined)
+DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
+DEBUG_SHUFFLE   = 4    # Debug file and directory handling
+DEBUG_DELETE    = 5    # Debug canonicalization after deletes
+DEBUG_COMMANDS  = 5    # Show commands as they are executed
+DEBUG_EMAILIN   = 5    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_UNITE     = 5    # Debug mark assignments in merging
+DEBUG_LEXER     = 6    # Debug selection-language parsing
 
 global_options = {}
 
@@ -2517,6 +2518,8 @@ class StreamParser:
                 continue
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
+                    announce(str(node))
+                elif node.kind == SD_DIR and verbose >= DEBUG_TOPOLOGY:
                     announce(str(node))
                 # Handle per-path properties.
                 if node.props is not None:
