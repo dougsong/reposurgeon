@@ -5697,7 +5697,7 @@ is performed even if is not clean.
                     for path in tipfiles:
                         if path not in targetfiles:
                             break
-                        if mergeable(path, tipfiles, targetfiles, target):
+                        elif not mergeable(path, tipfiles, targetfiles, target):
                             break
                     else:
                         announce("%s can merge clean at %s" % (tip.mark, target.mark))
@@ -5716,7 +5716,7 @@ is performed even if is not clean.
             for path in tipfiles:
                 if path not in targetfiles:
                     missing.append(path)
-                if mergeable(path, tipfiles, targetfiles, target):
+                elif not mergeable(path, tipfiles, targetfiles, target):
                     stale.append(path)
             if not missing and not stale:
                 announce("%s can merge clean at target %s" \
