@@ -3285,7 +3285,7 @@ class Repository:
                     if '/' in event.branch and not '/heads/' in event.branch:
                         complain(speak + "non-head branch attribute %s" % event.branch)
                     for fileop in event.fileops:
-                        if fileop.op != 'D':
+                        if fileop.op != 'D' and fileop.op != 'deleteall':
                             announce(speak + "non-delete fileops.")
                             break
         # Here are the deletions
@@ -5665,9 +5665,9 @@ is performed even if is not clean.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        rest = self.set_selection_set(line, list(range(len(repo.events))))
-        if len(self.selection) not in (1, 2):
-            raise Recoverable("merge requires a singleton selection set.")
+        rest = self.set_selection_set(line)
+        if not len(self.selection):
+            raise Recoverable("merge requires a nonempty selection set.")
         for mi in self.selection:
             if not isinstance(repo.events[mi], Commit):
                 self.selection.remove(mi)
