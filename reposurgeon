@@ -2635,7 +2635,7 @@ class StreamParser:
                                 self.branches[newbranch] = None
                         for source in node.from_set:
                             subnode = StreamParser.NodeAction()
-                            subnewbranch = os.path.join(newbranch,
+                            subnode.path = os.path.join(newbranch,
                                                         source[len(node.from_path+os.sep):])
                             subnode.revision = revision
                             subnode.from_path = source
@@ -2647,26 +2647,6 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     self.perform_node(node, commit)
                 # Node loop ends
-            # Suppress junk commits manufactured by cvs2svn
-            if "commit was manufactured by cvs2svn" in commit.comment:
-                for fileop in commit.fileops:
-                    # Commit can't have any unique file modifications.
-                    # Normally it just duplicates the ones in its parent, but
-                    # sometimes has references to far-past versions of stuff.
-                    if self.mark_counter[fileop.ref] > 1:
-                        continue
-                    # I don't know why cvs2svn generates deletes into these,
-                    # but they're pretty obviously spurious.
-                    elif fileop.op == 'D':
-                        continue
-                    else:
-                        # Fail safely - any fileop not matching the previous
-                        # tests means the commit should be emitted.  This
-                        # means we never throw away content modifications
-                        break
-                else:
-                    # Suppress this commit
-                    continue
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
             # It's important that this happens after blob creation
@@ -2813,6 +2793,29 @@ class StreamParser:
                 baton.twirl("+")
         # Code controlled by svn_nobranch option ends.
         #
+        # Suppress junk commits manufactured by cvs2svn
+        for commit in self.repo.commits():
+            if "commit was manufactured by cvs2svn" in commit.comment:
+                for fileop in commit.fileops:
+                    # Commit can't have any unique file modifications.
+                    # Normally it just duplicates the ones in its parent, but
+                    # sometimes has references to far-past versions of stuff.
+                    if self.mark_counter[fileop.ref] > 1:
+                        continue
+                    # I don't know why cvs2svn generates deletes into these,
+                    # but they're pretty obviously spurious.
+                    elif fileop.op == 'D':
+                        continue
+                    else:
+                        # Fail safely - any fileop not matching the previous
+                        # tests means the commit should be emitted.  This
+                        # means we never throw away content modifications
+                        break
+                else:
+                    # Suppress this commit
+                    self.repo.delete([self.repo.events.index(commit)],
+                                ["obliterate"],
+                                quiet=True)
         # Now we need to tagify all other commits without fileops, because
         # git is going to just discard them when we build a live repo and
         # they might possibly contain interesting metadata.  Usually they're
