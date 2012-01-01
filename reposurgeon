@@ -6,8 +6,6 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-# TODO: git extractor is broken
-#
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import readline, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
@@ -1537,88 +1535,6 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
-class FileMap:
-    """Object store indexed by file path and version. Used because
-extractors for changeset-oriented systems like Subversion need to
-track which files have existed at given revisions. And they need to do
-it space-efficiently - in repos with thousands of commits the data
-set gets huge."""
-    FileTag = "metadata"
-    def __init__(self, basedir):
-        self.basedir = basedir[len(os.getcwd())+1:]
-    def __revname(self, revision):
-        "Return the top level of a revision's metadata directory."
-        return os.path.join(self.basedir, revision)
-    def __stashname(self, revision, path):
-        "Return the metadata file for any given path in the history."
-        return os.path.join(self.__revname(revision), path, FileMap.FileTag)
-    def register(self, revision, path, payload):
-        "Register metadata for a specified path and revision."
-        stashname = self.__stashname(revision, path)
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("register(r%s, %s, %s)" % (revision, path, payload))
-        if not os.path.exists(os.path.dirname(stashname)):
-            os.makedirs(os.path.dirname(stashname))
-        with open(stashname, "w") as ofp:
-            cPickle.dump(payload, ofp)
-    def retrieve(self, revision, path):
-        "Retrieve metadata for a specified path and revision."
-        stashname = self.__stashname(revision, path)
-        with open(stashname, "r") as ifp:
-            payload = cPickle.load(ifp)
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("retrieve(r%s, %s) -> %s" % (revision, path, payload))
-        return payload
-    def remove(self, revision, path):
-        "Remove a file path from the map."
-        # Does not scavenge directories that might have had
-        # this as its only file - that's an unusual case in
-        # a source-code repo, and directory entries are cheap.
-        stashname = self.__stashname(revision, path)
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("remove(r%s, %s)" % (revision, path))
-        os.remove(stashname)
-        os.rmdir(os.path.dirname(stashname))
-    def derive(self, revision, parents):
-        "Create a new revision filemap that is the union of the parent maps."
-        # TODO: Presently only handles single-parent case.
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("derive(r%s, %s)" % (revision, parents))
-        if os.path.exists(self.__revname(parents[0])):
-            shutil.copytree(self.__revname(parents[0]),
-                            self.__revname(revision))
-        return self.children(revision, "")
-    def member_of(self, revision, path):
-        "Is a specified path in the specified revision?"
-        ismember = os.path.exists(self.__stashname(revision, path))
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("member_of(r%s, %s) = %s" % (revision, path, ismember))
-        return ismember
-    def __clipper(self, rev, cdir):
-        "Trim our housekeeping stuff off a path in the filestore."
-        return cdir[len(self.basedir+os.sep+rev+os.sep):-len(os.sep+FileMap.FileTag)]
-    @staticmethod
-    def dirwalk(cdir):
-        "Walk a directory tree, using a generator"
-        for f in os.listdir(cdir):
-            fullpath = os.path.join(cdir,f)
-            if os.path.isdir(fullpath) and not os.path.islink(fullpath):
-                for x in FileMap.dirwalk(fullpath):  # recurse into subdir
-                    yield x
-            else:
-                yield fullpath
-    def children(self, revision, parent):
-        "Return a list of the children of a specified node."
-        # TODO: turn this into an iterator generator
-        subtree = []
-        stashname = os.path.dirname(self.__stashname(revision, parent))
-        if os.path.isdir(stashname):
-            for cdir in FileMap.dirwalk(stashname):
-                subtree.append(self.__clipper(revision, cdir))
-        if verbose >= DEBUG_EXTRACT+1:
-            announce("children(r%s, %s) = %s" % (revision, parent, subtree))
-        return subtree
-
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
     def __init__(self, extractor):
@@ -1626,7 +1542,7 @@ class RepoStreamer:
         self.tagseq = 0
         self.commits = {}
         self.markmap = {}
-        self.filemap = None
+        self.filemap = {}
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
@@ -1640,7 +1556,6 @@ class RepoStreamer:
         if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         repo.makedir()
-        self.filemap = FileMap(repo.subdir())
         with Baton(prompt="Extracting", enable=progress) as self.baton:
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
@@ -1663,9 +1578,11 @@ class RepoStreamer:
                     if msg == None:
                         msg = ""
                     announce("r%s: comment '%s'" % (revision, msg.strip()))
-                expected = self.filemap.derive(revision, parents)
+                self.filemap[revision] = {}
+                for rev in parents:
+                    self.filemap[revision].update(self.filemap[rev])
                 if present:
-                    removed = set(expected.keys()) - set(present)
+                    removed = set(self.filemap[revision].keys()) - set(present)
                     for path in present:
                         if os.path.isdir(path):
                             continue
@@ -1681,27 +1598,21 @@ class RepoStreamer:
                             # The file's hash corresponds to an existing
                             # blob; generate modify, copy, or rename as
                             # appropriate.
-                            if self.filemap.retrieve(revision, path) != newsig:
+                            if path not in self.filemap[revision] \
+                                   or self.filemap[revision][path]!=newsig:
                                 if verbose >= DEBUG_EXTRACT:
                                     announce("r%s: update for %s" % (revision, path))
-                                for (oldpath, oldsig) in self.filemap.items(revision):
+                                for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp(commit)
                                             op.construct('R', oldpath, path)
                                             commit.fileops.append(op)
-                                            self.filemap.remove(revision,
-                                                                oldpath)
-                                            self.filemap.register(revision,
-                                                                  path,
-                                                                  oldsig)
+                                            del self.filemap[revision][oldpath]
                                         elif oldpath != path:
                                             op = FileOp(commit)
                                             op.construct('C', oldpath, path)
                                             commit.fileops.append(op)
-                                            self.filemap.record(revision,
-                                                                path,
-                                                                oldsig)
                                         break
                                 else:
                                     op = FileOp(commit)
@@ -1727,19 +1638,18 @@ class RepoStreamer:
                             op = FileOp(commit)
                             op.construct('M', newsig.perms, blobmark, path)
                             commit.fileops.append(op)
-                        self.filemap.register(revision, path, newsig)
+                        self.filemap[revision][path] = newsig
                     for tbd in removed:
                         op = FileOp(commit)
                         op.construct('D', tbd)
                         commit.fileops.append(op)
-                        self.filemap.remove(revision, tbd)
+                        del self.filemap[revision][tbd]
                 self.extractor.cleanup(revision, True)
                 if not parents and commit.branch != "refs/heads/master":
                     reset = Reset()
                     reset.ref = commit.branch
                     repo.events.append(reset)
-                if len(commit.fileops) > 1:
-                    commit.fileops.sort(cmp=FileOp.compare)
+                commit.fileops.sort(cmp=FileOp.compare)
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
                 commit.mark = self.__newmark(revision)
