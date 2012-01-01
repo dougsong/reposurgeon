@@ -4719,7 +4719,7 @@ for exploring the selection-set language.
             return
         try:
             for cmdline in open(line):
-                interpreter.onecmd(interpreter.precmd(cmdline))
+                self.onecmd(self.precmd(cmdline))
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
