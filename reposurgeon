@@ -1224,6 +1224,7 @@ class Commit:
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
         self.pushed_to = False       # Flagged for resolution after delete
+        self.filemap = {}
         self.color = None
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
@@ -1401,6 +1402,8 @@ class Commit:
         return pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
+        if self.filemap or not self.parent_marks:
+            return self.filemap
         ancestors = {}
         sys.setrecursionlimit(len(self.repo.events) * 2)
         for commit in self.parents():
@@ -1417,6 +1420,7 @@ class Commit:
                 ancestors[fileop.target] = ancestors[fileop.source]
                 if fileop.source in ancestors:
                     del ancestors[fileop.source]
+        self.filemap = ancestors
         return ancestors
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
