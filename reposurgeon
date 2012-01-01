@@ -1422,6 +1422,12 @@ class Commit:
                     del ancestors[fileop.source]
         self.filemap = ancestors
         return ancestors
+    def alldeletes(self):
+        "Is this an all-deletes commit?"
+        for fileop in self.fileops:
+            if fileop.op not in ("D", "deleteall"):
+                return False
+        return True
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
         if not directory:
@@ -5637,8 +5643,10 @@ is performed even if is not clean.
                             elif not mergeable(path, tipfiles, targetfiles, target):
                                 break
                         else:
-                            merge_clean = True
-                            break
+                            # Ignore tip commits consisting of all deletes
+                            if not commit.alldeletes() or commit.children():
+                                merge_clean = True
+                                break
                     baton.bumpcounter()
             if merge_clean:
                 announce("%s can merge clean at %s" % (tip.mark, target.mark))
