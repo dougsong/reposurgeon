@@ -2380,8 +2380,7 @@ class StreamParser:
                 else:
                     # Suppress this commit
                     self.repo.delete([self.repo.events.index(commit)],
-                                ["obliterate"],
-                                quiet=True)
+                                     ["obliterate", "quiet"])
         # Now we need to tagify all other commits without fileops, because
         # git is going to just discard them when we build a live repo and
         # they might possibly contain interesting metadata.  Usually they're
@@ -2579,8 +2578,7 @@ class Repository:
                                tagger=commit.committer,
                                comment=pref + legend))
         self.delete([self.events.index(commit)],
-                         ["obliterate"],
-                         quiet=True)
+                         ["obliterate", "quiet"])
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
@@ -2851,7 +2849,7 @@ class Repository:
                 break
             commit.fileops = [x for x in commit.fileops if x is not None]
         return coverage
-    def delete(self, selected, policy, quiet=False):
+    def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
@@ -2864,14 +2862,13 @@ class Repository:
             if isinstance(event, Blob):
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
-                if "obliterate" in policy and not quiet:
+                if "obliterate" in policy and not "quiet" in policy:
                     speak = "warning: commit %s to be obliterated has " % event.mark 
                     if '/' in event.branch and not '/heads/' in event.branch:
                         complain(speak + "non-head branch attribute %s" % event.branch)
-                    for fileop in event.fileops:
-                        if fileop.op != 'D' and fileop.op != 'deleteall':
-                            announce(speak + "non-delete fileops.")
-                            break
+                    if not event.alldeletes():
+                        announce(speak + "non-delete fileops.")
+                        break
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
@@ -5289,8 +5286,8 @@ is performed even if is not clean.
                             elif not mergeable(path, tipfiles, targetfiles, target):
                                 break
                         else:
-                            # Ignore tip commits consisting of all deletes
-                            if not commit.alldeletes() or commit.children():
+                            # Ignore target commits consisting of all deletes
+                            if not target.alldeletes() or target.children():
                                 merge_clean = True
                                 break
                     baton.bumpcounter()
