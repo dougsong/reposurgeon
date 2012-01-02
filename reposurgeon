@@ -2095,7 +2095,7 @@ class StreamParser:
                         if prop not in StreamParser.IgnoreProperties:
                             # Ignore an invalid value set (not no effect)
                             # by some tools. This keeps us from seeing
-                            # spurious messages about.
+                            # spurious messages about empty properties.
                             if prop == 'svn:mergeinfo' and not val:
                                 continue
                             if not latch:
