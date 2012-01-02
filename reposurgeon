@@ -2110,7 +2110,8 @@ class StreamParser:
                                  % (node.revision, node.path))
                 # Actions on directories
                 if node.kind == SD_DIR:
-                    # os.sep is appended to avoid collisions with path prefixes.
+                    # os.sep is appended to avoid collisions with path
+                    # prefixes.
                     node.path += os.sep
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
