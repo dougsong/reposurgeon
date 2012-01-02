@@ -1419,6 +1419,7 @@ class StreamParser:
         self.branchlink = {}
         self.uuid = None
         self.revisions = collections.OrderedDict()
+        self.copycounts = collections.OrderedDict()
         self.hashmap = {}
         self.permissions = {}
         self.warnings = []
@@ -2077,8 +2078,9 @@ class StreamParser:
                 attribution = "%s <%s> %s" % (au, au, ad)
             commit.committer = Attribution(attribution)
             commit.properties.update(record.props)
-            # Zero revision is never interesting - no operations, no comment, no
-            # author, it's just a start marker for a non-incremental dump.
+            # Zero revision is never interesting - no operations, no
+            # comment, no author, it's just a start marker for a
+            # non-incremental dump.
             if revision == "0": 
                 continue
             for node in record.nodes:
