@@ -2367,13 +2367,15 @@ class StreamParser:
                     if self.mark_counter[fileop.ref] > 1:
                         continue
                     # I don't know why cvs2svn generates deletes into these,
-                    # but they're pretty obviously spurious.
+                    # but they're pretty obviously spurious.  Anyway the
+                    # worst that could happen from removing a delete is that
+                    # the file is visible later than it should be.
                     elif fileop.op == 'D':
                         continue
                     else:
                         # Fail safely - any fileop not matching the previous
                         # tests means the commit should be emitted.  This
-                        # means we never throw away content modifications
+                        # means we never throw away content modifications.
                         break
                 else:
                     # Suppress this commit
