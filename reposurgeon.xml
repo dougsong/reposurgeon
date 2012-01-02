@@ -596,6 +596,13 @@ forward to the first child rather than being deleted.</para>
 backward to the first parent than being deleted. </para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>quiet</term>
+<listitem>
+<para>Suppresses warning messages about obliteration of commits with
+non-delete fileops.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>Under either of these policies, deleting a commit that has
