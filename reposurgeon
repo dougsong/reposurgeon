@@ -392,7 +392,7 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-granined)
+DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_DELETE    = 5    # Debug canonicalization after deletes
