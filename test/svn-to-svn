@@ -9,9 +9,9 @@
 # With the -d option, expect the repo to exist, undump the repo to
 # a Subversion dump file; then do not delete the repo.
 #
-# With the -r option, expect the repo to exist, pick it
-# up with reposurgeon, and throw the result to stdout; then
-# do not delete the repo.
+# With the -r option, expect the repo to exist, pick it up with
+# reposurgeon, and throw the result to stdout as an import stream;
+# then do not delete the repo.
 #
 # The -v option argument will be used to set reposurgeon's verbose option.
 #
