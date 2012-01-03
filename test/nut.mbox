@@ -1,873 +1,585 @@
 ------------------------------------------------------------------------------
 Event-Number: 305
-Branch: refs/heads/master
-Parents: 
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 27 Jan 2005 09:33:14 +0000
-Fossil-ID: 2
 
 Initial revision
 ------------------------------------------------------------------------------
 Event-Number: 326
-Branch: refs/heads/master
-Parents: :305
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 28 Feb 2005 04:14:07 +0000
-Fossil-ID: 6
 
 Bring CVS tree in sync with the new 2.0.1 stable
 ------------------------------------------------------------------------------
 Event-Number: 334
-Branch: refs/heads/v2.1.0
-Parents: 
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 18 Mar 2005 09:09:38 +0000
-Fossil-ID: 12
 
 Development tree fork, merge Patch #301143
 ------------------------------------------------------------------------------
 Event-Number: 338
-Branch: refs/heads/v2.1.0
-Parents: :333
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 18 Mar 2005 09:24:18 +0000
-Fossil-ID: 13
 
 Merge Alioth Patch #301145 from Niels Baggesen
 ------------------------------------------------------------------------------
 Event-Number: 341
-Branch: refs/heads/v2.1.0
-Parents: :337
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 18 Mar 2005 09:41:18 +0000
-Fossil-ID: 14
 
 Add the missing Powerware 5119 RM (genericups type=20)
 ------------------------------------------------------------------------------
 Event-Number: 344
-Branch: refs/heads/v2.1.0
-Parents: :340
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 21 Mar 2005 11:00:41 +0000
-Fossil-ID: 15
 
 Alioth Patch #301271
 ------------------------------------------------------------------------------
 Event-Number: 348
-Branch: refs/heads/v2.1.0
-Parents: :343
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 22 Mar 2005 05:24:27 +0000
-Fossil-ID: 16
 
 Alioth Patch #301146
 ------------------------------------------------------------------------------
 Event-Number: 351
-Branch: refs/heads/v2.1.0
-Parents: :347
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 22 Mar 2005 07:48:30 +0000
-Fossil-ID: 17
 
 Alioth Patch #301279
 ------------------------------------------------------------------------------
 Event-Number: 355
-Branch: refs/heads/v2.1.0
-Parents: :350
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 22 Mar 2005 10:03:48 +0000
-Fossil-ID: 18
 
 Alioth Patch #301281
 ------------------------------------------------------------------------------
 Event-Number: 358
-Branch: refs/heads/v2.1.0
-Parents: :354
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 22 Mar 2005 11:08:11 +0000
-Fossil-ID: 19
 
 Alioth Patch #301283
 ------------------------------------------------------------------------------
 Event-Number: 370
-Branch: refs/heads/v2.1.0
-Parents: :357
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 23 Mar 2005 11:06:43 +0000
-Fossil-ID: 20
 
 MGE patch-set 230305
 ------------------------------------------------------------------------------
 Event-Number: 374
-Branch: refs/heads/v2.1.0
-Parents: :369
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 23 Mar 2005 11:21:37 +0000
-Fossil-ID: 21
 
 Alioth Patch #301289
 ------------------------------------------------------------------------------
 Event-Number: 384
-Branch: refs/heads/v2.1.0
-Parents: :373
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 15 Apr 2005 07:24:33 +0000
-Fossil-ID: 24
 
 MGE patch-set for mge-shut and newhidups
 ------------------------------------------------------------------------------
 Event-Number: 390
-Branch: refs/heads/v2.1.0
-Parents: :383
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 15 Apr 2005 08:04:51 +0000
-Fossil-ID: 25
 
 Alioth Patch #301282, #301461
 ------------------------------------------------------------------------------
 Event-Number: 396
-Branch: refs/heads/v2.1.0
-Parents: :389
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 15 Apr 2005 08:46:02 +0000
-Fossil-ID: 26
 
 Netvision MIB support (Alioth Patch #301296)
 ------------------------------------------------------------------------------
 Event-Number: 405
-Branch: refs/heads/v2.1.0
-Parents: :395
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Apr 2005 07:12:48 +0000
-Fossil-ID: 30
 
 merge new bcmxcp driver (Alioth Patch #301290)
 ------------------------------------------------------------------------------
 Event-Number: 407
-Branch: refs/heads/v2.1.0
-Parents: :404
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Apr 2005 07:14:24 +0000
-Fossil-ID: 32
 
 add the forgotten drivers/netvisionmib.h (Alioth Patch #301296)
 ------------------------------------------------------------------------------
 Event-Number: 410
-Branch: refs/heads/v2.1.0
-Parents: :406
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 23 Apr 2005 15:41:46 +0000
-Fossil-ID: 33
 
 move initups after become_user (Alioth patch #301284)
 ------------------------------------------------------------------------------
 Event-Number: 414
-Branch: refs/heads/v2.1.0
-Parents: :409
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 23 Apr 2005 15:51:16 +0000
-Fossil-ID: 34
 
 Alioth patch #301288
 ------------------------------------------------------------------------------
 Event-Number: 417
-Branch: refs/heads/v2.1.0
-Parents: :413
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sun 24 Apr 2005 15:09:18 +0000
-Fossil-ID: 35
 
 [ Alioth patch #301505 ] etapro: fix brokeness due to ser_get_line
 ------------------------------------------------------------------------------
 Event-Number: 422
-Branch: refs/heads/v2.1.0
-Parents: :416
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 25 Apr 2005 16:16:41 +0000
-Fossil-ID: 36
 
 [ Alioth patch #301508 ] build should respect LDFLAGS
 ------------------------------------------------------------------------------
 Event-Number: 425
-Branch: refs/heads/v2.1.0
-Parents: :421
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 25 Apr 2005 16:20:57 +0000
-Fossil-ID: 37
 
 drivers/Makefile.in: remove unneeded STRLCPY flag for newhidups
 ------------------------------------------------------------------------------
 Event-Number: 430
-Branch: refs/heads/v2.1.0
-Parents: :424
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 28 Apr 2005 14:23:00 +0000
-Fossil-ID: 38
 
 check which USB driver(s) to build
 ------------------------------------------------------------------------------
 Event-Number: 434
-Branch: refs/heads/v2.1.0
-Parents: :429
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 29 Apr 2005 12:58:44 +0000
-Fossil-ID: 39
 
 [ Alioth patch #301287 ] apcsmart: fix APC600 support
 ------------------------------------------------------------------------------
 Event-Number: 440
-Branch: refs/heads/v2.1.0
-Parents: :433
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 02 May 2005 07:22:30 +0000
-Fossil-ID: 41
 
 [ Alioth patch #301568 ] snmp-ups: add Powerware MIB support
 ------------------------------------------------------------------------------
 Event-Number: 445
-Branch: refs/heads/v2.1.0
-Parents: :439
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 02 May 2005 07:42:32 +0000
-Fossil-ID: 42
 
 check which USB manpage(s) to install
 ------------------------------------------------------------------------------
 Event-Number: 448
-Branch: refs/heads/v2.1.0
-Parents: :444
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 02 May 2005 07:44:15 +0000
-Fossil-ID: 43
 
 suppress snmp-ups manpage duplication
 ------------------------------------------------------------------------------
 Event-Number: 455
-Branch: refs/heads/v2.1.0
-Parents: :447
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 03 May 2005 05:11:48 +0000
-Fossil-ID: 44
 
 USB improvements (interrupt and reconnexion support)
 ------------------------------------------------------------------------------
 Event-Number: 457
-Branch: refs/heads/v2.1.0
-Parents: :454
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 03 May 2005 05:14:37 +0000
-Fossil-ID: 45
 
 fix typo in CHANGES (cpups instead of cpsups)
 ------------------------------------------------------------------------------
 Event-Number: 466
-Branch: refs/heads/v2.1.0
-Parents: :456
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 03 May 2005 06:09:40 +0000
-Fossil-ID: 48
 
 [ Alioth patch #301144 ] merge new upscode II driver
 ------------------------------------------------------------------------------
 Event-Number: 469
-Branch: refs/heads/v2.1.0
-Parents: :465
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 03 May 2005 07:52:01 +0000
-Fossil-ID: 49
 
 [ Alioth patch #301573 ] Add POWERWARE 3110 support
 ------------------------------------------------------------------------------
 Event-Number: 474
-Branch: refs/heads/v2.1.0
-Parents: :468
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 03 May 2005 10:32:27 +0000
-Fossil-ID: 50
 
 [ Alioth patch #301574 ] Add Michel Bouissou's patches (fentonups part)
 ------------------------------------------------------------------------------
 Event-Number: 483
-Branch: refs/heads/v2.1.0
-Parents: :473
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 04 May 2005 03:40:24 +0000
-Fossil-ID: 54
 
 [ Alioth patch #301272 ] solis driver
 ------------------------------------------------------------------------------
 Event-Number: 485
-Branch: refs/heads/v2.1.0
-Parents: :482
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 04 May 2005 03:59:24 +0000
-Fossil-ID: 55
 
 Update the driver compatibility list
 ------------------------------------------------------------------------------
 Event-Number: 544
-Branch: refs/heads/Testing
-Parents: 
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 04 May 2005 05:36:37 +0000
-Fossil-ID: 56
 
 bring 2.0.2-pre1 testing release in sync with development release
 ------------------------------------------------------------------------------
 Event-Number: 552
-Branch: refs/heads/Testing
-Parents: :542
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 26 May 2005 08:22:27 +0000
-Fossil-ID: 58
 
 various 2.0.2-pre2 changes, mostly on newhidups
 ------------------------------------------------------------------------------
 Event-Number: 559
-Branch: refs/heads/Testing
-Parents: :550
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 01 Jun 2005 15:45:29 +0000
-Fossil-ID: 59
 
 newhidups improvements and apc support
 ------------------------------------------------------------------------------
 Event-Number: 565
-Branch: refs/heads/Testing
-Parents: :557
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 03 Jun 2005 09:10:26 +0000
-Fossil-ID: 60
 
 minor newhidups corrections
 ------------------------------------------------------------------------------
 Event-Number: 575
-Branch: refs/heads/Testing
-Parents: :563
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 22 Jun 2005 03:39:36 +0000
-Fossil-ID: 61
 
 various mge-shut, newhidups and tripplite improvements and buxfixes
 ------------------------------------------------------------------------------
 Event-Number: 584
-Branch: refs/heads/Testing
-Parents: :573
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 22 Jun 2005 08:10:33 +0000
-Fossil-ID: 62
 
 final update for 2.0.2-pre2
 ------------------------------------------------------------------------------
 Event-Number: 586
-Branch: refs/heads/Testing
-Parents: :582
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 23 Jun 2005 15:11:21 +0000
-Fossil-ID: 64
 
 fix a wrong numbering in CHANGES file (-pre1 instead of -pre2)
 ------------------------------------------------------------------------------
 Event-Number: 632
-Branch: refs/heads/Development
-Parents: 
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 23 Jun 2005 17:09:22 +0000
-Fossil-ID: 66
 
 2.1 fork and start of packaging integration
 ------------------------------------------------------------------------------
 Event-Number: 633
-Branch: refs/heads/Development
-Parents: :629
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 23 Jun 2005 18:09:31 +0000
-Fossil-ID: 67
 
 remove debian host patch
 ------------------------------------------------------------------------------
 Event-Number: 636
-Branch: refs/heads/Testing
-Parents: :584
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 27 Jun 2005 04:24:53 +0000
-Fossil-ID: 68
 
 final changes for 2.0.2
 ------------------------------------------------------------------------------
 Event-Number: 639
-Branch: refs/heads/Development
-Parents: :630
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 27 Jun 2005 04:59:30 +0000
-Fossil-ID: 69
 
 remove mgehid.h and sync Dev. branch with 2.0.2
 ------------------------------------------------------------------------------
 Event-Number: 645
-Branch: refs/heads/Development
-Parents: :636
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 28 Jun 2005 11:04:38 +0000
-Fossil-ID: 70
 
 SU_TYPE_TIME changes in *mib.h and bump version to 2.1.0
 ------------------------------------------------------------------------------
 Event-Number: 649
-Branch: refs/heads/Testing
-Parents: :633
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 28 Jun 2005 11:11:23 +0000
-Fossil-ID: 71
 
 SU_TYPE_TIME changes in *mib.h
 ------------------------------------------------------------------------------
 Event-Number: 654
-Branch: refs/heads/Testing
-Parents: :646
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 30 Jun 2005 09:43:36 +0000
-Fossil-ID: 72
 
 update version, patch for Solis and Solaris naming colision
 ------------------------------------------------------------------------------
 Event-Number: 657
-Branch: refs/heads/Testing
-Parents: :651
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 30 Jun 2005 09:46:10 +0000
-Fossil-ID: 73
 
 bum solis release to 0.41
 ------------------------------------------------------------------------------
 Event-Number: 660
-Branch: refs/heads/Testing
-Parents: :654
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 01 Jul 2005 04:32:46 +0000
-Fossil-ID: 74
 
 Add some trace to genericups for overriden data
 ------------------------------------------------------------------------------
 Event-Number: 664
-Branch: refs/heads/Development
-Parents: :642
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 01 Jul 2005 04:39:48 +0000
-Fossil-ID: 75
 
 Apply the same changes as in Testing (genericups traces overriden data, and solis fix a naming collision on Solaris)
 ------------------------------------------------------------------------------
 Event-Number: 667
-Branch: refs/heads/Development
-Parents: :661
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 01 Jul 2005 09:33:43 +0000
-Fossil-ID: 76
 
 revert back to B9600 for isbmex
 ------------------------------------------------------------------------------
 Event-Number: 670
-Branch: refs/heads/Testing
-Parents: :657
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 01 Jul 2005 09:35:45 +0000
-Fossil-ID: 77
 
 revert back to B9600 for isbmex
 ------------------------------------------------------------------------------
 Event-Number: 679
-Branch: refs/heads/Development
-Parents: :664
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 05 Jul 2005 09:38:49 +0000
-Fossil-ID: 78
 
 Changes for dummy-ups, and minor other typo
 ------------------------------------------------------------------------------
 Event-Number: 681
-Branch: refs/heads/Development
-Parents: :676
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 05 Jul 2005 09:57:37 +0000
-Fossil-ID: 79
 
 Remove an unneeded trace in dummy-ups.c
 ------------------------------------------------------------------------------
 Event-Number: 685
-Branch: refs/heads/Testing
-Parents: :667
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 20 Jul 2005 06:45:41 +0000
-Fossil-ID: 80
 
 fix the ID string for Sysgration UPGUARDS Pro650
 ------------------------------------------------------------------------------
 Event-Number: 691
-Branch: refs/heads/Development
-Parents: :678
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 20 Jul 2005 07:36:37 +0000
-Fossil-ID: 81
 
 various changes on fentonups, isbmex, nut.spec and driver.list
 ------------------------------------------------------------------------------
 Event-Number: 695
-Branch: refs/heads/Testing
-Parents: :682
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 20 Jul 2005 07:37:08 +0000
-Fossil-ID: 82
 
 isbmex fixes
 ------------------------------------------------------------------------------
 Event-Number: 698
-Branch: refs/heads/Development
-Parents: :688
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 20 Jul 2005 09:54:17 +0000
-Fossil-ID: 83
 
 newhidups adaptation for other manufacturers
 ------------------------------------------------------------------------------
 Event-Number: 701
-Branch: refs/heads/Testing
-Parents: :692
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 20 Jul 2005 09:58:56 +0000
-Fossil-ID: 84
 
 newhidups adaptation for other mfrs
 ------------------------------------------------------------------------------
 Event-Number: 705
-Branch: refs/heads/Development
-Parents: :695
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 21 Jul 2005 10:15:45 +0000
-Fossil-ID: 85
 
 add Belkin F6C1100-UNV and fix the LDFLAGS support in gendb
 ------------------------------------------------------------------------------
 Event-Number: 709
-Branch: refs/heads/Testing
-Parents: :698
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 21 Jul 2005 10:18:02 +0000
-Fossil-ID: 86
 
 add Belkin F6C1100-UNV and fix the LDFLAGS support in gendb
 ------------------------------------------------------------------------------
 Event-Number: 718
-Branch: refs/heads/root
-Parents: :305
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Jul 2005 07:44:43 +0000
-Fossil-ID: 87
 
 various changes on newhidups and dummy-ups
 ------------------------------------------------------------------------------
 Event-Number: 722
-Branch: refs/heads/Development
-Parents: :702
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Jul 2005 08:28:43 +0000
-Fossil-ID: 88
 
 powerware 5119 RM cable
 ------------------------------------------------------------------------------
 Event-Number: 725
-Branch: refs/heads/Development
-Parents: :718
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Jul 2005 10:53:07 +0000
-Fossil-ID: 89
 
 bump newhidups release to �0.24
 ------------------------------------------------------------------------------
 Event-Number: 729
-Branch: refs/heads/Testing
-Parents: :706
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 22 Jul 2005 12:24:04 +0000
-Fossil-ID: 90
 
 claim if. correction
 ------------------------------------------------------------------------------
 Event-Number: 732
-Branch: refs/heads/Testing
-Parents: :725
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 27 Jul 2005 04:26:55 +0000
-Fossil-ID: 91
 
 typo fixes, and add Bill Richter for APC600 patch
 ------------------------------------------------------------------------------
 Event-Number: 734
-Branch: refs/heads/Testing
-Parents: :728
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 27 Jul 2005 04:28:43 +0000
-Fossil-ID: 92
 
 typo fixes (final) in bcmxcp
 ------------------------------------------------------------------------------
 Event-Number: 736
-Branch: refs/heads/Testing
-Parents: :730
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 27 Jul 2005 04:30:15 +0000
-Fossil-ID: 93
 
 *** empty log message ***
 ------------------------------------------------------------------------------
 Event-Number: 750
-Branch: refs/heads/root
-Parents: :714
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 27 Jul 2005 17:19:35 +0000
-Fossil-ID: 94
 
 cgi enhancements step1
 ------------------------------------------------------------------------------
 Event-Number: 752
-Branch: refs/heads/Development
-Parents: :721
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 28 Jul 2005 02:54:38 +0000
-Fossil-ID: 95
 
 forgotten include of install-cgi-html in install-cgi
 ------------------------------------------------------------------------------
 Event-Number: 754
-Branch: refs/heads/Development
-Parents: :748
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 01 Aug 2005 07:26:43 +0000
-Fossil-ID: 96
 
 *** empty log message ***
 ------------------------------------------------------------------------------
 Event-Number: 756
-Branch: refs/heads/Development
-Parents: :750
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 01 Aug 2005 07:27:28 +0000
-Fossil-ID: 97
 
 add powerware cable reference
 ------------------------------------------------------------------------------
 Event-Number: 758
-Branch: refs/heads/master
-Parents: :326
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 01 Aug 2005 07:28:53 +0000
-Fossil-ID: 98
 
 add install-cgi-html to install-cgi rule
 ------------------------------------------------------------------------------
 Event-Number: 762
-Branch: refs/heads/Development
-Parents: :752
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 01 Aug 2005 07:29:41 +0000
-Fossil-ID: 100
 
 dummy-ups improvements, and newhidups typo about LB cleared by OL
 ------------------------------------------------------------------------------
 Event-Number: 766
-Branch: refs/heads/Development
-Parents: :758
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 01 Aug 2005 09:54:16 +0000
-Fossil-ID: 101
 
 newhidups: handle the status clearing for LB
 ------------------------------------------------------------------------------
 Event-Number: 772
-Branch: refs/heads/Development
-Parents: :762
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 02 Aug 2005 07:30:03 +0000
-Fossil-ID: 102
 
 better handling of return from LB in newhidups
 ------------------------------------------------------------------------------
 Event-Number: 776
-Branch: refs/heads/Development
-Parents: :768
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 03 Aug 2005 05:13:51 +0000
-Fossil-ID: 103
 
 add belkin VID to newhidups
 ------------------------------------------------------------------------------
 Event-Number: 778
-Branch: refs/heads/Development
-Parents: :772
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 03 Aug 2005 05:26:41 +0000
-Fossil-ID: 104
 
 add belkin recognition
 ------------------------------------------------------------------------------
 Event-Number: 791
-Branch: refs/heads/Development
-Parents: :774
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 10 Aug 2005 08:06:08 +0000
-Fossil-ID: 105
 
 various newhidups, mge-shut, cgi changes
 ------------------------------------------------------------------------------
 Event-Number: 798
-Branch: refs/heads/Testing
-Parents: :732
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 07:03:04 +0000
-Fossil-ID: 106
 
 various backport from Development branch
 ------------------------------------------------------------------------------
 Event-Number: 804
-Branch: refs/heads/Development
-Parents: :787
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 07:48:31 +0000
-Fossil-ID: 107
 
 various changes on genericups and newhidups
 ------------------------------------------------------------------------------
 Event-Number: 814
-Branch: refs/heads/Development
-Parents: :800
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 10:10:26 +0000
-Fossil-ID: 111
 
 add gamatronic, and various update
 ------------------------------------------------------------------------------
 Event-Number: 817
-Branch: refs/heads/Development
-Parents: :810
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 16:55:38 +0000
-Fossil-ID: 112
 
 soyntec support
 ------------------------------------------------------------------------------
 Event-Number: 820
-Branch: refs/heads/Testing
-Parents: :794
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 16:59:24 +0000
-Fossil-ID: 113
 
 soyntec support
 ------------------------------------------------------------------------------
 Event-Number: 824
-Branch: refs/heads/Testing
-Parents: :816
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 16 Aug 2005 17:56:14 +0000
-Fossil-ID: 114
 
 2.0.3 final preparation
 ------------------------------------------------------------------------------
 Event-Number: 829
-Branch: refs/heads/Development
-Parents: :813
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 18 Aug 2005 08:29:25 +0000
-Fossil-ID: 115
 
 mge-utalk old units support improvement
 ------------------------------------------------------------------------------
 Event-Number: 834
-Branch: refs/heads/Testing
-Parents: :820
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 18 Aug 2005 08:45:41 +0000
-Fossil-ID: 116
 
 mge-utalk improvements for old units
 ------------------------------------------------------------------------------
 Event-Number: 842
-Branch: refs/heads/Testing
-Parents: :830
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 23 Aug 2005 03:39:14 +0000
-Fossil-ID: 117
 
 add gamatronic, update hotplug README file
 ------------------------------------------------------------------------------
 Event-Number: 856
-Branch: refs/heads/Development
-Parents: :825
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 27 Aug 2005 00:18:55 +0000
-Fossil-ID: 123
 
 Added Wolfgang Ocker's patch to split the powerware driver...
 
 ...into a serial and a USB driver (bcmxcp and bcmxcp_usb, respectively)
 ------------------------------------------------------------------------------
 Event-Number: 858
-Branch: refs/heads/Development
-Parents: :852
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 27 Aug 2005 00:36:14 +0000
-Fossil-ID: 124
 
 Prototype mismatch
 ------------------------------------------------------------------------------
 Event-Number: 865
-Branch: refs/heads/Development
-Parents: :854
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 27 Aug 2005 00:42:56 +0000
-Fossil-ID: 125
 
 Really fixed things so that bcmxcp_usb would compile via 'make usb' 
 
 (i.e. don't change Makefiles unless you change Makefile.in, etc.)
 ------------------------------------------------------------------------------
 Event-Number: 867
-Branch: refs/heads/Development
-Parents: :861
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Wed 31 Aug 2005 22:42:18 +0000
-Fossil-ID: 126
 
 Followup to PowerWare patch:
 
 the bcmxcp_usb driver was not being removed during 'make clean'.
 ------------------------------------------------------------------------------
 Event-Number: 873
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: 
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 13:51:10 +0000
-Fossil-ID: 129
 
 Skeleton driver for Tripp Lite Omni models
 ------------------------------------------------------------------------------
 Event-Number: 875
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :868
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 14:50:39 +0000
-Fossil-ID: 130
 
 Compiles, but is having trouble with usb_interrupt_read() on OS X (10.3);
 
 switching to Debian for now
 ------------------------------------------------------------------------------
 Event-Number: 878
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :870
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 15:33:26 +0000
-Fossil-ID: 131
 
 tripplite_usb finds and opens device; send_cmd() works 
 
@@ -876,175 +588,118 @@ tripplite_usb finds and opens device; send_cmd() works
 turned down verbosity of usb_interrupt_read()
 ------------------------------------------------------------------------------
 Event-Number: 880
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :873
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 17:52:03 +0000
-Fossil-ID: 132
 
 Tripp Lite USB driver seems to work
 ------------------------------------------------------------------------------
 Event-Number: 883
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :875
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 18:46:50 +0000
-Fossil-ID: 133
 
 Cleaning up the Tripp Lite USB driver
 ------------------------------------------------------------------------------
 Event-Number: 885
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :878
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 18:56:13 +0000
-Fossil-ID: 134
 
 Better error checking
 ------------------------------------------------------------------------------
 Event-Number: 887
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :880
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 20:24:25 +0000
-Fossil-ID: 135
 
 Debugging statements
 ------------------------------------------------------------------------------
 Event-Number: 889
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :882
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 23:29:31 +0000
-Fossil-ID: 136
 
 Starting to implement shutdown routines
 ------------------------------------------------------------------------------
 Event-Number: 891
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :884
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 03 Sep 2005 23:41:10 +0000
-Fossil-ID: 137
 
 Disable some features that don't work at the moment
 ------------------------------------------------------------------------------
 Event-Number: 893
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :886
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Thu 08 Sep 2005 09:16:31 +0000
-Fossil-ID: 138
 
 Better parsing of the model string
 ------------------------------------------------------------------------------
 Event-Number: 896
-Branch: refs/heads/Development
-Parents: :863
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 06:50:12 +0000
-Fossil-ID: 139
 
 approval for powerware/bcmxcp split (serial/usb)
 ------------------------------------------------------------------------------
 Event-Number: 900
-Branch: refs/heads/Development
-Parents: :891
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 08:06:46 +0000
-Fossil-ID: 140
 
 approve tripplite_usb
 ------------------------------------------------------------------------------
 Event-Number: 902
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :888
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 09 Sep 2005 08:15:22 +0000
-Fossil-ID: 141
 
 Updated driver.list
 ------------------------------------------------------------------------------
 Event-Number: 905
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :897
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 09 Sep 2005 08:55:17 +0000
-Fossil-ID: 143
 
 Added documentation
 ------------------------------------------------------------------------------
 Event-Number: 914
-Branch: refs/heads/Development
-Parents: :895
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 10:32:39 +0000
-Fossil-ID: 144
 
 apply PSE patch set (Alioth patch #302101)
 ------------------------------------------------------------------------------
 Event-Number: 917
-Branch: refs/heads/Development
-Parents: :909
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 10:44:32 +0000
-Fossil-ID: 145
 
 completed new-names.txt as per the nut-cvs-patch-APC patch
 ------------------------------------------------------------------------------
 Event-Number: 919
-Branch: refs/heads/Development
-Parents: :912
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 11:24:54 +0000
-Fossil-ID: 146
 
 add the missing ups.beeper.status
 ------------------------------------------------------------------------------
 Event-Number: 923
-Branch: refs/heads/Development
-Parents: :914
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 09 Sep 2005 12:01:38 +0000
-Fossil-ID: 147
 
 belkinunv: NUT variable naming conformance (Alioth patch #302117)
 ------------------------------------------------------------------------------
 Event-Number: 925
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :900
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 09 Sep 2005 23:24:53 +0000
-Fossil-ID: 148
 
 Some SMARTPRO info
 ------------------------------------------------------------------------------
 Event-Number: 928
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :920
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 10 Sep 2005 17:16:49 +0000
-Fossil-ID: 150
 
 Some documentation
 ------------------------------------------------------------------------------
 Event-Number: 931
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :923
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 10 Sep 2005 18:55:59 +0000
-Fossil-ID: 151
 
 * Implemented reconnection
 
 * Adjusted some Doxygen parameters
 ------------------------------------------------------------------------------
 Event-Number: 933
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :926
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 11 Sep 2005 20:06:59 +0000
-Fossil-ID: 152
 
 Looks like I goofed on the variables. 
 
@@ -1053,78 +708,54 @@ It's probably input.voltage, not input.frequency.
 Some reconnection stuff
 ------------------------------------------------------------------------------
 Event-Number: 935
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :928
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 11 Sep 2005 20:32:45 +0000
-Fossil-ID: 153
 
 Hotplug for Tripp Lite models
 ------------------------------------------------------------------------------
 Event-Number: 937
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :930
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 11 Sep 2005 20:37:58 +0000
-Fossil-ID: 154
 
 Fixes error when two copies of driver are attempting to control the same device
 ------------------------------------------------------------------------------
 Event-Number: 980
-Branch: refs/heads/Development
-Parents: :918
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 12 Sep 2005 08:38:36 +0000
-Fossil-ID: 155
 
 add headers deps generation for every drivers
 ------------------------------------------------------------------------------
 Event-Number: 982
-Branch: refs/heads/Development
-Parents: :975
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 12 Sep 2005 08:43:43 +0000
-Fossil-ID: 156
 
 Restore Makefile.dist as the standard Makefile
 ------------------------------------------------------------------------------
 Event-Number: 988
-Branch: refs/heads/Development
-Parents: :977
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 12 Sep 2005 09:02:10 +0000
-Fossil-ID: 158
 
 complete bcmxcp_usb support (manpage, compat)
 ------------------------------------------------------------------------------
 Event-Number: 991
-Branch: refs/heads/Development
-Parents: :983
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 12 Sep 2005 13:55:12 +0000
-Fossil-ID: 159
 
 newhidups: fixed logic in upsdrv_shutdown():
 
 return after first command succeeds, don't print "Shutdown command failed".
 ------------------------------------------------------------------------------
 Event-Number: 996
-Branch: refs/heads/Development
-Parents: :986
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 12 Sep 2005 21:39:41 +0000
-Fossil-ID: 160
 
 newhidups: in libhid.h, removed iProduct from HIDDevice structure.
 
 Use ProductID instead.
 ------------------------------------------------------------------------------
 Event-Number: 1006
-Branch: refs/heads/regex_branch
-Parents: 
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Tue 13 Sep 2005 01:37:22 +0000
-Fossil-ID: 162
 
 [[UPS selection options for newhidups]]
 
@@ -1139,20 +770,14 @@ Fossil-ID: 162
  - skel.c: fixed typos
 ------------------------------------------------------------------------------
 Event-Number: 1009
-Branch: refs/heads/Development
-Parents: :991
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 13 Sep 2005 04:49:31 +0000
-Fossil-ID: 163
 
 [ #301881 ] Powerware 5119 = Exide NETUPS SE = Deltec name was PowerRite Pro II
 ------------------------------------------------------------------------------
 Event-Number: 1017
-Branch: refs/heads/Development
-Parents: :1003
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Tue 13 Sep 2005 17:11:06 +0000
-Fossil-ID: 165
 
 [[newhidups improvements]]
 
@@ -1164,11 +789,8 @@ Fossil-ID: 165
    device was found.
 ------------------------------------------------------------------------------
 Event-Number: 1022
-Branch: refs/heads/Development
-Parents: :1011
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 12:26:34 +0000
-Fossil-ID: 166
 
 [[More newhidups improvements]]
 
@@ -1176,11 +798,8 @@ Fossil-ID: 166
    newhidups driver release.
 ------------------------------------------------------------------------------
 Event-Number: 1026
-Branch: refs/heads/regex_branch
-Parents: :1000
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 14:36:25 +0000
-Fossil-ID: 168
 
 The following changes are in the "regex_branch":
 
@@ -1191,11 +810,8 @@ The following changes are in the "regex_branch":
    code.
 ------------------------------------------------------------------------------
 Event-Number: 1034
-Branch: refs/heads/regex_branch
-Parents: :1020
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 14:50:06 +0000
-Fossil-ID: 169
 
 Merge changes from Development branch up to "regex_branch_base0" ...
 
@@ -1203,11 +819,8 @@ Merge changes from Development branch up to "regex_branch_base0" ...
 "regex_branch_base0".
 ------------------------------------------------------------------------------
 Event-Number: 1042
-Branch: refs/heads/regex_branch
-Parents: :1028
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 21:17:07 +0000
-Fossil-ID: 170
 
 [[newhidups bug fixes and cleanups.]]
 
@@ -1223,11 +836,8 @@ Fossil-ID: 170
    newhidups.c:identify_ups().
 ------------------------------------------------------------------------------
 Event-Number: 1049
-Branch: refs/heads/regex_branch
-Parents: :1036
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 23:40:11 +0000
-Fossil-ID: 171
 
 [[newhidups matcher implementation]]
 
@@ -1242,40 +852,28 @@ Fossil-ID: 171
    some debug output.
 ------------------------------------------------------------------------------
 Event-Number: 1053
-Branch: refs/heads/Development
-Parents: :1016
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 14 Sep 2005 23:56:23 +0000
-Fossil-ID: 172
 
 added Belkin and APC models to supported hardware list... 
 
 ...in README and data/driver.list.
 ------------------------------------------------------------------------------
 Event-Number: 1058
-Branch: refs/heads/regex_branch
-Parents: :1043
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 15 Sep 2005 15:54:53 +0000
-Fossil-ID: 173
 
 newhidups: eliminated some unused arguments from functions
 ------------------------------------------------------------------------------
 Event-Number: 1062
-Branch: refs/heads/regex_branch
-Parents: :1052
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 15 Sep 2005 21:06:04 +0000
-Fossil-ID: 174
 
 newhidups: make sure correct matcher is used for reopenings.
 ------------------------------------------------------------------------------
 Event-Number: 1067
-Branch: refs/heads/Development
-Parents: :1047
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 15 Sep 2005 21:36:31 +0000
-Fossil-ID: 175
 
 drivers/: updated gendb and Makefile.in... 
 
@@ -1283,11 +881,8 @@ drivers/: updated gendb and Makefile.in...
 depend" target.
 ------------------------------------------------------------------------------
 Event-Number: 1070
-Branch: refs/heads/Development
-Parents: :1061
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 16 Sep 2005 20:29:31 +0000
-Fossil-ID: 176
 
 drivers/Makefile.in: don't run gendb on "make clean"...
 
@@ -1295,146 +890,98 @@ drivers/Makefile.in: don't run gendb on "make clean"...
 dependencies.
 ------------------------------------------------------------------------------
 Event-Number: 1072
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :932
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 17 Sep 2005 15:28:49 +0000
-Fossil-ID: 177
 
 Added detection for SMARTPRO series
 ------------------------------------------------------------------------------
 Event-Number: 1074
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1066
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 17 Sep 2005 15:53:38 +0000
-Fossil-ID: 178
 
 Better model detection
 ------------------------------------------------------------------------------
 Event-Number: 1076
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1068
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 17 Sep 2005 16:27:42 +0000
-Fossil-ID: 179
 
 Fixed up model detection code
 ------------------------------------------------------------------------------
 Event-Number: 1078
-Branch: refs/heads/Development
-Parents: :1064
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 17 Sep 2005 16:38:37 +0000
-Fossil-ID: 180
 
 added last night's changes to CHANGES
 ------------------------------------------------------------------------------
 Event-Number: 1080
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1070
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 17 Sep 2005 17:34:15 +0000
-Fossil-ID: 181
 
 Added load.on/load.off instcmds for SMARTPRO
 ------------------------------------------------------------------------------
 Event-Number: 1082
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1074
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 17 Sep 2005 18:14:11 +0000
-Fossil-ID: 182
 
 Battery test mode
 ------------------------------------------------------------------------------
 Event-Number: 1084
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1076
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 18 Sep 2005 18:18:00 +0000
-Fossil-ID: 183
 
 Differences between SMARTPRO and OMNIVS
 ------------------------------------------------------------------------------
 Event-Number: 1086
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1078
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 18 Sep 2005 19:00:28 +0000
-Fossil-ID: 184
 
 More SMARTPRO debugging
 ------------------------------------------------------------------------------
 Event-Number: 1088
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1080
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 18 Sep 2005 19:48:49 +0000
-Fossil-ID: 185
 
 Fix SMARTPRO debugging
 ------------------------------------------------------------------------------
 Event-Number: 1090
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1082
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 18 Sep 2005 20:12:38 +0000
-Fossil-ID: 186
 
 Also monitor "S" value on non-OMNIVS models
 ------------------------------------------------------------------------------
 Event-Number: 1093
-Branch: refs/heads/Development
-Parents: :1072
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 12:12:44 +0000
-Fossil-ID: 187
 
 drivers/gendb: added test for gcc availability.
 ------------------------------------------------------------------------------
 Event-Number: 1096
-Branch: refs/heads/Development
-Parents: :1087
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 12:43:34 +0000
-Fossil-ID: 188
 
 do not remove Makefile.drvbuild on "make clean".
 ------------------------------------------------------------------------------
 Event-Number: 1098
-Branch: refs/heads/Development
-Parents: :1090
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 12:45:12 +0000
-Fossil-ID: 189
 
 drivers/Makefile.in: don't remove Makefile.drvbuild on "make clean".
 ------------------------------------------------------------------------------
 Event-Number: 1104
-Branch: refs/heads/regex_branch
-Parents: :1056
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 13:51:48 +0000
-Fossil-ID: 190
 
 newhidups: added -x bus=X option to open a device on a specific USB bus.
 ------------------------------------------------------------------------------
 Event-Number: 1106
-Branch: refs/heads/regex_branch
-Parents: :1098
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 19:03:55 +0000
-Fossil-ID: 191
 
 added -x bus=<regex> option to newhidups man page
 ------------------------------------------------------------------------------
 Event-Number: 1125
-Branch: refs/heads/Development
-Parents: :1092
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 21:15:58 +0000
-Fossil-ID: 196
 
 [[Code cleanups for newhidups - no behavioral changes.]]
 
@@ -1446,29 +993,20 @@ Fossil-ID: 196
  - renamed drivers/hid-usb.h as drivers/libusb.h
 ------------------------------------------------------------------------------
 Event-Number: 1135
-Branch: refs/heads/Development
-Parents: :1119
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 21:59:25 +0000
-Fossil-ID: 197
 
 merging changes from regex_branch into Developement branch.
 ------------------------------------------------------------------------------
 Event-Number: 1140
-Branch: refs/heads/Development
-Parents: :1129
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 19 Sep 2005 22:13:04 +0000
-Fossil-ID: 198
 
 tripplite_usb: made minor adjustments reflecting recent changes in libhid.h.
 ------------------------------------------------------------------------------
 Event-Number: 1155
-Branch: refs/heads/Development
-Parents: :1134
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 23 Sep 2005 20:16:24 +0000
-Fossil-ID: 200
 
 [[Refactor newhidups to isolate vendor-specific pieces.]]
 
@@ -1485,38 +1023,26 @@ Fossil-ID: 200
 - added docs/hid-subdrivers.txt to explain how to write a new HID subdriver.
 ------------------------------------------------------------------------------
 Event-Number: 1165
-Branch: refs/heads/Development
-Parents: :1149
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 23 Sep 2005 20:50:38 +0000
-Fossil-ID: 201
 
  newhidups: eliminated global variables from libusb.
 ------------------------------------------------------------------------------
 Event-Number: 1167
-Branch: refs/heads/Development
-Parents: :1159
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 23 Sep 2005 21:32:46 +0000
-Fossil-ID: 202
 
  newhidups: eliminated global variables from libusb.
 ------------------------------------------------------------------------------
 Event-Number: 1169
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1084
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 23 Sep 2005 21:48:23 +0000
-Fossil-ID: 203
 
 Fix protocol detection
 ------------------------------------------------------------------------------
 Event-Number: 1179
-Branch: refs/heads/Development
-Parents: :1161
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 23 Sep 2005 22:39:02 +0000
-Fossil-ID: 204
 
 libhid.c: reduced number of global variables in libhid to 3. 
 
@@ -1524,11 +1050,8 @@ Also simplified logic in HIDGetItemValue() and fixed a bug where the
 report timestamp was refreshed even when an old report was used.
 ------------------------------------------------------------------------------
 Event-Number: 1189
-Branch: refs/heads/Development
-Parents: :1173
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 24 Sep 2005 00:37:25 +0000
-Fossil-ID: 205
 
 [[Isolate vendor-specific code in newhidups]]
 
@@ -1540,128 +1063,86 @@ Fossil-ID: 205
    and path_to_string().
 ------------------------------------------------------------------------------
 Event-Number: 1191
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1163
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Mon 26 Sep 2005 23:14:07 +0000
-Fossil-ID: 206
 
 More Smartpro (3003) protocol decoding
 ------------------------------------------------------------------------------
 Event-Number: 1193
-Branch: refs/heads/Tripp_Lite_Omni
-Parents: :1185
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Mon 26 Sep 2005 23:57:42 +0000
-Fossil-ID: 207
 
 More Smartpro variables
 ------------------------------------------------------------------------------
 Event-Number: 1196
-Branch: refs/heads/Development
-Parents: :1183
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 16:49:31 +0000
-Fossil-ID: 209
 
 doc/acpi.txt: start investigation on ACPI bridging (Alioth task #258)
 ------------------------------------------------------------------------------
 Event-Number: 1202
-Branch: refs/heads/Development
-Parents: :1190
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 17:08:09 +0000
-Fossil-ID: 210
 
 bcmxcp baud_rate parameter and HP R3000 XR support
 ------------------------------------------------------------------------------
 Event-Number: 1204
-Branch: refs/heads/Development
-Parents: :1196
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 17:10:39 +0000
-Fossil-ID: 211
 
 typo error on Modell
 ------------------------------------------------------------------------------
 Event-Number: 1206
-Branch: refs/heads/Development
-Parents: :1198
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 17:22:22 +0000
-Fossil-ID: 212
 
 missing blank line
 ------------------------------------------------------------------------------
 Event-Number: 1212
-Branch: refs/heads/Testing
-Parents: :838
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 17:24:11 +0000
-Fossil-ID: 213
 
 bcmxcp baud_rate parameter and HP R3000 XR
 ------------------------------------------------------------------------------
 Event-Number: 1215
-Branch: refs/heads/Development
-Parents: :1200
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 18:04:44 +0000
-Fossil-ID: 214
 
 models support completion
 ------------------------------------------------------------------------------
 Event-Number: 1217
-Branch: refs/heads/Testing
-Parents: :1206
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 18:08:21 +0000
-Fossil-ID: 215
 
 missing Alioth # reference
 ------------------------------------------------------------------------------
 Event-Number: 1219
-Branch: refs/heads/Development
-Parents: :1209
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 30 Sep 2005 18:08:25 +0000
-Fossil-ID: 216
 
 missing Alioth # reference
 ------------------------------------------------------------------------------
 Event-Number: 1222
-Branch: refs/heads/Development
-Parents: :1213
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 01 Oct 2005 14:20:32 +0000
-Fossil-ID: 217
 
 Alioth patch #302107
 ------------------------------------------------------------------------------
 Event-Number: 1224
-Branch: refs/heads/Development
-Parents: :1216
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 01 Oct 2005 14:23:17 +0000
-Fossil-ID: 218
 
 update the Date of upssched.txt
 ------------------------------------------------------------------------------
 Event-Number: 1227
-Branch: refs/heads/Testing
-Parents: :1211
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 01 Oct 2005 14:25:53 +0000
-Fossil-ID: 219
 
 Alioth patch #302107
 ------------------------------------------------------------------------------
 Event-Number: 1235
-Branch: refs/heads/Development
-Parents: :1218
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 01 Oct 2005 18:11:17 +0000
-Fossil-ID: 220
 
 [[Miscellaneous driver-level fixes]]
 
@@ -1672,166 +1153,112 @@ Fossil-ID: 220
  * scripts/hotplug/libhid.usermap: Added entry for Tripp Lite UPSes
 ------------------------------------------------------------------------------
 Event-Number: 1237
-Branch: refs/heads/Development
-Parents: :1229
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 01 Oct 2005 18:43:15 +0000
-Fossil-ID: 221
 
 merging an update to CHANGES previously forgotten
 ------------------------------------------------------------------------------
 Event-Number: 1239
-Branch: refs/heads/Development
-Parents: :1231
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 01 Oct 2005 18:45:02 +0000
-Fossil-ID: 222
 
 Added basic reconnection support for tripplite_usb
 ------------------------------------------------------------------------------
 Event-Number: 1242
-Branch: refs/heads/Development
-Parents: :1233
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 01 Oct 2005 18:58:17 +0000
-Fossil-ID: 223
 
 Updated tripplite_usb man page
 ------------------------------------------------------------------------------
 Event-Number: 1244
-Branch: refs/heads/Development
-Parents: :1236
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 01 Oct 2005 21:46:13 +0000
-Fossil-ID: 224
 
 If the Tripp Lite protocol number is recognized, don't output "ups.debug.0"
 ------------------------------------------------------------------------------
 Event-Number: 1247
-Branch: refs/heads/Development
-Parents: :1238
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 03 Oct 2005 17:53:07 +0000
-Fossil-ID: 225
 
 newhidups: removed bug that made all variables writable
 ------------------------------------------------------------------------------
 Event-Number: 1251
-Branch: refs/heads/Development
-Parents: :1241
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 03 Oct 2005 18:01:32 +0000
-Fossil-ID: 226
 
 newhidups: fixed declarations of writable variables in APC and Belkin
 ------------------------------------------------------------------------------
 Event-Number: 1255
-Branch: refs/heads/Development
-Parents: :1245
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 03 Oct 2005 23:34:37 +0000
-Fossil-ID: 227
 
 newhidups: fixed string length declarations in writable variables
 ------------------------------------------------------------------------------
 Event-Number: 1257
-Branch: refs/heads/Development
-Parents: :1249
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 06 Oct 2005 03:38:42 +0000
-Fossil-ID: 228
 
 Fix of idVendor for powerware 3110.
 ------------------------------------------------------------------------------
 Event-Number: 1260
-Branch: refs/heads/Testing
-Parents: :1221
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 07 Oct 2005 04:29:34 +0000
-Fossil-ID: 229
 
 add missing driver.list entries and gamatronic manpage
 ------------------------------------------------------------------------------
 Event-Number: 1269
-Branch: refs/heads/Development
-Parents: :1251
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 08 Oct 2005 17:21:41 +0000
-Fossil-ID: 230
 
 bring in sync
 ------------------------------------------------------------------------------
 Event-Number: 1279
-Branch: refs/heads/Development
-Parents: :1263
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 08 Oct 2005 17:39:03 +0000
-Fossil-ID: 231
 
 add the modified al175 driver
 ------------------------------------------------------------------------------
 Event-Number: 1281
-Branch: refs/heads/Development
-Parents: :1273
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 08 Oct 2005 19:46:30 +0000
-Fossil-ID: 232
 
 Mention last week's changes for tripplite_usb
 ------------------------------------------------------------------------------
 Event-Number: 1284
-Branch: refs/heads/Development
-Parents: :1275
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 08 Oct 2005 22:42:11 +0000
-Fossil-ID: 233
 
 added some missing usages (from USB/HID spec) to libhid.c
 ------------------------------------------------------------------------------
 Event-Number: 1291
-Branch: refs/heads/Development
-Parents: :1278
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sun 09 Oct 2005 01:32:57 +0000
-Fossil-ID: 234
 
 newhidups: fixed handling of status flags
 ------------------------------------------------------------------------------
 Event-Number: 1294
-Branch: refs/heads/Testing
-Parents: :1254
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Sun 09 Oct 2005 16:29:24 +0000
-Fossil-ID: 235
 
 Backport of split bcmxcp - bcmxcp_usb driver from Development. 
 
 Update to makefiles and gendb to make it build.
 ------------------------------------------------------------------------------
 Event-Number: 1306
-Branch: refs/heads/Testing
-Parents: :1288
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Sun 09 Oct 2005 16:38:30 +0000
-Fossil-ID: 236
 
 bcmxcp backport from development.
 ------------------------------------------------------------------------------
 Event-Number: 1309
-Branch: refs/heads/Testing
-Parents: :1300
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Sun 09 Oct 2005 17:24:38 +0000
-Fossil-ID: 237
 
 Fix for bcmxcp_usb driver.
 ------------------------------------------------------------------------------
 Event-Number: 1330
-Branch: refs/heads/Testing
-Parents: :1303
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sun 09 Oct 2005 18:19:00 +0000
-Fossil-ID: 238
 
 [[newhidups backport]]
 
@@ -1840,128 +1267,86 @@ Fossil-ID: 238
 * backported gendb changes to Testing
 ------------------------------------------------------------------------------
 Event-Number: 1339
-Branch: refs/heads/Testing
-Parents: :1324
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 09 Oct 2005 22:12:53 +0000
-Fossil-ID: 239
 
 Added tripplite_usb driver to Testing branch
 ------------------------------------------------------------------------------
 Event-Number: 1342
-Branch: refs/heads/Development
-Parents: :1285
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 09 Oct 2005 22:18:54 +0000
-Fossil-ID: 240
 
 Leftover tripplite_usb changes
 ------------------------------------------------------------------------------
 Event-Number: 1345
-Branch: refs/heads/Development
-Parents: :1336
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sun 09 Oct 2005 22:19:57 +0000
-Fossil-ID: 241
 
 Sync'd tripplite_usb.c documentation changes from Testing tree
 ------------------------------------------------------------------------------
 Event-Number: 1347
-Branch: refs/heads/Testing
-Parents: :1333
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Mon 10 Oct 2005 09:59:32 +0000
-Fossil-ID: 242
 
 Added comments in CHANGES for bcmxcp back-port.
 ------------------------------------------------------------------------------
 Event-Number: 1349
-Branch: refs/heads/Development
-Parents: :1339
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 10 Oct 2005 15:43:54 +0000
-Fossil-ID: 243
 
 really fix al175 compilation, while waiting for more cleanup
 ------------------------------------------------------------------------------
 Event-Number: 1352
-Branch: refs/heads/Development
-Parents: :1343
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 10 Oct 2005 16:20:19 +0000
-Fossil-ID: 244
 
 driver.list for al175
 ------------------------------------------------------------------------------
 Event-Number: 1355
-Branch: refs/heads/Testing
-Parents: :1341
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Mon 10 Oct 2005 16:50:20 +0000
-Fossil-ID: 245
 
 Removed unnecessary double declaration.
 ------------------------------------------------------------------------------
 Event-Number: 1359
-Branch: refs/heads/Testing
-Parents: :1349
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 11 Oct 2005 03:02:42 +0000
-Fossil-ID: 246
 
 add missing bcmxcp info
 ------------------------------------------------------------------------------
 Event-Number: 1362
-Branch: refs/heads/Testing
-Parents: :1353
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Tue 11 Oct 2005 17:35:36 +0000
-Fossil-ID: 247
 
 Added info about newhidups supported models to README, data/driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1369
-Branch: refs/heads/Development
-Parents: :1346
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 19 Oct 2005 08:13:31 +0000
-Fossil-ID: 248
 
 more debian/ update
 ------------------------------------------------------------------------------
 Event-Number: 1373
-Branch: refs/heads/Development
-Parents: :1363
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 19 Oct 2005 16:35:42 +0000
-Fossil-ID: 249
 
 debian sync and update
 ------------------------------------------------------------------------------
 Event-Number: 1382
-Branch: refs/heads/Development
-Parents: :1367
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Wed 19 Oct 2005 16:44:59 +0000
-Fossil-ID: 250
 
 add the nitram driver
 ------------------------------------------------------------------------------
 Event-Number: 1385
-Branch: refs/heads/Development
-Parents: :1376
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 20 Oct 2005 23:10:01 +0000
-Fossil-ID: 251
 
 corrected a typo in comments
 ------------------------------------------------------------------------------
 Event-Number: 1391
-Branch: refs/heads/Development
-Parents: :1379
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 20 Oct 2005 23:19:39 +0000
-Fossil-ID: 252
 
 * newhidups: added "-x generic" option... 
 
@@ -1969,266 +1354,182 @@ Fossil-ID: 252
 dump information.
 ------------------------------------------------------------------------------
 Event-Number: 1397
-Branch: refs/heads/Development
-Parents: :1385
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 20 Oct 2005 23:51:12 +0000
-Fossil-ID: 253
 
 - newhidups: enforce using "-x vendorid" together with "-x generic".
 
 - newhidups: added new info to man page and docs/hid-subdrivers.txt
 ------------------------------------------------------------------------------
 Event-Number: 1404
-Branch: refs/heads/Development
-Parents: :1391
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 21 Oct 2005 13:43:51 +0000
-Fossil-ID: 254
 
 newhidups: added missing "usage" definitions...
 
 ...from HID Power Device specification, corrected spellings.
 ------------------------------------------------------------------------------
 Event-Number: 1407
-Branch: refs/heads/Development
-Parents: :1398
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sun 23 Oct 2005 01:27:37 +0000
-Fossil-ID: 255
 
 fixed C++-style comments
 ------------------------------------------------------------------------------
 Event-Number: 1413
-Branch: refs/heads/Development
-Parents: :1401
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sun 23 Oct 2005 01:36:45 +0000
-Fossil-ID: 256
 
 newhidups: added support for CyberPower 685AVR
 ------------------------------------------------------------------------------
 Event-Number: 1422
-Branch: refs/heads/Development
-Parents: :1407
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 24 Oct 2005 09:00:39 +0000
-Fossil-ID: 257
 
 megatec commit
 ------------------------------------------------------------------------------
 Event-Number: 1424
-Branch: refs/heads/Development
-Parents: :1416
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 24 Oct 2005 15:02:10 +0000
-Fossil-ID: 258
 
 missing Makefile.drvbuild after megatec commit
 ------------------------------------------------------------------------------
 Event-Number: 1430
-Branch: refs/heads/Development
-Parents: :1418
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sun 06 Nov 2005 16:27:39 +0000
-Fossil-ID: 259
 
 driver - server socket naming change
 ------------------------------------------------------------------------------
 Event-Number: 1432
-Branch: refs/heads/Development
-Parents: :1424
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Mon 07 Nov 2005 00:45:48 +0000
-Fossil-ID: 260
 
 Updated newhidups man page: mention APC, CyberPower, Belkin.
 
 Also mention workaround for multiple USB UPSes.
 ------------------------------------------------------------------------------
 Event-Number: 1441
-Branch: refs/heads/Development
-Parents: :1426
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 07 Nov 2005 17:14:20 +0000
-Fossil-ID: 261
 
 added rudimentary Tripp Lite support (still incomplete and unstable)
 ------------------------------------------------------------------------------
 Event-Number: 1444
-Branch: refs/heads/Development
-Parents: :1435
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 07 Nov 2005 21:59:17 +0000
-Fossil-ID: 262
 
 added missing tripplite-hid files
 ------------------------------------------------------------------------------
 Event-Number: 1451
-Branch: refs/heads/Development
-Parents: :1438
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Tue 08 Nov 2005 21:16:56 +0000
-Fossil-ID: 263
 
 newhidups: cleaned up dependencies.
 ------------------------------------------------------------------------------
 Event-Number: 1459
-Branch: refs/heads/Development
-Parents: :1445
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 12 Nov 2005 00:18:56 +0000
-Fossil-ID: 264
 
 changed HID parser interface to parse report descriptor into a data structure, 
 
 ...instead of re-scanning it all the time.
 ------------------------------------------------------------------------------
 Event-Number: 1468
-Branch: refs/heads/Testing
-Parents: :1356
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 14 Nov 2005 15:37:12 +0000
-Fossil-ID: 268
 
 hotplug/udev and other docs update
 ------------------------------------------------------------------------------
 Event-Number: 1470
-Branch: refs/heads/Testing
-Parents: :1462
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 14 Nov 2005 16:07:20 +0000
-Fossil-ID: 269
 
 add missing configure rules for generating hotplug-ng scripts, and a basic autodetection of hotplug and udev
 ------------------------------------------------------------------------------
 Event-Number: 1473
-Branch: refs/heads/Testing
-Parents: :1464
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Tue 15 Nov 2005 11:31:10 +0000
-Fossil-ID: 270
 
 Add HP R5500 XR to driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1476
-Branch: refs/heads/Development
-Parents: :1453
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Tue 15 Nov 2005 11:38:08 +0000
-Fossil-ID: 271
 
 Add HP R5500 XR to driver.list.
 ------------------------------------------------------------------------------
 Event-Number: 1487
-Branch: refs/heads/reportbuf
-Parents: 
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 23 Nov 2005 22:55:50 +0000
-Fossil-ID: 274
 
 newhidups: Redesigned report retrieval system. 
 
 Implementation changes in various data structures.
 ------------------------------------------------------------------------------
 Event-Number: 1490
-Branch: refs/heads/Development
-Parents: :1470
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 24 Nov 2005 00:53:04 +0000
-Fossil-ID: 275
 
 updated newhidups man page to reflect multi-UPS mechanism
 ------------------------------------------------------------------------------
 Event-Number: 1493
-Branch: refs/heads/Development
-Parents: :1483
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 25 Nov 2005 09:42:36 +0000
-Fossil-ID: 276
 
 update INELT Monolith 1000LT
 ------------------------------------------------------------------------------
 Event-Number: 1497
-Branch: refs/heads/Development
-Parents: :1486
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 05 Dec 2005 23:08:15 +0000
-Fossil-ID: 277
 
 - added Belkin F6C800-UNV to scripts/hotplug/libhid.usermap
 
 - added Belkin F6C1500-TW-RK to data/driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1501
-Branch: refs/heads/Development
-Parents: :1490
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Tue 06 Dec 2005 09:36:33 +0000
-Fossil-ID: 278
 
 Copying hotplug-ng from Testing to Development
 ------------------------------------------------------------------------------
 Event-Number: 1507
-Branch: refs/heads/Testing
-Parents: :1467
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 16 Dec 2005 16:41:49 +0000
-Fossil-ID: 279
 
 documentation and compatibility update
 ------------------------------------------------------------------------------
 Event-Number: 1509
-Branch: refs/heads/Testing
-Parents: :1500
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Fri 16 Dec 2005 16:52:22 +0000
-Fossil-ID: 280
 
 use minus instead of start
 ------------------------------------------------------------------------------
 Event-Number: 1516
-Branch: refs/heads/Development
-Parents: :1494
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 19 Dec 2005 03:41:58 +0000
-Fossil-ID: 281
 
 USB documentation update (forport from Testing), and minor mge-* manpages update
 ------------------------------------------------------------------------------
 Event-Number: 1518
-Branch: refs/heads/Development
-Parents: :1509
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Wed 21 Dec 2005 20:18:19 +0000
-Fossil-ID: 282
 
 Somehow, I don't think this C code will ever get compiled in an HTML file :-)
 ------------------------------------------------------------------------------
 Event-Number: 1520
-Branch: refs/heads/Testing
-Parents: :1502
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 22 Dec 2005 08:35:31 +0000
-Fossil-ID: 283
 
 split Pulsar / Comet EXtreme compat
 ------------------------------------------------------------------------------
 Event-Number: 1524
-Branch: refs/heads/Testing
-Parents: :1513
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Thu 22 Dec 2005 09:29:41 +0000
-Fossil-ID: 284
 
 2.0.3-pre2 release
 ------------------------------------------------------------------------------
 Event-Number: 1526
-Branch: refs/heads/Development
-Parents: :1511
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 23 Dec 2005 11:29:13 +0000
-Fossil-ID: 286
 
 Changed example regex per discussion on nut-upsdev
 
@@ -2236,11 +1537,8 @@ Also reformatted the examples to be one-per-line since they were wrapping at
 odd places.
 ------------------------------------------------------------------------------
 Event-Number: 1528
-Branch: refs/heads/Testing
-Parents: :1517
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Fri 23 Dec 2005 11:29:28 +0000
-Fossil-ID: 287
 
 Changed example regex per discussion on nut-upsdev
 
@@ -2248,179 +1546,122 @@ Also reformatted the examples to be one-per-line since they were wrapping at
 odd places.
 ------------------------------------------------------------------------------
 Event-Number: 1533
-Branch: refs/heads/Development
-Parents: :1519
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Mon 02 Jan 2006 21:15:41 +0000
-Fossil-ID: 288
 
 megatec: new "lowbatt" parameter (overrides the hardware low battery level)
 ------------------------------------------------------------------------------
 Event-Number: 1537
-Branch: refs/heads/Development
-Parents: :1526
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Sat 14 Jan 2006 11:24:04 +0000
-Fossil-ID: 289
 
 megatec: minor changes to the manpage
 
 driver.list: added "Trust UPS 1000 Management PW-4105"
 ------------------------------------------------------------------------------
 Event-Number: 1541
-Branch: refs/heads/Testing
-Parents: :1521
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 16 Jan 2006 09:39:28 +0000
-Fossil-ID: 290
 
 mge-utalk 0.87
 ------------------------------------------------------------------------------
 Event-Number: 1545
-Branch: refs/heads/Testing
-Parents: :1534
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Mon 16 Jan 2006 17:22:45 +0000
-Fossil-ID: 291
 
 powermust: minor changes to the manpage
 
 added "Trust UPS 1000 Management PW-4105" to driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1549
-Branch: refs/heads/Testing
-Parents: :1538
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Wed 18 Jan 2006 18:59:22 +0000
-Fossil-ID: 292
 
 added "Tecnoware Easy Power 1200" to "powermust.8" and driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1553
-Branch: refs/heads/Development
-Parents: :1530
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Wed 18 Jan 2006 19:04:45 +0000
-Fossil-ID: 293
 
 added "Tecnoware Easy Power 1200" to "megatec.8" and driver.list
 
 point "Megatec Protocol" to "megatec" in driver.list
 ------------------------------------------------------------------------------
 Event-Number: 1565
-Branch: refs/heads/Development
-Parents: :1546
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Fri 20 Jan 2006 10:32:39 +0000
-Fossil-ID: 294
 
 Change include from sys/termios.h to "serial.h". Patch from Niklas.
 ------------------------------------------------------------------------------
 Event-Number: 1573
-Branch: refs/heads/Development
-Parents: :1558
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Sat 21 Jan 2006 15:12:27 +0000
-Fossil-ID: 298
 
 optiups Alioth #302891
 ------------------------------------------------------------------------------
 Event-Number: 1578
-Branch: refs/heads/Testing
-Parents: :1542
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 23 Jan 2006 05:04:55 +0000
-Fossil-ID: 299
 
 more doc update
 ------------------------------------------------------------------------------
 Event-Number: 1580
-Branch: refs/heads/Testing
-Parents: :1571
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 23 Jan 2006 05:22:53 +0000
-Fossil-ID: 300
 
 newhidups auto value for port
 ------------------------------------------------------------------------------
 Event-Number: 1582
-Branch: refs/heads/Testing
-Parents: :1573
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 23 Jan 2006 05:29:43 +0000
-Fossil-ID: 301
 
 more doc update
 ------------------------------------------------------------------------------
 Event-Number: 1589
-Branch: refs/heads/Development
-Parents: :1566
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 23 Jan 2006 09:04:47 +0000
-Fossil-ID: 302
 
 doc update from Testing
 ------------------------------------------------------------------------------
 Event-Number: 1591
-Branch: refs/heads/Development
-Parents: :1582
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 23 Jan 2006 10:45:18 +0000
-Fossil-ID: 303
 
 add optiups compatibility
 ------------------------------------------------------------------------------
 Event-Number: 1596
-Branch: refs/heads/Development
-Parents: :1584
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 24 Jan 2006 16:50:00 +0000
-Fossil-ID: 304
 
 Arjen (and SuSE) patches
 ------------------------------------------------------------------------------
 Event-Number: 1601
-Branch: refs/heads/Testing
-Parents: :1575
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 24 Jan 2006 16:51:20 +0000
-Fossil-ID: 305
 
 Arjen (and SuSE) patches
 ------------------------------------------------------------------------------
 Event-Number: 1611
-Branch: refs/heads/Development
-Parents: :1589
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 26 Jan 2006 11:25:46 +0000
-Fossil-ID: 306
 
 Patch from Niklas for snmp and 3phase.
 ------------------------------------------------------------------------------
 Event-Number: 1614
-Branch: refs/heads/Development
-Parents: :1604
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 27 Jan 2006 10:04:53 +0000
-Fossil-ID: 307
 
 newhidups: added usage path components for APC Back-UPS 500.
 ------------------------------------------------------------------------------
 Event-Number: 1619
-Branch: refs/heads/Development
-Parents: :1607
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Fri 27 Jan 2006 12:17:09 +0000
-Fossil-ID: 308
 
 Update to snmp-ups driver and apccmibs.
 ------------------------------------------------------------------------------
 Event-Number: 1621
-Branch: refs/heads/Development
-Parents: :1612
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 28 Jan 2006 09:38:58 +0000
-Fossil-ID: 309
 
 [[Refactoring steps]]
 
@@ -2434,11 +1675,8 @@ the driver. Whether or not this is needed, is decided by the code
 that calls sendping().
 ------------------------------------------------------------------------------
 Event-Number: 1623
-Branch: refs/heads/Development
-Parents: :1614
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 28 Jan 2006 09:54:34 +0000
-Fossil-ID: 310
 
 Update to sstate.c to fix bug with upsd declaring driver stale... 
 
@@ -2446,85 +1684,58 @@ Update to sstate.c to fix bug with upsd declaring driver stale...
 change of functionality)
 ------------------------------------------------------------------------------
 Event-Number: 1626
-Branch: refs/heads/Development
-Parents: :1616
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 28 Jan 2006 10:44:22 +0000
-Fossil-ID: 311
 
 Remove defined TRUE/FALSE,... 
 
 ...which were not very helpful in making the code easier to understand
 ------------------------------------------------------------------------------
 Event-Number: 1628
-Branch: refs/heads/Development
-Parents: :1619
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 28 Jan 2006 11:45:10 +0000
-Fossil-ID: 312
 
 Forgot to update driver version earlier
 ------------------------------------------------------------------------------
 Event-Number: 1631
-Branch: refs/heads/Development
-Parents: :1621
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Mon 30 Jan 2006 14:51:30 +0000
-Fossil-ID: 313
 
 Fix bug #302338 (genericups: custom configuration through ups.conf not working)
 ------------------------------------------------------------------------------
 Event-Number: 1635
-Branch: refs/heads/Development
-Parents: :1624
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Tue 31 Jan 2006 16:39:31 +0000
-Fossil-ID: 314
 
 Code cleanup of safenet driver (no new functionality)
 ------------------------------------------------------------------------------
 Event-Number: 1638
-Branch: refs/heads/Development
-Parents: :1628
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 01 Feb 2006 05:41:09 +0000
-Fossil-ID: 315
 
 newhidups: fixed battery manufacturing date conversion for some APC models
 ------------------------------------------------------------------------------
 Event-Number: 1639
-Branch: refs/heads/Development
-Parents: :1631
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Wed 01 Feb 2006 10:37:11 +0000
-Fossil-ID: 316
 
 Remove generated files from the repository
 ------------------------------------------------------------------------------
 Event-Number: 1644
-Branch: refs/heads/Development
-Parents: :1632
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 01 Feb 2006 13:16:55 +0000
-Fossil-ID: 318
 
 added .cvsignore files in each relevant directory, to reduce CVS noise
 ------------------------------------------------------------------------------
 Event-Number: 1665
-Branch: refs/heads/Development
-Parents: :1637
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 01 Feb 2006 13:17:01 +0000
-Fossil-ID: 319
 
 added .cvsignore files in each relevant directory, to reduce CVS noise
 ------------------------------------------------------------------------------
 Event-Number: 1669
-Branch: refs/heads/Development
-Parents: :1658
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Thu 02 Feb 2006 16:24:55 +0000
-Fossil-ID: 320
 
 Added 'status' command to upsdrvctl... 
 
@@ -2533,143 +1744,98 @@ longer needed, as the drivers will look this up themselves in
 'ups.conf'.
 ------------------------------------------------------------------------------
 Event-Number: 1671
-Branch: refs/heads/Development
-Parents: :1662
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Thu 02 Feb 2006 16:28:17 +0000
-Fossil-ID: 321
 
 Added myself
 ------------------------------------------------------------------------------
 Event-Number: 1673
-Branch: refs/heads/Development
-Parents: :1664
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Thu 02 Feb 2006 16:37:43 +0000
-Fossil-ID: 322
 
 Forgot to paste one line from the previous code, added
 ------------------------------------------------------------------------------
 Event-Number: 1676
-Branch: refs/heads/Development
-Parents: :1666
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Fri 03 Feb 2006 15:42:46 +0000
-Fossil-ID: 323
 
 Use old style pid names for the drivers too, for backwards compatibility.
 
 Consolidate tree walking functions to be shared for all commands.
 ------------------------------------------------------------------------------
 Event-Number: 1679
-Branch: refs/heads/Development
-Parents: :1669
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 04 Feb 2006 15:21:34 +0000
-Fossil-ID: 324
 
 drivers/genericups.c: check for invalid overrides for signals
 
 (don't accept output signal if an input is expected or vice-versa)
 ------------------------------------------------------------------------------
 Event-Number: 1682
-Branch: refs/heads/Development
-Parents: :1672
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 04 Feb 2006 16:24:01 +0000
-Fossil-ID: 325
 
 minor changes (coding style)
 ------------------------------------------------------------------------------
 Event-Number: 1754
-Branch: refs/heads/reportbuf
-Parents: :1480
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Mon 06 Feb 2006 05:51:48 +0000
-Fossil-ID: 327
 
 merged changes from Development branch into reportbuf branch.
 
 (reportbuf_base until reportbuf_base0)
 ------------------------------------------------------------------------------
 Event-Number: 1756
-Branch: refs/heads/Testing
-Parents: :1594
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 05:01:43 +0000
-Fossil-ID: 328
 
 update the date
 ------------------------------------------------------------------------------
 Event-Number: 1758
-Branch: refs/heads/Testing
-Parents: :1749
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 05:04:09 +0000
-Fossil-ID: 329
 
 a bit more FAQ update
 ------------------------------------------------------------------------------
 Event-Number: 1764
-Branch: refs/heads/Testing
-Parents: :1751
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 06:50:20 +0000
-Fossil-ID: 330
 
 final changes for 2.0.3 release
 ------------------------------------------------------------------------------
 Event-Number: 1768
-Branch: refs/heads/Testing
-Parents: :1757
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 06:57:53 +0000
-Fossil-ID: 331
 
 missing version* update
 ------------------------------------------------------------------------------
 Event-Number: 1770
-Branch: refs/heads/Testing
-Parents: :1761
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 06:59:16 +0000
-Fossil-ID: 332
 
 restore Makefile.dist as the top level Makefile
 ------------------------------------------------------------------------------
 Event-Number: 1772
-Branch: refs/heads/Testing
-Parents: :1763
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 07:09:51 +0000
-Fossil-ID: 333
 
 add a mention for libusb and Net-SNMP requirement
 ------------------------------------------------------------------------------
 Event-Number: 1806
-Branch: refs/heads/Stable
-Parents: 
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 09:31:57 +0000
-Fossil-ID: 334
 
 new files added to Stable
 ------------------------------------------------------------------------------
 Event-Number: 1871
-Branch: refs/heads/Stable
-Parents: :1798
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Tue 07 Feb 2006 09:36:20 +0000
-Fossil-ID: 335
 
 uncommitted Stable files, following the merge from Testing to Stable
 ------------------------------------------------------------------------------
 Event-Number: 1873
-Branch: refs/heads/Development
-Parents: :1675
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Tue 07 Feb 2006 15:19:03 +0000
-Fossil-ID: 337
 
 Remove the "connection monitoring" chapter from the man page.
 
@@ -2679,85 +1845,58 @@ this for so long and nobody (?) complained about it, there doesn't seem
 to be a demand for it.
 ------------------------------------------------------------------------------
 Event-Number: 1876
-Branch: refs/heads/Development
-Parents: :1865
 Committer: Carlos Rodrigues <cefrodrigues@gmail.com>
 Committer-Date: Tue 07 Feb 2006 18:26:48 +0000
-Fossil-ID: 338
 
 minor change to man/megatec.8 (date)
 ------------------------------------------------------------------------------
 Event-Number: 1882
-Branch: refs/heads/Development
-Parents: :1868
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 02:20:43 +0000
-Fossil-ID: 339
 
 Updates to cgi client and html pages.
 ------------------------------------------------------------------------------
 Event-Number: 1887
-Branch: refs/heads/Development
-Parents: :1874
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 08:14:10 +0000
-Fossil-ID: 340
 
 Update to cgi patch.
 ------------------------------------------------------------------------------
 Event-Number: 1889
-Branch: refs/heads/Development
-Parents: :1879
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 08:25:53 +0000
-Fossil-ID: 341
 
 Included the right text in CHANGES.
 ------------------------------------------------------------------------------
 Event-Number: 1892
-Branch: refs/heads/Development
-Parents: :1881
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 09 Feb 2006 11:01:10 +0000
-Fossil-ID: 342
 
 belkinunv: reduced gcc4 compiler warnings
 ------------------------------------------------------------------------------
 Event-Number: 1894
-Branch: refs/heads/Development
-Parents: :1884
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Thu 09 Feb 2006 11:08:10 +0000
-Fossil-ID: 343
 
 added myself
 ------------------------------------------------------------------------------
 Event-Number: 1897
-Branch: refs/heads/Development
-Parents: :1886
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 14:27:05 +0000
-Fossil-ID: 344
 
 - Reduced gcc4 compiler warnings
 ------------------------------------------------------------------------------
 Event-Number: 1901
-Branch: refs/heads/Development
-Parents: :1889
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 15:42:09 +0000
-Fossil-ID: 345
 
 sendsignalfn() and sendsignal() let caller know if a signal was sent ...
 
 ...successfully or not instead of returning silently on errors
 ------------------------------------------------------------------------------
 Event-Number: 1905
-Branch: refs/heads/Development
-Parents: :1893
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Thu 09 Feb 2006 16:00:07 +0000
-Fossil-ID: 346
 
 upsdrvctl: code cleanup and bug fix
 
@@ -2765,20 +1904,14 @@ upsdrvctl: code cleanup and bug fix
 if 'sdorder = -1', not only on shutdown like it is supposed to)
 ------------------------------------------------------------------------------
 Event-Number: 1911
-Branch: refs/heads/Development
-Parents: :1897
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Fri 10 Feb 2006 04:49:33 +0000
-Fossil-ID: 347
 
 Patch from Niels. And fix of line ending in nitram.
 ------------------------------------------------------------------------------
 Event-Number: 1917
-Branch: refs/heads/Development
-Parents: :1903
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 10 Feb 2006 17:27:52 +0000
-Fossil-ID: 348
 
 [[Code cleanup]]
 
@@ -2787,29 +1920,20 @@ Fossil-ID: 348
  - belkinunv.c, bcmxcp_ser.c: removed superflous type casts
 ------------------------------------------------------------------------------
 Event-Number: 1919
-Branch: refs/heads/Development
-Parents: :1909
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 11 Feb 2006 04:43:34 +0000
-Fossil-ID: 349
 
 updated own entry
 ------------------------------------------------------------------------------
 Event-Number: 1923
-Branch: refs/heads/Development
-Parents: :1911
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 11 Feb 2006 11:07:25 +0000
-Fossil-ID: 350
 
 changed ser_send_char to use "unsigned char" instead of "char"
 ------------------------------------------------------------------------------
 Event-Number: 1925
-Branch: refs/heads/Development
-Parents: :1915
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 11 Feb 2006 11:18:40 +0000
-Fossil-ID: 351
 
 This FAQ entry is no longer applicable...
 
@@ -2818,11 +1942,8 @@ startup in this particular case (it changes UID before reading the
 configuration files)
 ------------------------------------------------------------------------------
 Event-Number: 1935
-Branch: refs/heads/Development
-Parents: :1917
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sun 12 Feb 2006 16:46:27 +0000
-Fossil-ID: 352
 
 newhidups: rewrote logical-to-physical value conversion.
 
@@ -2831,49 +1952,34 @@ Kelvin-to-Celsius conversion. Tweaked APC date conversion. Back-UPS
 BF500 support.  Deleted unused items in HIDItem structure.
 ------------------------------------------------------------------------------
 Event-Number: 1956
-Branch: refs/heads/Development
-Parents: :1927
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Wed 15 Feb 2006 05:21:15 +0000
-Fossil-ID: 353
 
 Replaces output.voltage.target.battery and output.voltage.target.line... 
 
 ...with output.voltage.nominal.
 ------------------------------------------------------------------------------
 Event-Number: 1957
-Branch: refs/heads/root
-Parents: :746
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Thu 16 Feb 2006 08:25:06 +0000
-Fossil-ID: 354
 
 Cleaning up repository after initial SVN import
 ------------------------------------------------------------------------------
 Event-Number: 1958
-Branch: refs/heads/master
-Parents: :754
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Thu 16 Feb 2006 08:29:18 +0000
-Fossil-ID: 355
 
 Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
 ------------------------------------------------------------------------------
 Event-Number: 1959
-Branch: refs/heads/root
-Parents: :1949
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Thu 16 Feb 2006 08:31:43 +0000
-Fossil-ID: 356
 
 Moving branches/Development into trunk.
 ------------------------------------------------------------------------------
 Event-Number: 1960
-Branch: refs/heads/root
-Parents: :1951
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 18 Feb 2006 10:55:38 +0000
-Fossil-ID: 357
 
 Obsolete branch names:
 
@@ -2884,11 +1990,8 @@ Obsolete branch names:
    May 2005, but it is now source:trunk
 ------------------------------------------------------------------------------
 Event-Number: 1962
-Branch: refs/heads/master
-Parents: :1950
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 18 Feb 2006 12:06:54 +0000
-Fossil-ID: 358
 
 In SVN, you use the svn:ignore property on a directory to ignore files.
 
@@ -2900,121 +2003,82 @@ Reference:
     http://svnbook.red-bean.com/en/1.1/ch07s02.html#svn-ch-7-sect-2.3.3
 ------------------------------------------------------------------------------
 Event-Number: 1964
-Branch: refs/heads/master
-Parents: :1954
 Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Tue 21 Feb 2006 08:13:48 +0000
-Fossil-ID: 359
 
 Note SVN conversion in changelog
 ------------------------------------------------------------------------------
 Event-Number: 1966
-Branch: refs/heads/master
-Parents: :1956
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 22 Feb 2006 17:25:16 +0000
-Fossil-ID: 360
 
 clarified newhidups use of "port" value in INSTALL
 ------------------------------------------------------------------------------
 Event-Number: 1969
-Branch: refs/heads/master
-Parents: :1958
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sun 26 Feb 2006 08:46:48 +0000
-Fossil-ID: 361
 
 Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
 ------------------------------------------------------------------------------
 Event-Number: 1971
-Branch: refs/heads/master
-Parents: :1961
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Mon 27 Feb 2006 11:09:55 +0000
-Fossil-ID: 362
 
 nomsg
 ------------------------------------------------------------------------------
 Event-Number: 1973
-Branch: refs/heads/master
-Parents: :1963
 Committer: Kjell Claesson <keyson-guest@alioth.debian.org>
 Committer-Date: Mon 27 Feb 2006 11:10:05 +0000
-Fossil-ID: 363
 
 nomsg
 ------------------------------------------------------------------------------
 Event-Number: 1975
-Branch: refs/heads/master
-Parents: :1965
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 27 Feb 2006 15:16:53 +0000
-Fossil-ID: 364
 
 move debian/ to packaging/
 ------------------------------------------------------------------------------
 Event-Number: 1980
-Branch: refs/heads/master
-Parents: :1967
 Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 27 Feb 2006 15:42:53 +0000
-Fossil-ID: 365
 
 remove the zero prefix on mge-* and snmp-ups
 ------------------------------------------------------------------------------
 Event-Number: 1981
-Branch: refs/heads/regex_branch
-Parents: :1100
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Wed 01 Mar 2006 13:24:36 +0000
-Fossil-ID: 366
 
 Removing regex_branch, because it was merged into trunk in [[SVN:197]].
 ------------------------------------------------------------------------------
 Event-Number: 1983
-Branch: refs/heads/master
-Parents: :1972
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 03 Mar 2006 04:42:46 +0000
-Fossil-ID: 367
 
 set errno=ENOENT in common.c:get_user_pwent() if user not found 
 ------------------------------------------------------------------------------
 Event-Number: 1985
-Branch: refs/heads/master
-Parents: :1975
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 03 Mar 2006 07:52:47 +0000
-Fossil-ID: 368
 
 updated CHANGES for previous commit
 ------------------------------------------------------------------------------
 Event-Number: 1992
-Branch: refs/heads/master
-Parents: :1977
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Fri 03 Mar 2006 15:25:48 +0000
-Fossil-ID: 369
 
 handle problems with get_user_pwent() directly...
 
 instead of first returning to the caller with a NULL pointer
 ------------------------------------------------------------------------------
 Event-Number: 1995
-Branch: refs/heads/master
-Parents: :1984
 Committer: Arjen de Korte <adkorte-guest@alioth.debian.org>
 Committer-Date: Sat 04 Mar 2006 09:31:12 +0000
-Fossil-ID: 370
 
 drivers/safenet.c: increase timeout for reading replies from the UPS
 ------------------------------------------------------------------------------
 Event-Number: 2005
-Branch: refs/heads/Testing
-Parents: :1765
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 04 Mar 2006 12:44:41 +0000
-Fossil-ID: 371
 
 backported [[SVN:352]] from trunk to Testing
 
@@ -3024,10 +2088,7 @@ conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
 ------------------------------------------------------------------------------
 Event-Number: 2006
-Branch: refs/heads/Testing
-Parents: :1997
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Sat 04 Mar 2006 12:47:49 +0000
-Fossil-ID: 372
 
 removed Makefile from Testing branch, because it does not belong in SVN. 
