@@ -2081,7 +2081,9 @@ class StreamParser:
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
-                elif node.kind == SD_DIR and verbose >= DEBUG_TOPOLOGY:
+                elif node.kind == SD_DIR \
+                         and node.action != SD_CHANGE \
+                         and verbose >= DEBUG_TOPOLOGY:
                     announce(str(node))
                 # Handle per-path properties.
                 if node.props is not None:
