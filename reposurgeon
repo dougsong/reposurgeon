@@ -4871,7 +4871,8 @@ only when they are the final ones on the commit's branch.
                                  "obliterate",
                                  "pushback",
                                  "tagback",
-                                 "tagforward"]:
+                                 "tagforward",
+                                 "quiet"]:
                     complain("no such deletion modifier as " + token)
                     return
         self.chosen().delete(self.selection, self.line)
