@@ -5412,7 +5412,7 @@ a committer email address.  Does not take a selection set.
             self.chosen().write_fossilmap(sys.stdout)
         elif fields[0] == "write":
             with open(fields[1], "w") as wfp:
-                self.chosen().write_fossilmap(self.selection, wfp)            
+                self.chosen().write_fossilmap(wfp)            
         elif fields[0] == "read" and len(fields) == 1:
             self.chosen().read_fossilmap(sys.stdin)
         elif fields[0] == "read":
