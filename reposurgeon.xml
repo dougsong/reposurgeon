@@ -949,19 +949,6 @@ likely to be resolvable.</para>
 passthroughs when the repo is written to a stream file.</para>
 </listitem>
 </varlistentry>
-<varlistentry>
-<term><command>import_marks</command>
-          <emphasis>filename</emphasis>
-</term>
-<listitem>
-<para>Set fossil properties from a mark map.  Each line is expected to be a 
-mark (prededed by a colon) followed by a space, followed by a reference cookie,
-followed by a linefeed.  The fossil property of the commit corresponding to
-each mark is set; unrecognized marks throw recoverable errors.</para>
-
-<para>Does not take a selection set.</para>
-</listitem>
-</varlistentry>
 </variablelist>
 
 </refsect2>
