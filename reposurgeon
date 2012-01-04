@@ -4375,8 +4375,29 @@ for exploring the selection-set language.
             complain("script requires a file argument")
             return
         try:
-            for cmdline in open(line):
-                self.onecmd(self.precmd(cmdline))
+            with open(line) as scriptfp:
+                for cmdline in scriptfp:
+                    # Simulate shell here-document processing
+                    if '<<' not in cmdline:
+                        heredoc = None
+                    else:
+                        (cmdline, terminator) = line.split("<<")
+                        heredoc = tempfile.NamedTemporaryFile(mode="w",
+                                                              delete=False)
+                        while True:
+                            nextline = scriptfp.readline()
+                            if nextline == '':
+                                break
+                            elif nextline.rstrip() == terminator:
+                                break
+                            else:
+                                heredoc.write(nextline)
+                        heredoc.close()
+                        cmdline += heredoc.name
+                    # End of heredoc simulation
+                    self.onecmd(self.precmd(cmdline))
+                    if heredoc:
+                        os.remove(heredoc.name)
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
