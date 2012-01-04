@@ -2118,10 +2118,26 @@ class StreamParser:
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
                     if node.action == SD_ADD:
-                        # No-op, since stream format doesn't track
-                        # empty directories. However, we fall through
-                        # to the copyfrom case.
-                        pass
+                        newbranch = node.path
+                        # Don't allow directory copies to step on pre-existung
+                        # content.  
+                        #if self.branch_copies[node.path]:
+                        #    newbranch = newbranch[:-1] + "-" + str(self.branch_copies[node.path])
+                        #    self.gripe("r%s~%s: synthetic branch" \
+                        #               % (node.revision, newbranch))
+                        #if node.from_set:
+                        #    self.branch_copies[node.path] += 1
+                        if self.branches:
+                            if newbranch.count(os.sep) == 2:
+                                if newbranch.startswith("tags" + os.sep):
+                                    self.branches[newbranch] = None
+                                elif newbranch.startswith("branches" + os.sep):
+                                    self.branches[newbranch] = None
+                            elif newbranch.count(os.sep) == 1:
+                                # Exiguous top-level branch
+                                self.branches[newbranch] = None
+                        if newbranch in self.branches and verbose >= DEBUG_TOPOLOGY:
+                            announce("%s recognized as a branch" % newbranch)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             if verbose >= DEBUG_EXTRACT:
@@ -2179,24 +2195,6 @@ class StreamParser:
                                 record.nodes.append(newnode)
                     # Handle directory copies used for branching and tags
                     if node.from_path:
-                        newbranch = node.path
-                        # Don't allow directory copies to step on pre-existung
-                        # content.  
-                        #if self.branch_copies[node.path]:
-                        #    newbranch = newbranch[:-1] + "-" + str(self.branch_copies[node.path])
-                        #    self.gripe("r%s~%s: synthetic branch" \
-                        #               % (node.revision, newbranch))
-                        #if node.from_set:
-                        #    self.branch_copies[node.path] += 1
-                        if self.branches:
-                            if newbranch.count(os.sep) == 2:
-                                if newbranch.startswith("tags" + os.sep):
-                                    self.branches[newbranch] = None
-                                elif newbranch.startswith("branches" + os.sep):
-                                    self.branches[newbranch] = None
-                            elif newbranch.count(os.sep) == 1:
-                                # Exiguous top-level branch
-                                self.branches[newbranch] = None
                         for source in node.from_set:
                             subnode = StreamParser.NodeAction()
                             subnode.path = os.path.join(newbranch,
