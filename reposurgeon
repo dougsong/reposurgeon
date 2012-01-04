@@ -2560,7 +2560,10 @@ class Repository:
             raise Recoverable("bad syntax in fossils file.")
     def write_fossilmap(self, fp):
         "Dump fossil references."
-        for (cookie, commit) in self.fossil_map.items():
+        cookies = list(self.fossil_map.keys())
+        cookies.sort(key=lambda x: self.fossil_map[x].committer.date.timestamp)
+        for cookie in cookies:
+            commit = self.fossil_map[cookie]
             if commit.fossil_id:
                 fp.write("%s\t%s\t%s\n" % (cookie,
                                            commit.committer.date.rfc3339(),
