@@ -753,6 +753,9 @@ from standard input.</para>
 <para>Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.</para>
+
+<para>If the Event-Number field is absent, the mailbox_in logic will attempt 
+to match the commit to be modified by committer ID and timestamp.</para> 
 </listitem>
 </varlistentry>
 <varlistentry>

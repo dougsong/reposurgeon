@@ -951,7 +951,7 @@ class Commit:
                           % (int(msg["Event-Number"])))
                 modified = True
         date = Date(msg["Committer-Date"])
-        if date != self.committer.date:
+        if self.committer.date is None or date != self.committer.date:
             if verbose >= DEBUG_EMAILIN:
                 announce("in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
@@ -4764,10 +4764,8 @@ Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.
 
-Event updates are atomic; if reposurgeon throws an error while in this
-command events updated before the error will keep their changed state,
-but no event will be partially modified. Event numbers are validated
-before any individual event is updated.
+If the Event-Number field is absent, the mailbox_in logic will attempt 
+to match the commit to be modified by committer ID and timestamp.
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
@@ -4804,10 +4802,11 @@ before any individual event is updated.
                 commit = self.chosen()[eventnum]
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit(self.chosen())
+                blank.committer = Attribution()
                 blank.email_in(message)
                 stamp = blank.committer.action_stamp()
                 try:
-                    commit = self.attribution_map[stamp]
+                    commit = attribution_map[stamp]
                 except KeyError:
                     raise Recoverable("couldn't find a commit matching %s" \
                                       % stamp)
