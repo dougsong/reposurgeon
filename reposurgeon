@@ -4767,8 +4767,9 @@ Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.
 
-If the Event-Number field is absent, the mailbox_in logic will attempt 
-to match the commit to be modified by committer ID and timestamp.
+If the Event-Number field is absent, the mailbox_in logic will
+attempt to match the commit first by Fossil-ID, then by a unique
+committer ID and timestamp pair.
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
@@ -4790,8 +4791,15 @@ to match the commit to be modified by committer ID and timestamp.
             fp.close()
         # First, a validation pass
         attribution_map = {}
+        attribution_counts = collections.Counter()
         for commit in self.chosen().commits():
-            attribution_map[commit.committer.action_stamp()] = commit
+            stamp = commit.committer.action_stamp()
+            attribution_map[stamp] = commit
+            attribution_counts[stamp] += 1
+        fossil_map = {}
+        for commit in self.chosen().commits():
+            if commit.fossil_id:
+                fossil_map[commit.fossil_id] = commit
         commits = []
         for (i, message) in enumerate(update_list):
             if "Event-Number" in message:
@@ -4803,6 +4811,12 @@ to match the commit to be modified by committer ID and timestamp.
                     raise Recoverable("event number %d out of range in update %d" \
                                       % (eventnum, i+1))
                 commit = self.chosen()[eventnum]
+            elif "Fossil-ID" in message:
+                try:
+                    commit = fossil_map[message["Fossil-ID"]]
+                except KeyError:
+                    raise Recoverable("no commit matches fossil %s" \
+                                      % message["Fossil-ID"])
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit(self.chosen())
                 blank.committer = Attribution()
@@ -4811,8 +4825,11 @@ to match the commit to be modified by committer ID and timestamp.
                 try:
                     commit = attribution_map[stamp]
                 except KeyError:
-                    raise Recoverable("couldn't find a commit matching %s" \
-                                      % stamp)
+                    raise Recoverable("no commit matches stamp %s" % stamp)
+                if attribution_counts[stamp] > 1:
+                    raise Recoverable("multiple commits match %s" % stamp)
+            else:
+                raise Recoverable("no commit matches update %d" % (i+1))
             if not hasattr(commit, "email_in"):
                 raise Recoverable("event %d cannot be modified"%(eventnum+1,))
             commits.append(commit)
