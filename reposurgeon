@@ -2154,11 +2154,6 @@ class StreamParser:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: deleteall %s" % (revision,
                                                                 node.path))
-                            # It's arguable that the right thing to do with a
-                            # Subversion branch tip delete is to remove it,
-                            # leaving the branch tip live but inactive. But
-                            # that's a policy decision we shouldn't force
-                            # at this low a level.
                             fileop = FileOp(commit)
                             fileop.construct("deleteall", node.path[:-1])
                             commit.fileops.append(fileop)
