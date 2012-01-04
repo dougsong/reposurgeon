@@ -4788,31 +4788,42 @@ before any individual event is updated.
         if infile:
             fp.close()
         # First, a validation pass
+        attribution_map = {}
+        for commit in self.chosen().commits():
+            attribution_map[commit.committer.action_stamp()] = commit
+        commits = []
         for (i, message) in enumerate(update_list):
-            if "Event-Number" not in message:
-                raise Recoverable("missing event number in update %d" % i)
-            try:
-                eventnum = int(message["Event-Number"]) - 1
-            except ValueError:
-                raise Fatal("event number garbled in update %d" % (i+1,))
-            if eventnum < 0 or eventnum >= len(self.chosen()):
-                    
-                raise Fatal("event number %d out of range in update %d" % (eventnum, i+1))
-            event = self.chosen()[eventnum]
-            if not hasattr(event, "email_in"):
-                raise Fatal("event %d cannot be modified" % (eventnum+1,))
+            if "Event-Number" in message:
+                try:
+                    eventnum = int(message["Event-Number"]) - 1
+                except ValueError:
+                    raise Recoverable("event number garbled in update %d" % (i+1,))
+                if eventnum < 0 or eventnum >= len(self.chosen()):
+                    raise Recoverable("event number %d out of range in update %d" \
+                                      % (eventnum, i+1))
+                commit = self.chosen()[eventnum]
+            elif "Committer" in message and "Committer-Date" in message:
+                blank = Commit(self.chosen())
+                blank.email_in(message)
+                stamp = blank.committer.action_stamp()
+                try:
+                    commit = self.attribution_map[stamp]
+                except KeyError:
+                    raise Recoverable("couldn't find a commit matching %s" \
+                                      % stamp)
+            if not hasattr(commit, "email_in"):
+                raise Recoverable("event %d cannot be modified"%(eventnum+1,))
+            commits.append(commit)
         # Now apply the updates
-        modified = []
-        for update in update_list:
-            eventnum = int(update["Event-Number"]) - 1
-            event = self.chosen()[eventnum]
-            if event.email_in(update):
-                modified.append(eventnum+1)
+        modified = 0
+        for (commit, update) in zip(commits, update_list):
+            if commit.email_in(update):
+                modified += 1
         if verbose:
             if not modified:
                 announce("no events modified.")
             else:
-                announce("%d modified events." % (len(modified),))
+                announce("%d modified events." % modified)
 
     def help_edit(self):
         print("""
