@@ -2409,10 +2409,19 @@ class StreamParser:
             # just might be.
             elif commit.alldeletes(killset={"deleteall"}) \
                      and not commit.children():
-                commit.fileops = []
-                self.repo.tagify(commit,
-                                 "tipdelete-%s" % commit.fossil_id,
-                                 commit.parent_marks[0])
+                if commit.parent_marks:
+                    if commit.branch.endswith(os.sep):
+                        commit.branch = commit.branch[:-1]
+                    label = os.path.basename(commit.branch)
+                    commit.fileops = []
+                    self.repo.tagify(commit,
+                                     "tipdelete-%s" % label,
+                                     commit.parent_marks[0])
+                else:
+                    self.gripe("r%s: deleting parentless tip delete of %s" \
+                               % (commit.fossil_id, commit.branch))
+                    self.repo.delete([self.repo.events.index(commit)],
+                                ["obliterate", "quiet"])
         baton.twirl("polishing")
         # Now pretty up the branch names
         for commit in self.repo.commits():
@@ -4838,22 +4847,26 @@ committer ID and timestamp pair.
             if commit.fossil_id:
                 fossil_map[commit.fossil_id] = commit
         commits = []
+        errors = 0
         for (i, message) in enumerate(update_list):
             if "Event-Number" in message:
                 try:
                     eventnum = int(message["Event-Number"]) - 1
                 except ValueError:
-                    raise Recoverable("event number garbled in update %d" % (i+1,))
+                    complain("event number garbled in update %d" % (i+1,))
+                    errors += 1
                 if eventnum < 0 or eventnum >= len(self.chosen()):
-                    raise Recoverable("event number %d out of range in update %d" \
+                    complain("event number %d out of range in update %d" \
                                       % (eventnum, i+1))
+                    errors += 1
                 commit = self.chosen()[eventnum]
             elif "Fossil-ID" in message:
                 try:
                     commit = fossil_map[message["Fossil-ID"]]
                 except KeyError:
-                    raise Recoverable("no commit matches fossil %s" \
+                    complain("no commit matches fossil %s" \
                                       % message["Fossil-ID"])
+                    errors += 1
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit(self.chosen())
                 blank.committer = Attribution()
@@ -4862,14 +4875,20 @@ committer ID and timestamp pair.
                 try:
                     commit = attribution_map[stamp]
                 except KeyError:
-                    raise Recoverable("no commit matches stamp %s" % stamp)
+                    complain("no commit matches stamp %s" % stamp)
+                    errors += 1
                 if attribution_counts[stamp] > 1:
-                    raise Recoverable("multiple commits match %s" % stamp)
+                    complain("multiple commits match %s" % stamp)
+                    errors += 1
             else:
-                raise Recoverable("no commit matches update %d" % (i+1))
+                complain("no commit matches update %d" % (i+1))
+                errors += 1
             if not hasattr(commit, "email_in"):
-                raise Recoverable("event %d cannot be modified"%(eventnum+1,))
+                complain("event %d cannot be modified"%(eventnum+1,))
+                errors += 1
             commits.append(commit)
+        if errors > 0:
+            raise Recoverable("%d errors in metadata updates" % errors)
         # Now apply the updates
         modified = 0
         for (commit, update) in zip(commits, update_list):

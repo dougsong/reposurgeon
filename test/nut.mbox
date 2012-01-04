@@ -1666,32 +1666,6 @@ Replaces output.voltage.target.battery and output.voltage.target.line...
 ...with output.voltage.nominal.
 ------------------------------------------------------------------------------
 Committer: Charles Lepple <clepple+nut@gmail.com>
-Committer-Date: Thu 16 Feb 2006 08:25:06 +0000
-
-Cleaning up repository after initial SVN import
-------------------------------------------------------------------------------
-Committer: Charles Lepple <clepple+nut@gmail.com>
-Committer-Date: Thu 16 Feb 2006 08:29:18 +0000
-
-Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
-------------------------------------------------------------------------------
-Committer: Charles Lepple <clepple+nut@gmail.com>
-Committer-Date: Thu 16 Feb 2006 08:31:43 +0000
-
-Moving branches/Development into trunk.
-------------------------------------------------------------------------------
-Committer: Charles Lepple <clepple+nut@gmail.com>
-Committer-Date: Sat 18 Feb 2006 10:55:38 +0000
-
-Obsolete branch names:
-
- * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively 
-   revision [[SVN:3]].
- * r2.0.1: Not sure why this is a branch tag.
- * v2.1.0: This corresponds to what was source:branches/Development back in 
-   May 2005, but it is now source:trunk
-------------------------------------------------------------------------------
-Committer: Charles Lepple <clepple+nut@gmail.com>
 Committer-Date: Sat 18 Feb 2006 12:06:54 +0000
 
 In SVN, you use the svn:ignore property on a directory to ignore files.
@@ -1737,11 +1711,6 @@ Committer: Arnaud Quette <arnaud.quette@free.fr>
 Committer-Date: Mon 27 Feb 2006 15:42:53 +0000
 
 remove the zero prefix on mge-* and snmp-ups
-------------------------------------------------------------------------------
-Committer: Peter Selinger <selinger@users.sourceforge.net>
-Committer-Date: Wed 01 Mar 2006 13:24:36 +0000
-
-Removing regex_branch, because it was merged into trunk in [[SVN:197]].
 ------------------------------------------------------------------------------
 Committer: Peter Selinger <selinger@users.sourceforge.net>
 Committer-Date: Fri 03 Mar 2006 04:42:46 +0000

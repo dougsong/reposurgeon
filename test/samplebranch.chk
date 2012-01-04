@@ -81,7 +81,7 @@ data 45
 A branch created for illustrative purposes.
 
 
-tag tipdelete-8
+tag tipdelete-samplebranch
 from :10
 tagger esr <esr> 1324127616 +0000
 data 75
