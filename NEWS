@@ -9,6 +9,7 @@
      Repo 'merge' changed to 'unite' to avoid confusion with branch merges.
      The new 'merge' command can in fact do branch merges.
      The unreliable 'sort' command has been removed.
+     Script commands can now xonsume multiline here-documents, as in shell.
 
 1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.

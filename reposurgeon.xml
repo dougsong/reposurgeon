@@ -1149,7 +1149,16 @@ tests that are easily checked by eyeball.</para></listitem>
         <emphasis>filename</emphasis>
 </term>
 <listitem><para>Takes a filename argument. Reads each line from the file 
-and executes it as a command.</para></listitem>
+and executes it as a command.</para>
+
+<para>Within scripts (and only within scripts) a command that takes an input 
+filename argument can instead take literal following data in the syntax of a 
+shell here-document. That is: if the filename is replaced by "&lt;&lt;EOF",
+all following lines in the script up to a terminating line consisting
+only of "EOF" will be read, placed in a temporary file, and that file
+fed to the command and afterwards deleted. EOF may be replaced by
+any string.</para> 
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><command>history</command>
