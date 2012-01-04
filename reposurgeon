@@ -5578,19 +5578,6 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                             summary = event.lister(ei, screenwidth())
                             if summary:
                                 sys.stdout.write(summary + "\n")
-    def do_import_marks(self, line):
-        "Import a marks file mapping marks to reference cookies."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        for markline in open(line.strip()):
-            (mark, ref) = markline.split()
-            commit = repo.objfind(mark)
-            if commit:
-                commit.fossil_id = ref
-            else:
-                raise Recoverable("unknown mark %s pointing at %s" % (mark,ref))
 
     #
     # Examining tree states
