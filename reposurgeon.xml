@@ -1255,6 +1255,11 @@ apparent misfeature has been accepted so that
 human-generated metadata that might have value; it is left up to the
 user to manually remove unwanted tags.</para>
 
+<para>Subversion branch deletions are turned into deletealls, clearing the 
+fileset of the import-stream branch.  When a branch 
+finishes with a deleteall at its tip, the deleteall is transformed
+into a tag. This rule cleans up after aborted branch renames.</para>
+
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
 100755 and svn:special becomes 120000 (indicating a symlink; the blob 
