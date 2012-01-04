@@ -1909,10 +1909,21 @@ class StreamParser:
                 ancestor = None
             # Time for fileop generation
             if node.blob is not None:
-                node.mark = node.blob.mark = self.__newmark()
-                self.mark_counter[node.mark] += 1
-                self.repo.events.append(node.blob)
-                self.hashmap[node.content_hash] = node
+                if node.content_hash in self.hashmap:
+                    # Blob matches an existing one - node was created by
+                    # a non-Subversion copy followed by add.  Get the
+                    # ancestry right, otherwise parent pointers won't
+                    # be computed properly.
+                    ancestor = self.hashmap[node.content_hash]
+                    node.from_path = ancestor.from_path
+                    node.from_rev = ancestor.from_rev
+                    node.mark = ancestor.mark
+                else:
+                    # An entirely new blob
+                    node.mark = node.blob.mark = self.__newmark()
+                    self.mark_counter[node.mark] += 1
+                    self.repo.events.append(node.blob)
+                    self.hashmap[node.content_hash] = node
             elif ancestor:
                 node.mark = ancestor.mark
             else:
