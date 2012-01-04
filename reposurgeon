@@ -2527,7 +2527,7 @@ class Repository:
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
-            raise Recoverable("bad author map syntax")
+            raise Recoverable("bad author map syntax: %s" % repr(line))
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
@@ -4376,26 +4376,29 @@ for exploring the selection-set language.
             return
         try:
             with open(line) as scriptfp:
-                for cmdline in scriptfp:
+                while True:
+                    scriptline = scriptfp.readline()
+                    if not scriptline:
+                        break
                     # Simulate shell here-document processing
-                    if '<<' not in cmdline:
+                    if '<<' not in scriptline:
                         heredoc = None
                     else:
-                        (cmdline, terminator) = line.split("<<")
+                        (scriptline, terminator) = scriptline.split("<<")
                         heredoc = tempfile.NamedTemporaryFile(mode="w",
                                                               delete=False)
                         while True:
                             nextline = scriptfp.readline()
                             if nextline == '':
                                 break
-                            elif nextline.rstrip() == terminator:
+                            elif nextline == terminator:
                                 break
                             else:
                                 heredoc.write(nextline)
                         heredoc.close()
-                        cmdline += heredoc.name
+                        scriptline += heredoc.name
                     # End of heredoc simulation
-                    self.onecmd(self.precmd(cmdline))
+                    self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
         except IOError as e:
