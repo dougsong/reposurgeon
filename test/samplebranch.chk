@@ -66,14 +66,6 @@ Create another node on the branch side.
 from :6
 M 100644 :9 README
 
-commit refs/heads/samplebranch
-mark :11
-committer esr <esr> 1324127616 +0000
-data 74
-This is an example of a branch tip delete which should become a deletall.
-from :10
-deleteall
-
 tag root
 from :2
 tagger esr <esr> 1322682380 +0000
@@ -87,5 +79,12 @@ from :2
 tagger esr <esr> 1322682540 +0000
 data 45
 A branch created for illustrative purposes.
+
+
+tag tipdelete-8
+from :10
+tagger esr <esr> 1324127616 +0000
+data 75
+This is an example of a branch tip delete which should become a deletall.
 
 

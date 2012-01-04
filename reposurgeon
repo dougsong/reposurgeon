@@ -1066,10 +1066,10 @@ class Commit:
                     del ancestors[fileop.source]
         self.filemap = ancestors
         return ancestors
-    def alldeletes(self):
+    def alldeletes(self, killset={"D", "deleteall"}):
         "Is this an all-deletes commit?"
         for fileop in self.fileops:
-            if fileop.op not in ("D", "deleteall"):
+            if fileop.op not in killset:
                 return False
         return True
     def checkout(self, directory=None):
@@ -2387,11 +2387,11 @@ class StreamParser:
                     # Suppress this commit
                     self.repo.delete([self.repo.events.index(commit)],
                                      ["obliterate", "quiet"])
-        # Now we need to tagify all other commits without fileops, because
-        # git is going to just discard them when we build a live repo and
-        # they might possibly contain interesting metadata.  Usually they're
-        # just debris from tagging, though.
         for commit in self.repo.commits():
+            # Now we need to tagify all other commits without fileops, because
+            # git is going to just discard them when we build a live repo and
+            # they might possibly contain interesting metadata.  Usually they're
+            # just debris from tagging, though.
             if not commit.fileops:
                 legend = "[[Tag from zero-fileop commit at Subversion r%s" \
                          % commit.fossil_id
@@ -2404,6 +2404,15 @@ class StreamParser:
                                  "emptycommit-%s" % commit.fossil_id,
                                  commit.parent_marks[0],
                                  legend)
+            # Also, tagify tip commits that consist only of deletes.
+            # The fileops aren't worth saving; the comment metadata
+            # just might be.
+            elif commit.alldeletes(killset={"deleteall"}) \
+                     and not commit.children():
+                commit.fileops = []
+                self.repo.tagify(commit,
+                                 "tipdelete-%s" % commit.fossil_id,
+                                 commit.parent_marks[0])
         baton.twirl("polishing")
         # Now pretty up the branch names
         for commit in self.repo.commits():
