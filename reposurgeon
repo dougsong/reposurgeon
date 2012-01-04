@@ -12,7 +12,7 @@ import email.message, email.parser, email.utils
 import re, sre_constants
 import xml.etree.cElementTree as ET
 
-version="2.0-pre4"
+version="2.0-pre5"
 
 #
 # This code is intended to be hackable to support for special-purpose or
