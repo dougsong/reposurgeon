@@ -1871,12 +1871,13 @@ class StreamParser:
                 # Blob contents is the path the link should resolve to. 
                 return 0o120000
         return 0o100644
-    def perform_node(self, node, commit):
+    def perform_node(self, node):
+        fileops = []
         if node.action == SD_DELETE:
             assert node.blob is None
             fileop = FileOp()
             fileop.construct("D", node.path)
-            commit.fileops.append(fileop)
+            fileops.append(fileop)
         elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
             # Try to figure out who the ancestor of this node is.
             if node.from_hash:
@@ -1932,8 +1933,9 @@ class StreamParser:
                                  node.mark,
                                  node.path)
                 self.mark_counter[node.mark] += 1
-                commit.fileops.append(fileop)
+                fileops.append(fileop)
             self.permissions[node.path] = perms
+        return fileops
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
@@ -2071,6 +2073,7 @@ class StreamParser:
             # non-incremental dump.
             if revision == "0": 
                 continue
+            fileops = []
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
@@ -2138,7 +2141,7 @@ class StreamParser:
                                                                 node.path))
                             fileop = FileOp()
                             fileop.construct("deleteall", node.path[:-1])
-                            commit.fileops.append(fileop)
+                            fileops.append(fileop)
                         else:
                             for child in node.from_set:
                                 if verbose >= DEBUG_EXTRACT:
@@ -2146,7 +2149,7 @@ class StreamParser:
                                              % (revision, child))
                                 fileop = FileOp()
                                 fileop.construct("D", child)
-                                commit.fileops.append(fileop)
+                                fileops.append(fileop)
                     elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
@@ -2192,11 +2195,15 @@ class StreamParser:
                             subnode.from_rev = node.from_rev
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
-                            self.perform_node(subnode, commit)
+                            fileops += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
-                    self.perform_node(node, commit)
+                    fileops += self.perform_node(node)
                 # Node loop ends
+            # Fileop spans referring to the same subdirectories will
+            # become contiguous.
+            if len(fileops) > 1:
+                fileops.sort(cmp=FileOp.compare)
             # Deduce links between what will later become branches on the
             # basis of copies. This is tricky because a revision can be
             # the target of multiple copies.  Humans don't abuse this
@@ -2220,8 +2227,7 @@ class StreamParser:
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
             commit.mark = self.__newmark(revision)
-            if len(commit.fileops) > 1:
-                commit.fileops.sort(cmp=FileOp.compare)
+            commit.fileops = fileops
             self.repo.events.append(commit)
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
