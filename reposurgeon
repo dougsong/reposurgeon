@@ -1398,7 +1398,7 @@ class StreamParser:
         self.markmap = {}       # Revision-to-mark map
         self.mark_counter = collections.Counter()
         #self.branch_copies = collections.Counter()
-        self.parent = None
+        self.lastrevision = None
         self.branches = {}
         self.branchlink = {}
         self.uuid = None
@@ -2044,8 +2044,8 @@ class StreamParser:
             commit = Commit(self.repo)
             # Build a linear history for the whole repo.  We'll branchify
             # it later.
-            if self.parent:
-                commit.parent_marks = [self.markmap[self.parent]]
+            if self.lastrevision:
+                commit.parent_marks = [self.markmap[self.lastrevision]]
             commit.fossil_id = revision
             self.repo.fossil_map["SVN:%s" % revision] = commit
             try:
@@ -2197,14 +2197,6 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     self.perform_node(node, commit)
                 # Node loop ends
-            commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.branch = os.path.join("refs", "heads", "master") + os.sep
-            # It's important that this happens after blob creation
-            commit.mark = self.__newmark(revision)
-            self.parent = revision
-            if len(commit.fileops) > 1:
-                commit.fileops.sort(cmp=FileOp.compare)
-            self.repo.events.append(commit)
             # Deduce links between what will later become branches on the
             # basis of copies. This is tricky because a revision can be
             # the target of multiple copies.  Humans don't abuse this
@@ -2222,8 +2214,18 @@ class StreamParser:
                 if copies:
                     copies.sort(key=lambda node: int(node.from_rev))
                     self.branchlink[revision] = copies[-1].from_rev
+            # Klugy way to build linear history
+            self.lastrevision = revision
+            # Commit generation. Not currently handling mixed-branch commits.
+            commit.common = os.path.commonprefix([node.path for node in record.nodes])
+            commit.branch = os.path.join("refs", "heads", "master") + os.sep
+            commit.mark = self.__newmark(revision)
+            if len(commit.fileops) > 1:
+                commit.fileops.sort(cmp=FileOp.compare)
+            self.repo.events.append(commit)
+            # Report progress, and give up our scheduler slot
+            # so as not to eat the processor.
             baton.bumpcounter()
-            # Give up our scheduler slot
             time.sleep(0)
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
