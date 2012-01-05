@@ -1349,7 +1349,7 @@ class StreamParser:
             self.props = None
             # These are set during the analysis phase
             self.from_set = None
-            self.mark = None
+            self.blobmark = None
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
@@ -1897,15 +1897,15 @@ class StreamParser:
                     ancestor = self.hashmap[node.content_hash]
                     node.from_path = ancestor.from_path
                     node.from_rev = ancestor.from_rev
-                    node.mark = ancestor.mark
+                    node.blobmark = ancestor.blobmark
                 else:
                     # An entirely new blob
-                    node.mark = node.blob.mark = self.__newmark()
-                    self.mark_counter[node.mark] += 1
+                    node.blobmark = node.blob.mark = self.__newmark()
+                    self.mark_counter[node.blobmark] += 1
                     self.repo.events.append(node.blob)
                     self.hashmap[node.content_hash] = node
             elif ancestor:
-                node.mark = ancestor.mark
+                node.blobmark = ancestor.blobmark
             else:
                 # No ancestor, no blob. Has to be a pure property change.
                 # There's no way to figure out what mark to use in a
@@ -1913,7 +1913,7 @@ class StreamParser:
                 self.gripe("r%s~%s: permission information may be lost." \
                               % (node.revision, node.path))
                 return
-            assert node.mark
+            assert node.blobmark
             # Time for fileop generation
             if ancestor:
                 perms = oldperms = self.permissions.get(ancestor.path,
@@ -1927,9 +1927,9 @@ class StreamParser:
                 fileop = FileOp()
                 fileop.construct("M",
                                  perms,
-                                 node.mark,
+                                 node.blobmark,
                                  node.path)
-                self.mark_counter[node.mark] += 1
+                self.mark_counter[node.blobmark] += 1
                 fileops.append(fileop)
             self.permissions[node.path] = perms
         return fileops
