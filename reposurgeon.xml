@@ -871,6 +871,22 @@ revision - they just change parent-child relationships - unclean merges
 are not safe. Use with extreme caution.</para> 
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>tag</command>
+        <emphasis>tagname</emphasis>...
+        <command>{move|rename|telete}</command>
+        <command>[arg]</command>.
+</term>
+<listitem>
+<para>Move, rename, or delete a tag.  First argument must be an
+existing tag name; second argument must be one of the verbs 'move',
+'rename', or 'delete'.</para>
+
+<para>For a 'move', a third argument must be a singleton selection set. For
+a 'rename', tha third argument may be any token. For a 'delete', no
+third argument is required.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
