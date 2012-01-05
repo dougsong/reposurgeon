@@ -2195,10 +2195,13 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     fileops += self.perform_node(node)
                 # Node loop ends
-            # Fileop spans referring to the same subdirectories will
-            # become contiguous.
+            # Commit generation. Not currently handling mixed-branch commits.
+            commit.common = os.path.commonprefix([node.path for node in record.nodes])
+            commit.mark = self.__newmark(revision)
             if len(fileops) > 1:
                 fileops.sort(cmp=FileOp.compare)
+            commit.fileops = fileops
+            self.repo.events.append(commit)
             # Deduce links between what will later become branches on the
             # basis of copies. This is tricky because a revision can be
             # the target of multiple copies.  Humans don't abuse this
@@ -2216,11 +2219,6 @@ class StreamParser:
                 if copies:
                     copies.sort(key=lambda node: int(node.from_rev))
                     self.branchlink[revision] = copies[-1].from_rev
-            # Commit generation. Not currently handling mixed-branch commits.
-            commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.mark = self.__newmark(revision)
-            commit.fileops = fileops
-            self.repo.events.append(commit)
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
