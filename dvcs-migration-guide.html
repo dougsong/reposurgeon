@@ -295,6 +295,11 @@ with reposurgeon follow.</p>
 <li>If your target was git, run  <code>git gc &#45;&#45;aggressive</code>.</li>
 </ol>
 
+<p><code>reposurgeon</code> has a "script" command that allows you to
+bundle up a set of commands with comments.  I recommend writing your
+repository list as a reposurgeon script; this helps you not lose older
+steps as you experiment with newer ones, and it documents what you did.</p>
+
 <p>Most of the work will be in the comment-fixup and reference-lifting
 stages. I find, however, that they normally takes only a couple of
 hours even on very large repos with thousands of commits. An entire
