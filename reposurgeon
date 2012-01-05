@@ -732,15 +732,15 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
-    def __init__(self, commit=None):
+    def __init__(self):
         self.op = None
-        self.commit = commit                 # Only used for debugging.
         self.committish = None
         self.source = None
         self.target = None
         self.mode = None
         self.path = None
         self.ref = None
+        self.inline = None
     # Following two functions emulate the FileOp sort used by git
     # fast_export As it says, 'Handle files below a directory first,
     # in case they are all deleted and the directory changes to a file
@@ -784,8 +784,6 @@ class FileOp:
         else:
             raise Fatal("unexpected fileop %s while parsing" % opline)
         return self
-    def inlinefile(self):
-        return self.commit.repo.subdir() + "/inline-" + repr(id(self))
     def paths(self):
         "Return the set of all paths touched by this file op."
         if self.op in ("M", "D"):
@@ -831,15 +829,11 @@ class FileOp:
             else:
                 st += self.path
             if self.ref == 'inline':
-                with open(self.inlinefile()) as fp:
-                    content = fp.read()
-                st += "\ndata %d\n%s" % (len(content), content)
+                st += "\ndata %d\n%s" % (len(self.inline), self.inline)
         elif self.op == "N":
             st = " ".join((self.op, self.ref, self.committish)) + "\n"
             if self.ref == 'inline':
-                with open(self.inlinefile()) as fp:
-                    content = fp.read()
-                st += "data %d\n%s" % (len(content), content)
+                st += "data %d\n%s" % (len(self.inline), self.inline)
         elif self.op in "D":
             st = "D "
             if len(self.path.split()) > 1:
@@ -877,17 +871,7 @@ class Commit:
         return self.committer.date.timestamp
     def moveto(self, repo):
         "Change the repo this commit is associated with."
-        oldinlines = []
-        for fileop in self.fileops:
-            if fileop.op == 'M' and fileop.ref == 'inline': 
-                oldinlines.append(fileop.inlinefile()) 
         self.repo = repo
-        newinlines = []
-        for fileop in self.fileops:
-            if fileop.op == 'M' and fileop.ref == 'inline': 
-                newinlines.append(fileop.inlinefile())
-        for (old, new) in zip(oldinlines, newinlines):
-            os.rename(old, new)
     def clone(self, repo=None):
         "Clone this commit, without its fileops."
         c = copy.copy(self)
@@ -1259,17 +1243,17 @@ class RepoStreamer:
                                 for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
-                                            op = FileOp(commit)
+                                            op = FileOp()
                                             op.construct('R', oldpath, path)
                                             commit.fileops.append(op)
                                             del self.filemap[revision][oldpath]
                                         elif oldpath != path:
-                                            op = FileOp(commit)
+                                            op = FileOp()
                                             op.construct('C', oldpath, path)
                                             commit.fileops.append(op)
                                         break
                                 else:
-                                    op = FileOp(commit)
+                                    op = FileOp()
                                     op.construct('M',
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
@@ -1289,12 +1273,12 @@ class RepoStreamer:
                             blob.path = path
                             repo.events.append(blob)
                             # Its new fileop is added to the commit
-                            op = FileOp(commit)
+                            op = FileOp()
                             op.construct('M', newsig.perms, blobmark, path)
                             commit.fileops.append(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
-                        op = FileOp(commit)
+                        op = FileOp()
                         op.construct('D', tbd)
                         commit.fileops.append(op)
                         del self.filemap[revision][tbd]
@@ -1487,9 +1471,7 @@ class StreamParser:
         if fileop.ref[0] == ':':
             pass
         elif fileop.ref == 'inline':
-            wfp = open(fileop.inlinefile(), "w")
-            wfp.write(self.fi_read_data())
-            wfp.close()
+            fileop.inline = self.fi_read_data()
         else:
             self.error("unknown content type in filemodify")
     # Helpers for Subversion dumpfiles
@@ -1744,11 +1726,11 @@ class StreamParser:
                                     commit.parent_marks.append(line.split()[1])
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
-                                    commit.fileops.append(FileOp(commit).parse(line))
+                                    commit.fileops.append(FileOp().parse(line))
                                 elif line == "deleteall\n":
-                                    commit.fileops.append(FileOp(commit).parse("deleteall"))
+                                    commit.fileops.append(FileOp().parse("deleteall"))
                                 elif line[0] == "M":
-                                    fileop = FileOp(commit).parse(line)
+                                    fileop = FileOp().parse(line)
                                     commit.fileops.append(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
@@ -1761,7 +1743,7 @@ class StreamParser:
                                         # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == "N":
-                                    fileop = FileOp(commit).parse(line)
+                                    fileop = FileOp().parse(line)
                                     commit.fileops.append(fileop)
                                     self.fi_parse_fileop(fileop)
                                 # Handling of file ops ends.
@@ -1892,7 +1874,7 @@ class StreamParser:
     def perform_node(self, node, commit):
         if node.action == SD_DELETE:
             assert node.blob is None
-            fileop = FileOp(commit)
+            fileop = FileOp()
             fileop.construct("D", node.path)
             commit.fileops.append(fileop)
         elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
@@ -1944,7 +1926,7 @@ class StreamParser:
                 perms = self.node_permissions(node)
             if node.blob is not None or (perms != oldperms) or node.from_hash:
                 assert perms
-                fileop = FileOp(commit)
+                fileop = FileOp()
                 fileop.construct("M",
                                  perms,
                                  node.mark,
@@ -2154,7 +2136,7 @@ class StreamParser:
                             if verbose >= DEBUG_EXTRACT:
                                 announce("r%s: deleteall %s" % (revision,
                                                                 node.path))
-                            fileop = FileOp(commit)
+                            fileop = FileOp()
                             fileop.construct("deleteall", node.path[:-1])
                             commit.fileops.append(fileop)
                         else:
@@ -2162,7 +2144,7 @@ class StreamParser:
                                 if verbose >= DEBUG_EXTRACT:
                                     announce("r%s: deleting %s" \
                                              % (revision, child))
-                                fileop = FileOp(commit)
+                                fileop = FileOp()
                                 fileop.construct("D", child)
                                 commit.fileops.append(fileop)
                     elif node.action == SD_CHANGE:
@@ -2931,8 +2913,6 @@ class Repository:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
                         # needing resolution.
-                        for fileop in event.fileops:
-                            fileop.commit = child
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child.pushed_to = True
                 # We might be trying to hand the event's fileops to parents.
@@ -2942,7 +2922,6 @@ class Repository:
                         # each parent's list and mark the parent as needing
                         # resolution.
                         for fileop in event.fileops:
-                            fileop.commit = parent
                             # On a pushback (but not a push forward)
                             # we might have moved the fileop so it's
                             # now referred to before its actual
