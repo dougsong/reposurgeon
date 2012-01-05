@@ -4276,6 +4276,19 @@ unusual topology and you intend to do your own branch surgery.
                     fp.write(summary + "\n")
         if outfile:
             fp.close()
+    @staticmethod
+    def pop_token(line):
+        "Grab a whitespace-delimited token from the front of the line."
+        tok = ""
+        line = line.lstrip()
+        while True:
+            if not line or line[0].isspace():
+                break
+            else:
+                tok += line[0]
+                line = line[1:]
+        line = line.lstrip()
+        return (tok, line)
     def edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
         editor = line.strip() or os.getenv("EDITOR")
@@ -4536,7 +4549,7 @@ selection set, it will be taken as the name of the file to report to;
 no argument, or one of '-'; writes to standard output.
 """)
     def do_tags(self, line):
-        "Generate a human-friendly listing of objects."
+        "Generate a human-friendly listing of lightweight tags."
         self.report_select(line, "tags", (screenwidth(),))
 
     #
@@ -5415,6 +5428,48 @@ is performed even if is not clean.
         if "perform" in rest and (merge_clean or "force" in rest):
             target.parent_marks.append(tip.mark)
             announce("%s added as a parent of %s" % (tip.mark,target.mark))
+
+    def help_tag(self):
+        """Move, rename, or delete a tag.  First argument must be an
+existing tag name; second argument must be one of the verbs 'move',
+'rename', or 'delete'.
+
+For a 'move', a third argument must be a singleton selection set. For
+a 'rename', tha third argument may be any token. For a 'delete', no
+third argument is required.
+"""
+    def do_tag(self, line):
+        "Move a tag to point to a specified commit, or rename it, or delete it."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        (tagname, line) = RepoSurgeon.pop_token(line)
+        for event in repo.events:
+            if isinstance(event, Tag) and event.name == tagname:
+                tag = event
+                break
+        else:
+            raise Recoverable("no such tag as %s" % tagname)
+        (verb, line) = RepoSurgeon.pop_token(line)
+        if verb == "move":
+            self.set_selection_set(line)
+            if len(self.selection) != 1:
+                raise Recoverable("tag move requires a singleton set.")
+            else:
+                target = self.selection.pop(0)
+            if not isinstance(repo.events[target], Commit):
+                raise Recoverable("move target must be a commit.")
+            tag.committish = repo.events[target].mark
+        elif verb == "rename":
+            (newname, line) = RepoSurgeon.pop_token(line)
+            if not newname:
+                raise Recoverable("new tag name must be nonempty.")
+            tag.name = newname
+        elif verb == "delete":
+            repo.events.remove(tag)
+        else:
+            raise Recoverable("unknown verb '%s' in tag command.")
 
     #
     # Artifact Removal
