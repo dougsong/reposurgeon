@@ -1394,8 +1394,8 @@ class StreamParser:
         self.markseq = 0
         self.ccount = 0
         self.linebuffers = []
-        # Everying below here is Subversion-specific
-        self.markmap = {}       # Revision-to-mark map
+        self.warnings = []
+        # Everything below here is Subversion-specific
         self.mark_counter = collections.Counter()
         #self.branch_copies = collections.Counter()
         self.branches = {}
@@ -1405,7 +1405,6 @@ class StreamParser:
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
         self.permissions = {}
-        self.warnings = []
         self.has_properties = set([])
     def error(self, msg):
         "Throw fatal error during parsing."
@@ -1422,11 +1421,9 @@ class StreamParser:
             self.warnings.append(msg)
         else:
             complain(msg)
-    def __newmark(self, revision=None):
+    def __newmark(self):
         self.markseq += 1
         mark = ":" + str(self.markseq)
-        if revision:
-            self.markmap[revision] = mark
         return mark
     def readline(self):
         if self.linebuffers:
@@ -1937,6 +1934,7 @@ class StreamParser:
         return fileops
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
+        markmap = {}       # Revision-to-mark map
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
         # Find all copy sources
@@ -2197,7 +2195,8 @@ class StreamParser:
                 # Node loop ends
             # Commit generation. Not currently handling mixed-branch commits.
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.mark = self.__newmark(revision)
+            commit.mark = self.__newmark()
+            markmap[revision] = commit.mark
             if len(fileops) > 1:
                 fileops.sort(cmp=FileOp.compare)
             commit.fileops = fileops
@@ -2218,7 +2217,7 @@ class StreamParser:
                           if node.from_rev is not None]
                 if copies:
                     copies.sort(key=lambda node: int(node.from_rev))
-                    self.branchlink[commit.mark] = copies[-1].from_rev
+                    self.branchlink[commit.mark] = markmap[copies[-1].from_rev]
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
@@ -2294,7 +2293,7 @@ class StreamParser:
                 for commit in self.repo.commits():
                     if commit.branch == "root":
                         break
-                self.branchlink[commit.mark] = self.repo.commits()[0].fossil_id
+                self.branchlink[commit.mark] = self.repo.commits()[0].mark
             baton.twirl("+")
             # Re-root branches here using the branchlink info
             # We use append rather than replacing the mark list in order
@@ -2306,7 +2305,7 @@ class StreamParser:
             for root in branchroots:
                 rootrev = root.fossil_id
                 if root.mark in self.branchlink:
-                    root.parent_marks.append(self.markmap[self.branchlink[root.mark]])
+                    root.parent_marks.append(self.branchlink[root.mark])
                 elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
                     self.gripe("r%s: can't connect nonempty %s to trunk" \
                                % (rootrev, root.branch))
