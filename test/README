@@ -27,7 +27,6 @@ from foo.sd.  Here is a summary of the test sources:
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
 |nontipcopy.svn  |Two branches, with the creation right after a tag copy
-|nut.mbox        |Mailboxed comments used for the reference-lifting test
 |nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it
 |references.tst  |Test author mapping and reference lifting 
 |rootfile.svn    |Branchy layout with a file at the root level.

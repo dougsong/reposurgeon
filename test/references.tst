@@ -21,6 +21,17 @@ nba-guest = Niels Baggesen <nba@users.sourceforge.net>
 lyrgard-guest = Jonathan Dion <lyrgard-guest@alioth.debian.org>
 jongough-guest = Jon Gough <jon.gough@eclipsesystems.com.au>
 EOF
-mailbox_in nut.mbox
+mailbox_in <<EOF
+------------------------------------------------------------------------------
+Committer: Peter Selinger <selinger@users.sourceforge.net>
+Committer-Date: Sat 04 Mar 2006 12:44:41 +0000
+
+backported [[SVN:352]] from trunk to Testing
+
+newhidups: rewrote logical-to-physical value conversion. Rewrote
+extraction of logical values from report. Added Kelvin-to-Celsius
+conversion. Tweaked APC date conversion. Back-UPS BF500 support.
+Deleted unused items in HIDItem structure.
+EOF
 references lift
 write
