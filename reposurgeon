@@ -2112,7 +2112,7 @@ class StreamParser:
                         self.branches['trunk' + os.sep] = None
                     if node.action == SD_ADD:
                         newbranch = node.path
-                        # Don't allow directory copies to step on pre-existung
+                        # Don't allow directory copies to step on pre-existing
                         # content.  
                         #if self.branch_copies[node.path]:
                         #    newbranch = newbranch[:-1] + "-" + str(self.branch_copies[node.path])
