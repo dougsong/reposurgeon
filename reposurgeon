@@ -2218,7 +2218,6 @@ class StreamParser:
                     self.branchlink[revision] = copies[-1].from_rev
             # Commit generation. Not currently handling mixed-branch commits.
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.branch = os.path.join("refs", "heads", "master") + os.sep
             commit.mark = self.__newmark(revision)
             commit.fileops = fileops
             self.repo.events.append(commit)
@@ -2255,6 +2254,7 @@ class StreamParser:
         if not self.branches or global_options['svn_nobranch']:
             lastmark = None
             for commit in self.repo.commits():
+                commit.branch = os.path.join("refs", "heads", "master") + os.sep
                 if lastmark:
                     commit.parent_marks = [lastmark]
                 lastmark = commit.mark
@@ -2887,7 +2887,7 @@ class Repository:
             if event.__class__ in (Reset, Tag, Passthrough):
                 self.events.pop(ei)
             elif isinstance(event, Commit):
-                if "/tags/" in event.branch:
+                if event.branch and "/tags/" in event.branch:
                     identical = False
                     if "tagback" in policy:
                         if event.parents():
