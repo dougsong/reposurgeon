@@ -1869,12 +1869,12 @@ class StreamParser:
                 return 0o120000
         return 0o100644
     def perform_node(self, node):
-        fileops = []
+        actions = []
         if node.action == SD_DELETE:
             assert node.blob is None
             fileop = FileOp()
             fileop.construct("D", node.path)
-            fileops.append(fileop)
+            actions.append((node, fileop))
         elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
             # Try to figure out who the ancestor of this node is.
             if node.from_hash:
@@ -1930,17 +1930,16 @@ class StreamParser:
                                  node.blobmark,
                                  node.path)
                 self.mark_counter[node.blobmark] += 1
-                fileops.append(fileop)
+                actions.append((node, fileop))
             self.permissions[node.path] = perms
-        return fileops
-    def make_commits(self, commit, fileops, revision, record):
+        return actions
+    def make_commits(self, commit, actions, revision, record):
         "Commit generation. Not currently handling mixed-branch commits."
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
         commit.mark = self.__newmark()
         self.markmap[revision] = commit.mark
-        if len(fileops) > 1:
-            fileops.sort(cmp=FileOp.compare)
-        commit.fileops = fileops
+        commit.fileops = [action[1] for action in actions]
+        commit.fileops.sort(cmp=FileOp.compare)
         self.repo.events.append(commit)
         # Deduce links between what will later become branches on the
         # basis of copies. This is tricky because a revision can be
@@ -2092,7 +2091,7 @@ class StreamParser:
             # non-incremental dump.
             if revision == "0": 
                 continue
-            fileops = []
+            actions = []
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
@@ -2160,7 +2159,7 @@ class StreamParser:
                                                                 node.path))
                             fileop = FileOp()
                             fileop.construct("deleteall", node.path[:-1])
-                            fileops.append(fileop)
+                            actions.append((node, fileop))
                         else:
                             for child in node.from_set:
                                 if verbose >= DEBUG_EXTRACT:
@@ -2168,7 +2167,7 @@ class StreamParser:
                                              % (revision, child))
                                 fileop = FileOp()
                                 fileop.construct("D", child)
-                                fileops.append(fileop)
+                                actions.append((node, fileop))
                     elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
@@ -2214,12 +2213,12 @@ class StreamParser:
                             subnode.from_rev = node.from_rev
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
-                            fileops += self.perform_node(subnode)
+                            actions += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
-                    fileops += self.perform_node(node)
+                    actions += self.perform_node(node)
                 # Node loop ends
-            self.make_commits(commit, fileops, revision, record)
+            self.make_commits(commit, actions, revision, record)
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
