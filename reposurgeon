@@ -2213,12 +2213,12 @@ class StreamParser:
             # be substantially earlier than the CVS revision corresponding
             # to the copy). Fortunately, we can resolve such sets by the
             # simple expedient of picking the *latest* revision in them!
-            if revision not in self.branchlink:
+            if commit.mark not in self.branchlink:
                 copies = [node for node in record.nodes \
                           if node.from_rev is not None]
                 if copies:
                     copies.sort(key=lambda node: int(node.from_rev))
-                    self.branchlink[revision] = copies[-1].from_rev
+                    self.branchlink[commit.mark] = copies[-1].from_rev
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
@@ -2294,7 +2294,7 @@ class StreamParser:
                 for commit in self.repo.commits():
                     if commit.branch == "root":
                         break
-                self.branchlink[commit.fossil_id] = self.repo.commits()[0].fossil_id
+                self.branchlink[commit.mark] = self.repo.commits()[0].fossil_id
             baton.twirl("+")
             # Re-root branches here using the branchlink info
             # We use append rather than replacing the mark list in order
@@ -2305,8 +2305,8 @@ class StreamParser:
             nonempty = set([c for c in self.repo.commits() if c.fileops]) 
             for root in branchroots:
                 rootrev = root.fossil_id
-                if rootrev in self.branchlink:
-                    root.parent_marks.append(self.markmap[self.branchlink[rootrev]])
+                if root.mark in self.branchlink:
+                    root.parent_marks.append(self.markmap[self.branchlink[root.mark]])
                 elif root.branch != ("trunk" + os.sep) and commit.branch in nonempty:
                     self.gripe("r%s: can't connect nonempty %s to trunk" \
                                % (rootrev, root.branch))
