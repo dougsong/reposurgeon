@@ -1406,6 +1406,7 @@ class StreamParser:
         self.hashmap = {}
         self.permissions = {}
         self.has_properties = set([])
+        self.markmap = {}       # Revision-to-mark map
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -1932,9 +1933,34 @@ class StreamParser:
                 fileops.append(fileop)
             self.permissions[node.path] = perms
         return fileops
+    def make_commits(self, commit, fileops, revision, record):
+        "Commit generation. Not currently handling mixed-branch commits."
+        commit.common = os.path.commonprefix([node.path for node in record.nodes])
+        commit.mark = self.__newmark()
+        self.markmap[revision] = commit.mark
+        if len(fileops) > 1:
+            fileops.sort(cmp=FileOp.compare)
+        commit.fileops = fileops
+        self.repo.events.append(commit)
+        # Deduce links between what will later become branches on the
+        # basis of copies. This is tricky because a revision can be
+        # the target of multiple copies.  Humans don't abuse this
+        # because tracking multiple copies is too hard to do in a slow
+        # organic brain, but tools like cvs2svn can generate large
+        # sets of them. cvs2svn seems to try to copy each file and
+        # directory from the commit corresponding to the CVS revision
+        # where the file was last changed before the copy, which may
+        # be substantially earlier than the CVS revision corresponding
+        # to the copy). Fortunately, we can resolve such sets by the
+        # simple expedient of picking the *latest* revision in them!
+        if commit.mark not in self.branchlink:
+            copies = [node for node in record.nodes \
+                      if node.from_rev is not None]
+            if copies:
+                copies.sort(key=lambda node: int(node.from_rev))
+                self.branchlink[commit.mark] = self.markmap[copies[-1].from_rev]
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
-        markmap = {}       # Revision-to-mark map
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
         # Find all copy sources
@@ -2193,31 +2219,7 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     fileops += self.perform_node(node)
                 # Node loop ends
-            # Commit generation. Not currently handling mixed-branch commits.
-            commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.mark = self.__newmark()
-            markmap[revision] = commit.mark
-            if len(fileops) > 1:
-                fileops.sort(cmp=FileOp.compare)
-            commit.fileops = fileops
-            self.repo.events.append(commit)
-            # Deduce links between what will later become branches on the
-            # basis of copies. This is tricky because a revision can be
-            # the target of multiple copies.  Humans don't abuse this
-            # because tracking multiple copies is too hard to do in a slow
-            # organic brain, but tools like cvs2svn can generate large
-            # sets of them. cvs2svn seems to try to copy each file and
-            # directory from the commit corresponding to the CVS revision
-            # where the file was last changed before the copy, which may
-            # be substantially earlier than the CVS revision corresponding
-            # to the copy). Fortunately, we can resolve such sets by the
-            # simple expedient of picking the *latest* revision in them!
-            if commit.mark not in self.branchlink:
-                copies = [node for node in record.nodes \
-                          if node.from_rev is not None]
-                if copies:
-                    copies.sort(key=lambda node: int(node.from_rev))
-                    self.branchlink[commit.mark] = markmap[copies[-1].from_rev]
+            self.make_commits(commit, fileops, revision, record)
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
