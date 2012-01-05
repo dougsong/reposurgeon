@@ -1398,7 +1398,7 @@ class StreamParser:
         self.markmap = {}       # Revision-to-mark map
         self.mark_counter = collections.Counter()
         #self.branch_copies = collections.Counter()
-        self.lastrevision = None
+        self.lastmark = None
         self.branches = {}
         self.branchlink = {}
         self.uuid = None
@@ -2044,10 +2044,6 @@ class StreamParser:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
             commit = Commit(self.repo)
-            # Build a linear history for the whole repo.  We'll branchify
-            # it later.
-            if self.lastrevision:
-                commit.parent_marks = [self.markmap[self.lastrevision]]
             commit.fossil_id = revision
             self.repo.fossil_map["SVN:%s" % revision] = commit
             try:
@@ -2221,12 +2217,13 @@ class StreamParser:
                 if copies:
                     copies.sort(key=lambda node: int(node.from_rev))
                     self.branchlink[revision] = copies[-1].from_rev
-            # Klugy way to build linear history
-            self.lastrevision = revision
             # Commit generation. Not currently handling mixed-branch commits.
             commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.branch = os.path.join("refs", "heads", "master") + os.sep
             commit.mark = self.__newmark(revision)
+            if self.lastmark:
+                commit.parent_marks = [self.lastmark]
+            self.lastmark = commit.mark
             commit.fileops = fileops
             self.repo.events.append(commit)
             # Report progress, and give up our scheduler slot
