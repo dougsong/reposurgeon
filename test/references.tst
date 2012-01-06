@@ -1,5 +1,5 @@
 ## Test authors command, heredocs, and comment editing
-read nut.svn
+read references.svn
 authors read <<EOF
 esr-guest = Eric S. Raymond <esr-guest@alioth.debian.org>
 lestat-guest = David Goncalves <david@lestat.st>
