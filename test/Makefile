@@ -101,14 +101,17 @@ svn-buildregress:
 svn-regress:
 	@for test in $(SVNLOADS); \
 	do \
-	    if echo "Testing $${test}" >&2; \
-	    reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
-	    then diff -u $${test}.chk /tmp/regress; \
-	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
-	    mkdir /tmp/reposurgeon$$$$ ; \
-	    (cd /tmp/reposurgeon$$$$; \
-		git init --quiet; \
-		grep -v '^reposurgeon:' /tmp/regress | git fast-import --quiet); \
-	    rm -fr /tmp/reposurgeon$$$$ ; \
+	    if [ ! -f $${test}.tst ] ; \
+	    then \
+		(if echo "Testing $${test}" >&2; \
+		reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
+		then diff -u $${test}.chk /tmp/regress; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
+		mkdir /tmp/reposurgeon$$$$ ; \
+		(cd /tmp/reposurgeon$$$$; \
+		    git init --quiet; \
+		    grep -v '^reposurgeon:' /tmp/regress | git fast-import --quiet); \
+		rm -fr /tmp/reposurgeon$$$$) \
+	    fi \
 	done
 	@rm -f /tmp/regress
