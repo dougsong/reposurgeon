@@ -1936,10 +1936,12 @@ class StreamParser:
     def make_commits(self, commit, actions, revision, record):
         "Commit generation. Not currently handling mixed-branch commits."
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
-        opcommon = os.path.commonprefix([fileop.path for (node, fileop) in actions if fileop.op != "deleteall"])
+        filecommon = os.path.commonprefix([fileop.path for (node, fileop) in actions if fileop.op != "deleteall"])
         if verbose >= DEBUG_EXTRACT:
             announce("common = %s, filecommon = %s" \
                      % (commit.common, filecommon))
+        if not filecommon and len(actions) > 1 and not global_options['svn_nobranch']:
+            self.gripe("%s: pathological mixed revision" % revision)
         commit.mark = self.__newmark()
         self.markmap[revision] = commit.mark
         commit.fileops = [action[1] for action in actions]
