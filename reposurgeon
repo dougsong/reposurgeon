@@ -2170,15 +2170,14 @@ class StreamParser:
                         #    self.branch_copies[node.path] += 1
                         if self.branches:
                             if newbranch.count(os.sep) == 2:
-                                if newbranch in {"tags" + os.sep, "branches" + os.sep}:
-                                    pass
-                                elif newbranch.startswith("tags" + os.sep):
+                                if newbranch.startswith("tags" + os.sep):
                                     self.branches[newbranch] = None
                                 elif newbranch.startswith("branches" + os.sep):
                                     self.branches[newbranch] = None
                             elif newbranch.count(os.sep) == 1:
-                                # Exiguous top-level branch
-                                self.branches[newbranch] = None
+                                if newbranch not in {"tags" + os.sep,
+                                                     "branches" + os.sep}:
+                                    self.branches[newbranch] = None
                         if newbranch in self.branches and verbose >= DEBUG_TOPOLOGY:
                             announce("%s recognized as a branch" % newbranch)
                     elif node.action in (SD_DELETE, SD_REPLACE):
