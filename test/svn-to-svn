@@ -72,7 +72,9 @@ then
     then
 	rm -fr test-repo test-checkout
 	svnadmin create test-repo
-	sed  <$dump -e '/Text-content-md5: /d' -e '/Text-content-sha1: /d' \
+	sed  <$dump \
+	    -e '/Text-content-md5: /d' -e '/Text-content-sha1: /d' \
+	    -e '/Text-copy-source-md5: /d' -e '/Text-copy-source-sha1: /d' \
 	    | svnadmin load test-repo >/dev/null
 	svnadmin dump test-repo >$dump
     fi
