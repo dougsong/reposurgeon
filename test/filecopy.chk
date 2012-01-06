@@ -28,7 +28,7 @@ M 100644 :3 placeholder
 blob
 mark :5
 data 55
-After crearing this, we'll copy it to the test branch.
+After creating this, we'll copy it to the test branch.
 
 commit refs/heads/master
 mark :6
