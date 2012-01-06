@@ -1936,6 +1936,8 @@ class StreamParser:
     def make_commits(self, commit, actions, revision, record):
         "Commit generation. Not currently handling mixed-branch commits."
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
+        if verbose >= DEBUG_EXTRACT:
+            announce("common: %s" % commit.common)
         commit.mark = self.__newmark()
         self.markmap[revision] = commit.mark
         commit.fileops = [action[1] for action in actions]
