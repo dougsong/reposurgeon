@@ -170,13 +170,13 @@ Node-path: trunk/creation-example
 Node-kind: file
 Node-action: add
 Prop-content-length: 10
-Text-content-length: 44
-Text-content-md5: 4931f2bc2c35d7510d6317f695f2cde1
-Text-content-sha1: 47e15903a6a4e68c16a8a653f026878cf98da2c5
-Content-length: 54
+Text-content-length: 43
+Text-content-md5: bddf9e633fa1edd01086a566ee523838
+Text-content-sha1: 11cbfa6ebb6b8f637dec0921522209fb65dc9eb3
+Content-length: 53
 
 PROPS-END
-This file exists to be a creattion example.
+This file exists to be a creation example.
 
 
 Revision-number: 6
@@ -212,8 +212,8 @@ And another content modification.
 
 
 Revision-number: 7
-Prop-content-length: 117
-Content-length: 117
+Prop-content-length: 118
+Content-length: 118
 
 K 7
 svn:log
