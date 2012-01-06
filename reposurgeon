@@ -2170,7 +2170,9 @@ class StreamParser:
                         #    self.branch_copies[node.path] += 1
                         if self.branches:
                             if newbranch.count(os.sep) == 2:
-                                if newbranch.startswith("tags" + os.sep):
+                                if newbranch in {"tags" + os.sep, "branches" + os.sep}:
+                                    pass
+                                elif newbranch.startswith("tags" + os.sep):
                                     self.branches[newbranch] = None
                                 elif newbranch.startswith("branches" + os.sep):
                                     self.branches[newbranch] = None
