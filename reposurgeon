@@ -1944,17 +1944,20 @@ class StreamParser:
         # but we can pick off a few and warn about the rest.
         if not global_options['svn_nobranch']:
             if not filecommon and len(actions) > 1:
-                # First reduction: throw out all branch deletions.
-                # If someone just cleaned up old branches this
-                # will strip out all fileops and the result will
-                # be tagified.  There are examples like this in
-                # the NUT repo test at revisions 354 and 357.
+                # Throw out all branch deletions.  If someone just
+                # cleaned up old branches this will strip out all
+                # fileops and the result will be tagified.  There are
+                # examples like this in the NUT repo test at revisions
+                # 354 and 357.
                 reduced = [(node, fileop) for (node, fileop) in actions \
                            if fileop.op != "deleteall"]
                 if len(reduced) < len(actions):
                     self.gripe("%s: discarding branch deletes from mixed commit." % (revision))
                     self.make_commits(commit, reduced, revision, record)
                     return
+                if [fileop for (node, fileop) in actions \
+                    if fileop.op not in {'M', 'D'}]:
+                    raise Fatal("r%s: consistency error, file a bug" % revision)
                 # No reductions
                 #self.gripe("%s: mixed-branch revision: %s" % (revision, repr(record.nodes)))
                 self.gripe("%s: mixed-branch revision." % revision)
