@@ -1948,7 +1948,9 @@ class StreamParser:
                 # cleaned up old branches this will strip out all
                 # fileops and the result will be tagified.  There are
                 # examples like this in the NUT repo test at revisions
-                # 354 and 357.
+                # 354 and 357. If removing branch deletes leaves nothing
+                # but M and D operations, we win - it can be treated as
+                # a normal commit and can be a branch root.
                 reduced = [(node, fileop) for (node, fileop) in actions \
                            if fileop.op != "deleteall"]
                 if len(reduced) < len(actions):
@@ -1958,6 +1960,8 @@ class StreamParser:
                 if [fileop for (node, fileop) in actions \
                     if fileop.op not in {'M', 'D'}]:
                     raise Fatal("r%s: consistency error, file a bug" % revision)
+                # It's a real mixed commit.  Break it into pieces that may fit
+                # on existing branches.
                 self.gripe("%s: mixed-branch revision." % revision)
                 cliques = {}
                 for (node, fileop) in actions:
