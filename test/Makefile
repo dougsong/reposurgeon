@@ -99,7 +99,8 @@ svn-buildregress:
 	    rm -f $${test}.chk && make --quiet $${test}.chk; \
 	done
 svn-regress:
-	@for test in $(SVNLOADS); do \
+	@for test in $(SVNLOADS); \
+	do \
 	    if echo "Testing $${test}" >&2; \
 	    reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 	    then diff -u $${test}.chk /tmp/regress; \
