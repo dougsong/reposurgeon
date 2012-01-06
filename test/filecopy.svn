@@ -175,12 +175,12 @@ Node-kind: file
 Node-action: add
 Prop-content-length: 10
 Text-content-length: 55
-Text-content-md5: 817d8553414b54ea2a99fbeac3137b1b
-Text-content-sha1: b77777ac28a1f5833f5b009609afeac0dc1b42bf
+Text-content-md5: b486ddc85b4626902ecfc25211ee34dd
+Text-content-sha1: 82eafe9cc0ce6c6f83346bee8ab287153a9fbf49
 Content-length: 65
 
 PROPS-END
-After crearing this, we'll copy it to the test branch.
+After creating this, we'll copy it to the test branch.
 
 
 Revision-number: 6
@@ -209,8 +209,8 @@ Node-kind: file
 Node-action: add
 Node-copyfrom-rev: 5
 Node-copyfrom-path: trunk/copysource
-Text-copy-source-md5: 817d8553414b54ea2a99fbeac3137b1b
-Text-copy-source-sha1: b77777ac28a1f5833f5b009609afeac0dc1b42bf
+Text-copy-source-md5: b486ddc85b4626902ecfc25211ee34dd
+Text-copy-source-sha1: 82eafe9cc0ce6c6f83346bee8ab287153a9fbf49
 
 
 Revision-number: 7
