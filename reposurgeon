@@ -1958,10 +1958,36 @@ class StreamParser:
                 if [fileop for (node, fileop) in actions \
                     if fileop.op not in {'M', 'D'}]:
                     raise Fatal("r%s: consistency error, file a bug" % revision)
-                # No reductions
-                #self.gripe("%s: mixed-branch revision: %s" % (revision, repr(record.nodes)))
                 self.gripe("%s: mixed-branch revision." % revision)
-
+                cliques = {}
+                for (node, fileop) in actions:
+                    for branch in self.branches:
+                        if fileop.path.startswith(branch):
+                            if branch not in cliques:
+                                cliques[branch] = []
+                            cliques[branch].append((node, fileop))
+                            break
+                    else:
+                        if "" not in cliques:
+                            cliques[""] = []
+                        cliques[""].append((node, fileop))
+                oplist = []
+                for (branch, actions) in cliques.items():
+                    oplist.append((branch, [action[1] for action in actions]))
+                # trunk portion is probably most important, put it first 
+                oplist.sort(key=lambda b: not b[0].startswith("trunk"+ os.sep))
+                for (i, (branch, fileops)) in enumerate(oplist):
+                    split = copy.copy(commit)
+                    split.common = branch
+                    # TODO: Check if this will collide with another commit
+                    split.committer.date.timestamp += i
+                    split.fossil_id += "." + str(i + 1)
+                    split.comment += "\n[[Split portion of a mixed commit.]]\n"
+                    split.mark = self.__newmark()
+                    split.fileops = fileops
+                    split.fileops.sort(cmp=FileOp.compare)
+                    self.repo.events.append(split)
+                return
         # Normal, fallthrough case: all file actions are on the same branch
         commit.mark = self.__newmark()
         self.markmap[revision] = commit.mark
@@ -1984,7 +2010,11 @@ class StreamParser:
                       if node.from_rev is not None]
             if copies:
                 copies.sort(key=lambda node: int(node.from_rev))
-                self.branchlink[commit.mark] = self.markmap[copies[-1].from_rev]
+                latest = copies[-1].from_rev
+                try:
+                    self.branchlink[commit.mark] = self.markmap[latest]
+                except KeyError:
+                    raise Fatal("mixed branch root at %s - please report this as a bug." % latest)
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
