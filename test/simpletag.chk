@@ -26,8 +26,8 @@ M 100644 :3 README
 
 blob
 mark :5
-data 44
-This file exists to be a creattion example.
+data 43
+This file exists to be a creation example.
 
 commit refs/heads/master
 mark :6
