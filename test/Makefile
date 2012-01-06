@@ -95,8 +95,11 @@ svn-dump:
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
 svn-buildregress:
 	@for test in $(SVNLOADS); do \
-	    echo "Remaking $${test}.chk"; \
-	    rm -f $${test}.chk && make --quiet $${test}.chk; \
+	    if [ ! -f $${test}.tst ] ; \
+	    then \
+		    echo "Remaking $${test}.chk"; \
+		    rm -f $${test}.chk && make --quiet $${test}.chk; \
+	    fi \
 	done
 svn-regress:
 	@for test in $(SVNLOADS); \
