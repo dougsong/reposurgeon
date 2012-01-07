@@ -886,7 +886,7 @@ class Commit:
         "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
         return "%6d %s %-*s" % \
-                      (eventnum+1, self.committer.date.iso8601()[:-5], cols-27, topline[:cols-27]) 
+                      (eventnum+1, self.committer.date.rfc3339(), cols-33, topline[:cols-27]) 
     def tags(self, eventnum, cols):
         "Enable do_list() to report lightweight tags."
         assert cols > -1    # pacify pylint
@@ -4162,7 +4162,6 @@ unusual topology and you intend to do your own branch surgery.
                         raise Recoverable("reference improperly terminated. '%s'" % self.line)
                     ref = self.line[:closer]
                     self.line = self.line[closer+1:]
-
                     matched = False
                     # First, search branches
                     branchlist = self.chosen().branchlist()
@@ -4193,6 +4192,43 @@ unusual topology and you intend to do your own branch surgery.
                                     break
                             else:
                                 raise Recoverable("tag name %s points to hyperspace" % tag.name)
+                    # Might be a date or action stamp
+                    date = None
+                    bang = ref.find('!')
+                    date_end = len(ref)
+                    if bang >= 0:
+                        date_end = min(bang, date_end)
+                    try:
+                        date = Date(ref[:date_end])
+                    except Fatal:
+                        date = None
+                    email_id = None
+                    if date is not None and bang > -1:
+                        email_id = ref[bang+1:]
+                    matches = []
+                    if date:
+                        for (ei, event) in enumerate(self.chosen().events):
+                            if hasattr(event, 'committer'):
+                                if event.committer.date != date:
+                                    continue
+                                if email_id and event.committer.email != email_id:
+                                    continue
+                                else:
+                                    matches.append(ei)
+                            elif hasattr(event, 'tagger'):
+                                if event.tagger.date != date:
+                                    continue
+                                elif email_id and event.tagger.email!=email_id:
+                                    continue
+                                else:
+                                    matches.append(ei)
+                        if len(matches) < 1:
+                            raise Recoverable("no events match %s" % ref)
+                        elif len(matches) > 1:
+                            raise Recoverable("multiple events match %s" % ref)
+                        else:
+                            selection.append(matches[0])
+                            matched = True
                     if not matched:
                         raise Recoverable("couldn't match a name at <%s>" % ref)
             if verbose >= DEBUG_LEXER:
