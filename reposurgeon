@@ -5663,7 +5663,7 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
                     event = repo.events[ei]
-                    if isinstance(event, Commit):
+                    if isinstance(event, Commit) or isinstance(event, Tag):
                         earliest = 0
                         while True:
                             m = match_re.search(event.comment[earliest:])
