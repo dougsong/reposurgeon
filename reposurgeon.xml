@@ -1276,6 +1276,16 @@ fileset of the import-stream branch.  When a branch
 finishes with a deleteall at its tip, the deleteall is transformed
 into a tag. This rule cleans up after aborted branch renames.</para>
 
+<para>Occasionally (and usually by mistake) a branchy Subversion
+repository will contain revision that touch multiple branches. These
+are handled by partitioning them into multiple import-stream commits,
+one on each affected branch. The Fossil-ID of such a split commit
+will have a pseudo-decimal part - for examble, if Subversion revision 2317
+touches three branches, the three generated commits will have IDs
+2317.1, 2317.2, and 2317.3. In addition, the second and all subsequent
+commits will have their timestamps incremented by a second each in
+order to make the committer/timstamp pairs distinguishable.</para>
+
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
 100755 and svn:special becomes 120000 (indicating a symlink; the blob 
@@ -1290,9 +1300,11 @@ you're somehow managed to have an actual .gitignore file in a
 Subversion directory with an svn:ignore property, the file will get
 stepped on.</para>
 
-<para>All other properties are discarded. (This may change in a 
-future release.) <application>reposurgeon</application> will 
-issue warnings about property settings at conversion time.</para>
+<para>All other Subversion properties are discarded. (This may change in a 
+future release.) The property for which this is most likely to cause
+semantic problems is svn:eol-style. However, since property-change-only
+commits get turned into annotated tags, the translated tags will retain
+information about setting changes.</para>
 
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
