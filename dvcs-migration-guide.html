@@ -347,6 +347,12 @@ the code and remove $Id$, $Date$, $Revision$, and other keyword
 cookies lest they become unhelpful fossils. A command like <code>grep -R
 '$[A-Z]' .</code> may be helpful.</p>
 
+<p>After conversion of a branchy repository, look to see if there is a 
+'root' branch.  If there are any commits with a sufficiently
+pathological structure that <code>reposurgeon</code> can't figure out
+what branch they belong to, they'll wind up there.  In theory, this
+should never happen...</p>
+
 <p>It's good practice to leave a commit in the stream noting the date 
 and time of the repo lift.  See the next section on conversion
 comments for discussion.</p>
