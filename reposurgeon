@@ -4157,13 +4157,18 @@ unusual topology and you intend to do your own branch surgery.
                         raise Recoverable("start of span is missing")
                 if self.peek() == "<":
                     self.pop()
+                    closer = self.line.find('>')
+                    if closer == -1:
+                        raise Recoverable("reference improperly terminated. '%s'" % self.line)
+                    ref = self.line[:closer]
+                    self.line = self.line[closer+1:]
+
                     matched = False
                     # First, search branches
                     branchlist = self.chosen().branchlist()
                     branchlist.sort(key=len, reverse=True) # longest name first
                     for symbol in branchlist:
-                        if self.line.startswith(os.path.basename(symbol)):
-                            self.line = self.line[len(os.path.basename(symbol)):]
+                        if ref == os.path.basename(symbol):
                             loc = None
                             # Find the last commit with this branchname
                             for (i, event) in enumerate(self.chosen()):
@@ -4176,23 +4181,20 @@ unusual topology and you intend to do your own branch surgery.
                                 matched = True
                                 selection.append(loc)
                     # Next, search tags
-                    taglist = [e for e in self.chosen().events if isinstance(e, Tag)]
+                    taglist = [e for e in self.chosen().events \
+                               if isinstance(e, Tag)]
                     taglist.sort(key=lambda x: len(x.name), reverse=True)
                     for tag in taglist:
-                        if self.line.startswith(tag.name):
-                            self.line = self.line[len(tag.name):]
+                        if ref == tag.name:
                             for (i, event) in enumerate(self.chosen()):
-                                if isinstance(event, Commit) and event.mark == tag.mark:
+                                if isinstance(event, Commit) and event.mark == tag.committish:
                                     matched = True
                                     selection.append(i)
+                                    break
                             else:
                                 raise Recoverable("tag name %s points to hyperspace" % tag.name)
-                    if self.peek() == '>':
-                        self.pop()
-                    else:
-                        raise Recoverable("branch ref improperly terminated. '%s'" % self.line)
                     if not matched:
-                        raise Recoverable("couldn't match a name at <%s>" % self.line)
+                        raise Recoverable("couldn't match a name at <%s>" % ref)
             if verbose >= DEBUG_LEXER:
                 announce("location list is %s with %s left" % (selection, repr(self.line)))
             # Resolve spans
