@@ -10,6 +10,7 @@
      The unreliable 'sort' command has been removed.
      Script commands can now consume multiline here-documents, as in shell.
      New major command 'tag' with verbs "move", "rename" and "delete".
+     Reference-name syntax is documented, and can select commits by date.
 
 1.9: 2011-11-14
      'prefer' command now sets the type for the selected repo.

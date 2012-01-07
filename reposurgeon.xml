@@ -181,7 +181,7 @@ a tag is equivalent to its mark, and through that to a commit. Tag and
 branch locations are bracketed with &lt; &gt; (angle brackets) to
 distinguish them from command keywords. (But also see the discussion
 of branch sets and &amp; a bit further on; also, in older versions
-of this tool tag ad branch locations were prefixed with  '@' rather
+of this tool tag and branch locations were prefixed with  '@' rather
 than bracketed. The change fixed a parsing ambiguity)</para>
 </listitem>
 </varlistentry>
@@ -257,6 +257,43 @@ letters. These are the type letters:</para>
   </tgroup>
 </informaltable>
 
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>references</firstterm></term>
+<listitem><para>A reference name (bracketed by angle brackets) resolves
+to a single object, either a commit or tag.</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'>type</entry>
+        <entry align='center'>interpretation</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>branch name</entry>
+        <entry align='center'>the branch tip commit</entry>
+      </row>
+      <row>
+        <entry align='center'>tag name</entry>
+        <entry align='center'>the commit referred to by the tag</entry>
+      </row>
+      <row>
+        <entry align='center'>ISO3339 date</entry>
+        <entry align='center'>commit with that date</entry>
+      </row>
+      <row>
+        <entry align='center'>action stamp (date!email)</entry>
+        <entry align='center'>commit or tag with that date and creator</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
 </listitem>
 </varlistentry>
 <varlistentry>
