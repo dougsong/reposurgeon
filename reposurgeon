@@ -654,7 +654,7 @@ class Blob:
 
 class Tag:
     "Represents an annotated tag."
-    def __init__(self, name, committish, tagger, comment):
+    def __init__(self, name=None, committish=None, tagger=None, comment=None):
         self.name = name
         self.committish = committish
         self.tagger = tagger
@@ -692,15 +692,16 @@ class Tag:
                         announce("in tag %d, Tagger is modified" \
                               % (int(msg["Event-Number"])))
                     modified = True
-            date = Date(msg["Tagger-Date"])
-            if date != self.tagger.date:
-                if verbose >= DEBUG_EMAILIN:
-                    announce("in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
-                          % (int(msg["Event-Number"]),
-                             self.tagger.date, date,
-                             self.tagger.date.delta(date)))
-                self.tagger.date = date
-                modified = True
+            if "Tagger-Date" in msg:
+                date = Date(msg["Tagger-Date"])
+                if self.tagger.date is None or date != self.tagger.date:
+                    if verbose >= DEBUG_EMAILIN:
+                        announce("in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
+                              % (int(msg["Event-Number"]),
+                                 self.tagger.date, date,
+                                 self.tagger.date.delta(date)))
+                    self.tagger.date = date
+                    modified = True
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -1912,7 +1913,7 @@ class StreamParser:
                 # fileop.
                 self.gripe("r%s~%s: permission information may be lost." \
                               % (node.revision, node.path))
-                return
+                return actions
             assert node.blobmark
             # Time for fileop generation
             if ancestor:
@@ -1934,7 +1935,7 @@ class StreamParser:
             self.permissions[node.path] = perms
         return actions
     def make_commits(self, commit, actions, revision, record):
-        "Commit generation. Not currently handling mixed-branch commits."
+        "Commit generation. Handles mixed-branch commits."
         commit.common = os.path.commonprefix([node.path for node in record.nodes])
         filecommon = os.path.commonprefix([fileop.path for (node, fileop) in actions if fileop.op != "deleteall"])
         if verbose >= DEBUG_EXTRACT:
@@ -1954,7 +1955,10 @@ class StreamParser:
                 reduced = [(node, fileop) for (node, fileop) in actions \
                            if fileop.op != "deleteall"]
                 if len(reduced) < len(actions):
-                    self.gripe("%s: discarding branch deletes from mixed commit." % (revision))
+                    # Don't complain if it's just going to turn into a tag.
+                    # No information will be lost and user won't care.
+                    if len(reduced):
+                        self.gripe("%s: discarding branch deletes from mixed commit." % (revision))
                     self.make_commits(commit, reduced, revision, record)
                     return
                 if [fileop for (node, fileop) in actions \
@@ -4869,7 +4873,7 @@ which event the update from that message is applied to.  This is
 unlikely to have good results.
 
 If the Event-Number field is absent, the mailbox_in logic will
-attempt to match the commit first by Fossil-ID, then by a unique
+attempt to match the commit or tag first by Fossil-ID, then by a unique
 committer ID and timestamp pair.
 """)
     def do_mailbox_in(self, line):
@@ -4897,6 +4901,11 @@ committer ID and timestamp pair.
             stamp = commit.committer.action_stamp()
             attribution_map[stamp] = commit
             attribution_counts[stamp] += 1
+        for event in self.chosen().events:
+            if isinstance(event, Tag):
+                stamp = event.tagger.action_stamp()
+                attribution_map[stamp] = event
+                attribution_counts[stamp] += 1
         fossil_map = {}
         for commit in self.chosen().commits():
             if commit.fossil_id:
@@ -4933,7 +4942,20 @@ committer ID and timestamp pair.
                     complain("no commit matches stamp %s" % stamp)
                     errors += 1
                 if attribution_counts[stamp] > 1:
-                    complain("multiple commits match %s" % stamp)
+                    complain("multiple events match %s" % stamp)
+                    errors += 1
+            elif "Tagger" in message and "Tagger-Date" in message:
+                blank = Tag()
+                blank.tagger = Attribution()
+                blank.email_in(message)
+                stamp = blank.tagger.action_stamp()
+                try:
+                    commit = attribution_map[stamp]
+                except KeyError:
+                    complain("no tag matches stamp %s" % stamp)
+                    errors += 1
+                if attribution_counts[stamp] > 1:
+                    complain("multiple events match %s" % stamp)
                     errors += 1
             else:
                 complain("no commit matches update %d" % (i+1))
