@@ -549,8 +549,8 @@ class Date:
         try:
             # Discard subsecond precision, import-stream format can't use it.
             text = re.sub(r"\.[0-9]+Z", "Z", text)
-            iso860date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
-            self.timestamp = calendar.timegm(iso860date)
+            rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+            self.timestamp = calendar.timegm(rfc3339date)
             self.timezone = "+0000"
             return
         except ValueError:
