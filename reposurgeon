@@ -392,12 +392,12 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
-DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
+DEBUG_EMAILIN   = 2    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_TOPOLOGY  = 3    # Debug repo-extractor logic (coarse-grained)
+DEBUG_EXTRACT   = 4    # Debug repo-extractor logic (fine-grained)
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_DELETE    = 5    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
-DEBUG_EMAILIN   = 5    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_UNITE     = 5    # Debug mark assignments in merging
 DEBUG_LEXER     = 6    # Debug selection-language parsing
 
@@ -705,7 +705,7 @@ class Tag:
         newcomment = msg.get_payload().strip() + "\n"
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                announce("in tag %d, comment is modified '%s' -> '%s'" \
+                announce("in tag %d, comment is modified %s -> %s" \
                       % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
