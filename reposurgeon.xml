@@ -276,12 +276,12 @@ to a single object, either a commit or tag.</para>
     </thead>
     <tbody>
       <row>
-        <entry align='center'>branch name</entry>
-        <entry align='center'>the branch tip commit</entry>
-      </row>
-      <row>
         <entry align='center'>tag name</entry>
         <entry align='center'>annotated tag with that name</entry>
+      </row>
+      <row>
+        <entry align='center'>branch name</entry>
+        <entry align='center'>the branch tip commit</entry>
       </row>
       <row>
         <entry align='center'>ISO3339 date</entry>
@@ -294,6 +294,8 @@ to a single object, either a commit or tag.</para>
     </tbody>
   </tgroup>
 </informaltable>
+<para>Note that if an annotated tag and a branch have the same name foo,
+&lt;foo&gt; will resolve to the tag rather than the branch tip commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

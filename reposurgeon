@@ -4163,31 +4163,29 @@ unusual topology and you intend to do your own branch surgery.
                     ref = self.line[:closer]
                     self.line = self.line[closer+1:]
                     matched = False
-                    # First, search branches
-                    branchlist = self.chosen().branchlist()
-                    branchlist.sort(key=len, reverse=True) # longest name first
-                    for symbol in branchlist:
-                        if ref == os.path.basename(symbol):
-                            loc = None
-                            # Find the last commit with this branchname
-                            for (i, event) in enumerate(self.chosen()):
-                                if isinstance(event, Commit):
-                                    if event.branch == symbol:
-                                        loc = i
-                            if loc is None:
-                                raise Recoverable("branch name %s points to hyperspace" % symbol)
-                            else:
-                                matched = True
-                                selection.append(loc)
-                    # Next, search tags
+                    # First, search tags
                     for (i, event) in enumerate(self.chosen()):
                         if isinstance(event, Tag) and event.name == ref:
                             matched = True
                             selection.append(i)
                             break
-                    else:
-                        raise Recoverable("tag name %s points to hyperspace"
-                                          % event.name)
+                    # Next, search branches
+                    if not matched:
+                        branchlist = self.chosen().branchlist()
+                        branchlist.sort(key=len, reverse=True) # longest name first
+                        for symbol in branchlist:
+                            if ref == os.path.basename(symbol):
+                                loc = None
+                                # Find the last commit with this branchname
+                                for (i, event) in enumerate(self.chosen()):
+                                    if isinstance(event, Commit):
+                                        if event.branch == symbol:
+                                            loc = i
+                                if loc is None:
+                                    raise Recoverable("branch name %s points to hyperspace" % symbol)
+                                else:
+                                    matched = True
+                                    selection.append(loc)
                     # Might be a date or action stamp
                     date = None
                     bang = ref.find('!')

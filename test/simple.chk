@@ -77,7 +77,7 @@ resolve <lightweight-sample>
 resolve (annotated-sample)
 [85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 131]
 resolve <annotated-sample>
-[114]
+[131]
 resolve /regression/
 [50, 58, 120, 131]
 resolve /Raymond/
