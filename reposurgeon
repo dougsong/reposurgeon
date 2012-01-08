@@ -668,6 +668,8 @@ class Tag:
         if self.tagger:
             self.tagger.email_out(msg, "Tagger")
         msg.set_payload(self.comment)
+        if not self.comment.endswith("\n"):
+            complain("in tag %s, comment was not LF-terminated." % self.name)
         return str(msg)
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
@@ -702,7 +704,9 @@ class Tag:
                                  self.tagger.date.delta(date)))
                     self.tagger.date = date
                     modified = True
-        newcomment = msg.get_payload().strip() + "\n"
+        newcomment = msg.get_payload()
+        if not global_options["nocanonicalize"]:
+            newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
                 announce("in tag %d, comment is modified %s -> %s" \
@@ -910,6 +914,8 @@ class Commit:
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
         msg.set_payload(self.comment)
+        if not self.comment.endswith("\n"):
+            complain("in commit %s, comment was not LF-terminated." % self.mark)
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
@@ -995,9 +1001,11 @@ class Commit:
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload()
+        if not global_options["nocanonicalize"]:
+            newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
-                announce("in commit %d, comment is modified '%s' -> '%s'" \
+                announce("in commit %d, comment is modified %s -> %s" \
                       % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
@@ -3887,6 +3895,11 @@ Otherwise, fake up addresses the way git cvs-import does it.
     If set, don't perform branch analysis when lifting a Subversion repo. Leave
 it as a linear sequence of commits. This may be useful if the repo has an
 unusual topology and you intend to do your own branch surgery.
+"""),
+        ("nocanonicalize", """\
+    Normally, mailbox_in and edit operations canonicalize comments by stripping
+leading and trailing whitespace and then appending a linefeed.  This option
+suppresses that behavior.
 """),
         )
     def __init__(self):
