@@ -221,7 +221,7 @@ vcstypes = [
 #
 # that is, a free text name followed by an email ID followed by a date.
 # The date specification can be anything Attribution() can parse; in
-# particular, RFC3339/ISO8601 dates are good, so are RFC822 (email) dates,
+# particular, RFC3339 dates are good, so are RFC822 (email) dates,
 # and so is git's native integer-Unix-timetamp/timezone pairs.
 
 class GitExtractor:
@@ -545,7 +545,7 @@ class Date:
             # time.mktime throws this when it gets None:
             # TypeError: argument must be 9-item sequence, not None
             pass
-        # Also accept IS8601 dates in Zulu time, just because I like them.
+        # Also accept RFC3339 dates in Zulu time, just because I like them.
         try:
             # Discard subsecond precision, import-stream format can't use it.
             text = re.sub(r"\.[0-9]+Z", "Z", text)
@@ -559,9 +559,6 @@ class Date:
             pass
         # Date format not recognized
         raise Fatal("'%s' is not a valid timestamp" % text)
-    def iso8601(self):
-        "Format as an ISO8601 timestamp."
-        return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.timestamp)) + self.timezone
     def rfc3339(self):
         return rfc3339(self.timestamp)
     def rfc822(self):
@@ -3584,10 +3581,6 @@ class popen_or_die:
             raise Fatal("%s%s returned error." % (self.command, self.legend))
         return False
 
-def iso8601_from_unixtime(secs_since_epoch):
-    "Make an ISO8601 timestamp frm Unix time."
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(secs_since_epoch))
-
 class Recoverable(Exception):
     def __init__(self, msg):
         Exception.__init__(self)
@@ -4611,7 +4604,7 @@ currently chosen repository.
             print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
                   (repo.name, repo.size() / 1000.0, len(repo),
                    count(Blob), count(Commit), count(Tag), count(Reset),
-                   iso8601_from_unixtime(repo.readtime)))
+                   rfc3339(repo.readtime)))
             if repo.sourcedir:
                 print("  Loaded from " + repo.sourcedir)
             if repo.vcs:
@@ -4712,7 +4705,7 @@ repository, '-' for others.
                 status =  '-'
                 if self.chosen() and repo == self.chosen():
                     status = '*'
-                announce("%s %s %s" % (iso8601_from_unixtime(repo.readtime), status, repo.name))
+                announce("%s %s %s" % (rfc3339(repo.readtime), status, repo.name))
         else:
             if line in self.reponames():
                 self.choose(self.repo_by_name(line))
