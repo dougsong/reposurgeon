@@ -702,7 +702,7 @@ class Tag:
                     self.tagger.date = date
                     modified = True
         newcomment = msg.get_payload()
-        if not global_options["nocanonicalize"]:
+        if global_options["canonicalize"]:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -998,7 +998,7 @@ class Commit:
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload()
-        if not global_options["nocanonicalize"]:
+        if global_options["canonicalize"]:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
             if verbose >= DEBUG_EMAILIN:
@@ -3889,10 +3889,9 @@ Otherwise, fake up addresses the way git cvs-import does it.
 it as a linear sequence of commits. This may be useful if the repo has an
 unusual topology and you intend to do your own branch surgery.
 """),
-        ("nocanonicalize", """\
-    Normally, mailbox_in and edit operations canonicalize comments by stripping
-leading and trailing whitespace and then appending a linefeed.  This option
-suppresses that behavior.
+        ("canonicalize", """\
+    If set, mailbox_in and edit will canonicalize comments by stripping
+leading and trailing whitespace and then appending a linefeed.
 """),
         )
     def __init__(self):
