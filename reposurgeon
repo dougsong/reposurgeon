@@ -4180,18 +4180,14 @@ unusual topology and you intend to do your own branch surgery.
                                 matched = True
                                 selection.append(loc)
                     # Next, search tags
-                    taglist = [e for e in self.chosen().events \
-                               if isinstance(e, Tag)]
-                    taglist.sort(key=lambda x: len(x.name), reverse=True)
-                    for tag in taglist:
-                        if ref == tag.name:
-                            for (i, event) in enumerate(self.chosen()):
-                                if isinstance(event, Commit) and event.mark == tag.committish:
-                                    matched = True
-                                    selection.append(i)
-                                    break
-                            else:
-                                raise Recoverable("tag name %s points to hyperspace" % tag.name)
+                    for (i, event) in enumerate(self.chosen()):
+                        if isinstance(event, Tag) and event.name == ref:
+                            matched = True
+                            selection.append(i)
+                            break
+                    else:
+                        raise Recoverable("tag name %s points to hyperspace"
+                                          % event.name)
                     # Might be a date or action stamp
                     date = None
                     bang = ref.find('!')

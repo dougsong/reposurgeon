@@ -281,7 +281,7 @@ to a single object, either a commit or tag.</para>
       </row>
       <row>
         <entry align='center'>tag name</entry>
-        <entry align='center'>the commit referred to by the tag</entry>
+        <entry align='center'>annotated tag with that name</entry>
       </row>
       <row>
         <entry align='center'>ISO3339 date</entry>
