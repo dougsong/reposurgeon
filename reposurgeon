@@ -392,10 +392,10 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_IGNORES   = 2    # Debug ignore generation
-DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
-DEBUG_TOPOLOGY  = 3    # Debug repo-extractor logic (coarse-grained)
-DEBUG_EXTRACT   = 4    # Debug repo-extractor logic (fine-grained)
+DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
+DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
+DEBUG_IGNORES   = 4    # Debug ignore generation
+DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_DELETE    = 5    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
