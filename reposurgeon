@@ -5390,11 +5390,12 @@ list.
         self.remove_by_name(graft_repo.name)
 
     def help_paths(self):
-        """Without a modifier, list all paths touched by fileops in
+        print("""
+Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). With the 'sub'
 modifier, take a second argument that is a directory name and prepend
 it to every path. With the 'sup' modifier, strip the first directory
-component from every path.""" 
+component from every path.""" )
     def do_paths(self, line):
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -5423,7 +5424,8 @@ component from every path."""
                 raise Recoverable("no / in sup path.")
 
     def help_merge(self):
-        """Merge branches. Takes a selection set argument, ignoring all but
+        print("""
+Merge branches. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members; also, optional modifiers
 'perform' and 'force'.
 
@@ -5443,7 +5445,7 @@ what missing and out-of-date files would make the merge unclean.
 If the 'perform' modifier is given and a clean merge is available, it is
 performed.  If both 'perform' and 'force' modifiers are given, the merge
 is performed even if is not clean.
-""" 
+""" )
     def do_merge(self, line):
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -5531,14 +5533,15 @@ is performed even if is not clean.
             announce("%s added as a parent of %s" % (tip.mark,target.mark))
 
     def help_tag(self):
-        """Move, rename, or delete a tag.  First argument must be an
+        print("""
+Move, rename, or delete a tag.  First argument must be an
 existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', tha third argument may be any token. For a 'delete', no
 third argument is required.
-"""
+""")
     def do_tag(self, line):
         "Move a tag to point to a specified commit, or rename it, or delete it."
         if not self.chosen():
