@@ -2008,17 +2008,17 @@ class StreamParser:
         commit.fileops = [action[1] for action in actions]
         commit.fileops.sort(cmp=FileOp.compare)
         self.repo.events.append(commit)
-        # Deduce links between what will later become branches on the
-        # basis of copies. This is tricky because a revision can be
-        # the target of multiple copies.  Humans don't abuse this
-        # because tracking multiple copies is too hard to do in a slow
-        # organic brain, but tools like cvs2svn can generate large
-        # sets of them. cvs2svn seems to try to copy each file and
-        # directory from the commit corresponding to the CVS revision
-        # where the file was last changed before the copy, which may
-        # be substantially earlier than the CVS revision corresponding
-        # to the copy). Fortunately, we can resolve such sets by the
-        # simple expedient of picking the *latest* revision in them!
+        # Deduce links between branches on the basis of copies. This
+        # is tricky because a revision can be the target of multiple
+        # copies.  Humans don't abuse this because tracking multiple
+        # copies is too hard to do in a slow organic brain, but tools
+        # like cvs2svn can generate large sets of them. cvs2svn seems
+        # to try to copy each file and directory from the commit
+        # corresponding to the CVS revision where the file was last
+        # changed before the copy, which may be substantially earlier
+        # than the CVS revision corresponding to the
+        # copy). Fortunately, we can resolve such sets by the simple
+        # expedient of picking the *latest* revision in them!
         if commit.mark not in self.branchlink:
             copies = [node for node in record.nodes \
                       if node.from_rev is not None]
