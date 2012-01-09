@@ -12,7 +12,7 @@ import email.message, email.parser, email.utils
 import re, sre_constants
 import xml.etree.cElementTree as ET
 
-version="2.0-pre6"
+version="2.0-pre7"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -392,7 +392,8 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_EMAILIN   = 2    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_IGNORES   = 2    # Debug ignore generation
+DEBUG_EMAILIN   = 3    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_TOPOLOGY  = 3    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 4    # Debug repo-extractor logic (fine-grained)
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
@@ -2253,6 +2254,8 @@ class StreamParser:
                             # There are no other directory properties that can
                             # turn into fileops.
                             if "svn:ignore" in node.props:
+                                if verbose >= DEBUG_IGNORES:
+                                    announce("r%s: Queuing up %s/.gitignore generation with:\n%s." % (revision, node.path, node.props["svn:ignore"]))
                                 blob = Blob(self.repo)
                                 with open(blob.blobfile(), "w") as wfp:
                                     wfp.write(node.props["svn:ignore"])
@@ -2267,6 +2270,8 @@ class StreamParser:
                                 # won't have the right thing happen.
                                 record.nodes.append(newnode)
                             elif self.find_node(revision, gitignore_path):
+                                if verbose >= DEBUG_IGNORES:
+                                    announce("r%s: queuing up %s/.gitignore deletion." % (revision, node.path))
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = gitignore_path
                                 newnode.revision = revision
