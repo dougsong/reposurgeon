@@ -2282,18 +2282,23 @@ class StreamParser:
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 record.nodes.append(newnode)
-                    # Handle directory copies used for branching and tags
+                    # Handle directory copies.
+                    # If this is a copy between branches, do nothing;
+                    # no fileop should be issued until there is an
+                    # actual file modification on the new branch.
                     if node.from_path:
-                        for source in node.from_set:
-                            subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(newbranch,
-                                                        source[len(node.from_path+os.sep):])
-                            subnode.revision = revision
-                            subnode.from_path = source
-                            subnode.from_rev = node.from_rev
-                            subnode.action = SD_ADD
-                            subnode.kind = SD_FILE
-                            actions += self.perform_node(subnode)
+                        if node.from_path not in self.branches \
+                               or node.path not in self.branches:
+                            for source in node.from_set:
+                                subnode = StreamParser.NodeAction()
+                                subnode.path = os.path.join(newbranch,
+                                                            source[len(node.from_path+os.sep):])
+                                subnode.revision = revision
+                                subnode.from_path = source
+                                subnode.from_rev = node.from_rev
+                                subnode.action = SD_ADD
+                                subnode.kind = SD_FILE
+                                actions += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
                     actions += self.perform_node(node)
