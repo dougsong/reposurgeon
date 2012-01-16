@@ -1407,6 +1407,7 @@ class StreamParser:
         #self.branch_copies = collections.Counter()
         self.branches = {}
         self.branchlink = {}
+        self.branchdeletes = set([])
         self.uuid = None
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
@@ -2236,6 +2237,7 @@ class StreamParser:
                             fileop = FileOp()
                             fileop.construct("deleteall", node.path[:-1])
                             actions.append((node, fileop))
+                            self.branchdeletes.add(node.path)
                         else:
                             for child in node.from_set:
                                 if verbose >= DEBUG_EXTRACT:
@@ -2288,7 +2290,9 @@ class StreamParser:
                     # actual file modification on the new branch.
                     if node.from_path:
                         if node.from_path not in self.branches \
-                               or node.path not in self.branches:
+                               or node.path not in self.branches \
+                               or node.path in branchdeletes:
+                            self.branchdeletes.discard(node.path)
                             for source in node.from_set:
                                 subnode = StreamParser.NodeAction()
                                 subnode.path = os.path.join(newbranch,
@@ -2296,8 +2300,14 @@ class StreamParser:
                                 subnode.revision = revision
                                 subnode.from_path = source
                                 subnode.from_rev = node.from_rev
+                                subnode.from_hash = node.from_hash
                                 subnode.action = SD_ADD
                                 subnode.kind = SD_FILE
+                                if verbose >= DEBUG_TOPOLOGY:
+                                    announce("r%s: generating copy to %s from %s" \
+                                             % (revision,
+                                                subnode.path,
+                                                subnode.from_path))
                                 actions += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
