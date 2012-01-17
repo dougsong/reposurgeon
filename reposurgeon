@@ -1090,10 +1090,11 @@ class Commit:
         if self.committer:
             st += "committer %s\n" % self.committer
         if self.comment is not None:
-            st += "data %d\n" % len(self.comment)
-            st += self.comment
-        if global_options["fossilize"] and self.fossil_id:
-            st += "\nFossil-ID: %s\n" % self.fossil_id
+            comment = self.comment
+            if global_options["fossilize"] and self.fossil_id:
+                comment += "\nFossil-ID: %s\n" % self.fossil_id
+            st += "data %d\n" % len(comment)
+            st += comment
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
