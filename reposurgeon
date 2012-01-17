@@ -2209,6 +2209,8 @@ class StreamParser:
                     node.path += os.sep
                     if node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
+                    if node.from_path:
+                        node.from_path += os.sep
                     if node.action == SD_ADD:
                         newbranch = node.path
                         # Don't allow directory copies to step on pre-existing
@@ -2290,19 +2292,26 @@ class StreamParser:
                     # If this is a copy between branches, do nothing;
                     # no fileop should be issued until there is an
                     # actual file modification on the new branch.
+                    # Exception: If the target branch has been deleted,
+                    # perform a a normal copy.
                     if node.from_path:
                         if node.from_path not in self.branches \
                                or node.path not in self.branches \
-                               or node.path in branchdeletes:
+                               or node.path in self.branchdeletes:
                             self.branchdeletes.discard(node.path)
                             for source in node.from_set:
+                                lookback = self.find_node(node.from_rev,
+                                                          source)
+                                if lookback is None:
+                                    raise Fatal("r%s: can't find ancestor %s" \
+                                             % (revision, source))
                                 subnode = StreamParser.NodeAction()
                                 subnode.path = os.path.join(newbranch,
-                                                            source[len(node.from_path+os.sep):])
+                                                            source[len(node.from_path+os.sep)-1:])
                                 subnode.revision = revision
-                                subnode.from_path = source
-                                subnode.from_rev = node.from_rev
-                                subnode.from_hash = node.from_hash
+                                subnode.from_path = lookback.path
+                                subnode.from_rev = lookback.revision
+                                subnode.from_hash = lookback.content_hash
                                 subnode.action = SD_ADD
                                 subnode.kind = SD_FILE
                                 if verbose >= DEBUG_TOPOLOGY:
