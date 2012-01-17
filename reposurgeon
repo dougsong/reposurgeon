@@ -1092,6 +1092,8 @@ class Commit:
         if self.comment is not None:
             st += "data %d\n" % len(self.comment)
             st += self.comment
+        if global_options["fossilize"] and self.fossil_id:
+            st += "\nFossil-ID: %s\n" % self.fossil_id
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
         if self.parent_marks:
@@ -3916,6 +3918,10 @@ unusual topology and you intend to do your own branch surgery.
         ("canonicalize", """\
     If set, mailbox_in and edit will canonicalize comments by stripping
 leading and trailing whitespace and then appending a linefeed.
+"""),
+        ("fossilize", """\
+    If set, the Fossil-ID of each commit is appended to its commit comment
+at write time. This option is mainly useful for debugging conversion edge cases.
 """),
         )
     def __init__(self):
