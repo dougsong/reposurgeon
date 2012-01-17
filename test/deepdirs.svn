@@ -91,13 +91,13 @@ This is a test Subversion repository
 
 
 Revision-number: 3
-Prop-content-length: 177
-Content-length: 177
+Prop-content-length: 176
+Content-length: 176
 
 K 7
 svn:log
-V 79
-Create an directory with a subdirectory for recursive copy and delete testing.
+V 78
+Create a directory with a subdirectory for recursive copy and delete testing.
 
 K 10
 svn:author
