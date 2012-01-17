@@ -1407,7 +1407,6 @@ class StreamParser:
         self.warnings = []
         # Everything below here is Subversion-specific
         self.mark_counter = collections.Counter()
-        #self.branch_copies = collections.Counter()
         self.branches = {}
         self.branchlink = {}
         self.branchdeletes = set([])
@@ -2210,21 +2209,13 @@ class StreamParser:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
                     node.path += os.sep
-                    if node.path == 'trunk' + os.sep:
+                    if not global_options['svn_nobranch'] and node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
                         newbranch = node.path
-                        # Don't allow directory copies to step on pre-existing
-                        # content.  
-                        #if self.branch_copies[node.path]:
-                        #    newbranch = newbranch[:-1] + "-" + str(self.branch_copies[node.path])
-                        #    self.gripe("r%s~%s: synthetic branch" \
-                        #               % (node.revision, newbranch))
-                        #if node.from_set:
-                        #    self.branch_copies[node.path] += 1
-                        if self.branches:
+                        if not global_options['svn_nobranch'] and self.branches:
                             if newbranch.count(os.sep) == 2:
                                 if newbranch.startswith("tags" + os.sep):
                                     self.branches[newbranch] = None
