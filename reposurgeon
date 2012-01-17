@@ -1951,93 +1951,79 @@ class StreamParser:
         return actions
     def make_commits(self, commit, actions, revision, record):
         "Commit generation. Handles mixed-branch commits."
-        commit.common = os.path.commonprefix([node.path for node in record.nodes])
-        filecommon = os.path.commonprefix([fileop.path for (node, fileop) in actions if fileop.op != "deleteall"])
-        if verbose >= DEBUG_EXTRACT:
-            announce("common = %s, filecommon = %s" \
-                     % (commit.common, filecommon))
-        # We're probably not going to be able to handle all the mixed cases,
-        # but we can pick off a few and warn about the rest.
-        if not global_options['svn_nobranch']:
-            if not filecommon and len(actions) > 1:
-                # Throw out all branch deletions.  If someone just
-                # cleaned up old branches this will strip out all
-                # fileops and the result will be tagified.  There are
-                # examples like this in the NUT repo test at revisions
-                # 354 and 357. If removing branch deletes leaves nothing
-                # but M and D operations, we win - it can be treated as
-                # a normal commit and can be a branch root.
-                reduced = [(node, fileop) for (node, fileop) in actions \
-                           if fileop.op != "deleteall"]
-                if len(reduced) < len(actions):
-                    # Don't complain if it's just going to turn into a tag.
-                    # No information will be lost and user won't care.
-                    if len(reduced):
-                        self.gripe("%s: discarding branch deletes from mixed commit." % (revision))
-                    self.make_commits(commit, reduced, revision, record)
-                    return
-                if [fileop for (node, fileop) in actions \
-                    if fileop.op not in {'M', 'D'}]:
-                    raise Fatal("r%s: consistency error, file a bug" % revision)
-                # It's a real mixed commit.  Break it into pieces that may fit
-                # on existing branches.
-                self.gripe("%s: mixed-branch revision." % revision)
-                cliques = {}
-                for (node, fileop) in actions:
-                    for branch in self.branches:
-                        if fileop.path.startswith(branch):
-                            if branch not in cliques:
-                                cliques[branch] = []
-                            cliques[branch].append((node, fileop))
-                            break
-                    else:
-                        if "" not in cliques:
-                            cliques[""] = []
-                        cliques[""].append((node, fileop))
-                oplist = []
-                for (branch, actions) in cliques.items():
-                    oplist.append((branch, [action[1] for action in actions]))
-                # trunk portion is probably most important, put it first 
-                oplist.sort(key=lambda b: not b[0].startswith("trunk"+ os.sep))
-                for (i, (branch, fileops)) in enumerate(oplist):
-                    split = copy.copy(commit)
-                    split.common = branch
-                    # TODO: Check if this will collide with another commit
-                    split.committer.date.timestamp += i
-                    split.fossil_id += "." + str(i + 1)
-                    split.comment += "\n[[Split portion of a mixed commit.]]\n"
-                    split.mark = self.__newmark()
-                    split.fileops = fileops
-                    split.fileops.sort(cmp=FileOp.compare)
-                    self.repo.events.append(split)
-                return
-        # Normal, fallthrough case: all file actions are on the same branch
-        commit.mark = self.__newmark()
-        self.markmap[revision] = commit.mark
-        commit.fileops = [action[1] for action in actions]
-        commit.fileops.sort(cmp=FileOp.compare)
-        self.repo.events.append(commit)
-        # Deduce links between branches on the basis of copies. This
-        # is tricky because a revision can be the target of multiple
-        # copies.  Humans don't abuse this because tracking multiple
-        # copies is too hard to do in a slow organic brain, but tools
-        # like cvs2svn can generate large sets of them. cvs2svn seems
-        # to try to copy each file and directory from the commit
-        # corresponding to the CVS revision where the file was last
-        # changed before the copy, which may be substantially earlier
-        # than the CVS revision corresponding to the
-        # copy). Fortunately, we can resolve such sets by the simple
-        # expedient of picking the *latest* revision in them!
-        if commit.mark not in self.branchlink:
-            copies = [node for node in record.nodes \
-                      if node.from_rev is not None]
-            if copies:
-                copies.sort(key=lambda node: int(node.from_rev))
-                latest = copies[-1].from_rev
-                try:
-                    self.branchlink[commit.mark] = self.markmap[latest]
-                except KeyError:
-                    raise Fatal("mixed branch root at %s - please report this as a bug." % latest)
+        # First, break the file operations into branch cliques
+        cliques = {}
+        for (node, fileop) in actions:
+            for branch in self.branches:
+                if node.path.startswith(branch):
+                    if branch not in cliques:
+                        cliques[branch] = []
+                    cliques[branch].append((node, fileop))
+                    break
+            else:
+                if "" not in cliques:
+                    cliques[""] = []
+                cliques[""].append((node, fileop))
+        # Make an operation list from the cliques.
+        oplist = []
+        for (branch, actions) in cliques.items():
+            oplist.append((branch, [action[1] for action in actions]))
+        # Figure out which branch cliques contain only branch deletes
+        deletealls = set([])
+        for (branch, ops) in oplist:
+            if len(ops) == 1 and ops[0].op == "deleteall":
+                deletealls.add(branch)
+        # The commit is truly mixed if there is more than one clique
+        # not consisting entirely of deleteall operations.  Sort the
+        # oplist so all non-deleteall cliques are at the front.
+        mixed = len(oplist) - len(deletealls) > 1
+        oplist.sort(key=lambda b: not b[0] in deletealls)
+        # In the ordinary case, we can assign all non-deleteall commits
+        # to the base commit.
+        if not mixed:
+            if oplist:
+                (commit.common, commit.fileops) = oplist.pop(0)
+            else:
+                commit.common = os.path.commonprefix([node.path for node in record.nodes])
+            commit.mark = self.__newmark()
+            self.markmap[revision] = commit.mark
+            commit.fileops.sort(cmp=FileOp.compare)
+            self.repo.events.append(commit)
+            # Deduce links between branches on the basis of copies. This
+            # is tricky because a revision can be the target of multiple
+            # copies.  Humans don't abuse this because tracking multiple
+            # copies is too hard to do in a slow organic brain, but tools
+            # like cvs2svn can generate large sets of them. cvs2svn seems
+            # to try to copy each file and directory from the commit
+            # corresponding to the CVS revision where the file was last
+            # changed before the copy, which may be substantially earlier
+            # than the CVS revision corresponding to the
+            # copy). Fortunately, we can resolve such sets by the simple
+            # expedient of picking the *latest* revision in them!
+            if commit.mark not in self.branchlink:
+                copies = [node for node in record.nodes \
+                          if node.from_rev is not None]
+                if copies:
+                    copies.sort(key=lambda node: int(node.from_rev))
+                    latest = copies[-1].from_rev
+                    try:
+                        self.branchlink[commit.mark] = self.markmap[latest]
+                    except KeyError:
+                        raise Fatal("mixed branch root at %s - please report this as a bug." % latest)
+        # If the commit is mixed, or there are deletealls left over,
+        # handle that.
+        oplist.sort(key=lambda b: b[0])
+        for (i, (branch, fileops)) in enumerate(oplist):
+            split = copy.copy(commit)
+            split.common = branch
+            # TODO: Check if this will collide with another commit
+            split.committer.date.timestamp += i
+            split.fossil_id += "." + str(i + 1)
+            split.comment += "\n[[Split portion of a mixed commit.]]\n"
+            split.mark = self.__newmark()
+            split.fileops = fileops
+            split.fileops.sort(cmp=FileOp.compare)
+            self.repo.events.append(split)
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
