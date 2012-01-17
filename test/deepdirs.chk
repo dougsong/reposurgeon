@@ -28,8 +28,8 @@ This is the example child2 from the foo directory.
 commit refs/heads/master
 mark :6
 committer esr <esr> 1324129126 +0000
-data 79
-Create an directory with a subdirectory for recursive copy and delete testing.
+data 78
+Create a directory with a subdirectory for recursive copy and delete testing.
 from :2
 M 100644 :3 foo/bar/child3
 M 100644 :4 foo/child1
