@@ -2789,6 +2789,7 @@ class Repository:
     #
     def __ancestor_count(self, event, path, count=0):
         "Count modifications of a path in this commit and its ancestry chain."
+        sys.setrecursionlimit(len(self.events) * 2)
         for fileop in event.fileops:
             if fileop and fileop.op == "M" and fileop.path == path:
                 count += 1
