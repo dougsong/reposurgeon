@@ -3513,8 +3513,8 @@ def rebuild_repo(repo, target, preferred):
                 backupcount += 1
             else:
                 break
-        os.mkdir(savedir)
         assert(os.path.abspath(savedir))
+        os.mkdir(savedir)
 
         if staging != target:
             # This is a critical region.  Ignore all signals until we're done.
