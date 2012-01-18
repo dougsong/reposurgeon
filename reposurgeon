@@ -2784,14 +2784,21 @@ class Repository:
     #
     # Delete machinery begins here
     #
-    def __ancestor_count(self, event, path):
+    def __ancestor_count(self, event, path, count=0):
         "Count modifications of a path in this commit and its ancestry chain."
-        count = 0
         for fileop in event.fileops:
             if fileop and fileop.op == "M" and fileop.path == path:
-                count = 1
+                count += 1
                 break
-        return count + sum([self.__ancestor_count(c, path) for c in event.parents()])
+        # 0, 1, and >1 are the interesting cases; avoid deep recursion,
+        # it's too expensive on large repositories.
+        if count > 1:
+            return count
+        for c in event.parents():
+            count = self.__ancestor_count(c, path, count)
+            if count > 1:
+                break
+        return count
     def __compose(self, event, left, right):
         "Compose two relevant fileops."
         # Here's what the fields in the return value mean:
