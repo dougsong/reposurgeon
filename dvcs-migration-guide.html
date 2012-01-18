@@ -296,6 +296,7 @@ with reposurgeon follow.</p>
 <li>Review generated tags, pruning as appropriate.</li>
 <li>Look for branch merge points and patch parent marks to make them.</li>
 <li>Fix up or remove $-keyword cookies in the latest revision.</li>
+<li>If there's a root branch, check for and remove junk commits on it.</li>
 <li>For the record, make a commit noting time and date of the repo lift.</li>
 <li>If your target was git, run  <code>git gc &#45;&#45;aggressive</code>.</li>
 </ol>
@@ -350,8 +351,10 @@ cookies lest they become unhelpful fossils. A command like <code>grep -R
 <p>After conversion of a branchy repository, look to see if there is a 
 'root' branch.  If there are any commits with a sufficiently
 pathological structure that <code>reposurgeon</code> can't figure out
-what branch they belong to, they'll wind up there.  In theory, this
-should never happen...</p>
+what branch they belong to, they'll wind up there. Certain odd
+combinations of Subversion branch creation and deletion operations may
+do this, producing spurious deleteall commits; the results have to
+be garbage-collected by hand.</p>
 
 <p>It's good practice to leave a commit in the stream noting the date 
 and time of the repo lift.  See the next section on conversion
