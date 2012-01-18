@@ -2019,7 +2019,10 @@ class StreamParser:
                 copies = [node for node in record.nodes \
                           if node.from_rev is not None \
                           and node.path.startswith(commit.common)]
-                if copies:
+                # This guard filters out copy op sets that are all file
+                # copies.  Without it you tend to end up with lots
+                # of little merge bubbles with no commits on one side.
+                if [node for node in copies if node.kind == SD_DIR]:
                     copies.sort(key=lambda node: int(node.from_rev))
                     latest = copies[-1].from_rev
                     self.branchlink[commit.mark] = self.markmap[latest]
