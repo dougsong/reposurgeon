@@ -3225,7 +3225,8 @@ class Repository:
             ancestors = backto
         return None
     def move_to_rename(self):
-        "Make rename sequenced from matched delete-modify pairs."
+        "Make rename sequences from matched delete-modify pairs."
+        # TODO: Actually use this somewhere...
         rename_count = 0
         for commit in self.commits():
             renames = []
