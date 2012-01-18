@@ -1978,6 +1978,7 @@ class StreamParser:
         # oplist so all non-deleteall cliques are at the front.
         mixed = len(oplist) - len(deletealls) > 1
         oplist.sort(key=lambda b: not b[0] in deletealls)
+        newcommits = []
         # In the ordinary case, we can assign all non-deleteall commits
         # to the base commit.
         if not mixed:
@@ -1987,29 +1988,7 @@ class StreamParser:
                 commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.mark = self.__newmark()
             self.markmap[revision] = commit.mark
-            commit.fileops.sort(cmp=FileOp.compare)
-            self.repo.events.append(commit)
-            # Deduce links between branches on the basis of copies. This
-            # is tricky because a revision can be the target of multiple
-            # copies.  Humans don't abuse this because tracking multiple
-            # copies is too hard to do in a slow organic brain, but tools
-            # like cvs2svn can generate large sets of them. cvs2svn seems
-            # to try to copy each file and directory from the commit
-            # corresponding to the CVS revision where the file was last
-            # changed before the copy, which may be substantially earlier
-            # than the CVS revision corresponding to the
-            # copy). Fortunately, we can resolve such sets by the simple
-            # expedient of picking the *latest* revision in them!
-            if commit.mark not in self.branchlink:
-                copies = [node for node in record.nodes \
-                          if node.from_rev is not None]
-                if copies:
-                    copies.sort(key=lambda node: int(node.from_rev))
-                    latest = copies[-1].from_rev
-                    try:
-                        self.branchlink[commit.mark] = self.markmap[latest]
-                    except KeyError:
-                        raise Fatal("mixed branch root at %s - please report this as a bug." % latest)
+            newcommits.append(commit)
         # If the commit is mixed, or there are deletealls left over,
         # handle that.
         oplist.sort(key=lambda b: b[0])
@@ -2022,8 +2001,30 @@ class StreamParser:
             split.comment += "\n[[Split portion of a mixed commit.]]\n"
             split.mark = self.__newmark()
             split.fileops = fileops
-            split.fileops.sort(cmp=FileOp.compare)
-            self.repo.events.append(split)
+            newcommits.append(split)
+        # Deduce links between branches on the basis of copies. This
+        # is tricky because a revision can be the target of multiple
+        # copies.  Humans don't abuse this because tracking multiple
+        # copies is too hard to do in a slow organic brain, but tools
+        # like cvs2svn can generate large sets of them. cvs2svn seems
+        # to try to copy each file and directory from the commit
+        # corresponding to the CVS revision where the file was last
+        # changed before the copy, which may be substantially earlier
+        # than the CVS revision corresponding to the
+        # copy). Fortunately, we can resolve such sets by the simple
+        # expedient of picking the *latest* revision in them!
+        for commit in newcommits:
+            commit.fileops.sort(cmp=FileOp.compare)
+            if commit.mark not in self.branchlink:
+                copies = [node for node in record.nodes \
+                          if node.from_rev is not None \
+                          and node.path.startswith(commit.common)]
+                if copies:
+                    copies.sort(key=lambda node: int(node.from_rev))
+                    latest = copies[-1].from_rev
+                    self.branchlink[commit.mark] = self.markmap[latest]
+        # We're done, add all the new commits 
+        self.repo.events += newcommits
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
