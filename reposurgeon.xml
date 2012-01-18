@@ -1359,6 +1359,16 @@ the <command>authors read</command> command.</para>
 <para>Reading a Subversion stream enables writing of the fossil map as
 'fossil' passthroughs when the repo is written to a stream
 file.</para>
+
+<para>There is a known bug in the handling of Subversion file copies
+(directory copies, such as are used to create branches and tags, will
+not trigger it).  Any Subversion file copy to a branch directory will
+create a parent link from the source to target revisions, whether or
+not all other files in the source branch are also copied.  This bug
+cannot be fixed without breaking the ability of
+<application>reposurgeon</application> to interpret the rather
+tortured way that <application>cvs2svn</application> generates
+branches.</para>
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>
