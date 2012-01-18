@@ -2844,7 +2844,7 @@ class Repository:
         elif pair == ("deleteall", "M"):
             return (False, left, right, None, 7)
         # These cases should be impossible.  But cvs2svn actually generates
-        # adjacent deletes into Subversion dumpfiles witch turn into (D, D).
+        # adjacent deletes into Subversion dumpfiles which turn into (D, D).
         elif left.op == "deleteall" and right.op != "M":
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
