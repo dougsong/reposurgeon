@@ -5756,6 +5756,15 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
             repo.write_fossils = True
         else:
             # No modifier, just list or edit
+            refstyles = (
+                # Subversion references
+                r"\Wr([0-9]+)\W",
+                r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
+                # CVS references
+                r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
+                # Possible bare CVS references
+                r"[0-9]+\.[0-9]+\.[0-9]+",
+                )
             idhits = []
             for ei in self.selection:
                 event = repo.events[ei]
@@ -5765,15 +5774,6 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                     text = event.text
                 else:
                     continue
-                refstyles = (
-                    # Subversion references
-                    r"\Wr([0-9]+)\W",
-                    r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
-                    # CVS references
-                    r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
-                    # Possible bare CVS references
-                    r"[0-9]+\.[0-9]+\.[0-9]+",
-                    )
                 for pattern in refstyles:
                     if re.search(pattern, text):
                         if ei not in idhits:
