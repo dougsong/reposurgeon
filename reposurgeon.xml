@@ -1029,7 +1029,9 @@ the repository host in committer and author IDs. DVCSes want email
 addresses (net-wide identifiers) and complete names. To supply the map
 from oune to the other, an authors file is expected to consist of
 lines each beginning with a local user ID, followed by a '=' (possibly
-surrounded by whitespace) followed by a full name and email address.</para>
+surrounded by whitespace) followed by a full name and email address.
+An authors file may have comment lines beginning with '#'; these
+are ignored.</para>
 
 <para>When an authors file is applied, email addresses in committer and author
 metdata for which the local ID matches between &lt; and @ are replaced
