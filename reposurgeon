@@ -5720,6 +5720,18 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if "lift" in rest:
             hits = 0
+            def substitute(getter, matchobj):
+                payload = matchobj.group(0)[2:-2]
+                commit = getter(payload)
+                if commit is None:
+                    complain("no commit matches " + repr(payload))
+                    return matchobj.group(0) # no replacement
+                elif commit:
+                    text = commit.committer.action_stamp()
+                    return text
+                else:
+                    complain("cannot resolve %s" % payload)
+                    return matchobj.group(0) # no replacement
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
                       lambda p: repo.fossil_map.get(p) or repo.dollar_map.get(p)),
@@ -5732,26 +5744,10 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                 for ei in self.selection:
                     event = repo.events[ei]
                     if isinstance(event, Commit) or isinstance(event, Tag):
-                        earliest = 0
-                        while True:
-                            m = match_re.search(event.comment[earliest:])
-                            if not m:
-                                break
-                            payload = m.group(0)[2:-2]
-                            commit = getter(payload)
-                            if commit is None:
-                                complain("no commit matches " + repr(payload))
-                                break
-                            else:
-                                if commit:
-                                    event.comment = event.comment[:earliest+m.start()] \
-                                                    + commit.committer.action_stamp() \
-                                                    + event.comment[earliest+m.end():]
-                                    hits += 1
-                                else:
-                                    complain("cannot resolve %s" % payload)
-                                break
-                            earliest += m.end()
+                        event.comment, new_hits = match_re.subn(
+                            lambda m: substitute(getter, m),
+                            event.comment)
+                        hits += new_hits
             announce("%d references resolved." % hits)
             repo.write_fossils = True
         else:
