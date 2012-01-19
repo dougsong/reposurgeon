@@ -5237,7 +5237,7 @@ an offset literal of +0 or -0.
                     if len(args) > 1:
                         author.timezone = args[1]
 
-    def help_cut(self):
+    def help_divide(self):
         print("""
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
@@ -5249,7 +5249,7 @@ This operation may fail if the commit graph remains connected
 through another path; the tool will detect this. If the repo was named
 'foo', the cut segments will be named 'foo-early' and 'foo-late'.
 """)
-    def do_cut(self, line):
+    def do_divide(self, line):
         "Attempt to topologically partition the repo."
         if not self.chosen():
             complain("no repo has been chosen.")

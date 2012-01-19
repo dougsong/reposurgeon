@@ -17,7 +17,7 @@ from foo.sd.  Here is a summary of the test sources:
 
 |=============================================================================
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
-|cut.fi          |Test load for cut operation; uses bzr repo
+|divide.tst      |Test for divide operation; uses bzr repo
 |deletion.svn    |Tests translation of file deletions
 |deepdirs.svn    |Branchy repo with directory copy and delete
 |deleteall.fi    |Tests roundtripping of deleteall operation 
