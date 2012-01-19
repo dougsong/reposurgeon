@@ -660,7 +660,7 @@ changes may be added in future versions of this tool.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>cut</command>
+<term><command>divide</command>
         <emphasis>parent</emphasis>
 </term>
 <listitem>
