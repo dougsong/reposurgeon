@@ -1015,7 +1015,17 @@ class Commit:
         return [e for e in self.repo.commits() if self.mark in e.parent_marks] 
     def parents(self):
         "Get a list of this commit's parents."
-        return [e for e in self.repo.commits() if e.mark in self.parent_marks] 
+        return [e for e in self.repo.commits() if e.mark in self.parent_marks]
+    def descended_from(self, other):
+        "Is this commit a descendent of the specified other?"
+        sys.setrecursionlimit(len(self.repo.events) * 2)
+        if not self.parent_marks or self.committer.date < other.committer.date:
+            return False
+        elif other.mark in self.parent_marks:
+            return True
+        else:
+            return any([parent.descended_from(other) \
+                        for parent in self.parents()])
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = {}
@@ -2543,6 +2553,16 @@ class StreamParser:
                 issued.add(event.branch)
             self.repo.events.append(event)
             baton.twirl()
+        baton.twirl("+")
+        # Remove spurious parent links caused by random cvs2svn file copies.
+        baton.twirl("debubbling")
+        for commit in self.repo.commits():
+            if len(commit.parent_marks) == 2:
+                (a, b) = commit.parents()
+                if b.committer.date < a.committer.date:
+                    (a, b) = (b, a)
+                if b.descended_from(a):
+                    commit.parent_marks.remove(a.mark)
         baton.twirl("+")
         baton.twirl("renumbering")
         self.repo.renumber()
