@@ -637,6 +637,7 @@ class Blob:
     def clone(self, repo):
         "Clone a copy of this blob, pointing at the same file."
         c = copy.copy(self)
+        c.colors = []
         if verbose >= DEBUG_SHUFFLE:
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
         os.link(self.blobfile(), c.blobfile())
@@ -876,11 +877,12 @@ class Commit:
         "Change the repo this commit is associated with."
         self.repo = repo
     def clone(self, repo=None):
-        "Clone this commit, without its fileops."
+        "Clone this commit, without its fileops and color."
         c = copy.copy(self)
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
         c.fileops = []
+        c.color = None
         if repo is not None:
             c.moveto(repo)
         return c
@@ -3627,6 +3629,7 @@ class RepositoryList:
     def __init__(self):
         self.repo = None
         self.repolist = []
+        self.cut_index = None
     def chosen(self):
         return self.repo
     def choose(self, repo):
@@ -3656,10 +3659,9 @@ class RepositoryList:
         if self.repo and self.repo.name == name:
             self.unchoose()
         self.repolist.pop(self.reponames().index(name))        
-    def cut(self, early, late):
-        "Attempt to topologically cut the selected repo."
-        # Apply a graph-coloring algorithm to determine if the repo can be split
-        ri = late.parent_marks.index(early.mark)
+    def cut_conflict(self, early, late):
+        "Apply a graph-coloring algorithm to see if the repo can be split here."
+        self.cut_index = late.parent_marks.index(early.mark)
         late.parent_marks.remove(early.mark)
         def do_color(commit, color):
             commit.color = color
@@ -3684,11 +3686,19 @@ class RepositoryList:
                         elif neighbor.color != event.color:
                             conflict = True
                             break
-        if conflict:
-            late.parent_marks.insert(ri, early.mark)
-            for event in self.repo:
-                if hasattr(event, "color"):
-                    event.color = None
+        return conflict
+    def cut_clear(self, early, late):
+        "Undo a cut operation and clear all colors."
+        late.parent_marks.insert(self.cut_index, early.mark)
+        for event in self.repo:
+            if hasattr(event, "color"):
+                event.color = None
+            if hasattr(event, "colors"):
+                event.colors = []
+    def cut(self, early, late):
+        "Attempt to topologically cut the selected repo."
+        if self.cut_conflict(early, late):
+            self.cut_clear(early, late)
             return False
         # Repo can be split, so we need to color tags
         for t in self.repo.events:
@@ -3739,11 +3749,6 @@ class RepositoryList:
                 else:
                     # FIXME: Someday, color passthroughs that aren't fronted.
                     raise Fatal("coloring algorithm failed on %s" % event)
-        for event in self.repo:
-            if hasattr(event, "color"):
-                event.color = None
-            if hasattr(event, "colors"):
-                event.colors = []
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
         # Add the split results to the repo list. 
