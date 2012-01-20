@@ -5597,7 +5597,8 @@ is performed even if is not clean.
                                 break
                     baton.bumpcounter()
             if merge_clean:
-                announce("%s can merge clean at %s" % (tip.mark, target.mark))
+                announce("%s (%s) can merge clean at %s (%s)" \
+                         % (tip.mark, tip.branch, target.mark, target.branch))
             else:
                 announce("no merge point found.")
                 return
@@ -5613,24 +5614,26 @@ is performed even if is not clean.
                     missing.append(path)
                 elif not mergeable(path, tipfiles, targetfiles, target):
                     stale.append(path)
+            tip_id = "%s (%s)" % (tip.mark, tip.branch)
+            target_id = "%s (%s)" % (target.mark, target.branch)
             if not missing and not stale:
                 announce("%s can merge clean at target %s" \
-                         % (tip.mark, target.mark))
+                         % (tip_id, target_id))
                 merge_clean = True
             else:
                 announce("%s cannot merge clean at target %s" \
-                         % (tip.mark, target.mark))
+                         % (tip_id, target_id))
                 if missing:
                     announce("target %s is missing these files: %s" \
-                             % (target.mark, " ".join(missing)))
+                             % (target_id, " ".join(missing)))
                 if stale:
                     announce("target %s is out of date on these files: %s" \
-                             % (target.mark, " ".join(stale)))
+                             % (target_id, " ".join(stale)))
                 merge_clean = False
         # User may want merge performed or even forced
         if "perform" in rest and (merge_clean or "force" in rest):
             target.parent_marks.append(tip.mark)
-            announce("%s added as a parent of %s" % (tip.mark,target.mark))
+            announce("%s added as a parent of %s" % (tip_id, target_id))
 
     def help_tag(self):
         print("""
