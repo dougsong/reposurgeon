@@ -2001,6 +2001,8 @@ class StreamParser:
             else:
                 commit.common = os.path.commonprefix([node.path for node in record.nodes])
             commit.mark = self.__newmark()
+            if verbose >= DEBUG_EXTRACT:
+                announce("r%s gets mark %s" % (revision, commit.mark))
             self.markmap[revision] = commit.mark
             newcommits.append(commit)
         # If the commit is mixed, or there are deletealls left over,
@@ -2027,16 +2029,16 @@ class StreamParser:
         # than the CVS revision corresponding to the
         # copy). Fortunately, we can resolve such sets by the simple
         # expedient of picking the *latest* revision in them!
-        for commit in newcommits:
-            commit.fileops.sort(cmp=FileOp.compare)
+        for newcommit in newcommits:
+            newcommit.fileops.sort(cmp=FileOp.compare)
             if commit.mark not in self.branchlink:
                 copies = [node for node in record.nodes \
                           if node.from_rev is not None \
-                          and node.path.startswith(commit.common)]
+                          and node.path.startswith(newcommit.common)]
                 linkback = False
                 # If the copies include one for the ditectory, we're good.
                 if [node for node in copies if node.kind == SD_DIR and node.from_path]:
-                    self.directory_branchlinks.add(commit.common)
+                    self.directory_branchlinks.add(newcommit.common)
                     linkback = True
                 # Use may have botched a branch creation by doing a
                 # non-Subversion directory copy followed by a bunch of
@@ -2058,12 +2060,15 @@ class StreamParser:
                 # these have to be removed by a debubbling pass later.
                 # I don't know what generates these things - cvs2svn, maybe.
                 elif len(copies) > 1:
-                    self.fileop_branchlinks.add(commit.common)
+                    self.fileop_branchlinks.add(newcommit.common)
                     linkback = True
                 if linkback:
                     copies.sort(key=lambda node: int(node.from_rev))
                     latest = copies[-1].from_rev
-                    self.branchlink[commit.mark] = self.markmap[latest]
+                    self.branchlink[newcommit.mark] = self.markmap[latest]
+                    if verbose >= DEBUG_EXTRACT:
+                        announce("link from %s back to %s" % \
+                                 (newcommit.mark, self.markmap[latest]))
         # We're done, add all the new commits 
         self.repo.events += newcommits
     def svn_process(self, baton):
