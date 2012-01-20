@@ -1428,6 +1428,8 @@ class StreamParser:
         self.hashmap = {}
         self.permissions = {}
         self.has_properties = set([])
+        self.fileop_branchlinks  = set([])
+        self.directory_branchlinks  = set([])
         self.markmap = {}       # Revision-to-mark map
     def error(self, msg):
         "Throw fatal error during parsing."
@@ -2031,12 +2033,34 @@ class StreamParser:
                 copies = [node for node in record.nodes \
                           if node.from_rev is not None \
                           and node.path.startswith(commit.common)]
-                # This guard filters out copy op sets that are single file
-                # copies.  Without it you tend to end up with lots
-                # of little merge bubbles with no commits on one side.
-                # I don't know what generates these - cvs2svn, maybe. 
-                if [node for node in copies if node.kind == SD_DIR] or \
-                       len(copies) > 1:
+                linkback = False
+                # If the copies include one for the ditectory, we're good.
+                if [node for node in copies if node.kind == SD_DIR and node.from_path]:
+                    self.directory_branchlinks.add(commit.common)
+                    linkback = True
+                # Use may have botched a branch creation by doing a
+                # non-Subversion directory copy followed by a bunch of
+                # Subversion adds. Blob hashes will match existing files,
+                # but from_rev and from_path won't be set at parse time.
+                # The perform_node() code detects this case and makes file
+                # backlinks, but can't deduce the directory copy.  Thus,
+                # we have to treat multiple file copies as an instruction
+                # to create a gitspace branch.
+                #
+                # This guard filters out copy op sets that are *single* file
+                # copies. We're making an assumption here that multiple
+                # file copies should always trigger a branch link creation.
+                # This assumption could be wrong, which is why we emit a
+                # warning message later on for branch links detected this way
+                #
+                # Even with this filter you'll tend to end up with lots
+                # of little merge bubbles with no commits on one side;
+                # these have to be removed by a debubbling pass later.
+                # I don't know what generates these things - cvs2svn, maybe.
+                elif len(copies) > 1:
+                    self.fileop_branchlinks.add(commit.common)
+                    linkback = True
+                if linkback:
                     copies.sort(key=lambda node: int(node.from_rev))
                     latest = copies[-1].from_rev
                     self.branchlink[commit.mark] = self.markmap[latest]
@@ -2329,6 +2353,10 @@ class StreamParser:
             # so as not to eat the processor.
             baton.bumpcounter()
             time.sleep(0)
+        # Warn about dubious branch links
+        self.fileop_branchlinks.discard("trunk" + os.sep)
+        if self.fileop_branchlinks - self.directory_branchlinks:
+            self.gripe("branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT:
             announce("at post-parsing time:")
@@ -2414,7 +2442,7 @@ class StreamParser:
             for root in branchroots:
                 rootrev = root.fossil_id
                 if commit.branch in nonempty and root.branch != ("trunk" + os.sep):
-                    self.gripe("r%s: can't connect nonempty %s to origin" \
+                    self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (rootrev, root.branch))
                 baton.twirl()
             baton.twirl("+")
