@@ -2036,7 +2036,7 @@ class StreamParser:
                           if node.from_rev is not None \
                           and node.path.startswith(newcommit.common)]
                 linkback = False
-                # If the copies include one for the ditectory, we're good.
+                # If the copies include one for the directory, we're good.
                 if [node for node in copies if node.kind == SD_DIR and node.from_path]:
                     self.directory_branchlinks.add(newcommit.common)
                     linkback = True
@@ -2592,6 +2592,8 @@ class StreamParser:
         for commit in self.repo.commits():
             if len(commit.parent_marks) == 2:
                 (a, b) = commit.parents()
+                if a.branch != commit.branch or b.branch != commit.branch:
+                    continue
                 if b.committer.date < a.committer.date:
                     (a, b) = (b, a)
                 if b.descended_from(a):
