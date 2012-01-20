@@ -1361,6 +1361,72 @@ the <command>authors read</command> command.</para>
 <para>Reading a Subversion stream enables writing of the fossil map as
 'fossil' passthroughs when the repo is written to a stream
 file.</para>
+
+<para><command>reposurgeon</command> tries hard to silently do the
+right thing, but there are Subversion edge cases in which it emits warnings
+because a human may need to intervene and perform fixups by hand. Here
+are the less obvious messages it may emit:</para>
+
+<variablelist>
+<varlistentry>
+<term>can't connect nonempty branch XXXX to origin</term>
+<listitem>
+<para>This is a serious error. <command>reposurgeon</command> has been
+unable to find a link from a specified branch to the trunk (master)
+branch.  The commit graph will not be fully connected and will need
+manual repair.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>permission information may be lost</term>
+<listitem>
+<para>A Subversion node change on a file sets or clears properties,
+but no ancestor can be found for this file. Executable or symlink
+position may be set wrongly on later revisions of this
+file. Subversion user-defined properties may also be scrambled or
+lost. Usually this error can be ignored.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>properties set</term>
+<listitem>
+<para><command>reposurgeon</command> has detected a setting of a
+user-defined property, or one of the Subversion properies
+svn:externals or svn:mergeinfo. These properties cannot be expressed
+in an import stream; the user is notified in case this is a
+showstopper for the conversion or some corrective action is required,
+but normally this error can be ignored.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>branch links detected by file ops only</term>
+<listitem>
+<para>Branch links are normally deduced by examining Subversion directory 
+copy operations. A common user error (making a branch with a non-Subversion 
+directory copy and then doing an svn add on the contends) can defeat this.
+While <command>reposurgeon</command> should detect and cope with most such
+copies correctly, you should examine the commit graph to check that the
+branch is rooted at the correct place.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>could not tagify root commit</term>
+<listitem>
+<para>The earliesr commit in your Subversion repository has file operations,
+rather than being a pure directory creation. This probably means your 
+Subversion dump file is malformed, or you may have attempted to lift
+from an incremental dump. Proceed with caution.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>deleting parentless tip delete</term>
+<listitem>
+<para>This message may be triggered by a Subversion branch move followed by 
+a re-creation under the source name. Check near the indicated revision to make
+sure the renamed branch is connected to master.</para>
+</listitem>
+</varlistentry>
+</variablelist>
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>
