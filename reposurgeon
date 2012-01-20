@@ -5568,7 +5568,7 @@ is performed even if is not clean.
             # If targetfile matches tipfile, OK
             if tipfiles[path] == targetfiles[path]:
                 return True
-            # Tricky case -target file must have been modified
+            # Tricky case - target file must have been modified
             # in the target commit itelf.
             for fileop in target.fileops:
                 if fileop.op == 'M' and fileop.path == path:
@@ -5591,7 +5591,7 @@ is performed even if is not clean.
                             elif not mergeable(path, tipfiles, targetfiles, target):
                                 break
                         else:
-                            # Ignore target commits consisting of all deletes
+                            # Ignore tip commits consisting of all deletes
                             if not target.alldeletes() or target.children():
                                 merge_clean = True
                                 break
