@@ -63,7 +63,7 @@ mark :8
 committer esr <esr> 1322509428 +0000
 data 48
 This is not a tag. Ceci n'est pas un pipe, too.
-from :2
+from :6
 M 100644 :7 placeholder
 
 blob
@@ -115,7 +115,7 @@ Create a sample tag at revision 2.
 
 
 tag sample-branch-root
-from :2
+from :6
 tagger esr <esr> 1322509253 +0000
 data 26
 This is a sample branch.
