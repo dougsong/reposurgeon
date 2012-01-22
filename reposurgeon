@@ -1181,9 +1181,6 @@ class signature:
         return "<%s:%s:%s>" % (self.path, "%6o" % self.perms, self.hashval[:4])
     __repr__ = __str__
 
-def signature_map(paths):
-    return dict([(path, signature(path)) for path in paths])
-
 def capture(command):
     "Run a specified command, capturing the output."
     if verbose >= DEBUG_COMMANDS:
