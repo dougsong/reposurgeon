@@ -1336,8 +1336,6 @@ class RepoStreamer:
 # The Subversion dumpfile format is documented at
 #
 # https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
-#
-# See also dumpfile.txt in this directory
 
 # Use numeric codes rather than (un-interned) strings
 # to reduce working-set size.
