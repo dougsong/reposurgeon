@@ -1431,7 +1431,6 @@ class StreamParser:
         self.has_properties = set([])
         self.fileop_branchlinks  = set([])
         self.directory_branchlinks  = set([])
-        self.markmap = {}       # Revision-to-mark map
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2004,7 +2003,6 @@ class StreamParser:
             commit.mark = self.__newmark()
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s gets mark %s" % (revision, commit.mark))
-            self.markmap[revision] = commit.mark
             newcommits.append(commit)
         # If the commit is mixed, or there are deletealls left over,
         # handle that.
@@ -2070,15 +2068,20 @@ class StreamParser:
                 if linkback:
                     copies.sort(key=lambda node: int(node.from_rev))
                     latest = copies[-1].from_rev
-                    self.branchlink[newcommit.mark] = self.markmap[latest]
-                    if verbose >= DEBUG_TOPOLOGY:
-                        announce("link from %s (%s) back to %s (%s, %s)" % \
-                                 (newcommit.mark,
-                                  newcommit.common,
-                                  latest,
-                                  self.markmap[latest],
-                                  self.repo.objfind(self.markmap[latest]).common
-                                  ))
+                    for prev in reversed(self.repo.commits()):
+                        if prev.fossil_id == latest:
+                            self.branchlink[newcommit.mark] = prev.mark
+                            if verbose >= DEBUG_TOPOLOGY:
+                                announce("link %s (%s) back to %s (%s, %s)" % \
+                                         (newcommit.mark,
+                                          newcommit.common,
+                                          latest,
+                                          prev.mark,
+                                          prev.common
+                                          ))
+                            break
+                    else:
+                        raise Fatal("couldn't find revision %s" % latest)
         # We're done, add all the new commits 
         self.repo.events += newcommits
     def svn_process(self, baton):
