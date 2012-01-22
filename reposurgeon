@@ -889,8 +889,9 @@ class Commit:
     def lister(self, eventnum, cols):
         "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
-        return "%6d %s %-*s" % \
-                      (eventnum+1, self.committer.date.rfc3339(), cols-33, topline[:cols-27]) 
+        summary = "%6d %s %6s " % \
+                      (eventnum+1, self.committer.date.rfc3339(), self.mark)
+        return (summary + topline)[:cols]
     def tags(self, eventnum, cols):
         "Enable do_list() to report lightweight tags."
         assert cols > -1    # pacify pylint
@@ -2066,9 +2067,13 @@ class StreamParser:
                     copies.sort(key=lambda node: int(node.from_rev))
                     latest = copies[-1].from_rev
                     self.branchlink[newcommit.mark] = self.markmap[latest]
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("link from %s back to %s" % \
-                                 (newcommit.mark, self.markmap[latest]))
+                    if verbose >= DEBUG_TOPOLOGY:
+                        announce("link from %s (%s) back to %s (%s)" % \
+                                 (newcommit.mark,
+                                  newcommit.common,
+                                  self.markmap[latest],
+                                  self.repo.objfind(self.markmap[latest]).common
+                                  ))
         # We're done, add all the new commits 
         self.repo.events += newcommits
     def svn_process(self, baton):
