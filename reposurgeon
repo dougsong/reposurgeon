@@ -2031,7 +2031,7 @@ class StreamParser:
                           and node.path.startswith(newcommit.common)]
                 linkback = False
                 # If the copies include one for the directory, we're good.
-                if [node for node in copies if node.kind == SD_DIR and node.from_path]:
+                if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
                     self.directory_branchlinks.add(newcommit.common)
                     if verbose >= DEBUG_TOPOLOGY:
                         announce("directory copy with %s" % copies)
@@ -2532,17 +2532,23 @@ class StreamParser:
             # they might possibly contain interesting metadata.  Usually they're
             # just debris from tagging, though.
             if not commit.fileops:
-                legend = "[[Tag from zero-fileop commit at Subversion r%s" \
-                         % commit.fossil_id
-                if self.revisions[commit.fossil_id].nodes:
-                    legend += ":\n"
-                    for node in self.revisions[commit.fossil_id].nodes:
-                        legend += str(node) + "\n"
-                legend += "]]\n"
-                self.repo.tagify(commit,
-                                 "emptycommit-%s" % commit.fossil_id,
-                                 commit.parent_marks[0],
-                                 legend)
+                if commit.parent_marks:
+                    legend = "[[Tag from zero-fileop commit at Subversion r%s" \
+                             % commit.fossil_id
+                    if self.revisions[commit.fossil_id].nodes:
+                        legend += ":\n"
+                        for node in self.revisions[commit.fossil_id].nodes:
+                            legend += str(node) + "\n"
+                    legend += "]]\n"
+                    self.repo.tagify(commit,
+                                     "emptycommit-%s" % commit.fossil_id,
+                                     commit.parent_marks[0],
+                                     legend)
+                else:
+                    self.gripe("r%s: deleting parentless zero-op commit." \
+                               % commit.fossil_id)
+                    self.repo.delete([self.repo.events.index(commit)],
+                                ["obliterate", "quiet"])
             # Also, tagify tip commits that consist only of deletes.
             # The fileops aren't worth saving; the comment metadata
             # just might be.
