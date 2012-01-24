@@ -2954,10 +2954,11 @@ class Repository:
         #
         elif pair == ("R", "D"):
             if left.target == right.path:
-                # Rename followed by delete of target composes to nothing
-                return (True, None, None, None, 9)
+                # Rename followed by delete of target composes to source delete
+                right.path = left.source
+                return (True, None, right, None, 9)
             else:
-                # On followed by delete of source discard the delete
+                # On rename followed by delete of source discard the delete
                 # but user should be warned. 
                 return (False, left, None,
                         "delete of %s after renaming to %s?" % (right.path, left.source), -4)

@@ -1637,7 +1637,7 @@ describes all possible cases and all but one of the reductions.</para>
 	another case that would suggest repository corruption.</para></entry>
       </row>
       <row>
-        <entry align='center'>R a b + D b &rarr; nothing</entry>
+        <entry align='center'>R a b + D b &rarr; D a</entry>
 	<entry align='left'><para>The delete removes the just-renamed file.</para></entry>
       </row>
       <row>
