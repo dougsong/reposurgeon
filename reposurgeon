@@ -2209,31 +2209,31 @@ class StreamParser:
                     # Exception: If the target branch has been deleted,
                     # perform a a normal copy.
                     if node.from_path:
-                        branchcopy = node.from_path not in self.branches \
+                        nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
                                          or node.path in self.branchdeletes
-                        if branchcopy:
+                        if nonbranchcopy:
                             self.branchdeletes.discard(node.path)
-                            for source in node.from_set:
-                                lookback = self.find_node(node.from_rev,
-                                                          source)
-                                if lookback is None:
-                                    raise Fatal("r%s: can't find ancestor %s" \
-                                             % (revision, source))
-                                subnode = StreamParser.NodeAction()
-                                subnode.path = os.path.join(newbranch,
-                                                            source[len(node.from_path+os.sep)-1:])
-                                subnode.revision = revision
-                                subnode.from_path = lookback.path
-                                subnode.from_rev = lookback.revision
-                                subnode.from_hash = lookback.content_hash
-                                subnode.action = SD_ADD
-                                subnode.kind = SD_FILE
-                                if verbose >= DEBUG_TOPOLOGY:
-                                    announce("r%s: generating copy to %s from %s" \
-                                             % (revision,
-                                                subnode.path,
-                                                subnode.from_path))
+                        for source in node.from_set:
+                            lookback = self.find_node(node.from_rev, source)
+                            if lookback is None:
+                                raise Fatal("r%s: can't find ancestor %s" \
+                                         % (revision, source))
+                            subnode = StreamParser.NodeAction()
+                            subnode.path = os.path.join(newbranch,
+                                                        source[len(node.from_path+os.sep)-1:])
+                            subnode.revision = revision
+                            subnode.from_path = lookback.path
+                            subnode.from_rev = lookback.revision
+                            subnode.from_hash = lookback.content_hash
+                            subnode.action = SD_ADD
+                            subnode.kind = SD_FILE
+                            if verbose >= DEBUG_TOPOLOGY:
+                                announce("r%s: generating copy to %s from %s" \
+                                         % (revision,
+                                            subnode.path,
+                                            subnode.from_path))
+                            if nonbranchcopy:
                                 actions += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
