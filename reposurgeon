@@ -1853,12 +1853,6 @@ class StreamParser:
         # Walk back through previous revisions
         rev = int(revision)
         for prev in [str(rev-i+1) for i in range(1, rev+1)]:
-            # These two following loops cannot be merged. There are real-world
-            # cases in which, if you look for file copy matches and directory
-            # prefix matches in the same loop, you'll find a directory copy
-            # match before you find the correct (file copy) match and go off
-            # down a rabbit hole.  See revision 75 in the nut.svn test load
-            # for a place where this triggers, on trunk/drivers/solis.c.
             for pnode in self.revisions[prev].nodes:
                 if pnode.action == SD_DELETE:
                     continue
@@ -1868,13 +1862,6 @@ class StreamParser:
                         return self.find_node(pnode.from_rev, pnode.from_path)
                     else:
                         return pnode
-            for pnode in self.revisions[prev].nodes:
-                if pnode.from_rev and path.startswith(pnode.path):
-                    if verbose >= DEBUG_EXTRACT:
-                        announce("recursed in %s" % pnode) 
-                    return self.find_node(pnode.from_rev,
-                                               os.path.join(pnode.from_path,
-                                                            path[len(pnode.path):]))
         return None
     @staticmethod
     def node_permissions(node):
@@ -2092,6 +2079,7 @@ class StreamParser:
             if revision == "0": 
                 continue
             actions = []
+            generated_nodes = []
             for node in record.nodes:
                 if verbose >= DEBUG_EXTRACT:
                     announce(str(node))
@@ -2233,12 +2221,16 @@ class StreamParser:
                                          % (revision,
                                             subnode.path,
                                             subnode.from_path))
+                            generated_nodes.append(subnode)
                             if nonbranchcopy:
                                 actions += self.perform_node(subnode)
                 # Actions on files
                 elif node.kind == SD_FILE:
                     actions += self.perform_node(node)
-                # Node loop ends
+            # Node loop ends. Concatenate the expansions of directory
+            # copies onto the record so future lookbacks never have
+            # to do inference from directory structure.
+            record.nodes += generated_nodes
             # Time to generate actions
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %d actions" % (revision, len(actions)))
