@@ -1368,6 +1368,7 @@ class StreamParser:
             # These are set during the analysis phase
             self.from_set = None
             self.blobmark = None
+            self.implicit = False
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
@@ -2180,7 +2181,7 @@ class StreamParser:
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
-                                record.nodes.append(newnode)
+                                generated_nodes.append(newnode)
                             elif self.find_node(revision, gitignore_path):
                                 if verbose >= DEBUG_IGNORES:
                                     announce("r%s: queuing up %s/.gitignore deletion." % (revision, node.path))
@@ -2189,7 +2190,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                record.nodes.append(newnode)
+                                generated_nodes.append(newnode)
                     # Handle directory copies.
                     # If this is a copy between branches, do nothing;
                     # no fileop should be issued until there is an
@@ -2222,15 +2223,16 @@ class StreamParser:
                                             subnode.path,
                                             subnode.from_path))
                             generated_nodes.append(subnode)
-                            if nonbranchcopy:
-                                actions += self.perform_node(subnode)
-                # Actions on files
-                elif node.kind == SD_FILE:
-                    actions += self.perform_node(node)
-            # Node loop ends. Concatenate the expansions of directory
+                            subnode.implicit = not nonbranchcopy
+            # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
             # to do inference from directory structure.
             record.nodes += generated_nodes
+            # Create actions corresponding to both
+            # parsed and generated nodes.
+            for node in record.nodes:
+                if node.kind == SD_FILE and not node.implicit:
+                    actions += self.perform_node(node)
             # Time to generate actions
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %d actions" % (revision, len(actions)))
