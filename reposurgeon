@@ -1958,136 +1958,6 @@ class StreamParser:
                 announce("r%s~%s: unmodified" % (node.revision, node.path))
             self.permissions[node.path] = perms
         return actions
-    def make_commits(self, commit, actions, revision, record):
-        "Commit generation. Handles mixed-branch commits."
-        # First, break the file operations into branch cliques
-        cliques = {}
-        for (node, fileop) in actions:
-            for branch in self.branches:
-                if node.path.startswith(branch):
-                    if branch not in cliques:
-                        cliques[branch] = []
-                    cliques[branch].append((node, fileop))
-                    break
-            else:
-                if "" not in cliques:
-                    cliques[""] = []
-                cliques[""].append((node, fileop))
-        # Make an operation list from the cliques.
-        oplist = []
-        for (branch, actions) in cliques.items():
-            oplist.append((branch, [action[1] for action in actions]))
-        # Figure out which branch cliques contain only branch deletes
-        deletealls = set([])
-        for (branch, ops) in oplist:
-            if len(ops) == 1 and ops[0].op == "deleteall":
-                deletealls.add(branch)
-        # The commit is truly mixed if there is more than one clique
-        # not consisting entirely of deleteall operations.  Sort the
-        # oplist so all non-deleteall cliques are at the front.
-        mixed = len(oplist) - len(deletealls) > 1
-        oplist.sort(key=lambda b: not b[0] in deletealls)
-        newcommits = []
-        # In the ordinary case, we can assign all non-deleteall commits
-        # to the base commit.
-        if not mixed:
-            if oplist:
-                (commit.common, commit.fileops) = oplist.pop(0)
-            else:
-                commit.common = os.path.commonprefix([node.path for node in record.nodes])
-            commit.mark = self.__newmark()
-            if verbose >= DEBUG_EXTRACT:
-                announce("r%s gets mark %s" % (revision, commit.mark))
-            newcommits.append(commit)
-        # If the commit is mixed, or there are deletealls left over,
-        # handle that.
-        oplist.sort(key=lambda b: b[0])
-        for (i, (branch, fileops)) in enumerate(oplist):
-            split = copy.copy(commit)
-            split.common = branch
-            # TODO: Check if this will collide with another commit
-            split.committer.date.timestamp += i
-            split.fossil_id += "." + str(i + 1)
-            split.comment += "\n[[Split portion of a mixed commit.]]\n"
-            split.mark = self.__newmark()
-            split.fileops = fileops
-            newcommits.append(split)
-        # Deduce links between branches on the basis of copies. This
-        # is tricky because a revision can be the target of multiple
-        # copies.  Humans don't abuse this because tracking multiple
-        # copies is too hard to do in a slow organic brain, but tools
-        # like cvs2svn can generate large sets of them. cvs2svn seems
-        # to try to copy each file and directory from the commit
-        # corresponding to the CVS revision where the file was last
-        # changed before the copy, which may be substantially earlier
-        # than the CVS revision corresponding to the
-        # copy). Fortunately, we can resolve such sets by the simple
-        # expedient of picking the *latest* revision in them!
-        for newcommit in newcommits:
-            newcommit.fileops.sort(cmp=FileOp.compare)
-            if commit.mark not in self.branchlink:
-                copies = [node for node in record.nodes \
-                          if node.from_rev is not None \
-                          and node.path.startswith(newcommit.common)]
-                linkback = False
-                # If the copies include one for the directory, we're good.
-                if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
-                    self.directory_branchlinks.add(newcommit.common)
-                    if verbose >= DEBUG_TOPOLOGY:
-                        announce("directory copy with %s" % copies)
-                    linkback = True
-                # Use may have botched a branch creation by doing a
-                # non-Subversion directory copy followed by a bunch of
-                # Subversion adds. Blob hashes will match existing files,
-                # but from_rev and from_path won't be set at parse time.
-                # The perform_node() code detects this case and makes file
-                # backlinks, but can't deduce the directory copy.  Thus,
-                # we have to treat multiple file copies as an instruction
-                # to create a gitspace branch.
-                #
-                # This guard filters out copy op sets that are *single* file
-                # copies. We're making an assumption here that multiple
-                # file copies should always trigger a branch link creation.
-                # This assumption could be wrong, which is why we emit a
-                # warning message later on for branch links detected this way
-                #
-                # Even with this filter you'll tend to end up with lots
-                # of little merge bubbles with no commits on one side;
-                # these have to be removed by a debubbling pass later.
-                # I don't know what generates these things - cvs2svn, maybe.
-                elif len(copies) > 1:
-                    self.fileop_branchlinks.add(newcommit.common)
-                    if verbose >= DEBUG_TOPOLOGY:
-                        announce("file copies with %s" % copies)
-                    linkback = True
-                if linkback:
-                    copies.sort(key=lambda node: int(node.from_rev))
-                    latest = copies[-1]
-                    threshold = False
-                    for prev in reversed(self.repo.commits()):
-                        if prev.fossil_id == latest.from_rev:
-                            if verbose >= DEBUG_TOPOLOGY:
-                                announce("found %s looking for %s" \
-                                         % (latest, newcommit.common))
-                            threshold = True
-                        if threshold:
-                            if verbose >= DEBUG_TOPOLOGY:
-                                announce("looking at %s" % prev.fossil_id)
-                            if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
-                                self.branchlink[newcommit.mark] = prev.mark
-                                if verbose >= DEBUG_TOPOLOGY:
-                                    announce("link %s (%s) back to %s (%s, %s)" % \
-                                             (newcommit.mark,
-                                              newcommit.common,
-                                              latest.from_rev,
-                                              prev.mark,
-                                              prev.common
-                                              ))
-                                break
-                    else:
-                        raise Fatal("couldn't find revision %s" % latest)
-        # We're done, add all the new commits 
-        self.repo.events += newcommits
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
@@ -2368,9 +2238,137 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     actions += self.perform_node(node)
                 # Node loop ends
+            # Time to generate actions
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %d actions" % (revision, len(actions)))
-            self.make_commits(commit, actions, revision, record)
+            # First, break the file operations into branch cliques
+            cliques = {}
+            for (node, fileop) in actions:
+                for branch in self.branches:
+                    if node.path.startswith(branch):
+                        if branch not in cliques:
+                            cliques[branch] = []
+                        cliques[branch].append((node, fileop))
+                        break
+                else:
+                    if "" not in cliques:
+                        cliques[""] = []
+                    cliques[""].append((node, fileop))
+            # Make an operation list from the cliques.
+            oplist = []
+            for (branch, actions) in cliques.items():
+                oplist.append((branch, [action[1] for action in actions]))
+            # Figure out which branch cliques contain only branch deletes
+            deletealls = set([])
+            for (branch, ops) in oplist:
+                if len(ops) == 1 and ops[0].op == "deleteall":
+                    deletealls.add(branch)
+            # The commit is truly mixed if there is more than one clique
+            # not consisting entirely of deleteall operations.  Sort the
+            # oplist so all non-deleteall cliques are at the front.
+            mixed = len(oplist) - len(deletealls) > 1
+            oplist.sort(key=lambda b: not b[0] in deletealls)
+            newcommits = []
+            # In the ordinary case, we can assign all non-deleteall commits
+            # to the base commit.
+            if not mixed:
+                if oplist:
+                    (commit.common, commit.fileops) = oplist.pop(0)
+                else:
+                    commit.common = os.path.commonprefix([node.path for node in record.nodes])
+                commit.mark = self.__newmark()
+                if verbose >= DEBUG_EXTRACT:
+                    announce("r%s gets mark %s" % (revision, commit.mark))
+                newcommits.append(commit)
+            # If the commit is mixed, or there are deletealls left over,
+            # handle that.
+            oplist.sort(key=lambda b: b[0])
+            for (i, (branch, fileops)) in enumerate(oplist):
+                split = copy.copy(commit)
+                split.common = branch
+                # TODO: Check if this will collide with another commit
+                split.committer.date.timestamp += i
+                split.fossil_id += "." + str(i + 1)
+                split.comment += "\n[[Split portion of a mixed commit.]]\n"
+                split.mark = self.__newmark()
+                split.fileops = fileops
+                newcommits.append(split)
+            # Deduce links between branches on the basis of copies. This
+            # is tricky because a revision can be the target of multiple
+            # copies.  Humans don't abuse this because tracking multiple
+            # copies is too hard to do in a slow organic brain, but tools
+            # like cvs2svn can generate large sets of them. cvs2svn seems
+            # to try to copy each file and directory from the commit
+            # corresponding to the CVS revision where the file was last
+            # changed before the copy, which may be substantially earlier
+            # than the CVS revision corresponding to the
+            # copy). Fortunately, we can resolve such sets by the simple
+            # expedient of picking the *latest* revision in them!
+            for newcommit in newcommits:
+                newcommit.fileops.sort(cmp=FileOp.compare)
+                if commit.mark not in self.branchlink:
+                    copies = [node for node in record.nodes \
+                              if node.from_rev is not None \
+                              and node.path.startswith(newcommit.common)]
+                    linkback = False
+                    # If the copies include one for the directory, we're good.
+                    if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
+                        self.directory_branchlinks.add(newcommit.common)
+                        if verbose >= DEBUG_TOPOLOGY:
+                            announce("directory copy with %s" % copies)
+                        linkback = True
+                    # Use may have botched a branch creation by doing a
+                    # non-Subversion directory copy followed by a bunch of
+                    # Subversion adds. Blob hashes will match existing files,
+                    # but from_rev and from_path won't be set at parse time.
+                    # The perform_node() code detects this case and makes file
+                    # backlinks, but can't deduce the directory copy.  Thus,
+                    # we have to treat multiple file copies as an instruction
+                    # to create a gitspace branch.
+                    #
+                    # This guard filters out copy op sets that are *single* file
+                    # copies. We're making an assumption here that multiple
+                    # file copies should always trigger a branch link creation.
+                    # This assumption could be wrong, which is why we emit a
+                    # warning message later on for branch links detected this way
+                    #
+                    # Even with this filter you'll tend to end up with lots
+                    # of little merge bubbles with no commits on one side;
+                    # these have to be removed by a debubbling pass later.
+                    # I don't know what generates these things - cvs2svn, maybe.
+                    elif len(copies) > 1:
+                        self.fileop_branchlinks.add(newcommit.common)
+                        if verbose >= DEBUG_TOPOLOGY:
+                            announce("file copies with %s" % copies)
+                        linkback = True
+                    if linkback:
+                        copies.sort(key=lambda node: int(node.from_rev))
+                        latest = copies[-1]
+                        threshold = False
+                        for prev in reversed(self.repo.commits()):
+                            if prev.fossil_id == latest.from_rev:
+                                if verbose >= DEBUG_TOPOLOGY:
+                                    announce("found %s looking for %s" \
+                                             % (latest, newcommit.common))
+                                threshold = True
+                            if threshold:
+                                if verbose >= DEBUG_TOPOLOGY:
+                                    announce("looking at %s" % prev.fossil_id)
+                                if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
+                                    self.branchlink[newcommit.mark] = prev.mark
+                                    if verbose >= DEBUG_TOPOLOGY:
+                                        announce("link %s (%s) back to %s (%s, %s)" % \
+                                                 (newcommit.mark,
+                                                  newcommit.common,
+                                                  latest.from_rev,
+                                                  prev.mark,
+                                                  prev.common
+                                                  ))
+                                    break
+                        else:
+                            raise Fatal("couldn't find revision %s" % latest)
+            # We're done, add all the new commits 
+            self.repo.events += newcommits
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
