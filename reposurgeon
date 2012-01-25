@@ -2209,9 +2209,10 @@ class StreamParser:
                     # Exception: If the target branch has been deleted,
                     # perform a a normal copy.
                     if node.from_path:
-                        if node.from_path not in self.branches \
-                               or node.path not in self.branches \
-                               or node.path in self.branchdeletes:
+                        branchcopy = node.from_path not in self.branches \
+                                         or node.path not in self.branches \
+                                         or node.path in self.branchdeletes
+                        if branchcopy:
                             self.branchdeletes.discard(node.path)
                             for source in node.from_set:
                                 lookback = self.find_node(node.from_rev,
