@@ -2123,6 +2123,7 @@ class StreamParser:
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
+                        node.implicit = True
                         newbranch = node.path
                         if not global_options['svn_nobranch'] and self.branches:
                             if newbranch.count(os.sep) == 2:
@@ -2138,14 +2139,10 @@ class StreamParser:
                             announce("%s recognized as a branch" % newbranch)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: deleteall %s" % (revision,
-                                                                node.path))
-                            fileop = FileOp()
-                            fileop.construct("deleteall", node.path[:-1])
-                            actions.append((node, fileop))
+                            assert node.implicit == False
                             self.branchdeletes.add(node.path)
                         else:
+                            node.implicit = True
                             for child in node.from_set:
                                 if verbose >= DEBUG_EXTRACT:
                                     announce("r%s: deleting %s" \
@@ -2234,9 +2231,16 @@ class StreamParser:
             # Create actions corresponding to both
             # parsed and generated nodes.
             for node in record.nodes:
-                if node.kind == SD_FILE and not node.implicit:
-                    actions += self.perform_node(node)
-            # Time to generate actions
+                if not node.implicit:
+                    if node.kind == SD_FILE:
+                        actions += self.perform_node(node)
+                    elif node.action in (SD_DELETE, SD_REPLACE):
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: deleteall %s" % (revision,node.path))
+                        fileop = FileOp()
+                        fileop.construct("deleteall", node.path[:-1])
+                        actions.append((node, fileop))
+            # Time to generate commits from actions and fileops.
             if verbose >= DEBUG_EXTRACT:
                 announce("r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
