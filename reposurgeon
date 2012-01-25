@@ -2150,9 +2150,12 @@ class StreamParser:
                                 if verbose >= DEBUG_EXTRACT:
                                     announce("r%s: deleting %s" \
                                              % (revision, child))
-                                fileop = FileOp()
-                                fileop.construct("D", child)
-                                actions.append((node, fileop))
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = child
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                generated_nodes.append(newnode)
                     elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:
