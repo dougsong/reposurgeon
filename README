@@ -10,4 +10,4 @@ conversions.
 An auxiliary script, svnpull, assists in mirroring Subversion repositories.
 
 To test the correctness of this software, ensure that pylint
-is installed and then type type 'make check'
+is installed and then type 'make check'
