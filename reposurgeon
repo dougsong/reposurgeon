@@ -1841,7 +1841,7 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def find_node(self, revision, path):
+    def inner_find_node(self, revision, path, depth):
         "Find the node for path which is visible at the specified revision."
         # This isn't reliable.  The problem, as usual, is cvs2svn. It
         # sometimes generates op sequences that, when you chase the
@@ -1849,8 +1849,6 @@ class StreamParser:
         # key on copy-source hashes. There's an example,
         # branches/reportbuf/drivers/belkin-hid.c, at commit 274 of
         # the NUT repo.
-        if verbose >= DEBUG_EXTRACT:
-            announce("find_node(%s, %s)" % (revision, path))
         # Walk back through previous revisions
         rev = int(revision)
         for prev in [str(rev-i+1) for i in range(1, rev+1)]:
@@ -1860,10 +1858,19 @@ class StreamParser:
                 elif pnode.path == path:
                     assert pnode.kind == SD_FILE
                     if pnode.from_rev:
-                        return self.find_node(pnode.from_rev, pnode.from_path)
+                        return self.find_node(pnode.from_rev, pnode.from_path, depth+1)
                     else:
                         return pnode
         return None
+    def find_node(self, revision, path, depth=0):
+        "This outer function exists to assist debugging."
+        if verbose >= DEBUG_EXTRACT:
+            announce("%s-> find_node(%s, %s)" % ("-" * depth, revision, path))
+        node = self.inner_find_node(revision, path, depth)
+        if verbose >= DEBUG_EXTRACT:
+            announce("find_node(%s, %s) %s-> %s" % (revision, path,
+                                                    "-" * depth, node))
+        return node
     @staticmethod
     def node_permissions(node):
         "Fileop permissions from not properties"
@@ -1966,6 +1973,8 @@ class StreamParser:
         baton.twirl("commits:")
         for revision in self.revisions:
             record = self.revisions[revision]
+            if verbose >= DEBUG_EXTRACT:
+                announce("Revision %s:" % revision)
             for node in record.nodes:
                 # if node.props is None, no property section.
                 # if node.blob is None, no text section.
