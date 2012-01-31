@@ -1377,8 +1377,8 @@ class StreamParser:
                       self.path)
             if self.from_rev:
                 tell += "from=%s~%s " % (self.from_rev, self.from_path)
-            #if self.from_set:
-            #    tell += "sources=%s " % self.from_set
+            if self.from_set:
+                tell += "sources=%s " % self.from_set
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 showprops = repr(self.props)
@@ -2141,6 +2141,12 @@ class StreamParser:
                         if nonbranchcopy:
                             self.branchdeletes.discard(node.path)
                         for source in node.from_set:
+                            if verbose >= DEBUG_TOPOLOGY:
+                                announce("r%s: generating copy to %s from r%s~%s" \
+                                         % (revision,
+                                            node.path,
+                                            node.from_rev,
+                                            source))
                             lookback = self.find_node(node.from_rev, source)
                             if lookback is None:
                                 raise Fatal("r%s: can't find ancestor %s" \
@@ -2155,9 +2161,10 @@ class StreamParser:
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
                             if verbose >= DEBUG_TOPOLOGY:
-                                announce("r%s: generating copy to %s from %s" \
+                                announce("r%s: local copy is %s from r%s~%s" \
                                          % (revision,
                                             subnode.path,
+                                            subnode.from_rev,
                                             subnode.from_path))
                             generated_nodes.append(subnode)
                             subnode.implicit = not nonbranchcopy
