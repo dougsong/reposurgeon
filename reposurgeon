@@ -2057,6 +2057,8 @@ class StreamParser:
                     node.path += os.sep
                     if not global_options['svn_nobranch'] and node.path == 'trunk' + os.sep:
                         self.branches['trunk' + os.sep] = None
+                        if verbose >= DEBUG_TOPOLOGY:
+                            announce("trunk/ recognized as a branch")
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
@@ -2138,6 +2140,12 @@ class StreamParser:
                         nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
                                          or node.path in self.branchdeletes
+                        if verbose >= DEBUG_TOPOLOGY:
+                            announce("r%s: directory copy to %s from r%s~%s (nonbranchcopy %s)" \
+                                     % (revision,
+                                        node.path,
+                                        node.from_rev,
+                                        node.from_path, nonbranchcopy))
                         if nonbranchcopy:
                             self.branchdeletes.discard(node.path)
                         for source in node.from_set:
