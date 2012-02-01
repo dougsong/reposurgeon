@@ -1960,7 +1960,7 @@ class StreamParser:
                 elif node.kind == SD_FILE:
                     copynode.from_set.add(copynode.path)
             if not copynode.from_set:
-                raise Fatal("empty from set for %s" % copynode)
+                self.gripe("empty from set for %s" % copynode)
         del filemaps
         baton.twirl('+')
         # Build commits
@@ -2641,7 +2641,11 @@ class StreamParser:
         baton.twirl("debubbling")
         for commit in self.repo.commits():
             if len(commit.parent_marks) == 2:
-                (a, b) = commit.parents()
+                parents = commit.parents()
+                if len(parents) != 2:
+                    self.gripe("r%s: duplicate parent marks" % commit.fossil_id)
+                    continue
+                (a, b) = parents
                 if a.branch != commit.branch or b.branch != commit.branch:
                     continue
                 if b.committer.date < a.committer.date:
