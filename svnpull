@@ -14,7 +14,9 @@
 #
 operand=$1
 
-if [ `expr "$operand" : "svn://"` = 6 ]
+if [ `expr "$operand" : "svn://"` = 6 \
+    -o `expr "$operand" : "https://"` = 8 \
+    -o `expr "$operand" : "http://"` = 7 ]
 then
     local=`basename $operand`-mirror
     svnadmin create $local
