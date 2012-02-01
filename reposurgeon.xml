@@ -144,6 +144,8 @@ edit                   ;; edit all editable objects
 
 list 29..71            ;; list summary index of events 20..71
 
+list 236..$            ;; List events from 236 to the last
+
 list /regression/      ;; list all commits and tags with comments or
                        ;; committer headers or author headers containing 
                        ;; the string "regression"
@@ -184,6 +186,10 @@ of branch sets and &amp; a bit further on; also, in older versions
 of this tool tag and branch locations were prefixed with  '@' rather
 than bracketed. The change fixed a parsing ambiguity)</para>
 </listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>$</firstterm></term>
+<listitem><para>Refers to the last event.</para></listitem>
 </varlistentry>
 </variablelist>
 
@@ -336,6 +342,21 @@ members' neighbors and referents.  This extends the set to include the
 parents and children of all commits in the set, and the referents of
 any tags and resets in the set. Each blob reference in the set is
 replaced by all commits that refer to it.</para>
+
+<para>Note that
+
+<programlisting>
+write /tmp/foo 
+</programlisting>
+
+will not do what you expect. The command language parser sees
+"/tmp/" as a text search rather than the start of a pathname.  To
+work around this, write
+
+<programlisting>
+write 1..$ /tmp/foo 
+</programlisting>
+</para>
 
 <refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
 
