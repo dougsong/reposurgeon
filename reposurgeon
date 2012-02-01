@@ -4994,7 +4994,7 @@ anything other than a plain file. The default selection is all events.
             try:
                 with open(line, "w") as out:
                     self.chosen().fast_export(self.selection, out, progress=verbose==1)
-            except OSError:
+            except (IOError, OSError):
                 complain("open of %s for write failed.\n" % line)
 
     def help_inspect(self):
