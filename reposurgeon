@@ -777,10 +777,14 @@ class FileOp:
             if not m:
                 raise Fatal("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
+            if self.path[0] == '"' and self.path[-1] == '"':
+                self.path = self.path[1:-1]
         elif opline[0] == "N":
             (self.op, self.ref, self.committish) = shlex.split(opline)
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
+            if self.path[0] == '"' and self.path[-1] == '"':
+                self.path = self.path[1:-1]
         elif opline[0] in ("R", "C"):
             (self.op, self.source, self.target) = shlex.split(opline)
         elif opline == "deleteall":
