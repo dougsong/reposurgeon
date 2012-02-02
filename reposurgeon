@@ -3961,9 +3961,12 @@ class RepositoryList:
                 deletia.reverse()
                 for i in deletia:
                     fileop = event.fileops[i]
-                    # For D, we're done; removing it has no side effects,
-                    # and we don't want to keep it in the expunged repo.
-                    if fileop.op == 'M':
+                    if fileop.op == 'D':
+                        keepers.append(fileop)
+                        if verbose:
+                            announce("at %d, expunging D %s" \
+                                     % (ei+1, fileop.path))
+                    elif fileop.op == 'M':
                         keepers.append(fileop)
                         if fileop.ref != 'inline':
                             bi = self.repo.find(fileop.ref)
@@ -3971,7 +3974,8 @@ class RepositoryList:
                             assert(isinstance(blob, Blob))
                             blobs.append(blob)
                         if verbose:
-                            announce("at %d, expunging %s" % (ei+1,fileop.path))
+                            announce("at %d, expunging M %s" \
+                                     % (ei+1, fileop.path))
                     elif fileop.op in ("R", "C"):
                         assert(fileop.sourcedelete or fileop.targetdelete)
                         if fileop.sourcedelete and fileop.targetdelete:
