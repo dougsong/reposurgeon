@@ -5628,13 +5628,12 @@ is performed even if is not clean.
         rest = self.set_selection_set(line)
         if not len(self.selection):
             raise Recoverable("merge requires a nonempty selection set.")
-        for mi in self.selection:
-            if not isinstance(repo.events[mi], Commit):
-                self.selection.remove(mi)
-        if not self.selection:
-            raise Recoverable("merge requires commit argument(s).")
         self.selection = list(self.selection)
         self.selection.sort()
+        self.selection = [e for e in self.selection \
+                          if isinstance(repo.events[e], Commit)]
+        if not self.selection:
+            raise Recoverable("merge requires commit argument(s).")
         bi = list(self.selection)[0]
         tip = repo.events[bi]
         tipfiles = tip.manifest()
