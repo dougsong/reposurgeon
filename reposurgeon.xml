@@ -713,21 +713,23 @@ default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.</para>
 
 <para>All filemodify (M) operations and delete (D) operations
-involving a matched file in the selected set of events are removed.
-Renames are followed as the tool walks forward in the selection set;
-each triggers a warning message. If a selected file is a copy (C)
-target, the copy will be deleted and a warning message issued. If a
-selected file is a copy source, the copy target will be added to the
-list of paths to be deleted and a warning issued.</para>
+involving a matched file in the selected set of events are
+disconnected from the repo and put in a removal set.  Renames are
+followed as the tool walks forward in the selection set; each triggers
+a warning message. If a selected file is a copy (C) target, the copy
+will be deleted and a warning message issued. If a selected file is a
+copy source, the copy target will be added to the list of paths to be
+deleted and a warning issued.</para>
 
 <para>After file expunges have been performed, any commits with no
 remaining file operations will be removed, and any tags pointing to
-them.</para>
+them. Commits with deleted fileops pointing both in and outside the
+path set are not deleted, but are cloned into the removal set.</para>
 
-<para>The removed commits and blobs are not discarded. They are assembled
-into a new repository named after the old one with the suffix "-expunges"
-added.  This, this command can be used to carve a repository into sections
-by file path matches.</para>
+<para>The removal set is not discarded. It is assembled into a new
+repository named after the old one with the suffix "-expunges" added.
+This, this command can be used to carve a repository into sections by
+file path matches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
