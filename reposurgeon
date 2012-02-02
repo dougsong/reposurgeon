@@ -4506,7 +4506,10 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         line = self.set_selection_set(line, default)
         outfile = line.strip()
         if outfile and outfile != '-':
-            fp = open(outfile, "w")
+            try:
+                fp = open(outfile, "w")
+            except (IOError, OSError):
+                raise Recoverable("can't open %s for write" % outfile)
         else:
             fp = sys.stdout
         for i in self.selection:
@@ -4993,7 +4996,9 @@ anything other than a plain file. The default selection is all events.
         else:
             try:
                 with open(line, "w") as out:
-                    self.chosen().fast_export(self.selection, out, progress=verbose==1)
+                    self.chosen().fast_export(self.selection,
+                                              out,
+                                              progress=verbose==1)
             except (IOError, OSError):
                 complain("open of %s for write failed.\n" % line)
 
@@ -5077,7 +5082,7 @@ committer ID and timestamp pair.
         if infile and infile != '-':
             try:
                 fp = open(infile)
-            except IOError:
+            except (OSError, IOError):
                 raise Recoverable("couldn't read %s" % infile)
         else:
             fp = sys.stdin
@@ -5780,7 +5785,7 @@ a start on building an authors file.
             try:
                 with open(fields[1], "w") as wfp:
                     self.chosen().write_authormap(self.selection, wfp)
-            except IOError:
+            except (OSError, IOError):
                 raise Recoverable("authors file %s could not be written." \
                                   % fields[1])
         elif fields[0] == "read" and len(fields) == 1:
@@ -5789,14 +5794,14 @@ a start on building an authors file.
             try:
                 with open(fields[1]) as fp:
                     self.chosen().read_authormap(self.selection, fp)
-            except IOError:
+            except (OSError, IOError):
                 raise Recoverable("authors file %s could not be read." \
                                   % fields[1])
         else:
             try:
                 with open(fields[0]) as fp:
                     self.chosen().read_authormap(self.selection, fp)
-            except IOError:
+            except (OSError, IOError):
                 raise Recoverable("authors file %s could not be read." \
                                   % fields[0])
 
@@ -5818,16 +5823,25 @@ a committer email address.  Does not take a selection set.
         if not fields or (fields[0] == "write" and len(fields) == 1):
             self.chosen().write_fossilmap(sys.stdout)
         elif fields[0] == "write":
-            with open(fields[1], "w") as wfp:
-                self.chosen().write_fossilmap(wfp)            
+            try:
+                with open(fields[1], "w") as wfp:
+                    self.chosen().write_fossilmap(wfp)
+            except (OSError, IOError):
+                raise Recoverable("can't open %s for write" % fields[1])
         elif fields[0] == "read" and len(fields) == 1:
             self.chosen().read_fossilmap(sys.stdin)
         elif fields[0] == "read":
-            with open(fields[1]) as fp:
-                self.chosen().read_fossilmap(fp)
+            try:
+                with open(fields[1]) as fp:
+                    self.chosen().read_fossilmap(fp)
+            except (OSError, IOError):
+                raise Recoverable("can't open %s for read" % fields[1])
         else:
-            with open(fields[0]) as fp:
-                self.chosen().read_fossilmap(fp)
+            try:
+                with open(fields[0]) as fp:
+                    self.chosen().read_fossilmap(fp)
+            except (OSError, IOError):
+                raise Recoverable("can't open %s for read" % fields[1])
 
     def help_references(self):
         print("""
