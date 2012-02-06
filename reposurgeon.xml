@@ -1373,6 +1373,10 @@ information about setting changes.</para>
 <para>The subsecond resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
 
+<para>Because fast-import format cannot represent an empty directory,
+empty directories in Subversion repositories will be lost in
+translation.</para>
+
 <para>Normally, Subversion local usernames are mapped in the style of
 git cvs-import; thus user "foo" becomes "foo &lt;foo&gt;", which is
 sufficient to pacify git and other systems that require email
@@ -1435,7 +1439,7 @@ branch is rooted at the correct place.</para>
 <varlistentry>
 <term>could not tagify root commit</term>
 <listitem>
-<para>The earliesr commit in your Subversion repository has file operations,
+<para>The earliest commit in your Subversion repository has file operations,
 rather than being a pure directory creation. This probably means your 
 Subversion dump file is malformed, or you may have attempted to lift
 from an incremental dump. Proceed with caution.</para>
