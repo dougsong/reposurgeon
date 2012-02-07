@@ -4031,6 +4031,9 @@ class RepositoryList:
         # Now remove commits that no longer have fileops, and released blobs.
         deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events]
         deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
+        if not deletia:
+            announce("deletion set is empty.")
+            return
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
             deletia.reverse()
