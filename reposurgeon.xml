@@ -712,6 +712,12 @@ one.</para>
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.</para>
 
+<para>Note that if you give a regexp beginning with a '/' and no
+selection set, the result may not be what you expect -
+<application>reposurgeon</application> will attempt to interpret your
+regexp as a text search on events.  To avoid this, hand it the selection
+set '1..$' which means "all events".</para>
+
 <para>All filemodify (M) operations and delete (D) operations
 involving a matched file in the selected set of events are
 disconnected from the repo and put in a removal set.  Renames are
