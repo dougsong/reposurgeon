@@ -2362,11 +2362,13 @@ class StreamParser:
                     # Thus, we have to treat multiple file copies as
                     # an instruction to create a gitspace branch.
                     #
-                    # This guard filters out copy op sets that are *single* file
-                    # copies. We're making an assumption here that multiple
-                    # file copies should always trigger a branch link creation.
-                    # This assumption could be wrong, which is why we emit a
-                    # warning message later on for branch links detected this way
+                    # This guard filters out copy op sets that are
+                    # *single* file copies. We're making an assumption
+                    # here that multiple file copies should always
+                    # trigger a branch link creation.  This assumption
+                    # could be wrong, which is why we emit a warning
+                    # message later on for branch links detected this
+                    # way
                     #
                     # Even with this filter you'll tend to end up with lots
                     # of little merge bubbles with no commits on one side;
