@@ -5356,17 +5356,17 @@ an offset literal of +0 or -0.
             event = self.chosen()[ei]
             if isinstance(event, Tag):
                 if event.tagger:
-                    event.tagger.unixtime += offset
+                    event.tagger.date.timestamp += offset
                     if len(args) > 1:
-                        event.tagger.timezone = args[1]
+                        event.tagger.date.timezone = args[1]
             elif isinstance(event, Commit):
-                event.committer.unixtime += offset
+                event.committer.date.timestamp += offset
                 if len(args) > 1:
-                    event.committer.timezone = args[1]
+                    event.committer.date.timezone = args[1]
                 for author in event.authors:
-                    author.unixtime += offset
+                    author.date.timestamp += offset
                     if len(args) > 1:
-                        author.timezone = args[1]
+                        author.date.timezone = args[1]
 
     def help_divide(self):
         print("""
