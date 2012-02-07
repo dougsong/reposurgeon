@@ -4,6 +4,7 @@ data 112
 This repository is branchless.  It includes ignore property sets...
 
 ...which should turn into .gitignore files.
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322694387 +0000

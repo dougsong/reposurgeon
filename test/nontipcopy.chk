@@ -7,6 +7,7 @@ It has no other actual purpose than to exercise repostreamer.
 It is normally formed, with trunk and branches and tags directories
 at the top level.  Initially, the only content is this README.
 
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322088164 +0000
