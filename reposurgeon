@@ -2634,9 +2634,7 @@ class StreamParser:
         self.repo.events = []
         issued = set([])
         for event in save_events:
-            if isinstance(event, Commit) \
-                   and event.branch != os.path.join("refs","heads","master") \
-                   and event.branch not in issued:
+            if isinstance(event, Commit) and event.branch not in issued:
                 reset = Reset()
                 reset.ref = event.branch
                 self.repo.events.append(reset)

@@ -5,6 +5,7 @@ mark :1
 data 23
 This is a sample file.
 
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322671432 +0000

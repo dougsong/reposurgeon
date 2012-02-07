@@ -3,6 +3,7 @@ mark :1
 data 37
 This is a test Subversion repository
 
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 committer esr <esr> 1323737922 +0000

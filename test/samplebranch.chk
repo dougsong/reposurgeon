@@ -3,6 +3,7 @@ mark :1
 data 60
 This is the trunk version of README, without modifications.
 
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322682431 +0000
