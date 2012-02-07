@@ -2357,10 +2357,10 @@ class StreamParser:
                     # non-Subversion directory copy followed by a bunch of
                     # Subversion adds. Blob hashes will match existing files,
                     # but from_rev and from_path won't be set at parse time.
-                    # The perform_node() code detects this case and makes file
-                    # backlinks, but can't deduce the directory copy.  Thus,
-                    # we have to treat multiple file copies as an instruction
-                    # to create a gitspace branch.
+                    # Our code detects this case and makes file
+                    # backlinks, but can't deduce the directory copy.
+                    # Thus, we have to treat multiple file copies as
+                    # an instruction to create a gitspace branch.
                     #
                     # This guard filters out copy op sets that are *single* file
                     # copies. We're making an assumption here that multiple
