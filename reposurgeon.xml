@@ -290,7 +290,7 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>the branch tip commit</entry>
       </row>
       <row>
-        <entry align='center'>ISO3339 date</entry>
+        <entry align='center'>RFC3339 date</entry>
         <entry align='center'>commit with that date</entry>
       </row>
       <row>
@@ -942,7 +942,7 @@ are not safe. Use with extreme caution.</para>
 <varlistentry>
 <term><command>tag</command>
         <emphasis>tagname</emphasis>...
-        <command>{move|rename|telete}</command>
+        <command>{move|rename|delete}</command>
         <command>[arg]</command>.
 </term>
 <listitem>
