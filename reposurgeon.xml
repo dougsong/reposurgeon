@@ -884,7 +884,7 @@ type.</para>
 <varlistentry>
 <term><command>graft</command>
         <emphasis>commit-id</emphasis>
-        <emphasis>reponame</emphasis>.
+        <emphasis>reponame</emphasis>
 </term>
 <listitem>
 <para>For when unite doesn't give you enough control.  The selection set
@@ -899,7 +899,10 @@ list.</para>
 <varlistentry>
 <term><command>paths</command>
         <command>perform</command>
-        <command>force</command>.
+        <command>force</command>
+        [<emphasis>selection-set</emphasis>]
+	[<command>{sub|sup}</command>]
+	[<command>dirname</command>]
 </term>
 <listitem>
 <para>Takes a selection set. Without a modifier, list all paths
