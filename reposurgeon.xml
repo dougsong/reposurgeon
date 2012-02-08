@@ -1462,6 +1462,14 @@ a re-creation under the source name. Check near the indicated revision to make
 sure the renamed branch is connected to master.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>empty from set</term>
+<listitem>
+<para>This message may be triggered by a Subversion copy of an empty directory.
+Check that the indicated directory is empty at the reported revision; if
+it is not, report a bug in <command>reposurgeon</command>.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect1>
 
