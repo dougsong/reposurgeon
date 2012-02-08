@@ -393,6 +393,7 @@ extractors = [GitExtractor()]
 
 verbose         = 0
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
+DEBUG_FILEMAP   = 2    # Debug building of filemaps
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
 DEBUG_IGNORES   = 4    # Debug ignore generation
 DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
@@ -1930,14 +1931,23 @@ class StreamParser:
                     for path in filemaps[node.from_rev]:
                         if path.startswith(node.from_path + os.sep):
                             suffix = path[len(node.from_path+os.sep):]
-                            filemap.add(os.path.join(node.path, suffix))
+                            target = os.path.join(node.path, suffix)
+                            filemap.add(target)
+                            if verbose >= DEBUG_FILEMAP:
+                                announce("r%s~%s added by copy" \
+                                         % (node.revision, target))
                 # Mutate the filemap according to adds and deletes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap.add(node.path)
+                    if verbose >= DEBUG_FILEMAP:
+                        announce("r%s~%s added" % (node.revision, node.path))
                 elif node.action == SD_DELETE:
                     node.from_set = set([])
                     if node.path in filemap:
                         filemap.discard(node.path)
+                        if verbose >= DEBUG_FILEMAP:
+                            announce("r%s~%s deleted" \
+                                     % (node.revision, node.path))
                         node.from_set.add(node.path)
                         if node.kind == SD_NONE:
                             node.kind = SD_FILE
@@ -1946,6 +1956,9 @@ class StreamParser:
                             if path.startswith(node.path + os.sep):
                                 node.from_set.add(path)
                         filemap -= node.from_set
+                        if verbose >= DEBUG_FILEMAP:
+                            announce("r%s~%s deleted" \
+                                     % (node.revision, node.from_set))
                         if node.kind == SD_NONE:
                             node.kind = SD_DIR
             if revision in source_revisions:
