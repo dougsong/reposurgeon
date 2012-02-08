@@ -1972,13 +1972,17 @@ class StreamParser:
             announce("Pass 3")
         baton.twirl("copysets")
         for copynode in copynodes:
-            copynode.from_set = set([])
-            for path in filemaps[copynode.from_rev]:
-                if copynode.kind == SD_DIR:
+            if verbose >= DEBUG_FILEMAP:
+                announce("r%s filemap is %s" \
+                         % (copynode.from_rev, filemaps[copynode.from_rev]))
+            if copynode.kind == SD_FILE:
+                if copynode.from_path in filemaps[copynode.from_rev]:
+                    copynode.from_set = set([copynode.from_path])
+            else:
+                copynode.from_set = set([])
+                for path in filemaps[copynode.from_rev]:
                     if path.startswith(copynode.from_path + os.sep):
                         copynode.from_set.add(path)
-                elif node.kind == SD_FILE:
-                    copynode.from_set.add(copynode.path)
             if not copynode.from_set:
                 self.gripe("empty from set for %s" % copynode)
         del filemaps
