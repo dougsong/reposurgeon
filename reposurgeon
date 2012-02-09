@@ -4042,7 +4042,6 @@ class RepositoryList:
         for event in self.repo.events:
             if hasattr(event, "parent_marks"):
                 event.parent_marks = [e for e in event.parent_marks if e in keeper_marks]
-        self.repolist.append(expunged)
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
@@ -4055,6 +4054,7 @@ class RepositoryList:
         if not deletia:
             announce("deletion set is empty.")
             return
+        self.repolist.append(expunged)
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
             deletia.reverse()
