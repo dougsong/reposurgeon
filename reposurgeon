@@ -3972,50 +3972,50 @@ class RepositoryList:
                                 matchers.append("^" + fileop.target + "$")
                                 expunge = digest(matchers)
                 alterations.append(deletia)
-            # Second pass: perform actual fileop expunges
-            expunged = Repository(self.repo.name + "-expunges")
-            os.mkdir(expunged.subdir())
-            for event in self.repo:
-                event.deletehook = None
-            for (ei, deletia) in zip(selection, alterations):
-                event = self.repo[ei]
-                keepers = []
-                blobs = []
-                deletia.reverse()
-                for i in deletia:
-                    fileop = event.fileops[i]
-                    if fileop.op == 'D':
-                        keepers.append(fileop)
-                        if verbose:
-                            announce("at %d, expunging D %s" \
-                                     % (ei+1, fileop.path))
-                    elif fileop.op == 'M':
-                        keepers.append(fileop)
-                        if fileop.ref != 'inline':
-                            bi = self.repo.find(fileop.ref)
-                            blob = self.repo[bi]
-                            assert(isinstance(blob, Blob))
-                            blobs.append(blob)
-                        if verbose:
-                            announce("at %d, expunging M %s" \
-                                     % (ei+1, fileop.path))
-                    elif fileop.op in ("R", "C"):
-                        assert(fileop.sourcedelete or fileop.targetdelete)
-                        if fileop.sourcedelete and fileop.targetdelete:
-                            keepers.append(fileop)
-                    event.fileops.pop(i)
-                # If there are any keeper fileops, hang them them and
-                # their blobs on deletehooks, cloning the commit() for them.
-                if keepers:
-                    keepers.reverse()
-                    blobs.reverse()
-                    for blob in blobs:
-                        blob.deletehook = blob.clone(expunged)
-                        newevent = event.clone(expunged)
-                        newevent.fileops = keepers
-                        event.deletehook = newevent
         except re.error:
-            raise Fatal("you confused the regexp processor!")
+            raise Recoverable("you confused the regexp processor!")
+        # Second pass: perform actual fileop expunges
+        expunged = Repository(self.repo.name + "-expunges")
+        os.mkdir(expunged.subdir())
+        for event in self.repo:
+            event.deletehook = None
+        for (ei, deletia) in zip(selection, alterations):
+            event = self.repo[ei]
+            keepers = []
+            blobs = []
+            deletia.reverse()
+            for i in deletia:
+                fileop = event.fileops[i]
+                if fileop.op == 'D':
+                    keepers.append(fileop)
+                    if verbose:
+                        announce("at %d, expunging D %s" \
+                                 % (ei+1, fileop.path))
+                elif fileop.op == 'M':
+                    keepers.append(fileop)
+                    if fileop.ref != 'inline':
+                        bi = self.repo.find(fileop.ref)
+                        blob = self.repo[bi]
+                        assert(isinstance(blob, Blob))
+                        blobs.append(blob)
+                    if verbose:
+                        announce("at %d, expunging M %s" \
+                                 % (ei+1, fileop.path))
+                elif fileop.op in ("R", "C"):
+                    assert(fileop.sourcedelete or fileop.targetdelete)
+                    if fileop.sourcedelete and fileop.targetdelete:
+                        keepers.append(fileop)
+                event.fileops.pop(i)
+            # If there are any keeper fileops, hang them them and
+            # their blobs on deletehooks, cloning the commit() for them.
+            if keepers:
+                keepers.reverse()
+                blobs.reverse()
+                for blob in blobs:
+                    blob.deletehook = blob.clone(expunged)
+                    newevent = event.clone(expunged)
+                    newevent.fileops = keepers
+                    event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged_branches = expunged.branchlist()
