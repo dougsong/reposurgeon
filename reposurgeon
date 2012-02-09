@@ -3151,7 +3151,9 @@ class Repository:
                 # Reparent each child
                 for child in event.children():
                     child.parent_marks.remove(event.mark)
-                    child.parent_marks += event.parent_marks
+                    for parent_mark in event.parent_marks:
+                        if parent_mark not in child.parent_marks:
+                            child.parent_marks.append(parent_mark)
                     if "obliterate" not in policy and "pushback" not in policy:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
