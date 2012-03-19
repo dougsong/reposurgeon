@@ -7,10 +7,11 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import readline, time, calendar, signal, shutil, copy, shlex, collections
+import re, time, calendar, signal, shutil, copy, shlex, collections, platform
 import email.message, email.parser, email.utils
-import re
 import xml.etree.cElementTree as ET
+if platform.system() == "Linux":
+    import readline
 
 version="2.0-pre9"
 
