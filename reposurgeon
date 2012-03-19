@@ -211,7 +211,7 @@ vcstypes = [
 # ID don't matter to any of the code that will call the extractor, except that
 # IDs must be hashable so they can be dictionary keys.
 #
-# The 'name'. 'subdirectory', and 'visible' members must be set. The
+# The 'name', 'subdirectory', and 'visible' members must be set. The
 # subdirectory member is how an extractor recognizes what repositories
 # it can consume.  If the visible member is false, the 'read' command
 # will ignore the existence of the extractor.
@@ -223,7 +223,7 @@ vcstypes = [
 # that is, a free text name followed by an email ID followed by a date.
 # The date specification can be anything Attribution() can parse; in
 # particular, RFC3339 dates are good, so are RFC822 (email) dates,
-# and so is git's native integer-Unix-timetamp/timezone pairs.
+# and so is git's native integer-Unix-timestamp/timezone pairs.
 
 class GitExtractor:
     "Repository extractor for the git version-control system."
