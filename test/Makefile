@@ -7,7 +7,7 @@ all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 
 # The 'prefer git' suppresses writing out properties.
 .svn.chk:
-	reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
+	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 
 buildregress: fi-buildregress svn-buildregress
 
@@ -70,7 +70,7 @@ GITLOADS = bs
 git-regress:
 	@for test in $(GITLOADS); do \
 	    if (echo "Testing git-extractor on $${test}" >&2; \
-	    fi-to-fi) <$${test}.fi >/tmp/regress; \
+	    ./fi-to-fi) <$${test}.fi >/tmp/regress; \
 	    then diff -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
@@ -107,7 +107,7 @@ svn-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if echo "Testing $${test}" >&2; \
-		reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
+		../reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
