@@ -1220,7 +1220,7 @@ class PathSet:
             self.elements = elements
             self.shared = True
     def add(self, path, value=True):
-        "Add a filename to the set, with optional associated value."
+        "Add a filename to the set, with optional associated value (not None)."
         assert value is not None
         self._insert(self._split_path(path), value)
     def discard(self, path):
@@ -1286,10 +1286,10 @@ class PathSet:
             if isinstance(obj, PathSet):
                 obj._remove(components)
     # Return the object at the location given by components--either
-    # the value if it's present as a filename, or a PathSet containing the
-    # descendents if it's a directory name.  Return None if the
-    # location does not exist in the set.  Destroys components as we
-    # recurse.
+    # the associated value if it's present as a filename, or a PathSet
+    # containing the descendents if it's a directory name.  Return
+    # None if the location does not exist in the set.  Destroys
+    # components as we recurse.
     def _find(self, components):
         if not components:
             return self
@@ -1299,9 +1299,10 @@ class PathSet:
         down = self.elements[first]
         if isinstance(down, PathSet):
             return down._find(components)
+        elif not components:
+            return down
         else:
-            # Still not quite right - returns bool rather than associated value
-            return not components        
+            return None        
     # If elements might be shared with another PathSet, copy it.
     def _unshare(self):
         if self.shared:
