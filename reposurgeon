@@ -1234,7 +1234,7 @@ class PathSet:
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(self._split_path(source_path))
-        if source_obj is False:
+        if source_obj is None:
             return
         if isinstance(source_obj, PathSet):
             source_obj = source_obj.snapshot()
