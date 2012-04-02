@@ -1219,9 +1219,10 @@ class PathSet:
         else:
             self.elements = elements
             self.shared = True
-    def add(self, path):
-        "Add a filename to the set."
-        self._insert(self._split_path(path), True)
+    def add(self, path, value=True):
+        "Add a filename to the set, with optional associated value."
+        assert value is not None
+        self._insert(self._split_path(path), value)
     def discard(self, path):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
@@ -1240,7 +1241,8 @@ class PathSet:
         self._insert(self._split_path(target_path), source_obj)
     def __contains__(self, path):
         "Return true if path is present in the set as a file."
-        return self._find(self._split_path(path)) is True
+        check = self._find(self._split_path(path))
+        return not isinstance(check, PathSet) and check is not None
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(self.elements.itervalues())
@@ -1300,7 +1302,7 @@ class PathSet:
     # If elements might be shared with another PathSet, copy it.
     def _unshare(self):
         if self.shared:
-            self.elements = {k: (True if v is True else v.snapshot())
+            self.elements = {k: (v.snapshot() if isinstance(v, PathSet) else v)
                              for k,v in self.elements.iteritems()}
             self.shared = False
     # Return a list of the components in path in reverse order.
