@@ -1296,10 +1296,12 @@ class PathSet:
         first = components.pop()
         if first not in self.elements:
             return None
-        # The remainder of this function has yet to be converted.
-        if self.elements[first] is True:
-            return not components
-        return self.elements[first]._find(components)
+        down = self.elements[first]
+        if isinstance(down, PathSet):
+            return down._find(components)
+        else:
+            # Still not quite right - returns bool rather than associated value
+            return not components        
     # If elements might be shared with another PathSet, copy it.
     def _unshare(self):
         if self.shared:
