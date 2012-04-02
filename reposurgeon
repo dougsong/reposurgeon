@@ -1286,8 +1286,8 @@ class PathSet:
             if isinstance(obj, PathSet):
                 obj._remove(components)
     # Return the object at the location given by components--either
-    # True if it's present as a filename, or a PathSet containing the
-    # descendents if it's a directory name.  Return False if the
+    # the value if it's present as a filename, or a PathSet containing the
+    # descendents if it's a directory name.  Return None if the
     # location does not exist in the set.  Destroys components as we
     # recurse.
     def _find(self, components):
@@ -1295,7 +1295,8 @@ class PathSet:
             return self
         first = components.pop()
         if first not in self.elements:
-            return False
+            return None
+        # The remainder of this function has yet to be converted.
         if self.elements[first] is True:
             return not components
         return self.elements[first]._find(components)
