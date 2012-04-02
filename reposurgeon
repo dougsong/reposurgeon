@@ -1238,7 +1238,6 @@ class PathSet:
         if isinstance(source_obj, PathSet):
             source_obj = source_obj.snapshot()
         self._insert(self._split_path(target_path), source_obj)
-        pass
     def __contains__(self, path):
         "Return true if path is present in the set as a file."
         return self._find(self._split_path(path)) is True
@@ -2051,7 +2050,7 @@ class StreamParser:
                                       node.from_path)
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s copied to %s" \
-                                 % (node.revision, target, node.path))
+                                 % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds and deletes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap.add(node.path)
