@@ -10,6 +10,7 @@ import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
 import xml.etree.cElementTree as ET
+import threading
 
 # This import only works on Unixes.  The iuntention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd. 
@@ -6164,6 +6165,7 @@ displays the state of all flags. The following flags are defined:
 
 if __name__ == '__main__':
     try:
+        threading.stack_size(128*1024*1024)
         def interactive():
             global verbose
             interpreter.use_rawinput = True
@@ -6189,7 +6191,10 @@ if __name__ == '__main__':
                     else:
                         # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
-                        cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
+                        thread = threading.Thread(target = cmd.Cmd.onecmd,
+                                                  args = (interpreter, interpreter.precmd(arg)))
+                        thread.start()
+                        thread.join()
         finally:
             interpreter.cleanup()
         raise SystemExit(0)
