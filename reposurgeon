@@ -644,11 +644,11 @@ class Blob:
     def clone(self, repo):
         "Clone a copy of this blob, pointing at the same file."
         c = copy.copy(self)
+        c.repo = repo
         c.colors = []
         if verbose >= DEBUG_SHUFFLE:
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
         os.link(self.blobfile(), c.blobfile())
-        c.moveto(repo)
         return c
     def __str__(self):
         if not os.path.exists(self.blobfile()):
@@ -2819,7 +2819,9 @@ class Repository:
         try:
             if verbose >= DEBUG_SHUFFLE:
                 announce("repository fast import creates " + self.subdir())
-            os.mkdir(self.subdir())
+            target = self.subdir()
+            if not os.path.exists(target):
+                os.mkdir(target)
         except OSError:
             raise Fatal("can't create operating directory")
     def size(self):
@@ -4083,7 +4085,7 @@ class RepositoryList:
             raise Recoverable("you confused the regexp processor!")
         # Second pass: perform actual fileop expunges
         expunged = Repository(self.repo.name + "-expunges")
-        os.mkdir(expunged.subdir())
+        expunged.makedir()
         for event in self.repo:
             event.deletehook = None
         for (ei, deletia) in zip(selection, alterations):
