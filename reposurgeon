@@ -6163,9 +6163,19 @@ displays the state of all flags. The following flags are defined:
                 else:
                     global_options[option] = False
 
-if __name__ == '__main__':
+class ProfiledThread(threading.Thread):
+    # Overrides threading.Thread.run()
+    def run(self):
+        profiler = cProfile.Profile()
+        try:
+            return profiler.runcall(threading.Thread.run, self)
+        finally:
+            fn = '%s-%d.profile' % ("foo", self.ident,)
+            profiler.dump_stats(fn)
+            announce("wrote profile stats to %s" % fn);
+
+def main():
     try:
-        threading.stack_size(128*1024*1024)
         def interactive():
             global verbose
             interpreter.use_rawinput = True
@@ -6181,20 +6191,11 @@ if __name__ == '__main__':
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        if interpreter.profile_log is None:
-                            interactive()
-                        elif interpreter.profile_log:
-                            cProfile.run('interactive()', \
-                                         interpreter.profile_log)
-                        else:
-                            cProfile.run('interactive()')
+                        interactive()
                     else:
                         # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
-                        thread = threading.Thread(target = cmd.Cmd.onecmd,
-                                                  args = (interpreter, interpreter.precmd(arg)))
-                        thread.start()
-                        thread.join()
+                        cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
         finally:
             interpreter.cleanup()
         raise SystemExit(0)
@@ -6203,4 +6204,14 @@ if __name__ == '__main__':
         raise SystemExit(1)
     except KeyboardInterrupt:
         print("")
+
+if __name__ == '__main__':
+    threading.stack_size(128*1024*1024)
+    if re.search("profiled", sys.argv[0]) is not None:
+        announce('profiling enabled.')
+        thread = ProfiledThread(target = main)
+    else:
+        thread = threading.Thread(target = main)
+    thread.start()
+    thread.join()
 # end
