@@ -752,6 +752,10 @@ class FileOp:
         self.path = None
         self.ref = None
         self.inline = None
+        self._paths = None
+    def setOp(self, op):
+        self.op = op
+        self._paths = None
     # Following two functions emulate the FileOp sort used by git
     # fast_export As it says, 'Handle files below a directory first,
     # in case they are all deleted and the directory changes to a file
@@ -775,7 +779,7 @@ class FileOp:
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
-            self.op = "deleteall"
+            self.setOp("deleteall")
         else:
             raise Fatal("unexpected fileop %s" % opargs[0])
     def parse(self, opline):
@@ -784,6 +788,7 @@ class FileOp:
             if not m:
                 raise Fatal("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
+            self._paths = None
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
         elif opline[0] == "N":
@@ -798,17 +803,20 @@ class FileOp:
             self.op = "deleteall"
         else:
             raise Fatal("unexpected fileop %s while parsing" % opline)
+        self._paths = None
         return self
     def paths(self):
         "Return the set of all paths touched by this file op."
-        if self.op in ("M", "D"):
-            return set([self.path])
-        elif self.op in ("R", "C"):
-            return set([self.source, self.target])
-        # Ugh...this isn't right for deleteall, but since we don't expect
-        # to see that except at branch tips we'll ignore it for now.
-        elif self.op in ("N", "deleteall"):
-            return set([])
+        if self._paths is None:
+            if self.op in ("M", "D"):
+                self._paths = set([self.path])
+            elif self.op in ("R", "C"):
+                self._paths = set([self.source, self.target])
+            # Ugh...this isn't right for deleteall, but since we don't expect
+            # to see that except at branch tips we'll ignore it for now.
+            elif self.op in ("N", "deleteall"):
+                self._paths = set([])
+        return self._paths
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
         if self.op == "deleteall" or other.op == "deleteall":
@@ -881,6 +889,7 @@ class Commit:
         self.color = None
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
+        self._pathset = None
     def when(self):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
@@ -893,6 +902,7 @@ class Commit:
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
         c.fileops = []
+        c._pathset = None
         c.color = None
         if repo is not None:
             c.moveto(repo)
@@ -1055,10 +1065,11 @@ class Commit:
                 print("%d: %-20s" % (i, str(op)))
     def paths(self):
         "Return the set of all paths touched by this commit."
-        pathset = set([])
-        for fileop in self.fileops:
-            pathset |= fileop.paths()
-        return pathset
+        if self._pathset is None:
+            self._pathset = set([])
+            for fileop in self.fileops:
+                self._pathset |= fileop.paths()
+        return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         if self.filemap or not self.parent_marks:
@@ -2434,6 +2445,7 @@ class StreamParser:
             if not mixed:
                 if oplist:
                     (commit.common, commit.fileops) = oplist.pop(0)
+                    commit._pathset = None
                 else:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.mark = self.__newmark()
@@ -2452,6 +2464,7 @@ class StreamParser:
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.mark = self.__newmark()
                 split.fileops = fileops
+                split._pathset = None
                 newcommits.append(split)
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
@@ -2586,6 +2599,7 @@ class StreamParser:
                             elif fileop.op in ("R", "C"):
                                 fileop.source = fileop.source[len(branch):]
                                 fileop.target = fileop.target[len(branch):]
+                        commit._pathset = None
                         break
                 else:
                     commit.branch = "root"
@@ -3149,7 +3163,7 @@ class Repository:
         elif pair == ("C", "D"):
             if left.source == right.path:
                 # Copy followed by delete of the source is a rename.
-                left.op = "R"
+                left.setOp("R")
                 return (True, left, None, None, 13)
             elif left.target == right.path:
                 # This delete undoes the copy
@@ -3182,6 +3196,7 @@ class Repository:
             if verbose >= DEBUG_DELETE:
                 announce("removing all before rightmost deleteall")
             commit.fileops = commit.fileops[lastdeleteall:]
+            commit._pathset = None
         # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
@@ -3207,6 +3222,7 @@ class Repository:
             if not mutated:
                 break
             commit.fileops = [x for x in commit.fileops if x is not None]
+            commit._pathset = None
         return coverage
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
@@ -3266,6 +3282,7 @@ class Repository:
                         # each child's list and mark the child as
                         # needing resolution.
                         child.fileops = copy.copy(event.fileops) + child.fileops
+                        child._pathset = None
                         child.pushed_to = True
                 # We might be trying to hand the event's fileops to parents.
                 if "pushback" in policy:
@@ -3292,6 +3309,7 @@ class Repository:
                                     #print "Moving %d to %d" % (swapblob, swapcommit)
                                     self.events[swapcommit] = saveblob
                         parent.fileops += copy.copy(event.fileops)
+                        parent._pathset = None
                         parent.pushed_to = True
                 if "tagback" not in policy and "tagforward" not in policy:
                     self.events = [t for t in self.events if not (isinstance(t, Tag)
@@ -3331,6 +3349,7 @@ class Repository:
                             # Remove all but the last M.
                             while len(oplist) > 1:
                                 event.fileops.pop(oplist.pop(0))
+                            event._pathset = None
                         if verbose >= DEBUG_DELETE:
                             print("Commit %d, after applying policy:" % (ei +1,))
                             for op in event.fileops:
@@ -3507,6 +3526,7 @@ class Repository:
                 del commit.fileops[d].path
                 commit.fileops[d].op = 'R'
                 commit.fileops.pop(m)
+                commit._pathset = None
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
@@ -3529,6 +3549,7 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
+                event._pathset = None
         modified = list(modified)
         modified.sort()
         return modified
@@ -4113,6 +4134,7 @@ class RepositoryList:
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
                 event.fileops.pop(i)
+                event._pathset = None
             # If there are any keeper fileops, hang them them and
             # their blobs on deletehooks, cloning the commit() for them.
             if keepers:
@@ -4122,6 +4144,7 @@ class RepositoryList:
                     blob.deletehook = blob.clone(expunged)
                     newevent = event.clone(expunged)
                     newevent.fileops = keepers
+                    newevent._pathset = None
                     event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
@@ -4596,9 +4619,8 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             selection = []
             for (ei, event) in enumerate(self.chosen().events):
                 if isinstance(event, Commit):
-                    for fileop in event.fileops:
-                        if path in fileop.paths():
-                            selection.append(ei)
+                    if path in event.paths():
+                        selection.append(ei)
             return set(selection)
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
@@ -5630,7 +5652,9 @@ original commit.
                         child.parent_marks[j] = event2.mark
             # Fileop split happens here
             event2.fileops = event.fileops[splitpoint:]
+            event2._pathset = None
             event.fileops = event.fileops[:splitpoint]
+            event._pathset = None
             if verbose:
                 self.do_inspect(repr(where+1) + "," + repr(where+2))
 
