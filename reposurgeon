@@ -6172,7 +6172,7 @@ class ProfiledThread(threading.Thread):
         finally:
             fn = '%s-%d.profile' % ("foo", self.ident,)
             profiler.dump_stats(fn)
-            announce("wrote profile stats to %s" % fn);
+            announce("wrote profile stats to %s" % fn)
 
 def main():
     try:
