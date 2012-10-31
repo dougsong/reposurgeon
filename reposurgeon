@@ -1247,12 +1247,12 @@ class PathSet:
         "Return true if any filenames are present in the set."
         return any(self.elements.itervalues())
     def __iter__(self):
-        for name,value in sorted(self.elements.items()):
-            if not isinstance(value, PathSet) and value is not None:
-                yield name
-            else:
+        for (name, value) in sorted(self.elements.items()):
+            if isinstance(value, PathSet):
                 for path in value:
                     yield os.path.join(name, path)
+            elif value is not None:
+                yield name
     def __str__(self):
         tell = '<PathSet: '
         for path in self:
