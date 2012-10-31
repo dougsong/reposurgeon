@@ -1,0 +1,145 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 40809dbb-8527-4ca2-bb65-644b1993ad2b
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-10-31T01:12:39.062296Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 140
+Content-length: 140
+
+K 8
+svn:date
+V 27
+2012-10-31T01:14:46.226234Z
+K 7
+svn:log
+V 38
+initial directory structure and readme
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 94
+Text-content-md5: 9d7d2b5ead66054112bb3d03c11c8d57
+Text-content-sha1: 76e3755e33c0634e485f753d5f1239ff87006a7a
+Content-length: 104
+
+PROPS-END
+this repository is used for testing the expunge command. uses a non-standard directory layout
+
+
+Node-path: dev
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: releases
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 139
+Content-length: 139
+
+K 8
+svn:date
+V 27
+2012-10-31T01:15:48.944021Z
+K 7
+svn:log
+V 37
+we're getting close to a release here
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: dev/VERSION
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 9
+Text-content-md5: 94e2746029fcce00539b7e8fefeeb4ab
+Text-content-sha1: 138049cfab44c26f6959556f11f17bc6e924447a
+Content-length: 19
+
+PROPS-END
+0.999999
+
+
+Revision-number: 3
+Prop-content-length: 149
+Content-length: 149
+
+K 8
+svn:date
+V 27
+2012-10-31T01:16:46.631987Z
+K 7
+svn:log
+V 47
+we finally released. party tonight at my place!
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: dev/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
+Node-path: releases/v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: dev
+
+
+Node-path: releases/v1.0/VERSION
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: dev/VERSION
+Text-copy-source-md5: 94e2746029fcce00539b7e8fefeeb4ab
+Text-copy-source-sha1: 138049cfab44c26f6959556f11f17bc6e924447a
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
