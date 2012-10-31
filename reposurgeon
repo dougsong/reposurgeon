@@ -11,7 +11,7 @@ import re, time, calendar, signal, shutil, copy, shlex, collections
 import email.message, email.parser, email.utils
 import xml.etree.cElementTree as ET
 
-# This import only works on Unixes.  The iuntention is to enable
+# This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd. 
 try:
     import readline
@@ -1248,7 +1248,7 @@ class PathSet:
         return any(self.elements.itervalues())
     def __iter__(self):
         for name,value in sorted(self.elements.items()):
-            if value is True:
+            if not isinstance(value, PathSet) and value is not None:
                 yield name
             else:
                 for path in value:
