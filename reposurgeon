@@ -1238,14 +1238,14 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
-class PathSet:
+class PathMap:
     """Represent the set of filenames visible in a Subversion
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
     def __init__(self, elements=None):
         # elements is a dictionary mapping single-component names to
-        # True (for files) or to another PathSet (for directories).
-        # The dictionary may be shared with other PathSet instances if
+        # True (for files) or to another PathMap (for directories).
+        # The dictionary may be shared with other PathMap instances if
         # shared is true.
         if elements is None:
             self.elements = {}
@@ -1253,42 +1253,48 @@ class PathSet:
         else:
             self.elements = elements
             self.shared = True
-    def add(self, path, value=True):
-        "Add a filename to the set, with optional associated value (not None)."
-        assert value is not None
-        self._insert(self._split_path(path), value)
-    def discard(self, path):
-        """Remove a filename, or all descendents of a directory name,
-        from the set."""
-        self._remove(self._split_path(path))
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
         self.shared = True
-        return PathSet(self.elements)
+        return PathMap(self.elements)
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(self._split_path(source_path))
         if source_obj is None:
             return
-        if isinstance(source_obj, PathSet):
+        if isinstance(source_obj, PathMap):
             source_obj = source_obj.snapshot()
         self._insert(self._split_path(target_path), source_obj)
     def __contains__(self, path):
         "Return true if path is present in the set as a file."
-        check = self._find(self._split_path(path))
-        return not isinstance(check, PathSet) and check is not None
+        elt = self._find(self._split_path(path))
+        return not isinstance(elt, PathMap) and elt is not None
+    def __getitem__(self, path):
+        "Return the value associated with a specified path."
+        elt = self._find(self._split_path(path))
+        if elt is None or isinstance(elt, PathMap):
+            raise IndexError
+        return elt
+    def __setitem__(self, path, value):
+        "Add a filename to the set, with associated value (not None)."
+        assert value is not None
+        self._insert(self._split_path(path), value)
+    def __delitem__(self, path):
+        """Remove a filename, or all descendents of a directory name,
+        from the set."""
+        self._remove(self._split_path(path))
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(self.elements.itervalues())
     def __iter__(self):
         for (name, value) in sorted(self.elements.items()):
-            if isinstance(value, PathSet):
+            if isinstance(value, PathMap):
                 for path in value:
                     yield os.path.join(name, path)
             elif value is not None:
                 yield name
     def __str__(self):
-        tell = '<PathSet: '
+        tell = '<PathMap: '
         for path in self:
             tell += path + ' '
         return tell[:-1] + '>'
@@ -1302,8 +1308,8 @@ class PathSet:
         if not components:
             self.elements[first] = obj
         else:
-            if not isinstance(self.elements.get(first), PathSet):
-                self.elements[first] = PathSet()
+            if not isinstance(self.elements.get(first), PathMap):
+                self.elements[first] = PathMap()
             self.elements[first]._insert(components, obj)
     # Remove the location given by components.  Destroys components as
     # we recurse.
@@ -1317,10 +1323,10 @@ class PathSet:
                 del self.elements[first]
         else:
             obj = self.elements.get(first)
-            if isinstance(obj, PathSet):
+            if isinstance(obj, PathMap):
                 obj._remove(components)
     # Return the object at the location given by components--either
-    # the associated value if it's present as a filename, or a PathSet
+    # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
     # None if the location does not exist in the set.  Destroys
     # components as we recurse.
@@ -1331,16 +1337,16 @@ class PathSet:
         if first not in self.elements:
             return None
         down = self.elements[first]
-        if isinstance(down, PathSet):
+        if isinstance(down, PathMap):
             return down._find(components)
         elif not components:
             return down
         else:
             return None        
-    # If elements might be shared with another PathSet, copy it.
+    # If elements might be shared with another PathMap, copy it.
     def _unshare(self):
         if self.shared:
-            self.elements = {k: (v.snapshot() if isinstance(v, PathSet) else v)
+            self.elements = {k: (v.snapshot() if isinstance(v, PathMap) else v)
                              for k,v in self.elements.iteritems()}
             self.shared = False
     # Return a list of the components in path in reverse order.
@@ -2080,7 +2086,7 @@ class StreamParser:
         baton.twirl("filemaps:")
         filemaps = {}
         source_revisions = [node.from_rev for node in copynodes]
-        filemap = PathSet()
+        filemap = PathMap()
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
@@ -2094,16 +2100,16 @@ class StreamParser:
                                  % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds and deletes
                 if node.action == SD_ADD and node.kind == SD_FILE:
-                    filemap.add(node.path)
+                    filemap[node.path] = node
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s added" % (node.revision, node.path))
                 elif node.action == SD_DELETE:
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
                     # Snapshot the deleted paths before removing them.
-                    node.from_set = PathSet()
+                    node.from_set = PathMap()
                     node.from_set.copy_from(node.path, filemap, node.path)
-                    filemap.discard(node.path)
+                    del filemap[node.path]
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s deleted" \
                                  % (node.revision, node.path))
@@ -2121,7 +2127,7 @@ class StreamParser:
             if verbose >= DEBUG_FILEMAP:
                 announce("r%s filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
-            copynode.from_set = PathSet()
+            copynode.from_set = PathMap()
             copynode.from_set.copy_from(copynode.from_path,
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
