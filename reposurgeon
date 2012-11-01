@@ -2077,15 +2077,11 @@ class StreamParser:
         baton.endcounter()
         baton.twirl('+')
         # Build filemaps.
-        # Keeping a filemap for each revision gets prohibitively
-        # expensive.  So we keep around only those that are identified
-        # as directory copy sources.
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 2")
         baton.startcounter(countfmt)
         baton.twirl("filemaps:")
         filemaps = {}
-        source_revisions = [node.from_rev for node in copynodes]
         filemap = PathMap()
         for revision in self.revisions:
             record = self.revisions[revision]
@@ -2113,8 +2109,7 @@ class StreamParser:
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s deleted" \
                                  % (node.revision, node.path))
-            if revision in source_revisions:
-                filemaps[revision] = filemap.snapshot()
+            filemaps[revision] = filemap.snapshot()
             baton.bumpcounter()
         baton.endcounter()
         if verbose >= DEBUG_EXTRACT+1:
