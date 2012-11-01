@@ -1682,7 +1682,7 @@ class StreamParser:
         # Read a Subversion file-content blob.
         content = self.fp.read(length)
         if self.fp.read(1) != '\n':
-            self.error("EOL not seen where expected, Content-Length is incorrect")
+            self.error("EOL not seen where expected, Content-Length incorrect")
         self.import_line += content.count('\n') + 1
         self.ccount += len(content) + 1
         return content
@@ -2710,7 +2710,7 @@ class StreamParser:
             # they might possibly contain interesting metadata.  Usually they're
             # just debris from tagging, though.
             if not commit.fileops:
-                if commit.hasParents:
+                if commit.hasParents():
                     legend = "[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.fossil_id
                     if self.revisions[commit.fossil_id].nodes:
