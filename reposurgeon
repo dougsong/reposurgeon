@@ -1273,7 +1273,8 @@ class PathMap:
         "Return the value associated with a specified path."
         elt = self._find(self._split_path(path))
         if elt is None or isinstance(elt, PathMap):
-            raise IndexError
+            # This is not quite like indexing, which would throw IndexError
+            return None
         return elt
     def __setitem__(self, path, value):
         "Add a filename to the set, with associated value (not None)."
@@ -2094,7 +2095,7 @@ class StreamParser:
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s copied to %s" \
                                  % (node.from_rev, node.from_path, node.path))
-                # Mutate the filemap according to adds and deletes
+                # Mutate the filemap according to adds/deletes/changes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap[node.path] = node
                     if verbose >= DEBUG_FILEMAP:
@@ -2109,6 +2110,10 @@ class StreamParser:
                     if verbose >= DEBUG_FILEMAP:
                         announce("r%s~%s deleted" \
                                  % (node.revision, node.path))
+                elif node.action == SD_CHANGE and node.kind == SD_FILE:
+                    filemap[node.path] = node
+                    if verbose >= DEBUG_FILEMAP:
+                        announce("r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.bumpcounter()
         baton.endcounter()
@@ -2128,7 +2133,6 @@ class StreamParser:
                                         copynode.from_path)
             if not copynode.from_set:
                 self.gripe("empty from set for %s" % copynode)
-        del filemaps
         baton.twirl('+')
         # Build commits
         # This code can eat your processor, so we make it give up
