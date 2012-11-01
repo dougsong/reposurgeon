@@ -2326,7 +2326,7 @@ class StreamParser:
                                             node.path,
                                             node.from_rev,
                                             source))
-                            lookback = self.find_node(node.from_rev, source)
+                            lookback = filemaps[node.from_rev][source]
                             if lookback is None:
                                 raise Fatal("r%s: can't find ancestor %s" \
                                          % (revision, source))
@@ -2369,11 +2369,10 @@ class StreamParser:
                                 ancestor = self.hashmap[node.from_hash]
                             elif node.from_path:
                                 # A copy node is somehow missing its hash.
-                                ancestor = self.find_node(node.from_rev,
-                                                          node.from_path)
+                                ancestor = filemaps[node.from_rev][node.from_path]
                             elif node.action != SD_ADD:
                                 # Ordinary inheritance, no node copy.
-                                ancestor = self.find_node(str(int(node.revision)-1), node.path)
+                                ancestor = filemaps[str(int(node.revision)-1)][node.path]
                             else:
                                 ancestor = None
                             # Time for fileop generation
