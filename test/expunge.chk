@@ -1,12 +1,11 @@
 reposurgeon: verbose 1
 reposurgeon: echo 1
 read expunge.svn
-reposurgeon: from expunge.svn...                     ...(0.01 sec) done.
 reposurgeon: empty from set for <NodeAction: r3 add dir 'releases/v1.0' from=1~dev>
-reposurgeon: 2012-11-01T14:13:52Z * expunge.svn
+* expunge.svn
 expunge 1..$ ^releases/v1.0/
 reposurgeon: at 7, expunging M releases/v1.0/VERSION
 reposurgeon: deletion set is empty.
 choose
-reposurgeon: 2012-11-01T14:13:52Z - expunge.svn-expunges
-reposurgeon: 2012-11-01T14:13:52Z * expunge.svn
+- expunge.svn-expunges
+* expunge.svn
