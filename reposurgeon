@@ -1681,7 +1681,8 @@ class StreamParser:
     def sd_read_blob(self, length):
         # Read a Subversion file-content blob.
         content = self.fp.read(length)
-        assert self.fp.read(1) == '\n'
+        if self.fp.read(1) != '\n':
+            self.error("EOL not seen where expected, Content-Length is incorrect")
         self.import_line += content.count('\n') + 1
         self.ccount += len(content) + 1
         return content
