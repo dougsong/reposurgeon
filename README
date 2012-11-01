@@ -11,3 +11,19 @@ An auxiliary script, svnpull, assists in mirroring Subversion repositories.
 
 To test the correctness of this software, ensure that pylint
 is installed and then type 'make check'
+
+reposurgeon is a large, algorithmically extremely complex program.  It
+still has bugs when dealing with strange corner cases in older
+repositories.  It is often extremely difficult or impossible to
+reproduce those bugs without a full copy of the history on which they
+occurred.
+
+When you find a bug, please send me
+
+(a) An exact description of how observed behavior differed from expected
+behavior.
+
+(b) A git fast-import or Subversion dump file of the repository you
+were operating on.
+
+(c) The sequence of reposurgeon commands that tickled the bug.
