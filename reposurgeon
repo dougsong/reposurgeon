@@ -3605,16 +3605,16 @@ class Repository:
     def __setitem__(self, i, v):
         self.events[i] = v
 
-def read_repo(source, preferred):
+def read_repo(source, preferred, quiet=False):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
-        repo.fast_import(sys.stdin, progress=verbose==1)
+        repo.fast_import(sys.stdin, progress=(verbose==1 and not quiet))
     elif not os.path.exists(source):
         raise Recoverable("%s does not exist" % source)
     elif not os.path.isdir(source):
         repo = Repository()
-        repo.fast_import(open(source), progress=verbose==1)
+        repo.fast_import(open(source), progress=(verbose==1 and not quiet))
     else:
         if verbose >= DEBUG_SHUFFLE:
             if preferred:
@@ -4263,6 +4263,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         RepositoryList.__init__(self)
         self.use_rawinput = True
         self.echo = 0
+        self.scripting = False
         self.prompt = "reposurgeon% "
         self.preferred = None
         self.selection = []
@@ -4850,6 +4851,7 @@ for exploring the selection-set language.
             complain("script requires a file argument")
             return
         try:
+            self.scripting = True
             with open(line) as scriptfp:
                 while True:
                     scriptline = scriptfp.readline()
@@ -4876,6 +4878,7 @@ for exploring the selection-set language.
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
+            self.scripting = False
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
@@ -5070,7 +5073,9 @@ repository, '-' for others.
                 status =  '-'
                 if self.chosen() and repo == self.chosen():
                     status = '*'
-                announce("%s %s %s" % (rfc3339(repo.readtime), status, repo.name))
+                if not self.scripting:
+                    sys.stdout.write(rfc3339(repo.readtime) + " ")
+                sys.stdout.write("%s %s\n" % (status, repo.name))
         else:
             if line in self.reponames():
                 self.choose(self.repo_by_name(line))
@@ -5169,7 +5174,7 @@ command-line arguments).
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd()
-        repo = read_repo(line, self.preferred)
+        repo = read_repo(line, self.preferred, quiet=self.scripting)
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
@@ -5197,7 +5202,7 @@ anything other than a plain file. The default selection is all events.
         if not line:
             line = '-'
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=verbose==1)
+            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not self.scripting))
         else:
             try:
                 with open(line, "w") as out:
