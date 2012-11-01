@@ -4893,9 +4893,9 @@ currently chosen repository.
                 return                
         for name in line.split():
             repo = self.repo_by_name(name)
-            if not repo:
+            if repo is None:
                 raise Recoverable("no such repo as %s" % name)
-        if repo:
+        if repo is not None:
             def count(otype):
                 return len([x for x in repo.events if isinstance(x,otype)])
             print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
@@ -4996,7 +4996,7 @@ repository, '-' for others.
             if verbose > 0:
                 complain("no repositories are loaded.")
                 return
-        self.repolist.sort(key=lambda x: x[1])
+        self.repolist.sort(key=lambda x: x.name)
         if not line:
             for repo in self.repolist:
                 status =  '-'
@@ -5122,7 +5122,7 @@ anything other than a plain file. The default selection is all events.
 """)
     def do_write(self, line):
         "Stream out the results of repo surgery."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5148,7 +5148,7 @@ dump.
 """)
     def do_inspect(self, line):
         "Dump raw events."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5175,7 +5175,7 @@ its contents are backed up to a save directory.
 """)
     def do_rebuild(self, line):
         "Rebuild a repository from the edited state."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         rebuild_repo(self.chosen(), line, self.preferred)
@@ -5434,7 +5434,7 @@ ordering or gaps in the sequence.
     def do_renumber(self, unused):
         "Renumber the marks in the selected repo."
         assert unused is not None    # pacify pylint
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         self.repo.renumber()
@@ -5451,7 +5451,7 @@ an offset literal of +0 or -0.
 """)
     def do_timeoffset(self, line):
         "Apply a time offset to all dates in selected events."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5511,7 +5511,7 @@ through another path; the tool will detect this. If the repo was named
 """)
     def do_divide(self, line):
         "Attempt to topologically partition the repo."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, [])
@@ -5570,7 +5570,7 @@ file path matches.
 """)
     def do_expunge(self, line):
         "Expunge files from the chosen repository."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5596,7 +5596,7 @@ original commit.
 """)
     def do_split(self, line):
         "Split a commit."
-        if not self.chosen():
+        if self.chosen() is None:
             raise Recoverable("no repo has been chosen.")
         line = self.set_selection_set(line, [])
         if len(self.selection) != 1:
@@ -5678,7 +5678,7 @@ list.
 """)
     def do_graft(self, line):
         "Graft a named repo onto the selected one."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, [])
@@ -5704,7 +5704,7 @@ modifier, take a second argument that is a directory name and prepend
 it to every path. With the 'sup' modifier, strip the first directory
 component from every path.""" )
     def do_paths(self, line):
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5754,7 +5754,7 @@ performed.  If both 'perform' and 'force' modifiers are given, the merge
 is performed even if is not clean.
 """ )
     def do_merge(self, line):
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
@@ -5853,7 +5853,7 @@ third argument is required.
 """)
     def do_tag(self, line):
         "Move a tag to point to a specified commit, or rename it, or delete it."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
@@ -5917,7 +5917,7 @@ a start on building an authors file.
 """)
     def do_authors(self, line):
         "Apply or dump author-mapping file."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
@@ -5959,7 +5959,7 @@ a committer email address.  Does not take a selection set.
 """)
     def do_fossils(self, line):
         "Apply a reference-mapping file."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         fields = line.split()
@@ -6002,7 +6002,7 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
 """)
     def do_references(self, line):
         "Look for things that might be CVS or Subversion revision references."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
@@ -6085,7 +6085,7 @@ set must resolve to a singleton commit.
 """)
     def do_checkout(self, line):
         "Check out files for a specified commit into a directory."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
@@ -6107,7 +6107,7 @@ must resolve to exactly two commits.
 """)
     def do_diff(self, line):
         "Display a diff between versions."
-        if not self.chosen():
+        if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
