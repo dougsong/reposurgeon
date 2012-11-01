@@ -1597,6 +1597,7 @@ class StreamParser:
         self.has_properties = set([])
         self.fileop_branchlinks  = set([])
         self.directory_branchlinks  = set([])
+        self.active_gitignores = set([])
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2015,36 +2016,6 @@ class StreamParser:
     # there's a fair bit of impedance-matching required.  That happens
     # in the following functions.
     #
-    def inner_find_node(self, revision, path, depth):
-        "Find the node for path which is visible at the specified revision."
-        # This isn't reliable.  The problem, as usual, is cvs2svn. It
-        # sometimes generates op sequences that, when you chase the
-        # ancestry pointers, lead nowhere, which is why we prefer to
-        # key on copy-source hashes. There's an example,
-        # branches/reportbuf/drivers/belkin-hid.c, at commit 274 of
-        # the NUT repo.
-        # Walk back through previous revisions
-        rev = int(revision)
-        for prev in [str(rev-i+1) for i in range(1, rev+1)]:
-            for pnode in self.revisions[prev].nodes:
-                if pnode.action == SD_DELETE:
-                    continue
-                elif pnode.path == path:
-                    assert pnode.kind == SD_FILE
-                    if pnode.from_rev:
-                        return self.find_node(pnode.from_rev, pnode.from_path, depth+1)
-                    else:
-                        return pnode
-        return None
-    def find_node(self, revision, path, depth=0):
-        "This outer function exists to assist debugging."
-        if verbose >= DEBUG_EXTRACT:
-            announce("%s-> find_node(%s, %s)" % ("-" * depth, revision, path))
-        node = self.inner_find_node(revision, path, depth)
-        if verbose >= DEBUG_EXTRACT:
-            announce("find_node(%s, %s) %s-> %s" % (revision, path,
-                                                    "-" * depth, node))
-        return node
     @staticmethod
     def node_permissions(node):
         "Fileop permissions from node properties"
@@ -2292,7 +2263,8 @@ class StreamParser:
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
                                 generated_nodes.append(newnode)
-                            elif self.find_node(revision, gitignore_path):
+                                self.active_gitignores.add(gitignore_path)
+                            elif gitignore_path in self.active_gitignores:
                                 if verbose >= DEBUG_IGNORES:
                                     announce("r%s: queuing up %s/.gitignore deletion." % (revision, node.path))
                                 newnode = StreamParser.NodeAction()
@@ -2301,6 +2273,7 @@ class StreamParser:
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 generated_nodes.append(newnode)
+                                self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
                     # If this is a copy between branches, do nothing;
                     # no fileop should be issued until there is an
