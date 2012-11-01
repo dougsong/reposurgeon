@@ -2040,7 +2040,7 @@ class StreamParser:
         return node
     @staticmethod
     def node_permissions(node):
-        "Fileop permissions from not properties"
+        "Fileop permissions from node properties"
         if node.props:
             if "svn:executable" in node.props:
                 return 0o100755
