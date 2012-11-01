@@ -1671,6 +1671,7 @@ class StreamParser:
         if line.strip():
             self.error('found %s expecting blank line' % repr(line))
     def sd_read_blob(self, length):
+        # Read a Subversion file-content blob.
         content = self.fp.read(length)
         assert self.fp.read(1) == '\n'
         self.import_line += content.count('\n') + 1
