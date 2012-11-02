@@ -9,7 +9,8 @@
      Repo 'cut' changed to 'divide' to avoid confusion with link cuts.
      The new 'merge' command can in fact do branch merges.
      The unreliable 'sort' command has been removed.
-     Script commands can now consume multiline here-documents, as in shell.
+     Scripts can now be passed arguments substituted for $1..$n, as in shell.
+     Scripts can now consume multiline here-documents, as in shell.
      New major command 'tag' with verbs "move", "rename" and "delete".
      Reference-name syntax is documented, and can select commits by date.
 

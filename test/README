@@ -16,6 +16,7 @@ either some operation test on an input stream in foo.fi or a repo conversion
 from foo.sd.  Here is a summary of the test sources:
 
 |=============================================================================
+|argtest.tst     |Test argument substitution in scripts
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |divide.tst      |Test for divide operation; uses bzr repo
 |deletion.svn    |Tests translation of file deletions

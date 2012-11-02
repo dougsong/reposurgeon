@@ -1,3 +1,4 @@
+## Test file expunge operation
 verbose 1
 echo 1
 read expunge.svn
