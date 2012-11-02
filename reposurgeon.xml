@@ -459,11 +459,11 @@ do it if there is already one by the new name.
 
 <refsect2 id='rebuild'><title>REBUILDS IN PLACE</title>
 
-<para><command>reposurgeon</command> can rebuild an altered
-repository in place.  Because of safety measures it takes to ensure
-that no exiting repo is ever altered or clobbered, it has to be told
-which untracked files should be saved and restored when the contents
-of the new repository is checked out.</para>
+<para><command>reposurgeon</command> can rebuild an altered repository
+in place.  Untracked files are normally saved and restored when the
+contents of the new repository is checked out (but see the
+documentation of the <quote>preserve</quote> command for a
+caveat).</para>
 
 <variablelist>
 <varlistentry>
@@ -502,10 +502,11 @@ list of paths to be restored from the backup directory after a
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current preserve list is displayed afterwards.</para>
 
-<para>It is only necessary to use this command if your version-control system
-lacks a command to list files under version control. Under systems with such
-a command, all files that are neither beneath the repository dot directory
-nor under reposurgeon temporary directories are preserved automatically.</para>
+<para>It is only necessary to use this command if your version-control
+system lacks a command to list files under version control. Under
+systems with such a command (which include git and hg), all files that
+are neither beneath the repository dot directory nor under reposurgeon
+temporary directories are preserved automatically.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
