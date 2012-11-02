@@ -14,6 +14,10 @@ Description: a tool for editing version-control repository history
 
 XBS-Destinations: freecode
 
+XBS-Gitorious-URL: https://git.gitorious.org/reposurgeon/
+
+XBS-Ohloh-URL: https://www.ohloh.net/p/reposurgeon
+
 Homepage: http://www.catb.org/~esr/reposurgeon
 
 XBS-Logo: reposturgeon.png
