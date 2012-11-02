@@ -3215,10 +3215,10 @@ class Repository:
             # Keep making passes until nothing mutates
             mutated = False
             for i in range(len(commit.fileops)):
-                for j in range(len(commit.fileops)):
+                for j in range(i+1, len(commit.fileops)):
                     a = commit.fileops[i]
                     b = commit.fileops[j]
-                    if i < j and a is not None and b is not None and a.relevant(b):
+                    if a is not None and b is not None and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         if verbose >= DEBUG_DELETE:
                             announce("Reduction case %d fired on %s" % (case, (i,j)))
