@@ -132,7 +132,7 @@ class VCS:
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
 # * Default preserve set (typically config and hook files).
-# * Likely location for an importer to drop an authrmaps file
+# * Likely location for an importer to drop an authormap file
 # * Command to list files under repository control.
 #
 # Note that some of the commands used here are plugins or extensions
