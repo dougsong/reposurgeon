@@ -35,16 +35,16 @@ mailboxing:
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
-TESTLOADS := $(shell ls *.tst | sed '/.tst/s///')
+TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
 fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    ../reposurgeon "script $${file}.tst" >$${file}.chk 2>&1; \
+	    ../reposurgeon "script $${file}.tst testing123" >$${file}.chk 2>&1; \
 	done
 fi-regress:
 	@for file in $(TESTLOADS); do \
 	    echo -n $${file} " "; grep '##' $${file}.tst; \
-	    if ../reposurgeon "script $${file}.tst" >/tmp/regress 2>&1; \
+	    if ../reposurgeon "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done

@@ -4246,6 +4246,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         self.selection = []
         self.line = ""
         self.history = []
+        self.callstack = []
         self.profile_log = None
         for option in dict(RepoSurgeon.Options):
             global_options[option] = False
@@ -4828,8 +4829,9 @@ for exploring the selection-set language.
             complain("script requires a file argument")
             return
         try:
+            self.callstack.append(line.split())
             self.scripting = True
-            with open(line) as scriptfp:
+            with open(self.callstack[-1][0]) as scriptfp:
                 while True:
                     scriptline = scriptfp.readline()
                     if not scriptline:
@@ -4852,10 +4854,13 @@ for exploring the selection-set language.
                         heredoc.close()
                         scriptline += heredoc.name
                     # End of heredoc simulation
+                    for i in range(len(self.callstack[-1])):
+                        scriptline = scriptline.replace('$' + str(i), self.callstack[-1][i])
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
             self.scripting = False
+            self.callstack.pop()
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
