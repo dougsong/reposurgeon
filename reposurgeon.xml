@@ -1213,6 +1213,15 @@ and the list of version-control systems it directly supports.
 but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term><command>quiet</command> 
+        [<emphasis>on | off</emphasis>]
+</term>
+<listitem><para>Without an argument, this command requists a report of the quiet
+boolean; with the argument 'on' or 'off' it is changed.  When quiet is
+on, time-varying report fields which would otherwise cause spurious
+failures in regression testing are suppressed.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><command>echo</command>
         [<emphasis>number</emphasis>]
 </term>

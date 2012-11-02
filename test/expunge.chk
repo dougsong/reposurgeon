@@ -1,5 +1,6 @@
 reposurgeon: verbose 1
 reposurgeon: echo 1
+quiet on
 read expunge.svn
 reposurgeon: empty from set for <NodeAction: r3 add dir 'releases/v1.0' from=1~dev>
 * expunge.svn

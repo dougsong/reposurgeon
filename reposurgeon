@@ -4240,7 +4240,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         RepositoryList.__init__(self)
         self.use_rawinput = True
         self.echo = 0
-        self.scripting = False
+        self.quiet = False
         self.prompt = "reposurgeon% "
         self.preferred = None
         self.selection = []
@@ -4769,7 +4769,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
     def help_verbose(self):
         print("""
 Without an argument, this command requists a report of the verbosity
-kevel.  'verbose 1' enables progress messages, 'verbose 0' disables
+level.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
 developers only.
 """)
@@ -4782,6 +4782,22 @@ developers only.
                 complain("verbosity value must be an integer")
         if not line or verbose:
             announce("verbose %d" % verbose)
+
+    def help_quiet(self):
+        print("""
+Without an argument, this command requists a report of the quiet
+boolean; with the argument 'on' or 'off' it is changed.  When quiet is
+on, time-varying report fields which would otherwise cause spurious
+failures in regression testing are suppressed.
+""")
+    def do_quiet(self, line):
+        if line:
+            if line == "on":
+                self.quiet = True
+            elif line == "off":
+                self.quiet = False
+        if not line:
+            announce("quiet %s" % ("on" if self.quiet else "off"))
 
     def do_echo(self, line):
         "Set or clear echoing commands before processing (for regression tests)"
@@ -4830,7 +4846,6 @@ for exploring the selection-set language.
             return
         try:
             self.callstack.append(line.split())
-            self.scripting = True
             with open(self.callstack[-1][0]) as scriptfp:
                 while True:
                     scriptline = scriptfp.readline()
@@ -4859,7 +4874,6 @@ for exploring the selection-set language.
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
-            self.scripting = False
             self.callstack.pop()
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
@@ -5055,7 +5069,7 @@ repository, '-' for others.
                 status =  '-'
                 if self.chosen() and repo == self.chosen():
                     status = '*'
-                if not self.scripting:
+                if not self.quiet:
                     sys.stdout.write(rfc3339(repo.readtime) + " ")
                 sys.stdout.write("%s %s\n" % (status, repo.name))
         else:
@@ -5156,7 +5170,7 @@ command-line arguments).
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd()
-        repo = read_repo(line, self.preferred, quiet=self.scripting)
+        repo = read_repo(line, self.preferred, quiet=self.quiet)
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
@@ -5184,7 +5198,7 @@ anything other than a plain file. The default selection is all events.
         if not line:
             line = '-'
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not self.scripting))
+            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not self.quiet))
         else:
             try:
                 with open(line, "w") as out:
