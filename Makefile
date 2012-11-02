@@ -3,7 +3,7 @@
 #
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README NEWS COPYING reposurgeon reposurgeon.xml reposurgeon.1 svnpull
+SOURCES = README NEWS COPYING TODO reposurgeon reposurgeon.xml svnpull
 SOURCES += Makefile control reposturgeon.png
 
 all: reposurgeon.1
@@ -40,7 +40,7 @@ pylint:
 check: pylint
 	cd test; make --quiet
 
-dist: reposurgeon-$(VERS).tar.gz
+dist: reposurgeon-$(VERS).tar.gz reposurgeon.1
 
 release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 	shipper -u -m -t; make clean
