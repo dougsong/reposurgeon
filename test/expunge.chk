@@ -7,5 +7,5 @@ expunge 1..$ ^releases/v1.0/
 reposurgeon: at 7, expunging M releases/v1.0/VERSION
 reposurgeon: deletion set is empty.
 choose
-- expunge.svn-expunges
 * expunge.svn
+- expunge.svn-expunges
