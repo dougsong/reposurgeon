@@ -142,7 +142,7 @@ warnings on the manual page; under some (rare) circumstances this tool
 can produce incorrect conversions.</p>
 
 <p>Another option is the <a
-href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool dervied
+href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool derived
 from cvs2svn.  The hard part - deducing changesets from CVS's per-file
 commits - is shared with <code>cvs2svn</code>, which has probably been more
 extensively battle-tested than any other CVS converter out there. The
@@ -172,9 +172,9 @@ opinion of them can be gauged by the fact that I wrote my own.</p>
 <p>2.0 and later versions of <a
 href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> can parse
 Subversion dumpfiles; given local access to a Subversion repository
-(not a checkout, but the actual repository or a mrror of it) the tool
+(not a checkout, but the actual repository or a mirror of it) the tool
 can use <code>svnadmin dump</code> to mine it. The reposurgeon
-distribution also includes a script named <code>svngrab</code> for
+distribution also includes a script named <code>svnpull</code> for
 grabbing and mirroring a remote Subversion repository.</p>
 
 <p>Get the repository mirrored into a directory, fire up
@@ -307,7 +307,7 @@ repository list as a reposurgeon script; this helps you not lose older
 steps as you experiment with newer ones, and it documents what you did.</p>
 
 <p>Most of the work will be in the comment-fixup and reference-lifting
-stages. I find, however, that they normally takes only a couple of
+stages. I find, however, that they normally take only a couple of
 hours even on very large repos with thousands of commits. An entire
 conversion is usually less than a day of work.</p>
 
@@ -383,7 +383,7 @@ repository, a note dating and attributing the conversion work and
 explaining these conventions.  Example:</p>
 
 <blockquote>
-[[This repository was converted from Subversion to git on 2011-10-24
+[[This repository was converted from Subversion to git on 2012-10-24
 by Eric S. Raymond &lt;esr@thyrsus.com&gt;.  Here and elsewhere, conversion
 notes are enclosed in double square brackets. Junk commits generated
 by cvs2svn have been removed, commit references have been mapped into
@@ -423,7 +423,7 @@ git add .gitignore
 git commit -m 'Convert svn:ignore properties to .gitignore.'
 </code></pre>
 
-<h2 id="recovery">Recovering from error</h2>
+<h2 id="recovery">Recovering from errors</h2>
 
 <p>Occasionally you'll discover problems with a conversion after you've
 pushed it to a project's hosting site, typically to a bare repo that
@@ -565,7 +565,7 @@ ignores, removing keyword expansions.</p>
 
 <p>2.5 (2011-11-25) Fix typos and note the existence of git-remote-hg</p>
 
-<p>2.6 (2011-11-26) reposurgeon can read Subversion repos now, making
+<p>2.6 (2012-11-02) reposurgeon can read Subversion repos now, making
 earlier conversion tools obsolete.</p>
 </div>
 <hr />
