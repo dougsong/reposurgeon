@@ -88,6 +88,7 @@ class VCS:
                  checkout,
                  preserve,
                  authormap,
+                 ignorename,
                  notes):
         self.name = name
         self.subdirectory = subdirectory
@@ -100,6 +101,7 @@ class VCS:
         self.checkout = checkout
         self.preserve = preserve
         self.authormap = authormap
+        self.ignorename = ignorename
         self.notes = notes
     def __repr__(self):
         return "         Name: " + str(self.name) + "\n" \
@@ -113,6 +115,7 @@ class VCS:
              + "     Checkout: " + str(self.checkout) + "\n" \
              + "     Preserve: " + str(self.preserve) + "\n" \
              + "    Authormap: " + str(self.authormap) + "\n" \
+             + "   Ignorename: " + str(self.ignorename) + "\n" \
              + "        Notes: " + str(self.notes) + "\n"
 
 # Most knowledge about specific version-control systems lives in the
@@ -161,6 +164,7 @@ vcstypes = [
         lister="git ls-files",
         preserve=set(['.git/config', '.git/hooks']),
         authormap=".git/cvs-authors",
+        ignorename=".gitignore",
         notes="The authormap is not required, but will be used if present."),
     # 
     VCS(name="bzr",
@@ -174,6 +178,7 @@ vcstypes = [
         checkout="bzr checkout",
         preserve=set([]),
         authormap=None,
+        ignorename=".bzrignore",
         notes="Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
     VCS(name="hg",
@@ -189,6 +194,7 @@ vcstypes = [
         checkout="hg checkout",
         preserve=set([".hg/hgrc"]),
         authormap=None,
+        ignorename=".hgignore",
         notes="The hg export-import methods are not part of stock Mercurial."),
     # If we ever implement an exporter, don't forget to preserve hooks/.  
     VCS(name="svn",
@@ -202,6 +208,7 @@ vcstypes = [
         lister=None,
         preserve=set([]),
         authormap=None,
+        ignorename=None,
         notes="Read-only. Run from the repository, not a checkout directory."),
     ]
 
@@ -743,7 +750,8 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
-    def __init__(self):
+    def __init__(self, vcs=None):
+        self.vcs = vcs	# Only used in path_remap method
         self.op = None
         self.committish = None
         self.source = None
@@ -753,6 +761,16 @@ class FileOp:
         self.ref = None
         self.inline = None
         self._paths = None
+    def path_remap(self):
+        "Hack the fileop's basename."
+        # Ignore file names from non-git VCSes need to get
+        # mapped to .gitignore, because we have to
+        # have some way to recognize what they are
+        # in order to remap the name properly on
+        # export.
+        if self.vcs is not None:
+            if os.path.basename(self.path) == self.vcs.ignorename:
+                self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
     def setOp(self, op):
         self.op = op
         self._paths = None
@@ -772,10 +790,12 @@ class FileOp:
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
+            self.path_remap()
             if type(self.mode) == type(0):
                 self.mode = "%06o" % self.mode
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
+            self.path_remap()
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
@@ -791,12 +811,14 @@ class FileOp:
             self._paths = None
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path_remap()
         elif opline[0] == "N":
             (self.op, self.ref, self.committish) = shlex.split(opline)
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path_remap()
         elif opline[0] in ("R", "C"):
             (self.op, self.source, self.target) = shlex.split(opline)
         elif opline == "deleteall":
@@ -1918,11 +1940,11 @@ class StreamParser:
                                     commit.addParent(line.split()[1])
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
-                                    commit.fileops.append(FileOp().parse(line))
+                                    commit.fileops.append(FileOp(self.repo.vcs).parse(line))
                                 elif line == "deleteall\n":
-                                    commit.fileops.append(FileOp().parse("deleteall"))
+                                    commit.fileops.append(FileOp(self.repo.vcs).parse("deleteall"))
                                 elif line[0] == "M":
-                                    fileop = FileOp().parse(line)
+                                    fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
@@ -1935,7 +1957,7 @@ class StreamParser:
                                         # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == "N":
-                                    fileop = FileOp().parse(line)
+                                    fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     self.fi_parse_fileop(fileop)
                                 # Handling of file ops ends.
@@ -3004,6 +3026,13 @@ class Repository:
         else:
             # Default to git style
             return ("nl-after-commit",)
+    def ignore_remap(self, from_base, to_base):
+        "Substitute basenames in all fileops."
+        for commit in self.commits():
+            for op in commit.fileops():
+                if hasattr(op, 'path'):
+                    if os.path.basename(op.path) == from_base:
+                        os.path = os.path.join(os.path.dirname(os.path), to_base)
     def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
@@ -3780,8 +3809,12 @@ def rebuild_repo(repo, target, preferred):
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
+                if vcs.ignorename and vcs.ignorename != ".gitignore":
+                    repo.ignore_remap(".gitignore", vcs.ignorename)
                 with open(tfname, "w") as tp:
                     repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                if vcs.ignorename and vcs.ignorename != ".gitignore":
+                    repo.ignore_remap(vcs.ignorename, ".gitignore")
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)

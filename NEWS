@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.1:
+     Ignore patterns are now moved among .gitignore/.hgignore/.bzrignore.
+
 2.0: 2011-11-02
      reposurgeon can now read Subversion dump files and repositories directly.
      New major commands 'tag' and 'merge' (old 'merge is now 'unite'). 
