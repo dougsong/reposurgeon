@@ -19,16 +19,16 @@ EXTRAS =
 project-$(DVCS): project.fi
 	rm -fr project-$(DVCS); reposurgeon "read project.fi" "prefer $(DVCS)" "rebuild project-$(DVCS)"
 
-# Build the fast-import stream from the stream dump
+# Build the fast-import stream from the Subversion stream dump
 project.fi: project.svn project.lift reposurgeon $(EXTRAS)
 	reposurgeon "verbose 1" "read project.svn" "script project.lift" "write project.fi"
 
-# Get the stream dump from the local mirror
+# Build the Subversion stream dump from the local mirror
 project.svn: project-mirror
 	svnpull project-mirror
 	svnadmin dump project-mirror/ >project.svn
 
-# Make local mirror of the remote Subversion repo
+# Build a local mirror of the remote Subversion repo
 project-mirror:
 	svnpull $(SVN_URL)
 
@@ -44,7 +44,7 @@ local-clobber: clean
 remote-clobber: local-clobber
 	rm -fr project.svn project-mirror svn-checkout
 
-# Make a local checkout of the Subversion project for 
+# Make a local checkout of the Subversion project for inspection
 svn-checkout: project-mirror
 	svn co file://${PWD}/project-mirror svn-checkout
 
