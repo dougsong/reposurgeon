@@ -11,7 +11,7 @@ reposurgeon can also read Subversion dump files directly, making it
 useful for scripting very high-quality conversions from Subversion.
 
 An auxiliary script, svnpull, assists in mirroring Subversion
-repositories. This distribution also includes a generic Makeflow
+repositories. This distribution also includes a generic Makefile
 describing a repeatable conversion workflow using these tools.
 
 To test the correctness of this software, ensure that pylint
