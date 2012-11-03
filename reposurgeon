@@ -407,7 +407,7 @@ extractors = [GitExtractor()]
 verbose         = 0
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
-DEBUG_IGNORES   = 4    # Debug ignore generation
+DEBUG_IGNORES   = 3    # Debug ignore generation
 DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_FILEMAP   = 5    # Debug building of filemaps
@@ -2270,8 +2270,6 @@ class StreamParser:
                             # There are no other directory properties that can
                             # turn into fileops.
                             if "svn:ignore" in node.props:
-                                if verbose >= DEBUG_IGNORES:
-                                    announce("r%s: Queuing up %s/.gitignore generation with:\n%s." % (revision, node.path, node.props["svn:ignore"]))
                                 blob = Blob(self.repo)
                                 with open(blob.blobfile(), "w") as wfp:
                                     wfp.write(node.props["svn:ignore"])
@@ -2281,19 +2279,21 @@ class StreamParser:
                                 newnode.action = SD_ADD
                                 newnode.kind = SD_FILE
                                 newnode.blob = blob
+                                if verbose >= DEBUG_IGNORES:
+                                    announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
                                 generated_nodes.append(newnode)
                                 self.active_gitignores.add(gitignore_path)
                             elif gitignore_path in self.active_gitignores:
-                                if verbose >= DEBUG_IGNORES:
-                                    announce("r%s: queuing up %s/.gitignore deletion." % (revision, node.path))
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = gitignore_path
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
+                                if verbose >= DEBUG_IGNORES:
+                                    announce("r%s: queuing up %s deletion." % (revision, newnode.path))
                                 generated_nodes.append(newnode)
                                 self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
