@@ -547,7 +547,7 @@ class Date:
         # accepts. Note, there could be edge cases that Python's parser
         # handles but git doesn't.
         try:
-            self.timestamp = int(time.mktime(email.utils.parsedate(text)))
+            self.timestamp = int(email.utils.mktime_tz(email.utils.parsedate_tz(text)))
             self.timezone = text.split()[5]
             return
         except TypeError:
