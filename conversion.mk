@@ -52,6 +52,10 @@ svn-checkout: project-mirror
 gitk: project-git
 	cd project-git; gitk --all
 
+# Run a garbage-collect on the generated git repository.  Import doesn't.
+gc: project-git
+	cd project-git; git gc --aggressive
+
 # Make a conversion using a competing tool
 git-svn:
 	git svn --stdlayout clone file://${PWD}/project-mirror git-svn
