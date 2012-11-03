@@ -787,6 +787,23 @@ class FileOp:
             return ""
         else:
             raise Fatal("internal error while extracting pathname")
+    @staticmethod
+    def compare(a, b):
+        "Emulates the sort that git fast-export uses."
+        name_a = FileOp.__pathname__(a)
+        name_b = FileOp.__pathname__(b)
+        len_a = len(name_a)
+        len_b = len(name_b)
+        slen = min(len_a, len_b)
+        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
+        c = cmp(name_a[:slen], name_b[:slen])
+        if c:
+            return c
+        c = len_b - len_a
+        if c:
+            return c
+        # renames go last
+        return (a.op == 'R') - (b.op == 'R') 
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
@@ -845,23 +862,6 @@ class FileOp:
             return True
         else:
             return self.paths() & other.paths()
-    @staticmethod
-    def compare(a, b):
-        "Emulates the sort that git fast-export uses."
-        name_a = FileOp.__pathname__(a)
-        name_b = FileOp.__pathname__(b)
-        len_a = len(name_a)
-        len_b = len(name_b)
-        slen = min(len_a, len_b)
-        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
-        c = cmp(name_a[:slen], name_b[:slen])
-        if c:
-            return c
-        c = len_b - len_a
-        if c:
-            return c
-        # renames go last
-        return (a.op == 'R') - (b.op == 'R') 
     def __str__(self):
         "Dump this fileop in import-stream format."
         if self.op == "M":
