@@ -13,7 +13,7 @@ SVN_URL = svn://random-host.net/project
 DVCS = git
 EXTRAS =
 
-.PHONY: clean dist compare clobber
+.PHONY: clean dist compare local-clobber remote-clobber
 
 # Build the repo from the fast-import stream
 project-$(DVCS): project.fi
