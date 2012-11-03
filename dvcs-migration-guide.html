@@ -403,8 +403,11 @@ to supply version strings that are visible at runtime, you will
 need to supply that information in some different way.</p>
 
 <p>A step that too often gets missed and then inelegantly patched in
-later is converting the declarations that tell the
-version-control system to ignore derived files.</p>
+later is converting the declarations that tell the version-control
+system to ignore derived files. <code>reposurgeon</code> does this for
+you if you're using it for Subversion-to-git conversion; see the
+LIMITATIONS AND GUARANTEES section on its manpage if other DVCSes are
+involved.</p>
 
 <p>The format of .gitignore is compatible with .cvsignore; after a
 CVS-to-git conversion you'll want to do something like this:</p> 
@@ -414,14 +417,6 @@ for x in `find . -print | grep cvsignore`; do t=`dirname $x`/.gitignore; git mv 
 git commit -m 'Convert each .cvsignore to a .gitignore.'
 </code></pre>
 
-<p>Moving Subversion ignore properties is easier, as git-svn has direct
-support for this:</p>
-
-<pre><code>
-git svn show-ignore >.gitignore
-git add .gitignore
-git commit -m 'Convert svn:ignore properties to .gitignore.'
-</code></pre>
 
 <h2 id="automation">Automate aggressively!</h2>
 
@@ -435,182 +430,11 @@ a Makefile that conditionally fires all the steps in your conversion
 process needed to generate either the target repo or any other
 intermediate conversion stage.</p>
 
-<p>For reference, here is most of the Makefile I used to do trial
-conversions of the Network UPS Tools repository.</p>
-
-<pre>
-# Makefile for the nut conversion
-#
-# For these productions to work, reposurgeon and svnpull must be on your $PATH
-
-.PHONY: clean dist clobber
-
-# Build the repo from the fast-import stream
-nut-git: nut.fi
-	rm -fr nut-git; reposurgeon "read nut.fi" "prefer git" "rebuild nut-git"
-
-# Build the fast-import stream from the stream dump
-nut.fi: nut.svn nut.lift nut.box reposurgeon
-	reposurgeon "script nut.lift" "write nut.fi"
-
-# Get the stream dump from the local mirror
-nut.svn: nut-mirror
-	svnpull nut-mirror
-	svnadmin dump nut-mirror/ >nut.svn
-
-# Make local mirror of the NUT Subversion repo
-nut-mirror:
-	svnpull svn://svn.debian.org/nut
-
-# Force a rebuild of the git fast-import stream on the next make
-clean:
-	rm -fr nut.fi nut-git *~ .rs* nut-conversion.tar.gz 
-
-# Remove local state, forcing rebuild from the NUT repo on the next make.
-clobber: clean
-	rm -fr nut.svn nut-mirror svn-checkout
-</pre>
-
-<p>Here is how nut.lift looked at a lare stage of the conversion.  It
-is pretty typical in complexity for a large, old Subversion repository
-that started out as CVS.</p>
-
-<pre>
-# Reposurgeon script for building the git nut repository
-#
-# Make progress batons visible
-verbose 1
-#
-# Start from a dump of the Subversion repo
-read nut.svn
-#
-# Map the author IDs
-authors read &lt;&lt;EOF
-esr-guest = Eric S. Raymond &lt;esr-guest@alioth.debian.org&gt;
-lestat-guest = David Goncalves &lt;david@lestat.st&gt;
-agordeev-guest = Alexander Gordeev &lt;agordeev-guest@alioth.debian.org&gt;
-emilienkia-guest = Emilien Kia &lt;emilienkia-guest@alioth.debian.org&gt;
-prachi-guest = Prachi Gandhi &lt;prachi-guest@alioth.debian.org&gt;
-praveenkumar-guest = Praveen Kumar &lt;praveenkumar-guest@alioth.debian.org&gt;
-msoltyspl-guest = Michal Soltys &lt;msoltyspl-guest@alioth.debian.org&gt;
-keyson-guest = Kjell Claesson &lt;keyson-guest@alioth.debian.org&gt;
-chetanagarwal-guest = Chetan Agarwal &lt;chetanagarwal-guest@alioth.debian.org&gt;
-fbohe-guest = Frederic Bohe &lt;fbohe-guest@alioth.debian.org&gt;
-aquette = Arnaud Quette &lt;arnaud.quette@free.fr&gt;
-clepple-guest = Charles Lepple &lt;clepple+nut@gmail.com&gt;
-adkorte-guest = Arjen de Korte &lt;adkorte-guest@alioth.debian.org&gt;
-(no author) = no author &lt;nobody@networkupstools.org&gt;
-selinger-guest = Peter Selinger &lt;selinger@users.sourceforge.net&gt;
-carlosefr-guest = Carlos Rodrigues &lt;cefrodrigues@gmail.com&gt;
-nba-guest = Niels Baggesen &lt;nba@users.sourceforge.net&gt;
-lyrgard-guest = Jonathan Dion &lt;lyrgard-guest@alioth.debian.org&gt;
-jongough-guest = Jon Gough &lt;jon.gough@eclipsesystems.com.au&gt;
-EOF
-#
-# Optional: uncomment to dump comments after author mapping
-## mailbox_out nut.box-orig
-
-# Edit comments to fix multine comments and make all commit references
-# into machine-parseable cookies.
-mailbox_in nut.box
-#
-# Optional: uncomment to eyeball the comment differences,
-# Warning, this diff is large!
-## shell diff -u nut.box-orig nut.box | more
-#
-# Lift all SVN:xxxx references
-references lift
-#
-# Clean up superfluous branch root labels
-delete =T & /New repository initialized by cvs2svn./
-delete =T & /New branch for dynamic link of nut-scanner libraries/  
-delete =T & /AsciiDoc branch creation/
-delete =T & /Add new branch for bcmxcp driver extension/
-delete =T & /Create a branch to track development on Powerchain/
-delete =T & /Created NUT_packaging branch to add NUT Solaris package/
-delete =T & /apcsmart driver updates/
-delete =T & /Create branch tripplite-proto-3004/
-delete =T & /Create branch netport/
-delete =T & /Create Windows porting branch/
-delete =T & /Branch for working on HP-UX build issues./
-delete =T & /No functional changes \(properties only\)/
-delete =T & /Add new branch for dynamic poll mechanism/
-delete =T & /Create a branch for NUT Quality Assurance related work/
-delete =T & /Branch for some FreeBSD testing of tripplite_usb/
-delete =T & /creating a megatec-usb branch/
-delete =T & /New branch to test tripplite_usb Unit ID code command/
-delete =T & /Branch for "list UPS" option in upsc/
-delete =T & /create the development branch to work on the new configuration/
-delete =T & /creating a branch "automake" of trunk/
-delete =T & /Folder for NUT test cases/
-delete =T & /Create a new clean and up to date branch for NSS work/
-delete =T & /New try to add this/
-delete =T & /file mge-hid.h was initially added on branch v2_1_0./
-delete =T & /file bcmxcp.[ch8] was initially added on branch v2_1_0./
-delete =T & /file apc-hid.h was initially added on branch v2_1_0./
-delete =T & /file netvisionmib.h was initially added on branch v2_1_0./
-delete =T & /Initial CVS import from nut testing release 2.0.1-pre4/
-delete =T & /file upscode2.8 was initially added on branch v2_1_0./
-delete =T & /file pwmib.h was initially added on branch v2_1_0./
-delete =T & /file upscode2.c was initially added on branch v2_1_0./
-delete =T & /file solis.[ch8] was initially added on branch v2_1_0./
-delete =T & /This commit was manufactured by cvs2svn to create branch/
-delete =T & /New branch for rst conversion of documentation/
-delete =T & /Experimenting with conversion of documentation to reStructuredText:/
-delete =T & /Creating branch for eventual release of 2.2.0/
-delete =T & /file .* was initially added on branch./
-delete =T & /New branch for implementing list functionality in upsc./
-delete =T & /Copied from the trunk, to work on the autodetection by the server which drivers are running to allow for future hot(un)plugging of drivers for instance./
-delete =T & /Create an 'experimental' branch for changes that should/
-delete =T & /Create a branch to track development on new user interfaces/
-delete =T & /Creating a branch for Coverity reported problems/
-delete =T & /Create AppArmor working branch/
-#
-# Also, branch-deletion commits that have become tags.  The few that
-# convey actual information get renamed instead.
-delete =T & /Removing old branches/
-delete =T & /Remove old branch/
-delete =T & /^Merged into the trunk/
-delete =T & /Remove old Testing branch/
-delete =T & /Remove old -pre release tags, since these are not useful anymore/
-delete =T & /removing dead branch metatec-usb/
-delete =T & /Branch no longer needed./
-delete =T & /Merged branch back into trunk/
-delete =T & /Cleaning up old branches in preparation for 2.2.0/
-delete =T & /removing obsolete tags/
-delete =T & /Cleaning up repository after initial SVN import/
-delete &lt;tipdelete-r2.0.1&gt;
-delete &lt;tipdelete-v2.1.0&gt;
-# 
-# Delete obsolete branches
-delete (reportbuf) obliterate quiet
-delete (Tripp_Lite_Omni) obliterate quiet
-delete (regex_branch) obliterate quiet
-#
-# Delete the messed-up windows porting branch creation 
-delete &lt;2010-10-18T11:46:55Z&gt; obliterate quiet
-delete &lt;2010-10-18T11:52:35Z&gt; obliterate quiet
-delete =C & /Delete faulty branch/ obliterate quiet
-#
-# Delete other scar tissue
-delete =C & /Something went wrong in the creation of this branch/ obliterate quiet
-tag emptycommit-2175 delete # Empty comment - sets eol-style on Makefile.am
-delete =C & /About to create a new rst branch from the trunk/
-delete =C & /This branch is from before Arjen's updates to upsc. Moving it out of the way./
-delete =C & /Merge from trunk \(2010-12-21T09:32:47Z!fbohe-guest@alioth.debian.org\)/ obliterate quiet
-delete =C & /Revert previous commit \(merge pb due to bad revision\). Sorry for noise./ obliterate quiet
-#
-# Tag location and name fixups
-delete =C & /Remove 2.6.0 tag/ obliterate quiet
-tag v2.6.0 move /Missing website update for 2.6.0/
-delete =T & /^wrong tag name/
-tag 2.0.4 rename v2.0.4
-delete =T & /re taging 2.2.2/
-delete =C & /moving the tags following a last change in Testing/ obliterate quiet
-tag v2.2.2 move /fix HAL_CALLOUT_PATH for distcheck/
-tag emptycommit-2582 rename reset-eol
-tag emptycommit-3003 rename windows-set-eol
-</pre>
+<p>The <code>reposurgeon</code> distribution includes a <a
+href="http://catb.org/~esr/reposurgeon/conversion.mk">generic
+makefile</a> that captures much of the workflow described in this
+how-to and is designed to be easily customized for your repo
+conversion.</p>
 
 <h2 id="recovery">Recovering from errors</h2>
 
@@ -756,6 +580,8 @@ ignores, removing keyword expansions.</p>
 
 <p>2.6 (2012-11-02) reposurgeon can read Subversion repos now, making
 earlier conversion tools obsolete.</p>
+
+<p>2.7 (2012-11-03) Add a link to the generic conversion makefile.</p>
 </div>
 <hr />
 </body>
