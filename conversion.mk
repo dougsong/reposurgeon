@@ -28,16 +28,20 @@ project.svn: project-mirror
 	svnpull project-mirror
 	svnadmin dump project-mirror/ >project.svn
 
-# Make local mirror of the PROJECT Subversion repo
+# Make local mirror of the remote Subversion repo
 project-mirror:
 	svnpull $(SVN_URL)
 
-# Force rebuild of the fast-import stream from the local mirror on the next make
+# General cleanup
 clean:
+	rm -fr *~ .rs* project-conversion.tar.gz 
+
+# Force rebuild of the fast-import stream from the local mirror on the next make
+local-clobber: clean
 	rm -fr project.fi project-$(DVCS) *~ .rs* project-conversion.tar.gz 
 
 # Force full rebuild from the remote repo on the next make.
-clobber: clean
+remote-clobber: local-clobber
 	rm -fr project.svn project-mirror svn-checkout
 
 # Make a local checkout of the Subversion project for 
