@@ -1,7 +1,8 @@
 			reposurgeon project news
 
 2.1:
-     Ignore patterns are now moved among .gitignore/.hgignore/.bzrignore.
+     Ignores are moved among git/hg/bzr ignore files (but not yet translated).
+     Added conversion.mk to the distribution, describing a typical workflow.
 
 2.0: 2011-11-02
      reposurgeon can now read Subversion dump files and repositories directly.
