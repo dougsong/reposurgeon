@@ -1582,6 +1582,16 @@ tag will invalidate it.</para>
 property extension commands. Accordingly, <command>reposurgeon</command> 
 omits them when rebuilding a repo with git type.</para>
 
+<para>Limitation: <command>reposurgeon</command> recognizes how
+supported VCSes represent file ignores (Subversion ignore properties,
+.gitignore/.hgignore/.bzrignore file in other systems) and moves
+ignore declarations among these containers on repo input and output. This
+will be sufficent if the ignore patterns are exact filenames.  But
+<command>reposurgeon</command> does not know about variant pattern
+syntaxes and does not translate them. Subversion's shell globbing is
+upward-compatible with git's, but other translation cases may need
+hand-hacking.</para>
+
 <!-- was: https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools -->
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
