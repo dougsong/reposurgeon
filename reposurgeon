@@ -2301,7 +2301,7 @@ class StreamParser:
                     # no fileop should be issued until there is an
                     # actual file modification on the new branch.
                     # Exception: If the target branch has been deleted,
-                    # perform a a normal copy.
+                    # perform a normal copy.
                     if node.from_path:
                         nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
