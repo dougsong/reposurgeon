@@ -4,24 +4,28 @@
 # 1. Make sure reposurgeon and svnpull are on your $PATH.
 # 2. Set SVN_URL to point at the remote repository you want to convert.
 # 3. Set DVCS to git, hg, or bzr
-# 4. Create a project.lift script for your custom commands, initially empty.
+# 4. Set LIFT to the name of a script for your custom commands, initially empty.
 # 5. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
 # 6. (Optional) Replace 'project' with a short name for your project.
 # 7. Invoke make on this file.
 
 SVN_URL = svn://random-host.net/project
 DVCS = git
+LIFT = project.lift
 EXTRAS =
 
-.PHONY: clean dist compare local-clobber remote-clobber
+# Configuration ends here
+
+.PHONY: clean local-clobber remote-clobber
+.PHONY: svn-checkout gitk gc git-svn compare dist
 
 # Build the repo from the fast-import stream
 project-$(DVCS): project.fi
 	rm -fr project-$(DVCS); reposurgeon "read project.fi" "prefer $(DVCS)" "rebuild project-$(DVCS)"
 
 # Build the fast-import stream from the Subversion stream dump
-project.fi: project.svn project.lift reposurgeon $(EXTRAS)
-	reposurgeon "verbose 1" "read project.svn" "script project.lift" "write project.fi"
+project.fi: project.svn $(LIFT) reposurgeon $(EXTRAS)
+	reposurgeon "verbose 1" "read project.svn" "script $(LIFT)" "write project.fi"
 
 # Build the Subversion stream dump from the local mirror
 project.svn: project-mirror
@@ -58,7 +62,7 @@ gitk: project-git
 
 # Run a garbage-collect on the generated git repository.  Import doesn't.
 gc: project-git
-	cd project-git; git gc --aggressive
+	cd project-git; git repack; git gc --aggressive
 
 # Make a conversion using a competing tool
 git-svn:
@@ -71,7 +75,7 @@ compare: git-svn project-git
 	(cd project-git; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
 	diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
 
-SOURCES = Makefile project.lift $(EXTRAS)
+SOURCES = Makefile $(LIFT) $(EXTRAS)
 project-conversion.tar.gz: $(SOURCES)
 	tar --dereference --transform 's:^:project-conversion/:' -czvf project-conversion.tar.gz $(SOURCES)
 
