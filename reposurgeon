@@ -539,22 +539,41 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
+def secondsFromOffsetString(text):
+    m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
+    if m is not None:
+        sign = -1 if m.group(1) == "-" else 1
+        hours = int(m.group(2))
+        mins = int(m.group(3))
+        if hours < -14 or hours > 12 or mins > 59:
+            complain("Be warned, the UTC offset '%s' looks funky but we're using anyway." % text)
+        return (hours * 60 + mins) * 60 * sign
+    else:
+        complain("Warning, UTC offset '%s' is invalid, assuming +0000 instead." % text)
+        return 0
+
 class Date:
-    "A time/date in local time. Preserves TZ information but doesn't use it."
+    "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
-        # First, look for git's preferred format.
-        text = text.strip() 
+        # First, look for git's preferred format, which is a timestamp
+        # in UTC followed by an offset to be used as a hint for what
+        # timezone to display the date in when converting to other
+        # formats
+        text = text.strip()
         if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
-            (self.timestamp, self.timezone) = text.split()
+            (self.timestamp, self.orig_tz_string) = text.split()
+            self.tz_offset = secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
             return
         # If that didn't work, look for an RFC822 date, which git also
         # accepts. Note, there could be edge cases that Python's parser
         # handles but git doesn't.
         try:
-            self.timestamp = int(time.mktime(email.utils.parsedate(text)))
-            self.timezone = text.split()[5]
+            dt = email.utils.parsedate_tz(text)
+            self.tz_offset = dt[9]
+            self.timestamp = int(calendar.timegm(dt) - self.tz_offset)
+            self.orig_tz_string = text.split()[5]
             return
         except TypeError:
             # time.mktime throws this when it gets None:
@@ -566,7 +585,8 @@ class Date:
             text = re.sub(r"\.[0-9]+Z", "Z", text)
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(rfc3339date)
-            self.timezone = "+0000"
+            self.orig_tz_string = "+0000"
+            self.tz_offset = 0
             return
         except ValueError:
             # time.strptime() throws this
@@ -578,12 +598,12 @@ class Date:
         return rfc3339(self.timestamp)
     def rfc822(self):
         "Format as an RFC822 timestamp."
-        return time.strftime("%a %d %b %Y %H:%M:%S", time.localtime(self.timestamp)) + " " + self.timezone
+        return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
     def delta(self, other):
         return other.timestamp - self.timestamp
     def __str__(self):
         "Format as a git timestamp."
-        return str(self.timestamp) + " " + self.timezone
+        return str(self.timestamp) + " " + self.orig_tz_string
     def __cmp__(self, other):
         return cmp(self.timestamp, other.timestamp)
 
