@@ -28,6 +28,7 @@ from foo.sd.  Here is a summary of the test sources:
 |filecopy.svn	 |Test to make sure file copies don't confuse branch detection.
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
+|mkignore.svn    |Test simultaneous directory creation and ignore setting.
 |nontipcopy.svn  |Two branches, with the creation right after a tag copy
 |nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it
 |references.tst  |Test author mapping and reference lifting 

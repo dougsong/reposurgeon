@@ -1,0 +1,120 @@
+SVN-fs-dump-format-version: 2
+
+UUID: cc5b8b51-fa03-4c55-b27e-856421c10e04
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-04T19:45:16.268140Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 133
+Content-length: 133
+
+K 8
+svn:date
+V 27
+2012-11-04T19:48:50.875550Z
+K 7
+svn:log
+V 35
+Describe the purpose of this repo.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 229
+Text-content-md5: dddc7b97e506e6cf310244163c4911b7
+Text-content-sha1: d0dc95b0f51efb868e788aab04c5a6ca0dd45a11
+Content-length: 239
+
+PROPS-END
+This is a handcrafted repository designed to test a bug reported by
+Charles Lepple.  He reports that ".gitignore files do not seem to be
+generated when a directory is +created at the same time as its
+svn:ignore property is set."
+
+
+Revision-number: 2
+Prop-content-length: 200
+Content-length: 200
+
+K 8
+svn:date
+V 27
+2012-11-04T19:50:36.034744Z
+K 7
+svn:log
+V 101
+This commit immediately followed these two commands:
+
+svn mkdir foo
+svn propset svn:ignore *.pyc foo
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 163
+Content-length: 163
+
+K 8
+svn:date
+V 27
+2012-11-04T19:52:02.017672Z
+K 7
+svn:log
+V 65
+Add another commit so we can see if the .gitignore gets created.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: change
+Text-content-length: 295
+Text-content-md5: 32281ae3919f592745626e87855d0bcd
+Text-content-sha1: 382cf1de893627ab8e6ca01b73ec688cfc7e62d4
+Content-length: 295
+
+This is a handcrafted repository designed to test a bug reported by
+Charles Lepple.  He reports that ".gitignore files do not seem to be
+generated when a directory is +created at the same time as its
+svn:ignore property is set."
+
+Add another commit so we can see if the .gitignore gets created.
+
+
