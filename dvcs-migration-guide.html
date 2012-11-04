@@ -79,6 +79,41 @@ be in early development and as yet only poorly documented.</p>
 some education in good practice to get the most out of the tools.
 I'll cover that aspect as well.</p>
 
+<h1 id="preparation">Step Zero: Preparation</h1>
+
+<p>Subversion and CVS identify users by a Unix login name local to the
+repository host; DVCSes use pairs of fullnames and email addresses.
+Before you can do your conversion, you'll need to put together an
+authors file that maps the former to the latter.  The authors file
+should specify a full name and email address for each local user ID in
+the repo you're converting. Each line should be in the following form:</p>
+
+<pre>
+foonly=Fred Foonly &lt;foonly@foobar.com&gt;
+</pre>
+
+<p>How best to get this information will vary depending on your
+situation.  If you can get shell access to the repository host,
+looking at <code>/etc/passwd</code> will give you the real name
+corresponding to each username: usually you can simply append @ and
+the repository hostname to each username to get a valid email
+address. If the prepository is owned by a project on a forge site, you
+can usually get the real name information through the Web interface;
+try looking for the project membership or developer's list information .</p>
+
+<p>If you are converting the repository for an open-source project, it
+is good courtesy and good practice after the above first step to email
+the contributors and invite them to supply a preferred form of
+their name and a preferred email address to be used in the mapping.
+The reason for this is that some sites, like <a
+href="https://www.ohloh.net/">Ohloh</a>, aggregate participation
+statistics (and thus, reputation) across many projects, using
+developer name and email address as a primary key.</p>
+
+<p>Your authors file does not have to be final until you ship your
+converted repo, so you can chase down authors' preferred
+identifications in parallel with the rest of the work.</p>
+
 <h1 id="conversion">Step One: Conversion</h1>
 
 <p>Your first step will be converting your repository to git. In 90%
@@ -86,15 +121,6 @@ of cases you'll be converting from CVS or Subversion, and those are
 the cases we'll cover here.  If you're using something older or
 weirder, you're on your own for this step.</p>
 
-<p>Before you can do your conversion, you'll need to put together an
-authors file.  Subversion and CVS identify users by a local Unix login
-name; DVCSes use pairs of fullnames and email addresses. The authors file
-should specify a full name and email address for each local user ID in
-your repo. Each line should be in the following form:</p>
-
-<pre>
-foonly=Fred Foonly &lt;foonly@foobar.com&gt;
-</pre>
 
 <h2 id="cvs_to_git">CVS to git</h2> 
 
@@ -585,7 +611,7 @@ earlier conversion tools obsolete.</p>
 
 <p>2.7 (2012-11-03) Add a link to the generic conversion makefile.</p>
 
-<p>2.8 (2012-11-04) Title change and cleanup</p>
+<p>2.8 (2012-11-04) Title change, cleanup, and a Step Zero section.</p>
 </div>
 <hr />
 </body>
