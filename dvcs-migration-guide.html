@@ -10,7 +10,7 @@
 <meta name="keywords" content="" />
 <meta name="MSSmartTagsPreventParsing" content="TRUE" />
 <a href='http://www.anti-leech.com/spam/spambot_stopper.php'></a>
-<title>DVCS migration: supporting git and hg access from one repo</title>
+<title>DVCS migration HOWTO</title>
 </head>
 <body>
 
@@ -167,7 +167,9 @@ Use the -A option of <code>cvs2svn</code> (which works just like -A in
 
 <p>There are at least half a dozen utilities out there for lifting
 Subversion repositories to a git repository or import stream.  My
-opinion of them can be gauged by the fact that I wrote my own.</p>
+opinion of them can be gauged by the fact that I wrote my own. (You
+can read a <a href="http://esr.ibiblio.org/?p=4691">list</a> of the
+things it does that other conversion tools don't.)</p>
 
 <p>2.0 and later versions of <a
 href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> can parse
@@ -360,10 +362,10 @@ be garbage-collected by hand.</p>
 and time of the repo lift.  See the next section on conversion
 comments for discussion.</p>
 
-<p>Experiments with reposurgeon suggest that <code>git import</code>
-doesn't try to pack or otherwise optimize for space when it populates
-a repo from a dump file; this produces large repositories.  Running
-<code>gt repack</code> and <code>git gc
+<p>Experiments with <code>reposurgeon</code> suggest that <code>git
+import</code> doesn't try to pack or otherwise optimize for space when
+it populates a repo from a dump file; this produces large
+repositories.  Running <code>gt repack</code> and <code>git gc
 &#45;&#45;aggressive</code> can slim them down quite a lot.</p>
 
 <h2 id="conversion-comments">Conversion comments</h2>
@@ -424,7 +426,7 @@ git commit -m 'Convert each .cvsignore to a .gitignore.'
 the odds that you will get it perfectly right the first time are close
 to zero.</p>
 
-<p>To save yourself repeated handwork, package your reposurgeon
+<p>To save yourself repeated handwork, package your <code>reposurgeon</code>
 conversion steps into a lifting script as you develop them, then build
 a Makefile that conditionally fires all the steps in your conversion
 process needed to generate either the target repo or any other
@@ -582,6 +584,8 @@ ignores, removing keyword expansions.</p>
 earlier conversion tools obsolete.</p>
 
 <p>2.7 (2012-11-03) Add a link to the generic conversion makefile.</p>
+
+<p>2.8 (2012-11-04) Title change and cleanup</p>
 </div>
 <hr />
 </body>
