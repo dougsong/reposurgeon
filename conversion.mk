@@ -1,6 +1,7 @@
 # Generic makefile for Subversion-to-DVCS conversions using reposurgeon
 #
 # Steps to using this:
+# 0. Copy this into a scratch directory as Makefile
 # 1. Make sure reposurgeon and svnpull are on your $PATH.
 # 2. Set SVN_URL to point at the remote repository you want to convert.
 # 3. Set DVCS to git, hg, or bzr
@@ -16,8 +17,8 @@ EXTRAS =
 
 # Configuration ends here
 
-.PHONY: clean local-clobber remote-clobber
-.PHONY: svn-checkout gitk gc git-svn compare dist
+.PHONY: clean local-clobber remote-clobber svn-checkout dist
+.PHONY: gitk gc git-svn compare
 
 # Build the repo from the fast-import stream
 project-$(DVCS): project.fi
@@ -52,6 +53,13 @@ remote-clobber: local-clobber
 svn-checkout: project-mirror
 	svn co file://${PWD}/project-mirror svn-checkout
 
+# Bundle up the conversion metadata for shipping
+SOURCES = Makefile $(LIFT) $(EXTRAS)
+project-conversion.tar.gz: $(SOURCES)
+	tar --dereference --transform 's:^:project-conversion/:' -czvf project-conversion.tar.gz $(SOURCES)
+
+dist: project-conversion.tar.gz
+
 #
 # The following productions are git-specific
 #
@@ -74,9 +82,3 @@ compare: git-svn project-git
 	(cd git-svn; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
 	(cd project-git; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
 	diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
-
-SOURCES = Makefile $(LIFT) $(EXTRAS)
-project-conversion.tar.gz: $(SOURCES)
-	tar --dereference --transform 's:^:project-conversion/:' -czvf project-conversion.tar.gz $(SOURCES)
-
-dist: project-conversion.tar.gz
