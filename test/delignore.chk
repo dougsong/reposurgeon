@@ -1,0 +1,37 @@
+blob
+mark :1
+data 141
+This file is in the top level of a branchless repo.  A directory
+'foo' has been created, which will have an ignore property set
+on it soon.
+
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+committer esr <esr> 1351981329 +0000
+data 50
+This commit creates the README and the directory.
+M 100644 :1 README
+
+blob
+mark :3
+data 6
+*.pyc
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1351981462 +0000
+data 44
+This commit follows "svn:ignore *.pyc foo".
+from :2
+M 100644 :3 foo/.gitignore
+
+commit refs/heads/master
+mark :5
+committer esr <esr> 1351982722 +0000
+data 28
+This follows "svn del foo".
+from :4
+D foo/.gitignore
+

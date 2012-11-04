@@ -20,6 +20,7 @@ from foo.sd.  Here is a summary of the test sources:
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |divide.tst      |Test for divide operation; uses bzr repo
 |deletion.svn    |Tests translation of file deletions
+|delignore.svn   |Tests correct cleanup of gitignore on directory delete
 |deepdirs.svn    |Branchy repo with directory copy and delete
 |deleteall.fi    |Tests roundtripping of deleteall operation 
 |emptybranch.svn |Branchy repo with empty branch at top level
