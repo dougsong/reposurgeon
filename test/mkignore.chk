@@ -1,0 +1,50 @@
+blob
+mark :1
+data 229
+This is a handcrafted repository designed to test a bug reported by
+Charles Lepple.  He reports that ".gitignore files do not seem to be
+generated when a directory is +created at the same time as its
+svn:ignore property is set."
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+committer esr <esr> 1352058530 +0000
+data 35
+Describe the purpose of this repo.
+M 100644 :1 README
+
+blob
+mark :3
+data 6
+*.pyc
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1352058636 +0000
+data 101
+This commit immediately followed these two commands:
+
+svn mkdir foo
+svn propset svn:ignore *.pyc foo
+from :2
+M 100644 :3 foo/.gitignore
+
+blob
+mark :5
+data 295
+This is a handcrafted repository designed to test a bug reported by
+Charles Lepple.  He reports that ".gitignore files do not seem to be
+generated when a directory is +created at the same time as its
+svn:ignore property is set."
+
+Add another commit so we can see if the .gitignore gets created.
+
+commit refs/heads/master
+mark :6
+committer esr <esr> 1352058722 +0000
+data 65
+Add another commit so we can see if the .gitignore gets created.
+from :4
+M 100644 :5 README
+
