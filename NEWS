@@ -3,6 +3,7 @@
 2.1:
      Ignores are moved among git/hg/bzr ignore files (but not yet translated).
      Added conversion.mk to the distribution, describing a typical workflow.
+     Fixed a bug that could result in incorrect timezone handling in git dates.
 
 2.0: 2011-11-02
      reposurgeon can now read Subversion dump files and repositories directly.

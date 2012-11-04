@@ -2276,6 +2276,14 @@ class StreamParser:
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 generated_nodes.append(newnode)
+                            ignorepath = os.path.join(node.path, ".gitignore")
+                            if ignorepath in self.active_gitignores:
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = ignorepath
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                generated_nodes.append(newnode)
                     elif node.action == SD_CHANGE:
                         if node.props is not None:
                             if verbose >= DEBUG_EXTRACT:

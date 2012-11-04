@@ -1,0 +1,114 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 4985f3c0-5527-4116-afcb-158abdde39ba
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-03T22:16:25.308662Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 148
+Content-length: 148
+
+K 8
+svn:date
+V 27
+2012-11-03T22:22:09.866028Z
+K 7
+svn:log
+V 50
+This commit creates the README and the directory.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 141
+Text-content-md5: b143a2e3f8f284bf4519804de9bcc137
+Text-content-sha1: 6f7ef5a055bb1fa10c988c1f22e7d6446b32f297
+Content-length: 151
+
+PROPS-END
+This file is in the top level of a branchless repo.  A directory
+'foo' has been created, which will have an ignore property set
+on it soon.
+
+
+
+Node-path: foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 142
+Content-length: 142
+
+K 8
+svn:date
+V 27
+2012-11-03T22:24:22.232321Z
+K 7
+svn:log
+V 44
+This commit follows "svn:ignore *.pyc foo".
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: foo
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-11-03T22:45:22.887127Z
+K 7
+svn:log
+V 28
+This follows "svn del foo".
+
+PROPS-END
+
+Node-path: foo
+Node-action: delete
+
+
