@@ -290,7 +290,7 @@ with reposurgeon follow.</p>
 <ol>
 <li>Map author IDs from local to DVCS form.</li>
 <li>Check for leftover cvs2svn junk commits and remove them if possible.</li>
-<li>Lift references in commit comments.</p>
+<li>Lift references in commit comments.</li>
 <li>Massage comments into summary-line-plus-continuation form.</li>
 <li>Remove delete-only tip commits where appropriate.</li>
 <li>Review generated tags, pruning as appropriate.</li>
@@ -303,7 +303,7 @@ with reposurgeon follow.</p>
 
 <p><code>reposurgeon</code> has a "script" command that allows you to
 bundle up a set of commands with comments.  I recommend writing your
-repository list as a reposurgeon script; this helps you not lose older
+repository lift as a reposurgeon script; this helps you not lose older
 steps as you experiment with newer ones, and it documents what you did.</p>
 
 <p>Most of the work will be in the comment-fixup and reference-lifting
