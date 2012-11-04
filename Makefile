@@ -38,6 +38,7 @@ pylint:
 	@pylint --output-format=parseable $(PYLINTOPTS) reposurgeon
 
 check: pylint
+	./reposurgeon "runtests"
 	cd test; make --quiet
 
 dist: reposurgeon-$(VERS).tar.gz reposurgeon.1
