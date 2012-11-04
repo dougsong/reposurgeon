@@ -539,19 +539,6 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
-def secondsFromOffsetString(text):
-    m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
-    if m is not None:
-        sign = -1 if m.group(1) == "-" else 1
-        hours = int(m.group(2))
-        mins = int(m.group(3))
-        if hours < -14 or hours > 12 or mins > 59:
-            complain("Be warned, the UTC offset '%s' looks funky but we're using anyway." % text)
-        return (hours * 60 + mins) * 60 * sign
-    else:
-        complain("Warning, UTC offset '%s' is invalid, assuming +0000 instead." % text)
-        return 0
-
 class Date:
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     def __init__(self, text):
@@ -563,7 +550,7 @@ class Date:
         text = text.strip()
         if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
             (self.timestamp, self.orig_tz_string) = text.split()
-            self.tz_offset = secondsFromOffsetString(self.orig_tz_string)
+            self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
             return
         # If that didn't work, look for an RFC822 date, which git also
@@ -594,6 +581,19 @@ class Date:
             pass
         # Date format not recognized
         raise Fatal("'%s' is not a valid timestamp" % text)
+    @staticmethod
+    def secondsFromOffsetString(text):
+        m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
+        if m is not None:
+            sign = -1 if m.group(1) == "-" else 1
+            hours = int(m.group(2))
+            mins = int(m.group(3))
+            if hours < -14 or hours > 12 or mins > 59:
+                complain("dubious UTC offset '%s'." % text)
+            return (hours * 60 + mins) * 60 * sign
+        else:
+            complain("invalid UTC offset '%s', assuming +0000 instead." % text)
+            return 0
     def rfc3339(self):
         return rfc3339(self.timestamp)
     def rfc822(self):
