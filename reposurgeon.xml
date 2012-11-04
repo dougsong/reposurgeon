@@ -1312,11 +1312,15 @@ gathers statistics only on code executed via '-'.</para>
 
 <para><application>reposurgeon</application> can read Subversion
 dumpfiles or dump from a Subversion repository (not a checkout
-directory). You can usually use use svnsync to make a local mirror of
-the repository you are interested in. <application>reposurgeon</application>
-cannot write a Subversion repository, but history read from one can be
-exported to any VCS for which <application>reposurgeon</application> has
-an importer specified.</para>
+directory).  The <application>reposurgeon</application> distribution
+includes a script named <quote>svnpull</quote> that you can use to
+make and then incrementally update a local mirror of a remote
+repository for conversion purposes.</para>
+
+<para><application>reposurgeon</application> cannot write a Subversion
+repository, but history read from one can be exported to any VCS for
+which <application>reposurgeon</application> has an importer
+specified.</para>
 
 <para>Here are the rules used for mapping subdirectories in a 
 Subversion repository to branches:</para>
