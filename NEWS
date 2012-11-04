@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.1:
+2.1: 2012-11-04
      Ignores are moved among git/hg/bzr ignore files (but not yet translated).
      Added conversion.mk to the distribution, describing a typical workflow.
      Fixed a bug that could result in incorrect timezone handling in git dates.
