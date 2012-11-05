@@ -1572,12 +1572,9 @@ syntaxes and does not translate them. Subversion's shell globbing is
 upward-compatible with git's, but other translation cases may need
 hand-hacking.</para>
 
-<!-- was: https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools -->
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
-<command>reposurgeon</command>. See the <ulink
-url="https://git.wiki.kernel.org/articles/i/n/t/Interfaces,_frontends,_and_tools.html">Git
-Wiki tools page</ulink> for a large collection of such tools.</para>
+<command>reposurgeon</command>.</para>
 </refsect1>
 
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
