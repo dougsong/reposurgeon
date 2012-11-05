@@ -1296,9 +1296,18 @@ Subversion repository to branches:</para>
 
 <orderedlist>
 <listitem><para>A repository is considered "flat" if it has no /trunk
-directory.  All commits in a flat repository are assigned to branch master.
-In this case, we're done; all the other rules apply to non-flat
-repos.</para></listitem>
+directory.  All commits in a flat repository are assigned to branch
+master, and what would have been branch structure becomes directory
+structure.  In this case, we're done; all the other rules apply to
+non-flat repos.</para></listitem>
+
+<para>If you give the command <command>set svn_nobranch</command>
+before reading a Subversion repository, branch analysis is skipped and
+the repository is treated as though flat (left as a linear sequence of
+commits on refs/heads/master).  This may be useful if your repository
+configuration is highly unusual and you need to do your own branch
+surgery. Note that tis option will disable partitioning of mixed
+commits.</para>
 
 <listitem><para>/trunk always becomes the master branch.</para></listitem>
 
@@ -1317,12 +1326,6 @@ branch is the basename of the directory.)</para></listitem>
 synthetic branch named 'root'.</para></listitem>
 </orderedlist>
 
-<para>If you give the command <command>set svn_nobranch</command> before
-reading a Subversion repository, branch analysis is skipped and the
-repository is left as a linear sequence of commits on refs/heads/master.
-This may be useful if your repository configuration an unusual and you
-need to do your own branch surgery.</para>
-
 <para>Each commit that only creates or deletes directories (in
 particular, copy commits for tags and branches, and commits that only
 change properties) will be transformed into a tag named after the
@@ -1340,14 +1343,14 @@ finishes with a deleteall at its tip, the deleteall is transformed
 into a tag. This rule cleans up after aborted branch renames.</para>
 
 <para>Occasionally (and usually by mistake) a branchy Subversion
-repository will contain revision that touch multiple branches. These
+repository will contain revisions that touch multiple branches. These
 are handled by partitioning them into multiple import-stream commits,
 one on each affected branch. The Fossil-ID of such a split commit
 will have a pseudo-decimal part - for examble, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
 2317.1, 2317.2, and 2317.3. In addition, the second and all subsequent
 commits will have their timestamps incremented by a second each in
-order to make the committer/timstamp pairs distinguishable.</para>
+order to make the committer/timestamp pairs distinguishable.</para>
 
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
@@ -1421,11 +1424,11 @@ lost. Usually this error can be ignored.</para>
 <term>properties set</term>
 <listitem>
 <para><command>reposurgeon</command> has detected a setting of a
-user-defined property, or one of the Subversion properies
-svn:externals or svn:mergeinfo. These properties cannot be expressed
-in an import stream; the user is notified in case this is a
-showstopper for the conversion or some corrective action is required,
-but normally this error can be ignored.</para>
+user-defined property, or the Subversion properies
+svn:externals. These properties cannot be expressed in an import
+stream; the user is notified in case this is a showstopper for the
+conversion or some corrective action is required, but normally this
+error can be ignored.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
