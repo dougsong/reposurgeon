@@ -4614,6 +4614,13 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                                 else:
                                     matched = True
                                     selection.append(loc)
+                    # Next, fossil-ID references
+                    if not matched:
+                        for (i, event) in enumerate(self.chosen()):
+                            if hasattr(event, "fossil_id") and event.fossil_id == ref:
+                                selection.append(i)
+                                matched = True
+                                break
                     # Might be a date or action stamp
                     date = None
                     bang = ref.find('!')
