@@ -183,7 +183,6 @@ of the semantics of marks.</para></listitem>
 <varlistentry>
 <term><firstterm>tag and branch names</firstterm></term>
 <listitem>
-
 <para>The basename of a branch refers to its tip commit.  The name of
 a tag is equivalent to its mark, and through that to a commit. Tag and
 branch locations are bracketed with &lt; &gt; (angle brackets) to
@@ -191,6 +190,16 @@ distinguish them from command keywords. (But also see the discussion
 of branch sets and &amp; a bit further on; also, in older versions
 of this tool tag and branch locations were prefixed with  '@' rather
 than bracketed. The change fixed a parsing ambiguity)</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>fossil IDs</firstterm></term>
+<listitem>
+<para>If the contents of name brackets (&lt; &gt;) does not match a tag or 
+branch name, the interpreter next searches fossil IDs of commits.  This 
+is especially useful when you have imported a Subversion dunp; it
+means that commits made from it can be referred to by their corresponding
+Subversion revision numbers.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -294,6 +303,10 @@ to a single object, either a commit or tag.</para>
       <row>
         <entry align='center'>branch name</entry>
         <entry align='center'>the branch tip commit</entry>
+      </row>
+      <row>
+        <entry align='center'>fossil ID</entry>
+        <entry align='center'>commit with that fossil ID</entry>
       </row>
       <row>
         <entry align='center'>RFC3339 date</entry>
