@@ -1,88 +1,123 @@
-# Generic makefile for Subversion-to-DVCS conversions using reposurgeon
+# Generic makefile for DVCS conversions using reposurgeon
 #
 # Steps to using this:
 # 0. Copy this into a scratch directory as Makefile
-# 1. Make sure reposurgeon and svnpull are on your $PATH.
-# 2. Set SVN_URL to point at the remote repository you want to convert.
-# 3. Set DVCS to git, hg, or bzr
-# 4. Set LIFT to the name of a script for your custom commands, initially empty.
-# 5. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
-# 6. (Optional) Replace 'project' with a short name for your project.
-# 7. Invoke make on this file.
+# 1. Make sure rsync, reposurgeon and svnpull are on your $PATH.
+# 2. Set PROJECT to the name of your project
+# 3. Set SOURCE_VCS to svn or cvs
+# 4. Set TARGET_VCS to git, hg, or bzr
+# 5. For svn, set SVN_URL to point at the remote repository you want to convert.
+# 6. For cvs, set CVS_HOST to the repository hostname
+# 6. Create a $(PROJECT).lift script for your custom commands, initially empty.
+# 7. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
+# 8. Invoke make on this file.
 
-SVN_URL = svn://random-host.net/project
-DVCS = git
-LIFT = project.lift
-EXTRAS =
+PROJECT = foo
+SOURCE_VCS = svn
+TARGET_VCS = git
+EXTRAS = 
+SVN_URL = svn://svn.debian.org/$(PROJECT)
+CVS_HOST = $(PROJECT).cvs.sourceforge.net
 
 # Configuration ends here
 
-.PHONY: clean local-clobber remote-clobber svn-checkout svn-authors dist
-.PHONY: gitk gc git-svn compare
+.PHONY: local-clobber remote-clobber gitk gc compare clean dist
+
+default: $(PROJECT)-$(TARGET_VCS)
+
+ifeq ($(SOURCE_VCS),svn)
 
 # Build the repo from the fast-import stream
-project-$(DVCS): project.fi
-	rm -fr project-$(DVCS); reposurgeon "read project.fi" "prefer $(DVCS)" "rebuild project-$(DVCS)"
+$(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
+	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read $(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
 # Build the fast-import stream from the Subversion stream dump
-project.fi: project.svn $(LIFT) reposurgeon $(EXTRAS)
-	reposurgeon "verbose 1" "read project.svn" "script $(LIFT)" "write project.fi"
+$(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(EXTRAS)
+	reposurgeon "verbose 1" "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
-project.svn: project-mirror
-	svnpull project-mirror
-	svnadmin dump project-mirror/ >project.svn
+$(PROJECT).svn: $(PROJECT)-mirror
+	svnpull $(PROJECT)-mirror
+	svnadmin dump $(PROJECT)-mirror/ >$(PROJECT).svn
 
 # Build a local mirror of the remote Subversion repo
-project-mirror:
+$(PROJECT)-mirror:
 	svnpull $(SVN_URL)
-
-# General cleanup
-clean:
-	rm -fr *~ .rs* project-conversion.tar.gz 
 
 # Force rebuild of the fast-import stream from the local mirror on the next make
 local-clobber: clean
-	rm -fr project.fi project-$(DVCS) *~ .rs* project-conversion.tar.gz 
+	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
 
 # Force full rebuild from the remote repo on the next make.
 remote-clobber: local-clobber
-	rm -fr project.svn project-mirror svn-checkout
+	rm -fr $(PROJECT).svn $(PROJECT)-mirror svn-checkout
 
-# Make a local checkout of the Subversion project for inspection
-svn-checkout: project-mirror
-	svn co file://${PWD}/project-mirror svn-checkout
+# Make a local checkout of the Subversion mirror for inspection
+svn-checkout: $(PROJECT)-mirror
+	svn co file://${PWD}/$(PROJECT)-mirror svn-checkout
 
-# Dump the Subversion state of the author mapping
-svn-authors: project.svn
-	reposurgeon "read project.svn" "authors write"
+# Get the Subversion state of the author mapping
+$(PROJECT).map: $(PROJECT).svn
+	reposurgeon "read $(PROJECT).svn" "authors write $(PROJECT).map"
 
-# Bundle up the conversion metadata for shipping
-SOURCES = Makefile $(LIFT) $(EXTRAS)
-project-conversion.tar.gz: $(SOURCES)
-	tar --dereference --transform 's:^:project-conversion/:' -czvf project-conversion.tar.gz $(SOURCES)
+endif
 
-dist: project-conversion.tar.gz
+ifeq ($(SOURCE_VCS),cvs)
+
+#
+# The following productions are CVS-specific
+#
+
+# Mirror a CVS repo (from a site with a SourceForge-like CVS layout).
+# You may need to modify this.
+$(PROJECT)-mirror:
+	rsync -av $(CVSHOST)::cvsroot/$(PROJECT)/* $(PROJECT)-mirror
+
+# Build a git repo in project-cvs-git from a CVS repo in project-mirror
+# You must have created an author mapping in $(PROJECT).map.
+CVSIMPORT_OPTS = -s '~' -m -u -k -R -z 90 -v
+$(PROJECT)-git: $(PROJECT)-mirror $(PROJECT).map
+	cd $(PROJECT)-mirror
+	cvs update
+	git cvsimport -C ../$(PROJECT)-git $(CVSIMPORT_OPTS) -A ../$(PROJECT).map $(PROJECT)-mirror
+
+endif
+
+ifeq ($(TARGET_VCS),git)
 
 #
 # The following productions are git-specific
 #
 
 # Browse the generated git repository
-gitk: project-git
-	cd project-git; gitk --all
+gitk: $(PROJECT)-git
+	cd $(PROJECT)-git; gitk --all
 
 # Run a garbage-collect on the generated git repository.  Import doesn't.
-gc: project-git
-	cd project-git; git repack; git gc --aggressive
+gc: $(PROJECT)-git
+	cd $(PROJECT)-git; git repack; git gc --aggressive
 
 # Make a conversion using a competing tool
-git-svn:
-	git svn --stdlayout clone file://${PWD}/project-mirror git-svn
+$(PROJECT)-git-svn:
+	git svn --stdlayout clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
 
 # Compare the results
-compare: git-svn project-git
+compare: $(PROJECT)-git-svn $(PROJECT)-git
 	rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
-	(cd git-svn; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
-	(cd project-git; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
+	(cd $(PROJECT)-git-svn; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
+	(cd $(PROJECT)-git; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
 	diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
+
+endif
+
+# General cleanup and utility
+clean:
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz 
+
+# Bundle up the conversion metadata for shipping
+SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
+$(PROJECT)-conversion.tar.gz: $(SOURCES)
+	tar --dereference --transform 's:^:$(PROJECT)-conversion/:' -czvf $(PROJECT)-conversion.tar.gz $(SOURCES)
+
+dist: $(PROJECT)-conversion.tar.gz
+
