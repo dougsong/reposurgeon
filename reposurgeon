@@ -1612,6 +1612,7 @@ class StreamParser:
         "svn:executable",  # We special-case this one elsewhere
         "svn:ignore",      # We special-case this one elsewhere
         "svn:special",     # We special-case this one elsewhere
+        "svn:mergeinfo",   # We special-case this one elsewhere
         "svn:mime-type",
         "svn:keywords",
         "svn:needs-lock",
@@ -1639,6 +1640,7 @@ class StreamParser:
         self.fileop_branchlinks  = set([])
         self.directory_branchlinks  = set([])
         self.active_gitignores = set([])
+        self.mergeinfo = {}
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2219,11 +2221,6 @@ class StreamParser:
                     latch = False
                     for (prop, val) in node.props.items():
                         if prop not in StreamParser.IgnoreProperties:
-                            # Ignore an invalid value set (not no effect)
-                            # by some tools. This keeps us from seeing
-                            # spurious messages about empty properties.
-                            if prop == 'svn:mergeinfo' and not val:
-                                continue
                             if not latch:
                                 self.gripe("r%s~%s properties set:" \
                                            % (node.revision, node.path))
@@ -2290,6 +2287,21 @@ class StreamParser:
                         if verbose >= DEBUG_EXTRACT:
                             announce("r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
+                        # svn:mergeinfo gets handled here
+                        if 'svn:mergeinfo' in node.props:
+                            val = node.props['svn:mergeinfo']
+                            # Ignore an invalid empty value set (not
+                            # no effect) by some tools.
+                            if val:
+                                (_, span) = val.split(":")
+                                if '-' in span:
+                                    (_, end) = span.split("-")
+                                else:
+                                    end = span
+                                self.mergeinfo[revision] = end
+                                if verbose >= DEBUG_EXTRACT:
+                                    announce("r%s: mergeinfo link from %s\n" \
+                                            % (revision, end))
                         # svn:ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
@@ -2694,6 +2706,13 @@ class StreamParser:
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (rootrev, root.branch))
                 baton.twirl()
+            baton.twirl("+")
+            # Add links due to svn:merginfo properties
+            for (later, earlier) in self.mergeinfo.items():
+                late_commit = self.repo.fossil_map["SVN:%s" % later]
+                early_commit = self.repo.fossil_map["SVN:%s" % earlier]
+                if early_commit.mark not in late_commit.parentMarks():
+                    late_commit.addParent(early_commit.mark)
             baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
