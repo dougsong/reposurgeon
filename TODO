@@ -1,6 +1,3 @@
 = TO-DO =
 
-== The merge command doesn't work very well yet ==
-
-It's easily fooled into thinking merges are not valid due to
-out-of-date files when they're actually valid.
+No items.

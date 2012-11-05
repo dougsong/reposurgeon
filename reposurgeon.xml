@@ -912,39 +912,6 @@ strip the first directory component from every path.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>merge</command>
-        <emphasis>selection-set</emphasis>
-        [<command>perform</command>]
-        [<command>force</command>]
-</term>
-<listitem>
-<para>Merge branches. Takes a selection set argument, ignoring all but
-the lowest (source) and highest (target) members; also, optional modifiers
-'perform' and 'force'.</para>
-
-<para>The simplest form of the command takes a singleton selection set,
-interpreted as a source commit, and looks at each later commit as a
-target to see if a clean merge is possible.  A clean merge is deemed
-to be possible if every file in the source revision is present in the
-target revision and the target-revision content of every file occuring
-in the the source revision is either that of the source revision or was
-modified by the target commit itself.</para>
-
-<para>If the selection set has two members, the second (higher-numbered)
-even is taken as the target commit and checked to see if a clean merge
-is possible.  The output from the command says if it is, and if not
-what missing and out-of-date files would make the merge unclean.</para>
-
-<para>If the 'perform' modifier is given and a clean merge is available, it is
-performed.  If both 'perform' and 'force' modifiers are given, the merge
-is performed even if is not clean.</para>
-
-<para>Warning: while clean merges will never alter the content of any
-revision - they just change parent-child relationships - unclean merges
-are not safe. Use with extreme caution.</para> 
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><command>tag</command>
         <emphasis>tagname</emphasis>...
         <command>{move|rename|delete}</command>
