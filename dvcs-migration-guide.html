@@ -79,18 +79,66 @@ be in early development and as yet only poorly documented.</p>
 some education in good practice to get the most out of the tools.
 I'll cover that aspect as well.</p>
 
+<p>In 90% of cases you'll be converting from CVS or Subversion, and
+those are the cases we'll discuss.  If you're using something older or
+weirder, you're on your own - though reading this document may give
+helpful hints.</p>
+
 <h1 id="preparation">Step Zero: Preparation</h1>
+
+<p>Create a scratch directory for your conversion work.
+
+<p>Copy <a href="http://catb.org/~esr/reposurgeon/conversion.mk">this
+generic makefile</a> designed to sequence conversions to be the
+Makefile in your conversion directory. Then set the variables near the
+top appropriately for your project.</p>
+
+<p>This Makefile will help you avoid typing a lot of fiddly commands 
+by hand, and ensure that later products of the conversion pipeline
+are always updated when earlier ones have been modified or removed.</p>
+
+<p>Create an empty file named $(PROJECT).lift.  The Makefile will use
+it. Later, you will put your custom commands in here.</p>
+
+<p>Doing a high-quality repository conversion is not a simple job and
+the odds that you will get it perfectly right the first time are close
+to zero. By packaging your lift commands in a repeatable script and
+using the Makefile to sequence repetitive operations, you will reduce the
+overhead of experimenting.</p>
+
+<p>In the rest of the steps we describe below, when we write "make
+foo" that means the step can be sequenced by the "foo" production 
+in the Makefile. Replace $(PROJECT) with your project name.</p>
+
+<p>You may find it instructive to type "make -n" to see what the
+entire conversion sequence will look like.</p> 
+
+<p>Now get a mirror of your project repo into the scratch directory.
+That's "make $(PROJECT)-mirror" and will probably work without
+modification if this is a Subversion conversion.</p>
+
+<p>Methods for mirroring CVS repositories vary more; the rsync fetcher
+in the Makefile assumes the repo host has a SourceForge-like layouut
+with each project as a module under /cvsroot. This may need to be
+modified.</p>
+
+<h1 id="author map">Step One: The Author Map</h1>
 
 <p>Subversion and CVS identify users by a Unix login name local to the
 repository host; DVCSes use pairs of fullnames and email addresses.
-Before you can do your conversion, you'll need to put together an
-authors file that maps the former to the latter.  The authors file
-should specify a full name and email address for each local user ID in
-the repo you're converting. Each line should be in the following form:</p>
+Before you can finish your conversion, you'll need to put together an
+author map that maps the former to the latter; the Makefile assumes
+this is named $(PROJECT).map.  The author map should specify a full
+name and email address for each local user ID in the repo you're
+converting. Each line should be in the following form:</p>
 
 <pre>
 foonly=Fred Foonly &lt;foonly@foobar.com&gt;
 </pre>
+
+<p>Using the generic Makefile for Subversion, "make $(PROJECT).map" will
+display a start on an author-map file.  Capture this and edit in real
+names and addresses to the right of the equals signs.</p>
 
 <p>How best to get this information will vary depending on your
 situation.  If you can get shell access to the repository host,
@@ -116,11 +164,7 @@ identifications in parallel with the rest of the work.</p>
 
 <h1 id="conversion">Step One: Conversion</h1>
 
-<p>Your first step will be converting your repository to git. In 90%
-of cases you'll be converting from CVS or Subversion, and those are
-the cases we'll cover here.  If you're using something older or
-weirder, you're on your own for this step.</p>
-
+<p>Your first step will be converting your repository to git. </p>
 
 <h2 id="cvs_to_git">CVS to git</h2> 
 
@@ -158,6 +202,11 @@ silent mode can be disconcerting.</dd>
 <dd>Unpacking in the current directory is the default behavior, but
 probably not what you want.</dd>
 </dl>
+
+<p>In the generic Makefile, just <code>make $(PROJECT)-git</code> to
+call the command with all these options. You will need to have
+a $(PROJECT).map file in place; an empty one will do for your 
+early experiments.</p>
 
 <p>The reason this tool is normally your best option is that it
 converts straight to git, avoiding issues produced by the other major
@@ -205,13 +254,9 @@ can use <code>svnadmin dump</code> to mine it. The reposurgeon
 distribution also includes a script named <code>svnpull</code> for
 grabbing and mirroring a remote Subversion repository.</p>
 
-<p>Get the repository mirrored into a directory, fire up
-<code>reposurgeon</code>, give it the "read" command with the
-directory name as argument, and wait a few minutes while the baton
-spins. When you get a prompt from <code>reposurgeon</code> again, you
-can make a live repo in a scratch directory in your choice of the
-systems <code>reposurgeon</code> can export to (including git), or
-proceed directly to examining and editing the history.</p>
+<p>The Makefile will call <code>reposurgeon</code> for you,
+interpreting your $(PROJECT).lift file, when you type "make".
+You may have to watch the baton spin for a few minutes.</p>
 
 <p>Normally <code>reposurgeon</code> will do branch analysis for you.
 On most Subversion repositories, and in particular anything with a
@@ -331,8 +376,9 @@ with reposurgeon follow.</p>
 
 <p><code>reposurgeon</code> has a "script" command that allows you to
 bundle up a set of commands with comments.  I recommend writing your
-repository lift as a reposurgeon script; this helps you not lose older
-steps as you experiment with newer ones, and it documents what you did.</p>
+repository lift as a <code>reposurgeon</code> script; this helps you
+not lose older steps as you experiment with newer ones, and it
+documents what you did.</p>
 
 <p>Most of the work will be in the comment-fixup and reference-lifting
 stages. I find, however, that they normally take only a couple of
@@ -444,25 +490,6 @@ CVS-to-git conversion you'll want to do something like this:</p>
 for x in `find . -print | grep cvsignore`; do t=`dirname $x`/.gitignore; git mv $x $t; done
 git commit -m 'Convert each .cvsignore to a .gitignore.'
 </code></pre>
-
-
-<h2 id="automation">Automate aggressively!</h2>
-
-<p>Doing a high-quality repository conversion is not a simple job and
-the odds that you will get it perfectly right the first time are close
-to zero.</p>
-
-<p>To save yourself repeated handwork, package your <code>reposurgeon</code>
-conversion steps into a lifting script as you develop them, then build
-a Makefile that conditionally fires all the steps in your conversion
-process needed to generate either the target repo or any other
-intermediate conversion stage.</p>
-
-<p>The <code>reposurgeon</code> distribution includes a <a
-href="http://catb.org/~esr/reposurgeon/conversion.mk">generic
-makefile</a> that captures much of the workflow described in this
-how-to and is designed to be easily customized for your repo
-conversion.</p>
 
 <h2 id="recovery">Recovering from errors</h2>
 
