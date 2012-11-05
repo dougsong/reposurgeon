@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 2.2:
+     Interpretation of svn:mergeinfo properties.
      Fix for yet another corner case in ignore-property translation from SVN
 
 2.1: 2012-11-04

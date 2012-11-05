@@ -1363,6 +1363,10 @@ you're somehow managed to have an actual .gitignore file in a
 Subversion directory with an svn:ignore property, the file will get
 stepped on.</para>
 
+<para>svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
+on a revision A with a merge source range ending in revision B produces
+a merge link such that B becomes a parent of A.</para>
+
 <para>All other Subversion properties are discarded. (This may change in a 
 future release.) The property for which this is most likely to cause
 semantic problems is svn:eol-style. However, since property-change-only
