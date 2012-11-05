@@ -17,7 +17,7 @@ EXTRAS =
 
 # Configuration ends here
 
-.PHONY: clean local-clobber remote-clobber svn-checkout dist
+.PHONY: clean local-clobber remote-clobber svn-checkout svn-authors dist
 .PHONY: gitk gc git-svn compare
 
 # Build the repo from the fast-import stream
@@ -52,6 +52,10 @@ remote-clobber: local-clobber
 # Make a local checkout of the Subversion project for inspection
 svn-checkout: project-mirror
 	svn co file://${PWD}/project-mirror svn-checkout
+
+# Dump the Subversion state of the author mapping
+svn-authors: project.svn
+	reposurgeon "read project.svn" "authors write"
 
 # Bundle up the conversion metadata for shipping
 SOURCES = Makefile $(LIFT) $(EXTRAS)
