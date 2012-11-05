@@ -1050,8 +1050,8 @@ or dump created by <command>cvs2git</command> or by
 argument: write a mapping file that could be interpreted by 'authors
 read', with entries for each unique committer, author, and tagger (no
 file argument sends the report to standard output). This may be
-helpful as a start on building an authors file, though you will want
-to edit each part to the right of an equals sign.</para>
+helpful as a start on building an authors file, though each part to
+the right of an equals sign will neexd editing.</para>
 </listitem>
 </varlistentry>
 </variablelist>
