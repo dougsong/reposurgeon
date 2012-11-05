@@ -146,6 +146,12 @@ list 29..71            ;; list summary index of events 20..71
 
 list 236..$            ;; List events from 236 to the last
 
+inspect &lt;2317&lt;   ;; Look for a tag with the name 2317, a tip commit
+                       ;; of a branch named 2317, or a commit with fossil-ID
+                       ;; 2317. Inspect what is found. A plain number is
+                       ;; prbaby a fossil-ID inherited from a Subversion
+                       ;; revision number.
+
 list /regression/      ;; list all commits and tags with comments or
                        ;; committer headers or author headers containing 
                        ;; the string "regression"
