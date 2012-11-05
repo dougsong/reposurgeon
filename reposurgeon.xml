@@ -912,6 +912,16 @@ strip the first directory component from every path.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>merge</command>
+        <emphasis>selection-set</emphasis>
+</term>
+<listitem>
+<para>Create a merge link. Takes a selection set argument, ignoring all but
+the lowest (source) and highest (target) members.  Creates a merge link
+from the highest member (child) to the lowest (parent).</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>tag</command>
         <emphasis>tagname</emphasis>...
         <command>{move|rename|delete}</command>

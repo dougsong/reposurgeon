@@ -2973,8 +2973,8 @@ class Repository:
                     contributors[author.name] = author.who()
             elif isinstance(event, Tag):
                 contributors[event.tagger.name] = event.tagger.who()
-        for (name, id) in contributors.items():
-            fp.write("%s = %s\n" % (name, id))
+        for (name, cid) in contributors.items():
+            fp.write("%s = %s\n" % (name, cid))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
         commit_map = {}
@@ -5883,6 +5883,33 @@ component from every path.""" )
                 print "\n".join(modified)
             except IndexError:
                 raise Recoverable("no / in sup path.")
+
+    def help_merge(self):
+        print("""
+Create a merge link. Takes a selection set argument, ignoring all but
+the lowest (source) and highest (target) members.  Creates a merge link
+from the highest member (child) to the lowest (parent).
+""" )
+    def do_merge(self, line):
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        self.set_selection_set(line)
+        if not len(self.selection):
+            raise Recoverable("merge requires a nonempty selection set.")
+        self.selection = list(self.selection)
+        self.selection.sort()
+        self.selection = [e for e in self.selection \
+                          if isinstance(repo.events[e], Commit)]
+        if not self.selection:
+            raise Recoverable("merge requires commit arguments.")
+        earlier = repo.events[list(self.selection)[0]]
+        later = repo.events[list(self.selection)[-1]]
+        later.addParent(earlier.mark)
+        earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
+        later_id = "%s (%s)" % (later.mark, later.branch)
+        announce("%s added as a parent of %s" % (earlier_id, later_id))
 
     def help_tag(self):
         print("""
