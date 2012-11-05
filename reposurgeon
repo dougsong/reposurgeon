@@ -5955,10 +5955,11 @@ mapping from standard input).  May be useful if you are editing a repo
 or dump created by cvs2git or by git-svn invoked without -A.
 
 With no file argument, or with the 'write' modifier and a file
-argument: write each unique committer, author, and tagger (no file
-argument sends the report to standard output). This may be helpful as
-a start on building an authors file.
-""")
+argument: write a mapping file that could be interpreted by 'authors
+read', with entries for each unique committer, author, and tagger (no
+file argument sends the report to standard output). This may be
+helpful as a start on building an authors file, though each part to
+the right of an equals sign will neexd editing.""")
     def do_authors(self, line):
         "Apply or dump author-mapping file."
         if self.chosen() is None:
