@@ -1047,9 +1047,11 @@ or dump created by <command>cvs2git</command> or by
 <command>git-svn</command> invoked without -A.</para>
 
 <para>With no file argument, or with the 'write' modifier and a file
-argument: write each unique committer, author, and tagger (no file
-argument sends the report to standard output). This may be helpful as
-a start on building an authors file.</para>
+argument: write a mapping file that could be interpreted by 'authors
+read', with entries for each unique committer, author, and tagger (no
+file argument sends the report to standard output). This may be
+helpful as a start on building an authors file, though you will want
+to edit each part to the right of an equals sign.</para>
 </listitem>
 </varlistentry>
 </variablelist>

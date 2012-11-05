@@ -2964,17 +2964,17 @@ class Repository:
                 event.tagger.remap(authormap)
     def write_authormap(self, selection, fp):
         "List the identifiers we need."
-        contributors = set([])
+        contributors = {}
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
-                contributors.add(event.committer.who())
+                contributors[event.committer.name] = event.committer.who()
                 for author in event.authors:
-                    contributors.add(author.who())
+                    contributors[author.name] = author.who()
             elif isinstance(event, Tag):
-                contributors.add(event.tagger.who())
-        for contributor in contributors:
-            fp.write(contributor + "\n")
+                contributors[event.tagger.name] = event.tagger.who()
+        for (name, id) in contributors.items():
+            fp.write("%s = %s\n" % (name, id))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
         commit_map = {}
