@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, time, calendar, signal, shutil, copy, shlex, collections
+import re, time, calendar, signal, shutil, copy, shlex, collections, resource
 import email.message, email.parser, email.utils
 import threading
 
@@ -1104,7 +1104,6 @@ class Commit:
         return len(self._parent_marks) > 0
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
-        sys.setrecursionlimit(len(self.repo.events) * 2)
         if not self._parent_marks or self.committer.date < other.committer.date:
             return False
         elif other.mark in self._parent_marks:
@@ -6249,18 +6248,11 @@ displays the state of all flags. The following flags are defined:
                 else:
                     global_options[option] = False
 
-class ProfiledThread(threading.Thread):
-    # Overrides threading.Thread.run()
-    def run(self):
-        profiler = cProfile.Profile()
-        try:
-            return profiler.runcall(threading.Thread.run, self)
-        finally:
-            fn = '%s-%d.profile' % ("foo", self.ident,)
-            profiler.dump_stats(fn)
-            announce("wrote profile stats to %s" % fn)
-
-def main():
+if __name__ == '__main__':
+    # Increase max stack size from 8MB to 512MB
+    # Needed to handle really large repositories.
+    resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
+    sys.setrecursionlimit(10**6)
     try:
         def interactive():
             global verbose
@@ -6277,7 +6269,13 @@ def main():
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        interactive()
+                        if interpreter.profile_log is None:
+                            interactive()
+                        elif interpreter.profile_log:
+                            cProfile.run('interactive()', \
+                                         interpreter.profile_log)
+                        else:
+                            cProfile.run('interactive()')
                     else:
                         # Call the base method so RecoverableExceptios
                         # won't be caught; we want them to abort scripting.
@@ -6291,13 +6289,4 @@ def main():
     except KeyboardInterrupt:
         print("")
 
-if __name__ == '__main__':
-    threading.stack_size(128*1024*1024)
-    if re.search("profiled", sys.argv[0]) is not None:
-        announce('profiling enabled.')
-        thread = ProfiledThread(target = main)
-    else:
-        thread = threading.Thread(target = main)
-    thread.start()
-    thread.join()
 # end
