@@ -7,7 +7,8 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, time, calendar, signal, shutil, copy, shlex, collections, resource
+import re, signal, shutil, copy, shlex, collections, resource
+import time, calendar, unittest
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -605,6 +606,68 @@ class Date:
         return str(self.timestamp) + " " + self.orig_tz_string
     def __cmp__(self, other):
         return cmp(self.timestamp, other.timestamp)
+
+class DateTests(unittest.TestCase):
+    def test_conversion(self):
+        def do_test(init, formats):
+            date = Date(init)
+            for (func, result) in formats.items():
+                self.assertEqual(getattr(date, func)(), result)
+        data = [['2010-10-27T18:43:32Z',
+                 { 'rfc3339': "2010-10-27T18:43:32Z",
+                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   '__str__': "1288205012 +0000" }],
+                ['1288205012 +0000',
+                 { 'rfc3339': "2010-10-27T18:43:32Z",
+                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   '__str__': "1288205012 +0000" }],
+                ['Wed 27 Oct 2010 18:43:32 +0000',
+                 { 'rfc3339': "2010-10-27T18:43:32Z",
+                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   '__str__': "1288205012 +0000" }]]
+        for init, formats in data:
+            do_test(init, formats)
+    def test_equality(self):
+        d1 = Date('2010-10-27T18:43:32Z')
+        d2 = Date('1288205012 +0000')
+        d3 = Date('Wed 27 Oct 2010 18:43:32 +0000')
+        self.assertEqual(d1, d1)
+        self.assertEqual(d1, d2)
+        self.assertEqual(d1, d3)
+        self.assertEqual(d2, d2)
+        self.assertEqual(d2, d3)
+        self.assertEqual(d3, d3)
+    def test_inequality(self):
+        d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
+        d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
+        d3 = Date('Wed 27 Oct 2010 18:43:32 +0100')
+        self.assertNotEqual(d1, d2)
+        self.assertTrue(d1 < d2)
+        self.assertTrue(d2 > d1)
+        self.assertNotEqual(d1, d3)
+        self.assertTrue(d1 > d3)
+        self.assertTrue(d3 < d1)
+        self.assertNotEqual(d2, d3)
+        self.assertTrue(d2 > d3)
+        self.assertTrue(d3 < d2)
+        d1 = Date('2010-10-27T18:43:32Z')
+        d2 = Date('2010-10-27T18:43:33Z')
+        self.assertNotEqual(d1, d2)
+        self.assertTrue(d1 < d2)
+        self.assertTrue(d2 > d1)
+        d1 = Date('1288205012 +0000')
+        d2 = Date('1288205013 +0000')
+        self.assertNotEqual(d1, d2)
+        self.assertTrue(d1 < d2)
+        self.assertTrue(d2 > d1)
+    def test_deltas(self):
+        d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
+        d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
+        d3 = Date('Wed 27 Oct 2010 18:43:32 +0100')
+        self.assertEqual(d1.delta(d2), 1)
+        self.assertEqual(d2.delta(d3), -3601)
+        self.assertEqual(d3.delta(d1), 3600)
+        self.assertEqual(d1.delta(d1), 0)
 
 class Attribution:
     "Represents an attribution of a repo action to a person and time."
@@ -6283,6 +6346,24 @@ displays the state of all flags. The following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
+    def help_runtests(self):
+        print("""
+Runs the unit tests and reports the results.
+""")
+    def do_runtests(self, line):
+        def runtest(name):
+            result = unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(globals()[name]))
+            if not result.wasSuccessful():
+                raise Recoverable("unit tests failed")
+        available = ["DateTests"]
+        if line:
+            if line in available:
+                runtest(line)
+            else:
+                complain("no test class known as '%s'" % line)
+        else:
+            for name in available:
+                runtest(name)
 
 if __name__ == '__main__':
     # Increase max stack size from 8MB to 512MB
@@ -6318,11 +6399,9 @@ if __name__ == '__main__':
                         cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
         finally:
             interpreter.cleanup()
-        raise SystemExit(0)
     except (Recoverable, Fatal) as xe:
         complain(xe.msg)
-        raise SystemExit(1)
+        sys.exit(1)
     except KeyboardInterrupt:
         print("")
-
 # end
