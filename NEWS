@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 2.2:
+     Unit testing for the date parsing/formatting code
      'branchify' declares a non-default set of svn paths to be branchified.
      Interpretation of svn:mergeinfo properties.
      Fix for yet another corner case in ignore-property translation from SVN.
