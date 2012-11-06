@@ -2242,21 +2242,13 @@ class StreamParser:
                             for trial in global_options['svn_branchify']:
                                 if '*' not in trial and trial + os.sep == node.path:
                                     self.branches[node.path] = None
-                                    if verbose >= DEBUG_TOPOLOGY:
-                                        announce("%s recognized as a branch" \
-                                                 % node.path)
-                        if not global_options['svn_nobranch'] and self.branches:
-                            if newbranch.count(os.sep) == 2:
-                                if newbranch.startswith("tags" + os.sep):
-                                    self.branches[newbranch] = None
-                                elif newbranch.startswith("branches" + os.sep):
-                                    self.branches[newbranch] = None
-                            elif newbranch.count(os.sep) == 1:
-                                if newbranch not in {"tags" + os.sep,
-                                                     "branches" + os.sep}:
-                                    self.branches[newbranch] = None
-                        if newbranch in self.branches and verbose >= DEBUG_TOPOLOGY:
-                            announce("%s recognized as a branch" % newbranch)
+                                elif trial.endswith(os.sep + '*') \
+                                         and os.path.dirname(trial) == os.path.dirname(node.path[:-1]):
+                                    self.branches[node.path] = None
+                                elif trial == '*' and not node.path + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 2:
+                                    self.branches[node.path] = None
+                                if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
+                                    announce("%s recognized as a branch" % node.path)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             assert node.implicit == False
@@ -6008,7 +6000,7 @@ argument: write a mapping file that could be interpreted by 'authors
 read', with entries for each unique committer, author, and tagger (no
 file argument sends the report to standard output). This may be
 helpful as a start on building an authors file, though each part to
-the right of an equals sign will neexd editing.""")
+the right of an equals sign will need editing.""")
     def do_authors(self, line):
         "Apply or dump author-mapping file."
         if self.chosen() is None:
