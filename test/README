@@ -29,6 +29,7 @@ either some operation test on an input stream in foo.fi or a repo conversion
 from foo.sd.  Here is a summary of the test sources:
 
 |=============================================================================
+|agito.svn       |Simon Howard's tag-mangling test case (see below)
 |argtest.tst     |Test argument substitution in scripts
 |bzr.fi          |Test for processing and round-tripping of bzr extensions.
 |divide.tst      |Test for divide operation; uses bzr repo
@@ -77,5 +78,80 @@ from foo.sd.  Here is a summary of the test sources:
    svn delete file://${PWD}/test-repo/branches/foo
 
 5. 'make svn-dump' will dump the new test load to stdout.
+
+== The agito test case ==
+
+Samuel Howard had this to say:
+
+git-svn's handling of tags is broken.
+
+In this demonstration repository, a trunk directory of /trunk/proj exists,
+containing some code.  This is improperly tagged by doing:
+
+	svn cp trunk tags/proj-1.0
+
+Where as what should have been done is this:
+
+	svn cp trunk/proj tags/proj-1.0
+
+This is significant because this is exactly what the CVS to SVN conversion
+script (cvs2svn) does, to handle the fact that a CVS repository can contain
+multiple modules.  Fixing a "mistake" like this is therefore necessary when
+converting to SVN, to get tags stored properly.
+
+In the SVN repository, this is fixed by deleting the branch and recreating
+it properly (ie. the second command above).  To verify that this has been
+done successfully, try this:
+
+	svn log file://$PWD/myrepo/tags/proj-1.0
+
+outputs:
+
+	-----------------------------------------------------------------------
+	r4 | fraggle | 2009-10-02 23:37:42 +0100 (Fri, 02 Oct 2009) | 2 lines
+
+	Recreating the tag properly.
+
+	-----------------------------------------------------------------------
+	r1 | fraggle | 2009-10-02 23:36:41 +0100 (Fri, 02 Oct 2009) | 2 lines
+
+	Initial import.
+
+	-----------------------------------------------------------------------
+
+Only the history of the directory being tagged and the commit that created the
+tag are shown.  The "mistake" is kept in the history of /tags, but not in
+the history of the tag itself.
+
+The repository is then converted to git, using git-svn (see the shell script).
+Two tags are created (proj-1.0@1 is the older, broken tag).  However, the
+newer tag retains the history of the broken tag:
+
+	git log tags/proj-1.0
+
+outputs:
+
+	Author: fraggle <fraggle@f01c4a58-e860-4891-ae86-76464917f484>
+	Date:   Fri Oct 2 22:37:42 2009 +0000
+
+	    Recreating the tag properly.
+
+	commit 4aeb0a415e5be12d28a8af1128315e44d44a10d7
+	Author: fraggle <fraggle@f01c4a58-e860-4891-ae86-76464917f484>
+	Date:   Fri Oct 2 22:37:07 2009 +0000
+
+	    Creating a tag in a BROKEN way, like how cvs2svn does it.
+
+	commit 866f94c91de7628d7251098efcc133e6b5900f88
+	Author: fraggle <fraggle@f01c4a58-e860-4891-ae86-76464917f484>
+	Date:   Fri Oct 2 22:36:41 2009 +0000
+
+	    Initial import.
+
+	commit e8a2ee18774e319d33cb5bd418e03a5281b75268
+	Author: fraggle <fraggle@f01c4a58-e860-4891-ae86-76464917f484>
+	Date:   Fri Oct 2 22:36:41 2009 +0000
+
+	    Initial import.
 
 
