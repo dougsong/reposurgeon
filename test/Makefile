@@ -52,7 +52,7 @@ fi-buildregress:
 	done
 fi-regress:
 	@for file in $(TESTLOADS); do \
-	    echo -n $${file} " "; grep '##' $${file}.tst; \
+	    echo -n $${file} " "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if ../reposurgeon "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
@@ -115,7 +115,7 @@ svn-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo -n "Testing $${test}" >&2; grep '^ ##' $${test}.svn; >&2\
+		(if echo -n "Testing $${test}" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		../reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
