@@ -5,6 +5,19 @@ An .svn extension means it's a Subversion repo dump.
 A .chk extension means it's expected output from a test
 A .tst extension means it's a test driver script
 
+== The scripts ==
+
+=== fi-to-fi ===
+
+Builds a repo from a fast-import stream on stdin, or streams an exsting 
+repo to stdout.
+
+=== svn-to-svn ===
+
+Build a Subversion repo from a Subversion stream dump on stdin, or
+dump an existing repo as a stream to stdout.  Can also be used to edit
+a Subversion terst load, regenerating its checksums.
+
 == The tests ==
 
 Keeping live Subversion repos under version control doesn't work very well; 
@@ -40,7 +53,7 @@ from foo.sd.  Here is a summary of the test sources:
 |simple.fi       |Earlier version of the reposurgeon repo, kept as a test
 |simple.tst      |Test expression interpreter and basic operations
 |simpletag.svn   |Standard layout. Linear. A couple of tags and no branches.
-|testrepo.fi     |Synthetic repo made to check deltion results
+|testrepo.fi     |Synthetic repo made to check deletion results
 |testrepo.tst    |Exercises all the deletion cases, with coverage checks
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
