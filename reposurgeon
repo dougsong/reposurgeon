@@ -2295,7 +2295,7 @@ class StreamParser:
                                 # to this revision.  For each, we
                                 # link from the last one.
                                 for line in val.split('\n'):
-                                    if line:
+                                    if line and ':' in line:
                                         (_, span) = line.split(":")
                                         if '-' in span:
                                             (_, end) = span.split("-")
