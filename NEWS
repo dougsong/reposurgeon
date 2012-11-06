@@ -1,5 +1,18 @@
 			reposurgeon project news
 
+2.2:
+     'branchify' declares a non-default set of svn paths to be branchified.
+     Interpretation of svn:mergeinfo properties.
+     Fix for yet another corner case in ignore-property translation from SVN.
+     The "authors write: command is now a proper inverse of "authors read".
+     The 'merge' command now unconditionally creates a merge link.
+     Reference syntax now allows references to be fossil-IDs.
+
+2.1: 2012-11-04
+     Ignores are moved among git/hg/bzr ignore files (but not yet translated).
+     Added conversion.mk to the distribution, describing a typical workflow.
+     Fixed a bug that could result in incorrect timezone handling in git dates.
+
 2.0: 2011-11-02
      reposurgeon can now read Subversion dump files and repositories directly.
      New major commands 'tag' and 'merge' (old 'merge is now 'unite'). 

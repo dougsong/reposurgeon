@@ -2,6 +2,5 @@
 
 == The merge command doesn't work very well yet ==
 
-It's easily folloed into thinking merges are not valid due to
+It's easily fooled into thinking merges are not valid due to
 out-of-date files when they're actually valid.
-
