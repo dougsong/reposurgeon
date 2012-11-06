@@ -1,37 +1,57 @@
 blob
 mark :1
-data 141
-This file is in the top level of a branchless repo.  A directory
-'foo' has been created, which will have an ignore property set
-on it soon.
-
+data 37
+This is a test Subversion repository
 
 reset refs/heads/master
 commit refs/heads/master
 mark :2
-committer esr <esr> 1351981329 +0000
-data 50
-This commit creates the README and the directory.
+committer esr <esr> 1352219253 +0000
+data 24
+Initial README content.
 M 100644 :1 README
 
 blob
 mark :3
+data 156
+The pupose of this test repository is to verify that a ..gitignore generated 
+from an ignore property set on a directory won't survive directory deletion.
+
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1352220744 +0000
+data 31
+Explain what we're doing here.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 6
 *.pyc
 
 commit refs/heads/master
-mark :4
-committer esr <esr> 1351981462 +0000
-data 44
-This commit follows "svn:ignore *.pyc foo".
-from :2
-M 100644 :3 foo/.gitignore
+mark :6
+committer esr <esr> 1352220855 +0000
+data 48
+This follows "svn propset svn:ignore *.pyc foo"
+from :4
+M 100644 :5 foo/.gitignore
 
 commit refs/heads/master
-mark :5
-committer esr <esr> 1351982722 +0000
+mark :7
+committer esr <esr> 1352220901 +0000
 data 28
 This follows "svn del foo".
-from :4
+from :6
 D foo/.gitignore
+
+tag root
+from :2
+tagger esr <esr> 1352219253 +0000
+data 61
+Directory layout.
+
+[[Tag from root commit at Subversion r1]]
 
