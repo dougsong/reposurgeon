@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-all: clean roundtrip mailboxing fi-regress coalesce git-regress svn-regress
+all: listcheck roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 	@echo "No diff output is good news."
 
 .SUFFIXES: .svn .chk
@@ -18,6 +18,10 @@ clean:
 testlist:
 	@grep '^##' *.tst
 	@grep '^ ##' *.svn
+listcheck:
+	@for f in *.tst *.svn; do \
+	    if ( head -3 $$f | grep -q '^ *##' ); then :; else echo "$$f needs a description"; fi; \
+	done
 
 # Test that all dumpfiles round-trip properly
 roundtrip:
