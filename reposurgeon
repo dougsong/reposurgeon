@@ -2238,7 +2238,7 @@ class StreamParser:
                     if node.action == SD_ADD:
                         node.implicit = True
                         newbranch = node.path
-                        if not global_options['svn_nobranch']:
+                        if not node.path in self.branches and not global_options['svn_nobranch']:
                             for trial in global_options['svn_branchify']:
                                 if '*' not in trial and trial + os.sep == node.path:
                                     self.branches[node.path] = None
@@ -2247,8 +2247,8 @@ class StreamParser:
                                     self.branches[node.path] = None
                                 elif trial == '*' and not node.path + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 2:
                                     self.branches[node.path] = None
-                                if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
-                                    announce("%s recognized as a branch" % node.path)
+                            if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
+                                announce("%s recognized as a branch" % node.path)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             assert node.implicit == False
