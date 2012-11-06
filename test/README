@@ -35,7 +35,7 @@ from foo.sd.  Here is a summary of the test sources:
 |references.tst  |Test author mapping and reference lifting 
 |rootfile.svn    |Branchy layout with a file at the root level.
 |roundup.fi      |Early segment of the Roundup tracker repo
-|roundup.tst     |Test to see how it renders  the two different botched starts
+|roundup.tst     |Test to see how it renders the two different botched starts
 |samplebranch.svn|Two-branch history with interleaved commits.
 |simple.fi       |Earlier version of the reposurgeon repo, kept as a test
 |simple.tst      |Test expression interpreter and basic operations
@@ -52,7 +52,8 @@ from foo.sd.  Here is a summary of the test sources:
 
 1. To create a new Subversion test repo, 'make svn-flat' or 'make svn-branchy'.
 
-2. To clone an existing test load foo.svn into the test repo, 'svn -n <foo.svn'
+2. To clone an existing test load foo.svn into the test repo,
+'svn-to-svn -n <foo.svn'
 
 3. To copy trunk, creating a tag named 'foo'
 
