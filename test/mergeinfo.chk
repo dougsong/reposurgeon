@@ -198,7 +198,6 @@ committer db48x <db48x> 1352206643 +0000
 data 61
 merge bugfixes from 1.0.3 into trunk, bumping version to 1.4
 from :19
-merge :13
 merge :22
 M 100644 :26 VERSION
 M 100644 :27 src
@@ -305,8 +304,6 @@ committer db48x <db48x> 1352206652 +0000
 data 61
 merge bugfixes from 2.0.1 into trunk, bumping version to 2.2
 from :34
-merge :13
-merge :22
 merge :37
 M 100644 :38 VERSION
 M 100644 :39 src
