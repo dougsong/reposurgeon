@@ -1330,7 +1330,7 @@ Subversion repository to branches:</para>
 directory.  All commits in a flat repository are assigned to branch
 master, and what would have been branch structure becomes directory
 structure.  In this case, we're done; all the other rules apply to
-non-flat repos.</para></listitem>
+non-flat repos.</para>
 
 <para>If you give the command <command>set svn_nobranch</command>
 before reading a Subversion repository, branch analysis is skipped and
@@ -1338,7 +1338,7 @@ the repository is treated as though flat (left as a linear sequence of
 commits on refs/heads/master).  This may be useful if your repository
 configuration is highly unusual and you need to do your own branch
 surgery. Note that tis option will disable partitioning of mixed
-commits.</para>
+commits.</para></listitem>
 
 <listitem><para>/trunk always becomes the master branch.</para></listitem>
 
