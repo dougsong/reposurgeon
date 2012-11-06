@@ -2232,16 +2232,19 @@ class StreamParser:
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
-                    node.path += os.sep
-                    if not global_options['svn_nobranch'] and node.path == 'trunk' + os.sep:
-                        self.branches['trunk' + os.sep] = None
-                        if verbose >= DEBUG_TOPOLOGY:
-                            announce("trunk/ recognized as a branch")
+                    node.path += os.sep                   
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
                         node.implicit = True
                         newbranch = node.path
+                        if not global_options['svn_nobranch']:
+                            for trial in global_options['svn_branchify']:
+                                if '*' not in trial and trial + os.sep == node.path:
+                                    self.branches[node.path] = None
+                                    if verbose >= DEBUG_TOPOLOGY:
+                                        announce("%s recognized as a branch" \
+                                                 % node.path)
                         if not global_options['svn_nobranch'] and self.branches:
                             if newbranch.count(os.sep) == 2:
                                 if newbranch.startswith("tags" + os.sep):
@@ -4307,7 +4310,7 @@ class RepositoryList:
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
-    Options = (
+    OptionFlags = (
         ("svn_use_uuid", """\
     If set, use Subversion UUID when faking up email addresses, a la git-svn.
 Otherwise, fake up addresses the way git cvs-import does it.
@@ -4339,9 +4342,9 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         self.history = []
         self.callstack = []
         self.profile_log = None
-        self.branchify = ['trunk', 'tags/*', 'branches/*', '*']
-        for option in dict(RepoSurgeon.Options):
+        for option in dict(RepoSurgeon.OptionFlags):
             global_options[option] = False
+        global_options['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
     #
     # Housekeeping hooks.
     #
@@ -5257,11 +5260,11 @@ contents of a repository in any supported version-control system under
 that directory.
 
 If the argument is the name of a plain file, it will be read in as a
-fast-import stream.
+fast-import stream or Subversion dump, whichever it is.
 
-With an argument of '-', this command reads a fast-import stream from
-standard input (this will be useful in filters constructed with
-command-line arguments).
+With an argument of '-', this command reads a fast-import stream or
+Subversion dump from standard input (this will be useful in filters
+constructed with command-line arguments).
 """)
     def do_read(self, line):
         "Read in a repository for surgery."
@@ -6240,43 +6243,44 @@ to re-set it.
 """)
     def do_branchify(self, line):
         if line.strip():
-            self.branchify = line.strip().split()
-        announce(" ".join(self.branchify))
+            global_options['svn_branchify'] = line.strip().split()
+        announce(" ".join(global_options['svn_branchify']))
     #
     # Setting options
     #
     def help_set(self):
         print("""
 Set a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags. The following flags are defined:
+displays the state of all flags and options. The following flags and
+options are defined:
 """)
-        for (opt, expl) in RepoSurgeon.Options:
+        for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
     def do_set(self, line):
         if not line.strip():
-            for opt in dict(RepoSurgeon.Options):
+            for opt in dict(RepoSurgeon.OptionFlags):
                 print("\t%s = %s" % (opt, global_options.get(opt, False)))
         else:
             for option in line.split():
-                if option not in dict(RepoSurgeon.Options):
-                    complain("no such option as '%s'" % option)
+                if option not in dict(RepoSurgeon.OptionFlags):
+                    complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = True
     def help_clear(self):
         print("""
 Clear a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags. The following flags are defined:
+displays the state of all flags. The following flags and options are defined:
 """)
-        for (opt, expl) in RepoSurgeon.Options:
+        for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
     def do_clear(self, line):
         if not line.strip():
-            for opt in dict(RepoSurgeon.Options):
+            for opt in dict(RepoSurgeon.OptionFlags):
                 print("\t%s = %s" % (opt, global_options.get(opt, False)))
         else:
             for option in line.split():
-                if option not in dict(RepoSurgeon.Options):
-                    complain("no such option as '%s'" % option)
+                if option not in dict(RepoSurgeon.OptionFlags):
+                    complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
 
