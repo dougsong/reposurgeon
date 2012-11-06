@@ -115,7 +115,7 @@ svn-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo "Testing $${test}" >&2; \
+		(if echo -n "Testing $${test}" >&2; grep '^ ##' $${test}.svn; >&2\
 		../reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
