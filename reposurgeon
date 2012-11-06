@@ -2413,6 +2413,8 @@ class StreamParser:
                     # actual file modification on the new branch.
                     # Exception: If the target branch has been deleted,
                     # perform a normal copy.
+                    # TODO: if the delete was in the same revision, it would
+                    # be good to rewrite this as a branch merge.
                     if node.from_path:
                         nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
