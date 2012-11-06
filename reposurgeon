@@ -1602,8 +1602,7 @@ class StreamParser:
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
-    # Native Subversion properties that we don't suppress:
-    # svn:externals, svn:mergeinfo.
+    # Native Subversion properties that we don't suppress: svn:externals
     # The reason for these suppressions is to avoid a huge volume of
     # junk file properties - cvs2svn in particular generates them like
     # mad.  We want to let through other properties that might carry
@@ -2293,15 +2292,23 @@ class StreamParser:
                             # Ignore an invalid empty value set (not
                             # no effect) by some tools.
                             if val:
-                                (_, span) = val.split(":")
-                                if '-' in span:
-                                    (_, end) = span.split("-")
-                                else:
-                                    end = span
-                                self.mergeinfo[revision] = end
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("r%s: mergeinfo link from %s\n" \
-                                            % (revision, end))
+                                # The general case is multiline and
+                                # describes multiple soans merging
+                                # to this revision.  For each, we
+                                # link from the last one.
+                                for line in val.split('\n'):
+                                    if line:
+                                        (_, span) = line.split(":")
+                                        if '-' in span:
+                                            (_, end) = span.split("-")
+                                        else:
+                                            end = span
+                                        if revision not in self.mergeinfo:
+                                            self.mergeinfo[revision] = []
+                                        self.mergeinfo[revision].append(end)
+                                        if verbose >= DEBUG_EXTRACT:
+                                            announce("r%s: mergeinfo link from %s\n" \
+                                                    % (revision, end))
                         # svn:ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
@@ -2710,9 +2717,10 @@ class StreamParser:
             # Add links due to svn:merginfo properties
             for (later, earlier) in self.mergeinfo.items():
                 late_commit = self.repo.fossil_map["SVN:%s" % later]
-                early_commit = self.repo.fossil_map["SVN:%s" % earlier]
-                if early_commit.mark not in late_commit.parentMarks():
-                    late_commit.addParent(early_commit.mark)
+                for early in earlier:
+                    early_commit = self.repo.fossil_map["SVN:%s" % early]
+                    if early_commit.mark not in late_commit.parentMarks():
+                        late_commit.addParent(early_commit.mark)
             baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
