@@ -28,9 +28,8 @@ M 100644 :3 .gitignore
 blob
 mark :5
 data 49
-Now we modiy the README just as a placeholder.
+Now we modify the README just as a placeholder.
  
-
 commit refs/heads/master
 mark :6
 committer esr <esr> 1322694572 +0000

@@ -1,4 +1,4 @@
-## Test authors command, heredocs, and comment editing
+## Test authors read, fossil-ID refs, heredocs, comment editing
 read references.svn
 authors read <<EOF
 esr-guest = Eric S. Raymond <esr-guest@alioth.debian.org>
@@ -33,5 +33,6 @@ extraction of logical values from report. Added Kelvin-to-Celsius
 conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
 EOF
+inspect <352>
 references lift
 write

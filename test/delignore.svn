@@ -1,0 +1,189 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 239e47c3-361c-4cc1-b11f-f79d857aba4a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-06T16:27:31.141744Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 8
+svn:date
+V 27
+2012-11-06T16:27:33.023366Z
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-11-06T16:27:33.976763Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 129
+Content-length: 129
+
+K 8
+svn:date
+V 27
+2012-11-06T16:52:24.915264Z
+K 7
+svn:log
+V 31
+Explain what we're doing here.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 156
+Text-content-md5: 0ae8b7f9ecd74d785fc122a0a01bacc1
+Text-content-sha1: 27c0c4f4c1a47e85aae33653467473d7e2cebb13
+Content-length: 156
+
+The pupose of this test repository is to verify that a ..gitignore generated 
+from an ignore property set on a directory won't survive directory deletion.
+
+
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 146
+Content-length: 146
+
+K 8
+svn:date
+V 27
+2012-11-06T16:54:15.716101Z
+K 7
+svn:log
+V 48
+This follows "svn propset svn:ignore *.pyc foo"
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 126
+Content-length: 126
+
+K 7
+svn:log
+V 28
+This follows "svn del foo".
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-11-06T16:55:01.640609Z
+PROPS-END
+
+Node-path: trunk/foo
+Node-action: delete
+
+

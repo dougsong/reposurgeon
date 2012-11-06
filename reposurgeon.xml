@@ -146,6 +146,12 @@ list 29..71            ;; list summary index of events 20..71
 
 list 236..$            ;; List events from 236 to the last
 
+inspect &lt;2317&lt;   ;; Look for a tag with the name 2317, a tip commit
+                       ;; of a branch named 2317, or a commit with fossil-ID
+                       ;; 2317. Inspect what is found. A plain number is
+                       ;; prbaby a fossil-ID inherited from a Subversion
+                       ;; revision number.
+
 list /regression/      ;; list all commits and tags with comments or
                        ;; committer headers or author headers containing 
                        ;; the string "regression"
@@ -177,7 +183,6 @@ of the semantics of marks.</para></listitem>
 <varlistentry>
 <term><firstterm>tag and branch names</firstterm></term>
 <listitem>
-
 <para>The basename of a branch refers to its tip commit.  The name of
 a tag is equivalent to its mark, and through that to a commit. Tag and
 branch locations are bracketed with &lt; &gt; (angle brackets) to
@@ -185,6 +190,16 @@ distinguish them from command keywords. (But also see the discussion
 of branch sets and &amp; a bit further on; also, in older versions
 of this tool tag and branch locations were prefixed with  '@' rather
 than bracketed. The change fixed a parsing ambiguity)</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>fossil IDs</firstterm></term>
+<listitem>
+<para>If the contents of name brackets (&lt; &gt;) does not match a tag or 
+branch name, the interpreter next searches fossil IDs of commits.  This 
+is especially useful when you have imported a Subversion dunp; it
+means that commits made from it can be referred to by their corresponding
+Subversion revision numbers.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -290,6 +305,10 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>the branch tip commit</entry>
       </row>
       <row>
+        <entry align='center'>fossil ID</entry>
+        <entry align='center'>commit with that fossil ID</entry>
+      </row>
+      <row>
         <entry align='center'>RFC3339 date</entry>
         <entry align='center'>commit with that date</entry>
       </row>
@@ -383,7 +402,7 @@ arguments).</para>
 <para>If the read location is a git repository and contains a 
 <filename>.git/cvsauthors</filename> file (such as is left in in place
 by <command>git cvsimport -A</command>) that file will be read in as
-if it had been given to the <command>authors read</command>.</para>
+if it had been given to the <command>authors read</command> command.</para>
 
 <para>If the read location is a directory, and its repository
 subdirectory has a file named <filename>fossils</filename>, that file
@@ -626,39 +645,39 @@ warning when this occurs but does not try to resolve it.</para>
 
 <variablelist>
 <varlistentry>
-<term>obliterate</term>
+<term><command>obliterate</command></term>
 <listitem>
 <para>simply discards all file ops associated with deleted commit(s).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>coalesce</term>
+<term><command>coalesce</command></term>
 <listitem>
 <para>Discard all M operations (and associated blobs) except the last.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>pushback</term>
+<term><command>pushback</command></term>
 <listitem>
 <para>Append fileops to parents, rather than prepending to children.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>tagforward</term>
+<term><command>tagforward</command></term>
 <listitem>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
 forward to the first child rather than being deleted.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>tagback</term>
+<term><command>tagback</command></term>
 <listitem>
 <para>With the "tagback" modifier, any tag on the deleted commit is pushed
 backward to the first parent than being deleted. </para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>quiet</term>
+<term><command>quiet</command></term>
 <listitem>
 <para>Suppresses warning messages about obliteration of commits with
 non-delete fileops.</para>
@@ -666,13 +685,13 @@ non-delete fileops.</para>
 </varlistentry>
 </variablelist>
 
-<para>Under either of these policies, deleting a commit that has
+<para>Under any of these policies, deleting a commit that has
 children does not back out the changes made by that commit, as they
 will still be present in the blobs attached to versions past the end
 of the deletion set.  All a delete does when the commit has children
 is lose the metadata information about when and by who those changes
-were actually made; after the delete any such changes willbe
-attributes to the first undeleted children of the deleted commits.  It
+were actually made; after the delete any such changes will be
+attributed to the first undeleted children of the deleted commits.  It
 is expected that this command will be useful mainly for removing
 commits mechanically generated by repository converters such as
 <command>cvs2svn</command>.</para>
@@ -899,8 +918,6 @@ list.</para>
 </varlistentry>
 <varlistentry>
 <term><command>paths</command>
-        <command>perform</command>
-        <command>force</command>
         [<emphasis>selection-set</emphasis>]
 	[<command>{sub|sup}</command>]
 	[<command>dirname</command>]
@@ -915,32 +932,12 @@ strip the first directory component from every path.</para>
 </varlistentry>
 <varlistentry>
 <term><command>merge</command>
+        <emphasis>selection-set</emphasis>
 </term>
 <listitem>
-<para>Merge branches. Takes a selection set argument, ignoring all but
-the lowest (source) and highest (target) members; also, optional modifiers
-'perform' and 'force'.</para>
-
-<para>The simplest form of the command takes a singleton selection set,
-interpreted as a source commit, and looks at each later commit as a
-target to see if a clean merge is possible.  A clean merge is deemed
-to be possible if every file in the source revision is present in the
-target revision and the target-revision content of every file occuring
-in the the source revision is either that of the source revision or was
-modified by the target commit itself.</para>
-
-<para>If the selection set has two members, the second (higher-numbered)
-even is taken as the target commit and checked to see if a clean merge
-is possible.  The output from the command says if it is, and if not
-what missing and out-of-date files would make the merge unclean.</para>
-
-<para>If the 'perform' modifier is given and a clean merge is available, it is
-performed.  If both 'perform' and 'force' modifiers are given, the merge
-is performed even if is not clean.</para>
-
-<para>Warning: while clean merges will never alter the content of any
-revision - they just change parent-child relationships - unclean merges
-are not safe. Use with extreme caution.</para> 
+<para>Create a merge link. Takes a selection set argument, ignoring all but
+the lowest (source) and highest (target) members.  Creates a merge link
+from the highest member (child) to the lowest (parent).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -955,7 +952,7 @@ existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.</para>
 
 <para>For a 'move', a third argument must be a singleton selection set. For
-a 'rename', tha third argument may be any token. For a 'delete', no
+a 'rename', the third argument may be any token. For a 'delete', no
 third argument is required.</para>
 </listitem>
 </varlistentry>
@@ -1002,7 +999,7 @@ Subversion dump stream, (2) $Id$ and $Revision$ headers in repository
 files, and (3) the <filename>.git/cvs-revisions</filename> created by
 <command>git cvsimport</command>.</para>
 
-<para>The workflow for lifting possible references is this: first,
+<para>The detailed sequence for lifting possible references is this: first,
 find possible CVS and Subversion references with the
 <command>references</command>; then replace them with equivalent
 cookies; then run <command>references lift</command> to turn the
@@ -1075,12 +1072,39 @@ if the local ID is the entire address, this is also considered a match
 <para>With the 'read' modifier, or no modifier and a filename
 argument, apply author mapping data (no filename argument, read the
 mapping from standard input).  May be useful if you are editing a repo
-or dump created by cvs2git or by git-svn invoked without -A.</para>
+or dump created by <command>cvs2git</command> or by
+<command>git-svn</command> invoked without -A.</para>
 
 <para>With no file argument, or with the 'write' modifier and a file
-argument: write each unique committer, author, and tagger (no file
-argument sends the report to standard output). This may be helpful as
-a start on building an authors file.</para>
+argument: write a mapping file that could be interpreted by 'authors
+read', with entries for each unique committer, author, and tagger (no
+file argument sends the report to standard output). This may be
+helpful as a start on building an authors file, though each part to
+the right of an equals sign will need editing.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>branchify</command>
+          [<emphasis>path-set</emphasis>]
+</term>
+<listitem>
+<para>Specify the list of directories to be treated as potential branches (to
+become tags if there are no modifications after the creation copies)
+when analyzing a Subversion repo. This list is ignored when the
+svn_nobranch option is set.  It defaults to the 'standard layout'
+set of directories, plus any unrecognized directories in the
+repository root.</para>
+
+<para>With no arguments, displays the current branchification set.</para>
+
+<para>An asterisk at the end of a path in the set means 'all immediate
+subdirectories of this path, unless they are part of another (longer)
+path in the branchify set'.</para>
+
+<para>Note that the branchify set is a property of the reposurgeon
+interpreter, not of any individual repository, and will persist across
+Subversion dumpfile reads. This may lead to unexpected results if you
+forget to re-set it.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -1312,27 +1336,49 @@ gathers statistics only on code executed via '-'.</para>
 
 <para><application>reposurgeon</application> can read Subversion
 dumpfiles or dump from a Subversion repository (not a checkout
-directory). You can usually use use svnsync to make a local mirror of
-the repository you are interested in. <application>reposurgeon</application>
-cannot write a Subversion repository, but history read from one can be
-exported to any VCS for which <application>reposurgeon</application> has
-an importer specified.</para>
+directory).  The <application>reposurgeon</application> distribution
+includes a script named <quote>svnpull</quote> that you can use to
+make and then incrementally update a local mirror of a remote
+repository for conversion purposes.</para>
+
+<para><application>reposurgeon</application> cannot write a Subversion
+repository, but history read from one can be exported to any VCS for
+which <application>reposurgeon</application> has an importer
+specified.</para>
 
 <para>Here are the rules used for mapping subdirectories in a 
 Subversion repository to branches:</para>
 
 <orderedlist>
-<listitem><para>A repository is considered "flat" if it has no /trunk
-directory.  All commits in a flat repository are assigned to branch master.
-In this case, we're done; all the other rules apply to non-flat
-repos.</para></listitem>
+<listitem><para>At any given time there is a set of eligible 
+paths and path wildcards which declare potential branches. 
+See the documentation of the <command>branchify</command> 
+for how to alter this set, which initially consists of
+{trunk, tags/*, branches/*, and '*'}.</para></listitem>
 
-<listitem><para>/trunk always becomes the master branch.</para></listitem>
+<listitem><para>A repository is considered "flat" if it has no
+directory that matches a path or path wildcard in the branchify set.
+All commits in a flat repository are assigned to branch master, and
+what would have been branch structure becomes directory structure.  In
+this case, we're done; all the other rules apply to non-flat
+repos.</para>
 
-<listitem><para>If there are /tags and /branches directories, each
-subdirectory of these is considered a potential branch.  All top-level
-directories other than /trunk, /tags, and /branches are also considered
-potential branches.</para></listitem>
+<para>If you give the command <command>set svn_nobranch</command>
+before reading a Subversion repository, branch analysis is skipped and
+the repository is treated as though flat (left as a linear sequence of
+commits on refs/heads/master).  This may be useful if your repository
+configuration is highly unusual and you need to do your own branch
+surgery. Note that tis option will disable partitioning of mixed
+commits.</para></listitem>
+
+<listitem><para>If "trunk" is eligible, it always becomes the master
+branch.</para></listitem>
+
+<listitem><para>If an element of the branchify set ends with *, each
+immediate subdirectory of it is considered a potential branch.  If '*'
+is in the branchify set (which is true by default) all top-level
+directories other than /trunk, /tags, and /branches are also
+considered potential branches.</para></listitem>
 
 <listitem><para>Each potential branch is checked to see if it has
 commits on it after the initial creation or copy.  If there are such
@@ -1343,12 +1389,6 @@ branch is the basename of the directory.)</para></listitem>
 <listitem><para>Files in the top-level directory are assigned to a
 synthetic branch named 'root'.</para></listitem>
 </orderedlist>
-
-<para>If you give the command <command>set svn_nobranch</command> before
-reading a Subversion repository, branch analysis is skipped and the
-repository is left as a linear sequence of commits on refs/heads/master.
-This may be useful if your repository configuration an unusual and you
-need to do your own branch surgery.</para>
 
 <para>Each commit that only creates or deletes directories (in
 particular, copy commits for tags and branches, and commits that only
@@ -1367,14 +1407,14 @@ finishes with a deleteall at its tip, the deleteall is transformed
 into a tag. This rule cleans up after aborted branch renames.</para>
 
 <para>Occasionally (and usually by mistake) a branchy Subversion
-repository will contain revision that touch multiple branches. These
+repository will contain revisions that touch multiple branches. These
 are handled by partitioning them into multiple import-stream commits,
 one on each affected branch. The Fossil-ID of such a split commit
 will have a pseudo-decimal part - for examble, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
 2317.1, 2317.2, and 2317.3. In addition, the second and all subsequent
 commits will have their timestamps incremented by a second each in
-order to make the committer/timstamp pairs distinguishable.</para>
+order to make the committer/timestamp pairs distinguishable.</para>
 
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
@@ -1389,6 +1429,10 @@ used for reference-lifting, then discarded.</para>
 you're somehow managed to have an actual .gitignore file in a
 Subversion directory with an svn:ignore property, the file will get
 stepped on.</para>
+
+<para>svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
+on a revision A with a merge source range ending in revision B produces
+a merge link such that B becomes a parent of A.</para>
 
 <para>All other Subversion properties are discarded. (This may change in a 
 future release.) The property for which this is most likely to cause
@@ -1444,11 +1488,11 @@ lost. Usually this error can be ignored.</para>
 <term>properties set</term>
 <listitem>
 <para><command>reposurgeon</command> has detected a setting of a
-user-defined property, or one of the Subversion properies
-svn:externals or svn:mergeinfo. These properties cannot be expressed
-in an import stream; the user is notified in case this is a
-showstopper for the conversion or some corrective action is required,
-but normally this error can be ignored.</para>
+user-defined property, or the Subversion properies
+svn:externals. These properties cannot be expressed in an import
+stream; the user is notified in case this is a showstopper for the
+conversion or some corrective action is required, but normally this
+error can be ignored.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1582,12 +1626,19 @@ tag will invalidate it.</para>
 property extension commands. Accordingly, <command>reposurgeon</command> 
 omits them when rebuilding a repo with git type.</para>
 
-<!-- was: https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools -->
+<para>Limitation: <command>reposurgeon</command> recognizes how
+supported VCSes represent file ignores (Subversion ignore properties,
+.gitignore/.hgignore/.bzrignore file in other systems) and moves
+ignore declarations among these containers on repo input and output. This
+will be sufficent if the ignore patterns are exact filenames.  But
+<command>reposurgeon</command> does not know about variant pattern
+syntaxes and does not translate them. Subversion's shell globbing is
+upward-compatible with git's, but other translation cases may need
+hand-hacking.</para>
+
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
-<command>reposurgeon</command>. See the <ulink
-url="https://git.wiki.kernel.org/articles/i/n/t/Interfaces,_frontends,_and_tools.html">Git
-Wiki tools page</ulink> for a large collection of such tools.</para>
+<command>reposurgeon</command>.</para>
 </refsect1>
 
 <refsect1 id='requirements'><title>REQUIREMENTS</title>

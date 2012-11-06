@@ -16,6 +16,10 @@ Revision-number: 1
 Prop-content-length: 131
 Content-length: 131
 
+K 8
+svn:date
+V 27
+2011-11-30T23:06:27.557744Z
 K 7
 svn:log
 V 33
@@ -25,10 +29,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T23:06:27.557744Z
 PROPS-END
 
 Node-path: README
@@ -49,6 +49,10 @@ Revision-number: 2
 Prop-content-length: 145
 Content-length: 145
 
+K 8
+svn:date
+V 27
+2011-11-30T23:08:14.136495Z
 K 7
 svn:log
 V 47
@@ -58,10 +62,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T23:08:14.136495Z
 PROPS-END
 
 Node-path: 
@@ -82,6 +82,10 @@ Revision-number: 3
 Prop-content-length: 127
 Content-length: 127
 
+K 8
+svn:date
+V 27
+2011-11-30T23:09:32.596061Z
 K 7
 svn:log
 V 29
@@ -91,28 +95,27 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T23:09:32.596061Z
 PROPS-END
 
 Node-path: README
 Node-kind: file
 Node-action: change
 Text-content-length: 49
-Text-content-md5: c72981b51f656513588adb787083a92f
-Text-content-sha1: 91adeae86c0fbcea7db4cc191388b173fadfe1c9
+Text-content-md5: b3c5039ff1d50248116423d20c6c81f6
+Text-content-sha1: 8dd900e25c175c19844d98f1fb6d4d5cadd447f7
 Content-length: 49
 
-Now we modiy the README just as a placeholder.
+Now we modify the README just as a placeholder.
  
-
 
 Revision-number: 4
 Prop-content-length: 202
 Content-length: 202
 
+K 8
+svn:date
+V 27
+2011-11-30T23:11:25.076848Z
 K 7
 svn:log
 V 103
@@ -124,10 +127,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T23:11:25.076848Z
 PROPS-END
 
 Node-path: 
@@ -143,6 +142,10 @@ Revision-number: 5
 Prop-content-length: 110
 Content-length: 110
 
+K 8
+svn:date
+V 27
+2011-11-30T23:12:17.303954Z
 K 7
 svn:log
 V 12
@@ -152,10 +155,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T23:12:17.303954Z
 PROPS-END
 
 Node-path: README

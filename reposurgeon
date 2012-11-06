@@ -7,10 +7,9 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, time, calendar, signal, shutil, copy, shlex, collections, unittest
+import re, signal, shutil, copy, shlex, collections, resource
+import time, calendar, unittest
 import email.message, email.parser, email.utils
-import xml.etree.cElementTree as ET
-import threading, Queue
 
 # This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd. 
@@ -19,7 +18,7 @@ try:
 except ImportError:
     pass
 
-version="2.0"
+version="2.1"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -89,6 +88,7 @@ class VCS:
                  checkout,
                  preserve,
                  authormap,
+                 ignorename,
                  notes):
         self.name = name
         self.subdirectory = subdirectory
@@ -101,6 +101,7 @@ class VCS:
         self.checkout = checkout
         self.preserve = preserve
         self.authormap = authormap
+        self.ignorename = ignorename
         self.notes = notes
     def __repr__(self):
         return "         Name: " + str(self.name) + "\n" \
@@ -114,6 +115,7 @@ class VCS:
              + "     Checkout: " + str(self.checkout) + "\n" \
              + "     Preserve: " + str(self.preserve) + "\n" \
              + "    Authormap: " + str(self.authormap) + "\n" \
+             + "   Ignorename: " + str(self.ignorename) + "\n" \
              + "        Notes: " + str(self.notes) + "\n"
 
 # Most knowledge about specific version-control systems lives in the
@@ -133,7 +135,7 @@ class VCS:
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
 # * Default preserve set (typically config and hook files).
-# * Likely location for an importer to drop an authrmaps file
+# * Likely location for an importer to drop an authormap file
 # * Command to list files under repository control.
 #
 # Note that some of the commands used here are plugins or extensions
@@ -162,6 +164,7 @@ vcstypes = [
         lister="git ls-files",
         preserve=set(['.git/config', '.git/hooks']),
         authormap=".git/cvs-authors",
+        ignorename=".gitignore",
         notes="The authormap is not required, but will be used if present."),
     # 
     VCS(name="bzr",
@@ -175,6 +178,7 @@ vcstypes = [
         checkout="bzr checkout",
         preserve=set([]),
         authormap=None,
+        ignorename=".bzrignore",
         notes="Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
     VCS(name="hg",
@@ -190,6 +194,7 @@ vcstypes = [
         checkout="hg checkout",
         preserve=set([".hg/hgrc"]),
         authormap=None,
+        ignorename=".hgignore",
         notes="The hg export-import methods are not part of stock Mercurial."),
     # If we ever implement an exporter, don't forget to preserve hooks/.  
     VCS(name="svn",
@@ -203,6 +208,7 @@ vcstypes = [
         lister=None,
         preserve=set([]),
         authormap=None,
+        ignorename=None,
         notes="Read-only. Run from the repository, not a checkout directory."),
     ]
 
@@ -401,7 +407,7 @@ extractors = [GitExtractor()]
 verbose         = 0
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
-DEBUG_IGNORES   = 4    # Debug ignore generation
+DEBUG_IGNORES   = 3    # Debug ignore generation
 DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_FILEMAP   = 5    # Debug building of filemaps
@@ -533,19 +539,6 @@ class RepoSurgeonEmail(email.message.Message):
     def __str__(self):
         return email.message.Message.__str__(self).replace("\n--", "\n.--")
 
-def secondsFromOffsetString(text):
-    m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
-    if m is not None:
-        sign = -1 if m.group(1) == "-" else 1
-        hours = int(m.group(2))
-        mins = int(m.group(3))
-        if hours < -14 or hours > 12 or mins > 59:
-            complain("Be warned, the UTC offset '%s' looks funky but we're using anyway." % text)
-        return (hours * 60 + mins) * 60 * sign
-    else:
-        complain("Warning, UTC offset '%s' is invalid, assuming +0000 instead." % text)
-        return 0
-
 class Date:
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     def __init__(self, text):
@@ -557,7 +550,7 @@ class Date:
         text = text.strip()
         if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
             (self.timestamp, self.orig_tz_string) = text.split()
-            self.tz_offset = secondsFromOffsetString(self.orig_tz_string)
+            self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
             return
         # If that didn't work, look for an RFC822 date, which git also
@@ -588,6 +581,19 @@ class Date:
             pass
         # Date format not recognized
         raise Fatal("'%s' is not a valid timestamp" % text)
+    @staticmethod
+    def secondsFromOffsetString(text):
+        m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
+        if m is not None:
+            sign = -1 if m.group(1) == "-" else 1
+            hours = int(m.group(2))
+            mins = int(m.group(3))
+            if hours < -14 or hours > 12 or mins > 59:
+                complain("dubious UTC offset '%s'." % text)
+            return (hours * 60 + mins) * 60 * sign
+        else:
+            complain("invalid UTC offset '%s', assuming +0000 instead." % text)
+            return 0
     def rfc3339(self):
         return rfc3339(self.timestamp)
     def rfc822(self):
@@ -826,7 +832,8 @@ class Reset:
 class FileOp:
     "Represent a primitive operation on a file."
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
-    def __init__(self):
+    def __init__(self, vcs=None):
+        self.vcs = vcs	# Only used in path_remap method
         self.op = None
         self.committish = None
         self.source = None
@@ -836,6 +843,16 @@ class FileOp:
         self.ref = None
         self.inline = None
         self._paths = None
+    def path_remap(self):
+        "Hack the fileop's basename."
+        # Ignore file names from non-git VCSes need to get
+        # mapped to .gitignore, because we have to
+        # have some way to recognize what they are
+        # in order to remap the name properly on
+        # export.
+        if self.vcs is not None:
+            if os.path.basename(self.path) == self.vcs.ignorename:
+                self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
     def setOp(self, op):
         self.op = op
         self._paths = None
@@ -852,13 +869,32 @@ class FileOp:
             return ""
         else:
             raise Fatal("internal error while extracting pathname")
+    @staticmethod
+    def compare(a, b):
+        "Emulates the sort that git fast-export uses."
+        name_a = FileOp.__pathname__(a)
+        name_b = FileOp.__pathname__(b)
+        len_a = len(name_a)
+        len_b = len(name_b)
+        slen = min(len_a, len_b)
+        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
+        c = cmp(name_a[:slen], name_b[:slen])
+        if c:
+            return c
+        c = len_b - len_a
+        if c:
+            return c
+        # renames go last
+        return (a.op == 'R') - (b.op == 'R') 
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
+            self.path_remap()
             if type(self.mode) == type(0):
                 self.mode = "%06o" % self.mode
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
+            self.path_remap()
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
@@ -874,12 +910,14 @@ class FileOp:
             self._paths = None
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path_remap()
         elif opline[0] == "N":
             (self.op, self.ref, self.committish) = shlex.split(opline)
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path_remap()
         elif opline[0] in ("R", "C"):
             (self.op, self.source, self.target) = shlex.split(opline)
         elif opline == "deleteall":
@@ -906,23 +944,6 @@ class FileOp:
             return True
         else:
             return self.paths() & other.paths()
-    @staticmethod
-    def compare(a, b):
-        "Emulates the sort that git fast-export uses."
-        name_a = FileOp.__pathname__(a)
-        name_b = FileOp.__pathname__(b)
-        len_a = len(name_a)
-        len_b = len(name_b)
-        slen = min(len_a, len_b)
-        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
-        c = cmp(name_a[:slen], name_b[:slen])
-        if c:
-            return c
-        c = len_b - len_a
-        if c:
-            return c
-        # renames go last
-        return (a.op == 'R') - (b.op == 'R') 
     def __str__(self):
         "Dump this fileop in import-stream format."
         if self.op == "M":
@@ -1145,7 +1166,6 @@ class Commit:
         return len(self._parent_marks) > 0
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
-        sys.setrecursionlimit(len(self.repo.events) * 2)
         if not self._parent_marks or self.committer.date < other.committer.date:
             return False
         elif other.mark in self._parent_marks:
@@ -1643,8 +1663,7 @@ class StreamParser:
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
-    # Native Subversion properties that we don't suppress:
-    # svn:externals, svn:mergeinfo.
+    # Native Subversion properties that we don't suppress: svn:externals
     # The reason for these suppressions is to avoid a huge volume of
     # junk file properties - cvs2svn in particular generates them like
     # mad.  We want to let through other properties that might carry
@@ -1653,6 +1672,7 @@ class StreamParser:
         "svn:executable",  # We special-case this one elsewhere
         "svn:ignore",      # We special-case this one elsewhere
         "svn:special",     # We special-case this one elsewhere
+        "svn:mergeinfo",   # We special-case this one elsewhere
         "svn:mime-type",
         "svn:keywords",
         "svn:needs-lock",
@@ -1680,6 +1700,7 @@ class StreamParser:
         self.fileop_branchlinks  = set([])
         self.directory_branchlinks  = set([])
         self.active_gitignores = set([])
+        self.mergeinfo = {}
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2001,11 +2022,11 @@ class StreamParser:
                                     commit.addParent(line.split()[1])
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
-                                    commit.fileops.append(FileOp().parse(line))
+                                    commit.fileops.append(FileOp(self.repo.vcs).parse(line))
                                 elif line == "deleteall\n":
-                                    commit.fileops.append(FileOp().parse("deleteall"))
+                                    commit.fileops.append(FileOp(self.repo.vcs).parse("deleteall"))
                                 elif line[0] == "M":
-                                    fileop = FileOp().parse(line)
+                                    fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
@@ -2018,7 +2039,7 @@ class StreamParser:
                                         # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == "N":
-                                    fileop = FileOp().parse(line)
+                                    fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     self.fi_parse_fileop(fileop)
                                 # Handling of file ops ends.
@@ -2260,11 +2281,6 @@ class StreamParser:
                     latch = False
                     for (prop, val) in node.props.items():
                         if prop not in StreamParser.IgnoreProperties:
-                            # Ignore an invalid value set (not no effect)
-                            # by some tools. This keeps us from seeing
-                            # spurious messages about empty properties.
-                            if prop == 'svn:mergeinfo' and not val:
-                                continue
                             if not latch:
                                 self.gripe("r%s~%s properties set:" \
                                            % (node.revision, node.path))
@@ -2279,28 +2295,23 @@ class StreamParser:
                 if node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
-                    node.path += os.sep
-                    if not global_options['svn_nobranch'] and node.path == 'trunk' + os.sep:
-                        self.branches['trunk' + os.sep] = None
-                        if verbose >= DEBUG_TOPOLOGY:
-                            announce("trunk/ recognized as a branch")
+                    node.path += os.sep                   
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
                         node.implicit = True
                         newbranch = node.path
-                        if not global_options['svn_nobranch'] and self.branches:
-                            if newbranch.count(os.sep) == 2:
-                                if newbranch.startswith("tags" + os.sep):
-                                    self.branches[newbranch] = None
-                                elif newbranch.startswith("branches" + os.sep):
-                                    self.branches[newbranch] = None
-                            elif newbranch.count(os.sep) == 1:
-                                if newbranch not in {"tags" + os.sep,
-                                                     "branches" + os.sep}:
-                                    self.branches[newbranch] = None
-                        if newbranch in self.branches and verbose >= DEBUG_TOPOLOGY:
-                            announce("%s recognized as a branch" % newbranch)
+                        if not global_options['svn_nobranch']:
+                            for trial in global_options['svn_branchify']:
+                                if '*' not in trial and trial + os.sep == node.path:
+                                    self.branches[node.path] = None
+                                elif trial.endswith(os.sep + '*') \
+                                         and os.path.dirname(trial) == os.path.dirname(node.path[:-1]):
+                                    self.branches[node.path] = None
+                                elif trial == '*' and not node.path + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 2:
+                                    self.branches[node.path] = None
+                                if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
+                                    announce("%s recognized as a branch" % node.path)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             assert node.implicit == False
@@ -2317,52 +2328,90 @@ class StreamParser:
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 generated_nodes.append(newnode)
-                    elif node.action == SD_CHANGE:
-                        if node.props is not None:
-                            if verbose >= DEBUG_EXTRACT:
-                                announce("r%s: setting properties %s on %s" \
-                                         % (revision, node.props, node.path))
-                            # svn:ignore gets handled here,
-                            if node.path == os.sep:
-                                gitignore_path = ".gitignore"
-                            else:
-                                gitignore_path = os.path.join(node.path,
-                                                              ".gitignore")
-                            # There are no other directory properties that can
-                            # turn into fileops.
-                            if "svn:ignore" in node.props:
-                                if verbose >= DEBUG_IGNORES:
-                                    announce("r%s: Queuing up %s/.gitignore generation with:\n%s." % (revision, node.path, node.props["svn:ignore"]))
-                                blob = Blob(self.repo)
-                                with open(blob.blobfile(), "w") as wfp:
-                                    wfp.write(node.props["svn:ignore"])
+                            ignorepath = os.path.join(node.path, ".gitignore")
+                            if ignorepath in self.active_gitignores:
                                 newnode = StreamParser.NodeAction()
-                                newnode.path = gitignore_path
-                                newnode.revision = revision
-                                newnode.action = SD_ADD
-                                newnode.kind = SD_FILE
-                                newnode.blob = blob
-                                # Must append rather than simply performing.
-                                # Otherwise when the property is unset we
-                                # won't have the right thing happen.
-                                generated_nodes.append(newnode)
-                                self.active_gitignores.add(gitignore_path)
-                            elif gitignore_path in self.active_gitignores:
-                                if verbose >= DEBUG_IGNORES:
-                                    announce("r%s: queuing up %s/.gitignore deletion." % (revision, node.path))
-                                newnode = StreamParser.NodeAction()
-                                newnode.path = gitignore_path
+                                newnode.path = ignorepath
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 generated_nodes.append(newnode)
-                                self.active_gitignores.remove(gitignore_path)
+                    # Property settings can be present on either
+                    # AD_ADD or SD_CHANGE actions.
+                    if node.props is not None:
+                        if verbose >= DEBUG_EXTRACT:
+                            announce("r%s: setting properties %s on %s" \
+                                     % (revision, node.props, node.path))
+                        # svn:mergeinfo gets handled here
+                        if 'svn:mergeinfo' in node.props:
+                            val = node.props['svn:mergeinfo']
+                            # Ignore an invalid empty value set (not
+                            # no effect) by some tools.
+                            if val:
+                                # The general case is multiline; each line
+                                # may describe multiple spans merging
+                                # to this revision.  For each span, we
+                                # link from the last revision.
+                                for line in val.split('\n'):
+                                    if line and ':' in line:
+                                        (_, ranges) = line.split(":")
+                                        for span in ranges.split(","):
+                                            if '-' in span:
+                                                (_, end) = span.split("-")
+                                            else:
+                                                end = span
+                                            # Because mergenfo properties will
+                                            # persist like other properties,
+                                            # we want to record the earliest
+                                            # instance of a merge to a given
+                                            # path from a given source revision
+                                            # then ignore latter ones.
+                                            if (node.path, end) not in self.mergeinfo:
+                                                self.mergeinfo[(node.path, end)] = revision
+                                            if verbose >= DEBUG_EXTRACT:
+                                                announce("r%s: mergeinfo link from %s\n" \
+                                                        % (revision, end))
+                        # svn:ignore gets handled here,
+                        if node.path == os.sep:
+                            gitignore_path = ".gitignore"
+                        else:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
+                        # There are no other directory properties that can
+                        # turn into fileops.
+                        if "svn:ignore" in node.props:
+                            blob = Blob(self.repo)
+                            with open(blob.blobfile(), "w") as wfp:
+                                wfp.write(node.props["svn:ignore"])
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_ADD
+                            newnode.kind = SD_FILE
+                            newnode.blob = blob
+                            if verbose >= DEBUG_IGNORES:
+                                announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                            # Must append rather than simply performing.
+                            # Otherwise when the property is unset we
+                            # won't have the right thing happen.
+                            generated_nodes.append(newnode)
+                            self.active_gitignores.add(gitignore_path)
+                        elif gitignore_path in self.active_gitignores:
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_DELETE
+                            newnode.kind = SD_FILE
+                            if verbose >= DEBUG_IGNORES:
+                                announce("r%s: queuing up %s deletion." % (revision, newnode.path))
+                            generated_nodes.append(newnode)
+                            self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
                     # If this is a copy between branches, do nothing;
                     # no fileop should be issued until there is an
                     # actual file modification on the new branch.
                     # Exception: If the target branch has been deleted,
-                    # perform a a normal copy.
+                    # perform a normal copy.
                     if node.from_path:
                         nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
@@ -2727,6 +2776,13 @@ class StreamParser:
                                 % (rootrev, root.branch))
                 baton.twirl()
             baton.twirl("+")
+            # Add links due to svn:merginfo properties
+            for ((_, early), late) in self.mergeinfo.items():
+                late_commit = self.repo.fossil_map["SVN:%s" % late]
+                early_commit = self.repo.fossil_map["SVN:%s" % early]
+                if early_commit.mark not in late_commit.parentMarks():
+                    late_commit.addParent(early_commit.mark)
+            baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
                 for commit in self.repo.commits():
@@ -2977,17 +3033,17 @@ class Repository:
                 event.tagger.remap(authormap)
     def write_authormap(self, selection, fp):
         "List the identifiers we need."
-        contributors = set([])
+        contributors = {}
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
-                contributors.add(event.committer.who())
+                contributors[event.committer.name] = event.committer.who()
                 for author in event.authors:
-                    contributors.add(author.who())
+                    contributors[author.name] = author.who()
             elif isinstance(event, Tag):
-                contributors.add(event.tagger.who())
-        for contributor in contributors:
-            fp.write(contributor + "\n")
+                contributors[event.tagger.name] = event.tagger.who()
+        for (name, cid) in contributors.items():
+            fp.write("%s = %s\n" % (name, cid))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
         commit_map = {}
@@ -3087,6 +3143,13 @@ class Repository:
         else:
             # Default to git style
             return ("nl-after-commit",)
+    def ignore_remap(self, from_base, to_base):
+        "Substitute basenames in all fileops."
+        for commit in self.commits():
+            for op in commit.fileops():
+                if hasattr(op, 'path'):
+                    if os.path.basename(op.path) == from_base:
+                        os.path = os.path.join(os.path.dirname(os.path), to_base)
     def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
@@ -3297,10 +3360,10 @@ class Repository:
             # Keep making passes until nothing mutates
             mutated = False
             for i in range(len(commit.fileops)):
-                for j in range(len(commit.fileops)):
+                for j in range(i+1, len(commit.fileops)):
                     a = commit.fileops[i]
                     b = commit.fileops[j]
-                    if i < j and a is not None and b is not None and a.relevant(b):
+                    if a is not None and b is not None and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         if verbose >= DEBUG_DELETE:
                             announce("Reduction case %d fired on %s" % (case, (i,j)))
@@ -3863,8 +3926,12 @@ def rebuild_repo(repo, target, preferred):
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
+                if vcs.ignorename and vcs.ignorename != ".gitignore":
+                    repo.ignore_remap(".gitignore", vcs.ignorename)
                 with open(tfname, "w") as tp:
                     repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                if vcs.ignorename and vcs.ignorename != ".gitignore":
+                    repo.ignore_remap(vcs.ignorename, ".gitignore")
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
@@ -4298,7 +4365,7 @@ class RepositoryList:
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
-    Options = (
+    OptionFlags = (
         ("svn_use_uuid", """\
     If set, use Subversion UUID when faking up email addresses, a la git-svn.
 Otherwise, fake up addresses the way git cvs-import does it.
@@ -4330,8 +4397,9 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         self.history = []
         self.callstack = []
         self.profile_log = None
-        for option in dict(RepoSurgeon.Options):
+        for option in dict(RepoSurgeon.OptionFlags):
             global_options[option] = False
+        global_options['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
     #
     # Housekeeping hooks.
     #
@@ -4616,6 +4684,13 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                                 else:
                                     matched = True
                                     selection.append(loc)
+                    # Next, fossil-ID references
+                    if not matched:
+                        for (i, event) in enumerate(self.chosen()):
+                            if hasattr(event, "fossil_id") and event.fossil_id == ref:
+                                selection.append(i)
+                                matched = True
+                                break
                     # Might be a date or action stamp
                     date = None
                     bang = ref.find('!')
@@ -5240,11 +5315,11 @@ contents of a repository in any supported version-control system under
 that directory.
 
 If the argument is the name of a plain file, it will be read in as a
-fast-import stream.
+fast-import stream or Subversion dump, whichever it is.
 
-With an argument of '-', this command reads a fast-import stream from
-standard input (this will be useful in filters constructed with
-command-line arguments).
+With an argument of '-', this command reads a fast-import stream or
+Subversion dump from standard input (this will be useful in filters
+constructed with command-line arguments).
 """)
     def do_read(self, line):
         "Read in a repository for surgery."
@@ -5888,114 +5963,30 @@ component from every path.""" )
 
     def help_merge(self):
         print("""
-Merge branches. Takes a selection set argument, ignoring all but
-the lowest (source) and highest (target) members; also, optional modifiers
-'perform' and 'force'.
-
-The simplest form of the command takes a singleton selection set,
-interpreted as a source commit, and looks at each later commit as a
-target to see if a clean merge is possible.  A clean merge is deemed
-to be possible if every file in the source revision is present in the
-target revision and the target-revision content of every file occuring
-in the the source revision is either that of the source revision or was
-modified by the target commit itself.
-
-If the selection set has two members, the second (higher-numbered)
-even is taken as the target commit and checked to see if a clean merge
-is possible.  The output from the command says if it is, and if not
-what missing and out-of-date files would make the merge unclean.
-
-If the 'perform' modifier is given and a clean merge is available, it is
-performed.  If both 'perform' and 'force' modifiers are given, the merge
-is performed even if is not clean.
+Create a merge link. Takes a selection set argument, ignoring all but
+the lowest (source) and highest (target) members.  Creates a merge link
+from the highest member (child) to the lowest (parent).
 """ )
     def do_merge(self, line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        rest = self.set_selection_set(line)
+        self.set_selection_set(line)
         if not len(self.selection):
             raise Recoverable("merge requires a nonempty selection set.")
         self.selection = list(self.selection)
         self.selection.sort()
         self.selection = [e for e in self.selection \
                           if isinstance(repo.events[e], Commit)]
-        if not self.selection:
-            raise Recoverable("merge requires commit argument(s).")
-        bi = list(self.selection)[0]
-        tip = repo.events[bi]
-        tipfiles = tip.manifest()
-        def mergeable(path, tipfiles, targetfiles, target):
-            # If targetfile matches tipfile, OK
-            if tipfiles[path] == targetfiles[path]:
-                return True
-            # Tricky case - target file must have been modified
-            # in the target commit itelf.
-            for fileop in target.fileops:
-                if fileop.op == 'M' and fileop.path == path:
-                    return True
-            return False
-        if len(self.selection) == 1:
-            # Look for a merge point anywhere forward of the specified commit
-            merge_clean = False
-            with Baton("Seeking merge point", enable=verbose>=1) as baton:
-                last = len(repo.events)
-                countfmt = " %%%dd of %d" % (len(str(last)), last)
-                baton.startcounter(countfmt, bi+1)
-                for ei in range(bi+1, len(repo.events)):
-                    target = repo.events[ei]
-                    if isinstance(target, Commit):
-                        targetfiles = target.manifest()
-                        for path in tipfiles:
-                            if path not in targetfiles:
-                                break
-                            elif not mergeable(path, tipfiles, targetfiles, target):
-                                break
-                        else:
-                            # Ignore tip commits consisting of all deletes
-                            if not target.alldeletes() or target.children():
-                                merge_clean = True
-                                break
-                    baton.bumpcounter()
-            if merge_clean:
-                announce("%s (%s) can merge clean at %s (%s)" \
-                         % (tip.mark, tip.branch, target.mark, target.branch))
-            else:
-                announce("no merge point found.")
-                return
-        else:
-            # Merge point specified, audit for correctness
-            ti = list(self.selection)[-1]
-            target = repo.events[ti]
-            targetfiles = target.manifest()
-            missing = []
-            stale = []
-            for path in tipfiles:
-                if path not in targetfiles:
-                    missing.append(path)
-                elif not mergeable(path, tipfiles, targetfiles, target):
-                    stale.append(path)
-            tip_id = "%s (%s)" % (tip.mark, tip.branch)
-            target_id = "%s (%s)" % (target.mark, target.branch)
-            if not missing and not stale:
-                announce("%s can merge clean at target %s" \
-                         % (tip_id, target_id))
-                merge_clean = True
-            else:
-                announce("%s cannot merge clean at target %s" \
-                         % (tip_id, target_id))
-                if missing:
-                    announce("target %s is missing these files: %s" \
-                             % (target_id, " ".join(missing)))
-                if stale:
-                    announce("target %s is out of date on these files: %s" \
-                             % (target_id, " ".join(stale)))
-                merge_clean = False
-        # User may want merge performed or even forced
-        if "perform" in rest and (merge_clean or "force" in rest):
-            target.addParent(tip.mark)
-            announce("%s added as a parent of %s" % (tip_id, target_id))
+        if not self.selection or len(self.selection) < 2:
+            raise Recoverable("merge requires two commit arguments.")
+        earlier = repo.events[list(self.selection)[0]]
+        later = repo.events[list(self.selection)[-1]]
+        later.addParent(earlier.mark)
+        earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
+        later_id = "%s (%s)" % (later.mark, later.branch)
+        announce("%s added as a parent of %s" % (earlier_id, later_id))
 
     def help_tag(self):
         print("""
@@ -6068,10 +6059,11 @@ mapping from standard input).  May be useful if you are editing a repo
 or dump created by cvs2git or by git-svn invoked without -A.
 
 With no file argument, or with the 'write' modifier and a file
-argument: write each unique committer, author, and tagger (no file
-argument sends the report to standard output). This may be helpful as
-a start on building an authors file.
-""")
+argument: write a mapping file that could be interpreted by 'authors
+read', with entries for each unique committer, author, and tagger (no
+file argument sends the report to standard output). This may be
+helpful as a start on building an authors file, though each part to
+the right of an equals sign will need editing.""")
     def do_authors(self, line):
         "Apply or dump author-mapping file."
         if self.chosen() is None:
@@ -6281,41 +6273,69 @@ must resolve to exactly two commits.
         command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
-        #
-        # Setting options
-        #
+    #
+    # Setting patch to branchify
+    #
+    def help_branchify(self):
+        print("""
+Specify the list of directories to be treated as potential branches (to
+become tags if there are no modifications after the creation copies)
+when analyzing a Subversion repo. This list is ignored when the
+svn_nobranch option is set.  It defaults to the 'standard layout'
+set of directories, plus any unrecognized directories in the
+repository root.
+
+With no arguments, displays the current branchification set.
+
+An asterisk at the end of a path in the set means 'all immediate
+subdirectories of this path, unless they are part of another (longer)
+path in the branchify set'.
+
+Note that the branchify set is a property of the reposurgeon interpreter, not
+of any individual repository, and will persist across Subversion
+dumpfile reads. This may lead to unexpected results if you forget
+to re-set it.
+""")
+    def do_branchify(self, line):
+        if line.strip():
+            global_options['svn_branchify'] = line.strip().split()
+        announce(" ".join(global_options['svn_branchify']))
+    #
+    # Setting options
+    #
     def help_set(self):
         print("""
 Set a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags. The following flags are defined:
+displays the state of all flags and options. The following flags and
+options are defined:
 """)
-        for (opt, expl) in RepoSurgeon.Options:
+        for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
     def do_set(self, line):
         if not line.strip():
-            for opt in dict(RepoSurgeon.Options):
+            for opt in dict(RepoSurgeon.OptionFlags):
                 print("\t%s = %s" % (opt, global_options.get(opt, False)))
         else:
             for option in line.split():
-                if option not in dict(RepoSurgeon.Options):
-                    complain("no such option as '%s'" % option)
+                if option not in dict(RepoSurgeon.OptionFlags):
+                    complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = True
     def help_clear(self):
         print("""
 Clear a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags. The following flags are defined:
+displays the state of all flags. The following flags and options are defined:
 """)
-        for (opt, expl) in RepoSurgeon.Options:
+        for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
     def do_clear(self, line):
         if not line.strip():
-            for opt in dict(RepoSurgeon.Options):
+            for opt in dict(RepoSurgeon.OptionFlags):
                 print("\t%s = %s" % (opt, global_options.get(opt, False)))
         else:
             for option in line.split():
-                if option not in dict(RepoSurgeon.Options):
-                    complain("no such option as '%s'" % option)
+                if option not in dict(RepoSurgeon.OptionFlags):
+                    complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
     def help_runtests(self):
@@ -6337,20 +6357,11 @@ Runs the unit tests and reports the results.
             for name in available:
                 runtest(name)
 
-class ProfiledThread(threading.Thread):
-    # Overrides threading.Thread.run()
-    def run(self):
-        profiler = cProfile.Profile()
-        try:
-            return profiler.runcall(threading.Thread.run, self)
-        finally:
-            fn = '%s-%d.profile' % ("foo", self.ident,)
-            profiler.dump_stats(fn)
-            announce("wrote profile stats to %s" % fn)
-
-exitStatus = Queue.Queue()
-
-def main():
+if __name__ == '__main__':
+    # Increase max stack size from 8MB to 512MB
+    # Needed to handle really large repositories.
+    resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
+    sys.setrecursionlimit(10**6)
     try:
         def interactive():
             global verbose
@@ -6367,7 +6378,13 @@ def main():
             for arg in sys.argv[1:]:
                 for arg in arg.split(";"):
                     if arg == '-':
-                        interactive()
+                        if interpreter.profile_log is None:
+                            interactive()
+                        elif interpreter.profile_log:
+                            cProfile.run('interactive()', \
+                                         interpreter.profile_log)
+                        else:
+                            cProfile.run('interactive()')
                     else:
                         # Call the base method so RecoverableExceptions
                         # won't be caught; we want them to abort scripting.
@@ -6376,21 +6393,6 @@ def main():
             interpreter.cleanup()
     except (Recoverable, Fatal) as xe:
         complain(xe.msg)
-        exitStatus.put(1)
     except KeyboardInterrupt:
         print("")
-
-if __name__ == '__main__':
-    threading.stack_size(128*1024*1024)
-    if re.search("profiled", sys.argv[0]) is not None:
-        announce('profiling enabled.')
-        thread = ProfiledThread(target = main)
-    else:
-        thread = threading.Thread(target = main)
-    thread.start()
-    thread.join()
-    try:
-        sys.exit(exitStatus.get_nowait())
-    except (Queue.Empty):
-        pass
 # end

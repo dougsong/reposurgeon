@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# fi-to-fi - build repo from fast-import stream on stdin, stream to stdout
+# fi-to-fi - build repo from fast-import stream on stdin, or stream a repo to stdout
 #
 # Intended for reposurgeon roundtripping tests.
 #
@@ -8,9 +8,8 @@
 # and check out a working copy for editing, but do not stream the
 # result to stdout and do not delete the repo.
 #
-# With the -r option, expect the repo to exist, pick it
-# up with repostreamer, and throw the result to stdout; then
-# do not delete the repo.
+# With the -r option, expect the repo to exist, and throw a
+# steam dump to stdout; then do not delete the repo.
 #
 # With the -g option, build a repo from the stream input and view it
 # for gitk.  Useful for eyeball-checking whether the DAG has the
