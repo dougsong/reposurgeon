@@ -2302,9 +2302,14 @@ class StreamParser:
                                                 (_, end) = span.split("-")
                                             else:
                                                 end = span
-                                            if revision not in self.mergeinfo:
-                                                self.mergeinfo[revision] = []
-                                            self.mergeinfo[revision].append(end)
+                                            # Because mergenfo properties will
+                                            # persist like other properties,
+                                            # we want to record the earliest
+                                            # instance of a merge to a given
+                                            # path from a given source revision
+                                            # then ignore latter ones.
+                                            if (node.path, end) not in self.mergeinfo:
+                                                self.mergeinfo[(node.path, end)] = revision
                                             if verbose >= DEBUG_EXTRACT:
                                                 announce("r%s: mergeinfo link from %s\n" \
                                                         % (revision, end))
@@ -2714,12 +2719,11 @@ class StreamParser:
                 baton.twirl()
             baton.twirl("+")
             # Add links due to svn:merginfo properties
-            for (later, earlier) in self.mergeinfo.items():
-                late_commit = self.repo.fossil_map["SVN:%s" % later]
-                for early in earlier:
-                    early_commit = self.repo.fossil_map["SVN:%s" % early]
-                    if early_commit.mark not in late_commit.parentMarks():
-                        late_commit.addParent(early_commit.mark)
+            for ((_, early), late) in self.mergeinfo.items():
+                late_commit = self.repo.fossil_map["SVN:%s" % late]
+                early_commit = self.repo.fossil_map["SVN:%s" % early]
+                if early_commit.mark not in late_commit.parentMarks():
+                    late_commit.addParent(early_commit.mark)
             baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
