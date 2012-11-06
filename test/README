@@ -55,7 +55,7 @@ from foo.sd.  Here is a summary of the test sources:
 |simple.tst      |Test expression interpreter and basic operations
 |simpletag.svn   |Standard layout. Linear. A couple of tags and no branches.
 |testrepo.fi     |Synthetic repo made to check deletion results
-|testrepo.tst    |Exercises all the deletion cases, with coverage checks
+|testdelete.tst  |Exercises all the deletion cases, with coverage checks
 |uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
 |uncoalesced.tst |Exercises all the deletion cases, with coverage checks
 |unite.tst       |Test unite on bzr and testrepo
