@@ -32,7 +32,12 @@ In general, a file named foo.chk is the expected output from a test involving
 either some operation test on an input stream in foo.fi or a repo conversion
 from foo.svn.
 
-To see summary lines from all tests, 'make testlist'.
+To see summary lines from all tests, 'make testlist'.  
+
+The Subversion dumpfiles have summary comments in them that abuse a loophole
+in Subversion's parser - header lines that begin with whitespace are ignored.
+When you create a new one, insert a second line that begins with a space and
+two pound signs.
 
 === Making new Subversion test loads ===
 

@@ -1,6 +1,7 @@
 = TO-DO =
 
-== The merge command doesn't work very well yet ==
+* Figure out what the right behavior for the agito.svn test case is and
+  implement it.
 
-It's easily fooled into thinking merges are not valid due to
-out-of-date files when they're actually valid.
+* There are still undetected merges in the NUT repository conversion.
+  Find out why.
