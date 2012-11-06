@@ -1,6 +1,6 @@
 SVN-fs-dump-format-version: 2
 
-UUID: cc5b8b51-fa03-4c55-b27e-856421c10e04
+UUID: 5978492d-a849-4db6-bc37-864a69c2cef8
 
 Revision-number: 0
 Prop-content-length: 56
@@ -9,21 +9,21 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2012-11-04T19:45:16.268140Z
+2012-11-06T17:03:02.610032Z
 PROPS-END
 
 Revision-number: 1
-Prop-content-length: 133
-Content-length: 133
+Prop-content-length: 116
+Content-length: 116
 
 K 8
 svn:date
 V 27
-2012-11-04T19:48:50.875550Z
+2012-11-06T17:03:03.234413Z
 K 7
 svn:log
-V 35
-Describe the purpose of this repo.
+V 18
+Directory layout.
 
 K 10
 svn:author
@@ -31,37 +31,77 @@ V 3
 esr
 PROPS-END
 
-Node-path: README
-Node-kind: file
+Node-path: branches
+Node-kind: dir
 Node-action: add
 Prop-content-length: 10
-Text-content-length: 229
-Text-content-md5: dddc7b97e506e6cf310244163c4911b7
-Text-content-sha1: d0dc95b0f51efb868e788aab04c5a6ca0dd45a11
-Content-length: 239
+Content-length: 10
 
 PROPS-END
-This is a handcrafted repository designed to test a bug reported by
-Charles Lepple.  He reports that ".gitignore files do not seem to be
-generated when a directory is +created at the same time as its
-svn:ignore property is set."
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
 
 
 Revision-number: 2
-Prop-content-length: 200
-Content-length: 200
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-11-06T17:03:04.152681Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 131
+Content-length: 131
 
 K 8
 svn:date
 V 27
-2012-11-04T19:50:36.034744Z
+2012-11-06T17:04:43.543665Z
 K 7
 svn:log
-V 101
-This commit immediately followed these two commands:
-
-svn mkdir foo
-svn propset svn:ignore *.pyc foo
+V 33
+Report the purpose of this repo.
 
 K 10
 svn:author
@@ -69,7 +109,44 @@ V 3
 esr
 PROPS-END
 
-Node-path: foo
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 229
+Text-content-md5: afdb99423ea2ef02e337f26a78a32294
+Text-content-sha1: c6aa4a35fd4d0c7b38d2a05cf9239973fd6a788b
+Content-length: 229
+
+This is a handcrafted repository designed to test a bug reported by
+Charles Lepple.  He reports that ".gitignore files do not seem to be
+generated when a directory is created at the same time as its
+svn:ignore property is set."
+
+
+
+Revision-number: 4
+Prop-content-length: 237
+Content-length: 237
+
+K 8
+svn:date
+V 27
+2012-11-06T17:06:37.902870Z
+K 7
+svn:log
+V 138
+This commit featured simultaeneous directory creation and svn:ignore setting.
+
+svn mkdir trunk/foo
+svn propset svn:ignore *.pyc trunk/foo
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/foo
 Node-kind: dir
 Node-action: add
 Prop-content-length: 37
@@ -83,14 +160,14 @@ V 6
 PROPS-END
 
 
-Revision-number: 3
+Revision-number: 5
 Prop-content-length: 163
 Content-length: 163
 
 K 8
 svn:date
 V 27
-2012-11-04T19:52:02.017672Z
+2012-11-06T17:07:22.012080Z
 K 7
 svn:log
 V 65
@@ -102,17 +179,17 @@ V 3
 esr
 PROPS-END
 
-Node-path: README
+Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 295
-Text-content-md5: 32281ae3919f592745626e87855d0bcd
-Text-content-sha1: 382cf1de893627ab8e6ca01b73ec688cfc7e62d4
-Content-length: 295
+Text-content-length: 294
+Text-content-md5: 486fe139c8054f8747b336abbfe16a46
+Text-content-sha1: 259709e5c0a8ec1bc89e049fc2e47a673f33c1b8
+Content-length: 294
 
 This is a handcrafted repository designed to test a bug reported by
 Charles Lepple.  He reports that ".gitignore files do not seem to be
-generated when a directory is +created at the same time as its
+generated when a directory is created at the same time as its
 svn:ignore property is set."
 
 Add another commit so we can see if the .gitignore gets created.
