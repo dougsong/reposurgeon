@@ -1080,7 +1080,31 @@ argument: write a mapping file that could be interpreted by 'authors
 read', with entries for each unique committer, author, and tagger (no
 file argument sends the report to standard output). This may be
 helpful as a start on building an authors file, though each part to
-the right of an equals sign will neexd editing.</para>
+the right of an equals sign will need editing.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>branchify</command>
+          [<emphasis>path-set</emphasis>]
+</term>
+<listitem>
+<para>Specify the list of directories to be treated as potential branches (to
+become tags if there are no modifications after the creation copies)
+when analyzing a Subversion repo. This list is ignored when the
+svn_nobranch option is set.  It defaults to the 'standard layout'
+set of directories, plus any unrecognized directories in the
+repository root.</para>
+
+<para>With no arguments, displays the current branchification set.</para>
+
+<para>An asterisk at the end of a path in the set means 'all immediate
+subdirectories of this path, unless they are part of another (longer)
+path in the branchify set'.</para>
+
+<para>Note that the branchify set is a property of the reposurgeon
+interpreter, not of any individual repository, and will persist across
+Subversion dumpfile reads. This may lead to unexpected results if you
+forget to re-set it.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -1326,11 +1350,18 @@ specified.</para>
 Subversion repository to branches:</para>
 
 <orderedlist>
-<listitem><para>A repository is considered "flat" if it has no /trunk
-directory.  All commits in a flat repository are assigned to branch
-master, and what would have been branch structure becomes directory
-structure.  In this case, we're done; all the other rules apply to
-non-flat repos.</para>
+<listitem><para>At any given time there is a set of eligible 
+paths and path wildcards which declare potential branches. 
+See the documentation of the <command>branchify</command> 
+for how to alter this set, which initially consists of
+{trunk, tags/*, branches/*, and '*'}.</para></listitem>
+
+<listitem><para>A repository is considered "flat" if it has no
+directory that matches a path or path wildcard in the branchify set.
+All commits in a flat repository are assigned to branch master, and
+what would have been branch structure becomes directory structure.  In
+this case, we're done; all the other rules apply to non-flat
+repos.</para>
 
 <para>If you give the command <command>set svn_nobranch</command>
 before reading a Subversion repository, branch analysis is skipped and
@@ -1340,12 +1371,14 @@ configuration is highly unusual and you need to do your own branch
 surgery. Note that tis option will disable partitioning of mixed
 commits.</para></listitem>
 
-<listitem><para>/trunk always becomes the master branch.</para></listitem>
+<listitem><para>If "trunk" is eligible, it always becomes the master
+branch.</para></listitem>
 
-<listitem><para>If there are /tags and /branches directories, each
-subdirectory of these is considered a potential branch.  All top-level
-directories other than /trunk, /tags, and /branches are also considered
-potential branches.</para></listitem>
+<listitem><para>If an element of the branchify set ends with *, each
+immediate subdirectory of it is considered a potential branch.  If '*'
+is in the branchify set (which is true by default) all top-level
+directories other than /trunk, /tags, and /branches are also
+considered potential branches.</para></listitem>
 
 <listitem><para>Each potential branch is checked to see if it has
 commits on it after the initial creation or copy.  If there are such
