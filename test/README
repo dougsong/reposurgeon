@@ -20,7 +20,7 @@ repo to stdout.
 
 Build a Subversion repo from a Subversion stream dump on stdin, or
 dump an existing repo as a stream to stdout.  Can also be used to edit
-a Subversion terst load, regenerating its checksums.
+a Subversion tert load, regenerating its checksums.
 
 == The tests ==
 
@@ -30,42 +30,9 @@ do is keep Subversion dump files and rebuild the repo before each test.
 
 In general, a file named foo.chk is the expected output from a test involving
 either some operation test on an input stream in foo.fi or a repo conversion
-from foo.svn.  Here is a summary of the test sources:
+from foo.svn.
 
-|=============================================================================
-|agito.svn       |Simon Howard's tag-mangling test case (see below)
-|argtest.tst     |Test argument substitution in scripts
-|bzr.fi          |Test for processing and round-tripping of bzr extensions.
-|divide.tst      |Test for divide operation; uses bzr repo
-|deletion.svn    |Tests translation of file deletions
-|delignore.svn   |Tests correct cleanup of gitignore on directory delete
-|deepdirs.svn    |Branchy repo with directory copy and delete
-|deleteall.fi    |Tests roundtripping of deleteall operation 
-|emptybranch.svn |Branchy repo with empty branch at top level
-|exiguous.svn    |Branchy repo with exiguous branch at top level
-|filecopy.svn	 |Test to make sure file copies don't confuse branch detection.
-|graft.tst       |Grafts together the bzr and testrepo repositories
-|ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
-|mergeinfo.svn   |Test processing of Subversion mergeinfo properties.  
-|mergeinfo-with-split.svn|Test processing of mergeinfo with split commits
-|mkignore.svn    |Test simultaneous directory creation and ignore setting.
-|nontipcopy.svn  |Two branches, with the creation right after a tag copy
-|nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it
-|references.tst  |Test author mapping and reference lifting 
-|rootfile.svn    |Branchy layout with a file at the root level.
-|roundup.fi      |Early segment of the Roundup tracker repo
-|roundup.tst     |Test to see how it renders the two different botched starts
-|samplebranch.svn|Two-branch history with interleaved commits.
-|simple.fi       |Earlier version of the reposurgeon repo, kept as a test
-|simple.tst      |Test expression interpreter and basic operations
-|simpletag.svn   |Standard layout. Linear. A couple of tags and no branches.
-|testrepo.fi     |Synthetic repo made to check deletion results
-|testdelete.tst  |Exercises all the deletion cases, with coverage checks
-|uncoalesced.fi  |Repo with unsquashed squashable commits from the SNG project
-|uncoalesced.tst |Exercises all the deletion cases, with coverage checks
-|unite.tst       |Test unite on bzr and testrepo
-|vanilla.svn     |Standard layout. Linear. Simplest case, no tags or branches.
-|=============================================================================
+To see summary lines from all tests, 'make testlist'.
 
 === Making new Subversion test loads ===
 

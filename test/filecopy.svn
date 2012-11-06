@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Test to make sure file copies don't confuse branch detection
 
 UUID: fce6cb11-e124-4746-a1f4-39ae8ff745da
 

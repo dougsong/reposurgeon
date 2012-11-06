@@ -14,6 +14,11 @@ buildregress: fi-buildregress svn-buildregress
 clean:
 	rm -fr .rs* test-repo test-checkout *~
 
+# Show summary lines for all tests.
+testlist:
+	@grep '^##' *.tst
+	@grep '^ ##' *.svn
+
 # Test that all dumpfiles round-trip properly
 roundtrip:
 	@for file in *.fi; do \
