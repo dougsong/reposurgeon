@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Branchy layout with a file at the root level
 
 UUID: c8181032-df8d-45ee-b41b-a8969c8cbe85
 

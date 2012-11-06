@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Test processing of mergeinfo with split commits
 
 UUID: d2eb0f33-2251-40fb-b0f4-9279052010a4
 

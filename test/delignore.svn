@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Tests correct cleanup of gitignore on directory delete
 
 UUID: 239e47c3-361c-4cc1-b11f-f79d857aba4a
 

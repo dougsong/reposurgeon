@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Test simultaneous directory creation and ignore setting
 
 UUID: 5978492d-a849-4db6-bc37-864a69c2cef8
 
