@@ -9,7 +9,6 @@
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, time, calendar, signal, shutil, copy, shlex, collections, resource
 import email.message, email.parser, email.utils
-import threading
 
 # This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd. 
@@ -6277,7 +6276,7 @@ if __name__ == '__main__':
                         else:
                             cProfile.run('interactive()')
                     else:
-                        # Call the base method so RecoverableExceptios
+                        # Call the base method so RecoverableExceptions
                         # won't be caught; we want them to abort scripting.
                         cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
         finally:
