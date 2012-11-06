@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test generation and removal of .gitignore files from svn:igore settings
+ ## Translation of svn:ignore to .gitignores 
 
 UUID: c5c3272b-47d6-4c38-9040-a1f498a121f6
 
