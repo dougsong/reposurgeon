@@ -2290,23 +2290,24 @@ class StreamParser:
                             # Ignore an invalid empty value set (not
                             # no effect) by some tools.
                             if val:
-                                # The general case is multiline and
-                                # describes multiple soans merging
-                                # to this revision.  For each, we
-                                # link from the last one.
+                                # The general case is multiline; each line
+                                # may describe multiple spans merging
+                                # to this revision.  For each span, we
+                                # link from the last revision.
                                 for line in val.split('\n'):
                                     if line and ':' in line:
-                                        (_, span) = line.split(":")
-                                        if '-' in span:
-                                            (_, end) = span.split("-")
-                                        else:
-                                            end = span
-                                        if revision not in self.mergeinfo:
-                                            self.mergeinfo[revision] = []
-                                        self.mergeinfo[revision].append(end)
-                                        if verbose >= DEBUG_EXTRACT:
-                                            announce("r%s: mergeinfo link from %s\n" \
-                                                    % (revision, end))
+                                        (_, ranges) = line.split(":")
+                                        for span in ranges.split(","):
+                                            if '-' in span:
+                                                (_, end) = span.split("-")
+                                            else:
+                                                end = span
+                                            if revision not in self.mergeinfo:
+                                                self.mergeinfo[revision] = []
+                                            self.mergeinfo[revision].append(end)
+                                            if verbose >= DEBUG_EXTRACT:
+                                                announce("r%s: mergeinfo link from %s\n" \
+                                                        % (revision, end))
                         # svn:ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
