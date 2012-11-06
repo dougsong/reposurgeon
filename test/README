@@ -26,7 +26,7 @@ do is keep Subversion dump files and rebuild the repo before each test.
 
 In general, a file named foo.chk is the expected output from a test involving
 either some operation test on an input stream in foo.fi or a repo conversion
-from foo.sd.  Here is a summary of the test sources:
+from foo.svn.  Here is a summary of the test sources:
 
 |=============================================================================
 |agito.svn       |Simon Howard's tag-mangling test case (see below)
@@ -43,6 +43,7 @@ from foo.sd.  Here is a summary of the test sources:
 |graft.tst       |Grafts together the bzr and testrepo repositories
 |ignores.fi      |Flat repo.  Tests for turning svn:ignore into .gitignore
 |mergeinfo.svn   |Test processing of Subversion mergeinfo properties.  
+|mergeinfo-with-split.svn|Test processing of mergeinfo with split commits
 |mkignore.svn    |Test simultaneous directory creation and ignore setting.
 |nontipcopy.svn  |Two branches, with the creation right after a tag copy
 |nut.svn         |Head segment of NUT-UPS repo with lots of cvs2svn cruft in it

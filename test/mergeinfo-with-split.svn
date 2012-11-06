@@ -1,0 +1,374 @@
+SVN-fs-dump-format-version: 2
+
+UUID: d2eb0f33-2251-40fb-b0f4-9279052010a4
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-06T10:33:31.717002Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 139
+Content-length: 139
+
+K 8
+svn:date
+V 27
+2012-11-06T10:36:33.257070Z
+K 7
+svn:log
+V 39
+default repository layout, and a README
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 94
+Text-content-md5: 66760f04bb3ec9129227765a900c6cb7
+Text-content-sha1: aa3b8c4fffcbd104b99fbfdbf9dadf554742f323
+Content-length: 104
+
+PROPS-END
+this svn repository is for testing reposurgeon's way of dealing with svn:mergeinfo properties
+
+
+Revision-number: 2
+Prop-content-length: 126
+Content-length: 126
+
+K 8
+svn:date
+V 27
+2012-11-06T10:37:34.853893Z
+K 7
+svn:log
+V 26
+trunk development proceeds
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 5
+Text-content-md5: 89f3822117a6da8c74ad7d283786de45
+Text-content-sha1: e43b691cc2d26f910c466674e6f747554ce488ea
+Content-length: 15
+
+PROPS-END
+0.99
+
+
+Revision-number: 3
+Prop-content-length: 113
+Content-length: 113
+
+K 8
+svn:date
+V 27
+2012-11-06T10:38:35.866336Z
+K 7
+svn:log
+V 13
+release party
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: branches/v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/v1.0/VERSION
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/VERSION
+Text-copy-source-md5: 89f3822117a6da8c74ad7d283786de45
+Text-copy-source-sha1: e43b691cc2d26f910c466674e6f747554ce488ea
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
+Revision-number: 4
+Prop-content-length: 126
+Content-length: 126
+
+K 8
+svn:date
+V 27
+2012-11-06T10:39:12.884726Z
+K 7
+svn:log
+V 26
+trunk development proceeds
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: d39d8df974f8d45e3d23499dc20ea763
+Text-content-sha1: 49aec2b9c6b091a17f0f4a82f5f4549121bd0124
+Content-length: 4
+
+1.1
+
+
+Revision-number: 5
+Prop-content-length: 124
+Content-length: 124
+
+K 8
+svn:date
+V 27
+2012-11-06T10:40:05.674683Z
+K 7
+svn:log
+V 24
+emergency bugfix in v1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: branches/v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 6
+Text-content-md5: ee7ab3e7e15d1e00ec001ca33b4571f1
+Text-content-sha1: cfc5fe3a1d6f7e773eb019d04681697648d23e76
+Content-length: 6
+
+1.0.1
+
+
+Revision-number: 6
+Prop-content-length: 157
+Content-length: 157
+
+K 8
+svn:date
+V 27
+2012-11-06T10:49:30.606359Z
+K 7
+svn:log
+V 57
+merge 1.0.1 bugfix into trunk, bumping the version to 1.2
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 51
+Content-length: 51
+
+K 13
+svn:mergeinfo
+V 16
+/branches/v1.0:3
+PROPS-END
+
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: add9573d0bdbe6b511957d850d7ceb80
+Text-content-sha1: 6d69fa1724f4a439d489ee56aa0c22fdd41c632c
+Content-length: 4
+
+1.2
+
+
+Revision-number: 7
+Prop-content-length: 124
+Content-length: 124
+
+K 8
+svn:date
+V 27
+2012-11-06T10:50:06.991947Z
+K 7
+svn:log
+V 24
+emergency bugfix in v1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: branches/v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 6
+Text-content-md5: 14607822426d690390607bb48a124f66
+Text-content-sha1: 880d9396e60cb9e65a3af230f9467412553b6d50
+Content-length: 6
+
+1.0.2
+
+
+Revision-number: 8
+Prop-content-length: 124
+Content-length: 124
+
+K 7
+svn:log
+V 24
+emergency bugfix in v1.0
+K 10
+svn:author
+V 5
+db48x
+K 8
+svn:date
+V 27
+2012-11-06T10:50:11.960239Z
+PROPS-END
+
+Node-path: branches/v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 6
+Text-content-md5: db007b32b16e26f01cae59f75e492284
+Text-content-sha1: 8fbc549835992841cbef4232a1d5b86780d3ad5b
+Content-length: 6
+
+1.0.3
+
+
+Revision-number: 9
+Prop-content-length: 126
+Content-length: 126
+
+K 8
+svn:date
+V 27
+2012-11-06T10:51:01.922764Z
+K 7
+svn:log
+V 26
+trunk development proceeds
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 84b17206d983a7430710b2a1f8ae52b8
+Text-content-sha1: e350bf129ed3e8455fb310efe23a787adfdf9fb4
+Content-length: 4
+
+1.3
+
+
+Revision-number: 10
+Prop-content-length: 159
+Content-length: 159
+
+K 8
+svn:date
+V 27
+2012-11-06T10:54:50.073216Z
+K 7
+svn:log
+V 59
+merge 1.0.1 bugfixes into trunk, bumping the version to 1.4
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 55
+Content-length: 55
+
+K 13
+svn:mergeinfo
+V 20
+/branches/v1.0:3,7-8
+PROPS-END
+
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 25198dbbb5f787214992c13a596f5751
+Text-content-sha1: 2e1d6e852c9d321bb37cb601ab2a6d97e323153e
+Content-length: 4
+
+1.4
+
+

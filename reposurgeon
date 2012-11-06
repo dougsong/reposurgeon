@@ -2096,6 +2096,7 @@ class StreamParser:
         baton.twirl("filemaps:")
         filemaps = {}
         filemap = PathMap()
+        split_commits = []
         for revision in self.revisions:
             record = self.revisions[revision]
             for node in record.nodes:
@@ -2512,7 +2513,9 @@ class StreamParser:
             newcommits = []
             # In the ordinary case, we can assign all non-deleteall commits
             # to the base commit.
-            if not mixed:
+            if mixed:
+                split_commits.append(revision)
+            else:
                 if oplist:
                     (commit.common, commit.fileops) = oplist.pop(0)
                     commit._pathset = None
@@ -2713,12 +2716,17 @@ class StreamParser:
                                 % (rootrev, root.branch))
                 baton.twirl()
             baton.twirl("+")
-            # Add links due to svn:merginfo properties
+            # Add links due to svn:mergeinfo properties
             for ((_, early), late) in self.mergeinfo.items():
-                late_commit = self.repo.fossil_map["SVN:%s" % late]
-                early_commit = self.repo.fossil_map["SVN:%s" % early]
-                if early_commit.mark not in late_commit.parentMarks():
-                    late_commit.addParent(early_commit.mark)
+                if early in split_commits:
+                    self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
+                elif late in split_commits:
+                    self.gripe("cannot resolve mergeinfo from %s to split commit %s." % (early, late))
+                else:
+                    late_commit = self.repo.fossil_map["SVN:%s" % late]
+                    early_commit = self.repo.fossil_map["SVN:%s" % early]
+                    if early_commit.mark not in late_commit.parentMarks():
+                        late_commit.addParent(early_commit.mark)
             baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
                 announce("after branch analysis:")
