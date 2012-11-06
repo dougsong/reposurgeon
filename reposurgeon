@@ -6393,6 +6393,7 @@ if __name__ == '__main__':
             interpreter.cleanup()
     except (Recoverable, Fatal) as xe:
         complain(xe.msg)
+        sys.exit(1)
     except KeyboardInterrupt:
         print("")
 # end
