@@ -1822,7 +1822,7 @@ class StreamParser:
     # The main event
     #
     def fast_import(self, fp, progress=False):
-        "Initialize the repo from a fast-import stream.."
+        "Initialize the repo from a fast-import stream or Subversion dump."
         self.repo.makedir()
         try:
             self.fp = fp
