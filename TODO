@@ -2,6 +2,3 @@
 
 * Figure out what the right behavior for the agito.svn test case is and
   implement it.
-
-* There are still undetected merges in the NUT repository conversion.
-  Find out why.
