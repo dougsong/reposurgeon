@@ -1,4 +1,4 @@
-= Notes on the test machinery = 
+'= Notes on the test machinery = 
 
 A .fi extension means it's a git fast-import stream.  
 An .svn extension means it's a Subversion repo dump.
@@ -9,18 +9,25 @@ Additionally, reposurgeon will run unit tests when given the
 "runtests" command. These tests are written in Python and built in to
 the script itself.
 
+== Writing new unit tests ==
+
+New unit tests can be written by adding a new class derived from
+unittest.TestCase, then listing this class as in the "available" list
+in do_runtests(). Any methods on this class which begin with the
+prefix "test_" will be automatically run by the unit test framework.
+
 == The scripts ==
 
 === fi-to-fi ===
 
-Builds a repo from a fast-import stream on stdin, or streams an exsting 
+Builds a repo from a fast-import stream on stdin, or streams an existing 
 repo to stdout.
 
 === svn-to-svn ===
 
 Build a Subversion repo from a Subversion stream dump on stdin, or
 dump an existing repo as a stream to stdout.  Can also be used to edit
-a Subversion tert load, regenerating its checksums.
+a Subversion test load, regenerating its checksums.
 
 == The tests ==
 
@@ -131,9 +138,3 @@ outputs:
 
 	    Initial import.
 
-== Writing new unit tests ==
-
-New unit tests can be written by adding a new class derived from
-unittest.TestCase, then listing this class as in the "available" list
-in do_runtests(). Any methods on this class which begin with the
-prefix "test_" will be automatically run by the unit test framework.
