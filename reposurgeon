@@ -686,7 +686,7 @@ class Attribution:
             try:
                 self.date = Date(person.strip().split("|")[2])
             except (ValueError, IndexError):
-                raise Fatal("malformed attribution %s" % person)
+                raise Fatal("malformed attribution date in %s" % person)
     def email_out(self, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
@@ -895,6 +895,8 @@ class FileOp:
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
             self.path_remap()
+        elif opargs[0] == "N":
+            (self.op, self.ref, self.committish) = opargs
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
@@ -3172,13 +3174,29 @@ class Repository:
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
             try:
+                fossil_latch = False
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
+                    #fossil_latch = fossil_latch or hasattr(event, "fossil_id")
                     if verbose >= DEBUG_UNITE:
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
+                if fossil_latch:
+                    fp.write("reset fossil_id\n")
+                    endcommit = Commit(self)
+                    endcommit.branch = "refs/heads/master"
+                    endcommit.comment = "Fossil-ID notes\n"
+                    endcommit.committer = Attribution("Nowhere Man <nowhere@nobody.net> " + rfc3339(time.time()))
+                    for ei in selection:
+                        event = self.events[ei]
+                        if hasattr(event, "fossil_id"):
+                            fileop = FileOp()
+                            fileop.inline = "Fossil-ID: %s" % event.fossil_id
+                            fileop.construct('N', 'inline', event.mark)
+                            endcommit.fileops.append(fileop)
+                    fp.write(str(endcommit))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def preserve(self, filename):
