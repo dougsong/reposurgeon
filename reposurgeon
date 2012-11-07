@@ -6378,8 +6378,14 @@ Runs the unit tests and reports the results.
 if __name__ == '__main__':
     # Increase max stack size from 8MB to 512MB
     # Needed to handle really large repositories.
-    resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
-    sys.setrecursionlimit(10**6)
+    try:
+        resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
+        sys.setrecursionlimit(10**6)
+    except ValueError:
+        # May not be allowed on some systems.  Whether or not we can do it
+        # isn't interesting, it only matters whether the limit is actually
+        # blown.
+        pass
     try:
         def interactive():
             global verbose
