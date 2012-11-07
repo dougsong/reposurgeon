@@ -2621,12 +2621,16 @@ class StreamParser:
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
                               and node.path.startswith(newcommit.common)]
+                    if copies and verbose >= DEBUG_TOPOLOGY:
+                        announce("r%s: copy operations %s" %
+                                     (newcommit.fossil_id, copies))
                     linkback = False
                     # If the copies include one for the directory, we're good.
                     if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
                         self.directory_branchlinks.add(newcommit.common)
                         if verbose >= DEBUG_TOPOLOGY:
-                            announce("directory copy with %s" % copies)
+                            announce("r%s: directory copy with %s" \
+                                     % (newcommit.fossil_id, copies))
                         linkback = True
                     # Use may have botched a branch creation by doing a
                     # non-Subversion directory copy followed by a bunch of
@@ -2652,26 +2656,30 @@ class StreamParser:
                     elif len(copies) > 1:
                         self.fileop_branchlinks.add(newcommit.common)
                         if verbose >= DEBUG_TOPOLOGY:
-                            announce("file copies with %s" % copies)
+                            announce("r%s: making branch link %s" %
+                                     (newcommit.fossil_id, newcommit.common))
                         linkback = True
                     if linkback:
                         copies.sort(key=lambda node: int(node.from_rev))
                         latest = copies[-1]
                         threshold = False
+                        # TODO: This is O(n**2). Lookup should be memoized.
                         for prev in reversed(self.repo.commits()):
                             if prev.fossil_id == latest.from_rev:
                                 if verbose >= DEBUG_TOPOLOGY:
-                                    announce("found %s looking for %s" \
-                                             % (latest, newcommit.common))
+                                    announce("r%s: found %s looking for %s" \
+                                             % (newcommit.fossil_id, latest, newcommit.common))
                                 threshold = True
                             if threshold:
                                 if verbose >= DEBUG_TOPOLOGY:
-                                    announce("looking at %s" % prev.fossil_id)
+                                    announce("r%s: looking at %s" \
+                                             % (newcommit.fossil_id, prev.fossil_id))
                                 if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
                                     self.branchlink[newcommit.mark] = prev.mark
                                     if verbose >= DEBUG_TOPOLOGY:
-                                        announce("link %s (%s) back to %s (%s, %s)" % \
-                                                 (newcommit.mark,
+                                        announce("r%s: link %s (%s) back to %s (%s, %s)" % \
+                                                 (newcommit.fossil_id,
+                                                  newcommit.mark,
                                                   newcommit.common,
                                                   latest.from_rev,
                                                   prev.mark,
