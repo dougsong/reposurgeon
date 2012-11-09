@@ -4954,6 +4954,47 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
+
+    def help_selection(self):
+        print("""
+A quick example-centered reference for selection-set syntax.
+
+First, these ways of constructing singleton sets:
+
+123        event numbered 123 (1-origin)
+:345       event with mark 345
+<456>      commit with fossil-ID 456 (probably an SVN rev)
+<foo>      the tag named 'foo', or failing that the tip commmit of branch foo
+
+You can select commits and tags by date, or by date and committer:
+
+<2011-05-25T07:30:37Z>      specifying the commit date
+<2011-05-25T07:30:37Z!esr>  specifying the commit date and committer
+
+More ways to construct event sets:
+
+/foo/      all commits and tags containing the string 'foo' in text or metadata
+(foo)      all commits on branch 'foo'.
+[foo]      all commits touching the file named 'foo'.
+=C         all commits
+=H         all head (branch tip) commits
+=T         all tags
+=B         all blobs
+=R         all resets
+=P         all passthroughs
+
+You can compose sets as follows:
+
+:123,<foo>     the event marked 123 and the event referenced by 'foo'.
+:123..<foo>    the range of events from mark 123 to the reference 'foo'
+
+Sets can be composed with | (union) and & (intersection). | has lower
+precedence than &, but set expressions can be grouped with { }.
+""")
+            
+    ##
+    ## Cmmand implementation begins here
+    ##
     #
     # On-line help and instrumentation
     #
@@ -6336,6 +6377,7 @@ to re-set it.
         if line.strip():
             global_options['svn_branchify'] = line.strip().split()
         announce(" ".join(global_options['svn_branchify']))
+
     #
     # Setting options
     #
@@ -6374,6 +6416,7 @@ displays the state of all flags. The following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
+
     #
     # Running unit tests (undocumented)
     #
