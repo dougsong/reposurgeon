@@ -2541,6 +2541,8 @@ class StreamParser:
                             elif verbose >= DEBUG_EXTRACT:
                                 announce("r%s~%s: unmodified" % (node.revision, node.path))
                             self.permissions[node.path] = perms
+                    # These are directory actions.
+                    # FIXME: The agito case may need to be handled here.
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if verbose >= DEBUG_EXTRACT:
                             announce("r%s: deleteall %s" % (revision,node.path))
