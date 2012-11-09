@@ -6374,6 +6374,9 @@ displays the state of all flags. The following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
+    #
+    # Running unit tests (undocumented)
+    #
     def help_runtests(self):
         print("""
 Runs the unit tests and reports the results.
