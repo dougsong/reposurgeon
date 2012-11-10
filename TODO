@@ -7,3 +7,5 @@
   right now writing that out to a git repository then .git/HEAD
   will have "refs/heads/(null)" in it, which annoys quite a lot of git
   tools.
+
+* In branchify.chk, looks like there is an extra file creation.
