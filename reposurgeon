@@ -2305,7 +2305,6 @@ class StreamParser:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
                         node.implicit = True
-                        newbranch = node.path
                         if not node.path in self.branches and not global_options['svn_nobranch']:
                             for trial in global_options['svn_branchify']:
                                 if '*' not in trial and trial + os.sep == node.path:
@@ -2444,7 +2443,7 @@ class StreamParser:
                                 raise Fatal("r%s: can't find ancestor %s" \
                                          % (revision, source))
                             subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(newbranch,
+                            subnode.path = os.path.join(node.path,
                                                         source[len(node.from_path+os.sep)-1:])
                             subnode.revision = revision
                             subnode.from_path = lookback.path
