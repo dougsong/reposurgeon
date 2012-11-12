@@ -2269,9 +2269,9 @@ class StreamParser:
             if revision == "0": 
                 continue
             generated_nodes = []
-            for node in record.nodes:
+            for (n, node) in enumerate(record.nodes):
                 if verbose >= DEBUG_EXTRACT:
-                    announce(str(node))
+                    announce("r%s:%d: %s" % (revision, n+1, node))
                 elif node.kind == SD_DIR \
                          and node.action != SD_CHANGE \
                          and verbose >= DEBUG_TOPOLOGY:
@@ -2452,13 +2452,13 @@ class StreamParser:
                             subnode.from_hash = lookback.content_hash
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
+                            subnode.implicit = branchcopy
                             if verbose >= DEBUG_TOPOLOGY:
                                 announce("r%s: local copy is %s from r%s~%s" \
                                          % (revision,
                                             subnode.path,
                                             subnode.from_rev,
                                             subnode.from_path))
-                            subnode.implicit = branchcopy
                             generated_nodes.append(subnode)
             # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
