@@ -2456,8 +2456,8 @@ class StreamParser:
                                             subnode.path,
                                             subnode.from_rev,
                                             subnode.from_path))
-                            generated_nodes.append(subnode)
                             subnode.implicit = branchcopy
+                            generated_nodes.append(subnode)
             # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
             # to do inference from directory structure.
