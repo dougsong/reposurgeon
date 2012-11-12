@@ -1,7 +1,7 @@
 SVN-fs-dump-format-version: 2
- ## test of the branchify command.
+ ## test of the branchify command
 
-UUID: bc7dbf9d-e3b4-41dc-ab80-3c0a0b40d71e
+UUID: 3294951f-59a5-4dc0-88cf-cf6cb9d8e58a
 
 Revision-number: 0
 Prop-content-length: 56
@@ -10,17 +10,13 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2012-11-10T15:08:10.931370Z
+2012-11-12T21:38:38.660115Z
 PROPS-END
 
 Revision-number: 1
 Prop-content-length: 123
 Content-length: 123
 
-K 8
-svn:date
-V 27
-2012-11-10T15:09:20.287021Z
 K 7
 svn:log
 V 25
@@ -30,6 +26,10 @@ K 10
 svn:author
 V 3
 esr
+K 8
+svn:date
+V 27
+2012-11-12T21:40:54.176531Z
 PROPS-END
 
 Node-path: nontrunk
@@ -42,22 +42,22 @@ PROPS-END
 
 
 Revision-number: 2
-Prop-content-length: 125
-Content-length: 125
+Prop-content-length: 138
+Content-length: 138
 
+K 8
+svn:date
+V 27
+2012-11-12T21:42:40.113884Z
 K 7
 svn:log
-V 27
-Explanatory file creation.
+V 40
+This follows "svn add nontrunk/README".
 
 K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2012-11-10T15:11:49.624066Z
 PROPS-END
 
 Node-path: nontrunk/README
@@ -75,22 +75,22 @@ a branchy repo has no trunk.
 
 
 Revision-number: 3
-Prop-content-length: 127
-Content-length: 127
+Prop-content-length: 144
+Content-length: 144
 
-K 8
-svn:date
-V 27
-2012-11-10T15:12:55.895099Z
 K 7
 svn:log
-V 29
-Here is our branch creation.
+V 46
+This follows "svn cp nontrunk nontrunkbranch"
 
 K 10
 svn:author
 V 3
 esr
+K 8
+svn:date
+V 27
+2012-11-12T21:58:04.548422Z
 PROPS-END
 
 Node-path: nontrunkbranch
@@ -110,35 +110,35 @@ Text-copy-source-sha1: 92df4f8ff4bde4d0b33bc007f33973c24775fcb7
 
 
 Revision-number: 4
-Prop-content-length: 125
-Content-length: 125
+Prop-content-length: 140
+Content-length: 140
 
+K 8
+svn:date
+V 27
+2012-11-12T21:59:52.005629Z
 K 7
 svn:log
-V 27
-So we have a modification.
+V 42
+A random modification on the branch side.
 
 K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2012-11-10T15:15:11.734544Z
 PROPS-END
 
 Node-path: nontrunkbranch/README
 Node-kind: file
 Node-action: change
-Text-content-length: 148
-Text-content-md5: 01bea909929e01c0f4a8347e17036519
-Text-content-sha1: 413fffd795bb880fd68b19f2c148907c9a0c0306
-Content-length: 148
+Text-content-length: 154
+Text-content-md5: e400b1e48059a9b3f25564112f24c984
+Text-content-sha1: 703e6cbfab52fcb1c8c7cf70a33750975bde9663
+Content-length: 154
 
 The purpose of this test repo is to check what happens in conversion when
 a branchy repo has no trunk.
 
-This file gets modified on the branch side.
+This is a random modification on the branch side.
 
 
