@@ -3,4 +3,6 @@
 * Figure out what the right behavior for the agito.svn test case is and
   implement it.
 
-* In branchify.chk, looks like there is an extra file creation.
+* In branchify.chk, looks like there is an extra file copy node generated
+  by Subversion which we fail to mark implicit.
+
