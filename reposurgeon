@@ -1653,6 +1653,8 @@ class StreamParser:
                 tell += "from=%s~%s " % (self.from_rev, self.from_path)
             if self.from_set:
                 tell += "sources=%s " % self.from_set
+            if self.implicit:
+                tell += "implicit "
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 showprops = repr(self.props)
