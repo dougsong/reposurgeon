@@ -2368,7 +2368,7 @@ class StreamParser:
                                             # we want to record the earliest
                                             # instance of a merge to a given
                                             # path from a given source revision
-                                            # then ignore latter ones.
+                                            # then ignore later ones.
                                             if (node.path, end) not in self.mergeinfo:
                                                 self.mergeinfo[(node.path, end)] = revision
                                             if verbose >= DEBUG_EXTRACT:
@@ -2415,8 +2415,7 @@ class StreamParser:
                     # actual file modification on the new branch.
                     # Exception: If the target branch has been deleted,
                     # perform a normal copy.
-                    # TODO: if the delete was in the same revision, it would
-                    # be good to rewrite this as a branch merge.
+                    # TODO: Throw a warning id this produces a branch merge?
                     if node.from_path:
                         nonbranchcopy = node.from_path not in self.branches \
                                          or node.path not in self.branches \
