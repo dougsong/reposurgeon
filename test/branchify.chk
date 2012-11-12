@@ -9,39 +9,39 @@ a branchy repo has no trunk.
 reset refs/heads/nontrunk
 commit refs/heads/nontrunk
 mark :2
-committer esr <esr> 1352560309 +0000
-data 27
-Explanatory file creation.
+committer esr <esr> 1352756560 +0000
+data 40
+This follows "svn add nontrunk/README".
 M 100644 :1 README
 
 reset refs/heads/nontrunkbranch
 commit refs/heads/nontrunkbranch
 mark :3
-committer esr <esr> 1352560375 +0000
-data 29
-Here is our branch creation.
+committer esr <esr> 1352757484 +0000
+data 46
+This follows "svn cp nontrunk nontrunkbranch"
 from :2
 M 100644 :1 README
 
 blob
 mark :4
-data 148
+data 154
 The purpose of this test repo is to check what happens in conversion when
 a branchy repo has no trunk.
 
-This file gets modified on the branch side.
+This is a random modification on the branch side.
 
 commit refs/heads/nontrunkbranch
 mark :5
-committer esr <esr> 1352560511 +0000
-data 27
-So we have a modification.
+committer esr <esr> 1352757592 +0000
+data 42
+A random modification on the branch side.
 from :3
 M 100644 :4 README
 
 tag root
 from :2
-tagger esr <esr> 1352560160 +0000
+tagger esr <esr> 1352756454 +0000
 data 68
 Ceci n'est pas un trunk.
 
