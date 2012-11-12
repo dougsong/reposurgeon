@@ -2139,7 +2139,7 @@ class StreamParser:
         "Subversion actions to import-stream commits."
         toprev = len(self.revisions)
         countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
-        # Find all copy sources
+        # Find all copy sources and compute the set of branches
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 1")
         baton.startcounter(countfmt)
@@ -2152,6 +2152,17 @@ class StreamParser:
                     copynodes.append(node)
                     if verbose >= DEBUG_EXTRACT+1:
                         announce("copynode at %s" % node)
+                if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not global_options['svn_nobranch']:
+                    for trial in global_options['svn_branchify']:
+                        if '*' not in trial and trial == node.path:
+                            self.branches[node.path+os.sep] = None
+                        elif trial.endswith(os.sep + '*') \
+                                 and os.path.dirname(trial) == os.path.dirname(node.path):
+                            self.branches[node.path+os.sep] = None
+                        elif trial == '*' and not node.path + os.sep + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
+                            self.branches[node.path+os.sep] = None
+                    if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
+                        announce("%s recognized as a branch" % node.path+os.sep)
             baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
@@ -2305,17 +2316,6 @@ class StreamParser:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
                         node.implicit = True
-                        if not node.path in self.branches and not global_options['svn_nobranch']:
-                            for trial in global_options['svn_branchify']:
-                                if '*' not in trial and trial + os.sep == node.path:
-                                    self.branches[node.path] = None
-                                elif trial.endswith(os.sep + '*') \
-                                         and os.path.dirname(trial) == os.path.dirname(node.path[:-1]):
-                                    self.branches[node.path] = None
-                                elif trial == '*' and not node.path + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 2:
-                                    self.branches[node.path] = None
-                            if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
-                                announce("%s recognized as a branch" % node.path)
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             assert node.implicit == False
