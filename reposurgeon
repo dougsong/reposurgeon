@@ -2414,19 +2414,21 @@ class StreamParser:
                     # no fileop should be issued until there is an
                     # actual file modification on the new branch.
                     # Exception: If the target branch has been deleted,
-                    # perform a normal copy.
-                    # TODO: Throw a warning id this produces a branch merge?
+                    # perform a normal copy and interpret this as an
+                    # ad-hoc branch merge.
                     if node.from_path:
-                        nonbranchcopy = node.from_path not in self.branches \
-                                         or node.path not in self.branches \
-                                         or node.path in self.branchdeletes
+                        branchcopy = node.from_path in self.branches \
+                                         and node.path in self.branches \
+                                         and node.path not in self.branchdeletes
                         if verbose >= DEBUG_TOPOLOGY:
-                            announce("r%s: directory copy to %s from r%s~%s (nonbranchcopy %s)" \
+                            announce("r%s: directory copy to %s from r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
                                         node.from_rev,
-                                        node.from_path, nonbranchcopy))
-                        if nonbranchcopy:
+                                        node.from_path,
+                                        branchcopy))
+                        if not branchcopy:
+                            # TODO: Throw a warning here?
                             self.branchdeletes.discard(node.path)
                         for source in node.from_set:
                             if verbose >= DEBUG_TOPOLOGY:
@@ -2455,7 +2457,7 @@ class StreamParser:
                                             subnode.from_rev,
                                             subnode.from_path))
                             generated_nodes.append(subnode)
-                            subnode.implicit = not nonbranchcopy
+                            subnode.implicit = branchcopy
             # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
             # to do inference from directory structure.
