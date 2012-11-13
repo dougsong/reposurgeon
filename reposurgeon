@@ -1683,6 +1683,7 @@ class StreamParser:
         "svn:needs-lock",
         "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         )
+    SplitSep = '.'
     def __init__(self, repo):
         self.repo = repo
         self.fp = None
@@ -2622,9 +2623,7 @@ class StreamParser:
             for (i, (branch, fileops)) in enumerate(oplist):
                 split = copy.copy(commit)
                 split.common = branch
-                # TODO: Check if this will collide with another commit
-                split.committer.date.timestamp += i
-                split.fossil_id += "." + str(i + 1)
+                split.fossil_id += StreamParser.SplitSep + str(i + 1)
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.mark = self.__newmark()
                 split.fileops = fileops
@@ -3094,15 +3093,19 @@ class Repository:
         "Read a fossil-references dump and initialize the repo's fossil map."
         commit_map = {}
         for event in self.commits():
-            commit_map[(event.committer.date.timestamp, event.committer.email)] = event
+            key = (event.committer.date.timestamp, event.committer.email)
+            if key not in commit_map:
+                commit_map[key] = []
+            commit_map[key].append(event)
         try:
             for line in fp:
-                (fossil, timefield, person) = line.split()
+                (fossil, timefield, person, serial) = line.split()
+                serial = int(serial)
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in commit_map:
-                    self.fossil_map[fossil] = commit_map[when_who]
+                    self.fossil_map[fossil] = commit_map[when_who][serial]
                     if fossil.startswith("SVN:"):
-                        commit_map[when_who].fossil_id = fossil[4:]
+                        commit_map[when_who][serial].fossil_id = fossil[4:]
                 else:
                     complain("no mark matches fossil %s" % fossil)
             del commit_map
@@ -3114,10 +3117,15 @@ class Repository:
         cookies.sort(key=lambda x: self.fossil_map[x].committer.date.timestamp)
         for cookie in cookies:
             commit = self.fossil_map[cookie]
+            if RepoStreamer.split_sep in cookie:
+                serial = cookie.split(StreamParser.SplitSep)[1]
+            else:
+                serial = '0'
             if commit.fossil_id:
-                fp.write("%s\t%s\t%s\n" % (cookie,
-                                           commit.committer.date.rfc3339(),
-                                           commit.committer.email))
+                fp.write("%s\t%s\t%st%s\n" % (cookie,
+                                              commit.committer.date.rfc3339(),
+                                              commit.committer.email,
+                                              serial))
     def tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
