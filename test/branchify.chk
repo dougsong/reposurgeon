@@ -1,5 +1,4 @@
 reposurgeon: branchify nontrunk nontrunkbranch
-reposurgeon: empty from set for <NodeAction: r3 add dir 'nontrunkbranch' from=1~nontrunk>
 blob
 mark :1
 data 103
