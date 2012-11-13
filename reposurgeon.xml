@@ -313,7 +313,7 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>commit with that date</entry>
       </row>
       <row>
-        <entry align='center'>action stamp (date!email)</entry>
+        <entry align='center'>action stamp (date!email[:seq])</entry>
         <entry align='center'>commit or tag with that date and creator</entry>
       </row>
     </tbody>
@@ -986,9 +986,10 @@ to the specified mark. You may want to hand-patch this in when one of
 previous forms is inconvenient.</para>
 
 <para>An action stamp is an RFC3339 timestamp, followed by a '!',
-followed by a committer email address; it refers to a commit without
-being VCS-specific.  Thus, instead of "commit 304a53c2" or "r2355",
-"2011-10-25T15:11:09Z!fred@foonly.com".</para>
+followed by a committer email address, followed by ':' and a 1-origin
+sequence number if the date/time pair is not unique in the repository;
+it refers to a commit without being VCS-specific.  Thus, instead of
+"commit 304a53c2" or "r2355", "2011-10-25T15:11:09Z!fred@foonly.com".</para>
 
 <para>In order to support reference lifting,
 <command>reposurgeon</command> internally builds a fossil-reference
@@ -1295,9 +1296,8 @@ selection set.</para>
 
 <para> A fossil-reference file maps reference cookies to (committer,
 commit-date, sequence-number) pairs; these in turn (should) uniquely
-identify a commit.  The format is four whitespace-separated fields:
-the cookie, an RFC3339 timestamp, a committer email ID, and a sequence
-number in case the first three are not unique.</para>
+identify a commit.  The format is two whitespace-separated fields:
+the cookie followed by an action stamp identifying the commit.</para>
 
 <para>It should not normally be necessary to use this command.  The
 fossil map is automatically preserved through repository reads and
@@ -1557,9 +1557,9 @@ $Locker:, $Name:, $RCSfile:, $Source:, and $State:.</para>
 that <command>references lift</command> generates when it can resolve
 an SVN or CVS reference in a comment. It is best that you
 <emphasis>not vary from this format</emphasis>, even in trivial ways
-like omitting the 'Z' or changing the 'T' or '!'. Making action stamps
-uniform and machine-parseable will have good consequences for future
-repository-browsing tools.</para>
+like omitting the 'Z' or changing the 'T' or '!' or ':'. Making action
+stamps uniform and machine-parseable will have good consequences for
+future repository-browsing tools.</para>
 
 <para>Sometimes, in converting a repository, you may need to insert an
 explanatory comment - for example, if metadata has been garbled or
