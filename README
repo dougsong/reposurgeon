@@ -13,6 +13,8 @@ It is better than git-svn at tag lifting, automatically cleaning up
 cvs2svn conversion artifacts, dealing with nonstandard repository
 layouts, recognizing branch merges, handling mixed-branch commits, 
 and generally at coping with Subversion's many odd corner cases.
+Normally Subversion repos should be analyzed at a rate of upwards
+of a thousand commits per minute.
 
 An auxiliary script, svnpull, assists in mirroring Subversion
 repositories. This distribution also includes a generic Makefile
