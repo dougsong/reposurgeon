@@ -9,6 +9,10 @@ conversions.
 
 reposurgeon can also read Subversion dump files directly, making it
 useful for scripting very high-quality conversions from Subversion.
+It is better than git-svn at tag lifting, automatically cleaning up 
+cvs2svn conversion artifacts, dealing with nonstandard repository
+layout, recognizing branch merges, and generally at handling 
+Subversion's many odd corner cases.
 
 An auxiliary script, svnpull, assists in mirroring Subversion
 repositories. This distribution also includes a generic Makefile
