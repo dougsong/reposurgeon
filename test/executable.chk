@@ -86,36 +86,28 @@ svn propset svn:executable 'true' hello
 from :10
 M 100755 :6 hello
 
-commit refs/heads/master
-mark :12
-committer esr <esr> 1324608187 +0000
-data 32
-Perform 'svn cp hello goodbye'.
-from :11
-M 100755 :6 goodbye
-
 blob
-mark :13
+mark :12
 data 95
 This is a test Subversion repository
 
 After the copy, goodbye has the svn:executable property.
 
 blob
-mark :14
+mark :13
 data 40
 #!/bin/sh
 
 echo "Goodbye, cruel world!"
 
 commit refs/heads/master
-mark :15
+mark :14
 committer esr <esr> 1324608419 +0000
 data 78
 The translated 'goodbye' fileop for this revision should have executable set.
-from :12
-M 100644 :13 README
-M 100755 :14 goodbye
+from :11
+M 100644 :12 README
+M 100644 :13 goodbye
 
 tag root
 from :2
@@ -124,4 +116,14 @@ data 61
 Directory layout.
 
 [[Tag from root commit at Subversion r1]]
+
+tag emptycommit-9
+from :11
+tagger esr <esr> 1324608187 +0000
+data 176
+Perform 'svn cp hello goodbye'.
+
+[[Tag from zero-fileop commit at Subversion r9:
+<NodeAction: r9 add file 'trunk/goodbye' from=8~trunk/hello sources=<PathMap: trunk/hello>>
+]]
 
