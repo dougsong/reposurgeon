@@ -1,7 +1,8 @@
 			reposurgeon project news
 
 2.3:
-     Subversion dump analysis now completes much faster on large examples.
+     SVN dump analysis now completes much faster on large examples.
+     SVN dump analysis no longer increments the timestamps of split commits
 
 2.2: 2012-11-06
      Unit testing for the date parsing/formatting code
