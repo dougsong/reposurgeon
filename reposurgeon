@@ -2345,7 +2345,7 @@ class StreamParser:
                                     newnode.kind = SD_FILE
                                     generated_nodes.append(newnode)
                         # Property settings can be present on either
-                    # AD_ADD or SD_CHANGE actions.
+                    # SD_ADD or SD_CHANGE actions.
                     if node.props is not None:
                         if verbose >= DEBUG_EXTRACT:
                             announce("r%s: setting properties %s on %s" \
