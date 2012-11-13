@@ -2929,16 +2929,16 @@ class StreamParser:
         # cvs2svn likes to crap out sequences of deletes followed by
         # filecopies on the same node when it's generating tag commits.
         # These are lots of examples of this in the nut.svn test load.
-        # These show up as redundant (D, M) fileop pairs. We can optimize
-        # them out by using the canonicalizer from the delete machinery.
+        # These show up as redundant (D, M) fileop pairs.
         baton.twirl("canonicalizing")
         for commit in self.repo.commits():
             if [fileop for fileop in commit.fileops if fileop is None]:
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
-            # Canonicalization is O(n**2) so avoid doing it here unless
-            # there are actual deletes.
-            elif [fileop for fileop in commit.fileops if fileop.op == 'D']:
-                self.repo.canonicalize(commit)
+            for i in range(len(commit.fileops)-1):
+                if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
+                    if commit.fileops[i].path == commit.fileops[i+1].path:
+                        commit.fileops[i+1].op = None
+                commit.fileops = [fileop for fileop in commit.fileops if fileop is not None]
             baton.twirl()
         baton.twirl("+")
         # Issue resets when required
