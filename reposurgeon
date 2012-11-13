@@ -1061,6 +1061,7 @@ class Commit:
                 modified = True
             self.setParents(msg["Parents"].split())
         (newname, newemail) = email.utils.parseaddr(msg["Committer"])
+
         if not newemail:
             raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
         else:
@@ -2688,7 +2689,6 @@ class StreamParser:
                         copies.sort(key=lambda node: int(node.from_rev))
                         latest = copies[-1]
                         threshold = False
-                        # TODO: This is O(n**2). Lookup should be memoized.
                         for prev in reversed(self.repo.commits()):
                             if prev.fossil_id == latest.from_rev:
                                 if verbose >= DEBUG_TOPOLOGY:
