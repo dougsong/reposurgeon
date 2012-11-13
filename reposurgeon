@@ -2491,6 +2491,13 @@ class StreamParser:
                             # this node is.
                             if node.from_hash:
                                 ancestor = self.hashmap[node.from_hash]
+                                node.blobmark = ancestor.blobmark
+                                # Ignore add operations generated to go with
+                                # directory copies. They're distinguishable
+                                # by the fact that they have a hash pointer
+                                # and no content or properties.
+                                if node.action == SD_ADD and node.blob is None and node.props is None:
+                                    continue
                             elif node.from_path:
                                 # A copy node is somehow missing its hash.
                                 ancestor = filemaps[node.from_rev][node.from_path]
