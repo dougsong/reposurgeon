@@ -2264,8 +2264,6 @@ class StreamParser:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
             commit = Commit(self.repo)
-            commit.fossil_id = revision
-            self.repo.fossil_map["SVN:%s" % revision] = commit
             try:
                 ad = record.props.pop("svn:date")
             except KeyError, key:
@@ -2605,9 +2603,11 @@ class StreamParser:
             newcommits = []
             # In the ordinary case, we can assign all non-deleteall commits
             # to the base commit.
+            commit.fossil_id = revision
             if mixed:
                 split_commits.append(revision)
             else:
+                self.repo.fossil_map["SVN:%s" % commit.fossil_id] = commit
                 if oplist:
                     (commit.common, commit.fileops) = oplist.pop(0)
                     commit._pathset = None
@@ -2625,6 +2625,7 @@ class StreamParser:
                 split.common = branch
                 # Sequence numbers for split commits are 1-origin
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
+                self.repo.fossil_map["SVN:%s" % split.fossil_id] = split
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.mark = self.__newmark()
                 split.fileops = fileops
@@ -3121,7 +3122,7 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         cookies = list(self.fossil_map.keys())
-        cookies.sort(key=lambda x: self.fossil_map[x].committer.date.timestamp)
+        cookies.sort(key=lambda x: (self.fossil_map[x].committer.date.timestamp, x))
         for cookie in cookies:
             commit = self.fossil_map[cookie]
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
