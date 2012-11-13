@@ -2953,7 +2953,7 @@ class StreamParser:
                 if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
                     if commit.fileops[i].path == commit.fileops[i+1].path:
                         commit.fileops[i+1].op = None
-                commit.fileops = [fileop for fileop in commit.fileops if fileop is not None]
+            commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
             baton.twirl()
         baton.twirl("+")
         # Issue resets when required
