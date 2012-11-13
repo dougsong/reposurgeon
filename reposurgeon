@@ -3117,12 +3117,18 @@ class Repository:
         cookies.sort(key=lambda x: self.fossil_map[x].committer.date.timestamp)
         for cookie in cookies:
             commit = self.fossil_map[cookie]
-            if RepoStreamer.split_sep in cookie:
+            # What we're trying to do here:
+            # 1. Each SVN cookie not corresponding to a split commit
+            #    gets written out with the 4th (sequence number) field 0.
+            # 2. Each SVN cookie corresponding to a split commit gets
+            #    written out with the sequence number of its split index.
+            # 3. Each CVS cookie gets written out with a sequence number of 0.
+            if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = cookie.split(StreamParser.SplitSep)[1]
             else:
                 serial = '0'
             if commit.fossil_id:
-                fp.write("%s\t%s\t%st%s\n" % (cookie,
+                fp.write("%s\t%s\t%s\t%s\n" % (cookie,
                                               commit.committer.date.rfc3339(),
                                               commit.committer.email,
                                               serial))
