@@ -963,7 +963,7 @@ class FileOp:
             st = " ".join((self.op, self.ref, self.committish)) + "\n"
             if self.ref == 'inline':
                 st += "data %d\n%s" % (len(self.inline), self.inline)
-        elif self.op in "D":
+        elif self.op == "D":
             st = "D "
             if len(self.path.split()) > 1:
                 st += '"' + self.path + '"'
