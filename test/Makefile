@@ -129,12 +129,12 @@ svn-regress:
 	done
 	@rm -f /tmp/regress
 
-REFLOADS=references
+REFLOADS=references mergeinfo-with-split
 fossil-buildregress:
 	@for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
-	    ../reposurgeon "read $${test}.svn" "fossils write $${test}.map"; \
+	    ../reposurgeon "read $${test}.svn" "fossils write " >$${test}.map 2>&1; \
 	done
 fossil-regress:
 	@for test in $(REFLOADS); \
