@@ -1,6 +1,7 @@
 # Test-suite makefile for reposurgeon
 
-all: listcheck roundtrip mailboxing fi-regress coalesce git-regress svn-regress
+all: listcheck roundtrip mailboxing fi-regress coalesce \
+		git-regress svn-regress fossil-regress
 	@echo "No diff output is good news."
 
 .SUFFIXES: .svn .chk
@@ -9,7 +10,7 @@ all: listcheck roundtrip mailboxing fi-regress coalesce git-regress svn-regress
 .svn.chk:
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 
-buildregress: fi-buildregress svn-buildregress
+buildregress: fi-buildregress svn-buildregress fossil-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout *~
@@ -127,3 +128,22 @@ svn-regress:
 	    fi \
 	done
 	@rm -f /tmp/regress
+
+REFLOADS=references
+fossil-buildregress:
+	@for test in $(REFLOADS); \
+	do \
+	    echo "Remaking $${test}.map"; \
+	    ../reposurgeon "read $${test}.svn" "fossils write $${test}.map"; \
+	done
+fossil-regress:
+	@for test in $(REFLOADS); \
+	do \
+	    if echo "Checking $${test} map" >&2; \
+	    ../reposurgeon "read $${test}.svn" "fossils write" >/tmp/regress 2>&1; \
+	    then diff -u $${test}.map /tmp/regress; \
+	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
+	done
+	@rm -f /tmp/regress
+
+# end
