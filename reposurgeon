@@ -1710,7 +1710,6 @@ class StreamParser:
         raise Fatal(msg + " at line " + repr(self.import_line))
     def warn(self, msg):
         "Display a parse warning associated with a line."
-        msg = "warning: " + msg 
         if self.import_line:
             complain(msg + " at line " + repr(self.import_line))
         else:
@@ -2224,7 +2223,7 @@ class StreamParser:
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
             if not copynode.from_set:
-                self.warn("empty from set for %s" % copynode)
+                self.gripe("empty from set for %s" % copynode)
         baton.twirl('+')
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -2321,29 +2320,31 @@ class StreamParser:
                         if node.path in self.branches:
                             assert node.implicit == False
                             self.branchdeletes.add(node.path)
-                        elif node.from_set is None:
-                            self.warn("r%s: empty from set on %s" % (revision, node))
                         else:
                             node.implicit = True
-                            for child in node.from_set:
-                                if verbose >= DEBUG_EXTRACT:
-                                    announce("r%s: deleting %s" \
-                                             % (revision, child))
-                                newnode = StreamParser.NodeAction()
-                                newnode.path = child
-                                newnode.revision = revision
-                                newnode.action = SD_DELETE
-                                newnode.kind = SD_FILE
-                                generated_nodes.append(newnode)
-                            ignorepath = os.path.join(node.path, ".gitignore")
-                            if ignorepath in self.active_gitignores:
-                                newnode = StreamParser.NodeAction()
-                                newnode.path = ignorepath
-                                newnode.revision = revision
-                                newnode.action = SD_DELETE
-                                newnode.kind = SD_FILE
-                                generated_nodes.append(newnode)
-                    # Property settings can be present on either
+                            # A delete or replace with no from set
+                            # can occur if the directory is empty.
+                            # We can just ignore this case.
+                            if node.from_set is not None:
+                                for child in node.from_set:
+                                    if verbose >= DEBUG_EXTRACT:
+                                        announce("r%s: deleting %s" \
+                                                 % (revision, child))
+                                    newnode = StreamParser.NodeAction()
+                                    newnode.path = child
+                                    newnode.revision = revision
+                                    newnode.action = SD_DELETE
+                                    newnode.kind = SD_FILE
+                                    generated_nodes.append(newnode)
+                                ignorepath = os.path.join(node.path, ".gitignore")
+                                if ignorepath in self.active_gitignores:
+                                    newnode = StreamParser.NodeAction()
+                                    newnode.path = ignorepath
+                                    newnode.revision = revision
+                                    newnode.action = SD_DELETE
+                                    newnode.kind = SD_FILE
+                                    generated_nodes.append(newnode)
+                        # Property settings can be present on either
                     # AD_ADD or SD_CHANGE actions.
                     if node.props is not None:
                         if verbose >= DEBUG_EXTRACT:
