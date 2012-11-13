@@ -3,7 +3,6 @@ reposurgeon: echo 1
 quiet on
 set svn_nobranch
 read expunge.svn
-reposurgeon: empty from set for <NodeAction: r3 add dir 'releases/v1.0' from=1~dev>
 * expunge.svn
 expunge 1..$ ^releases/v1.0/
 reposurgeon: at 7, expunging M releases/v1.0/VERSION
