@@ -33,7 +33,7 @@ data 4
 reset refs/heads/v1.0
 commit refs/heads/v1.0
 mark :6
-committer db48x <db48x> 1352198316 +0000
+committer db48x <db48x> 1352198315 +0000
 data 52
 release party
 
@@ -43,7 +43,7 @@ M 100644 :5 VERSION
 
 commit refs/heads/master
 mark :7
-committer db48x <db48x> 1352198316 +0000
+committer db48x <db48x> 1352198315 +0000
 data 52
 release party
 
