@@ -2623,6 +2623,7 @@ class StreamParser:
             for (i, (branch, fileops)) in enumerate(oplist):
                 split = copy.copy(commit)
                 split.common = branch
+                # Sequence numbers for split commits are 1-origin
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.mark = self.__newmark()
@@ -3099,13 +3100,19 @@ class Repository:
             commit_map[key].append(event)
         try:
             for line in fp:
-                (fossil, timefield, person, serial) = line.split()
-                serial = int(serial)
+                (fossil, stamp) = line.split()
+                (timefield, person) = stamp.split('!')
+                if ':' in person:
+                    (person, seq) = person.split(':')
+                    seq = int(seq) - 1
+                else:
+                    seq = 0
+                assert fossil and timefield and person
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in commit_map:
-                    self.fossil_map[fossil] = commit_map[when_who][serial]
+                    self.fossil_map[fossil] = commit_map[when_who][seq]
                     if fossil.startswith("SVN:"):
-                        commit_map[when_who][serial].fossil_id = fossil[4:]
+                        commit_map[when_who][seq].fossil_id = fossil[4:]
                 else:
                     complain("no mark matches fossil %s" % fossil)
             del commit_map
@@ -3117,21 +3124,15 @@ class Repository:
         cookies.sort(key=lambda x: self.fossil_map[x].committer.date.timestamp)
         for cookie in cookies:
             commit = self.fossil_map[cookie]
-            # What we're trying to do here:
-            # 1. Each SVN cookie not corresponding to a split commit
-            #    gets written out with the 4th (sequence number) field 0.
-            # 2. Each SVN cookie corresponding to a split commit gets
-            #    written out with the sequence number of its split index.
-            # 3. Each CVS cookie gets written out with a sequence number of 0.
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
-                serial = cookie.split(StreamParser.SplitSep)[1]
+                serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:
-                serial = '0'
+                serial = ''
             if commit.fossil_id:
-                fp.write("%s\t%s\t%s\t%s\n" % (cookie,
-                                              commit.committer.date.rfc3339(),
-                                              commit.committer.email,
-                                              serial))
+                fp.write("%s\t%s!%s%s\n" % (cookie,
+                                           commit.committer.date.rfc3339(),
+                                           commit.committer.email,
+                                           serial))
     def tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
         if verbose >= DEBUG_EXTRACT:
