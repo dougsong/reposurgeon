@@ -197,7 +197,7 @@ than bracketed. The change fixed a parsing ambiguity)</para>
 <listitem>
 <para>If the contents of name brackets (&lt; &gt;) does not match a tag or 
 branch name, the interpreter next searches fossil IDs of commits.  This 
-is especially useful when you have imported a Subversion dunp; it
+is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
 </listitem>
@@ -1021,9 +1021,9 @@ translated into VCS-independent action stamps. With the modifier
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the fossil map. An action
-stamp is a timestamp/email combination uniquely identifying the commit
-associated with that blob, as described in <xref
-linkend='style'/>.</para>
+stamp is a timestamp/email/sequence-number combination uniquely
+identifying the commit associated with that blob, as described in
+<xref linkend='style'/>.</para>
 
 <para>It is not guaranteed that every such reference will be resolved,
 or even that any at all will be. Normally all references in history
@@ -1294,9 +1294,10 @@ any string.</para>
 selection set.</para>
 
 <para> A fossil-reference file maps reference cookies to (committer,
-commit-date) pairs; these in turn (should) uniquely identify a commit.
-The format is three whitespace-separated fields: the cookie, an RFC3339
-timestamp, and a committer email ID.</para>
+commit-date, sequence-number) pairs; these in turn (should) uniquely
+identify a commit.  The format is four whitespace-separated fields:
+the cookie, an RFC3339 timestamp, a committer email ID, and a sequence
+number in case the first three are not unique.</para>
 
 <para>It should not normally be necessary to use this command.  The
 fossil map is automatically preserved through repository reads and
@@ -1412,9 +1413,7 @@ are handled by partitioning them into multiple import-stream commits,
 one on each affected branch. The Fossil-ID of such a split commit
 will have a pseudo-decimal part - for examble, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
-2317.1, 2317.2, and 2317.3. In addition, the second and all subsequent
-commits will have their timestamps incremented by a second each in
-order to make the committer/timestamp pairs distinguishable.</para>
+2317.1, 2317.2, and 2317.3.</para>
 
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
