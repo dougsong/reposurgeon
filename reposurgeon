@@ -2222,8 +2222,13 @@ class StreamParser:
             copynode.from_set.copy_from(copynode.from_path,
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
+            # If the directory node has no from set, but there are
+            # files underneath it, this may indicate a problem.
             if not copynode.from_set:
-                self.gripe("empty from set for %s" % copynode)
+                for path in filemaps[copynode.revision]:
+                    if path.startswith(node.path + os.sep):
+                        self.gripe("empty from set for %s" % copynode)
+                        break
         baton.twirl('+')
         # Build commits
         # This code can eat your processor, so we make it give up
