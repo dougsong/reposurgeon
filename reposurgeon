@@ -2935,7 +2935,10 @@ class StreamParser:
         for commit in self.repo.commits():
             if [fileop for fileop in commit.fileops if fileop is None]:
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
-            self.repo.canonicalize(commit)
+            # Canonicalization is O(n**2) so avoid doing it here unless
+            # there are actual deletes.
+            elif [fileop for fileop in commit.fileops if fileop.op == 'D']:
+                self.repo.canonicalize(commit)
             baton.twirl()
         baton.twirl("+")
         # Issue resets when required
