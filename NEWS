@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.3:
+2.3: 2012-11-13
      SVN dump analysis now completes much faster on large examples.
      The format of action stamps has changed to fully support split commits.
 
