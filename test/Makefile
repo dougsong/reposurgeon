@@ -4,13 +4,15 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svn-regress fossil-regress
 	@echo "No diff output is good news."
 
-.SUFFIXES: .svn .chk .fi
+.SUFFIXES: .svn .chk .fi .map
 
 # The 'prefer git' suppresses writing out properties.
 .svn.chk:
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
 	../reposurgeon "read $<" "prefer git" "write $@"
+.svn.map:
+	../reposurgeon "read $<" "prefer git" "fossils write $@" >/dev/null
 
 buildregress: fi-buildregress svn-buildregress fossil-buildregress
 
@@ -136,7 +138,7 @@ fossil-buildregress:
 	@for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
-	    ../reposurgeon "read $${test}.svn" "fossils write " >$${test}.map 2>&1; \
+	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null; \
 	done
 fossil-regress:
 	@for test in $(REFLOADS); \
