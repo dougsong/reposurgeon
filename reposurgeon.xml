@@ -1223,13 +1223,6 @@ you what things are legal within angle brackets and
 parentheses.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>version</command>
-</term>
-<listitem><para>Report the version of <command>reposurgeon</command>
-and the list of version-control systems it directly supports.
-</para></listitem>
-</varlistentry>
-<varlistentry>
 <term><command>verbose</command> 
         [<emphasis>n</emphasis>]
 </term>
@@ -1283,10 +1276,11 @@ any string.</para>
         [<emphasis>required</emphasis>...]
 </term>
 <listitem>
-<para>With no argument, display the program version.  With argument, declare the
-major version (single digit) or full version (major.minor)  under which the
-enclosing script was seveloped.  The program will error out if the major
-version has changed (which means the surgical language is not backwards
+<para>With no argument, display the program version and the list of
+VCSes directly supported.  With argument, declare the major version
+(single digit) or full version (major.minor) under which the enclosing
+script was seveloped.  The program will error out if the major version
+has changed (which means the surgical language is not backwards
 compatible).</para>
 
 <para>It is good practice to start your lift script with a version 
