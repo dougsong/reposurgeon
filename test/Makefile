@@ -144,7 +144,7 @@ fossil-regress:
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "Checking $${test} map" >&2; \
-	    ../reposurgeon "read $${test}.svn" "fossils write" >/tmp/regress 2>&1; \
+	    ../reposurgeon "read $${test}.svn" "fossils write" >/tmp/regress 2>/dev/null; \
 	    then diff -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
