@@ -415,6 +415,7 @@ DEBUG_DELETE    = 5    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
 DEBUG_UNITE     = 5    # Debug mark assignments in merging
 DEBUG_LEXER     = 6    # Debug selection-language parsing
+quiet = False
 
 global_options = {}
 
@@ -3866,7 +3867,7 @@ class Repository:
     def __setitem__(self, i, v):
         self.events[i] = v
 
-def read_repo(source, preferred, quiet=False):
+def read_repo(source, preferred):
     "Read a repository using fast-import."
     if source == '-':
         repo = Repository()
@@ -4528,7 +4529,6 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         RepositoryList.__init__(self)
         self.use_rawinput = True
         self.echo = 0
-        self.quiet = False
         self.prompt = "reposurgeon% "
         self.preferred = None
         self.selection = []
@@ -5128,13 +5128,14 @@ on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.
 """)
     def do_quiet(self, line):
+        global quiet
         if line:
             if line == "on":
-                self.quiet = True
+                quiet = True
             elif line == "off":
-                self.quiet = False
+                quiet = False
         if not line:
-            announce("quiet %s" % ("on" if self.quiet else "off"))
+            announce("quiet %s" % ("on" if quiet else "off"))
 
     def do_echo(self, line):
         "Set or clear echoing commands before processing (for regression tests)"
@@ -5401,7 +5402,7 @@ repository, '-' for others.
                 status =  '-'
                 if self.chosen() and repo == self.chosen():
                     status = '*'
-                if not self.quiet:
+                if not quiet:
                     sys.stdout.write(rfc3339(repo.readtime) + " ")
                 sys.stdout.write("%s %s\n" % (status, repo.name))
         else:
@@ -5502,7 +5503,7 @@ constructed with command-line arguments).
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd()
-        repo = read_repo(line, self.preferred, quiet=self.quiet)
+        repo = read_repo(line, self.preferred)
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
@@ -5530,7 +5531,7 @@ anything other than a plain file. The default selection is all events.
         if not line:
             line = '-'
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not self.quiet))
+            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
         else:
             try:
                 with open(line, "w") as out:
