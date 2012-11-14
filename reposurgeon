@@ -1852,6 +1852,7 @@ class StreamParser:
                             self.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
+                            baton.twirl()
                             if verbose >= DEBUG_EXTRACT+1:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
@@ -1984,6 +1985,7 @@ class StreamParser:
                         elif line.startswith("data"):
                             self.error("unexpected data object")
                         elif line.startswith("commit"):
+                            baton.twirl()
                             commitbegin = self.import_line
                             commit = Commit(self.repo)
                             commit.branch = line.split()[1]
@@ -2139,13 +2141,13 @@ class StreamParser:
         return 0o100644
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
-        toprev = len(self.revisions)
-        countfmt = " %%%dd of %s" % (len(str(toprev)), toprev)
+        def countfmt(count):
+            return " %%%dd of %s" % (len(str(count)), count)
         # Find all copy sources and compute the set of branches
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 1")
-        baton.startcounter(countfmt)
-        baton.twirl("copynodes:")
+        baton.twirl("copynodes")
+        baton.startcounter(countfmt(len(self.revisions)))
         copynodes = []
         for revision in self.revisions:
             record = self.revisions[revision]
@@ -2172,8 +2174,8 @@ class StreamParser:
         # Build filemaps.
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 2")
-        baton.startcounter(countfmt)
-        baton.twirl("filemaps:")
+        baton.twirl("filemaps")
+        baton.startcounter(countfmt(len(self.revisions)))
         filemaps = {}
         filemap = PathMap()
         split_commits = []
@@ -2210,12 +2212,14 @@ class StreamParser:
             filemaps[revision] = filemap.snapshot()
             baton.bumpcounter()
         baton.endcounter()
+        baton.twirl('+')
         if verbose >= DEBUG_EXTRACT+1:
             announce("filemaps %s" % filemaps)
         # Build from sets in each directory copy record.
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 3")
         baton.twirl("copysets")
+        baton.startcounter(countfmt(len(copynodes)))
         for copynode in copynodes:
             if verbose >= DEBUG_FILEMAP:
                 announce("r%s filemap is %s" \
@@ -2234,6 +2238,8 @@ class StreamParser:
                     if path.startswith(node.path + os.sep):
                         self.gripe("inconsistently empty from set for %s" % copynode)
                         break
+            baton.bumpcounter()
+        baton.endcounter()
         baton.twirl('+')
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -2241,8 +2247,8 @@ class StreamParser:
         # it doesn't hit the disk.
         if verbose >= DEBUG_EXTRACT+1:
             announce("Pass 4")
-        baton.startcounter(countfmt)
-        baton.twirl("commits:")
+        baton.twirl("commits")
+        baton.startcounter(countfmt(len(self.revisions)))
         for revision in self.revisions:
             record = self.revisions[revision]
             if verbose >= DEBUG_EXTRACT:
@@ -2737,6 +2743,8 @@ class StreamParser:
                           len(commit.properties),
                           msg.strip()[:20]))
         baton.twirl("+")
+        baton.twirl("branches")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         # First, turn the root commit into a tag
         initial = self.repo.commits()[0]
         if not initial.fileops:
@@ -2745,10 +2753,8 @@ class StreamParser:
                                  "root",
                                  self.repo.commits()[1].mark,
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
-                baton.twirl()
             else:
                 self.gripe("could not tagify root commit.")
-            baton.twirl("branches")
         # Now, branch analysis.
         if not self.branches or global_options['svn_nobranch']:
             lastmark = None
@@ -2757,6 +2763,7 @@ class StreamParser:
                 if lastmark:
                     commit.setParents([lastmark])
                 lastmark = commit.mark
+                baton.bumpcounter()
         else:
             # Instead, determine a branch for each commit...
             if verbose >= DEBUG_EXTRACT:
@@ -2776,10 +2783,13 @@ class StreamParser:
                 else:
                     commit.branch = "root"
                     self.branches["root"] = None
-                baton.twirl()
+                baton.bumpcounter()
+            baton.endcounter()
             baton.twirl("+")
             # ...then rebuild parent links so they follow the branches
             branchroots = []
+            baton.twirl("parents")
+            baton.startcounter(countfmt(len(self.repo.commits())))
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
@@ -2787,8 +2797,10 @@ class StreamParser:
                 else:
                     commit.setParents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
-                baton.twirl()
+                baton.bumpcounter()
+            baton.endcounter()
             baton.twirl("+")
+            baton.twirl("root")
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
             # last phase.
@@ -2797,11 +2809,11 @@ class StreamParser:
                     if commit.branch == "root":
                         break
                 self.branchlink[commit.mark] = self.repo.commits()[0].mark
-            baton.twirl("+")
             # Add links due to Subversion copy operations
             if verbose >= DEBUG_EXTRACT:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
+            baton.twirl("branchlinks")
             for (later, earlier) in self.branchlink.items():
                 child = self.repo.objfind(later)
                 if earlier not in child.parentMarks():
@@ -2815,6 +2827,7 @@ class StreamParser:
                 baton.twirl()
             baton.twirl("+")
             # Add links due to svn:mergeinfo properties
+            baton.twirl("svn-mergeinfo")
             for ((_, early), late) in self.mergeinfo.items():
                 if early in split_commits:
                     self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
@@ -2827,7 +2840,7 @@ class StreamParser:
                         late_commit.addParent(early_commit.mark)
             baton.twirl("+")
             if verbose >= DEBUG_EXTRACT:
-                announce("after branch analysis:")
+                announce("after branch analysis")
                 for commit in self.repo.commits():
                     parents = commit.parents()
                     if len(parents):
@@ -2841,6 +2854,7 @@ class StreamParser:
                               len(commit.properties),
                               commit.branch))
             baton.twirl("tagifying")
+            baton.startcounter(countfmt(len(self.repo.commits())))
             # Tagify normal branch-root commits, they don't carry any
             # information other than their metadata. The exceptions
             # are trunk and root (if the later exists); neither is
@@ -2857,11 +2871,14 @@ class StreamParser:
                     self.repo.tagify(commit,
                                      tagname,
                                      commit.parentMarks()[0])
-                    baton.twirl()
-            baton.twirl("+")
+                baton.bumpcounter()
+            baton.endcounter()
+        baton.twirl("+")
         # Code controlled by svn_nobranch option ends.
         #
         # Suppress junk commits manufactured by cvs2svn
+        baton.twirl("junk")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             if "commit was manufactured by cvs2svn" in commit.comment:
                 for fileop in commit.fileops:
@@ -2885,6 +2902,11 @@ class StreamParser:
                     # Suppress this commit
                     self.repo.delete([self.repo.events.index(commit)],
                                      ["obliterate", "quiet"])
+            baton.bumpcounter()
+        baton.endcounter()
+        baton.twirl('+')
+        baton.twirl("tagify-empty")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             # Now we need to tagify all other commits without fileops, because
             # git is going to just discard them when we build a live repo and
@@ -2926,8 +2948,12 @@ class StreamParser:
                                % (commit.fossil_id, commit.branch))
                     self.repo.delete([self.repo.events.index(commit)],
                                 ["obliterate", "quiet"])
+            baton.bumpcounter()
+        baton.endcounter()
+        baton.twirl("+")
         baton.twirl("polishing")
         # Now pretty up the branch names
+        baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             if commit.branch == "root":
                 commit.branch = os.path.join("refs", "heads", "root")
@@ -2939,13 +2965,15 @@ class StreamParser:
             else:
                 commit.branch = os.path.join("refs", "heads",
                                                  os.path.basename(commit.branch[:-1]))
-            baton.twirl()
+            baton.bumpcounter()
+        baton.endcounter()
         baton.twirl("+")
         # cvs2svn likes to crap out sequences of deletes followed by
         # filecopies on the same node when it's generating tag commits.
         # These are lots of examples of this in the nut.svn test load.
         # These show up as redundant (D, M) fileop pairs.
         baton.twirl("canonicalizing")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             if [fileop for fileop in commit.fileops if fileop is None]:
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
@@ -2954,10 +2982,12 @@ class StreamParser:
                     if commit.fileops[i].path == commit.fileops[i+1].path:
                         commit.fileops[i+1].op = None
             commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
-            baton.twirl()
+            baton.bumpcounter()
+        baton.endcounter()
         baton.twirl("+")
         # Issue resets when required
         baton.twirl("resets")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         save_events = self.repo.events
         self.repo.events = []
         self.repo._commits = None
@@ -2969,10 +2999,11 @@ class StreamParser:
                 self.repo.addEvent(reset)
                 issued.add(event.branch)
             self.repo.addEvent(event)
-            baton.twirl()
+            baton.bumpcounter()
         baton.twirl("+")
         # Remove spurious parent links caused by random cvs2svn file copies.
         baton.twirl("debubbling")
+        baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             if len(commit.parentMarks()) == 2:
                 parents = commit.parents()
@@ -2986,9 +3017,11 @@ class StreamParser:
                     (a, b) = (b, a)
                 if b.descended_from(a):
                     commit.removeParent(a.mark)
+            baton.bumpcounter()
+        baton.endcounter()
         baton.twirl("+")
         baton.twirl("renumbering")
-        self.repo.renumber()
+        self.repo.renumber(baton)
         baton.twirl("+")
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
@@ -3622,7 +3655,7 @@ class Repository:
         return [e for e in self.events \
                 if isinstance(e, Passthrough) \
                 and (e.text.startswith("option") or e.text.startswith("feature"))]
-    def renumber(self):
+    def renumber(self, baton=None):
         "Renumber the marks in a repo."
         marklist = []
         def remark(m):
@@ -3630,6 +3663,9 @@ class Repository:
                 return ":" + repr(1 + marklist.index(m))
             except ValueError:
                 raise Fatal("unknown mark %s cannot be renumbered!" % m)
+        if baton:
+            count = len(self.events)
+            baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
         for event in self.events:
             if hasattr(event, "mark"):
                 if event.mark is None:
@@ -3662,6 +3698,10 @@ class Repository:
                         if verbose >= DEBUG_UNITE:
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
+            if baton:
+                baton.bumpcounter()
+        if baton:
+            baton.endcounter()
     def uniquify(self, color):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
