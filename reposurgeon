@@ -2447,7 +2447,6 @@ class StreamParser:
                                         node.from_path,
                                         branchcopy))
                         if not branchcopy:
-                            # TODO: Throw a warning here?
                             self.branchdeletes.discard(node.path)
                         for source in node.from_set:
                             if verbose >= DEBUG_TOPOLOGY:
@@ -3804,7 +3803,7 @@ class Repository:
         return None
     def move_to_rename(self):
         "Make rename sequences from matched delete-modify pairs."
-        # TODO: Actually use this somewhere...
+        # FIXME: Actually use this somewhere...
         rename_count = 0
         for commit in self.commits():
             renames = []
