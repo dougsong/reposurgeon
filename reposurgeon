@@ -3100,6 +3100,7 @@ class Repository:
                 commit_map[key] = []
             commit_map[key].append(event)
         try:
+            matched = unmatched = 0
             for line in fp:
                 (fossil, stamp) = line.split()
                 (timefield, person) = stamp.split('!')
@@ -3114,8 +3115,12 @@ class Repository:
                     self.fossil_map[fossil] = commit_map[when_who][seq]
                     if fossil.startswith("SVN:"):
                         commit_map[when_who][seq].fossil_id = fossil[4:]
+                    matched += 1
                 else:
-                    complain("no mark matches fossil %s" % fossil)
+                    unmatched += 1
+            if verbose >= 1:
+                announce("%d matched, %d unmatched, %d total"\
+                         % (matched, unmatched, matched+unmatched))
             del commit_map
         except ValueError:
             raise Recoverable("bad syntax in fossils file.")
