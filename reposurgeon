@@ -6479,6 +6479,34 @@ displays the state of all flags. The following flags and options are defined:
                     global_options[option] = False
 
     #
+    # Version binding 
+    #
+    def help_version(self):
+        print("""
+With no argument, display the reposurgeon version.  With argument, declare the
+major version (single digit) or full version (major.minor)  under which the
+enclosing script was seveloped.  The program will error out if the major
+version has changed (which means the surgical language is not backwards
+compatible).
+""")
+    def do_version(self, line):
+        if not line:
+            announce("version " + version)
+        else:
+            (vmajor, _) = version.split(".")
+            if '.' in line:
+                try:
+                    (major, _) = line.strip().split(".")
+                except ValueError:
+                    complain("invalid version.")
+                    return
+            else:
+                major = line.strip()
+            if major != vmajor:
+                raise Fatal("major version mismatch, aborting.")
+            elif verbose > 0:
+                announce("version check passed.")
+    #
     # Running unit tests (undocumented)
     #
     def help_runtests(self):
