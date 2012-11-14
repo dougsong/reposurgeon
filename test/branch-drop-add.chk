@@ -1,4 +1,4 @@
-reposurgeon: dubious deleteall at <7> on refs/heads/v1.0, delete obliterate {<5>,<7>} may be indicated.
+reposurgeon: dubious deleteall, delete obliterate (v1.0)&{1..<7>} may be indicated.
 blob
 mark :1
 data 115
