@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.4:
+     In SVN conversion, user is warned about mid-branch deletealls.
+
 2.3: 2012-11-13
      SVN dump analysis now completes much faster on large examples.
      The format of action stamps has changed to fully support split commits.

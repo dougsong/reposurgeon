@@ -2563,7 +2563,6 @@ class StreamParser:
                                 announce("r%s~%s: unmodified" % (node.revision, node.path))
                             self.permissions[node.path] = perms
                     # These are directory actions.
-                    # FIXME: The agito case may need to be handled here.
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if verbose >= DEBUG_EXTRACT:
                             announce("r%s: deleteall %s" % (revision,node.path))
@@ -2992,6 +2991,21 @@ class StreamParser:
         self.repo.renumber()
         baton.twirl("+")
         self.repo.write_fossils = True
+        # Look for tag and branch merges that mean we may want to undo a
+        # tag or branch creation
+        dubious = [commit for commit in self.repo.commits() if \
+                   commit.fileops and commit.fileops[0].op == 'deleteall' \
+                   and commit.children()]
+        for commit in dubious:
+            questionable = []
+            ancestor = commit
+            while ancestor.branch == commit.branch:
+                questionable = [ancestor] + questionable
+                if ancestor.hasParents():
+                    ancestor = ancestor.parents()[0]
+                else:
+                    break
+            self.gripe("dubious deleteall at <%s> on %s, delete obliterate {%s} may be indicated." % (commit.fossil_id, commit.branch, ",".join(["<%s>" % event.fossil_id for event in questionable])))
 
 # Generic repository-manipulation code begins here
 
