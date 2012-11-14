@@ -2,6 +2,7 @@
 
 2.4:
      In SVN conversion, user is warned about mid-branch deletealls.
+     'version' command allows a script to be pinned to a major version.
 
 2.3: 2012-11-13
      SVN dump analysis now completes much faster on large examples.

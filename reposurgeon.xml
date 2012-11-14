@@ -1279,6 +1279,22 @@ any string.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>version</command>
+        [<emphasis>required</emphasis>...]
+</term>
+<listitem>
+<para>With no argument, display the program version.  With argument, declare the
+major version (single digit) or full version (major.minor)  under which the
+enclosing script was seveloped.  The program will error out if the major
+version has changed (which means the surgical language is not backwards
+compatible).</para>
+
+<para>It is good practice to start your lift script with a version 
+requirement, especially if you are going to archive it for later 
+reference.</para>  
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>history</command>
 </term>
 <listitem>
