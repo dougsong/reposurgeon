@@ -4,11 +4,13 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svn-regress fossil-regress
 	@echo "No diff output is good news."
 
-.SUFFIXES: .svn .chk
+.SUFFIXES: .svn .chk .fi
 
 # The 'prefer git' suppresses writing out properties.
 .svn.chk:
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
+.svn.fi:
+	../reposurgeon "read $<" "prefer git" "write $@"
 
 buildregress: fi-buildregress svn-buildregress fossil-buildregress
 
