@@ -1843,6 +1843,7 @@ class StreamParser:
                         raise Fatal("unsupported dump format version %s" \
                                     % version)
                     # Beginning of Subversion dump parsing
+                    starttime = time.time() 
                     while True:
                         line = self.readline()
                         if not line:
@@ -1940,6 +1941,9 @@ class StreamParser:
                             # End Revision processing
                     # End of Subversion dump parsing
                     self.svn_process(baton)
+                    elapsed = time.time() - baton.time
+                    baton.twirl("%d revisions (%d/s)" %
+                                 (int(revision), int(int(revision)/elapsed)))
                 else:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
