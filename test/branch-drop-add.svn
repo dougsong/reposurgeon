@@ -1,0 +1,488 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 5b425b4e-5c71-452e-b535-43a26c2e98af
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:33.143191Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 125
+Content-length: 125
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:33.228812Z
+K 7
+svn:log
+V 25
+default repository layout
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 137
+Content-length: 137
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:35.308314Z
+K 7
+svn:log
+V 37
+trunk development proceeds; feature A
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 115
+Text-content-md5: 45f8ac4ac45a67c0b9a30da3dcfe582d
+Text-content-sha1: 08ae1e75505fba217a4232dc0542567ef54b886b
+Content-length: 125
+
+PROPS-END
+this svn repository is for testing reposurgeon's way of dealing with deleted svn branches that are later recreated
+
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: 1e85d27c4639f6730bb7624094413c74
+Text-content-sha1: 4945209b9ca10ba3925e93b008532753d08390e9
+Content-length: 14
+
+PROPS-END
+0.1
+
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 22
+Text-content-md5: 1a1a8fb0872bceac3582058e61b25795
+Text-content-sha1: 5b69ab91cadd33a763485f4ac6ce8803c764d418
+Content-length: 32
+
+PROPS-END
+feature development A
+
+
+Revision-number: 3
+Prop-content-length: 137
+Content-length: 137
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:37.383213Z
+K 7
+svn:log
+V 37
+trunk development proceeds; feature B
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 5215168f88b83cb127d078dcf751b4b6
+Text-content-sha1: 06f123380d3ba26607771195651065221867ca18
+Content-length: 4
+
+0.2
+
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: change
+Text-content-length: 44
+Text-content-md5: 42b8f05165864034cabb8d165ff4aef1
+Text-content-sha1: e9ca4a48dbc1470ba4d3140353e655c87e837855
+Content-length: 44
+
+feature development A
+feature development B
+
+
+Revision-number: 4
+Prop-content-length: 131
+Content-length: 131
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:39.454754Z
+K 7
+svn:log
+V 31
+create a release branch for 1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 126
+Content-length: 126
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:41.522198Z
+K 7
+svn:log
+V 26
+bump version number to 1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
+Revision-number: 6
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 37
+trunk development proceeds; feature C
+K 10
+svn:author
+V 5
+db48x
+K 8
+svn:date
+V 27
+2012-11-10T09:35:43.594019Z
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 588f8b45134362a0dfc093164b839024
+Text-content-sha1: db69d1dc386bbf900a932e6a9f3f8f4353ae7e15
+Content-length: 4
+
+0.3
+
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: change
+Text-content-length: 66
+Text-content-md5: ace010d85f4b7c301c008ccd596aa71a
+Text-content-sha1: c1ecfcdbf32c37b7a611a8f789d7ddb7d837f6c4
+Content-length: 66
+
+feature development A
+feature development B
+feature development C
+
+
+Revision-number: 7
+Prop-content-length: 127
+Content-length: 127
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:45.691600Z
+K 7
+svn:log
+V 27
+delete incorrect 1.0 branch
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0
+Node-action: delete
+
+
+Revision-number: 8
+Prop-content-length: 131
+Content-length: 131
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:47.758587Z
+K 7
+svn:log
+V 31
+create a release branch for 1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 7
+Node-copyfrom-path: trunk
+
+
+Revision-number: 9
+Prop-content-length: 126
+Content-length: 126
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:49.825240Z
+K 7
+svn:log
+V 26
+bump version number to 1.0
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 2542b79651fab56d0ebfff75a0fdf7be
+Text-content-sha1: 61652cd1568dcf2614df833eba241755eee34e89
+Content-length: 4
+
+1.0
+
+
+Revision-number: 10
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 37
+trunk development proceeds; feature D
+K 10
+svn:author
+V 5
+db48x
+K 8
+svn:date
+V 27
+2012-11-10T09:35:51.892396Z
+PROPS-END
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: d39d8df974f8d45e3d23499dc20ea763
+Text-content-sha1: 49aec2b9c6b091a17f0f4a82f5f4549121bd0124
+Content-length: 4
+
+1.1
+
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: change
+Text-content-length: 88
+Text-content-md5: d9ec1467bb0f0c6db1c0d608436af27b
+Text-content-sha1: 4ab3dde887f5cf1c4a48a1cdcbcc9158def1f517
+Content-length: 88
+
+feature development A
+feature development B
+feature development C
+feature development D
+
+
+Revision-number: 11
+Prop-content-length: 142
+Content-length: 142
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:53.963730Z
+K 7
+svn:log
+V 42
+emergency bugfix for v1.0, releasing 1.0.1
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: v1.0/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 6
+Text-content-md5: ee7ab3e7e15d1e00ec001ca33b4571f1
+Text-content-sha1: cfc5fe3a1d6f7e773eb019d04681697648d23e76
+Content-length: 6
+
+1.0.1
+
+
+Node-path: v1.0/src
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Text-content-md5: a6a0b3f08caa6078be7f458ea051757b
+Text-content-sha1: b1eb04f50060e13ec8b88cd8fc28001fd7fc18e2
+Content-length: 75
+
+feature development A
+feature development B
+feature development C
+bugfix 1
+
+
+Revision-number: 12
+Prop-content-length: 160
+Content-length: 160
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:56.092812Z
+K 7
+svn:log
+V 60
+merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 45
+Content-length: 45
+
+K 13
+svn:mergeinfo
+V 10
+/v1.0:8-11
+PROPS-END
+
+
+Node-path: trunk/VERSION
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: add9573d0bdbe6b511957d850d7ceb80
+Text-content-sha1: 6d69fa1724f4a439d489ee56aa0c22fdd41c632c
+Content-length: 4
+
+1.2
+
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: change
+Text-content-length: 97
+Text-content-md5: 6352236f75dfb8585a37874d0fe2003c
+Text-content-sha1: 401b6ed085aacd6f646bbca193bb8fad0329ae0d
+Content-length: 97
+
+feature development A
+feature development B
+feature development C
+feature development D
+bugfix 1
+
+
+Revision-number: 13
+Prop-content-length: 137
+Content-length: 137
+
+K 8
+svn:date
+V 27
+2012-11-10T09:35:58.166334Z
+K 7
+svn:log
+V 37
+trunk development proceeds; feature E
+K 10
+svn:author
+V 5
+db48x
+PROPS-END
+
+Node-path: trunk/src
+Node-kind: file
+Node-action: change
+Text-content-length: 119
+Text-content-md5: 54ff74014d2816944b198e5f1d02aada
+Text-content-sha1: 0c4e928631d54e9d816b075def05e0ef6bb84db7
+Content-length: 119
+
+feature development A
+feature development B
+feature development C
+feature development D
+bugfix 1
+feature development E
+
+
