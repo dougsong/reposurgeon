@@ -88,30 +88,20 @@ deleteall
 
 commit refs/heads/v1.0
 mark :14
-committer db48x <db48x> 1352540147 +0000
-data 32
-create a release branch for 1.0
-from :13
-merge :12
-M 100644 :1 README
-M 100644 :10 VERSION
-M 100644 :11 src
-
-commit refs/heads/v1.0
-mark :15
 committer db48x <db48x> 1352540149 +0000
 data 27
 bump version number to 1.0
-from :14
+from :13
+merge :12
 M 100644 :8 VERSION
 
 blob
-mark :16
+mark :15
 data 4
 1.1
 
 blob
-mark :17
+mark :16
 data 88
 feature development A
 feature development B
@@ -119,21 +109,21 @@ feature development C
 feature development D
 
 commit refs/heads/master
-mark :18
+mark :17
 committer db48x <db48x> 1352540151 +0000
 data 38
 trunk development proceeds; feature D
 from :12
-M 100644 :16 VERSION
-M 100644 :17 src
+M 100644 :15 VERSION
+M 100644 :16 src
 
 blob
-mark :19
+mark :18
 data 6
 1.0.1
 
 blob
-mark :20
+mark :19
 data 75
 feature development A
 feature development B
@@ -141,21 +131,21 @@ feature development C
 bugfix 1
 
 commit refs/heads/v1.0
-mark :21
+mark :20
 committer db48x <db48x> 1352540153 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.1
-from :15
-M 100644 :19 VERSION
-M 100644 :20 src
+from :14
+M 100644 :18 VERSION
+M 100644 :19 src
 
 blob
-mark :22
+mark :21
 data 4
 1.2
 
 blob
-mark :23
+mark :22
 data 97
 feature development A
 feature development B
@@ -164,17 +154,17 @@ feature development D
 bugfix 1
 
 commit refs/heads/master
-mark :24
+mark :23
 committer db48x <db48x> 1352540156 +0000
 data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
-from :18
-merge :21
-M 100644 :22 VERSION
-M 100644 :23 src
+from :17
+merge :20
+M 100644 :21 VERSION
+M 100644 :22 src
 
 blob
-mark :25
+mark :24
 data 119
 feature development A
 feature development B
@@ -184,12 +174,12 @@ bugfix 1
 feature development E
 
 commit refs/heads/master
-mark :26
+mark :25
 committer db48x <db48x> 1352540158 +0000
 data 38
 trunk development proceeds; feature E
-from :24
-M 100644 :25 src
+from :23
+M 100644 :24 src
 
 tag root
 from :4
@@ -205,4 +195,17 @@ tagger db48x <db48x> 1352540139 +0000
 data 33
 create a release branch for 1.0
 
+
+tag emptycommit-8
+from :13
+tagger db48x <db48x> 1352540147 +0000
+data 372
+create a release branch for 1.0
+
+[[Tag from zero-fileop commit at Subversion r8:
+<NodeAction: r8 add dir 'v1.0/' from=7~trunk/ sources=<PathMap: trunk/README trunk/VERSION trunk/src> implicit>
+<NodeAction: r8 add file 'v1.0/README' from=2~trunk/README>
+<NodeAction: r8 add file 'v1.0/VERSION' from=6~trunk/VERSION>
+<NodeAction: r8 add file 'v1.0/src' from=6~trunk/src>
+]]
 
