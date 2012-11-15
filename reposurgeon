@@ -2727,7 +2727,7 @@ class StreamParser:
                             raise Fatal("couldn't find revision %s" % latest)
             # We're done, add all the new commits 
             self.repo.events += newcommits
-            self.repo._commits = None
+            self.declare_sequence_mutation()
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
@@ -2996,7 +2996,7 @@ class StreamParser:
         baton.startcounter(countfmt(len(self.repo.commits())))
         save_events = self.repo.events
         self.repo.events = []
-        self.repo._commits = None
+        self.declare_sequence_mutation()
         issued = set([])
         for event in save_events:
             if isinstance(event, Commit) and event.branch not in issued:
@@ -3319,12 +3319,15 @@ class Repository:
                                        % (self.subdir(), self.subdir(newname), e))
     def addEvent(self, event):
         self.events.append(event)
-        self._commits = None
+        self.declare_sequence_mutation()
     def commits(self):
         "Return a list of the repository commit objects."
         if self._commits is None:
             self._commits = [e for e in self.events if isinstance(e, Commit)]
         return self._commits
+    def declare_sequence_mutation(self):
+        "Mark the repo event sequence sequence modified."
+        self._commits = None
     def earliest(self):
         "Return the date of earliest commit."
         return self.commits()[0].committer.date
@@ -3594,7 +3597,7 @@ class Repository:
                                         self.events[countdown] = self.events[countdown-1]
                                     #print "Moving %d to %d" % (swapblob, swapcommit)
                                     self.events[swapcommit] = saveblob
-                                    self._commits = None
+                                    self._declare_sequence_mutation()
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         parent.pushed_to = True
@@ -3641,7 +3644,7 @@ class Repository:
                             print("Commit %d, after applying policy:" % (ei +1,))
                             for op in event.fileops:
                                 print(str(op))
-        self._commits = None
+        self.declare_sequence_mutation()
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
@@ -3762,7 +3765,7 @@ class Repository:
             self.events.insert(len(front), other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
-        self._commits = None
+        self.declare_sequence_mutation()
         # Transplant in fileops, blobs, and other impedimenta
         for event in other:
             if hasattr(event, "moveto"):
@@ -4319,7 +4322,7 @@ class RepositoryList:
                     raise Fatal("coloring algorithm failed on %s" % event)
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
-        late._commits = None
+        late.declare_sequence_mutation()
         # Add the split results to the repo list. 
         self.repolist.append(early)
         self.repolist.append(late)
@@ -4453,7 +4456,7 @@ class RepositoryList:
                     event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
-        expunged._commits = None
+        expunged.declare_sequence_mutation()
         expunged_branches = expunged.branchlist()
         for event in self.repo:
             if event.deletehook:
@@ -4496,7 +4499,7 @@ class RepositoryList:
             deletia.reverse()
             for i in deletia:
                 self.repo.events.pop(i)
-            self.repo._commits = None
+            self.repo.declare_sequence_mutation()
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
@@ -6016,7 +6019,7 @@ original commit.
                 raise Recoverable("fileop index out of range")
             # Actual implementation starts here
             self.chosen().events.insert(where+1, event.clone())
-            self.chosen()._commits = None
+            self.chosen().declare_sequence_mutation()
             event2 = self.chosen().events[where+1]
             assert(event.mark == event2.mark)
             event2.mark = event.mark + "bis"
@@ -6206,7 +6209,7 @@ is prepended.
                          or \
                          (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
                         ["obliterate", "quiet"])
-            repo._commits = None
+            repo.declare_sequence_mutation()
         else:
             raise Recoverable("unknown verb '%s' in branch command.")
 
@@ -6251,7 +6254,7 @@ tag). For a 'delete', no third argument is required.
             tag.name = newname
         elif verb == "delete":
             repo.events.remove(tag)
-            repo._commits = None
+            repo.declare_sequence_mutation()
         else:
             raise Recoverable("unknown verb '%s' in tag command.")
 
