@@ -2727,7 +2727,7 @@ class StreamParser:
                             raise Fatal("couldn't find revision %s" % latest)
             # We're done, add all the new commits 
             self.repo.events += newcommits
-            self.declare_sequence_mutation()
+            self.repo.declare_sequence_mutation()
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.bumpcounter()
@@ -2996,7 +2996,7 @@ class StreamParser:
         baton.startcounter(countfmt(len(self.repo.commits())))
         save_events = self.repo.events
         self.repo.events = []
-        self.declare_sequence_mutation()
+        self.repo.declare_sequence_mutation()
         issued = set([])
         for event in save_events:
             if isinstance(event, Commit) and event.branch not in issued:
@@ -3597,7 +3597,7 @@ class Repository:
                                         self.events[countdown] = self.events[countdown-1]
                                     #print "Moving %d to %d" % (swapblob, swapcommit)
                                     self.events[swapcommit] = saveblob
-                                    self._declare_sequence_mutation()
+                                    self.declare_sequence_mutation()
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         parent.pushed_to = True
