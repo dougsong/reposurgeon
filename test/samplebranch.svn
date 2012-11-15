@@ -17,6 +17,10 @@ Revision-number: 1
 Prop-content-length: 163
 Content-length: 163
 
+K 8
+svn:date
+V 27
+2011-11-30T19:46:20.235780Z
 K 7
 svn:log
 V 65
@@ -26,10 +30,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T19:46:20.235780Z
 PROPS-END
 
 Node-path: branches
@@ -63,6 +63,10 @@ Revision-number: 2
 Prop-content-length: 136
 Content-length: 136
 
+K 8
+svn:date
+V 27
+2011-11-30T19:47:11.615041Z
 K 7
 svn:log
 V 38
@@ -72,10 +76,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T19:47:11.615041Z
 PROPS-END
 
 Node-path: trunk/README
@@ -121,6 +121,10 @@ Revision-number: 4
 Prop-content-length: 122
 Content-length: 122
 
+K 8
+svn:date
+V 27
+2011-11-30T19:56:34.845054Z
 K 7
 svn:log
 V 24
@@ -130,10 +134,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T19:56:34.845054Z
 PROPS-END
 
 Node-path: trunk/README
@@ -151,6 +151,10 @@ Revision-number: 5
 Prop-content-length: 137
 Content-length: 137
 
+K 8
+svn:date
+V 27
+2011-11-30T19:59:20.146034Z
 K 7
 svn:log
 V 39
@@ -160,10 +164,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T19:59:20.146034Z
 PROPS-END
 
 Node-path: branches/samplebranch/README
@@ -181,6 +181,10 @@ Revision-number: 6
 Prop-content-length: 121
 Content-length: 121
 
+K 8
+svn:date
+V 27
+2011-11-30T20:00:51.311668Z
 K 7
 svn:log
 V 23
@@ -190,10 +194,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T20:00:51.311668Z
 PROPS-END
 
 Node-path: trunk/README
@@ -212,6 +212,10 @@ Revision-number: 7
 Prop-content-length: 138
 Content-length: 138
 
+K 8
+svn:date
+V 27
+2011-11-30T22:15:57.523666Z
 K 7
 svn:log
 V 40
@@ -221,10 +225,6 @@ K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-11-30T22:15:57.523666Z
 PROPS-END
 
 Node-path: branches/samplebranch/README
@@ -241,22 +241,22 @@ Second modification to the README.
 
 
 Revision-number: 8
-Prop-content-length: 172
-Content-length: 172
+Prop-content-length: 173
+Content-length: 173
 
+K 8
+svn:date
+V 27
+2011-12-17T13:13:36.240933Z
 K 7
 svn:log
-V 74
-This is an example of a branch tip delete which should become a deletall.
+V 75
+This is an example of a branch tip delete which should become a deleteall.
 
 K 10
 svn:author
 V 3
 esr
-K 8
-svn:date
-V 27
-2011-12-17T13:13:36.240933Z
 PROPS-END
 
 Node-path: branches/samplebranch

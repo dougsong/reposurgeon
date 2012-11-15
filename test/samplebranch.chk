@@ -85,7 +85,7 @@ A branch created for illustrative purposes.
 tag tipdelete-samplebranch
 from :10
 tagger esr <esr> 1324127616 +0000
-data 75
-This is an example of a branch tip delete which should become a deletall.
+data 76
+This is an example of a branch tip delete which should become a deleteall.
 
 
