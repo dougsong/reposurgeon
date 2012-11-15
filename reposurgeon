@@ -6166,7 +6166,7 @@ existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
-a 'rename', tha third argument may be any token. For a 'delete', no
+a 'rename', the third argument may be any token. For a 'delete', no
 third argument is required.
 """)
     def do_tag(self, line):
