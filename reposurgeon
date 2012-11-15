@@ -3027,7 +3027,7 @@ class StreamParser:
         baton.endcounter()
         baton.twirl("+")
         baton.twirl("renumbering")
-        self.repo.renumber(baton)
+        self.repo.renumber(baton=baton)
         baton.twirl("+")
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
@@ -3656,12 +3656,12 @@ class Repository:
         return [e for e in self.events \
                 if isinstance(e, Passthrough) \
                 and (e.text.startswith("option") or e.text.startswith("feature"))]
-    def renumber(self, baton=None):
-        "Renumber the marks in a repo."
+    def renumber(self, origin=1, baton=None):
+        "Renumber the marks in a repo starting from a specified origin."
         marklist = []
         def remark(m):
             try:
-                return ":" + repr(1 + marklist.index(m))
+                return ":" + repr(origin + marklist.index(m))
             except ValueError:
                 raise Fatal("unknown mark %s cannot be renumbered!" % m)
         if baton:
