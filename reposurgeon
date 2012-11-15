@@ -6159,6 +6159,52 @@ from the highest member (child) to the lowest (parent).
         later_id = "%s (%s)" % (later.mark, later.branch)
         announce("%s added as a parent of %s" % (earlier_id, later_id))
 
+    def help_branch(self):
+        print("""
+Rename or delete a branch (and any associated resets).  First argument
+must be an existing branch name; second argument must one of the verbs
+'rename' or 'delete'.
+
+For a 'rename', the third argument may be any token that is a syntactically
+valid branch name (but not the name of an existing branch). For a 'delete',
+no third argument is required.
+
+For either name, if it does not contain a '/' the prefix 'refs/heads'
+is prepended.
+""")
+    def do_branch(self, line):
+        "Rename a branch or delete it."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        (branchname, line) = RepoSurgeon.pop_token(line)
+        if not "/" in branchname:
+            branchname = 'refs/heads/' + branchname
+        if branchname not in repo.branchlist():
+            raise Recoverable("no such branch as %s" % branchname)
+        (verb, line) = RepoSurgeon.pop_token(line)
+        if verb == "rename":
+            (newname, line) = RepoSurgeon.pop_token(line)
+            if not newname:
+                raise Recoverable("new branch name must be nonempty.")
+            if not "/" in newname:
+                newname = 'refs/heads/' + newname
+            if newname in repo.branchlist():
+                raise Recoverable("there is already a branch named '%s'." \
+                                  % newname)
+            for event in repo:
+                if isinstance(event, Commit):
+                    if event.branch == branchname:
+                        event.branch = newname
+                elif isinstance(event, Reset):
+                    if event.ref == branchname:
+                        event.ref = newname
+        elif verb == "delete":
+            raise Recoverable("branch delete is not yet implemented.")
+        else:
+            raise Recoverable("unknown verb '%s' in branch command.")
+
     def help_tag(self):
         print("""
 Move, rename, or delete a tag.  First argument must be an
@@ -6166,8 +6212,9 @@ existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
-a 'rename', the third argument may be any token. For a 'delete', no
-third argument is required.
+a 'rename', the third argument may be any token token that is a
+syntactically valid tag name (but not the name of an existing
+tag). For a 'delete', no third argument is required.
 """)
     def do_tag(self, line):
         "Move a tag to point to a specified commit, or rename it, or delete it."
