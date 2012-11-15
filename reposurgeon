@@ -6201,7 +6201,12 @@ is prepended.
                     if event.ref == branchname:
                         event.ref = newname
         elif verb == "delete":
-            raise Recoverable("branch delete is not yet implemented.")
+            repo.delete([i for i in range(len(repo.events)) if
+                         (isinstance(repo.events[i], Reset) and repo.events[i].ref == branchname) \
+                         or \
+                         (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
+                        ["obliterate", "quiet"])
+            repo._commits = None
         else:
             raise Recoverable("unknown verb '%s' in branch command.")
 
