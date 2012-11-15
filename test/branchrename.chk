@@ -69,8 +69,8 @@ M 100644 :9 README
 commit refs/heads/jabberwocky
 mark :11
 committer esr <esr> 1324127616 +0000
-data 74
-This is an example of a branch tip delete which should become a deletall.
+data 75
+This is an example of a branch tip delete which should become a deleteall.
 from :10
 deleteall
 
