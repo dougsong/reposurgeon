@@ -2549,7 +2549,7 @@ class StreamParser:
                                 # in a fileop.
                                 self.gripe("r%s~%s: permission information may be lost." \
                                               % (node.revision, node.path))
-                                return actions
+                                continue
                             assert node.blobmark
                             # Time for fileop generation
                             if ancestor:
