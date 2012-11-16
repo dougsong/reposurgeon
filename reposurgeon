@@ -2983,11 +2983,7 @@ class StreamParser:
         for commit in self.repo.commits():
             if [fileop for fileop in commit.fileops if fileop is None]:
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
-            for i in range(len(commit.fileops)-1):
-                if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
-                    if commit.fileops[i].path == commit.fileops[i+1].path:
-                        commit.fileops[i+1].op = None
-            commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
+            self.repo.canonicalize(commit)
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl("+")
