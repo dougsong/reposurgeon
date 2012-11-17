@@ -103,10 +103,11 @@ $(PROJECT)-git-svn:
 
 # Compare the results
 compare: $(PROJECT)-git-svn $(PROJECT)-git
-	rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
-	(cd $(PROJECT)-git-svn; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
-	(cd $(PROJECT)-git; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
-	diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
+	@rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
+	@(cd $(PROJECT)-git-svn >/dev/null; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
+	@(cd $(PROJECT)-git >/dev/null; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
+	@diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
+	@echo "No diff output is good news"
 
 endif
 
