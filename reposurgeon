@@ -2149,7 +2149,7 @@ class StreamParser:
             if path.startswith(branch):
                 return path[len(branch):]
         raise Fatal("couldn't assign %s to a branch in %s" \
-                    (path, self.branches.keys()))
+                    % (path, self.branches.keys()))
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         def countfmt(count):
