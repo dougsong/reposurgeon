@@ -2501,12 +2501,16 @@ class StreamParser:
                             if node.from_hash:
                                 ancestor = self.hashmap[node.from_hash]
                                 node.blobmark = ancestor.blobmark
+                                # This causes missing files on the NUT repo.
+                                # Which is a shame, because it prevents extra
+                                # fikeop generation elsewhere.
+                                #
                                 # Ignore add operations generated to go with
                                 # directory copies. They're distinguishable
                                 # by the fact that they have a hash pointer
                                 # and no content or properties.
-                                if node.action == SD_ADD and node.blob is None and node.props is None:
-                                    continue
+                                #if node.action == SD_ADD and node.blob is None and node.props is None:
+                                #    continue
                             elif node.from_path:
                                 # A copy node is somehow missing its hash.
                                 ancestor = filemaps[node.from_rev][node.from_path]
@@ -2983,7 +2987,11 @@ class StreamParser:
         for commit in self.repo.commits():
             if [fileop for fileop in commit.fileops if fileop is None]:
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
-            self.repo.canonicalize(commit)
+            for i in range(len(commit.fileops)-1):
+                if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
+                    if commit.fileops[i].path == commit.fileops[i+1].path:
+                        commit.fileops[i+1].op = None
+            commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl("+")

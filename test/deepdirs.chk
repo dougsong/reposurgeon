@@ -49,43 +49,70 @@ Put some distance between the directory creation and the copy we'll do next.
 from :6
 M 100644 :7 README
 
-blob
+reset refs/heads/foocopy
+commit refs/heads/foocopy
 mark :9
+committer esr <esr> 1324319862 +0000
+data 148
+Directory copy to branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
+from :8
+M 100644 :3 bar/child3
+M 100644 :4 child1
+M 100644 :5 child2
+
+blob
+mark :10
 data 23
 Twice-modified README.
 
 commit refs/heads/master
-mark :10
+mark :11
 committer esr <esr> 1324319931 +0000
 data 23
 Another spacer commit.
 from :8
-M 100644 :9 README
+M 100644 :10 README
 
 commit refs/heads/master
-mark :11
+mark :12
 committer esr <esr> 1324320054 +0000
 data 136
 Test to see how recursive delete that is not a branch copy is translated.
 
 The command was "svn remove foo" run in the trunk directory.
-from :10
+from :11
 D foo/bar/child3
 D foo/child1
 D foo/child2
 
 blob
-mark :12
+mark :13
 data 24
 Thrice-modified README.
 
 commit refs/heads/master
-mark :13
+mark :14
 committer esr <esr> 1324320090 +0000
 data 27
 Yet another spacer commit.
-from :11
-M 100644 :12 README
+from :12
+M 100644 :13 README
+
+commit refs/heads/master
+mark :15
+committer esr <esr> 1324320228 +0000
+data 174
+A Subversion file copy back from the branch.
+
+The command that produced this was:
+
+svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-repo/trunk
+from :14
+M 100644 :3 child3
 
 tag root
 from :2
@@ -94,29 +121,4 @@ data 61
 Directory layout.
 
 [[Tag from root commit at Subversion r1]]
-
-tag foocopy-root
-from :8
-tagger esr <esr> 1324319862 +0000
-data 149
-Directory copy to branch.
-
-The command that produced this was:
-
-svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
-
-
-tag emptycommit-9
-from :13
-tagger esr <esr> 1324320228 +0000
-data 349
-A Subversion file copy back from the branch.
-
-The command that produced this was:
-
-svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-repo/trunk
-
-[[Tag from zero-fileop commit at Subversion r9:
-<NodeAction: r9 add file 'trunk/child3' from=8~branches/foocopy/bar/child3 sources=<PathMap: branches/foocopy/bar/child3>>
-]]
 

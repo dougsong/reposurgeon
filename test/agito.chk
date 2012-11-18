@@ -1,3 +1,4 @@
+reposurgeon: dubious deleteall, delete obliterate (proj-1.0)&{1..<3>} may be indicated.
 blob
 mark :1
 data 76
@@ -28,21 +29,19 @@ Removing broken tag.
 from :2
 deleteall
 
+commit tags/proj-1.0
+mark :4
+committer fraggle <fraggle> 1254523062 +0000
+data 29
+Recreating the tag properly.
+from :3
+merge :2
+M 100644 :1 hello.c
+
 tag proj-1.0
 from :2
 tagger fraggle <fraggle> 1254523027 +0000
 data 59
 Creating a tag in a BROKEN way, like how cvs2svn does it.
 
-
-tag emptycommit-4
-from :3
-tagger fraggle <fraggle> 1254523062 +0000
-data 300
-Recreating the tag properly.
-
-[[Tag from zero-fileop commit at Subversion r4:
-<NodeAction: r4 add dir 'tags/proj-1.0/' from=1~trunk/proj/ sources=<PathMap: trunk/proj/hello.c> implicit properties=[('svn:mergeinfo', '')]>
-<NodeAction: r4 add file 'tags/proj-1.0/hello.c' from=1~trunk/proj/hello.c>
-]]
 
