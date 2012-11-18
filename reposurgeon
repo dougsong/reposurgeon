@@ -2503,7 +2503,7 @@ class StreamParser:
                                 node.blobmark = ancestor.blobmark
                                 # This causes missing files on the NUT repo.
                                 # Which is a shame, because it prevents extra
-                                # fikeop generation elsewhere.
+                                # fileop generation elsewhere.
                                 #
                                 # Ignore add operations generated to go with
                                 # directory copies. They're distinguishable
