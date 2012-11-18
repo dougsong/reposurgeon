@@ -109,7 +109,7 @@ compare: $(PROJECT)-git-svn $(PROJECT)-git
 	@diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
 	@echo "No diff output is good news"
 	@echo; echo "Comparing file contents"
-	@set -e; cd $(PROJECT)-git-svn; for file in `git ls-files`; do cmp $$file ../$(PROJECT)-git/$$file; done
+	@set -e; for file in `cd $(PROJECT)-git-svn >/dev/null; git ls-files`; do cmp $(PROJECT)-git-svn/$$file $(PROJECT)-git/$$file; done
 	@echo "No cmp output is good news"
 
 endif
