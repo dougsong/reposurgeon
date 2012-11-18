@@ -266,6 +266,11 @@ repo, such as many projects use for website content.)  In unusual
 cases you may want to use the "svn_nobranch" option; find out more
 about this and other options via the "set" command.</p>
 
+<p>When you're done, run <code>make compare</code>.  This is a sanity
+check that redoes your repo conversion with git-svn, then compares the
+file manifests of the head revisions.  They should have no
+differences; if they do, report a bug in <code>reposurgeon</code>.
+
 <p>To my knowledge, <code>reposurgeon</code> is the only conversion
 tool that handles multibranch Subversion repositories in full
 generality. It can even translate Subversion commits that alter
@@ -642,6 +647,8 @@ earlier conversion tools obsolete.</p>
 
 <p>3.0 (2012-11-05) Get serious about capturing the workflow in the
 Makefile.</p>
+
+<p>3.1 (2012-11-18) It's a good idea to run 'make compare'.</p>
 
 </div>
 <hr />
