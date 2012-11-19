@@ -1565,12 +1565,13 @@ link in by hand with the 'merge' command.</para>
 <varlistentry>
 <term>dubious deleteall</term>
 <listitem>
-<para>A deleteall operation has been found in the middle of a branch 
+<para>A deleteall operation has been found in the middle of a branch
 history.  This usually indicates that a Subversion tag or branch was
-created by mistake, and someone later tried to undo the error by deleting
-the tag/branch directory before recreating it.  The message will tell you
-the delete command you could issue to delete the branch history up to 
-and including the dubious deleteall.</para>
+created by mistake, and someone later tried to undo the error by
+deleting the tag/branch directory before recreating it.  You may want
+to cut the forward link from the deleteall with
+<command>divide</command> and then use a <command>branch
+rename</command> to rename the old branch.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
