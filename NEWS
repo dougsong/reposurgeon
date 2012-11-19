@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.5:
+2.5: 2012-11-19
      git sometimes doesn't quote filenames with embedded spaces properly; cope.
      Correctly handle combination of SVN directory copy with a file change.
      More careful sanity checking in the workflow makefile,
