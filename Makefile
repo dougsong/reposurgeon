@@ -22,7 +22,7 @@ svnpull.html: svnpull.xml
 	xmlto html-nochunks svnpull.xml
 
 clean:
-	rm -f  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
+	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
 
