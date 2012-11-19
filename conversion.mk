@@ -18,6 +18,7 @@ TARGET_VCS = git
 EXTRAS = 
 SVN_URL = svn://svn.debian.org/$(PROJECT)
 CVS_HOST = $(PROJECT).cvs.sourceforge.net
+VERBOSITY = "verbose 1"
 
 # Configuration ends here
 
@@ -33,7 +34,7 @@ $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 
 # Build the fast-import stream from the Subversion stream dump
 $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(EXTRAS)
-	reposurgeon "verbose 1" "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
@@ -103,12 +104,14 @@ $(PROJECT)-git-svn:
 
 # Compare the results
 compare: $(PROJECT)-git-svn $(PROJECT)-git
+	@echo; echo "Comparing the directory manifests..."
 	@rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
 	@(cd $(PROJECT)-git-svn >/dev/null; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
 	@(cd $(PROJECT)-git >/dev/null; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
+	@echo "Comparing file manifests..."
 	@diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
 	@echo "No diff output is good news"
-	@echo; echo "Comparing file contents"
+	@echo; echo "Comparing file contents..."
 	@set -e; for file in `cd $(PROJECT)-git-svn >/dev/null; git ls-files`; do cmp $(PROJECT)-git-svn/$$file $(PROJECT)-git/$$file; done
 	@echo "No cmp output is good news"
 
