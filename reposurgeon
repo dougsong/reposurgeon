@@ -5936,13 +5936,12 @@ general selection-set argument.  It is only necessary to specify the
 parent commit, unless it has multiple children in which case the child
 commit must follow.
 
-This operation may fail if the commit graph remains connected
-through another path; the tool will detect this. If the repo was named
-'foo', the cut segments will be named 'foo-early' and 'foo-late'.
-
-You can override the connectivity check with the command modifier 'force'
-after the selection set.  If you do this, the targeted parent-child link
-will be cut but no attempt will be made to rename the repo fragments.
+If the repo was named 'foo', you will normally end up with two repos
+named 'foo-early' and 'foo-late'.  But if the commit graph would
+remain connected through another path after the cut, the behavior
+changes.  In this case, if the parent and child were on the same
+branch 'qux', the branch segments are renamed 'qux-early' and
+'qux-late'.
 """)
     def do_divide(self, line):
         "Attempt to topologically partition the repo."
@@ -5973,13 +5972,22 @@ will be cut but no attempt will be made to rename the repo fragments.
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
-        if "force" in line:
+        # Try the topological cut first
+        if not self.cut(early, late):
+            # If that failed, cut anyway and rename the branch segments
             late.removeParent(early.mark)
-            if early.branch == late.branch:
-                complain("disconnected segments both have branch attribute %s" \
-                         % early.branch)
-        elif not self.cut(early, late):
-            complain("repository cannot be split here")
+            if early.branch != late.branch:
+                announce("no branch renames were required")
+            else:
+                basename = early.branch
+                announce("%s has been split into %s-early and %s-late" \
+                         % (basename, basename, basename))
+                for (i, event) in enumerate(self.chosen().events):
+                    if event.branch == basename:
+                        if i <= self.selection[0]:
+                            event.branch += "-early"
+                        else:
+                            event.branch += "-late"
         if verbose:
             self.do_choose("")
 
