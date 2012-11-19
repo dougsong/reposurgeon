@@ -2942,8 +2942,7 @@ class StreamParser:
                         break
                 else:
                     # Suppress this commit
-                    self.repo.delete([self.repo.events.index(commit)],
-                                     ["obliterate", "quiet"])
+                    self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl('+')
@@ -2970,8 +2969,7 @@ class StreamParser:
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
                                % commit.fossil_id)
-                    self.repo.delete([self.repo.events.index(commit)],
-                                ["obliterate", "quiet"])
+                    self.repo.quiet_delete(commit)
             # Also, tagify tip commits that consist only of deletes.
             # The fileops aren't worth saving; the comment metadata
             # just might be.
@@ -2988,8 +2986,7 @@ class StreamParser:
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
-                    self.repo.delete([self.repo.events.index(commit)],
-                                ["obliterate", "quiet"])
+                    self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl("+")
@@ -3237,8 +3234,7 @@ class Repository:
                           committish=committish,
                           tagger=commit.committer,
                           comment=pref + legend))
-        self.delete([self.events.index(commit)],
-                         ["obliterate", "quiet"])
+        self.quiet_delete(commit)
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
@@ -3684,6 +3680,8 @@ class Repository:
         # Clear everybody's problem flag
         for commit in self.commits():
             commit.pushed_to = False
+    def quiet_delete(self, commit):
+        self.delete([self.events.index(commit)], ["obliterate", "quiet"])
     #
     # Delete machinery ends here
     #
