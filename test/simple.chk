@@ -192,6 +192,7 @@ verbose 0
 checkout 116 foobar
 !ls foobar
 Makefile
+README
 reposurgeon
 reposurgeon.xml
 test

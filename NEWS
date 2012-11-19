@@ -5,6 +5,7 @@
      Correctly handle combination of SVN directlt copy with a file change.
      More careful sanity checking in the workflow makefile,
      Disable erroneous shlex interpretation of single quotes in R/C/N fileops.
+     Fix and regression test for expunge when it implies removal of a commit.
 
 2.4: 2012-11-18
      In SVN conversion, user is warned about mid-branch deletealls.
