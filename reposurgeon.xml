@@ -754,7 +754,7 @@ path set are not deleted, but are cloned into the removal set.</para>
 
 <para>The removal set is not discarded. It is assembled into a new
 repository named after the old one with the suffix "-expunges" added.
-This, this command can be used to carve a repository into sections by
+Thus, this command can be used to carve a repository into sections by
 file path matches.</para>
 </listitem>
 </varlistentry>
