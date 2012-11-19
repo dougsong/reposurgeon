@@ -3555,7 +3555,7 @@ class Repository:
         # Sanity checks
         for ei in selected:
             event = self.events[ei]
-            if isinstance(event, Blob):
+            if isinstance(event, Blob) and not "quiet" in policy:
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
                 if "obliterate" in policy and not "quiet" in policy:
@@ -3568,7 +3568,7 @@ class Repository:
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
-            if event.__class__ in (Reset, Tag, Passthrough):
+            if event.__class__ in (Reset, Tag, Passthrough, Blob):
                 self.events.pop(ei)
             elif isinstance(event, Commit):
                 if event.branch and "/tags/" in event.branch:
@@ -4530,10 +4530,7 @@ class RepositoryList:
             return
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
-            deletia.reverse()
-            for i in deletia:
-                self.repo.events.pop(i)
-            self.repo.declare_sequence_mutation()
+        self.repo.delete(deletia, ["obliterate", "quiet"])
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
