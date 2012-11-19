@@ -916,6 +916,7 @@ class FileOp:
             self.path_remap()
         elif opline[0] == "N":
             try:
+                opline = opline.replace("'", r"\'")
                 (self.op, self.ref, self.committish) = shlex.split(opline)
             except ValueError:
                 raise Fatal("ill-formed fileop %s" % repr(opline))
@@ -926,6 +927,7 @@ class FileOp:
             self.path_remap()
         elif opline[0] in ("R", "C"):
             try:
+                opline = opline.replace("'", r"\'")
                 (self.op, self.source, self.target) = shlex.split(opline)
             except ValueError:
                 raise Fatal("ill-formed fileop %s" % repr(opline))
