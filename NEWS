@@ -1,5 +1,11 @@
 			reposurgeon project news
 
+2.5:
+     git sometimes doesn't quote filenames with embedded spaces properly; cope.
+     Correctly handle combination of SVN directlt copy with a file change.
+     More careful sanity checking in the workflow makefile,
+     Disable erroneous shlex interpretation of single quotes in R/C/N fileops.
+
 2.4: 2012-11-18
      In SVN conversion, user is warned about mid-branch deletealls.
      'version' command allows a script to be pinned to a major version.
