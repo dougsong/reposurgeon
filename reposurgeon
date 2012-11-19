@@ -918,7 +918,7 @@ class FileOp:
             try:
                 (self.op, self.ref, self.committish) = shlex.split(opline)
             except ValueError:
-                self.error("ill-formed fileop %s" % repr(opline))
+                raise Fatal("ill-formed fileop %s" % repr(opline))
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
@@ -928,7 +928,7 @@ class FileOp:
             try:
                 (self.op, self.source, self.target) = shlex.split(opline)
             except ValueError:
-                self.error("ill-formed fileop %s" % repr(opline))
+                raise Fatal("ill-formed fileop %s" % repr(opline))
         elif opline == "deleteall":
             self.op = "deleteall"
         else:
