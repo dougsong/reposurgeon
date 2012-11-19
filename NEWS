@@ -2,7 +2,7 @@
 
 2.5:
      git sometimes doesn't quote filenames with embedded spaces properly; cope.
-     Correctly handle combination of SVN directlt copy with a file change.
+     Correctly handle combination of SVN directory copy with a file change.
      More careful sanity checking in the workflow makefile,
      Disable erroneous shlex interpretation of single quotes in R/C/N fileops.
      Fix and regression test for expunge when it implies removal of a commit.
