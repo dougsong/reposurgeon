@@ -5939,6 +5939,10 @@ commit must follow.
 This operation may fail if the commit graph remains connected
 through another path; the tool will detect this. If the repo was named
 'foo', the cut segments will be named 'foo-early' and 'foo-late'.
+
+You can override the connectivity check with the command modifier 'force'
+after the selection set.  If you do this, the targeted parent-child link
+will be cut but no attempt will be made to rename the repo fragments.
 """)
     def do_divide(self, line):
         "Attempt to topologically partition the repo."
@@ -5969,7 +5973,12 @@ through another path; the tool will detect this. If the repo was named
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
-        if not self.cut(early, late):
+        if "force" in line:
+            late.removeParent(early.mark)
+            if early.branch == late.branch:
+                complain("disconnected segments both have branch attribute %s" \
+                         % early.branch)
+        elif not self.cut(early, late):
             complain("repository cannot be split here")
         if verbose:
             self.do_choose("")

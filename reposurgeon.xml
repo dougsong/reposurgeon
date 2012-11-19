@@ -720,6 +720,15 @@ the repo was named 'foo', the cut segments will be named 'foo-early'
 and 'foo-late'. Option and feature events at the beginning of the
 early segnment will be duplicated onto the beginning of the late
 one.</para>
+
+<para>You can override the connectivity check with the command modifier 'force'
+after the selection set.  If you do this, the targeted parent-child link
+will be cut but no attempt will be made to rename the repo fragments.</para>
+
+<para>The <command>force</command> mode can be used to sever links
+around a bubble in a commit graph, but be aware that it can leave the
+repo in an inconsistent state with the same branch attribute carried
+by multiple disconnected commit segments.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
