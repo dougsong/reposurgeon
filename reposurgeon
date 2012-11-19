@@ -915,14 +915,20 @@ class FileOp:
                 self.path = self.path[1:-1]
             self.path_remap()
         elif opline[0] == "N":
-            (self.op, self.ref, self.committish) = shlex.split(opline)
+            try:
+                (self.op, self.ref, self.committish) = shlex.split(opline)
+            except ValueError:
+                self.error("ill-formed fileop %s" % repr(opline))
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
             self.path_remap()
         elif opline[0] in ("R", "C"):
-            (self.op, self.source, self.target) = shlex.split(opline)
+            try:
+                (self.op, self.source, self.target) = shlex.split(opline)
+            except ValueError:
+                self.error("ill-formed fileop %s" % repr(opline))
         elif opline == "deleteall":
             self.op = "deleteall"
         else:
@@ -2145,6 +2151,8 @@ class StreamParser:
         return 0o100644
     def branchpath(self, path):
         "Strip the branch prefix from a path."
+        if not self.branches or path.count(os.sep) == 0:
+            return path
         for branch in self.branches:
             if path.startswith(branch):
                 return path[len(branch):]
