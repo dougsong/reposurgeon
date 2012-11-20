@@ -3351,7 +3351,7 @@ class Repository:
                     dump_node(fp, path=svnpath, kind="dir", action="add")
                 revision = 1
                 directory_counts = {}
-                fileset = set([])
+                filemap = {}
                 for i in selection:
                     event = self.events[i]
                     # Annotated tags and passthroughs are lost;
@@ -3370,19 +3370,51 @@ class Repository:
                                   event.committer.date)
                     for fileop in event.fileops:
                         if fileop.op == "D":
+                            # TODO: special-case handling of .gitignore
                             svnpath = os.path.join(svnbranch(event.branch),
                                                    fileop.path)
                             dump_node(fp,
                                       path=svnpath,
-                                      kind="file", action="delete")
-                            fileset.remove(svnpath)
+                                      kind="file",
+                                      action="delete")
+                            del filemap[svnpath]
                             while True:
                                 svnpath = os.path.dirname(svnpath)
                                 directory_counts[svnpath] -= 1
                                 if directory_counts[svnpath] == 0:
                                     dump_node(fp,
                                               path=svnpath,
-                                              kind="file", action="delete")
+                                              kind="file",
+                                              action="delete")
+                        elif fileop.op == "M":
+                            # TODO: special-case handling of .gitignore
+                            svnpath = os.path.join(svnbranch(event.branch),
+                                                   fileop.path)
+                            with open(self.objfind(fileop.ref).blobfile()) as dp:
+                                content = dp.read()
+                            changeprops = None
+                            if fileop.mode == 0o100755:
+                                if "svn:executable" not in filemap[svnpath]:
+                                    filemap[svnpath]["svn:executable"] = "true"
+                                    changeprops = filemap[svnpath]
+                            elif fileop.mode == 0o100644:
+                                if "svn:executable" in filemap[svnpath]:
+                                    filemap[svnpath]["svn:executable"] = "false"
+                                    changeprops = filemap[svnpath]
+                            if svnpath in filemap:
+                                dump_node(fp,
+                                          path=svnpath,
+                                          kind="file",
+                                          action="change",
+                                          props=changeprops,
+                                          content=content)
+                            else:
+                                # This is the tricky case - new file
+                                # creation may imply an ordinary
+                                # directory copy or a branch creation.
+                                # All superdirectories must be created
+                                # first.
+                                pass
                         else:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
