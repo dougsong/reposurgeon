@@ -3305,7 +3305,7 @@ class Repository:
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n" % len(revprops))
             fp.write(revprops)
-        def dump_node(path, kind, action, content="", props=None):
+        def dump_node(fp, path, kind, action, content="", props=None):
             fp.write("Node-path: %s\n" % path)
             fp.write("Node-kind: %s\n" % kind)
             fp.write("Node-action: %s\n" % action)
@@ -3326,6 +3326,13 @@ class Repository:
             if content:
                 fp.write(content)
             fp.write("\n")
+        def svnbranch(branch):
+            svnb = os.path.basename(branch)
+            if svnb == "master":
+                svnb = "trunk"
+            elif svnb.endswith("trunk"):
+                svnb = svnbranch + "-git"
+            return svnb
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 if not self.uuid:
@@ -3340,17 +3347,15 @@ class Repository:
                 markmap = [None]
                 dump_revprops(fp, 1, "Branch creation.", "nobody", Date(now))
                 for branch in self.branchlist():
-                    svnbranch = os.path.basename(branch)
-                    if svnbranch == "master":
-                        svnbranch = "trunk"
-                    elif svnbranch.endswith("trunk"):
-                        svnbranch = svnbranch + "-git"
-                    dump_node(path=svnbranch, kind="dir", action="add")
+                    svnpath = svnbranch(branch)
+                    dump_node(fp, path=svnpath, kind="dir", action="add")
                 revision = 1
+                directory_counts = {}
+                fileset = set([])
                 for i in selection:
                     event = self.events[i]
                     # Annotated tags and passthroughs are lost;
-                    # there are no equivalents in Subversion's ontology
+                    # there are no equivalents in Subversion's ontology.
                     if not isinstance(event, Commit):
                         continue
                     revision += 1
@@ -3358,11 +3363,29 @@ class Repository:
                     # We must treat the gitspace committer attribute
                     # as the author: gitspace author information is
                     # lost.  So is everything but the local part of
-                    # the committer name
+                    # the committer name.
                     dump_revprops(fp, revision,
                                   event.comment,
                                   event.committer.email,
                                   event.committer.date)
+                    for fileop in event.fileops:
+                        if fileop.op == "D":
+                            svnpath = os.path.join(svnbranch(event.branch),
+                                                   fileop.path)
+                            dump_node(fp,
+                                      path=svnpath,
+                                      kind="file", action="delete")
+                            fileset.remove(svnpath)
+                            while True:
+                                svnpath = os.path.dirname(svnpath)
+                                directory_counts[svnpath] -= 1
+                                if directory_counts[svnpath] == 0:
+                                    dump_node(fp,
+                                              path=svnpath,
+                                              kind="file", action="delete")
+                        else:
+                            raise Fatal("unsupported fileop type %s." \
+                                        % fileop.op)
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def fast_export(self, selection, fp, progress=False):
