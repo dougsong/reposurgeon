@@ -5983,7 +5983,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
                 announce("%s has been split into %s-early and %s-late" \
                          % (basename, basename, basename))
                 for (i, event) in enumerate(self.chosen().events):
-                    if event.branch == basename:
+                    if hasattr(event, "branch") and event.branch == basename:
                         if i <= self.selection[0]:
                             event.branch += "-early"
                         else:
