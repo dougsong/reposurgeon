@@ -3305,10 +3305,16 @@ class Repository:
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n" % len(revprops))
             fp.write(revprops)
-        def dump_node(fp, path, kind, action, content="", props=None):
+        def dump_node(fp, path, kind, action, content="",
+                      from_rev=None, from_path=None,
+                      props=None):
             fp.write("Node-path: %s\n" % path)
             fp.write("Node-kind: %s\n" % kind)
             fp.write("Node-action: %s\n" % action)
+            if from_rev:
+                fp.write("Node-copyfrom-rev: %s\n" % from_rev)
+            if from_path:
+                fp.write("Node-copyfrom-path: %s\n" % from_path)
             props = props or {}
             nodeprops = ""
             keys = props.keys()
@@ -3327,12 +3333,13 @@ class Repository:
                 fp.write(content)
             fp.write("\n")
         def svnbranch(branch):
-            svnb = os.path.basename(branch)
-            if svnb == "master":
-                svnb = "trunk"
-            elif svnb.endswith("trunk"):
-                svnb = svnbranch + "-git"
-            return svnb
+            "The branch directory corresponding to a specified git branch."
+            svnbase = os.path.basename(branch)
+            if svnbase == "master":
+                return "trunk"
+            if svnbase.endswith("trunk"):
+                svnbase += "-git"
+            return os.path.join("branches", svnbase)
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 if not self.uuid:
@@ -3354,8 +3361,8 @@ class Repository:
                 filemap = {}
                 for i in selection:
                     event = self.events[i]
-                    # Annotated tags and passthroughs are lost;
-                    # there are no equivalents in Subversion's ontology.
+                    # Passthroughs are lost; there are no equivalents
+                    # in Subversion's ontology.
                     if not isinstance(event, Commit):
                         continue
                     revision += 1
@@ -3390,6 +3397,11 @@ class Repository:
                             # TODO: special-case handling of .gitignore
                             svnpath = os.path.join(svnbranch(event.branch),
                                                    fileop.path)
+                            if svnpath in filemap:
+                                svnop = "change"
+                            else:
+                                svnop = "add",
+                                filemap[svnpath] = {}
                             with open(self.objfind(fileop.ref).blobfile()) as dp:
                                 content = dp.read()
                             changeprops = None
@@ -3401,23 +3413,41 @@ class Repository:
                                 if "svn:executable" in filemap[svnpath]:
                                     filemap[svnpath]["svn:executable"] = "false"
                                     changeprops = filemap[svnpath]
-                            if svnpath in filemap:
+                            # Branch creation may be required
+                            if event.hasParents() and event.branch == event.getParents()[0].branch:
+                                parent = event.getParents()[0]
                                 dump_node(fp,
-                                          path=svnpath,
-                                          kind="file",
-                                          action="change",
-                                          props=changeprops,
-                                          content=content)
-                            else:
-                                # This is the tricky case - new file
-                                # creation may imply an ordinary
-                                # directory copy or a branch creation.
-                                # All superdirectories must be created
-                                # first.
-                                pass
+                                          path=svnbranch(event.branch),
+                                          kind="dir",
+                                          action="add",
+                                          from_rev=markmap.index(parent.mark),
+                                          from_path=svnbranch(parent.branch))
+                            # Create all segments required to get down to the
+                            # level where we can create the file.
+                            parts = os.path.dirname(fileop.path).split(os.sep)
+                            parents = [os.sep.join(parts[:i+1])
+                                                   for i in range(len(parts))]
+                            for parentdir in parents:
+                                if parentdir not in directory_counts:
+                                    directory_counts[parentdir] = 0
+                                    dump_node(fp,
+                                              path=parentdir,
+                                              kind="dir",
+                                              action="add",
+                                              content="Directory creation.\n")
+                                directory_counts[parentdir] += 1
+                            # The actual content
+                            dump_node(fp,
+                                      path=svnpath,
+                                      kind="file",
+                                      action=svnop,
+                                      props=changeprops,
+                                      content=content)
                         else:
+                            # TODO: R and C ops
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
+                        # TODO: turn following tag into directory copy.
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def fast_export(self, selection, fp, progress=False):
