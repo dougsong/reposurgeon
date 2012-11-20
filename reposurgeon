@@ -3305,10 +3305,11 @@ class Repository:
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n" % len(revprops))
             fp.write(revprops)
-        def dump_node(path, kind, action, props={}):
+        def dump_node(path, kind, action, content="", props=None):
             fp.write("Node-path: %s\n" % path)
             fp.write("Node-kind: %s\n" % kind)
             fp.write("Node-action: %s\n" % action)
+            props = props or {}
             nodeprops = ""
             keys = props.keys()
             keys.sort()
@@ -3318,8 +3319,12 @@ class Repository:
                              % (len(key), key, len(val), val)
             nodeprops += "PROPS-END\n\n"
             fp.write("Prop-content-length: %d\n" % len(nodeprops))
-            fp.write("Content-length: %d\n" % len(nodeprops))
+            if content:
+                fp.write("Text-content-length: %d\n" % len(content))
+            fp.write("Content-length: %d\n" % (len(nodeprops) + len(content)))
             fp.write(nodeprops)            
+            if content:
+                fp.write(content)
             fp.write("\n")
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
