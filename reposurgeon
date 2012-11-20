@@ -209,7 +209,7 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename=None,
-        notes="Read-only. Run from the repository, not a checkout directory."),
+        notes="Run from the repository, not a checkout directory."),
     ]
 
 # How to write extractor classes:
@@ -3294,7 +3294,17 @@ class Repository:
                 if hasattr(op, 'path'):
                     if os.path.basename(op.path) == from_base:
                         os.path = os.path.join(os.path.dirname(os.path), to_base)
-    def svndump(self, _selection, fp, progress=False):
+    def svndump(self, selection, fp, progress=False):
+        def dump_revprops(fp, revision, log, author, date):
+            fp.write("Revision: %d\n" % revision)
+            revprops = "K 7\nsvn.log\nV %d\n%s\n" % (len(log), log)
+            revprops += "K 10\nsvn:author\nV%d\n%s\n" % (len(author), author)
+            svndate = date.rfc3339()
+            revprops += "K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n\n" \
+                        % (len(svndate), svndate)
+            fp.write("Prop-content-length: %d\n" % len(revprops))
+            fp.write("Content-length: %d\n" % len(revprops))
+            fp.write(revprops)
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 if not self.uuid:
@@ -3303,9 +3313,27 @@ class Repository:
                 fp.write("UUID: %s\n\n" % self.uuid)
                 fp.write("Revision: 0\n")
                 now = rfc3339(time.time())
-                fp.write("K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n" % (len(now), now))
+                fp.write("K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n" \
+                         % (len(now), now))
                 baton.twirl()
-                # MORE
+                markmap = [None]
+                revision = 0
+                for i in selection:
+                    event = self.events[i]
+                    # Annotated tags and passthroughs are lost;
+                    # there are no equivalents in Subversion's ontology
+                    if not isinstance(event, Commit):
+                        continue
+                    revision += 1
+                    markmap.append(event.mark)
+                    # We must treat the gitspace committer attribute
+                    # as the author: gitspace author information is
+                    # lost.  So is everything but the local part of
+                    # the committer name
+                    dump_revprops(fp, revision,
+                                  event.comment,
+                                  event.committer.email,
+                                  event.committer.date)
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def fast_export(self, selection, fp, progress=False):
