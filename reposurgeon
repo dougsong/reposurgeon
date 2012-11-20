@@ -3300,11 +3300,27 @@ class Repository:
             revprops = "K 7\nsvn.log\nV %d\n%s\n" % (len(log), log)
             revprops += "K 10\nsvn:author\nV%d\n%s\n" % (len(author), author)
             svndate = date.rfc3339()
-            revprops += "K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n\n" \
+            revprops += "K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n" \
                         % (len(svndate), svndate)
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n" % len(revprops))
             fp.write(revprops)
+        def dump_node(path, kind, action, props={}):
+            fp.write("Node-path: %s\n" % path)
+            fp.write("Node-kind: %s\n" % kind)
+            fp.write("Node-action: %s\n" % action)
+            nodeprops = ""
+            keys = props.keys()
+            keys.sort()
+            for key in keys:
+                val = props[key]
+                nodeprops += "K %d\n%sV%d\n%s\n" \
+                             % (len(key), key, len(val), val)
+            nodeprops += "PROPS-END\n\n"
+            fp.write("Prop-content-length: %d\n" % len(nodeprops))
+            fp.write("Content-length: %d\n" % len(nodeprops))
+            fp.write(nodeprops)            
+            fp.write("\n")
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 if not self.uuid:
@@ -3317,7 +3333,15 @@ class Repository:
                          % (len(now), now))
                 baton.twirl()
                 markmap = [None]
-                revision = 0
+                dump_revprops(fp, 1, "Branch creation.", "nobody", Date(now))
+                for branch in self.branchlist():
+                    svnbranch = os.path.basename(branch)
+                    if svnbranch == "master":
+                        svnbranch = "trunk"
+                    elif svnbranch.endswith("trunk"):
+                        svnbranch = svnbranch + "-git"
+                    dump_node(path=svnbranch, kind="dir", action="add")
+                revision = 1
                 for i in selection:
                     event = self.events[i]
                     # Annotated tags and passthroughs are lost;
