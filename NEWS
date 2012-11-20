@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.6:
+     divide now cuts unconditionally, renaming branches or repos as required.
+
 2.5: 2012-11-19
      git sometimes doesn't quote filenames with embedded spaces properly; cope.
      Correctly handle combination of SVN directory copy with a file change.
