@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, signal, shutil, copy, shlex, collections, resource
+import re, signal, shutil, copy, shlex, collections, resource, uuid
 import time, calendar, unittest
 import email.message, email.parser, email.utils
 
@@ -1706,7 +1706,6 @@ class StreamParser:
         self.branches = {}
         self.branchlink = {}
         self.branchdeletes = set([])
-        self.uuid = None
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
@@ -1858,7 +1857,7 @@ class StreamParser:
                         elif not line.strip():
                             continue
                         elif line.startswith("UUID:"):
-                            self.uuid = StreamParser.sd_body(line)
+                            self.repo.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             baton.twirl()
@@ -2304,7 +2303,7 @@ class StreamParser:
                 if not commit.comment.endswith("\n"):
                     commit.comment += "\n"
             if global_options["svn_use_uuid"]:
-                attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
+                attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:
                 attribution = "%s <%s> %s" % (au, au, ad)
             commit.committer = Attribution(attribution)
@@ -3085,6 +3084,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
+        self.uuid = None
         self.write_fossils = False
         self.dollar_map = {}        # From dollar cookies in files
         self.fossil_map = {}    # From anything that doesn't survive rebuild
@@ -3294,6 +3294,20 @@ class Repository:
                 if hasattr(op, 'path'):
                     if os.path.basename(op.path) == from_base:
                         os.path = os.path.join(os.path.dirname(os.path), to_base)
+    def svndump(self, _selection, fp, progress=False):
+        with Baton("reposurgeon: dumping", enable=progress) as baton:
+            try:
+                if not self.uuid:
+                    self.uuid = uuid.uuid4()
+                fp.write("SVN-fs-dump-format-version: 2\n\n")
+                fp.write("UUID: %s\n\n" % self.uuid)
+                fp.write("Revision: 0\n")
+                now = rfc3339(time.time())
+                fp.write("K 8\nsvn:date\nV %d\n%s\nPROPS-END\n\n" % (len(now), now))
+                baton.twirl()
+                # MORE
+            except IOError as e:
+                raise Fatal("export error: %s" % e)
     def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
@@ -4066,6 +4080,7 @@ def rebuild_repo(repo, target, preferred):
     else:
         raise Recoverable("no default destination for rebuild")
     vcs = preferred or repo.vcs
+    export = repo.svndump if (vcs and vcs.name == "svn") else repo.fast_export
     if not vcs:
         raise Recoverable("please prefer a repo type first")
     if not hasattr(vcs, "exporter") or vcs.importer is None:
@@ -4101,7 +4116,7 @@ def rebuild_repo(repo, target, preferred):
                 if vcs.ignorename and vcs.ignorename != ".gitignore":
                     repo.ignore_remap(".gitignore", vcs.ignorename)
                 with open(tfname, "w") as tp:
-                    repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                    export(list(range(len(repo))), tp, progress=verbose>0)
                 if vcs.ignorename and vcs.ignorename != ".gitignore":
                     repo.ignore_remap(vcs.ignorename, ".gitignore")
                 do_or_die(vcs.exporter % parameters, "import")
@@ -4109,7 +4124,7 @@ def rebuild_repo(repo, target, preferred):
                 os.remove(tfname)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                export(list(range(len(repo))), tp, progress=verbose>0)
         if repo.write_fossils:
             try:
                 fossilfile = os.path.join(vcs.subdirectory, "fossils")
@@ -5559,14 +5574,13 @@ anything other than a plain file. The default selection is all events.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         if not line:
             line = '-'
+        export = self.chosen().svndump if self.preferred and self.preferred.name == "svn" else self.chosen().fast_export
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
+            export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
         else:
             try:
                 with open(line, "w") as out:
-                    self.chosen().fast_export(self.selection,
-                                              out,
-                                              progress=verbose==1)
+                    export(self.selection, out, progress=verbose==1)
             except (IOError, OSError):
                 complain("open of %s for write failed.\n" % line)
 
