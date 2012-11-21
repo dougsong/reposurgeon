@@ -3296,16 +3296,23 @@ class Repository:
                         os.path = os.path.join(os.path.dirname(os.path), to_base)
     def svndump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
+        def svnprops(pdict):
+            keys = pdict.keys()
+            keys.sort()
+            flattened = ""
+            for key in keys:
+                val = pdict[key]
+                if val:
+                    flattened += "K %d\n%s\nV %d\n%s\n" \
+                                 % (len(key), key, len(val), val)
+            return flattened
         def dump_revprops(fp, revision, date, author=None, log=None):
             fp.write("Revision-number: %d\n" % revision)
             revprops = ""
-            if log:
-                revprops += "K 7\nsvn.log\nV %d\n%s\n" % (len(log),log)
-            if author:
-                revprops += "K 10\nsvn:author\nV%d\n%s\n" % (len(author),author)
-            svndate = date.rfc3339()
-            revprops += "K 8\nsvn:date\nV %d\n%s\nPROPS-END\n" \
-                        % (len(svndate), svndate)
+            revprops += svnprops({"svn:log": log})
+            revprops += svnprops({"svn:author": author})
+            revprops += svnprops({"svn:date": date.rfc3339()})
+            revprops += "PROPS-END\n"
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n\n" % len(revprops))
             fp.write(revprops + "\n")
@@ -3319,15 +3326,7 @@ class Repository:
                 fp.write("Node-copyfrom-rev: %s\n" % from_rev)
             if from_path:
                 fp.write("Node-copyfrom-path: %s\n" % from_path)
-            props = props or {}
-            nodeprops = ""
-            keys = props.keys()
-            keys.sort()
-            for key in keys:
-                val = props[key]
-                nodeprops += "K %d\n%sV%d\n%s\n" \
-                             % (len(key), key, len(val), val)
-            nodeprops += "PROPS-END\n\n"
+            nodeprops = svnprops(props or {}) + "PROPS-END\n\n"
             fp.write("Prop-content-length: %d\n" % len(nodeprops))
             if content:
                 fp.write("Text-content-length: %d\n" % len(content))
