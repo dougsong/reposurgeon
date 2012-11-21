@@ -3311,7 +3311,8 @@ class Repository:
             revprops = ""
             revprops += svnprops({"svn:log": log})
             revprops += svnprops({"svn:author": author})
-            revprops += svnprops({"svn:date": date.rfc3339()})
+            # Ugh.  Subversion apparently insists on those decimal places
+            revprops += svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"})
             revprops += "PROPS-END\n"
             fp.write("Prop-content-length: %d\n" % len(revprops))
             fp.write("Content-length: %d\n\n" % len(revprops))
