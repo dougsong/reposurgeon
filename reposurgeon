@@ -3295,8 +3295,9 @@ class Repository:
                     if os.path.basename(op.path) == from_base:
                         os.path = os.path.join(os.path.dirname(os.path), to_base)
     def svndump(self, selection, fp, progress=False):
+        "Export the respository as a Subversion dumpfile."
         def dump_revprops(fp, revision, date, author=None, log=None):
-            fp.write("Revision: %d\n" % revision)
+            fp.write("Revision-number: %d\n" % revision)
             revprops = ""
             if log:
                 revprops += "K 7\nsvn.log\nV %d\n%s\n" % (len(log),log)
@@ -3306,7 +3307,7 @@ class Repository:
             revprops += "K 8\nsvn:date\nV %d\n%s\nPROPS-END\n" \
                         % (len(svndate), svndate)
             fp.write("Prop-content-length: %d\n" % len(revprops))
-            fp.write("Content-length: %d\n" % len(revprops))
+            fp.write("Content-length: %d\n\n" % len(revprops))
             fp.write(revprops + "\n")
         def dump_node(fp, path, kind, action, content="",
                       from_rev=None, from_path=None,
@@ -3330,13 +3331,14 @@ class Repository:
             fp.write("Prop-content-length: %d\n" % len(nodeprops))
             if content:
                 fp.write("Text-content-length: %d\n" % len(content))
-            fp.write("Content-length: %d\n" % (len(nodeprops) + len(content)))
+            fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
             fp.write(nodeprops)            
             if content:
                 fp.write(content)
             fp.write("\n")
         def svnbranch(branch):
             "The branch directory corresponding to a specified git branch."
+            # TODO: Express merges as svn:mergeinfo properties.
             svnbase = os.path.basename(branch)
             if svnbase == "master":
                 return "trunk"
