@@ -3071,6 +3071,7 @@ class StreamParser:
             self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
 
 class SubversionDumper:
+    "Respository to Subversion stream dump."
     def __init__(self, repo):
         self.repo = repo
     @staticmethod
@@ -3086,6 +3087,7 @@ class SubversionDumper:
         return flattened
     @staticmethod
     def dump_revprops(fp, revision, date, author=None, log=None):
+        "Emit a Revision-number record describing unversioned properties."
         fp.write("Revision-number: %d\n" % revision)
         revprops = ""
         revprops += SubversionDumper.svnprops({"svn:log": log})
@@ -3100,6 +3102,7 @@ class SubversionDumper:
     def dump_node(fp, path, kind, action, content="",
                   from_rev=None, from_path=None,
                   props=None):
+        "Emit a Node record describing versioned properties and content."
         fp.write("Node-path: %s\n" % path)
         fp.write("Node-kind: %s\n" % kind)
         fp.write("Node-action: %s\n" % action)
@@ -3128,6 +3131,10 @@ class SubversionDumper:
         return os.path.join("branches", svnbase)
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
+        class FlowState:
+            def __init__(self, rev, props):
+                self.rev = rev
+                self.props = props
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 # TODO: Dubious - we probably shouldn't alter the repo state.
@@ -3194,18 +3201,18 @@ class SubversionDumper:
                                 svnop = "change"
                             else:
                                 svnop = "add",
-                                filemap[svnpath] = {}
+                                filemap[svnpath] = FlowState(revision, {})
                             with open(self.repo.objfind(fileop.ref).blobfile()) as dp:
                                 content = dp.read()
                             changeprops = None
                             if fileop.mode == 0o100755:
-                                if "svn:executable" not in filemap[svnpath]:
-                                    filemap[svnpath]["svn:executable"] = "true"
-                                    changeprops = filemap[svnpath]
+                                if "svn:executable" not in filemap[svnpath].props:
+                                    filemap[svnpath].props["svn:executable"] = "true"
+                                    changeprops = filemap[svnpath].props
                             elif fileop.mode == 0o100644:
-                                if "svn:executable" in filemap[svnpath]:
-                                    filemap[svnpath]["svn:executable"] = "false"
-                                    changeprops = filemap[svnpath]
+                                if "svn:executable" in filemap[svnpath].props:
+                                    filemap[svnpath].props["svn:executable"] = "false"
+                                    changeprops = filemap[svnpath].props
                             # Branch creation may be required
                             if event.branch not in branches_created:
                                 branches_created.append(event.branch)
