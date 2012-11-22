@@ -3386,7 +3386,13 @@ class Repository:
                             del filemap[svnpath]
                             while True:
                                 svnpath = os.path.dirname(svnpath)
-                                if not svnpath:
+                                # The second disjunct in this guard is a
+                                # spasmodic twitch in the direction of
+                                # respecting Subversion's notion of a "flow".
+                                # We refrain from deleting branch directories
+                                # so they'll have just one flow throughout the
+                                # life of the repository.
+                                if not svnpath or svnpath in branches_created:
                                     break
                                 directory_counts[svnpath] -= 1
                                 if directory_counts[svnpath] == 0:
