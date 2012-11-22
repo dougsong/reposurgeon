@@ -6051,7 +6051,7 @@ Split a specified commit in two, the opposite of coalesce.  The first argument
 is required to be a commit location; the separating keyword 'at' must follow,
 then an integer 1-origin index of a file operation within the commit.
 
-The commit is copied copied and inserted into a new position in the
+The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
 the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
