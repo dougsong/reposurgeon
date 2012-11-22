@@ -6049,7 +6049,8 @@ file path matches.
         print("""
 Split a specified commit in two, the opposite of coalesce.  The first argument
 is required to be a commit location; the separating keyword 'at' must follow,
-then an integer 1-origin index of a file operation within the commit.
+then either an integer 1-origin index of a file operation within the commit
+or a pathname to be matched (the pathname match is done first).
 
 The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
@@ -6057,10 +6058,10 @@ the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
 then changed, with 'bis' added as a suffix.
 
-Finally, some file operations - starting at the one indexed by the split
-argument - are moved forward from the original commit into the new one.
-Legal indices are 2-n, where n is the number of file operations in the
-original commit.
+Finally, some file operations - starting at the one matched or indexed
+by the split argument - are moved forward from the original commit
+into the new one.  Legal indices are 2-n, where n is the number of
+file operations in the original commit.
 """)
     def do_split(self, line):
         "Split a commit."
@@ -6078,11 +6079,23 @@ original commit.
             raise Recoverable("expected 'at'")
         else:
             line = line[2:].lstrip()
-            try:
-                line = str(line)   # pacify pylint by forcing string type
-                splitpoint = int(line.split()[0]) - 1
-            except ValueError:
-                raise Recoverable("expected integer fileop index (1-origin)")
+            if line[0].isdigit():
+                try:
+                    line = str(line)   # pacify pylint by forcing string type
+                    splitpoint = int(line.split()[0]) - 1
+                except ValueError:
+                    raise Recoverable("expected integer fileop index (1-origin)")
+            else:
+                for (i, fileop) in enumerate(where.fileops):
+                    if hasattr(fileop, 'path') and fileop.path == line:
+                        splitpoint = i + 1
+                        break
+                    elif hasattr(fileop, 'source') and fileop.source == line:
+                        splitpoint = i + 1
+                        break
+                else:
+                    raise Recoverable("couldn't find '%s' in a fileop path." \
+                                      % line)
             if splitpoint not in list(range(1, len(event.fileops))):
                 raise Recoverable("fileop index out of range")
             # Actual implementation starts here

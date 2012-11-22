@@ -788,8 +788,9 @@ commits from CVS lifts.</para>
 <listitem>
 <para>Split a specified commit in two, the opposite of coalesce.  The
 first argument is required to be a commit location; the separating
-keyword 'at' must follow, then an integer 1-origin index of a file
-operation within the commit.</para>
+keyword 'at' must follow, then either an integer 1-origin index of a
+file operation within the commit or a pathname to be matched (the
+pathname match is done first).</para>
 
 <para>The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
@@ -797,10 +798,10 @@ the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
 then changed, with 'bis' added as a suffix.</para>
 
-<para>Finally, some file operations - starting at the one indexed by
-the split argument - are moved forward from the original commit into
-the new one.  Legal indices are 2-n, where n is the number of file
-operations in the original commit.</para>
+<para>Finally, some file operations - starting at the one matched or
+indexed by the split argument - are moved forward from the original
+commit into the new one.  Legal indices are 2-n, where n is the number
+of file operations in the original commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
