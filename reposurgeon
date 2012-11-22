@@ -3386,6 +3386,8 @@ class Repository:
                             del filemap[svnpath]
                             while True:
                                 svnpath = os.path.dirname(svnpath)
+                                if not svnpath:
+                                    break
                                 directory_counts[svnpath] -= 1
                                 if directory_counts[svnpath] == 0:
                                     dump_node(fp,
@@ -3415,19 +3417,23 @@ class Repository:
                             # Branch creation may be required
                             if event.branch not in branches_created:
                                 branches_created.append(event.branch)
+                                svnout = svnbranch(event.branch)
                                 if event.hasParents():
                                     parent = event.parents()[0]
                                     dump_node(fp,
-                                              path=svnbranch(event.branch),
+                                              path=svnout,
                                               kind="dir",
                                               action="add",
                                               from_rev=markmap.index(parent.mark),
                                               from_path=svnbranch(parent.branch))
                                 else:
                                     dump_node(fp,
-                                              path=svnbranch(event.branch),
+                                              path=svnout,
                                               kind="dir",
                                               action="add")
+                                if svnout not in directory_counts:
+                                    directory_counts[svnout] = 0
+                                directory_counts[svnout] += 1
                             # Create all directory segments required
                             # to get down to the level where we can
                             # create the file.
@@ -3456,6 +3462,7 @@ class Repository:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
                         # TODO: turn following tag into directory copy.
+                    sys.stdout.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
     def fast_export(self, selection, fp, progress=False):
