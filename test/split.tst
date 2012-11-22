@@ -1,5 +1,6 @@
 ## test the split command
 verbose 1
+quiet on
 read mergeinfo.svn
 split :19 at 1
 split :19 at 3
