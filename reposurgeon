@@ -3187,16 +3187,18 @@ class SubversionDumper:
             svnout = SubversionDumper.svnbranch(branch)
             if parents:
                 SubversionDumper.dump_node(fp,
-                          path=svnout,
-                          kind="dir",
-                          action="add",
-                          from_rev=self.markmap.index(parents[0].mark),
-                          from_path=SubversionDumper.svnbranch(parents[0].branch))
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           from_rev=self.markmap.index(parents[0].mark),
+                                           from_path=SubversionDumper.svnbranch(parents[0].branch),
+                                           props=changeprops)
             else:
                 SubversionDumper.dump_node(fp,
-                          path=svnout,
-                          kind="dir",
-                          action="add")
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           props=changeprops)
             if svnout not in self.directory_counts:
                 self.directory_counts[svnout] = 0
             self.directory_counts[svnout] += 1
