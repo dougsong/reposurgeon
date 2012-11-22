@@ -3138,7 +3138,7 @@ class SubversionDumper:
             svnbase += "-git"
         return os.path.join("branches", svnbase)
     def filedelete(self, fp, branch, path):
-        # TODO: special-case handling of .gitignore
+        "Emit the dump-stream records required to delete a file."
         svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
         SubversionDumper.dump_node(fp,
                                    path=svnpath,
@@ -3161,12 +3161,12 @@ class SubversionDumper:
                           path=svnpath,
                           kind="file",
                           action="delete")
-    def filemodify(self, fp, revision, branch, path, mode, ref, event):
-        # TODO: special-case handling of .gitignore
-        svnpath = os.path.join(SubversionDumper.svnbranch(branch),
-                               path)
+    def filemodify(self, fp, revision, branch, path, mode, ref, parents):
+        "Emit the dump-stream records required to add or modify a file."
+        svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
         if svnpath in self.filemap:
             svnop = "change"
+            self.filemap[svnpath].rev = revision
         else:
             svnop = "add",
             self.filemap[svnpath] = SubversionDumper.FlowState(revision, {})
@@ -3182,17 +3182,16 @@ class SubversionDumper:
                 self.filemap[svnpath].props["svn:executable"] = "false"
                 changeprops = self.filemap[svnpath].props
         # Branch creation may be required
-        if event.branch not in self.branches_created:
-            self.branches_created.append(event.branch)
-            svnout = SubversionDumper.svnbranch(event.branch)
-            if event.hasParents():
-                parent = event.parents()[0]
+        if branch not in self.branches_created:
+            self.branches_created.append(branch)
+            svnout = SubversionDumper.svnbranch(branch)
+            if parents:
                 SubversionDumper.dump_node(fp,
                           path=svnout,
                           kind="dir",
                           action="add",
-                          from_rev=self.markmap.index(parent.mark),
-                          from_path=SubversionDumper.svnbranch(parent.branch))
+                          from_rev=self.markmap.index(parents[0].mark),
+                          from_path=SubversionDumper.svnbranch(parents[0].branch))
             else:
                 SubversionDumper.dump_node(fp,
                           path=svnout,
@@ -3255,6 +3254,7 @@ class SubversionDumper:
                                                    author=event.committer.email,
                                                    date=event.committer.date)
                     for fileop in event.fileops:
+                        # TODO: special-case handling of .gitignore
                         if fileop.op == "D":
                             self.filedelete(fp, event.branch, fileop.path)
                         elif fileop.op == "M":
@@ -3264,7 +3264,7 @@ class SubversionDumper:
                                             fileop.path,
                                             fileop.mode,
                                             fileop.ref,
-                                            event)
+                                            event.parents())
                         else:
                             # TODO: R and C ops
                             raise Fatal("unsupported fileop type %s." \
