@@ -4279,6 +4279,9 @@ def rebuild_repo(repo, target, preferred):
         raise Recoverable("%s repositories are supported for read only." \
                           % preferred.name)
 
+    if not os.path.join("refs", "heads", "master") in repo.branchlist():
+        complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
+
     # Create a new empty directory to do the rebuild in
     if not os.path.exists(target):
         staging = target
