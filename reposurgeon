@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, signal, shutil, copy, shlex, collections, resource
+import re, signal, shutil, copy, shlex, collections, resource, uuid
 import time, calendar, unittest
 import email.message, email.parser, email.utils
 
@@ -209,7 +209,7 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename=None,
-        notes="Read-only. Run from the repository, not a checkout directory."),
+        notes="Run from the repository, not a checkout directory."),
     ]
 
 # How to write extractor classes:
@@ -1706,7 +1706,6 @@ class StreamParser:
         self.branches = {}
         self.branchlink = {}
         self.branchdeletes = set([])
-        self.uuid = None
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
@@ -1858,7 +1857,7 @@ class StreamParser:
                         elif not line.strip():
                             continue
                         elif line.startswith("UUID:"):
-                            self.uuid = StreamParser.sd_body(line)
+                            self.repo.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             baton.twirl()
@@ -2304,7 +2303,7 @@ class StreamParser:
                 if not commit.comment.endswith("\n"):
                     commit.comment += "\n"
             if global_options["svn_use_uuid"]:
-                attribution = "%s <%s@%s> %s" % (au, au, self.uuid, ad)
+                attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:
                 attribution = "%s <%s> %s" % (au, au, ad)
             commit.committer = Attribution(attribution)
@@ -3071,6 +3070,209 @@ class StreamParser:
         for commit in dubious:
             self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
 
+class SubversionDumper:
+    "Respository to Subversion stream dump."
+    def __init__(self, repo):
+        self.repo = repo
+        self.filemap = {}
+        self.directory_counts = {}
+        self.markmap = [None]
+        self.branches_created = []
+    class FlowState:
+        def __init__(self, rev, props):
+            self.rev = rev
+            self.props = props
+    @staticmethod
+    def svnprops(pdict):
+        keys = pdict.keys()
+        keys.sort()
+        flattened = ""
+        for key in keys:
+            val = pdict[key]
+            if val:
+                flattened += "K %d\n%s\nV %d\n%s\n" \
+                             % (len(key), key, len(val), val)
+        return flattened
+    @staticmethod
+    def dump_revprops(fp, revision, date, author=None, log=None):
+        "Emit a Revision-number record describing unversioned properties."
+        fp.write("Revision-number: %d\n" % revision)
+        revprops = ""
+        revprops += SubversionDumper.svnprops({"svn:log": log})
+        revprops += SubversionDumper.svnprops({"svn:author": author})
+        # Ugh.  Subversion apparently insists on those decimal places
+        revprops += SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"})
+        revprops += "PROPS-END\n"
+        fp.write("Prop-content-length: %d\n" % len(revprops))
+        fp.write("Content-length: %d\n\n" % len(revprops))
+        fp.write(revprops + "\n")
+    @staticmethod
+    def dump_node(fp, path, kind, action, content="",
+                  from_rev=None, from_path=None,
+                  props=None):
+        "Emit a Node record describing versioned properties and content."
+        fp.write("Node-path: %s\n" % path)
+        fp.write("Node-kind: %s\n" % kind)
+        fp.write("Node-action: %s\n" % action)
+        if from_rev:
+            fp.write("Node-copyfrom-rev: %s\n" % from_rev)
+        if from_path:
+            fp.write("Node-copyfrom-path: %s\n" % from_path)
+        nodeprops = SubversionDumper.svnprops(props or {}) + "PROPS-END\n\n"
+        fp.write("Prop-content-length: %d\n" % len(nodeprops))
+        if content:
+            fp.write("Text-content-length: %d\n" % len(content))
+        fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
+        fp.write(nodeprops)            
+        if content:
+            fp.write(content)
+        fp.write("\n")
+    @staticmethod
+    def svnbranch(branch):
+        "The branch directory corresponding to a specified git branch."
+        # TODO: Express merges as svn:mergeinfo properties.
+        svnbase = os.path.basename(branch)
+        if svnbase == "master":
+            return "trunk"
+        if svnbase.endswith("trunk"):
+            svnbase += "-git"
+        return os.path.join("branches", svnbase)
+    def filedelete(self, fp, branch, path):
+        "Emit the dump-stream records required to delete a file."
+        svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
+        SubversionDumper.dump_node(fp,
+                                   path=svnpath,
+                                   kind="file",
+                                   action="delete")
+        del self.filemap[svnpath]
+        while True:
+            svnpath = os.path.dirname(svnpath)
+            # The second disjunct in this guard is a
+            # spasmodic twitch in the direction of
+            # respecting Subversion's notion of a "flow".
+            # We refrain from deleting branch directories
+            # so they'll have just one flow throughout the
+            # life of the repository.
+            if not svnpath or svnpath in self.branches_created:
+                break
+            self.directory_counts[svnpath] -= 1
+            if self.directory_counts[svnpath] == 0:
+                SubversionDumper.dump_node(fp,
+                          path=svnpath,
+                          kind="file",
+                          action="delete")
+    def filemodify(self, fp, revision, branch, path, mode, ref, parents):
+        "Emit the dump-stream records required to add or modify a file."
+        svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
+        if svnpath in self.filemap:
+            svnop = "change"
+            self.filemap[svnpath].rev = revision
+        else:
+            svnop = "add",
+            self.filemap[svnpath] = SubversionDumper.FlowState(revision, {})
+        with open(self.repo.objfind(ref).blobfile()) as dp:
+            content = dp.read()
+        changeprops = None
+        if mode == 0o100755:
+            if "svn:executable" not in self.filemap[svnpath].props:
+                self.filemap[svnpath].props["svn:executable"] = "true"
+                changeprops = self.filemap[svnpath].props
+        elif mode == 0o100644:
+            if "svn:executable" in self.filemap[svnpath].props:
+                self.filemap[svnpath].props["svn:executable"] = "false"
+                changeprops = self.filemap[svnpath].props
+        # Branch creation may be required
+        if branch not in self.branches_created:
+            self.branches_created.append(branch)
+            svnout = SubversionDumper.svnbranch(branch)
+            if parents:
+                SubversionDumper.dump_node(fp,
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           from_rev=self.markmap.index(parents[0].mark),
+                                           from_path=SubversionDumper.svnbranch(parents[0].branch),
+                                           props=changeprops)
+            else:
+                SubversionDumper.dump_node(fp,
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           props=changeprops)
+            if svnout not in self.directory_counts:
+                self.directory_counts[svnout] = 0
+            self.directory_counts[svnout] += 1
+        # Create all directory segments required
+        # to get down to the level where we can
+        # create the file.
+        parts = os.path.dirname(path).split(os.sep)
+        if parts[0]:
+            parents = [os.sep.join(parts[:i+1])
+                                   for i in range(len(parts))]
+            for parentdir in parents:
+                if parentdir not in self.directory_counts:
+                    self.directory_counts[parentdir] = 0
+                    SubversionDumper.dump_node(fp,
+                              path=parentdir,
+                              kind="dir",
+                              action="add",
+                              content="Directory creation.\n")
+                self.directory_counts[parentdir] += 1
+        # The actual content
+        SubversionDumper.dump_node(fp,
+                  path=svnpath,
+                  kind="file",
+                  action=svnop,
+                  props=changeprops,
+                  content=content)
+    def dump(self, selection, fp, progress=False):
+        "Export the respository as a Subversion dumpfile."
+        with Baton("reposurgeon: dumping", enable=progress) as baton:
+            try:
+                fp.write("SVN-fs-dump-format-version: 2\n\n")
+                fp.write("UUID: %s\n\n" % self.repo.uuid or uuid.uuid4())
+                SubversionDumper.dump_revprops(fp,
+                                               revision=0,
+                                               date=Date(rfc3339(time.time()))) 
+                baton.twirl()
+                revision = 0
+                for i in selection:
+                    event = self.repo.events[i]
+                    # Passthroughs are lost; there are no equivalents
+                    # in Subversion's ontology.
+                    if not isinstance(event, Commit):
+                        continue
+                    revision += 1
+                    self.markmap.append(event.mark)
+                    # We must treat the gitspace committer attribute
+                    # as the author: gitspace author information is
+                    # lost.  So is everything but the local part of
+                    # the committer name.
+                    SubversionDumper.dump_revprops(fp, revision,
+                                                   log=event.comment,
+                                                   author=event.committer.email,
+                                                   date=event.committer.date)
+                    for fileop in event.fileops:
+                        # TODO: special-case handling of .gitignore
+                        if fileop.op == "D":
+                            self.filedelete(fp, event.branch, fileop.path)
+                        elif fileop.op == "M":
+                            self.filemodify(fp,
+                                            revision,
+                                            event.branch,
+                                            fileop.path,
+                                            fileop.mode,
+                                            fileop.ref,
+                                            event.parents())
+                        else:
+                            # TODO: R and C ops
+                            raise Fatal("unsupported fileop type %s." \
+                                        % fileop.op)
+                        # TODO: turn following tag into directory copy.
+                    fp.flush()
+            except IOError as e:
+                raise Fatal("export error: %s" % e)
+
 # Generic repository-manipulation code begins here
 
 class Repository:
@@ -3085,6 +3287,7 @@ class Repository:
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
+        self.uuid = None
         self.write_fossils = False
         self.dollar_map = {}        # From dollar cookies in files
         self.fossil_map = {}    # From anything that doesn't survive rebuild
@@ -3294,6 +3497,9 @@ class Repository:
                 if hasattr(op, 'path'):
                     if os.path.basename(op.path) == from_base:
                         os.path = os.path.join(os.path.dirname(os.path), to_base)
+    def svndump(self, selection, fp, progress=False):
+        "Export the respository as a Subversion dumpfile."
+        SubversionDumper(self).dump(selection, fp, progress)
     def fast_export(self, selection, fp, progress=False):
         "Dump the repo object in fast-export format."
         with Baton("reposurgeon: exporting", enable=progress) as baton:
@@ -4086,11 +4292,15 @@ def rebuild_repo(repo, target, preferred):
     else:
         raise Recoverable("no default destination for rebuild")
     vcs = preferred or repo.vcs
+    export = repo.svndump if (vcs and vcs.name == "svn") else repo.fast_export
     if not vcs:
         raise Recoverable("please prefer a repo type first")
     if not hasattr(vcs, "exporter") or vcs.importer is None:
         raise Recoverable("%s repositories are supported for read only." \
                           % preferred.name)
+
+    if not os.path.join("refs", "heads", "master") in repo.branchlist():
+        complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
 
     # Create a new empty directory to do the rebuild in
     if not os.path.exists(target):
@@ -4121,7 +4331,7 @@ def rebuild_repo(repo, target, preferred):
                 if vcs.ignorename and vcs.ignorename != ".gitignore":
                     repo.ignore_remap(".gitignore", vcs.ignorename)
                 with open(tfname, "w") as tp:
-                    repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                    export(list(range(len(repo))), tp, progress=verbose>0)
                 if vcs.ignorename and vcs.ignorename != ".gitignore":
                     repo.ignore_remap(vcs.ignorename, ".gitignore")
                 do_or_die(vcs.exporter % parameters, "import")
@@ -4129,7 +4339,7 @@ def rebuild_repo(repo, target, preferred):
                 os.remove(tfname)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(list(range(len(repo))), tp, progress=verbose>0)
+                export(list(range(len(repo))), tp, progress=verbose>0)
         if repo.write_fossils:
             try:
                 fossilfile = os.path.join(vcs.subdirectory, "fossils")
@@ -5579,14 +5789,13 @@ anything other than a plain file. The default selection is all events.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         if not line:
             line = '-'
+        export = self.chosen().svndump if self.preferred and self.preferred.name == "svn" else self.chosen().fast_export
         if line == '-':
-            self.chosen().fast_export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
+            export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
         else:
             try:
                 with open(line, "w") as out:
-                    self.chosen().fast_export(self.selection,
-                                              out,
-                                              progress=verbose==1)
+                    export(self.selection, out, progress=verbose==1)
             except (IOError, OSError):
                 complain("open of %s for write failed.\n" % line)
 
