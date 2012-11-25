@@ -6272,10 +6272,16 @@ file path matches.
 
     def help_split(self):
         print("""
-Split a specified commit in two, the opposite of coalesce.  The first argument
-is required to be a commit location; the separating keyword 'at' must follow,
-then either an integer 1-origin index of a file operation within the commit
-or a pathname to be matched (the pathname match is done first).
+Split a specified commit in two, the opposite of coalesce.
+
+    split N at M
+    split N in PREFIX
+
+The first argument is required to be a commit location; the second is
+a preposition which indicates which splitting method to use. If the
+preposition is 'at', then the third argument must be an integer
+1-origin index of a file operation within the commit. If it is 'in',
+then the third argument must be a pathname to be matched.
 
 The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
