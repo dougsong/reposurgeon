@@ -4099,26 +4099,39 @@ class Repository:
         modified = list(modified)
         modified.sort()
         return modified
-    def split_commit(self, where, splitpoint):
+    def split_commit(self, where, splitfunc):
         event = self.events[where]
-        self.events.insert(where+1, event.clone())
-        self.declare_sequence_mutation()
-        event2 = self.events[where+1]
-        assert(event.mark == event2.mark)
-        event2.mark = event.mark + "bis"
-        # Fix up parent/child relationships
-        event2.setParents([event.mark])
-        for child in event.children():
-            parent_marks = child.parentMarks()
-            for (j, mark) in enumerate(parent_marks):
-                if mark == event.mark:
-                    parent_marks[j] = event2.mark
-            child.setParents(parent_marks)
         # Fileop split happens here
-        event2.fileops = event.fileops[splitpoint:]
-        event2._pathset = None
-        event.fileops = event.fileops[:splitpoint]
-        event._pathset = None
+        (fileops, fileops2) = splitfunc(event.fileops)
+        if fileops and fileops2:
+            self.events.insert(where+1, event.clone())
+            self.declare_sequence_mutation()
+            event2 = self.events[where+1]
+            assert(event.mark == event2.mark)
+            event2.mark = event.mark + "bis"
+            # Fix up parent/child relationships
+            event2.setParents([event.mark])
+            for child in event.children():
+                parent_marks = child.parentMarks()
+                for (j, mark) in enumerate(parent_marks):
+                    if mark == event.mark:
+                        parent_marks[j] = event2.mark
+                child.setParents(parent_marks)
+            event2.fileops = fileops2
+            event2._pathset = None
+            event.fileops = fileops
+            event._pathset = None
+            return True
+        return False
+    def split_commit_by_index(self, where, splitpoint):
+        return self.split_commit(where,
+                                 lambda ops: (ops[splitpoint:],
+                                              ops[:splitpoint]))
+    def split_commit_by_prefix(self, where, prefix):
+        return self.split_commit(where,
+                                 lambda ops: ([op for op in ops if not op.path.startswith(prefix)],
+                                              [op for op in ops if (op.path or op.target) and
+                                                                   (op.path or op.target).startswith(prefix)]))
 
     # Container emulation methods
     def __len__(self):
@@ -6287,33 +6300,24 @@ file operations in the original commit.
         if not isinstance(event, Commit):
             raise Recoverable("fileop argument doesn't point at a commit")
         line = str(line)   # pacify pylint by forcing string type
-        if not line.startswith("at"):
-            raise Recoverable("expected 'at'")
+        (prep, obj) = line.split()
+        if prep == 'at':
+            try:
+                splitpoint = int(obj) - 1
+                if splitpoint not in list(range(1, len(event.fileops))):
+                    raise Recoverable("fileop index out of range")
+                self.chosen().split_commit_by_index(where, splitpoint)
+            except ValueError:
+                raise Recoverable("expected integer fileop index (1-origin)")
+        elif prep == 'in':
+            split = self.chosen().split_commit_by_prefix(where, obj)
+            if not split:
+                raise Recoverable("couldn't find '%s' in a fileop path." \
+                                  % obj)
         else:
-            line = line[2:].lstrip()
-            if line[0].isdigit():
-                try:
-                    line = str(line)   # pacify pylint by forcing string type
-                    splitpoint = int(line.split()[0]) - 1
-                except ValueError:
-                    raise Recoverable("expected integer fileop index (1-origin)")
-            else:
-                for (i, fileop) in enumerate(where.fileops):
-                    if hasattr(fileop, 'path') and fileop.path == line:
-                        splitpoint = i + 1
-                        break
-                    elif hasattr(fileop, 'source') and fileop.source == line:
-                        splitpoint = i + 1
-                        break
-                else:
-                    raise Recoverable("couldn't find '%s' in a fileop path." \
-                                      % line)
-            if splitpoint not in list(range(1, len(event.fileops))):
-                raise Recoverable("fileop index out of range")
-            # Actual implementation starts here
-            self.chosen().split_commit(where, splitpoint)
-            if verbose:
-                self.do_inspect(repr(where+1) + "," + repr(where+2))
+            raise Recoverable("don't know what to do for preposition %s" % prep)
+        if verbose:
+            self.do_inspect(repr(where+1) + "," + repr(where+2))
 
     def help_unite(self):
         print("""
