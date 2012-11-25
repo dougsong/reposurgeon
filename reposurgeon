@@ -1006,6 +1006,7 @@ class Commit:
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
         self._pathset = None
+        self.splits = None          # split command increments this to avoid creating multiple new commits with duplicate marks
     def when(self):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
@@ -4107,16 +4108,23 @@ class Repository:
             self.events.insert(where+1, event.clone())
             self.declare_sequence_mutation()
             event2 = self.events[where+1]
+            # need a new mark
             assert(event.mark == event2.mark)
-            event2.mark = event.mark + "bis"
+            if event.splits is None:
+                event.splits = 1
+            else:
+                event.splits += 1
+            newmark = "%s.%s" % (event.mark, event.splits)
             # Fix up parent/child relationships
-            event2.setParents([event.mark])
             for child in event.children():
                 parent_marks = child.parentMarks()
                 for (j, mark) in enumerate(parent_marks):
                     if mark == event.mark:
-                        parent_marks[j] = event2.mark
+                        parent_marks[j] = newmark
                 child.setParents(parent_marks)
+            event2.setParents([event.mark])
+            event2.mark = newmark
+            # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
             event.fileops = fileops
