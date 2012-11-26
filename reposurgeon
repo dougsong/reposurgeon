@@ -3139,6 +3139,7 @@ class SubversionDumper:
         fp.write("Prop-content-length: %d\n" % len(nodeprops))
         if content:
             fp.write("Text-content-length: %d\n" % len(content))
+        # TODO: on file copy, include a content hash.
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
         fp.write(nodeprops)            
         if content:
@@ -3178,6 +3179,44 @@ class SubversionDumper:
                           path=svnpath,
                           kind="file",
                           action="delete")
+    def directory_create(self, fp, branch, path, parents=None, props=None):
+        # Branch creation may be required
+        if branch not in self.branches_created:
+            self.branches_created.append(branch)
+            svnout = SubversionDumper.svnbranch(branch)
+            if parents:
+                SubversionDumper.dump_node(fp,
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           from_rev=self.markmap.index(parents[0].mark),
+                                           from_path=SubversionDumper.svnbranch(parents[0].branch),
+                                           props=props)
+            else:
+                SubversionDumper.dump_node(fp,
+                                           path=svnout,
+                                           kind="dir",
+                                           action="add",
+                                           props=props)
+            if svnout not in self.directory_counts:
+                self.directory_counts[svnout] = 0
+            self.directory_counts[svnout] += 1
+        # Create all directory segments required
+        # to get down to the level where we can
+        # create the file.
+        parts = os.path.dirname(path).split(os.sep)
+        if parts[0]:
+            parents = [os.sep.join(parts[:i+1])
+                                   for i in range(len(parts))]
+            for parentdir in parents:
+                if parentdir not in self.directory_counts:
+                    self.directory_counts[parentdir] = 0
+                    SubversionDumper.dump_node(fp,
+                              path=parentdir,
+                              kind="dir",
+                              action="add",
+                              content="Directory creation.\n")
+                self.directory_counts[parentdir] += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
@@ -3198,43 +3237,9 @@ class SubversionDumper:
             if "svn:executable" in self.filemap[svnpath].props:
                 self.filemap[svnpath].props["svn:executable"] = "false"
                 changeprops = self.filemap[svnpath].props
-        # Branch creation may be required
-        if branch not in self.branches_created:
-            self.branches_created.append(branch)
-            svnout = SubversionDumper.svnbranch(branch)
-            if parents:
-                SubversionDumper.dump_node(fp,
-                                           path=svnout,
-                                           kind="dir",
-                                           action="add",
-                                           from_rev=self.markmap.index(parents[0].mark),
-                                           from_path=SubversionDumper.svnbranch(parents[0].branch),
-                                           props=changeprops)
-            else:
-                SubversionDumper.dump_node(fp,
-                                           path=svnout,
-                                           kind="dir",
-                                           action="add",
-                                           props=changeprops)
-            if svnout not in self.directory_counts:
-                self.directory_counts[svnout] = 0
-            self.directory_counts[svnout] += 1
-        # Create all directory segments required
-        # to get down to the level where we can
-        # create the file.
-        parts = os.path.dirname(path).split(os.sep)
-        if parts[0]:
-            parents = [os.sep.join(parts[:i+1])
-                                   for i in range(len(parts))]
-            for parentdir in parents:
-                if parentdir not in self.directory_counts:
-                    self.directory_counts[parentdir] = 0
-                    SubversionDumper.dump_node(fp,
-                              path=parentdir,
-                              kind="dir",
-                              action="add",
-                              content="Directory creation.\n")
-                self.directory_counts[parentdir] += 1
+        # Branch and directory creation may be required
+        self.directory_create(fp, branch, path,
+                              parents=parents, props=changeprops)
         # The actual content
         SubversionDumper.dump_node(fp,
                   path=svnpath,
@@ -3248,6 +3253,7 @@ class SubversionDumper:
             flow = self.filemap[svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
+        self.directory_create(fp, branch, target)
         svntarget = os.path.join(SubversionDumper.svnbranch(branch), target)
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
