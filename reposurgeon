@@ -2759,7 +2759,9 @@ class StreamParser:
                                                   ))
                                     break
                         else:
-                            raise Fatal("couldn't find revision %s" % latest)
+                            if verbose >= DEBUG_TOPOLOGY:
+                                complain("lookback for %s failed" % latest)
+                            raise Fatal("couldn't find a branch root for the copy of %s at r%s." % (latest.path, latest.revision))
             # We're done, add all the new commits 
             self.repo.events += newcommits
             self.repo.declare_sequence_mutation()
