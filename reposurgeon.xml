@@ -47,10 +47,14 @@ normally does not do its own repository reading and writing.  Instead, it
 relies on being able to parse and emit the command streams created by
 git-fast-export and read by git-fast-import.  This means that it can
 be used on any version-control system that that has both fast-export
-and fast-import utilities.  At time of writing this set includes git
-itself, hg, and bzr. The git-import stream format also implicitly
+and fast-import utilities. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
+
+<para>Fully supported systems include git, hg, bzr, and darcs.  For a
+complete list, with dependencies and technical notes, type
+<command>prefer</command> to the <command>reposurgeon</command>
+prompt.
 
 <para><command>reposurgeon</command> can also read - but not write -
 dumpfiles produced by Subversion. It can thus be used to lift

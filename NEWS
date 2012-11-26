@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.7:
+     Full (read-write) support for darcs.
+
 2.6: 2012-11-22
      divide now cuts unconditionally, renaming branches or repos as required.
      The split command can take a path to be matched instead of an index.
