@@ -35,12 +35,11 @@ preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for <command>reposurgeon</command> was
 to clean up artifacts created by repository conversions, and it has
-some special-purpose commands for this use. With the addition of
-extractors (see below) and the ability to read Subversion dumpfiles,
-<command>reposurgeon</command> is a repository conversion tool in its
-own right.  It was foreseen that the tool would also have applications
-when code needs to be removed from repositories for legal or policy
-reasons.</para>
+some special-purpose commands for this use. With the ability to read
+Subversion dumpfiles, <command>reposurgeon</command> became a repository
+conversion tool in its own right.  It was foreseen that the tool would
+also have applications when code needs to be removed from repositories
+for legal or policy reasons.</para>
 
 <para>To keep <command>reposurgeon</command> simple and flexible, it
 normally does not do its own repository reading and writing.  Instead, it
