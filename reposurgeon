@@ -3242,9 +3242,19 @@ class SubversionDumper:
                   action=svnop,
                   props=changeprops,
                   content=content)
-    def filecopy(self, fp, source, target):
-        # FIXME: actually implement this
-        pass
+    def filecopy(self, fp, branch, source, target):
+        svnsource = os.path.join(SubversionDumper.svnbranch(branch), target)
+        try:
+            flow = self.filemap[svnsource]
+        except:
+            raise Fatal("couldn't retrieve flow information for %s" % source)
+        svntarget = os.path.join(SubversionDumper.svnbranch(branch), target)
+        SubversionDumper.dump_node(fp,
+                                   path=svntarget,
+                                   kind="file",
+                                   action="add",
+                                   from_path=svnsource,
+                                   from_rev=flow.revision)
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
         with Baton("reposurgeon: dumping", enable=progress) as baton:
@@ -3286,13 +3296,15 @@ class SubversionDumper:
                                             event.parents())
                         elif fileop.op == "R":
                             self.filecopy(fp,
-                                            os.path.join(event.branch, fileop.source),
-                                            os.path.join(event.branch, fileop.target))
+                                          event.branch,
+                                          fileop.source,
+                                          fileop.target)
                             self.filedelete(fp, event.branch, fileop.source)
                         elif fileop.op == "C":
                             self.filecopy(fp,
-                                            os.path.join(event.branch, fileop.source),
-                                            os.path.join(event.branch, fileop.target))
+                                          event.branch,
+                                          fileop.source,
+                                          fileop.target)
                         else:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
