@@ -51,10 +51,11 @@ and fast-import utilities. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
 
-<para>Fully supported systems include git, hg, bzr, and darcs.  For a
-complete list, with dependencies and technical notes, type
-<command>prefer</command> to the <command>reposurgeon</command>
-prompt.
+<para>Fully supported systems (those for which
+<command>reposurgeon</command>) can both read and write repositories
+include git, hg, bzr, and darcs.  For a complete list, with
+dependencies and technical notes, type <command>prefer</command> to
+the <command>reposurgeon</command> prompt.</para>
 
 <para><command>reposurgeon</command> can also read - but not write -
 dumpfiles produced by Subversion. It can thus be used to lift
