@@ -3164,7 +3164,7 @@ class SubversionDumper:
                           path=svnpath,
                           kind="file",
                           action="delete")
-    def filemodify(self, fp, revision, branch, path, mode, ref, parents):
+    def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
         if svnpath in self.filemap:
@@ -3228,6 +3228,9 @@ class SubversionDumper:
                   action=svnop,
                   props=changeprops,
                   content=content)
+    def filecopy(self, fp, source, target):
+        # FIXME: actually implement this
+        pass
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
         with Baton("reposurgeon: dumping", enable=progress) as baton:
@@ -3263,12 +3266,20 @@ class SubversionDumper:
                             self.filemodify(fp,
                                             revision,
                                             event.branch,
-                                            fileop.path,
                                             fileop.mode,
                                             fileop.ref,
+                                            fileop.path,
                                             event.parents())
+                        elif fileop.op == "R":
+                            self.filecopy(fp,
+                                            os.path.join(event.branch, fileop.source),
+                                            os.path.join(event.branch, fileop.target))
+                            self.filedelete(fp, event.branch, fileop.source)
+                        elif fileop.op == "C":
+                            self.filecopy(fp,
+                                            os.path.join(event.branch, fileop.source),
+                                            os.path.join(event.branch, fileop.target))
                         else:
-                            # TODO: R and C ops
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
                         # TODO: turn following tag into directory copy.
