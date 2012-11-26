@@ -1576,6 +1576,15 @@ rename</command> to rename the old branch.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term>couldn't find a branch root for the copy</term>
+<listitem>
+<para>Branch analysis failed, probably due to a set of file copies that
+<command>reposurgeon</command> thought it should interpret as a botched
+branch creation but couldn't deduce a history for. Use the svn_nobranch
+option.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term>inconsistently empty from set</term>
 <listitem>
 <para>This message means means <command>reposurgeon</command> has
