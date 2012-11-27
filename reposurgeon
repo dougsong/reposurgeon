@@ -3267,7 +3267,7 @@ class SubversionDumper:
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 fp.write("SVN-fs-dump-format-version: 2\n\n")
-                fp.write("UUID: %s\n\n" % self.repo.uuid or uuid.uuid4())
+                fp.write("UUID: %s\n\n" % (self.repo.uuid or uuid.uuid4()))
                 SubversionDumper.dump_revprops(fp,
                                                revision=0,
                                                date=Date(rfc3339(time.time()))) 
