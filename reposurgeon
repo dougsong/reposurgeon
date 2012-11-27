@@ -3283,7 +3283,7 @@ class SubversionDumper:
                     # the committer name.
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment,
-                                                   author=event.committer.email,
+                                                   author=event.committer.email.split("@")[0],
                                                    date=event.committer.date)
                     for fileop in event.fileops:
                         # TODO: special-case handling of .gitignore
