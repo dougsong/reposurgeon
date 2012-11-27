@@ -111,7 +111,7 @@ M 100644 :12 doomed3
 blob
 mark :14
 data 70
-This fiie needs to have at least one commit other than its creation.
+This file needs to have at least one commit other than its creation.
 
 
 commit refs/heads/master
@@ -126,7 +126,7 @@ M 100644 :14 doomed3
 blob
 mark :16
 data 50
-And let's give it another one fot good measure.
+And let's give it another one for good measure.
 
 
 
