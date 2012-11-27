@@ -34,12 +34,9 @@ and (f) cutting a repo in two by cutting a parent-child link,
 preserving the branch structure of both child repos.</para>
 
 <para>The original motivation for <command>reposurgeon</command> was
-to clean up artifacts created by repository conversions, and it has
-some special-purpose commands for this use. With the ability to read
-Subversion dumpfiles, <command>reposurgeon</command> became a repository
-conversion tool in its own right.  It was foreseen that the tool would
-also have applications when code needs to be removed from repositories
-for legal or policy reasons.</para>
+to clean up artifacts created by repository conversions.  It was
+foreseen that the tool would also have applications when code needs to
+be removed from repositories for legal or policy reasons.</para>
 
 <para>To keep <command>reposurgeon</command> simple and flexible, it
 normally does not do its own repository reading and writing.  Instead, it
@@ -57,7 +54,7 @@ dependencies and technical notes, type <command>prefer</command> to
 the <command>reposurgeon</command> prompt. Also note that writing
 Subversion repositories has some significant limitations, discussed in
 the section on <link linkend="subversion">Working With
-Subversion</link></para>
+Subversion</link>.</para>
 
 <!--
 <para>In order to deal with version-control systems that do not have
@@ -1632,6 +1629,14 @@ recreated if and when the repository is written back out to
 Subversion; rather, each branch copy node from the original translates
 into a branch creation plus the first set of file modifications on the
 branch.</para>
+
+<para>When reading a Subversion repository,
+<application>reposurgeon</application> also automatically breaks apart
+mixed-branch commits.</para>
+
+<para>Because of the preceding two points, it is not guaranteed that 
+even revision numbers will be stable when a Subversion repository
+is read in and then written out!</para>
 
 <para>Subversion has a concept of "flows"; that is, named segments of
 history corresponding to files or directories that are created when the 
