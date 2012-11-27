@@ -1643,9 +1643,9 @@ may be arbitrarily changed. </para>
 
 <para>Bugs: Presently, writing out a history to a Subversion
 repository does not properly set ignore properties and does not create
-mergeinfo properties representing branch merges.  These bugs will
-probably be fixed in future <application>reposurgeon</application>
-releases.</para>
+mergeinfo properties representing branch merges. It also loses all tag
+information. These bugs will probably be fixed in future
+<application>reposurgeon</application> releases.</para>
 </refsect2>
 </refsect1>
 
