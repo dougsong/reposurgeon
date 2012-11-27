@@ -3135,13 +3135,13 @@ class SubversionDumper:
             fp.write("Node-copyfrom-rev: %s\n" % from_rev)
         if from_path:
             fp.write("Node-copyfrom-path: %s\n" % from_path)
-        nodeprops = SubversionDumper.svnprops(props or {}) + "PROPS-END\n\n"
+        nodeprops = SubversionDumper.svnprops(props or {}) + "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(nodeprops))
         if content:
             fp.write("Text-content-length: %d\n" % len(content))
         # TODO: on file copy, include a content hash.
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
-        fp.write(nodeprops)            
+        fp.write(nodeprops + "\n")            
         if content:
             fp.write(content)
         fp.write("\n")
