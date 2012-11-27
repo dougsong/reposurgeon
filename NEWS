@@ -2,6 +2,7 @@
 
 2.7:
      Full (read-write) support for darcs.
+     Alpha-level support for writing Subversion repositories.
 
 2.6: 2012-11-22
      divide now cuts unconditionally, renaming branches or repos as required.
