@@ -1642,10 +1642,10 @@ uses.  Thus, after editing, the flow boundaries of a Subversion history
 may be arbitrarily changed. </para>
 
 <para>Bugs: Presently, writing out a history to a Subversion
-repository does not properly set ignore or executable properties, and
-does not create mergeinfo properties representing branch merges.
-These bugs will probably be fixed in future
-<application>reposurgeon</application>releases.</para>
+repository does not properly set ignore properties and does not create
+mergeinfo properties representing branch merges.  These bugs will
+probably be fixed in future <application>reposurgeon</application>
+releases.</para>
 </refsect2>
 </refsect1>
 
