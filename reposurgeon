@@ -736,6 +736,10 @@ class Blob:
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
+    def content(self):
+        "Content of the blob as a string."
+        with open(self.blobfile()) as dp:
+            return dp.read()
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -758,8 +762,7 @@ class Blob:
         if not os.path.exists(self.blobfile()):
             return ''
         else:
-            with open(self.blobfile()) as dp:
-                content = dp.read()
+            content = self.content()
             return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
 
 class Tag:
@@ -3154,11 +3157,15 @@ class SubversionDumper:
         if svnbase.endswith("trunk"):
             svnbase += "-git"
         return os.path.join("branches", svnbase)
+    @staticmethod
+    def svnize(branch, path):
+        "Return SVN path corresponding to a specified gitspace branch and path."
+        return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
-        svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
-        fp.write("Node-path: %s\n" % svnpath);
-        fp.write("Node-action: delete\n\n\n");
+        svnpath = SubversionDumper.svnize(branch, path)
+        fp.write("Node-path: %s\n" % svnpath)
+        fp.write("Node-action: delete\n\n\n")
         del self.filemap[svnpath]
         while True:
             svnpath = os.path.dirname(svnpath)
@@ -3172,8 +3179,8 @@ class SubversionDumper:
                 break
             self.directory_counts[svnpath] -= 1
             if self.directory_counts[svnpath] == 0:
-                fp.write("Node-path: %s\n" % svnpath);
-                fp.write("Node-action: delete\n\n\n");
+                fp.write("Node-path: %s\n" % svnpath)
+                fp.write("Node-action: delete\n\n\n")
     def directory_create(self, fp, branch, path, parents=None, props=None):
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
@@ -3214,7 +3221,7 @@ class SubversionDumper:
                 self.directory_counts[parentdir] += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
-        svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
+        svnpath = SubversionDumper.svnize(branch, path)
         if svnpath in self.filemap:
             svnop = "change"
             self.filemap[svnpath].rev = revision
@@ -3243,13 +3250,13 @@ class SubversionDumper:
                   props=changeprops,
                   content=content)
     def filecopy(self, fp, branch, source, target):
-        svnsource = os.path.join(SubversionDumper.svnbranch(branch), source)
+        svnsource = SubversionDumper.svnize(branch, source)
         try:
             flow = self.filemap[svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
         self.directory_create(fp, branch, target)
-        svntarget = os.path.join(SubversionDumper.svnbranch(branch), target)
+        svntarget = SubversionDumper.svnize(branch, target)
         self.filemap[svntarget] = self.filemap[svnsource]
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
@@ -3285,17 +3292,35 @@ class SubversionDumper:
                                                    author=event.committer.email.split("@")[0],
                                                    date=event.committer.date)
                     for fileop in event.fileops:
-                        # TODO: special-case handling of .gitignore
                         if fileop.op == "D":
-                            self.filedelete(fp, event.branch, fileop.path)
+                            if fileop.path.endswith(".gitignore"):
+                                svnpath = SubversionDumper.svnize(event.branch, fileop.path)
+                                self.filemap[svnpath].props["svn:ignore"] = ""
+                                SubversionDumper.dump_node(fp,
+                                          path=os.path.dirname(svnpath),
+                                          kind="dir",
+                                          action="change",
+                                          props = self.filemap[svnpath].props)
+                            else:
+                                self.filedelete(fp, event.branch, fileop.path)
                         elif fileop.op == "M":
-                            self.filemodify(fp,
-                                            revision,
-                                            event.branch,
-                                            fileop.mode,
-                                            fileop.ref,
-                                            fileop.path,
-                                            event.parents())
+                            if fileop.path.endswith(".gitignore"):
+                                svnpath = SubversionDumper.svnize(event.branch, fileop.path)
+                                blob = self.repo.objfind(fileop.ref)
+                                self.filemap[svnpath].props["svn:ignore"] = blob.content()
+                                SubversionDumper.dump_node(fp,
+                                          path=os.path.dirname(svnpath),
+                                          kind="dir",
+                                          action="change",
+                                          props = self.filemap[svnpath].props)
+                            else:
+                                self.filemodify(fp,
+                                                revision,
+                                                event.branch,
+                                                fileop.mode,
+                                                fileop.ref,
+                                                fileop.path,
+                                                event.parents())
                         elif fileop.op == "R":
                             self.filecopy(fp,
                                           event.branch,
@@ -3308,8 +3333,9 @@ class SubversionDumper:
                                           fileop.source,
                                           fileop.target)
                         elif fileop.op == "deleteall":
-                            fp.write("Node-path: %s\n" % self.svnbranch(path));
-                            fp.write("Node-action: delete\n\n\n");
+                            # FIXME: Must delete all subfiles first!
+                            fp.write("Node-path: %s\n" % self.svnbranch(fileop.path))
+                            fp.write("Node-action: delete\n\n\n")
                         else:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
