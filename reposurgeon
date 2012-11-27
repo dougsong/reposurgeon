@@ -134,7 +134,7 @@ class VCS:
 # * Command to initialize a new repo
 # * Command to import from the interchange format
 # * Command to check out working copies of the repo files.
-# * Default preserve set (typically config and hook files).
+# * Default preserve set (e.g. config & hook files; parts can be directories).
 # * Likely location for an importer to drop an authormap file
 # * Command to list files under repository control.
 #
@@ -210,17 +210,17 @@ vcstypes = [
         authormap=None,
         ignorename="_darcs/prefs/boring",
         notes="Assumes no boringfile preference has been set."),
-    # If we ever implement an exporter, don't forget to preserve hooks/.  
+    # Export is experimental and doesn't round-trip
     VCS(name="svn",
         subdirectory="locks",
         exporter="svnadmin dump .",
         styleflags=set(["export-progress"]),
         properties=False,
-        initializer=None,
-        importer=None,
+        initializer="svn create .",
+        importer="svnadmin load .",
         checkout=None,
         lister=None,
-        preserve=set([]),
+        preserve=set(["hooks"]),
         authormap=None,
         ignorename=None,
         notes="Run from the repository, not a checkout directory."),
