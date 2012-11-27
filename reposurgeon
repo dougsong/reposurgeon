@@ -3307,6 +3307,9 @@ class SubversionDumper:
                                           event.branch,
                                           fileop.source,
                                           fileop.target)
+                        elif fileop.op == "deleteall":
+                            fp.write("Node-path: %s\n" % self.svnbranch(path));
+                            fp.write("Node-action: delete\n\n\n");
                         else:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
