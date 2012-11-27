@@ -3158,10 +3158,8 @@ class SubversionDumper:
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
         svnpath = os.path.join(SubversionDumper.svnbranch(branch), path)
-        SubversionDumper.dump_node(fp,
-                                   path=svnpath,
-                                   kind="file",
-                                   action="delete")
+        fp.write("Node-path: %s\n" % svnpath);
+        fp.write("Node-action: delete\n\n\n");
         del self.filemap[svnpath]
         while True:
             svnpath = os.path.dirname(svnpath)
@@ -3175,15 +3173,13 @@ class SubversionDumper:
                 break
             self.directory_counts[svnpath] -= 1
             if self.directory_counts[svnpath] == 0:
-                SubversionDumper.dump_node(fp,
-                          path=svnpath,
-                          kind="file",
-                          action="delete")
+                fp.write("Node-path: %s\n" % svnpath);
+                fp.write("Node-action: delete\n\n\n");
     def directory_create(self, fp, branch, path, parents=None, props=None):
         # Branch creation may be required
-        if branch not in self.branches_created:
-            self.branches_created.append(branch)
-            svnout = SubversionDumper.svnbranch(branch)
+        svnout = SubversionDumper.svnbranch(branch)
+        if svnout not in self.branches_created:
+            self.branches_created.append(svnout)
             if parents:
                 SubversionDumper.dump_node(fp,
                                            path=svnout,
