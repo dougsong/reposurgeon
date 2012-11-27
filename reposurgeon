@@ -3248,19 +3248,20 @@ class SubversionDumper:
                   props=changeprops,
                   content=content)
     def filecopy(self, fp, branch, source, target):
-        svnsource = os.path.join(SubversionDumper.svnbranch(branch), target)
+        svnsource = os.path.join(SubversionDumper.svnbranch(branch), source)
         try:
             flow = self.filemap[svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
         self.directory_create(fp, branch, target)
         svntarget = os.path.join(SubversionDumper.svnbranch(branch), target)
+        self.filemap[svntarget] = self.filemap[svnsource]
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
                                    kind="file",
                                    action="add",
                                    from_path=svnsource,
-                                   from_rev=flow.revision)
+                                   from_rev=flow.rev)
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
         with Baton("reposurgeon: dumping", enable=progress) as baton:
