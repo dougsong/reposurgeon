@@ -1780,7 +1780,13 @@ hg-fast-export.py script.</para>
 <varlistentry>
 <term>svn</term>
 <listitem>
-<para>Read only, via <command>svnadmin dump</command>.</para>
+<para>Stock Subversion commands support export and import.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>darcs</term>
+<listitem>
+<para>Stock darcs commands support export and import.</para>
 </listitem>
 </varlistentry>
 </variablelist>
