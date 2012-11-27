@@ -3088,7 +3088,6 @@ class StreamParser:
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
-    #FIXME: This doesn't work yet.
     def __init__(self, repo):
         self.repo = repo
         self.filemap = {}
