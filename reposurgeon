@@ -3341,6 +3341,7 @@ class SubversionDumper:
                             self.filedelete(fp, event.branch, fileop.source)
                         elif fileop.op == "C":
                             self.filecopy(fp,
+                                          revision,
                                           event.branch,
                                           fileop.source,
                                           fileop.target)
