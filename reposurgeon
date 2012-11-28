@@ -1046,6 +1046,11 @@ class Commit:
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         return (summary + topline)[:cols]
+    def tip(self, eventnum, cols):
+        "Enable do_list() to report deduced branch tips."
+        summary = "%6d %s %6s " % \
+                      (eventnum+1, self.committer.date.rfc3339(), self.mark)
+        return (summary + self.head())[:cols]
     def tags(self, eventnum, cols):
         "Enable do_list() to report lightweight tags."
         assert cols > -1    # pacify pylint
@@ -1268,6 +1273,18 @@ class Commit:
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
         return directory
+    def head(self):
+        "Return the branch head to which this commit belongs."
+        offspring = self.children()
+        if not offspring:
+            return self.branch
+        elif len(offspring) == 1:
+            return offspring[0].head()
+        else:
+            for child in offspring:
+                if child.branch == self.branch:
+                    return child.head()
+        raise Recoverable("can't deduce a branch head for %s" % self.mark)
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
         st = "commit %s\n" % self.branch
@@ -3303,7 +3320,7 @@ class SubversionDumper:
                     for fileop in event.fileops:
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = SubversionDumper.svnize(event.branch, fileop.path)
+                                svnpath = SubversionDumper.svnize(event.head(), fileop.path)
                                 self.pathmap[svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
@@ -3314,7 +3331,8 @@ class SubversionDumper:
                                 self.filedelete(fp, event.branch, fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = SubversionDumper.svnize(event.branch, os.path.dirname(fileop.path))
+                                svnpath = SubversionDumper.svnize(event.head(),
+                                                                  os.path.dirname(fileop.path))
                                 blob = self.repo.objfind(fileop.ref)
                                 if svnpath not in self.pathmap:
                                     self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
@@ -3327,7 +3345,7 @@ class SubversionDumper:
                             else:
                                 self.filemodify(fp,
                                                 revision,
-                                                event.branch,
+                                                event.head(),
                                                 fileop.mode,
                                                 fileop.ref,
                                                 fileop.path,
@@ -3335,18 +3353,18 @@ class SubversionDumper:
                         elif fileop.op == "R":
                             self.filecopy(fp,
                                           revision,
-                                          event.branch,
+                                          event.head(),
                                           fileop.source,
                                           fileop.target)
                             self.filedelete(fp, event.branch, fileop.source)
                         elif fileop.op == "C":
                             self.filecopy(fp,
                                           revision,
-                                          event.branch,
+                                          event.head(),
                                           fileop.source,
                                           fileop.target)
                         elif fileop.op == "deleteall":
-                            branchdir = self.svnbranch(event.branch)
+                            branchdir = self.svnbranch(event.head())
                             for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
@@ -3361,7 +3379,7 @@ class SubversionDumper:
                         for tag in tags:
                             if tag.committish == event.mark:
                                 revision += 1
-                                svnsource = SubversionDumper.svnize(event.branch)
+                                svnsource = SubversionDumper.svnize(event.head())
                                 svntarget = SubversionDumper.svnize("tags", tag.name)
                                 SubversionDumper.dump_revprops(fp, revision,
                                                                log=tag.comment,
@@ -5684,6 +5702,22 @@ output.
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister", (screenwidth(),))
+
+    def help_tip(self):
+        print("""
+Display the branch tip names associated with commits in the selection
+set.  These will not necessarily be the same as their branch fields
+(which will often be tag names if the repo contains either annotated
+or lightweight tags).
+
+If a commit is at a branch tip, its tip is its branch name.  If it has
+only one child, its tip is the child's tip.  If it has multiple children,
+then if there is a child with a matching branch name its tip is the
+child's tip.  Otherwise this function throws a recoverable error.
+""")
+    def do_tip(self, line):
+        "Generate a human-friendly listing of objects."
+        self.report_select(line, "tip", (screenwidth(),))
 
     def help_tags(self):
         print("""
