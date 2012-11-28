@@ -1,0 +1,34 @@
+quiet on
+verbose 1
+reposurgeon: verbose 1
+read deletion.svn
+* deletion.svn
+expunge doomed
+reposurgeon: at 5, expunging M doomed
+reposurgeon: at 6, expunging D doomed
+reposurgeon: deleting blobs and empty commits [4, 5, 6]
+choose deletion.svn-expunges
+deletion.svn-expunges: 0K, 3 events, 1 blobs, 2 commits, 0 tags, 0 resets, 2012-11-28T16:38:32Z.
+inspect
+Event 1 =================================================================
+blob
+mark :3
+data 77
+This file is doomed.  It exists only so we can check translation of deletes.
+
+Event 2, Fossil-ID 3 ====================================================
+commit refs/heads/master
+mark :4
+committer esr <esr> 1323707473 +0000
+data 71
+Create a doomed file so we can delete it and see the fileop generated.
+M 100644 :3 doomed
+
+Event 3, Fossil-ID 4 ====================================================
+commit refs/heads/master
+mark :5
+committer esr <esr> 1323707585 +0000
+data 77
+The import stream representation of this commit should have a delete fileop.
+from :4
+D doomed
