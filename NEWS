@@ -3,6 +3,7 @@
 2.7:
      Full (read-write) support for darcs.
      The expunge command now treats deletes correctly.
+     New 'tip' command deuces if a commit is associated with a unique branch.
 
 2.6: 2012-11-22
      divide now cuts unconditionally, renaming branches or repos as required.
