@@ -4811,12 +4811,12 @@ class RepositoryList:
             if keepers:
                 keepers.reverse()
                 blobs.reverse()
+                newevent = event.clone(expunged)
+                newevent.fileops = keepers
+                newevent._pathset = None
                 for blob in blobs:
                     blob.deletehook = blob.clone(expunged)
-                    newevent = event.clone(expunged)
-                    newevent.fileops = keepers
-                    newevent._pathset = None
-                    event.deletehook = newevent
+                event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged.declare_sequence_mutation()
