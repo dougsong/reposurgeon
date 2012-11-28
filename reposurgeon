@@ -3338,7 +3338,14 @@ class SubversionDumper:
                                           fileop.source,
                                           fileop.target)
                         elif fileop.op == "deleteall":
-                            fp.write("Node-path: %s\n" % self.svnbranch(event.branch))
+                            branchdir = self.svnbranch(event.branch)
+                            for path in self.filemap.keys():
+                                if path.startswith(branchdir + os.sep):
+                                    del self.filemap[path]
+                                    supdir = os.path.dirname(path)
+                                    if supdir in self.directory_counts:
+                                        self.directory_counts[supdir] -= 1
+                            fp.write("Node-path: %s\n" % branchdir)
                             fp.write("Node-action: delete\n\n\n")
                         else:
                             raise Fatal("unsupported fileop type %s." \
