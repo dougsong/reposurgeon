@@ -7,24 +7,24 @@ and subtrees from repo history. The original motivation for
 reposurgeon was to clean up artifacts created by repository
 conversions.
 
-reposurgeon can also read Subversion dump files directly, making it
-useful for scripting very high-quality conversions from Subversion.
-It is better than git-svn at tag lifting, automatically cleaning up 
-cvs2svn conversion artifacts, dealing with nonstandard repository
-layouts, recognizing branch merges, handling mixed-branch commits, 
-and generally at coping with Subversion's many odd corner cases.
-Normally Subversion repos should be analyzed at a rate of upwards
-of a thousand commits per minute.
+reposurgeon is also useful for scripting very high-quality conversions
+from Subversion.  It is better than git-svn at tag lifting,
+automatically cleaning up cvs2svn conversion artifacts, dealing with
+nonstandard repository layouts, recognizing branch merges, handling
+mixed-branch commits, and generally at coping with Subversion's many
+odd corner cases.  Normally Subversion repos should be analyzed at a
+rate of upwards of a thousand commits per minute.
 
 An auxiliary script, svnpull, assists in mirroring Subversion
 repositories. This distribution also includes a generic Makefile
 describing a repeatable conversion workflow using these tools.
 
+There is an extensive regression-test suite in the test/ directory.
 To test the correctness of this software, ensure that pylint
-is installed and then type 'make check'
+is installed and then type 'make check'.
 
-reposurgeon is a large, algorithmically extremely complex program.  It
-may still have bugs when dealing with strange corner cases in older
+reposurgeon is an extremely algorithmically complex program.  It may
+still have bugs when dealing with strange corner cases in older
 repositories.  It is often extremely difficult or impossible to
 reproduce those bugs without a full copy of the history on which they
 occurred.
