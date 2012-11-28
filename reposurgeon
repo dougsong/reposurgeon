@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, signal, shutil, copy, shlex, collections, resource, uuid, hashlib
+import re, signal, shutil, copy, shlex, collections, resource, uuid
 import time, calendar, unittest
 import email.message, email.parser, email.utils
 
@@ -3162,7 +3162,7 @@ class SubversionDumper:
             svnbase += "-git"
         return os.path.join("branches", svnbase)
     @staticmethod
-    def svnize(branch, path):
+    def svnize(branch, path=""):
         "Return SVN path corresponding to a specified gitspace branch and path."
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
@@ -3270,6 +3270,7 @@ class SubversionDumper:
                                    from_rev=flow.rev)
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
+        tags = [event for event in self.repo and isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 fp.write("SVN-fs-dump-format-version: 2\n\n")
@@ -3343,7 +3344,24 @@ class SubversionDumper:
                         else:
                             raise Fatal("unsupported fileop type %s." \
                                         % fileop.op)
-                        # TODO: turn following tag into directory copy.
+                        # Turn any annotated tag pointing at this commit into
+                        # a directory copy.
+                        # FIXME: We need to preserve lightweight tags too.
+                        for tag in tags:
+                            if tag.mark == event.mark:
+                                revision += 1
+                                svnsource = SubversionDumper.svnize(event.branch)
+                                svntarget = SubversionDumper.svnize("tags", tag.name)
+                                SubversionDumper.dump_revprops(fp, revision,
+                                                               log=tag.comment,
+                                                               author=tag.tagger.email.split("@")[0],
+                                                               date=tag.tagger.date)
+                                SubversionDumper.dump_node(fp,
+                                                           path=svntarget,
+                                                           kind="dir",
+                                                           action="add",
+                                                           from_path=svnsource,
+                                                           from_rev=revision)
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
