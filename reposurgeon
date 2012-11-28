@@ -3338,8 +3338,7 @@ class SubversionDumper:
                                           fileop.source,
                                           fileop.target)
                         elif fileop.op == "deleteall":
-                            # FIXME: Must delete all subfiles first!
-                            fp.write("Node-path: %s\n" % self.svnbranch(fileop.path))
+                            fp.write("Node-path: %s\n" % self.svnbranch(event.branch))
                             fp.write("Node-action: delete\n\n\n")
                         else:
                             raise Fatal("unsupported fileop type %s." \
