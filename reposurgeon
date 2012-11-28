@@ -4138,7 +4138,7 @@ class Repository:
         return None
     def move_to_rename(self):
         "Make rename sequences from matched delete-modify pairs."
-        # FIXME: Actually use this somewhere...
+        # TODO: Actually use this somewhere...
         rename_count = 0
         for commit in self.commits():
             renames = []
@@ -4675,7 +4675,7 @@ class RepositoryList:
                         event.moveto(late)
                     late.addEvent(event)
                 else:
-                    # FIXME: Someday, color passthroughs that aren't fronted.
+                    # TODO: Someday, color passthroughs that aren't fronted.
                     raise Fatal("coloring algorithm failed on %s" % event)
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
@@ -4945,7 +4945,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         if self.line == line:
             self.selection = default
         else:
-            # FIXME: We probably want to stop doing this
+            # TODO: We probably want to stop doing this
             self.selection.sort()
         return self.line.lstrip()
     def peek(self):
