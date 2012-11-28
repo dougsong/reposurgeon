@@ -3173,13 +3173,19 @@ class SubversionDumper:
     @staticmethod
     def svnbranch(branch):
         "The branch directory corresponding to a specified git branch."
-        # TODO: Express merges as svn:mergeinfo properties.
-        svnbase = os.path.basename(branch)
-        if svnbase == "master":
+        segments = branch.split(os.sep)
+        assert segments[0] == "refs"
+        if segments == ["refs", "head", "master"]:
             return "trunk"
+        if segments[1] not in ("tags", "heads") or len(segments) != 3:
+            raise Recoverable("%s can't be mapped to Subversion." % branch)
+        svnbase = segments[2]
         if svnbase.endswith("trunk"):
             svnbase += "-git"
-        return os.path.join("branches", svnbase)
+        if segments[1] == "tags":
+            return os.path.join("tags", svnbase)
+        else:
+            return os.path.join("branches", svnbase)
     @staticmethod
     def svnize(branch, path=""):
         "Return SVN path corresponding to a specified gitspace branch and path."
@@ -3290,7 +3296,8 @@ class SubversionDumper:
                                    from_path=svnsource,
                                    from_rev=flow.rev)
     def dump(self, selection, fp, progress=False):
-        "Export the respository as a Subversion dumpfile."
+        "Export the repository as a Subversion dumpfile."
+        # TODO: Express merges as svn:mergeinfo properties.
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
@@ -3380,7 +3387,7 @@ class SubversionDumper:
                             if tag.committish == event.mark:
                                 revision += 1
                                 svnsource = SubversionDumper.svnize(event.head())
-                                svntarget = SubversionDumper.svnize("tags", tag.name)
+                                svntarget = os.path.join("tags", tag.name)
                                 SubversionDumper.dump_revprops(fp, revision,
                                                                log=tag.comment,
                                                                author=tag.tagger.email.split("@")[0],
