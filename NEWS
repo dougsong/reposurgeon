@@ -3,11 +3,11 @@
 2.7:
      Full (read-write) support for darcs.
      Alpha-level support for writing Subversion repositories.
+     The expunge command now treats deletes correctly.
 
 2.6: 2012-11-22
      divide now cuts unconditionally, renaming branches or repos as required.
      The split command can take a path to be matched instead of an index.
-     expunge now treats deletes correctly
 
 2.5: 2012-11-19
      git sometimes doesn't quote filenames with embedded spaces properly; cope.
