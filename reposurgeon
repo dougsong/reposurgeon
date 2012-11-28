@@ -3270,7 +3270,7 @@ class SubversionDumper:
                                    from_rev=flow.rev)
     def dump(self, selection, fp, progress=False):
         "Export the respository as a Subversion dumpfile."
-        tags = [event for event in self.repo and isinstance(event, Tag)]
+        tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 fp.write("SVN-fs-dump-format-version: 2\n\n")
@@ -3310,7 +3310,7 @@ class SubversionDumper:
                                 self.filedelete(fp, event.branch, fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = SubversionDumper.svnize(event.branch, fileop.path)
+                                svnpath = SubversionDumper.svnize(event.branch, os.path.dirname(fileop.path))
                                 blob = self.repo.objfind(fileop.ref)
                                 self.filemap[svnpath].props["svn:ignore"] = blob.content()
                                 SubversionDumper.dump_node(fp,
@@ -3354,7 +3354,7 @@ class SubversionDumper:
                         # a directory copy.
                         # FIXME: We need to preserve lightweight tags too.
                         for tag in tags:
-                            if tag.mark == event.mark:
+                            if tag.committish == event.mark:
                                 revision += 1
                                 svnsource = SubversionDumper.svnize(event.branch)
                                 svntarget = SubversionDumper.svnize("tags", tag.name)
