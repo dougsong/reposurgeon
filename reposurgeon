@@ -3091,16 +3091,18 @@ class StreamParser:
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
+    # FIXME: Doesn't work...
     def __init__(self, repo):
         self.repo = repo
-        self.filemap = {}
-        self.directory_counts = {}
+        self.pathmap = {}
         self.markmap = [None]
         self.branches_created = []
     class FlowState:
-        def __init__(self, rev, props):
+        def __init__(self, rev, props=None):
             self.rev = rev
-            self.props = props
+            self.props = props or {}
+            self.is_directory = False
+            self.subfiles = 0
     @staticmethod
     def svnprops(pdict):
         keys = pdict.keys()
@@ -3170,7 +3172,7 @@ class SubversionDumper:
         svnpath = SubversionDumper.svnize(branch, path)
         fp.write("Node-path: %s\n" % svnpath)
         fp.write("Node-action: delete\n\n\n")
-        del self.filemap[svnpath]
+        del self.pathmap[svnpath]
         while True:
             svnpath = os.path.dirname(svnpath)
             # The second disjunct in this guard is a
@@ -3181,11 +3183,13 @@ class SubversionDumper:
             # life of the repository.
             if not svnpath or svnpath in self.branches_created:
                 break
-            self.directory_counts[svnpath] -= 1
-            if self.directory_counts[svnpath] == 0:
+            self.pathmap[svnpath].subfiles -= 1
+            if self.pathmap[svnpath].subfiles == 0:
                 fp.write("Node-path: %s\n" % svnpath)
                 fp.write("Node-action: delete\n\n\n")
-    def directory_create(self, fp, branch, path, parents=None, props=None):
+                del self.pathmap[svnpath]
+    def directory_create(self, fp, revision, branch, path,
+                         parents=None, props=None):
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
         if svnout not in self.branches_created:
@@ -3204,9 +3208,9 @@ class SubversionDumper:
                                            kind="dir",
                                            action="add",
                                            props=props)
-            if svnout not in self.directory_counts:
-                self.directory_counts[svnout] = 0
-            self.directory_counts[svnout] += 1
+            if svnout not in self.pathmap:
+                self.pathmap[svnout] = SubversionDumper.FlowState(revision)
+                self.pathmap[svnout].is_directory = True
         # Create all directory segments required
         # to get down to the level where we can
         # create the file.
@@ -3215,36 +3219,36 @@ class SubversionDumper:
             parents = [os.sep.join(parts[:i+1])
                                    for i in range(len(parts))]
             for parentdir in parents:
-                if parentdir not in self.directory_counts:
-                    self.directory_counts[parentdir] = 0
+                if parentdir not in self.pathmap:
                     SubversionDumper.dump_node(fp,
                               path=parentdir,
                               kind="dir",
                               action="add",
                               content="Directory creation.\n")
-                self.directory_counts[parentdir] += 1
+                    self.pathmap[parentdir] = SubversionDumper.FlowState(revision)
+                    self.pathmap[parentdir].is_directory = True
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         svnpath = SubversionDumper.svnize(branch, path)
-        if svnpath in self.filemap:
+        if svnpath in self.pathmap:
             svnop = "change"
-            self.filemap[svnpath].rev = revision
+            self.pathmap[svnpath].rev = revision
         else:
             svnop = "add",
-            self.filemap[svnpath] = SubversionDumper.FlowState(revision, {})
+            self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
         changeprops = None
         if mode == 0o100755:
-            if "svn:executable" not in self.filemap[svnpath].props:
-                self.filemap[svnpath].props["svn:executable"] = "true"
-                changeprops = self.filemap[svnpath].props
+            if "svn:executable" not in self.pathmap[svnpath].props:
+                self.pathmap[svnpath].props["svn:executable"] = "true"
+                changeprops = self.pathmap[svnpath].props
         elif mode == 0o100644:
-            if "svn:executable" in self.filemap[svnpath].props:
-                self.filemap[svnpath].props["svn:executable"] = "false"
-                changeprops = self.filemap[svnpath].props
+            if "svn:executable" in self.pathmap[svnpath].props:
+                self.pathmap[svnpath].props["svn:executable"] = "false"
+                changeprops = self.pathmap[svnpath].props
         # Branch and directory creation may be required
-        self.directory_create(fp, branch, path,
+        self.directory_create(fp, revision, branch, path,
                               parents=parents, props=changeprops)
         # The actual content
         SubversionDumper.dump_node(fp,
@@ -3253,15 +3257,15 @@ class SubversionDumper:
                   action=svnop,
                   props=changeprops,
                   content=content)
-    def filecopy(self, fp, branch, source, target):
+    def filecopy(self, fp, revision, branch, source, target):
         svnsource = SubversionDumper.svnize(branch, source)
         try:
-            flow = self.filemap[svnsource]
+            flow = self.pathmap[svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
-        self.directory_create(fp, branch, target)
+        self.directory_create(fp, revision, branch, target)
         svntarget = SubversionDumper.svnize(branch, target)
-        self.filemap[svntarget] = self.filemap[svnsource]
+        self.pathmap[svntarget] = self.pathmap[svnsource]
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
                                    kind="file",
@@ -3300,24 +3304,26 @@ class SubversionDumper:
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = SubversionDumper.svnize(event.branch, fileop.path)
-                                self.filemap[svnpath].props["svn:ignore"] = ""
+                                self.pathmap[svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
                                           kind="dir",
                                           action="change",
-                                          props = self.filemap[svnpath].props)
+                                          props = self.pathmap[svnpath].props)
                             else:
                                 self.filedelete(fp, event.branch, fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = SubversionDumper.svnize(event.branch, os.path.dirname(fileop.path))
                                 blob = self.repo.objfind(fileop.ref)
-                                self.filemap[svnpath].props["svn:ignore"] = blob.content()
+                                if svnpath not in self.pathmap:
+                                    self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
+                                self.pathmap[svnpath].props["svn:ignore"] = blob.content()
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
                                           kind="dir",
                                           action="change",
-                                          props = self.filemap[svnpath].props)
+                                          props = self.pathmap[svnpath].props)
                             else:
                                 self.filemodify(fp,
                                                 revision,
@@ -3328,6 +3334,7 @@ class SubversionDumper:
                                                 event.parents())
                         elif fileop.op == "R":
                             self.filecopy(fp,
+                                          revision,
                                           event.branch,
                                           fileop.source,
                                           fileop.target)
@@ -3339,12 +3346,9 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.branch)
-                            for path in self.filemap.keys():
+                            for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
-                                    del self.filemap[path]
-                                    supdir = os.path.dirname(path)
-                                    if supdir in self.directory_counts:
-                                        self.directory_counts[supdir] -= 1
+                                    del self.pathmap[path]
                             fp.write("Node-path: %s\n" % branchdir)
                             fp.write("Node-action: delete\n\n\n")
                         else:
