@@ -150,4 +150,12 @@ fossil-regress:
 	done
 	@rm -f /tmp/regress
 
+TRANSLOADS=bs
+trans-test:
+	@for f in $(TRANSLOADS); \
+	do \
+	    ../reposurgeon "read $${f}.fi" "prefer svn" "write $${f}.svnout"; \
+	    ./svn-to-svn -n <$${f}.svnout; \
+	done
+
 # end
