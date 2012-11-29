@@ -3108,11 +3108,10 @@ class StreamParser:
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
-    # FIXME: Doesn't work...
     def __init__(self, repo):
         self.repo = repo
         self.pathmap = {}
-        self.markmap = [None]
+        self.mark_to_revision = {}
         self.branches_created = []
         self.tag_latch = False
     class FlowState:
@@ -3223,7 +3222,7 @@ class SubversionDumper:
                                            path=svnout,
                                            kind="dir",
                                            action="add",
-                                           from_rev=self.markmap.index(parents[0].mark),
+                                           from_rev=self.mark_to_revision[parents[0].mark],
                                            from_path=SubversionDumper.svnbranch(parents[0].branch),
                                            props=props)
             else:
@@ -3336,7 +3335,7 @@ class SubversionDumper:
                     if not isinstance(event, Commit):
                         continue
                     revision += 1
-                    self.markmap.append(event.mark)
+                    self.mark_to_revision[event.mark] = revision
                     # We must treat the gitspace committer attribute
                     # as the author: gitspace author information is
                     # lost.  So is everything but the local part of
