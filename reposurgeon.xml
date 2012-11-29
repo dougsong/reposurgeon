@@ -1652,6 +1652,12 @@ branch.</para>
 <application>reposurgeon</application> also automatically breaks apart
 mixed-branch commits.</para>
 
+<para>When writing to a Subversion repository, all lightweight tags
+become Subversion tag copies with empty log comments, named for the
+tag basename.  The committer name and timestamp are copied from the
+commit the tag points to. The distinction between heads and tags is
+lost.</para>
+
 <para>Because of the preceding two points, it is not guaranteed that 
 even revision numbers will be stable when a Subversion repository
 is read in and then written out!</para>
