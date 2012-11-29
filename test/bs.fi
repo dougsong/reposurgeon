@@ -1329,8 +1329,8 @@ commit refs/tags/2.0
 mark :6
 author Eric S. Raymond <esr@thyrsus.com> 753386212 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 753386212 +0000
-data 17
-Initial revision
+data 24
+Checkin of manual page.
 from :4
 M 100644 :5 bs.xml
 
@@ -11307,8 +11307,8 @@ commit refs/tags/2.3
 mark :60
 author Eric S. Raymond <esr@thyrsus.com> 914212464 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 914212464 +0000
-data 21
-We can doi RPMs now.
+data 20
+We can do RPMs now.
 from :57
 M 100644 :58 Makefile
 M 100644 :59 bs.spec
@@ -12694,8 +12694,8 @@ commit refs/tags/2.3
 mark :65
 author Eric S. Raymond <esr@thyrsus.com> 989587600 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 989587600 +0000
-data 26
-*** empty log message ***
+data 31
+Version bump for 2.3 release. 
 from :63
 M 100644 :64 bs.spec
 
@@ -12733,8 +12733,8 @@ commit refs/tags/2.3
 mark :67
 author Eric S. Raymond <esr@thyrsus.com> 989587672 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 989587672 +0000
-data 26
-*** empty log message ***
+data 31
+Fix up man directory location.
 from :65
 M 100644 :66 bs.spec
 
@@ -13126,8 +13126,8 @@ commit refs/tags/2.4
 mark :78
 author Eric S. Raymond <esr@thyrsus.com> 1026399261 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 1026399261 +0000
-data 26
-*** empty log message ***
+data 30
+Improve the clean production.
 from :76
 M 100644 :77 Makefile
 
@@ -15684,318 +15684,8 @@ M 100644 :114 Makefile
 M 100644 :115 README
 M 100644 :116 bs.spec
 
-commit refs/tags/2.8
+blob
 mark :118
-author Eric S. Raymond <esr@thyrsus.com> 989587672 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 989587672 +0000
-data 33
-Fix some paths in the specfile.
-
-from :65
-M 100644 :66 bs.spec
-
-commit refs/tags/2.8
-mark :119
-author Eric S. Raymond <esr@thyrsus.com> 989587761 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 989587761 +0000
-data 19
-Fix version macro.
-from :118
-M 100644 :68 Makefile
-
-commit refs/tags/2.8
-mark :120
-author Eric S. Raymond <esr@thyrsus.com> 1026340256 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1026340256 +0000
-data 19
-First cut at SGML.
-from :119
-M 100644 :70 bs.xml
-
-commit refs/tags/2.8
-mark :121
-author Eric S. Raymond <esr@thyrsus.com> 1026340463 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1026340463 +0000
-data 23
-Make the right target.
-from :120
-M 100644 :72 bs.xml
-
-commit refs/tags/2.8
-mark :122
-author Eric S. Raymond <esr@thyrsus.com> 1026340819 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1026340819 +0000
-data 17
-SGML conversion.
-from :121
-M 100644 :74 Makefile
-M 100644 :75 bs.spec
-
-commit refs/tags/2.8
-mark :123
-author Eric S. Raymond <esr@thyrsus.com> 1026399261 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1026399261 +0000
-data 30
-Tweaked the clean production.
-from :122
-M 100644 :77 Makefile
-
-commit refs/tags/2.8
-mark :124
-author Eric S. Raymond <esr@thyrsus.com> 1026405057 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1026405057 +0000
-data 9
-URL fix.
-from :123
-M 100644 :79 bs.xml
-
-commit refs/tags/2.8
-mark :125
-author Eric S. Raymond <esr@thyrsus.com> 1027852699 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1027852699 +0000
-data 16
-Convert to XML.
-from :124
-M 100644 :81 Makefile
-M 100644 :82 README
-M 100644 :83 bs.xml
-
-commit refs/tags/2.8
-mark :126
-author Eric S. Raymond <esr@thyrsus.com> 1027972539 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1027972539 +0000
-data 14
-Added header.
-from :125
-M 100644 :85 bs.xml
-
-commit refs/tags/2.8
-mark :127
-author Eric S. Raymond <esr@thyrsus.com> 1028033943 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1028033943 +0000
-data 18
-Placed under GPL.
-from :126
-M 100644 :87 Makefile
-
-commit refs/tags/2.8
-mark :128
-author Eric S. Raymond <esr@thyrsus.com> 1028034161 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1028034161 +0000
-data 7
-GPLed.
-from :127
-M 100644 :89 bs.spec
-
-commit refs/tags/2.8
-mark :129
-author Eric S. Raymond <esr@thyrsus.com> 1028037467 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1028037467 +0000
-data 13
-Corrections.
-from :128
-M 100644 :91 bs.spec
-
-commit refs/tags/2.8
-mark :130
-author Eric S. Raymond <esr@thyrsus.com> 1028037509 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1028037509 +0000
-data 13
-Corrections.
-from :129
-M 100644 :93 bs.spec
-
-commit refs/tags/2.8
-mark :131
-author Eric S. Raymond <esr@thyrsus.com> 1028184038 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1028184038 +0000
-data 22
-Copyright -> License.
-from :130
-M 100644 :95 bs.spec
-
-commit refs/tags/2.8
-mark :132
-author Eric S. Raymond <esr@thyrsus.com> 1072301668 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072301668 +0000
-data 23
-Ready for 2.5 release.
-from :131
-M 100644 :97 Makefile
-M 100644 :98 README
-M 100644 :99 bs.c
-M 100644 :100 bs.spec
-
-commit refs/tags/2.8
-mark :133
-author Eric S. Raymond <esr@thyrsus.com> 1072301762 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072301762 +0000
-data 47
-Get the spec version number from the makefile.
-from :132
-M 100644 :102 Makefile
-
-commit refs/tags/2.8
-mark :134
-author Eric S. Raymond <esr@thyrsus.com> 1072301830 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072301830 +0000
-data 24
-LSM no longer a source.
-from :133
-M 100644 :104 Makefile
-
-commit refs/tags/2.8
-mark :135
-author Eric S. Raymond <esr@thyrsus.com> 1072460119 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072460119 +0000
-data 14
-Lock for 2.5.
-from :134
-M 100644 :106 bs.spec
-
-commit refs/tags/2.8
-mark :136
-author Eric S. Raymond <esr@thyrsus.com> 1072460640 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072460640 +0000
-data 26
-Version bump and cleanup.
-from :135
-M 100644 :108 Makefile
-M 100644 :109 bs.spec
-M 100644 :110 bs.xml
-
-commit refs/tags/2.8
-mark :137
-author Eric S. Raymond <esr@thyrsus.com> 1072460719 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072460719 +0000
-data 20
-Fix RPM production.
-from :136
-M 100644 :112 Makefile
-
-commit refs/tags/2.8
-mark :138
-author Eric S. Raymond <esr@thyrsus.com> 1072682153 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1072682153 +0000
-data 21
-RPM packaging fixes.
-from :137
-M 100644 :114 Makefile
-M 100644 :115 README
-M 100644 :116 bs.spec
-
-blob
-mark :139
-data 898
-#	Makefile for bs, the Battleships game
-
-VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s//\1/p')
-
-# Flags for use with the Linux ncurses package (recommended)
-TERMLIB = -lncurses
-CC = gcc
-
-# DESTDIR support
-DESTDIR = 
-
-bs: bs.c
-	$(CC) $(CFLAGS) -o bs bs.c $(TERMLIB)
-
-bs.6: bs.xml
-	xmlto man bs.xml
-
-clean:
-	rm -f bs bs.6 bs*.tar.gz bs*.rpm *~
-
-install: bs.6 uninstall
-	cp bs $(DESTDIR)/usr/bin
-	cp bs.6 $(DESTDIR)/usr/share/man/man6/bs.6
-
-uninstall:
-	rm -f /usr/bin/bs /usr/share/man/man6/bs.6
-
-SOURCES = README COPYING bs.c Makefile bs.xml bs.spec
-
-bs-$(VERSION).tar.gz: $(SOURCES) bs.6
-	@ls $(SOURCES) bs.6 | sed s:^:bs-$(VERSION)/: >MANIFEST
-	@(cd ..; ln -s bs bs-$(VERSION))
-	(cd ..; tar -czvf bs/bs-$(VERSION).tar.gz `cat bs/MANIFEST`)
-	@(cd ..; rm bs-$(VERSION))
-
-dist: bs-$(VERSION).tar.gz
-
-release: bs-$(VERSION).tar.gz bs.html
-	shipper -f; rm -f *.6 *.html CHANGES ANNOUNCE* *.lsm
-
-blob
-mark :140
-data 1530
-Name: bs
-Summary: Battleships against the computer (character-cell graphics)
-Version: 2.7
-Release: 1
-URL: http://www.catb.org/~esr/bs/
-Source0: %{name}-%{version}.tar.gz
-License: GPL
-Group: Games
-BuildRoot: %{_tmppath}/%{name}-root
-#Keywords: battleships, game, solitaire
-
-%description
-The classic game of Battleships against the computer.
-Uses character-cell graphics with a visual point-and-shoot interface.
-If you're using an xterm under Linux the mouse will work.
-
-%prep
-%setup
-
-%build
-make %{?_smp_mflags} bs bs.6
-
-%install
-[ "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf "$RPM_BUILD_ROOT"
-mkdir -p "$RPM_BUILD_ROOT"%{_bindir}
-mkdir -p "$RPM_BUILD_ROOT"%{_mandir}/man6/
-cp bs "$RPM_BUILD_ROOT"%{_bindir}
-cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
-
-%clean
-[ "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf "$RPM_BUILD_ROOT"
-%files
-%defattr(-,root,root,-)
-%{_mandir}/man6/bs.6*
-%{_bindir}/bs
-%doc README COPYING
-
-%changelog
-* Mon Dec 29 2003 Eric S. Raymond <esr@snark.thyrsus.com> 2.7-1
-- Source RPMS no longer depend on --define myversion.
-
-* Fri Dec 26 2003 Eric S. Raymond <esr@snark.thyrsus.com> 2.6-1
-- Fix a broken URL in the documentation
-
-* Wed Dec 24 2003 Eric S. Raymond <esr@snark.thyrsus.com> 2.5-1
-- Improved packaging.
-
- * v1.2 with color support and minor portability fixes, November 1990
- * v2.0 featuring strict ANSI/POSIX conformance, November 1993.
- * v2.1 with ncurses mouse support, September 1995
- * v2.2 code cleanup.
- * v2.3 bug fixes by Erik Sigra.
- * v2.4 Update the RPM production.
-
-commit refs/tags/2.8
-mark :141
-author Eric S. Raymond <esr@thyrsus.com> 1073853844 +0000
-committer Eric S. Raymond <esr@thyrsus.com> 1073853844 +0000
-data 22
-Ready to use shipper.
-from :138
-M 100644 :139 Makefile
-M 100644 :140 bs.spec
-
-blob
-mark :142
 data 17992
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
@@ -16339,16 +16029,16 @@ library.  If this is what you want to do, use the GNU Library General
 Public License instead of this License.
 
 commit refs/tags/2.8
-mark :143
+mark :119
 author Eric S. Raymond <esr@thyrsus.com> 1286928454 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1286928454 -0400
 data 32
 Belatedly check in the license.
-from :141
-M 100644 :142 COPYING
+from :117
+M 100644 :118 COPYING
 
 blob
-mark :144
+mark :120
 data 28545
 /* 
  * bs.c - original author: Bruce Holloway
@@ -17629,16 +17319,16 @@ int main(int argc, char *argv[])
 /* bs.c ends here */
 
 commit refs/tags/2.8
-mark :145
+mark :121
 author Eric S. Raymond <esr@thyrsus.com> 1287483557 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287483557 -0400
 data 22
 Use bools and stdlib.
-from :143
-M 100644 :144 bs.c
+from :119
+M 100644 :120 bs.c
 
 blob
-mark :146
+mark :122
 data 17
 bs
 *~
@@ -17646,16 +17336,16 @@ bs
 *.6
 
 commit refs/tags/2.8
-mark :147
+mark :123
 author Eric S. Raymond <esr@thyrsus.com> 1287483855 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287483855 -0400
 data 29
 Ignore some generated stuff.
-from :145
-M 100644 :146 .gitignore
+from :121
+M 100644 :122 .gitignore
 
 blob
-mark :148
+mark :124
 data 1623
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
@@ -17715,16 +17405,16 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.4 Update the RPM production.
 
 commit refs/tags/2.8
-mark :149
+mark :125
 author Eric S. Raymond <esr@thyrsus.com> 1287484006 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287484006 -0400
 data 20
 Update the history.
-from :147
-M 100644 :148 bs.spec
+from :123
+M 100644 :124 bs.spec
 
 blob
-mark :150
+mark :126
 data 26
 bs
 *~
@@ -17733,16 +17423,16 @@ bs
 MANIFEST
 
 commit refs/tags/2.8
-mark :151
+mark :127
 author Eric S. Raymond <esr@thyrsus.com> 1287484075 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287484075 -0400
 data 17
 Ignore MANIFEST.
-from :149
-M 100644 :150 .gitignore
+from :125
+M 100644 :126 .gitignore
 
 blob
-mark :152
+mark :128
 data 892
 #	Makefile for bs, the Battleships game
 
@@ -17786,16 +17476,16 @@ release: bs-$(VERSION).tar.gz bs.html
 
 
 commit refs/tags/2.8
-mark :153
+mark :129
 author Eric S. Raymond <esr@thyrsus.com> 1287484172 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287484172 -0400
-data 34
-Adapt for new shiipper machinery.
-from :151
-M 100644 :152 Makefile
+data 33
+Adapt for new shipper machinery.
+from :127
+M 100644 :128 Makefile
 
 blob
-mark :154
+mark :130
 data 3047
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -17880,16 +17570,16 @@ for updates, also other software and resources by ESR.</para>
 
 
 commit refs/tags/2.8
-mark :155
+mark :131
 author Eric S. Raymond <esr@thyrsus.com> 1287484335 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287484335 -0400
 data 32
 Suppress some warning messages.
-from :153
-M 100644 :154 bs.xml
+from :129
+M 100644 :130 bs.xml
 
 blob
-mark :156
+mark :132
 data 1421
 			BSD LICENSE
 
@@ -17921,7 +17611,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 blob
-mark :157
+mark :133
 data 936
 #	Makefile for bs, the Battleships game
 
@@ -17967,7 +17657,7 @@ release: bs-$(VERSION).tar.gz bs.html
 
 
 blob
-mark :158
+mark :134
 data 1623
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
@@ -18027,18 +17717,18 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.4 Update the RPM production.
 
 commit refs/heads/master
-mark :159
+mark :135
 author Eric S. Raymond <esr@thyrsus.com> 1287486771 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287486771 -0400
 data 23
 Change license to BSD.
-from :155
-M 100644 :156 COPYING
-M 100644 :157 Makefile
-M 100644 :158 bs.spec
+from :131
+M 100644 :132 COPYING
+M 100644 :133 Makefile
+M 100644 :134 bs.spec
 
 blob
-mark :160
+mark :136
 data 1648
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
@@ -18099,19 +17789,19 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.4 Update the RPM production.
 
 commit refs/heads/master
-mark :161
+mark :137
 author Eric S. Raymond <esr@thyrsus.com> 1290997985 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1290997985 -0500
 data 42
 Be explicit about releasing to freshmeat.
-from :159
-M 100644 :160 bs.spec
+from :135
+M 100644 :136 bs.spec
 
 reset refs/heads/master
-from :161
+from :137
 
 tag 2.8
-from :155
+from :131
 tagger Eric S. Raymond <esr@thyrsus.com> 1287484438 -0400
 data 32
 Tagged for external release 2.8
