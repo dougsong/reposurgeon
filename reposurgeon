@@ -3175,7 +3175,7 @@ class SubversionDumper:
         "The branch directory corresponding to a specified git branch."
         segments = branch.split(os.sep)
         assert segments[0] == "refs"
-        if segments == ["refs", "head", "master"]:
+        if tuple(segments) == ("refs", "heads", "master"):
             return "trunk"
         if segments[1] not in ("tags", "heads") or len(segments) != 3:
             raise Recoverable("%s can't be mapped to Subversion." % branch)
@@ -3298,6 +3298,7 @@ class SubversionDumper:
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
         # TODO: Express merges as svn:mergeinfo properties.
+        tag_latch = False
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
@@ -3392,12 +3393,18 @@ class SubversionDumper:
                                                                log=tag.comment,
                                                                author=tag.tagger.email.split("@")[0],
                                                                date=tag.tagger.date)
+                                if not tag_latch:
+                                    tag_latch = True
+                                    SubversionDumper.dump_node(fp,
+                                                           path="tags",
+                                                           kind="dir",
+                                                           action="add")
                                 SubversionDumper.dump_node(fp,
                                                            path=svntarget,
                                                            kind="dir",
                                                            action="add",
                                                            from_path=svnsource,
-                                                           from_rev=revision)
+                                                           from_rev=revision-1)
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
