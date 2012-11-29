@@ -3114,6 +3114,7 @@ class SubversionDumper:
         self.pathmap = {}
         self.markmap = [None]
         self.branches_created = []
+        self.tag_latch = False
     class FlowState:
         def __init__(self, rev, props=None):
             self.rev = rev
@@ -3295,10 +3296,29 @@ class SubversionDumper:
                                    action="add",
                                    from_path=svnsource,
                                    from_rev=flow.rev)
+    def make_tag(self, fp, revision, branch, name, log, author):
+        svnsource = SubversionDumper.svnize(branch)
+        svntarget = os.path.join("tags", name)
+        SubversionDumper.dump_revprops(fp, revision,
+                                       log=log,
+                                       author=author.email.split("@")[0],
+                                       date=author.date)
+        if not self.tag_latch:
+            self.tag_latch = True
+            SubversionDumper.dump_node(fp,
+                                   path="tags",
+                                   kind="dir",
+                                   action="add")
+        SubversionDumper.dump_node(fp,
+                                   path=svntarget,
+                                   kind="dir",
+                                   action="add",
+                                   from_path=svnsource,
+                                   from_rev=revision-1)
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
         # TODO: Express merges as svn:mergeinfo properties.
-        tag_latch = False
+        self.tag_latch = False
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
@@ -3387,24 +3407,13 @@ class SubversionDumper:
                         for tag in tags:
                             if tag.committish == event.mark:
                                 revision += 1
-                                svnsource = SubversionDumper.svnize(event.head())
-                                svntarget = os.path.join("tags", tag.name)
-                                SubversionDumper.dump_revprops(fp, revision,
-                                                               log=tag.comment,
-                                                               author=tag.tagger.email.split("@")[0],
-                                                               date=tag.tagger.date)
-                                if not tag_latch:
-                                    tag_latch = True
-                                    SubversionDumper.dump_node(fp,
-                                                           path="tags",
-                                                           kind="dir",
-                                                           action="add")
-                                SubversionDumper.dump_node(fp,
-                                                           path=svntarget,
-                                                           kind="dir",
-                                                           action="add",
-                                                           from_path=svnsource,
-                                                           from_rev=revision-1)
+                                self.make_tag(fp,
+                                              revision,
+                                              event.head(),
+                                              name=tag.name,
+                                              log=tag.comment,
+                                              author=tag.tagger)
+                                break
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
