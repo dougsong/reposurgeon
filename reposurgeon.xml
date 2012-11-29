@@ -1656,6 +1656,11 @@ mixed-branch commits.</para>
 even revision numbers will be stable when a Subversion repository
 is read in and then written out!</para>
 
+<para>Subversion repositories are always written with a standard
+(trunk/tags/branches) layout. Thus, a repository with a nonstandard 
+shape that has been analyzed by <application>reposurgeon</application>
+won't be written out with the same shape.</para>
+
 <para>Subversion has a concept of "flows"; that is, named segments of
 history corresponding to files or directories that are created when the 
 path is added, cloned when the path is copied, and deleted when the
@@ -1665,9 +1670,10 @@ uses.  Thus, after editing, the flow boundaries of a Subversion history
 may be arbitrarily changed. </para>
 
 <para>Bugs: Presently, writing out a history to a Subversion
-repository does not properly set ignore properties and does not create
-mergeinfo properties representing branch merges. It also loses all tag
-information. These bugs will probably be fixed in future
+repository does not create mergeinfo properties representing branch
+merges. It also loses all information about lightweight tags (though
+annotated tags are runed into Subversion-style directory
+copies). These bugs will probably be fixed in future
 <application>reposurgeon</application> releases.</para>
 </refsect2>
 </refsect1>
