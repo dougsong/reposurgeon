@@ -1667,6 +1667,11 @@ is read in and then written out!</para>
 shape that has been analyzed by <application>reposurgeon</application>
 won't be written out with the same shape.</para>
 
+<para>When writing a Subversion repository, branch merges are
+translated into svn:merginfo properties in the simplest possible way -
+as an svn:mergeinfo property of the translated merge commit listing 
+the merge source revisions.</para>
+
 <para>Subversion has a concept of "flows"; that is, named segments of
 history corresponding to files or directories that are created when the 
 path is added, cloned when the path is copied, and deleted when the
@@ -1674,13 +1679,6 @@ path is deleted. This information is not preserved in import streams or
 the internal representation that <application>reposurgeon</application>
 uses.  Thus, after editing, the flow boundaries of a Subversion history
 may be arbitrarily changed. </para>
-
-<para>Bugs: Presently, writing out a history to a Subversion
-repository does not create mergeinfo properties representing branch
-merges. It also loses all information about lightweight tags (though
-annotated tags are runed into Subversion-style directory
-copies). These bugs will probably be fixed in future
-<application>reposurgeon</application> releases.</para>
 </refsect2>
 </refsect1>
 

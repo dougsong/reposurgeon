@@ -2439,7 +2439,7 @@ class StreamParser:
                                                 (_, end) = span.split("-")
                                             else:
                                                 end = span
-                                            # Because mergenfo properties will
+                                            # Because mergeinfo properties will
                                             # persist like other properties,
                                             # we want to record the earliest
                                             # instance of a merge to a given
@@ -3132,7 +3132,7 @@ class SubversionDumper:
                              % (len(key), key, len(val), val)
         return flattened
     @staticmethod
-    def dump_revprops(fp, revision, date, author=None, log=None):
+    def dump_revprops(fp, revision, date, author=None, log=None, parents=None):
         "Emit a Revision-number record describing unversioned properties."
         fp.write("Revision-number: %d\n" % revision)
         revprops = ""
@@ -3140,6 +3140,17 @@ class SubversionDumper:
         revprops += SubversionDumper.svnprops({"svn:author": author})
         # Ugh.  Subversion apparently insists on those decimal places
         revprops += SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"})
+        # Hack merge links into mergeinfo properties.  This is a kluge
+        # - the Subversion model is really like cherrypicking rather
+        # than branch merging - but it's better than nothing, and
+        # should at least round-trip with the logic in the Subversion
+        # dump parser.
+        parents = parents or []
+        if parents[1:]:
+            ancestral = parents[1:]
+            ancestral.sort()
+            ancestral = ".".join(str(x) for x in ancestral)
+            revprops += SubversionDumper.svnprops({"svn:mergeinfo", ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
         fp.write("Content-length: %d\n\n" % len(revprops))
@@ -3316,7 +3327,6 @@ class SubversionDumper:
                                    from_rev=revision-1)
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
-        # TODO: Express merges as svn:mergeinfo properties.
         self.tag_latch = False
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
@@ -3340,10 +3350,13 @@ class SubversionDumper:
                     # as the author: gitspace author information is
                     # lost.  So is everything but the local part of
                     # the committer name.
+                    backlinks = [self.mark_to_revision[mark]
+                                 for mark in event.parents()[1:]]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment,
                                                    author=event.committer.email.split("@")[0],
-                                                   date=event.committer.date)
+                                                   date=event.committer.date,
+                                                   parents=backlinks)
                     for fileop in event.fileops:
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
