@@ -15,7 +15,7 @@
 #
 # The -v option argument will be used to set reposurgeon's verbose option.
 #
-# The -s op[tion strips out generated time-varying headers - the UUID and
+# The -s option strips out generated time-varying headers - the UUID and
 # the timestamp in revision zero.  This is necessary for file comparisons 
 # in regression tests.
 #
