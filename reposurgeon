@@ -3270,6 +3270,7 @@ class SubversionDumper:
         else:
             svnop = "add",
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
+            self.pathmap[svnpath].subfiles += 1
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
         changeprops = None
