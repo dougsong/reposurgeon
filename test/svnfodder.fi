@@ -54,8 +54,8 @@ commit refs/heads/master
 mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1354282863 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354282910 -0500
-data 53
-We're going to point a tag named "lightweight" here.
+data 46
+A tag named "lightweight" used to point here.
 from :6
 M 100644 :7 README
 
@@ -256,7 +256,7 @@ mark :30
 author Eric S. Raymond <esr@thyrsus.com> 1354285113 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354285113 -0500
 data 47
-Remame a file.  We want this to generate an R.
+Rename a file.  We want this to generate an R.
 from :29
 R "README" "RENAMED"
 

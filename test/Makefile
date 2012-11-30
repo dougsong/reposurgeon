@@ -11,8 +11,6 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
 	../reposurgeon "read $<" "prefer git" "write $@"
-.fi.svn:
-	../reposurgeon "read $<" "prefer svn" "write $@"
 .svn.map:
 	../reposurgeon "read $<" "prefer git" "fossils write $@"
 

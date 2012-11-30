@@ -62,7 +62,7 @@ if [ $strip = T ]
 then
     seen_uuid=F
     seen_date=F
-    while read -r line
+    while IFS= read -r line
     do
 	case $line in
 	    [0-9]*)
