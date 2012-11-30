@@ -120,7 +120,7 @@ svnload-buildregress:
 	    fi \
 	done
 svnload-regress:
-	echo "Test loading of Subversion streams:"
+	@echo "Test loading of Subversion streams:"
 	@for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
@@ -165,7 +165,7 @@ svndump-buildregress:
 	done
 	@make --quiet clean
 svndump-regress:
-	echo "Test dumping of Subversion streams:"
+	@echo "Test dumping of Subversion streams:"
 	@for test in $(DUMPLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
