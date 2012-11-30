@@ -151,11 +151,24 @@ fossil-regress:
 	@rm -f /tmp/regress
 
 TRANSLOADS=bs
-trans-test:
+trans-buildregress:
 	@for f in $(TRANSLOADS); \
 	do \
-	    ../reposurgeon "read $${f}.fi" "prefer svn" "write $${f}.svnout"; \
-	    ./svn-to-svn -n <$${f}.svnout; \
+	    echo "Remaking $${f}.chk"; \
+	    ../reposurgeon "read $${f}.fi" "prefer svn" "write" | svn-to-svn -s >$${f}.chk; \
 	done
+	@make --quiet clean
+trans-regress:
+	@for test in $(TRANSLOADS); \
+	do \
+	    if [ ! -f $${test}.tst ] ; \
+	    then \
+		(if echo "Testing $${test}" >&2; \
+		../reposurgeon "read $${test}.fi" "prefer svn" "write" | svn-to-svn -s >/tmp/regress 2>&1; \
+		then diff -u $${test}.chk /tmp/regress; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;); \
+	    fi \
+	done
+	@rm -f /tmp/regress
 
 # end
