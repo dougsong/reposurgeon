@@ -3351,7 +3351,7 @@ class SubversionDumper:
                     # lost.  So is everything but the local part of
                     # the committer name.
                     backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parents()[1:]]
+                                 for mark in event.parentMarks()[1:]]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment,
                                                    author=event.committer.email.split("@")[0],
@@ -3368,7 +3368,7 @@ class SubversionDumper:
                                           action="change",
                                           props = self.pathmap[svnpath].props)
                             else:
-                                self.filedelete(fp, event.branch, fileop.path)
+                                self.filedelete(fp, event.head(), fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = SubversionDumper.svnize(event.head(),
