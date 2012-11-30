@@ -154,7 +154,7 @@ fossil-regress:
 	@rm -f /tmp/regress
 
 # Test dumping to Subversion
-DUMPLOADS=bs
+DUMPLOADS=bs svnfodder
 svndump-buildregress:
 	@for f in $(DUMPLOADS); \
 	do \
