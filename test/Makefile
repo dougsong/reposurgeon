@@ -170,12 +170,13 @@ svndump-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo "$${test}.fi" >&2; \
-		../reposurgeon "read $${test}.fi" "prefer svn" "write" | svn-to-svn -s >/tmp/regress 2>&1; \
-		then diff -u $${test}.chk /tmp/regress; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;); \
+		if echo "$${test}.fi" >&2; \
+		../reposurgeon "read $${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		then diff -u $${test}.chk /tmp/stripped$$$$; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
+		svn-to-svn -n </tmp/prestripped$$$$; \
 	    fi \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
 
 # end
