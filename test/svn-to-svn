@@ -15,6 +15,10 @@
 #
 # The -v option argument will be used to set reposurgeon's verbose option.
 #
+# The -s op[tion strips out generated time-varying headers - the UUID and
+# the timestamp in revision zero.  This is necessary for file comparisons 
+# in regression tests.
+#
 # The -t option allows property extensions to be generated.  It's turned
 # off by default because git-import chokes on it.
 #
@@ -33,23 +37,33 @@ edit=F
 stream=F
 undump=T
 cleanup=T
+strip=F
 verbose="0"
 # Suppress fossil emission by default
 streamopts='prefer git'
 
-while getopts degnrtv: opt
+while getopts degnrstv: opt
 do
     case $opt in
-        e) extract=F ; view=F ; edit=T ; stream=F ; undump=F ; cleanup=T ;;
-	n) extract=T ; view=F ; edit=F ; stream=F ; undump=F ; cleanup=F ;;
-        g) extract=F ; view=T ; edit=F ; stream=F ; undump=F ; cleanup=F ;;
-        r) extract=F ; view=F ; edit=F ; stream=T ; undump=F ; cleanup=F ;;
-        d) extract=F ; view=F ; edit=F ; stream=F ; undump=T ; cleanup=F ;;
+        e) extract=F; view=F; edit=T; stream=F; undump=F; cleanup=T strip=F;;
+	n) extract=T; view=F; edit=F; stream=F; undump=F; cleanup=F strip=F;;
+        g) extract=F; view=T; edit=F; stream=F; undump=F; cleanup=F strip=F;;
+        r) extract=F; view=F; edit=F; stream=T; undump=F; cleanup=F strip=F;;
+        d) extract=F; view=F; edit=F; stream=F; undump=T; cleanup=F strip=F;;
+        s) extract=F; view=F; edit=F; stream=F; undump=F; cleanup=F strip=T;;
 	t) streamopts="" ;;
 	v) verbose="$OPTARG" ;;
     esac
 done
 shift $(($OPTIND - 1))
+
+# Should we strip time-varying headers out of the input dump file?
+if [ $strip = T ]
+then
+    sed \
+	-e '/^UUID.*/s//UUID LINE MUNGED FOR REGRESSION-TEST PURPOSES/' \
+	-e '/^[0-9]/s/.*/DATE LINE MUNGED FOR REGRESSION-TEST PURPOSES/'
+fi
 
 # Should we build a repo from the input file?
 if [ $extract = T ]
