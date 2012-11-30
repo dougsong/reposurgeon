@@ -50,7 +50,7 @@ features of the Subversion dump code.
 
 Add a spacer commit at which we will point a lightweight tag.
 
-commit refs/original/refs/heads/master
+commit refs/heads/master
 mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1354282863 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354282910 -0500
@@ -66,7 +66,7 @@ data 13
 *.pyc
 .a
 
-commit refs/original/refs/heads/master
+commit refs/heads/master
 mark :10
 author Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
@@ -84,7 +84,7 @@ features of the Subversion dump code.
 Randomly mess with the README file content on the master branch.
 
 
-commit refs/original/refs/heads/master
+commit refs/heads/master
 mark :12
 author Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
@@ -140,7 +140,7 @@ This is a merge commit.
 
 
 
-commit refs/original/refs/heads/master
+commit refs/heads/master
 mark :18
 author Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
