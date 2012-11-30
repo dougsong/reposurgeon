@@ -60,9 +60,20 @@ shift $(($OPTIND - 1))
 # Should we strip time-varying headers out of the input dump file?
 if [ $strip = T ]
 then
-    sed \
-	-e '/^UUID.*/s//UUID LINE MUNGED FOR REGRESSION-TEST PURPOSES/' \
-	-e '/^[0-9]/s/.*/DATE LINE MUNGED FOR REGRESSION-TEST PURPOSES/'
+    seen_uuid=F
+    seen_date=F
+    while read -r line
+    do
+	case $line in
+	    [0-9]*)
+		if [ $seen_date = T ]; then echo "$line"; fi ;  
+		seen_date=T ;;
+	    UUID*)  
+		if [ $seen_uuid = T ]; then echo "$line"; fi ; 
+		seen_uuid=T ;;
+	    *) echo "$line" ;;
+	esac
+    done
 fi
 
 # Should we build a repo from the input file?
