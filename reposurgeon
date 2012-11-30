@@ -3245,6 +3245,7 @@ class SubversionDumper:
             if svnout not in self.pathmap:
                 self.pathmap[svnout] = SubversionDumper.FlowState(revision)
                 self.pathmap[svnout].is_directory = True
+                self.pathmap[svnout].subfiles += 1
         # Create all directory segments required
         # to get down to the level where we can
         # create the file.
@@ -3259,8 +3260,10 @@ class SubversionDumper:
                               kind="dir",
                               action="add",
                               content="Directory creation.\n")
-                    self.pathmap[parentdir] = SubversionDumper.FlowState(revision)
-                    self.pathmap[parentdir].is_directory = True
+                    fullpath = os.path.join(svnout, parentdir)
+                    self.pathmap[fullpath] = SubversionDumper.FlowState(revision)
+                    self.pathmap[fullpath].is_directory = True
+                    self.pathmap[fullpath].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         svnpath = SubversionDumper.svnize(branch, path)
@@ -3270,7 +3273,6 @@ class SubversionDumper:
         else:
             svnop = "add",
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
-            self.pathmap[svnpath].subfiles += 1
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
         changeprops = None
