@@ -1,7 +1,7 @@
 # Test-suite makefile for reposurgeon
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
-		git-regress svn-regress fossil-regress
+		git-regress svnload-regress fossil-regress svndump-regress
 	@echo "No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
@@ -11,10 +11,12 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
 	../reposurgeon "read $<" "prefer git" "write $@"
+.fi.svn:
+	../reposurgeon "read $<" "prefer svn" "write $@"
 .svn.map:
 	../reposurgeon "read $<" "prefer git" "fossils write $@"
 
-buildregress: fi-buildregress svn-buildregress fossil-buildregress
+buildregress: fi-buildregress svnload-buildregress fossil-buildregress svndump-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout *~
@@ -80,6 +82,7 @@ coalesce:
 	done
 	@rm -f /tmp/regress
 
+# Test the git extractor
 GITLOADS = bs
 git-regress:
 	@for test in $(GITLOADS); do \
@@ -106,8 +109,9 @@ svn-branchy: svn-flat
 svn-dump:
 	@svnadmin dump test-repo 
 
+# Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
-svn-buildregress:
+svnload-buildregress:
 	@for test in $(SVNLOADS); do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
@@ -115,12 +119,13 @@ svn-buildregress:
 		    rm -f $${test}.chk && make --quiet $${test}.chk; \
 	    fi \
 	done
-svn-regress:
+svnload-regress:
+	echo "Test loading of Subversion streams:"
 	@for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo -n "Testing $${test}" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
+		(if echo -n "$${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		../reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
@@ -150,20 +155,22 @@ fossil-regress:
 	done
 	@rm -f /tmp/regress
 
-TRANSLOADS=bs
-trans-buildregress:
-	@for f in $(TRANSLOADS); \
+# Test dumping to Subversion
+DUMPLOADS=bs
+svndump-buildregress:
+	@for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
 	    ../reposurgeon "read $${f}.fi" "prefer svn" "write" | svn-to-svn -s >$${f}.chk; \
 	done
 	@make --quiet clean
-trans-regress:
-	@for test in $(TRANSLOADS); \
+svndump-regress:
+	echo "Test dumping of Subversion streams:"
+	@for test in $(DUMPLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo "Testing $${test}" >&2; \
+		(if echo "$${test}.fi" >&2; \
 		../reposurgeon "read $${test}.fi" "prefer svn" "write" | svn-to-svn -s >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;); \
