@@ -3256,10 +3256,9 @@ class SubversionDumper:
             for parentdir in parents:
                 if parentdir not in self.pathmap:
                     SubversionDumper.dump_node(fp,
-                              path=parentdir,
-                              kind="dir",
-                              action="add",
-                              content="Directory creation.\n")
+                                               path=parentdir,
+                                               kind="dir",
+                                               action="add")
                     fullpath = os.path.join(svnout, parentdir)
                     self.pathmap[fullpath] = SubversionDumper.FlowState(revision)
                     self.pathmap[fullpath].is_directory = True
