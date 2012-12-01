@@ -104,29 +104,23 @@ V 27
 2012-11-30T13:37:03.000000Z
 PROPS-END
 
-Node-path: foo
+Node-path: trunk/foo
 Node-kind: dir
 Node-action: add
 Prop-content-length: 10
-Text-content-length: 20
-Text-content-sha1: 84565475157721f16d79fba728cea0514f566ce3
-Content-length: 30
+Content-length: 10
 
 PROPS-END
 
-Directory creation.
 
-Node-path: foo/bar
+Node-path: trunk/foo/bar
 Node-kind: dir
 Node-action: add
 Prop-content-length: 10
-Text-content-length: 20
-Text-content-sha1: 84565475157721f16d79fba728cea0514f566ce3
-Content-length: 30
+Content-length: 10
 
 PROPS-END
 
-Directory creation.
 
 Node-path: trunk/foo/bar/junk
 Node-kind: file

@@ -3256,7 +3256,7 @@ class SubversionDumper:
             for parentdir in parents:
                 if parentdir not in self.pathmap:
                     SubversionDumper.dump_node(fp,
-                                               path=parentdir,
+                                               path=os.path.join(svnout,parentdir),
                                                kind="dir",
                                                action="add")
                     fullpath = os.path.join(svnout, parentdir)
