@@ -47,7 +47,6 @@ Content-length: 10
 PROPS-END
 
 
-Path map is: ['branches', 'trunk']
 Node-path: trunk/README
 Node-kind: file
 Node-action: add
@@ -136,7 +135,6 @@ Content-length: 10
 PROPS-END
 
 
-Path map is: ['trunk/foo/bar', 'branches', 'trunk/README', 'trunk', 'trunk/foo', 'trunk/']
 Node-path: trunk/foo/bar/junk
 Node-kind: file
 Node-action: add
@@ -203,7 +201,6 @@ V 27
 2012-12-02T05:43:44.000000Z
 PROPS-END
 
-Path map is: ['trunk/foo/bar', 'branches', 'trunk/foo/bar/junk', 'trunk/README', 'trunk', 'trunk/foo', 'trunk/']
 Node-path: trunk/hello
 Node-kind: file
 Node-action: add
@@ -266,7 +263,6 @@ V 27
 2012-12-02T05:46:11.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'trunk', 'trunk/hello', 'trunk/']
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
@@ -302,7 +298,6 @@ V 27
 2012-12-02T05:48:20.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'trunk', 'trunk/hello', 'trunk/']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -340,7 +335,6 @@ V 27
 2012-12-02T05:48:32.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'trunk', 'trunk/hello', 'trunk/']
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
@@ -376,7 +370,6 @@ V 27
 2012-12-02T06:02:42.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'trunk', 'trunk/hello', 'trunk/']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -455,7 +448,6 @@ V 27
 2012-12-02T06:05:11.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'trunk', 'trunk/hello', 'trunk/']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -506,7 +498,6 @@ Content-length: 10
 PROPS-END
 
 
-Path map is: ['branches', 'trunk/README', 'branches/alternate/README', 'trunk', 'trunk/hello', 'branches/alternate', 'branches/alternate/', 'branches/alternate/hello', 'trunk/']
 Node-path: branches/alternate/README
 Node-kind: file
 Node-action: change
@@ -546,7 +537,6 @@ V 27
 2012-12-02T06:12:55.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'branches/alternate/README', 'trunk', 'trunk/hello', 'branches/alternate', 'branches/alternate/', 'branches/alternate/hello', 'trunk/']
 Node-path: branches/alternate/README
 Node-kind: file
 Node-action: change
@@ -611,7 +601,6 @@ V 27
 2012-12-02T06:08:27.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'branches/alternate/README', 'trunk', 'trunk/hello', 'branches/alternate', 'branches/alternate/', 'branches/alternate/hello', 'trunk/']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -647,7 +636,6 @@ V 27
 2012-12-02T06:15:01.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/README', 'branches/alternate/README', 'trunk', 'trunk/hello', 'branches/alternate', 'branches/alternate/', 'branches/alternate/hello', 'trunk/']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
