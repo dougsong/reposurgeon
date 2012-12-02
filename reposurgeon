@@ -419,6 +419,7 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
+DEBUG_SVNDUMP   = 1    # Debug Subversion dumping
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
 DEBUG_IGNORES   = 3    # Debug ignore generation
@@ -3203,6 +3204,8 @@ class SubversionDumper:
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
+        if verbose >= DEBUG_SVNDUMP:
+            announce("filedelete%s" % repr((branch, path)))
         svnpath = SubversionDumper.svnize(branch, path)
         fp.write("Node-path: %s\n" % svnpath)
         fp.write("Node-action: delete\n\n\n")
@@ -3265,6 +3268,8 @@ class SubversionDumper:
                     self.pathmap[fullpath].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
+        if verbose >= DEBUG_SVNDUMP:
+            announce("filemodify%s" % repr((revision, branch, mode, ref, path, parents)))
         svnpath = SubversionDumper.svnize(branch, path)
         if svnpath in self.pathmap:
             svnop = "change"
@@ -3294,6 +3299,8 @@ class SubversionDumper:
                   props=changeprops,
                   content=content)
     def filecopy(self, fp, revision, branch, source, target):
+        if verbose >= DEBUG_SVNDUMP:
+            announce("filecopy%s" % repr((revision, branch, source, target)))
         svnsource = SubversionDumper.svnize(branch, source)
         try:
             flow = self.pathmap[svnsource]
@@ -3309,6 +3316,8 @@ class SubversionDumper:
                                    from_path=svnsource,
                                    from_rev=flow.rev)
     def make_tag(self, fp, revision, branch, name, log, author):
+        if verbose >= DEBUG_SVNDUMP:
+            announce("make_tag%s" % repr((revision, branch, name, log, author)))
         svnsource = SubversionDumper.svnize(branch)
         svntarget = os.path.join("tags", name)
         SubversionDumper.dump_revprops(fp, revision,
