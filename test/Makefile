@@ -172,7 +172,7 @@ svndump-regress:
 		../reposurgeon "read $${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
-		svn-to-svn -n </tmp/prestripped$$$$; \
+		svn-to-svn -n -q </tmp/prestripped$$$$; \
 	    fi \
 	done
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$

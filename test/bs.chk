@@ -47,7 +47,6 @@ Content-length: 10
 PROPS-END
 
 
-Path map is: ['branches', 'trunk']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: add
@@ -80,7 +79,6 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
-Path map is: ['trunk/Makefile', 'branches', 'trunk']
 Node-path: trunk/README
 Node-kind: file
 Node-action: add
@@ -125,7 +123,6 @@ O.K., I feel better now that I've got that off my chest...
 						esr@snark.uu.net
 
 
-Path map is: ['trunk/Makefile', 'branches', 'trunk/README', 'trunk']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: add
@@ -1378,7 +1375,6 @@ V 27
 1993-11-15T17:56:52.000000Z
 PROPS-END
 
-Path map is: ['trunk/bs.c', 'trunk/Makefile', 'branches', 'trunk/README', 'trunk']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: add
@@ -1451,7 +1447,6 @@ V 27
 1993-11-15T18:01:23.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -1486,7 +1481,6 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -1536,7 +1530,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 						esr@snark.thyrsus.com
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -2821,7 +2814,6 @@ char *argv[];
 
 /* bs.c ends here */
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -2931,7 +2923,6 @@ V 27
 1994-10-23T20:12:32.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -3007,7 +2998,6 @@ V 27
 1994-10-23T20:26:27.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -3042,7 +3032,6 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -4347,7 +4336,6 @@ V 27
 1994-10-24T20:35:56.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -5656,7 +5644,6 @@ V 27
 1994-10-24T20:51:08.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -5714,7 +5701,6 @@ V 27
 1994-11-21T20:47:41.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -5764,7 +5750,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 						esr@snark.thyrsus.com
 					(WWW: //www.thyrsus.com/~esr/home.html)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -5843,7 +5828,6 @@ V 27
 1994-11-21T21:03:34.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -5893,7 +5877,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.thyrsus.com/~esr/home.html)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -5972,7 +5955,6 @@ V 27
 1995-05-07T03:23:46.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -7287,7 +7269,6 @@ V 27
 1995-05-07T04:04:30.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -7345,7 +7326,6 @@ V 27
 1995-05-08T01:37:29.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -7395,7 +7375,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.ccil.org/~esr/home.html)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -7474,7 +7453,6 @@ V 27
 1995-09-18T03:01:30.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -8791,7 +8769,6 @@ V 27
 1995-12-06T03:42:08.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -8860,7 +8837,6 @@ V 27
 1995-12-06T03:57:44.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: add
@@ -8913,7 +8889,6 @@ V 27
 1995-12-06T03:58:08.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -8981,7 +8956,6 @@ V 27
 1995-12-06T04:16:05.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -9049,7 +9023,6 @@ V 27
 1995-12-06T04:20:00.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -9118,7 +9091,6 @@ V 27
 1995-12-06T13:11:40.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -9171,7 +9143,6 @@ V 27
 1995-12-06T13:51:50.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -9224,7 +9195,6 @@ V 27
 1995-12-07T23:06:02.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -9293,7 +9263,6 @@ V 27
 1996-05-09T02:14:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -10585,7 +10554,6 @@ V 27
 1998-08-14T03:53:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -11900,7 +11868,6 @@ V 27
 1998-08-14T04:00:14.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -11994,7 +11961,6 @@ V 27
 1998-12-21T03:54:24.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -12053,7 +12019,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(V)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -12110,7 +12075,6 @@ V 27
 2001-05-07T20:27:59.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -12169,7 +12133,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(V)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -13500,7 +13463,6 @@ V 27
 2001-05-11T13:26:40.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -13557,7 +13519,6 @@ V 27
 2001-05-11T13:27:52.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -13639,7 +13600,6 @@ V 27
 2001-05-11T13:29:21.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -13717,7 +13677,6 @@ V 27
 2002-07-10T22:30:56.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -13823,7 +13782,6 @@ V 27
 2002-07-10T22:34:23.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -13929,7 +13887,6 @@ V 27
 2002-07-10T22:40:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -13992,7 +13949,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -14047,7 +14003,6 @@ V 27
 2002-07-11T14:54:21.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -14129,7 +14084,6 @@ V 27
 2002-07-11T16:30:57.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -14235,7 +14189,6 @@ V 27
 2002-07-28T10:38:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -14298,7 +14251,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -14348,7 +14300,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.tuxedo.org/~esr/home.html)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -14456,7 +14407,6 @@ V 27
 2002-07-29T19:55:39.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -14565,7 +14515,6 @@ V 27
 2002-07-30T12:59:03.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -14647,7 +14596,6 @@ V 27
 2002-07-30T13:02:41.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -14702,7 +14650,6 @@ V 27
 2002-07-30T13:57:47.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -14757,7 +14704,6 @@ V 27
 2002-07-30T13:58:29.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -14838,7 +14784,6 @@ V 27
 2002-08-01T06:40:38.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -14895,7 +14840,6 @@ V 27
 2003-12-24T21:34:28.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -14952,7 +14896,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -15002,7 +14945,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.catb.org/~esr/home.html)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -16309,7 +16251,6 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16379,7 +16320,6 @@ V 27
 2003-12-24T21:36:02.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -16450,7 +16390,6 @@ V 27
 2003-12-24T21:37:10.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -16521,7 +16460,6 @@ V 27
 2003-12-26T17:35:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16616,7 +16554,6 @@ V 27
 2003-12-26T17:44:00.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -16668,7 +16605,6 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16722,7 +16658,6 @@ make install
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -16831,7 +16766,6 @@ V 27
 2003-12-26T17:45:19.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -16927,7 +16861,6 @@ V 27
 2003-12-29T07:15:53.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -16975,7 +16908,6 @@ bs-$(VERSION).tar.gz: $(SOURCES) bs.6
 
 dist: bs-$(VERSION).tar.gz
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -17025,7 +16957,6 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.catb.org/~esr/)
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -17133,7 +17064,6 @@ V 27
 2010-10-13T00:07:34.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/COPYING
 Node-kind: file
 Node-action: add
@@ -17504,7 +17434,6 @@ V 27
 2010-10-19T10:19:17.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile']
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -18866,7 +18795,6 @@ V 27
 2010-10-19T10:26:46.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -18990,7 +18918,6 @@ V 27
 2010-10-19T10:29:32.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -19061,7 +18988,6 @@ V 27
 2010-10-19T10:32:15.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -19203,7 +19129,6 @@ V 27
 2010-10-19T11:12:51.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/COPYING
 Node-kind: file
 Node-action: change
@@ -19243,7 +19168,6 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -19297,7 +19221,6 @@ release: bs-$(VERSION).tar.gz bs.html
 	shipper -u -m -t; make clean
 
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -19384,7 +19307,6 @@ V 27
 2010-11-29T02:33:05.000000Z
 PROPS-END
 
-Path map is: ['branches', 'trunk/bs.xml', 'trunk/bs.spec', 'trunk/bs.c', 'trunk/COPYING', 'trunk/README', 'trunk', 'trunk/Makefile', 'trunk/']
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
