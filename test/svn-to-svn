@@ -6,6 +6,8 @@
 # and check out a working copy for editing, but do not stream the
 # result to stdout and do not delete the repo.
 #
+# The -q option suppresses progress messages from svnadmin load. 
+#
 # With the -d option, expect the repo to exist, undump the repo to
 # a Subversion dump file; then do not delete the repo.
 #
@@ -27,7 +29,8 @@
 #
 # To add complexity to a test load, do -n, then edit the test repo with
 # Subversion, then use -d. Note: you must commit to force the repo to
-# be up to date before streaming it. 
+# be up to date before streaming it. Also note that any embedded comments
+# will be lost.
 #
 PATH=$PATH:../..
 
@@ -39,10 +42,11 @@ undump=T
 cleanup=T
 strip=F
 verbose="0"
+quiet=""
 # Suppress fossil emission by default
 streamopts='prefer git'
 
-while getopts degnrstv: opt
+while getopts degnrstv:q opt
 do
     case $opt in
         e) extract=F; view=F; edit=T; stream=F; undump=F; cleanup=T strip=F;;
@@ -52,6 +56,7 @@ do
         d) extract=F; view=F; edit=F; stream=F; undump=T; cleanup=F strip=F;;
         s) extract=F; view=F; edit=F; stream=F; undump=F; cleanup=F strip=T;;
 	t) streamopts="" ;;
+	q) quiet=-q ;;
 	v) verbose="$OPTARG" ;;
     esac
 done
@@ -81,7 +86,7 @@ if [ $extract = T ]
 then
     rm -fr test-repo test-checkout
     svnadmin create test-repo
-    svnadmin load test-repo >/dev/null
+    svnadmin load ${quiet} test-repo
     svn co file://${PWD}/test-repo test-checkout >/dev/null
 fi
 
