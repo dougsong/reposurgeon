@@ -626,3 +626,37 @@ Second post-split commit on the main branch.
 
 
 
+Revision-number: 17
+Prop-content-length: 128
+Content-length: 128
+
+K 7
+svn:log
+V 30
+Attempt to generate a rename.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T22:52:52.000000Z
+PROPS-END
+
+Node-path: trunk/goodbye
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 9
+Node-copyfrom-path: trunk/hello
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/hello
+Node-action: delete
+
+

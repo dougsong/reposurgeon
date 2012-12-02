@@ -246,8 +246,17 @@ Second commit on the main branch.
 from :25
 M 100644 :26 README
 
-reset refs/heads/master
+commit refs/heads/master
+mark :28
+author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+data 30
+Attempt to generate a rename.
 from :27
+R "hello" "goodbye"
+
+reset refs/heads/master
+from :28
 
 tag annotated
 from :17
