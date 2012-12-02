@@ -19102,31 +19102,6 @@ PROPS-END
 
 
 Revision-number: 65
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2010-10-19T10:32:15.000000Z
-PROPS-END
-
-Node-path: tags/2.8
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 64
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 66
 Prop-content-length: 121
 Content-length: 121
 
@@ -19304,7 +19279,7 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
-Revision-number: 67
+Revision-number: 66
 Prop-content-length: 140
 Content-length: 140
 
@@ -19391,7 +19366,7 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
-Revision-number: 68
+Revision-number: 67
 Prop-content-length: 80
 Content-length: 80
 
@@ -19408,7 +19383,7 @@ PROPS-END
 Node-path: tags/master
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 67
+Node-copyfrom-rev: 66
 Node-copyfrom-path: trunk/
 Prop-content-length: 10
 Content-length: 10

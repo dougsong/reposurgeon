@@ -3227,28 +3227,19 @@ class SubversionDumper:
                 del self.pathmap[svnpath]
     def directory_create(self, fp, revision, branch, path,
                          parents=None, props=None):
+        if verbose >= DEBUG_SVNDUMP:
+            announce("directory_create%s" % repr((revision, branch, path)))
+        creations = []
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
         if svnout not in self.branches_created:
             self.branches_created.append(svnout)
             if parents:
-                SubversionDumper.dump_node(fp,
-                                           path=svnout,
-                                           kind="dir",
-                                           action="add",
-                                           from_rev=self.mark_to_revision[parents[0].mark],
-                                           from_path=SubversionDumper.svnbranch(parents[0].branch),
-                                           props=props)
+                from_rev = self.mark_to_revision[parents[0].mark],
+                from_branch = SubversionDumper.svnbranch(parents[0].branch),
+                creations.append((svnout, from_rev, from_branch, props))
             else:
-                SubversionDumper.dump_node(fp,
-                                           path=svnout,
-                                           kind="dir",
-                                           action="add",
-                                           props=props)
-            if svnout not in self.pathmap:
-                self.pathmap[svnout] = SubversionDumper.FlowState(revision)
-                self.pathmap[svnout].is_directory = True
-                self.pathmap[svnout].subfiles += 1
+                creations.append((svnout, None, None, props))
         # Create all directory segments required
         # to get down to the level where we can
         # create the file.
@@ -3259,13 +3250,18 @@ class SubversionDumper:
             for parentdir in parents:
                 if parentdir not in self.pathmap:
                     fullpath = os.path.join(svnout, parentdir)
-                    SubversionDumper.dump_node(fp,
-                                               path=fullpath,
-                                               kind="dir",
-                                               action="add")
-                    self.pathmap[fullpath] = SubversionDumper.FlowState(revision)
-                    self.pathmap[fullpath].is_directory = True
-                    self.pathmap[fullpath].subfiles += 1
+                    creations.append((fullpath, None, None, None))
+        for (path, from_rev, from_path, props) in creations:
+            SubversionDumper.dump_node(fp,
+                                       path=path,
+                                       kind="dir",
+                                       action="add",
+                                       from_rev=from_rev,
+                                       from_path=from_path,
+                                       props=props)
+            self.pathmap[path] = SubversionDumper.FlowState(revision)
+            self.pathmap[path].is_directory = True
+            self.pathmap[path].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         if verbose >= DEBUG_SVNDUMP:
