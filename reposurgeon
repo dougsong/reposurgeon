@@ -3239,8 +3239,12 @@ class SubversionDumper:
             self.branches_created.append(svnout)
             if parents:
                 from_rev = self.mark_to_revision[parents[0].mark],
-                from_branch = SubversionDumper.svnbranch(parents[0].branch),
+                from_branch = SubversionDumper.svnbranch(parents[0].branch)
                 creations.append((svnout, from_rev, from_branch, props))
+                for (key, value) in self.pathmap.items():
+                    if key.startswith(from_branch + os.sep) and key != from_branch:
+                        counterpart = svnout + key[len(from_branch):]
+                        self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
             else:
                 creations.append((svnout, None, None, props))
         # Create all directory segments required
@@ -3275,7 +3279,7 @@ class SubversionDumper:
             svnop = "change"
             self.pathmap[svnpath].rev = revision
         else:
-            svnop = "add",
+            svnop = "add"
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
