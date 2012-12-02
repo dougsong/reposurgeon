@@ -42,7 +42,7 @@ shift $(($OPTIND - 1))
 if [ $extract = True ]
 then
     rm -fr $testrepo; mkdir $testrepo
-    (cd $testrepo >/dev/null; git init >/dev/null; git fast-import --quiet) 
+    (cd $testrepo >/dev/null; git init --quiet; git fast-import --quiet; git checkout) 
 fi
 
 # Should we view the repo?
