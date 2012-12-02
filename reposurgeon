@@ -1275,7 +1275,9 @@ class Commit:
             raise Recoverable("could not create checkout directory or files.")
         return directory
     def head(self):
-        "Return the branch head to which this commit belongs."
+        "Return the branch to which this commit belongs."
+        if self.branch.startswith("refs/heads/"):
+            return self.branch
         offspring = self.children()
         if not offspring:
             return self.branch
@@ -3443,17 +3445,19 @@ class SubversionDumper:
                             break
                     else:
                         # Preserve lightweight tags, too.  Ugh, O(n**2).
-                        for child in event.children():
-                            if child.branch == event.branch: 
-                                break
-                        else:
-                            revision += 1
-                            self.make_tag(fp,
-                                          revision,
-                                          event.head(),
-                                          name=os.path.basename(event.branch),
-                                          log="",
-                                          author=event.committer)
+                        children = event.children()
+                        if children:
+                            for child in children:
+                                if child.branch == event.branch: 
+                                    break
+                            else:
+                                revision += 1
+                                self.make_tag(fp,
+                                              revision,
+                                              event.head(),
+                                              name=os.path.basename(event.branch),
+                                              log="",
+                                              author=event.committer)
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
