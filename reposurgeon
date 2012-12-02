@@ -3233,6 +3233,9 @@ class SubversionDumper:
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
         if svnout not in self.branches_created:
+            if not svnout.startswith("tags") and "branches" not in self.branches_created:
+                self.branches_created.append("branches")
+                creations.append(("branches", None, None, None))
             self.branches_created.append(svnout)
             if parents:
                 from_rev = self.mark_to_revision[parents[0].mark],
