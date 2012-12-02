@@ -421,31 +421,6 @@ PROPS-END
 
 
 Revision-number: 12
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-12-02T06:02:42.000000Z
-PROPS-END
-
-Node-path: tags/annotated
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 11
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 13
 Prop-content-length: 158
 Content-length: 158
 
@@ -480,7 +455,7 @@ A third spacer commit.
 
 
 
-Revision-number: 14
+Revision-number: 13
 Prop-content-length: 136
 Content-length: 136
 
@@ -502,7 +477,7 @@ PROPS-END
 Node-path: branches/alternate
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 13
+Node-copyfrom-rev: 12
 Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
@@ -530,7 +505,7 @@ First commit on the alternate branch.
 
 
 
-Revision-number: 15
+Revision-number: 14
 Prop-content-length: 137
 Content-length: 137
 
@@ -569,7 +544,7 @@ Second commit on the alternate branch.
 
 
 
-Revision-number: 16
+Revision-number: 15
 Prop-content-length: 80
 Content-length: 80
 
@@ -586,7 +561,7 @@ PROPS-END
 Node-path: tags/alternate
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 15
+Node-copyfrom-rev: 14
 Node-copyfrom-path: branches/alternate/
 Prop-content-length: 10
 Content-length: 10
@@ -594,7 +569,7 @@ Content-length: 10
 PROPS-END
 
 
-Revision-number: 17
+Revision-number: 16
 Prop-content-length: 142
 Content-length: 142
 
@@ -629,7 +604,7 @@ First post-split commit on the main branch.
 
 
 
-Revision-number: 18
+Revision-number: 17
 Prop-content-length: 132
 Content-length: 132
 
@@ -667,7 +642,7 @@ Second post-split commit on the main branch.
 
 
 
-Revision-number: 19
+Revision-number: 18
 Prop-content-length: 80
 Content-length: 80
 
@@ -684,7 +659,7 @@ PROPS-END
 Node-path: tags/master
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 18
+Node-copyfrom-rev: 17
 Node-copyfrom-path: trunk/
 Prop-content-length: 10
 Content-length: 10
