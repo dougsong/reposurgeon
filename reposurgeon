@@ -3238,12 +3238,14 @@ class SubversionDumper:
                 creations.append(("branches", None, None, None))
             self.branches_created.append(svnout)
             if parents:
+                print "Branch copy of", svnout
                 from_rev = self.mark_to_revision[parents[0].mark],
                 from_branch = SubversionDumper.svnbranch(parents[0].branch)
                 creations.append((svnout, from_rev, from_branch, props))
                 for (key, value) in self.pathmap.items():
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
+                        print "Adding", counterpart
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
             else:
                 creations.append((svnout, None, None, props))
@@ -3275,26 +3277,31 @@ class SubversionDumper:
             announce("filemodify%s" % repr((revision, branch, mode, ref, path,
                                             [event.mark for event in parents])))
         svnpath = SubversionDumper.svnize(branch, path)
+        # Branch and directory creation may be required.
+        # This has to be called early so copy can update the filemap.
+        changeprops = None
+        if svnpath in self.pathmap:
+            if mode == '100755':
+                if "svn:executable" not in self.pathmap[svnpath].props:
+                    self.pathmap[svnpath].props["svn:executable"] = "true"
+                    changeprops = self.pathmap[svnpath].props
+            elif mode == '100644':
+                if "svn:executable" in self.pathmap[svnpath].props:
+                    self.pathmap[svnpath].props["svn:executable"] = "false"
+                    changeprops = self.pathmap[svnpath].props
+        self.directory_create(fp, revision, branch, path,
+                              parents=parents, props=changeprops)
+        print "Path map is:", self.pathmap.keys()
         if svnpath in self.pathmap:
             svnop = "change"
             self.pathmap[svnpath].rev = revision
         else:
             svnop = "add"
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
+        if verbose >= DEBUG_SVNDUMP:
+            announce("Generating %s %s" % (svnpath, svnop))
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
-        changeprops = None
-        if mode == '100755':
-            if "svn:executable" not in self.pathmap[svnpath].props:
-                self.pathmap[svnpath].props["svn:executable"] = "true"
-                changeprops = self.pathmap[svnpath].props
-        elif mode == '100644':
-            if "svn:executable" in self.pathmap[svnpath].props:
-                self.pathmap[svnpath].props["svn:executable"] = "false"
-                changeprops = self.pathmap[svnpath].props
-        # Branch and directory creation may be required
-        self.directory_create(fp, revision, branch, path,
-                              parents=parents, props=changeprops)
         # The actual content
         SubversionDumper.dump_node(fp,
                   path=svnpath,
