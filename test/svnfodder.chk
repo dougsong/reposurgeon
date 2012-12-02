@@ -257,11 +257,15 @@ PROPS-END
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
-Prop-content-length: 10
+Prop-content-length: 39
 Text-content-length: 46
 Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
-Content-length: 56
+Content-length: 85
 
+K 14
+svn:executable
+V 4
+true
 PROPS-END
 
 echo "Hello, world, I want to be executable."
@@ -325,11 +329,15 @@ PROPS-END
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
-Prop-content-length: 10
+Prop-content-length: 40
 Text-content-length: 46
 Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
-Content-length: 56
+Content-length: 86
 
+K 14
+svn:executable
+V 5
+false
 PROPS-END
 
 echo "Hello, world, I want to be executable."

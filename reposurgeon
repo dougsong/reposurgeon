@@ -3269,7 +3269,8 @@ class SubversionDumper:
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         if verbose >= DEBUG_SVNDUMP:
-            announce("filemodify%s" % repr((revision, branch, mode, ref, path, parents)))
+            announce("filemodify%s" % repr((revision, branch, mode, ref, path,
+                                            [event.mark for event in parents])))
         svnpath = SubversionDumper.svnize(branch, path)
         if svnpath in self.pathmap:
             svnop = "change"
@@ -3280,11 +3281,11 @@ class SubversionDumper:
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
         changeprops = None
-        if mode == 0o100755:
+        if mode == '100755':
             if "svn:executable" not in self.pathmap[svnpath].props:
                 self.pathmap[svnpath].props["svn:executable"] = "true"
                 changeprops = self.pathmap[svnpath].props
-        elif mode == 0o100644:
+        elif mode == '100644':
             if "svn:executable" in self.pathmap[svnpath].props:
                 self.pathmap[svnpath].props["svn:executable"] = "false"
                 changeprops = self.pathmap[svnpath].props
@@ -3317,7 +3318,7 @@ class SubversionDumper:
                                    from_rev=flow.rev)
     def make_tag(self, fp, revision, branch, name, log, author):
         if verbose >= DEBUG_SVNDUMP:
-            announce("make_tag%s" % repr((revision, branch, name, log, author)))
+            announce("make_tag%s" % repr((revision, branch, name, log, str(author))))
         svnsource = SubversionDumper.svnize(branch)
         svntarget = os.path.join("tags", name)
         SubversionDumper.dump_revprops(fp, revision,
