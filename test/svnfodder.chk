@@ -26,7 +26,7 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:32:21.000000Z
+2012-12-02T05:37:55.000000Z
 PROPS-END
 
 Node-path: trunk
@@ -42,14 +42,18 @@ Node-path: trunk/README
 Node-kind: file
 Node-action: add
 Prop-content-length: 10
-Text-content-length: 93
-Text-content-sha1: 77e6a9cbfd39b6eea8a9d52e56ca3ed0404543b5
-Content-length: 103
+Text-content-length: 120
+Text-content-sha1: 6ecc83367e0544b68a1ffe80de85842aed07a9f2
+Content-length: 130
 
 PROPS-END
 
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
+
+This is a merge commit.
+
+
 
 Revision-number: 2
 Prop-content-length: 168
@@ -67,7 +71,7 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:34:57.000000Z
+2012-12-02T05:39:18.000000Z
 PROPS-END
 
 Node-path: trunk
@@ -101,7 +105,7 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:37:03.000000Z
+2012-12-02T05:40:58.000000Z
 PROPS-END
 
 Node-path: trunk/foo
@@ -135,13 +139,13 @@ PROPS-END
 This file will test deep directory creation.
 
 Revision-number: 4
-Prop-content-length: 144
-Content-length: 144
+Prop-content-length: 168
+Content-length: 168
 
 K 7
 svn:log
-V 46
-A tag named "lightweight" used to point here.
+V 70
+Test a .gitignore modification for causing the right property change.
 
 K 10
 svn:author
@@ -150,32 +154,33 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:41:50.000000Z
+2012-12-02T05:42:08.000000Z
 PROPS-END
 
-Node-path: trunk/README
-Node-kind: file
+Node-path: trunk
+Node-kind: dir
 Node-action: change
-Prop-content-length: 10
-Text-content-length: 156
-Text-content-sha1: 8706d6fa067154e4c89742d1f330ad966e95128f
-Content-length: 166
+Prop-content-length: 46
+Content-length: 46
+
+K 10
+svn:ignore
+V 14
+*.o
+*.pyc
+*.a
 
 PROPS-END
 
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Add a spacer commit at which we will point a lightweight tag.
 
 Revision-number: 5
-Prop-content-length: 172
-Content-length: 172
+Prop-content-length: 135
+Content-length: 135
 
 K 7
 svn:log
-V 74
-Change the .gitignore, we should get property changes down one path only.
+V 37
+A script without its executable bit.
 
 K 10
 svn:author
@@ -184,33 +189,29 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:47:07.000000Z
+2012-12-02T05:43:44.000000Z
 PROPS-END
 
-Node-path: trunk
-Node-kind: dir
-Node-action: change
-Prop-content-length: 45
-Content-length: 45
-
-K 10
-svn:ignore
-V 13
-*.o
-*.pyc
-.a
+Node-path: trunk/hello
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 46
+Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
+Content-length: 56
 
 PROPS-END
 
+echo "Hello, world, I want to be executable."
 
 Revision-number: 6
-Prop-content-length: 149
-Content-length: 149
+Prop-content-length: 125
+Content-length: 125
 
 K 7
 svn:log
-V 51
-This is going to be a target for an annotated tag.
+V 27
+Delete the deep directory.
 
 K 10
 svn:author
@@ -219,477 +220,7 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T13:49:22.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 160
-Text-content-sha1: de15fbfb8981e5326698e6ac52dfdf6239596b54
-Content-length: 170
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Randomly mess with the README file content on the master branch.
-
-
-Revision-number: 7
-Prop-content-length: 136
-Content-length: 136
-
-K 7
-svn:log
-V 38
-First commit on the alternate branch.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:44:12.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 157
-Text-content-sha1: b14211ea9ae45ff21e305bafd967f4610c2e3d3d
-Content-length: 167
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-We've started a branch; this file gets alternate content now.
-
-
-Revision-number: 8
-Prop-content-length: 131
-Content-length: 131
-
-K 7
-svn:log
-V 33
-Second commit on alternate path.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:45:39.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 146
-Text-content-sha1: 3d099cdab3243180972fdaadaa12e42afbf3874b
-Content-length: 156
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-The file continue to evolve on an alternate path.
-
-
-
-Revision-number: 9
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:45:39.000000Z
-PROPS-END
-
-Node-path: tags
-Node-kind: dir
-Node-action: add
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Node-path: tags/alternate
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 8
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 10
-Prop-content-length: 134
-Content-length: 134
-
-K 7
-svn:log
-V 36
-Merge branch 'alternate' to master.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:55:00.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 120
-Text-content-sha1: 6ecc83367e0544b68a1ffe80de85842aed07a9f2
-Content-length: 130
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-This is a merge commit.
-
-
-
-Revision-number: 11
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:55:00.000000Z
-PROPS-END
-
-Node-path: tags/master
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 10
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 12
-Prop-content-length: 193
-Content-length: 193
-
-K 7
-svn:log
-V 95
-Branch fork commit.
-
-Used to be a lightweight tag taged, but the tag vanished during a merge.
-
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:41:50.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 156
-Text-content-sha1: 8706d6fa067154e4c89742d1f330ad966e95128f
-Content-length: 166
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Add a spacer commit at which we will point a lightweight tag.
-
-Revision-number: 13
-Prop-content-length: 172
-Content-length: 172
-
-K 7
-svn:log
-V 74
-Change the .gitignore, we should get property changes down one path only.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:47:07.000000Z
-PROPS-END
-
-Node-path: trunk
-Node-kind: dir
-Node-action: change
-Prop-content-length: 45
-Content-length: 45
-
-K 10
-svn:ignore
-V 13
-*.o
-*.pyc
-.a
-
-PROPS-END
-
-
-Revision-number: 14
-Prop-content-length: 149
-Content-length: 149
-
-K 7
-svn:log
-V 51
-This is going to be a target for an annotated tag.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:49:22.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 160
-Text-content-sha1: de15fbfb8981e5326698e6ac52dfdf6239596b54
-Content-length: 170
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Randomly mess with the README file content on the master branch.
-
-
-Revision-number: 15
-Prop-content-length: 124
-Content-length: 124
-
-K 7
-svn:log
-V 26
-An annotated tag, hurray!
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:49:48.000000Z
-PROPS-END
-
-Node-path: tags/heavyweight
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 14
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 16
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:49:22.000000Z
-PROPS-END
-
-Node-path: tags/heavyweight
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 15
-Node-copyfrom-path: trunk/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 17
-Prop-content-length: 136
-Content-length: 136
-
-K 7
-svn:log
-V 38
-First commit on the alternate branch.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:44:12.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 157
-Text-content-sha1: b14211ea9ae45ff21e305bafd967f4610c2e3d3d
-Content-length: 167
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-We've started a branch; this file gets alternate content now.
-
-
-Revision-number: 18
-Prop-content-length: 131
-Content-length: 131
-
-K 7
-svn:log
-V 33
-Second commit on alternate path.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:45:39.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 146
-Text-content-sha1: 3d099cdab3243180972fdaadaa12e42afbf3874b
-Content-length: 156
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-The file continue to evolve on an alternate path.
-
-
-
-Revision-number: 19
-Prop-content-length: 134
-Content-length: 134
-
-K 7
-svn:log
-V 36
-Merge branch 'alternate' to master.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T13:55:00.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 120
-Text-content-sha1: 6ecc83367e0544b68a1ffe80de85842aed07a9f2
-Content-length: 130
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-This is a merge commit.
-
-
-
-Revision-number: 20
-Prop-content-length: 152
-Content-length: 152
-
-K 7
-svn:log
-V 54
-Test whether deep file removal cleans up directories.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T14:02:46.000000Z
+2012-12-02T05:44:01.000000Z
 PROPS-END
 
 Node-path: trunk/foo/bar/junk
@@ -704,14 +235,14 @@ Node-path: trunk/foo
 Node-action: delete
 
 
-Revision-number: 21
-Prop-content-length: 125
-Content-length: 125
+Revision-number: 7
+Prop-content-length: 135
+Content-length: 135
 
 K 7
 svn:log
-V 27
-Script without executable.
+V 37
+Turn on the script's executable bit.
 
 K 10
 svn:author
@@ -720,55 +251,29 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T14:07:32.000000Z
-PROPS-END
-
-Node-path: trunk/hello
-Node-kind: file
-Node-action: add
-Prop-content-length: 10
-Text-content-length: 21
-Text-content-sha1: 2982397a768ce40f0ae0cc42196aacdec38ab930
-Content-length: 31
-
-PROPS-END
-
-echo "Hello, world."
-
-Revision-number: 22
-Prop-content-length: 146
-Content-length: 146
-
-K 7
-svn:log
-V 48
-Only the permissions changed on the hello file.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T14:07:52.000000Z
+2012-12-02T05:46:11.000000Z
 PROPS-END
 
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
 Prop-content-length: 10
-Text-content-length: 21
-Text-content-sha1: 2982397a768ce40f0ae0cc42196aacdec38ab930
-Content-length: 31
+Text-content-length: 46
+Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
+Content-length: 56
 
 PROPS-END
 
-echo "Hello, world."
+echo "Hello, world, I want to be executable."
 
-Revision-number: 23
-Prop-content-length: 80
-Content-length: 80
+Revision-number: 8
+Prop-content-length: 120
+Content-length: 120
+
+K 7
+svn:log
+V 22
+Just a spacer commit.
 
 K 10
 svn:author
@@ -777,13 +282,129 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T14:07:52.000000Z
+2012-12-02T05:48:20.000000Z
 PROPS-END
 
-Node-path: tags/lightweight
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 122
+Text-content-sha1: 47cb60aea3a26c01057369729546e719d6302de0
+Content-length: 132
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a spacer commit.
+
+
+
+
+Revision-number: 9
+Prop-content-length: 127
+Content-length: 127
+
+K 7
+svn:log
+V 29
+Turn off the executable bit.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T05:48:32.000000Z
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 46
+Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
+Content-length: 56
+
+PROPS-END
+
+echo "Hello, world, I want to be executable."
+
+Revision-number: 10
+Prop-content-length: 133
+Content-length: 133
+
+K 7
+svn:log
+V 35
+Spacer commit with a tag attached.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:02:42.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 156
+Text-content-sha1: 335a638f92c071f0f18482b3690849d395d18916
+Content-length: 166
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is another spacer commit.  This one
+will have a tag.
+
+
+
+
+
+Revision-number: 11
+Prop-content-length: 132
+Content-length: 132
+
+K 7
+svn:log
+V 34
+This is an example annotated tag.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:03:13.000000Z
+PROPS-END
+
+Node-path: tags
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 22
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags/annotated
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 10
 Node-copyfrom-path: trunk/
 Prop-content-length: 10
 Content-length: 10
@@ -791,105 +412,7 @@ Content-length: 10
 PROPS-END
 
 
-Revision-number: 24
-Prop-content-length: 197
-Content-length: 197
-
-K 7
-svn:log
-V 99
-Now we change them back again.
-
-This should generate property-change nodes in the Subversion dump.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T14:08:34.000000Z
-PROPS-END
-
-Node-path: trunk/hello
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 21
-Text-content-sha1: 2982397a768ce40f0ae0cc42196aacdec38ab930
-Content-length: 31
-
-PROPS-END
-
-echo "Hello, world."
-
-Revision-number: 25
-Prop-content-length: 145
-Content-length: 145
-
-K 7
-svn:log
-V 47
-Rename a file.  We want this to generate an R.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T14:18:33.000000Z
-PROPS-END
-
-Node-path: trunk/RENAMED
-Node-kind: file
-Node-action: add
-Node-copyfrom-rev: 19
-Node-copyfrom-path: trunk/README
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Node-path: trunk/README
-Node-action: delete
-
-
-Revision-number: 26
-Prop-content-length: 141
-Content-length: 141
-
-K 7
-svn:log
-V 43
-With any luck, this turns into a C fileop.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-11-30T14:19:51.000000Z
-PROPS-END
-
-Node-path: trunk/goodbye
-Node-kind: file
-Node-action: add
-Prop-content-length: 10
-Text-content-length: 21
-Text-content-sha1: 2982397a768ce40f0ae0cc42196aacdec38ab930
-Content-length: 31
-
-PROPS-END
-
-echo "Hello, world."
-
-Revision-number: 27
+Revision-number: 12
 Prop-content-length: 80
 Content-length: 80
 
@@ -900,13 +423,260 @@ esr
 K 8
 svn:date
 V 27
-2012-11-30T14:19:51.000000Z
+2012-12-02T06:02:42.000000Z
+PROPS-END
+
+Node-path: tags/annotated
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 11
+Node-copyfrom-path: trunk/
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 13
+Prop-content-length: 158
+Content-length: 158
+
+K 7
+svn:log
+V 60
+A third spacer commit. We'll start a branch after this one.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:05:11.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 27
+Text-content-sha1: 7729b10d8875fc9eb353a67f7d79121faa7c92fd
+Content-length: 37
+
+PROPS-END
+
+A third spacer commit.
+
+
+
+
+
+Revision-number: 14
+Prop-content-length: 136
+Content-length: 136
+
+K 7
+svn:log
+V 38
+First commit on the alternate branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:06:53.000000Z
+PROPS-END
+
+Node-path: branches/alternate
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 13
+Node-copyfrom-path: trunk
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches/alternate/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 137
+Text-content-sha1: 78a97e5f3adf2e0a53a5371083a7bc2cad86c1ca
+Content-length: 147
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+First commit on the alternate branch.
+
+
+
+
+
+
+Revision-number: 15
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 39
+Second commit on the alternate branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:12:55.000000Z
+PROPS-END
+
+Node-path: branches/alternate/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 138
+Text-content-sha1: 6ad7f1b0acd6b38dd6129bd342578e6b858ec21f
+Content-length: 148
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second commit on the alternate branch.
+
+
+
+
+
+
+Revision-number: 16
+Prop-content-length: 80
+Content-length: 80
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:12:55.000000Z
+PROPS-END
+
+Node-path: tags/alternate
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 15
+Node-copyfrom-path: branches/alternate/
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 17
+Prop-content-length: 142
+Content-length: 142
+
+K 7
+svn:log
+V 44
+First post-split commit on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:08:27.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 48
+Text-content-sha1: 5991fd9adf6b031cc8b094f46b8588146fbe931a
+Content-length: 58
+
+PROPS-END
+
+First post-split commit on the main branch.
+
+
+
+
+
+Revision-number: 18
+Prop-content-length: 132
+Content-length: 132
+
+K 7
+svn:log
+V 34
+Second commit on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:15:01.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 143
+Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
+Content-length: 153
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+Revision-number: 19
+Prop-content-length: 80
+Content-length: 80
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:15:01.000000Z
 PROPS-END
 
 Node-path: tags/master
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 26
+Node-copyfrom-rev: 18
 Node-copyfrom-path: trunk/
 Prop-content-length: 10
 Content-length: 10

@@ -1,14 +1,18 @@
 blob
 mark :1
-data 93
+data 120
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
-reset refs/tags/heavyweight
-commit refs/tags/heavyweight
+This is a merge commit.
+
+
+
+reset refs/tags/annotated
+commit refs/tags/annotated
 mark :2
-author Eric S. Raymond <esr@thyrsus.com> 1354282341 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354282341 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
 data 56
 A start on a test repository for the Subversion dumper.
 M 100644 :1 README
@@ -19,10 +23,10 @@ data 10
 *.o
 *.pyc
 
-commit refs/tags/heavyweight
+commit refs/tags/annotated
 mark :4
-author Eric S. Raymond <esr@thyrsus.com> 1354282430 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354282497 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
 data 70
 Create a .gitignore in order to test whether this special case is OK.
 from :2
@@ -33,10 +37,10 @@ mark :5
 data 45
 This file will test deep directory creation.
 
-commit refs/tags/heavyweight
+commit refs/tags/annotated
 mark :6
-author Eric S. Raymond <esr@thyrsus.com> 1354282623 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354282623 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
 data 30
 Test deep directory creation.
 from :4
@@ -44,237 +48,210 @@ M 100644 :5 foo/bar/junk
 
 blob
 mark :7
+data 14
+*.o
+*.pyc
+*.a
+
+commit refs/tags/annotated
+mark :8
+author Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+data 70
+Test a .gitignore modification for causing the right property change.
+from :6
+M 100644 :7 .gitignore
+
+blob
+mark :9
+data 46
+echo "Hello, world, I want to be executable."
+
+commit refs/tags/annotated
+mark :10
+author Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+data 37
+A script without its executable bit.
+from :8
+M 100644 :9 hello
+
+commit refs/tags/annotated
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+data 27
+Delete the deep directory.
+from :10
+D foo/bar/junk
+
+commit refs/tags/annotated
+mark :12
+author Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+data 37
+Turn on the script's executable bit.
+from :11
+M 100755 :9 hello
+
+blob
+mark :13
+data 122
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a spacer commit.
+
+
+
+
+commit refs/tags/annotated
+mark :14
+author Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+data 22
+Just a spacer commit.
+from :12
+M 100644 :13 README
+
+commit refs/tags/annotated
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+data 29
+Turn off the executable bit.
+from :14
+M 100644 :9 hello
+
+blob
+mark :16
 data 156
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
-Add a spacer commit at which we will point a lightweight tag.
-
-commit refs/heads/master
-mark :8
-author Eric S. Raymond <esr@thyrsus.com> 1354282863 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354282910 -0500
-data 46
-A tag named "lightweight" used to point here.
-from :6
-M 100644 :7 README
-
-blob
-mark :9
-data 13
-*.o
-*.pyc
-.a
-
-commit refs/heads/master
-mark :10
-author Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
-data 74
-Change the .gitignore, we should get property changes down one path only.
-from :8
-M 100644 :9 .gitignore
-
-blob
-mark :11
-data 160
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Randomly mess with the README file content on the master branch.
-
-
-commit refs/heads/master
-mark :12
-author Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
-data 51
-This is going to be a target for an annotated tag.
-from :10
-M 100644 :11 README
-
-blob
-mark :13
-data 157
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-We've started a branch; this file gets alternate content now.
-
-
-commit refs/heads/alternate
-mark :14
-author Eric S. Raymond <esr@thyrsus.com> 1354283052 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283052 -0500
-data 38
-First commit on the alternate branch.
-from :8
-M 100644 :13 README
-
-blob
-mark :15
-data 146
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-The file continue to evolve on an alternate path.
+This is another spacer commit.  This one
+will have a tag.
 
 
 
-commit refs/heads/alternate
-mark :16
-author Eric S. Raymond <esr@thyrsus.com> 1354283139 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283139 -0500
-data 33
-Second commit on alternate path.
-from :14
-M 100644 :15 README
 
-blob
+
+commit refs/tags/annotated
 mark :17
-data 120
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
+author Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+data 35
+Spacer commit with a tag attached.
+from :15
+M 100644 :16 README
 
-This is a merge commit.
+blob
+mark :18
+data 27
+A third spacer commit.
+
+
 
 
 
 commit refs/heads/master
-mark :18
-author Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
-data 36
-Merge branch 'alternate' to master.
-from :12
-merge :16
-M 100644 :17 README
-
-commit refs/tags/heavyweight
 mark :19
-author Eric S. Raymond <esr@thyrsus.com> 1354282863 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354282910 -0500
-data 95
-Branch fork commit.
+author Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+data 60
+A third spacer commit. We'll start a branch after this one.
+from :17
+M 100644 :18 README
 
-Used to be a lightweight tag taged, but the tag vanished during a merge.
-
-from :6
-M 100644 :7 README
-
-commit refs/tags/heavyweight
+blob
 mark :20
-author Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283227 -0500
-data 74
-Change the .gitignore, we should get property changes down one path only.
-from :19
-M 100644 :9 .gitignore
+data 137
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
 
-commit refs/tags/heavyweight
+First commit on the alternate branch.
+
+
+
+
+
+
+commit refs/heads/alternate
 mark :21
-author Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283362 -0500
-data 51
-This is going to be a target for an annotated tag.
-from :20
-M 100644 :11 README
-
-commit refs/tags/lightweight
-mark :22
-author Eric S. Raymond <esr@thyrsus.com> 1354283052 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283052 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
 data 38
 First commit on the alternate branch.
 from :19
-M 100644 :13 README
+M 100644 :20 README
 
-commit refs/tags/lightweight
+blob
+mark :22
+data 138
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second commit on the alternate branch.
+
+
+
+
+
+
+commit refs/heads/alternate
 mark :23
-author Eric S. Raymond <esr@thyrsus.com> 1354283139 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283139 -0500
-data 33
-Second commit on alternate path.
-from :22
-M 100644 :15 README
-
-commit refs/tags/lightweight
-mark :24
-author Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354283700 -0500
-data 36
-Merge branch 'alternate' to master.
+author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+data 39
+Second commit on the alternate branch.
 from :21
-merge :23
-M 100644 :17 README
+M 100644 :22 README
 
-commit refs/tags/lightweight
+blob
+mark :24
+data 48
+First post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
 mark :25
-author Eric S. Raymond <esr@thyrsus.com> 1354284166 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354284166 -0500
-data 54
-Test whether deep file removal cleans up directories.
-from :24
-D foo/bar/junk
+author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+data 44
+First post-split commit on the main branch.
+from :19
+M 100644 :24 README
 
 blob
 mark :26
-data 21
-echo "Hello, world."
+data 143
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
 
-commit refs/tags/lightweight
+Second post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
 mark :27
-author Eric S. Raymond <esr@thyrsus.com> 1354284452 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354284452 -0500
-data 27
-Script without executable.
+author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
+data 34
+Second commit on the main branch.
 from :25
-M 100644 :26 hello
-
-commit refs/tags/lightweight
-mark :28
-author Eric S. Raymond <esr@thyrsus.com> 1354284472 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354284472 -0500
-data 48
-Only the permissions changed on the hello file.
-from :27
-M 100755 :26 hello
-
-commit refs/heads/master
-mark :29
-author Eric S. Raymond <esr@thyrsus.com> 1354284514 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354284514 -0500
-data 99
-Now we change them back again.
-
-This should generate property-change nodes in the Subversion dump.
-from :28
-M 100644 :26 hello
-
-commit refs/heads/master
-mark :30
-author Eric S. Raymond <esr@thyrsus.com> 1354285113 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354285113 -0500
-data 47
-Rename a file.  We want this to generate an R.
-from :29
-R "README" "RENAMED"
-
-commit refs/heads/master
-mark :31
-author Eric S. Raymond <esr@thyrsus.com> 1354285191 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354285191 -0500
-data 43
-With any luck, this turns into a C fileop.
-from :30
-M 100644 :26 goodbye
+M 100644 :26 README
 
 reset refs/heads/master
-from :31
+from :27
 
-tag heavyweight
-from :21
-tagger Eric S. Raymond <esr@thyrsus.com> 1354283388 -0500
-data 26
-An annotated tag, hurray!
+tag annotated
+from :17
+tagger Eric S. Raymond <esr@thyrsus.com> 1354428193 -0500
+data 34
+This is an example annotated tag.
 

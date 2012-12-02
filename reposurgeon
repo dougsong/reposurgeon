@@ -3255,11 +3255,11 @@ class SubversionDumper:
                                    for i in range(len(parts))]
             for parentdir in parents:
                 if parentdir not in self.pathmap:
+                    fullpath = os.path.join(svnout, parentdir)
                     SubversionDumper.dump_node(fp,
-                                               path=os.path.join(svnout,parentdir),
+                                               path=fullpath,
                                                kind="dir",
                                                action="add")
-                    fullpath = os.path.join(svnout, parentdir)
                     self.pathmap[fullpath] = SubversionDumper.FlowState(revision)
                     self.pathmap[fullpath].is_directory = True
                     self.pathmap[fullpath].subfiles += 1
