@@ -3237,14 +3237,12 @@ class SubversionDumper:
                 creations.append(("branches", None, None))
             self.branches_created.append(svnout)
             if parents:
-                print "Branch copy of", svnout
                 from_rev = self.mark_to_revision[parents[0].mark],
                 from_branch = SubversionDumper.svnbranch(parents[0].branch)
                 creations.append((svnout, from_rev, from_branch))
                 for (key, value) in self.pathmap.items():
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
-                        print "Adding", counterpart
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
             else:
                 creations.append((svnout, None, None))
