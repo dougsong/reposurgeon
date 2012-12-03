@@ -3153,7 +3153,7 @@ class SubversionDumper:
             ancestral = parents[1:]
             ancestral.sort()
             ancestral = ".".join(str(x) for x in ancestral)
-            revprops += SubversionDumper.svnprops({"svn:mergeinfo", ancestral})
+            revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
         fp.write("Content-length: %d\n\n" % len(revprops))
@@ -3369,7 +3369,7 @@ class SubversionDumper:
                     # lost.  So is everything but the local part of
                     # the committer name.
                     backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parentMarks()[1:]]
+                                 for mark in event.parentMarks()]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment,
                                                    author=event.committer.email.split("@")[0],
