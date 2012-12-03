@@ -465,6 +465,151 @@ A third spacer commit.
 
 
 Revision-number: 13
+Prop-content-length: 142
+Content-length: 142
+
+K 7
+svn:log
+V 44
+First post-split commit on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:08:27.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 48
+Text-content-sha1: 5991fd9adf6b031cc8b094f46b8588146fbe931a
+Content-length: 58
+
+PROPS-END
+
+First post-split commit on the main branch.
+
+
+
+
+
+Revision-number: 14
+Prop-content-length: 132
+Content-length: 132
+
+K 7
+svn:log
+V 34
+Second commit on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T06:15:01.000000Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 143
+Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
+Content-length: 153
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+Revision-number: 15
+Prop-content-length: 126
+Content-length: 126
+
+K 7
+svn:log
+V 28
+Attempt to generate a copy.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-02T22:52:52.000000Z
+PROPS-END
+
+Node-path: trunk/goodbye
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 9
+Node-copyfrom-path: trunk/hello
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/hello
+Node-action: delete
+
+
+Revision-number: 16
+Prop-content-length: 129
+Content-length: 129
+
+K 7
+svn:log
+V 31
+Attempt to generate a copy op.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-03T01:03:59.000000Z
+PROPS-END
+
+Node-path: trunk/README2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 143
+Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
+Content-length: 153
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+Revision-number: 17
 Prop-content-length: 136
 Content-length: 136
 
@@ -514,7 +659,7 @@ First commit on the alternate branch.
 
 
 
-Revision-number: 14
+Revision-number: 18
 Prop-content-length: 137
 Content-length: 137
 
@@ -553,14 +698,9 @@ Second commit on the alternate branch.
 
 
 
-Revision-number: 15
-Prop-content-length: 142
-Content-length: 142
-
-K 7
-svn:log
-V 44
-First post-split commit on the main branch.
+Revision-number: 19
+Prop-content-length: 80
+Content-length: 80
 
 K 10
 svn:author
@@ -569,94 +709,63 @@ esr
 K 8
 svn:date
 V 27
-2012-12-02T06:08:27.000000Z
+2012-12-02T06:12:55.000000Z
 PROPS-END
 
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 48
-Text-content-sha1: 5991fd9adf6b031cc8b094f46b8588146fbe931a
-Content-length: 58
-
-PROPS-END
-
-First post-split commit on the main branch.
-
-
-
-
-
-Revision-number: 16
-Prop-content-length: 132
-Content-length: 132
-
-K 7
-svn:log
-V 34
-Second commit on the main branch.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-12-02T06:15:01.000000Z
-PROPS-END
-
-Node-path: trunk/README
-Node-kind: file
-Node-action: change
-Prop-content-length: 10
-Text-content-length: 143
-Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
-Content-length: 153
-
-PROPS-END
-
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
-
-Second post-split commit on the main branch.
-
-
-
-
-
-Revision-number: 17
-Prop-content-length: 128
-Content-length: 128
-
-K 7
-svn:log
-V 30
-Attempt to generate a rename.
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-12-02T22:52:52.000000Z
-PROPS-END
-
-Node-path: trunk/goodbye
-Node-kind: file
+Node-path: tags/alternate
+Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 9
-Node-copyfrom-path: trunk/hello
+Node-copyfrom-rev: 18
+Node-copyfrom-path: branches/alternate/
 Prop-content-length: 10
 Content-length: 10
 
 PROPS-END
 
 
-Node-path: trunk/hello
-Node-action: delete
+Revision-number: 20
+Prop-content-length: 169
+Content-length: 169
+
+K 7
+svn:log
+V 45
+Merge branch 'alternate'
+
+Conflicts:
+	README
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-03T01:24:14.000000Z
+K 13
+svn:mergeinfo
+V 2
+18
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 123
+Text-content-sha1: a54236b063598ec79940ab80c541875b8b00e640
+Content-length: 133
+
+PROPS-END
+
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a merge commit.
+
+
+
+
 
 
