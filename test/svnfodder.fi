@@ -209,7 +209,7 @@ committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
 data 28
 Attempt to generate a copy.
 from :23
-R hello goodbye
+R "hello" "goodbye"
 
 commit refs/heads/master
 mark :25
