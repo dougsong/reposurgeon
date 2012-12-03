@@ -165,6 +165,63 @@ M 100644 :18 README
 
 blob
 mark :20
+data 48
+First post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+data 44
+First post-split commit on the main branch.
+from :19
+M 100644 :20 README
+
+blob
+mark :22
+data 143
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
+data 34
+Second commit on the main branch.
+from :21
+M 100644 :22 README
+
+commit refs/heads/master
+mark :24
+author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+data 28
+Attempt to generate a copy.
+from :23
+R hello goodbye
+
+commit refs/heads/master
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+data 31
+Attempt to generate a copy op.
+from :24
+M 100644 :22 README2
+
+blob
+mark :26
 data 137
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
@@ -177,16 +234,16 @@ First commit on the alternate branch.
 
 
 commit refs/heads/alternate
-mark :21
+mark :27
 author Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
 data 38
 First commit on the alternate branch.
 from :19
-M 100644 :20 README
+M 100644 :26 README
 
 blob
-mark :22
+mark :28
 data 138
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
@@ -199,64 +256,42 @@ Second commit on the alternate branch.
 
 
 commit refs/heads/alternate
-mark :23
+mark :29
 author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
 data 39
 Second commit on the alternate branch.
-from :21
-M 100644 :22 README
+from :27
+M 100644 :28 README
 
 blob
-mark :24
-data 48
-First post-split commit on the main branch.
-
-
-
-
-
-commit refs/heads/master
-mark :25
-author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
-data 44
-First post-split commit on the main branch.
-from :19
-M 100644 :24 README
-
-blob
-mark :26
-data 143
+mark :30
+data 123
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
-Second post-split commit on the main branch.
+This is a merge commit.
+
 
 
 
 
 
 commit refs/heads/master
-mark :27
-author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
-data 34
-Second commit on the main branch.
+mark :31
+author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+data 45
+Merge branch 'alternate'
+
+Conflicts:
+	README
 from :25
-M 100644 :26 README
-
-commit refs/heads/master
-mark :28
-author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
-committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
-data 30
-Attempt to generate a rename.
-from :27
-R "hello" "goodbye"
+merge :29
+M 100644 :30 README
 
 reset refs/heads/master
-from :28
+from :31
 
 tag annotated
 from :17
