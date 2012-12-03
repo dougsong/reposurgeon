@@ -1,10 +1,10 @@
 			reposurgeon project news
 
-2.7:
+2.7: 2012-12-01
      Full (read-write) support for darcs.
      The expunge command now treats deletes correctly.
      New 'tip' command deduces if a commit is associated with a unique branch.
-     Alpha support for writing Subversion repos - only works on linear ones.
+     Support for writing Subversion repositories, but they don't round-trip.
 
 2.6: 2012-11-22
      divide now cuts unconditionally, renaming branches or repos as required.
