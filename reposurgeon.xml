@@ -67,7 +67,7 @@ history into an input stream internally. Repositories under systems
 supported through extractors can be read by
 <command>reposurgeon</command>, but not modified by it.  In
 particular, <command>reposurgeon</command> can be used to move a
-repostory history from any VCS supported by an extractor to any VCS
+repository history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.</para>
 
 A test extractor exists for git, but is normally disabled in favor of
@@ -211,7 +211,7 @@ Subversion revision numbers.</para>
 <varlistentry>
 <term><firstterm>ranges</firstterm></term>
 <listitem><para>A range is two locations separated by "..", and is
-the set of events begining at the left-hand location and ending at the
+the set of events beginning at the left-hand location and ending at the
 right-hand location (inclusive).</para></listitem>
 </varlistentry>
 <varlistentry>
@@ -350,7 +350,7 @@ it as a source or target.</para>
 
 <para>Set expressions may be combined with the operators | and &amp;;
 these are, respectively, set union and intersection. The | has lower
-precendence than intersection, but you may use curly brackets '{' and
+precedence than intersection, but you may use curly brackets '{' and
 '}' to group expressions in case there is ambiguity.</para>
 
 <para>Finally, any set operation may be followed by '?' to add the set
@@ -727,7 +727,7 @@ commit must follow.</para>
 
 <para>If the repo was named 'foo', you will normally end up with two
 repos named 'foo-early' and 'foo-late' (option and feature events at
-the beginning of the early segnment will be duplicated onto the
+the beginning of the early segment will be duplicated onto the
 beginning of the late one.).  But if the commit graph would remain
 connected through another path after the cut, the behavior changes.
 In this case, if the parent and child were on the same branch 'qux',
@@ -887,11 +887,11 @@ are multiline and not in summary/blank-line/details form.</para>
 <listitem>
 <para>Apply a time offset to all time/date stamps in the selected set.
 An offset argument is required; it may be in the form [+-]ss,
-[+-]mm:ss or [+-]hh:mm:ss.  The leading sign is required to distingush
+[+-]mm:ss or [+-]hh:mm:ss.  The leading sign is required to distinguish
 it from a selection expression.</para>
 
 <para>Optionally you may also specify another argument in the form [+-]hhmm, a
-timeone literal to apply.  To apply a timezone without an offset, use
+timezone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.</para>
 </listitem>
 </varlistentry>
@@ -1029,7 +1029,7 @@ it refers to a commit without being VCS-specific.  Thus, instead of
 <command>reposurgeon</command> internally builds a fossil-reference
 map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
-places: (1) cvs2svn:rev properties if the repostory was read from a
+places: (1) cvs2svn:rev properties if the repository was read from a
 Subversion dump stream, (2) $Id$ and $Revision$ headers in repository
 files, and (3) the <filename>.git/cvs-revisions</filename> created by
 <command>git cvsimport</command>.</para>
@@ -1092,14 +1092,14 @@ set, defaulting to all events.</para>
 <para>Lifts from CVS and Subversion may have only usernames local to
 the repository host in committer and author IDs. DVCSes want email
 addresses (net-wide identifiers) and complete names. To supply the map
-from oune to the other, an authors file is expected to consist of
+from one to the other, an authors file is expected to consist of
 lines each beginning with a local user ID, followed by a '=' (possibly
 surrounded by whitespace) followed by a full name and email address.
 An authors file may have comment lines beginning with '#'; these
 are ignored.</para>
 
 <para>When an authors file is applied, email addresses in committer and author
-metdata for which the local ID matches between &lt; and @ are replaced
+metadata for which the local ID matches between &lt; and @ are replaced
 according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
 (this handles what git-cvsimport and cvs2git do) </para>
@@ -1268,7 +1268,7 @@ but intended for developers only.</para></listitem>
 <term><command>quiet</command> 
         [<emphasis>on | off</emphasis>]
 </term>
-<listitem><para>Without an argument, this command requists a report of the quiet
+<listitem><para>Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
 on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.</para></listitem>
@@ -1313,7 +1313,7 @@ any string.</para>
 <para>With no argument, display the program version and the list of
 VCSes directly supported.  With argument, declare the major version
 (single digit) or full version (major.minor) under which the enclosing
-script was seveloped.  The program will error out if the major version
+script was developed.  The program will error out if the major version
 has changed (which means the surgical language is not backwards
 compatible).</para>
 
@@ -1411,7 +1411,7 @@ before reading a Subversion repository, branch analysis is skipped and
 the repository is treated as though flat (left as a linear sequence of
 commits on refs/heads/master).  This may be useful if your repository
 configuration is highly unusual and you need to do your own branch
-surgery. Note that tis option will disable partitioning of mixed
+surgery. Note that this option will disable partitioning of mixed
 commits.</para></listitem>
 
 <listitem><para>If "trunk" is eligible, it always becomes the master
@@ -1453,7 +1453,7 @@ into a tag. This rule cleans up after aborted branch renames.</para>
 repository will contain revisions that touch multiple branches. These
 are handled by partitioning them into multiple import-stream commits,
 one on each affected branch. The Fossil-ID of such a split commit
-will have a pseudo-decimal part - for examble, if Subversion revision 2317
+will have a pseudo-decimal part - for example, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
 2317.1, 2317.2, and 2317.3.</para>
 
@@ -1481,7 +1481,7 @@ semantic problems is svn:eol-style. However, since property-change-only
 commits get turned into annotated tags, the translated tags will retain
 information about setting changes.</para>
 
-<para>The subsecond resolution on Subversion commit dates is discarded;
+<para>The sub-second resolution on Subversion commit dates is discarded;
 Git wants integer timestamps only.</para>
 
 <para>Because fast-import format cannot represent an empty directory,
@@ -1491,7 +1491,7 @@ translation.</para>
 <para>Normally, Subversion local usernames are mapped in the style of
 git cvs-import; thus user "foo" becomes "foo &lt;foo&gt;", which is
 sufficient to pacify git and other systems that require email
-addresses.  With the option "use-uuid", udernames are mapped in the
+addresses.  With the option "use-uuid", usernames are mapped in the
 git-svn style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
 the <command>authors read</command> command.</para>
@@ -1529,7 +1529,7 @@ lost. Usually this error can be ignored.</para>
 <term>properties set</term>
 <listitem>
 <para><command>reposurgeon</command> has detected a setting of a
-user-defined property, or the Subversion properies
+user-defined property, or the Subversion properties
 svn:externals. These properties cannot be expressed in an import
 stream; the user is notified in case this is a showstopper for the
 conversion or some corrective action is required, but normally this
@@ -1628,14 +1628,14 @@ committer's email address are preserved, the latter becoming the
 Subversion author field.  However, reading a Subversion repository and
 writing it out again will preserve the author fields.</para>
 
-<para>Import-stream timestamps have 1-second granularity. The subsecond
+<para>Import-stream timestamps have 1-second granularity. The sub-second
 parts of Subversion commit timestamps will be lost on their way through
 reposurgeon.</para>
 
 <para>Empty directories aren't represented in import
 streams. Consequently, reading and writing Subversion repositories
 preserves file content, but not empty directories.  It is also not
-guaranteed that after editing a Subverson repository that the sequence
+guaranteed that after editing a Subversion repository that the sequence
 of directory creations and deletions relative to other operations will
 be identical; the only guarantee is that enclosing directories will
 be created before any files in them are.</para>
@@ -1778,7 +1778,7 @@ omits them when rebuilding a repo with git type.</para>
 supported VCSes represent file ignores (Subversion ignore properties,
 .gitignore/.hgignore/.bzrignore file in other systems) and moves
 ignore declarations among these containers on repo input and output. This
-will be sufficent if the ignore patterns are exact filenames.  But
+will be sufficient if the ignore patterns are exact filenames.  But
 <command>reposurgeon</command> does not know about variant pattern
 syntaxes and does not translate them. Subversion's shell globbing is
 upward-compatible with git's, but other translation cases may need
@@ -1866,7 +1866,7 @@ describes all possible cases and all but one of the reductions.</para>
       <row>
         <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
         <entry align='left'><para>The purpose of this transformation is 
-	to push renames towards the beginning of the list,
+	to push renames toward the beginning of the list,
 	where they may become adjacent to another R or C they can 
 	be composed with. If the M is the only modify operation for
 	this file, the rename is dropped.</para></entry>
@@ -1974,7 +1974,7 @@ ID.</para></step>
 <step>
 <para>We then make an empty backup directory.  This directory will
 be named <filename>/path/to/foo.~N~</filename>, where N is incremented
-so as not to conflict with any existing backup drectories.  
+so as not to conflict with any existing backup directories.  
 <command>reposurgeon</command> never, under any circumstances,
 ever deletes a backup directory.</para>
 
