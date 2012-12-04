@@ -419,14 +419,15 @@ class GitExtractor:
 extractors = [GitExtractor()]
 
 verbose         = 0
-DEBUG_SVNDUMP   = 1    # Debug Subversion dumping
+DEBUG_SVNDUMP   = 2    # Debug Subversion dumping
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
+DEBUG_FILEMAP   = 3    # Debug building of filemaps
+DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_IGNORES   = 3    # Debug ignore generation
+DEBUG_SVNPARSE  = 4    # Lower-level Subversion parsing details
 DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
-DEBUG_FILEMAP   = 5    # Debug building of filemaps
-DEBUG_DELETE    = 5    # Debug canonicalization after deletes
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
 DEBUG_UNITE     = 5    # Debug mark assignments in merging
 DEBUG_LEXER     = 6    # Debug selection-language parsing
@@ -1450,6 +1451,7 @@ class PathMap:
         for path in self:
             tell += path + ' '
         return tell[:-1] + '>'
+    __repr__ = __str__
     # Insert obj at the location given by components.  Destroys
     # components as we recurse.
     def _insert(self, components, obj):
@@ -1846,7 +1848,7 @@ class StreamParser:
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
-            if verbose >= DEBUG_EXTRACT+1:
+            if verbose >= DEBUG_SVNPARSE:
                 announce("readprops, line %d: %s" % \
                          (self.import_line, repr(line)))
             if line.startswith("PROPS-END"):
@@ -1865,7 +1867,7 @@ class StreamParser:
                     raise self.error("property value garbled")
                 value = self.sd_read_blob(int(line.split()[1]))
                 props[key] = value
-                if verbose >= DEBUG_EXTRACT+1:
+                if verbose >= DEBUG_SVNPARSE:
                     announce("readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
         return props
@@ -1898,7 +1900,7 @@ class StreamParser:
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             baton.twirl()
-                            if verbose >= DEBUG_EXTRACT+1:
+                            if verbose >= DEBUG_SVNPARSE:
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
                             revision = StreamParser.sd_body(line)
@@ -1914,7 +1916,7 @@ class StreamParser:
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
-                                if verbose >= DEBUG_EXTRACT+1:
+                                if verbose >= DEBUG_SVNPARSE:
                                     announce("node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
                                 if not line:
@@ -1971,14 +1973,14 @@ class StreamParser:
                                 elif line.startswith("Content-length: "):
                                     continue
                                 else:
-                                    if verbose >= DEBUG_EXTRACT+1:
+                                    if verbose >= DEBUG_SVNPARSE:
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
                                              (self.import_line, repr(line)))
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
-                            if verbose >= DEBUG_EXTRACT+1:
+                            if verbose >= DEBUG_SVNPARSE:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
@@ -2201,7 +2203,7 @@ class StreamParser:
         def countfmt(count):
             return " %%%dd of %s" % (len(str(count)), count)
         # Find all copy sources and compute the set of branches
-        if verbose >= DEBUG_EXTRACT+1:
+        if verbose >= DEBUG_EXTRACT:
             announce("Pass 1")
         baton.twirl("copynodes")
         baton.startcounter(countfmt(len(self.revisions)))
@@ -2211,7 +2213,7 @@ class StreamParser:
             for node in record.nodes:
                 if node.from_path is not None:
                     copynodes.append(node)
-                    if verbose >= DEBUG_EXTRACT+1:
+                    if verbose >= DEBUG_EXTRACT:
                         announce("copynode at %s" % node)
                 if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not global_options['svn_nobranch']:
                     for trial in global_options['svn_branchify']:
@@ -2229,7 +2231,7 @@ class StreamParser:
         baton.endcounter()
         baton.twirl('+')
         # Build filemaps.
-        if verbose >= DEBUG_EXTRACT+1:
+        if verbose >= DEBUG_EXTRACT:
             announce("Pass 2")
         baton.twirl("filemaps")
         baton.startcounter(countfmt(len(self.revisions)))
@@ -2270,16 +2272,16 @@ class StreamParser:
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl('+')
-        if verbose >= DEBUG_EXTRACT+1:
+        if verbose >= DEBUG_FILEMAP:
             announce("filemaps %s" % filemaps)
         # Build from sets in each directory copy record.
-        if verbose >= DEBUG_EXTRACT+1:
+        if verbose >= DEBUG_EXTRACT:
             announce("Pass 3")
         baton.twirl("copysets")
         baton.startcounter(countfmt(len(copynodes)))
         for copynode in copynodes:
-            if verbose >= DEBUG_FILEMAP:
-                announce("r%s filemap is %s" \
+            if verbose >= DEBUG_EXTRACT:
+                announce("r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
             copynode.from_set.copy_from(copynode.from_path,
@@ -2302,7 +2304,7 @@ class StreamParser:
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
-        if verbose >= DEBUG_EXTRACT+1:
+        if verbose >= DEBUG_EXTRACT:
             announce("Pass 4")
         baton.twirl("commits")
         baton.startcounter(countfmt(len(self.revisions)))
