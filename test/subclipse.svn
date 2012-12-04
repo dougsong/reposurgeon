@@ -1,0 +1,124 @@
+SVN-fs-dump-format-version: 2
+ ## Test delete-and-replace produced by subclipse user
+
+UUID: e6342ff2-80cb-4804-bbc5-ccb9bbe24be5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-12-04T04:36:01.322930Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 17
+Initial structure
+K 10
+svn:author
+V 4
+khan
+K 8
+svn:date
+V 27
+2012-12-04T04:36:01.371668Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 105
+Content-length: 105
+
+K 8
+svn:date
+V 27
+2012-12-04T04:36:01.440947Z
+K 7
+svn:log
+V 7
+Develop
+K 10
+svn:author
+V 4
+khan
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 12
+Text-content-md5: f0ef7081e1539ac00ef5b761b4fb01b3
+Text-content-sha1: 33ab5639bfd8e7b95eb1d8d0b87781d4ffea4d5d
+Content-length: 22
+
+PROPS-END
+Hello world
+
+
+Revision-number: 3
+Prop-content-length: 158
+Content-length: 158
+
+K 8
+svn:date
+V 27
+2012-12-04T04:36:01.509728Z
+K 7
+svn:log
+V 59
+Replace file with a copy of the previous revision of itself
+K 10
+svn:author
+V 4
+khan
+PROPS-END
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: delete
+
+Node-path: trunk/hello
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/hello
+Text-copy-source-md5: f0ef7081e1539ac00ef5b761b4fb01b3
+Text-copy-source-sha1: 33ab5639bfd8e7b95eb1d8d0b87781d4ffea4d5d
+
+
+
+

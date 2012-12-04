@@ -1,0 +1,29 @@
+blob
+mark :1
+data 12
+Hello world
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+committer khan <khan> 1354595761 +0000
+data 8
+Develop
+M 100644 :1 hello
+
+commit refs/heads/master
+mark :3
+committer khan <khan> 1354595761 +0000
+data 60
+Replace file with a copy of the previous revision of itself
+from :2
+M 100644 :1 hello
+
+tag root
+from :2
+tagger khan <khan> 1354595761 +0000
+data 61
+Initial structure
+
+[[Tag from root commit at Subversion r1]]
+

@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.8: 2012-12-04
+     Fix for a nasty optimizer bug that could cause file loss.
+
 2.7: 2012-12-01
      Full (read-write) support for darcs.
      The expunge command now treats deletes correctly.
