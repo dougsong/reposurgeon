@@ -75,6 +75,10 @@ the regular exporter. A Subversion extractor existed in an unreleased
 version of <command>reposurgeon</command>, but due to extremely poor
 performance it was discarded in favor of parsing dumpfiles.
 -->
+
+<para>For guidance on the pragmatics of repository conversion, see the
+<ulink url="http://www.catb.org/esr/dvcs-migration-guide.html">DVCS
+Migration HOWTO</ulink>.</para>
 </refsect1>
 
 <refsect1 id='warning'><title>SAFETY WARNINGS</title>
