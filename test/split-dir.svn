@@ -1,0 +1,209 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 538667c0-f51b-4ee6-ac17-ec52b2e3e0d3
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-11-25T03:21:00.647906Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 117
+Content-length: 117
+
+K 7
+svn:log
+V 15
+add directories
+K 10
+svn:author
+V 7
+brooksd
+K 8
+svn:date
+V 27
+2012-11-25T03:21:00.790927Z
+PROPS-END
+
+Node-path: bar
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: baz
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 134
+Content-length: 134
+
+K 8
+svn:date
+V 27
+2012-11-25T03:21:03.028478Z
+K 7
+svn:log
+V 32
+add a new file in each directory
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: bar/src
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 2
+Text-content-md5: 60b725f10c9c85c70d97880dfe8191b3
+Text-content-sha1: 3f786850e387550fdab836ed7e6dc881de23001b
+Content-length: 12
+
+PROPS-END
+a
+
+
+Node-path: baz/src
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 2
+Text-content-md5: 60b725f10c9c85c70d97880dfe8191b3
+Text-content-sha1: 3f786850e387550fdab836ed7e6dc881de23001b
+Content-length: 12
+
+PROPS-END
+a
+
+
+Node-path: foo/src
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 2
+Text-content-md5: 60b725f10c9c85c70d97880dfe8191b3
+Text-content-sha1: 3f786850e387550fdab836ed7e6dc881de23001b
+Content-length: 12
+
+PROPS-END
+a
+
+
+Revision-number: 3
+Prop-content-length: 135
+Content-length: 135
+
+K 8
+svn:date
+V 27
+2012-11-25T03:21:05.192619Z
+K 7
+svn:log
+V 33
+modify the file in each directory
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: bar/src
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: dd8c6a395b5dd36c56d23275028f526c
+Text-content-sha1: 05dec960e24d918b8a73a1c53bcbbaac2ee5c2e0
+Content-length: 4
+
+a
+b
+
+
+Node-path: baz/src
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: dd8c6a395b5dd36c56d23275028f526c
+Text-content-sha1: 05dec960e24d918b8a73a1c53bcbbaac2ee5c2e0
+Content-length: 4
+
+a
+b
+
+
+Node-path: foo/src
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: dd8c6a395b5dd36c56d23275028f526c
+Text-content-sha1: 05dec960e24d918b8a73a1c53bcbbaac2ee5c2e0
+Content-length: 4
+
+a
+b
+
+
+Revision-number: 4
+Prop-content-length: 128
+Content-length: 128
+
+K 8
+svn:date
+V 27
+2012-11-25T03:21:07.372998Z
+K 7
+svn:log
+V 26
+copy the three directories
+K 10
+svn:author
+V 7
+brooksd
+PROPS-END
+
+Node-path: bar2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: bar
+
+
+Node-path: baz2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: baz
+
+
+Node-path: foo2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: foo
+
+
