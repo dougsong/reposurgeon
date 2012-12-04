@@ -1,4 +1,4 @@
-## split a commit based on a directory prefix
+## Split a commit based on a directory prefix
 echo 1
 verbose 1
 quiet on
