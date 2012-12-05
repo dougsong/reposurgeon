@@ -5643,7 +5643,7 @@ developers only.
 
     def help_quiet(self):
         print("""
-Without an argument, this command requists a report of the quiet
+Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
 on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.
@@ -5658,8 +5658,11 @@ failures in regression testing are suppressed.
         if not line:
             announce("quiet %s" % ("on" if quiet else "off"))
 
+    def help_echo(self):
+        print("""
+Set or clear echoing commands before processing (for regression tests).
+""")
     def do_echo(self, line):
-        "Set or clear echoing commands before processing (for regression tests)"
         try:
             self.echo = int(line)
         except ValueError:
@@ -5739,6 +5742,10 @@ Read and execute commands from a named file.
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
+    def help_history(self):
+        print("""
+Dump your command list from this session so far.
+""")
     def do_history(self, line):
         "Dump your command list from this session so far."
         for line in self.history:
