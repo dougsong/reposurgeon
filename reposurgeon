@@ -5793,6 +5793,10 @@ of the comment.  If there is a second argument, or the first is not
 recognized as a selection set, it will be taken as the name of the
 file to report to; no argument, or one of '-'; writes to standard
 output.
+
+The output from this command can optionally be redirected to a named
+output file. Prefix the filename with '&lt;' and give it as a
+following argument.
 """)
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
@@ -5809,6 +5813,10 @@ If a commit is at a branch tip, its tip is its branch name.  If it has
 only one child, its tip is the child's tip.  If it has multiple children,
 then if there is a child with a matching branch name its tip is the
 child's tip.  Otherwise this function throws a recoverable error.
+
+The output from this command can optionally be redirected to a named
+output file. Prefix the filename with '&lt;' and give it as a
+following argument.
 """)
     def do_tip(self, line):
         "Generate a human-friendly listing of objects."
@@ -5820,6 +5828,10 @@ Display lightweight tags: two fields, an event number and a tag name.  If
 there is a second argument, or the first is not recognized as a
 selection set, it will be taken as the name of the file to report to;
 no argument, or one of '-'; writes to standard output.
+
+The output from this command can optionally be redirected to a named
+output file. Prefix the filename with '&lt;' and give it as a
+following argument.
 """)
     def do_tags(self, line):
         "Generate a human-friendly listing of lightweight tags."
@@ -6038,13 +6050,25 @@ Dump a fast-import stream representing selected events to standard output.
 Just like a write, except (1) the progress meter is disabled, (2) properties
 are always dumped, and (3) there is an identifying header before each event
 dump.
+
+The output from this command can optionally be redirected to a named
+output file. Prefix the filename with '&lt;' and give it as a
+following argument.
 """)
     def do_inspect(self, line):
         "Dump raw events."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        fp = sys.stdout
+        if line.startswith(">"):
+            outfile = line[1:]
+            if outfile and outfile != '-':
+                try:
+                    fp = open(outfile, "w")
+                except (IOError, OSError):
+                    raise Recoverable("can't open %s for write" % outfile)
         for ei in self.selection:
             event = self.chosen().events[ei]
             header = "Event %s, " % repr(ei+1)
@@ -6052,11 +6076,13 @@ dump.
                 header += "Fossil-ID %s, " % event.fossil_id
             header = header[:-2]
             header += " " + ((72 - len(header)) * "=") + "\n"
-            sys.stdout.write(header)
+            fp.write(header)
             if isinstance(event, Commit):
-                sys.stdout.write(event.dump(write_properties=True))
+                fp.write(event.dump(write_properties=True))
             else:
-                sys.stdout.write(str(event))
+                fp.write(str(event))
+        if fp != sys.stdout:
+            fp.close()
 
     def help_rebuild(self):
         print("""
