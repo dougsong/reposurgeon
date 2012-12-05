@@ -5597,9 +5597,22 @@ You can compose sets as follows:
 Sets can be composed with | (union) and & (intersection). | has lower
 precedence than &, but set expressions can be grouped with { }.
 """)
+
+    def help_syntax(self):
+        print("""
+All commands begin with a command keyword.  Most take a selection set
+immediately following it; see 'help selection' for details.  Some
+commands take additional modifier arguments after the selection set.
+
+Many report-generation commands support output redirection. When
+arguments for these are parsed, any argument beginning with '>' is
+extracted and interpreted as the name of a file to which command
+output should be redirected.  Any remaining arguments are available to
+the command logic.
+""")
             
     ##
-    ## Cmmand implementation begins here
+    ## Command implementation begins here
     ##
     #
     # On-line help and instrumentation
