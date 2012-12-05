@@ -6879,17 +6879,19 @@ output or a >-redirected filename.
 
     def help_references(self):
         print("""
-Produces a listing of events that may have Subversion or CVS commit
-references in them. With the modifier 'edit', edit this set.
+With no modifier, produces a listing of events that may have
+Subversion or CVS commit references in them.  This version
+of the command supports >-redirection
+
+With the modifier 'edit', edit this set.
 
 With the modifier 'lift', transform commit-reference cookies from CVS
 and Subversion into action stamps.  This command expects cookies
 consisting of the leading string '[[', followed by a VCS identifier
 (currently SVN or CVS) followed by VCS-dependent information, followed
 by ']]'. An action stamp pointing at the corresponding commit is
-substituted when possible.
-
-Enables writing of the fassil-reference map when the repo is written or rebuilt.
+substituted when possible.  Enables writing of the fassil-reference
+map when the repo is written or rebuilt.
 """)
     def do_references(self, line):
         "Look for things that might be CVS or Subversion revision references."
@@ -6959,12 +6961,13 @@ Enables writing of the fassil-reference map when the repo is written or rebuilt.
                 if rest.startswith("edit"):
                     self.edit(idhits, rest[4:].strip())
                 else:
-                    for ei in idhits:
-                        event = repo.events[ei]
-                        if hasattr(event, "lister"):
-                            summary = event.lister(ei, screenwidth())
-                            if summary:
-                                sys.stdout.write(summary + "\n")
+                    with RepoSurgeon.LineParse(rest, capabilities=["stdout"]) as parse:
+                        for ei in idhits:
+                            event = repo.events[ei]
+                            if hasattr(event, "lister"):
+                                summary = event.lister(ei, screenwidth())
+                                if summary:
+                                    parse.stdout.write(summary + "\n")
 
     #
     # Examining tree states
