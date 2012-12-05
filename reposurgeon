@@ -5608,7 +5608,7 @@ precedence than &, but set expressions can be grouped with { }.
         print("Show help for a command. Follow with space and the command name.")
     def help_verbose(self):
         print("""
-Without an argument, this command requists a report of the verbosity
+Without an argument, this command requests a report of the verbosity
 level.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
 developers only.
@@ -5653,7 +5653,7 @@ failures in regression testing are suppressed.
         print("""
 Does nothing but resolve a selection-set expression
 and report the resulting event-number set to standard
-output. Implemented mainly for recression testing, but may be useful
+output. Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 """)
     def do_resolve(self, line):
@@ -5666,17 +5666,23 @@ for exploring the selection-set language.
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
 
-    def do_names(self, unused):
-        "List all known symbolic names of branches and tags."
-        assert unused is not None   # pacify pylint
-        for branch in self.chosen().branchlist():
-            print("branch %s" % branch)
-        for event in self.chosen():
-            if isinstance(event, Tag):
-                print("tag    %s" % event.name)
+    def help_names(self):
+        print("""
+List all known symbolic names of branches and tags. Supports > redirection.
+""")
+    def do_names(self, line):
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            for branch in self.chosen().branchlist():
+                parse.stdout.write("branch %s" % branch)
+            for event in self.chosen():
+                if isinstance(event, Tag):
+                    parse.stdout.write("tag    %s" % event.name)
 
+    def help_script(self):
+        print("""
+Read and execute commands from a named file.
+""")
     def do_script(self, line):
-        "Read and execute commands from a named file."
         if not line:
             complain("script requires a file argument")
             return
@@ -5738,7 +5744,7 @@ Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
 it's the commit branch; for a blob it's the repository path of the
-file in the blob.
+file in the blob.  Supports > redirection.
 """)
     def do_index(self, line):
         "Generate a summary listing of objects."
@@ -5751,23 +5757,24 @@ file in the blob.
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
         default = [x[0] for x in [n_o1 for n_o1 in enumerate(self.chosen()) if not isinstance(n_o1[1], Blob)]]
-        self.set_selection_set(line, default)
-        for i in self.selection:
-            event = self.chosen().events[i]
-            if isinstance(event, Blob):
-                print("%6d blob   %6s    %s" % (i+1, event.mark,event.path))
-                continue
-            if isinstance(event, Commit):
-                print("%6d commit %6s    %s" % (i+1, event.mark or '-', event.branch)) 
-                continue
-            if isinstance(event, Tag):
-                print("%6d tag    %6s    %4s" % (i+1, event.committish, repr(event.name),)) 
-                continue
-            if isinstance(event, Reset):
-                print("%6d branch %6s    %s" % (i+1, event.committish or '-', event.ref)) 
-                continue
-            else:
-                print("?      -      %s" % (event,)) 
+        line = self.set_selection_set(line, default)
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if isinstance(event, Blob):
+                    parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark,event.path))
+                    continue
+                if isinstance(event, Commit):
+                    parse.stdout.write("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch)) 
+                    continue
+                if isinstance(event, Tag):
+                    parse.stdout.write("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),)) 
+                    continue
+                if isinstance(event, Reset):
+                    parse.stdout.write("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref)) 
+                    continue
+                else:
+                    parse.stdout.write("?      -      %s\n" % (event,)) 
     def help_profile(self):
         print("""
 Enable profiling. Must be one of the initial command-line arguments, and

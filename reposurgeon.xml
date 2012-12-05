@@ -548,6 +548,11 @@ afterwards.</para></listitem>
 <para>Commands in this group report information about the selected
 repository.</para>
 
+<para>The output of most of these commands can individually be redirected to
+a named output file. Where indicated in the syntax, you can prefix the
+output filename with <quote>&lt;</quote> and give it as a following
+argument.</para>
+
 <variablelist>
 <varlistentry>
 <term><command>list</command>
@@ -559,10 +564,6 @@ you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
 event numbers, the second a timestamp in local time, and the third the
 leading text of the comment. </para></listitem>
-
-<para>The output from this command can optionally be redirected
-to a named output file. Prefix the filename with <quote>&lt;</quote>
-and give it as a following argument.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>
@@ -579,10 +580,6 @@ it has only one child, its tip is the child's tip.  If it has multiple
 children, then if there is a child with a matching branch name its tip
 is the child's tip.  Otherwise this function throws a recoverable
 error.</para>
-
-<para>The output from this command can optionally be redirected
-to a named output file. Prefix the filename with <quote>&lt;</quote>
-and give it as a following argument.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -595,10 +592,6 @@ For each commit in the selection set with a branch member that
 contains "/tags/", list the event and the branch member.  This
 will list the lightweight tags in the selection set.
 </para>
-
-<para>The output from this command can optionally be redirected
-to a named output file. Prefix the filename with <quote>&lt;</quote>
-and give it as a following argument.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -619,12 +612,7 @@ named repositories, or with no argument the currently chosen repository.
 Dump a fast-import stream representing selected events to standard output.
 Just like a write, except (1) the progress meter is disabled, (2) properties
 are always dumped, and (3) there is an identifying header before each event
-dump.
-</para>
-
-<para>The output from this command can optionally be redirected
-to a named output file. Prefix the filename with <quote>&lt;</quote>
-and give it as a following argument.</para>
+dump.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -1250,10 +1238,16 @@ to the type of that repository.</para>
 regression-testing purposes, but may be useful in unusual
 circumstances.</para>
 
+<para>The output of most of these commands can individually be redirected to
+a named output file. Where indicated in the syntax, you can prefix the
+output filename with <quote>&lt;</quote> and give it as a following
+argument.</para>
+
 <variablelist>
 <varlistentry>
 <term><command>index</command>
         [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Display four columns of info on objects in the selection set:
@@ -1277,6 +1271,7 @@ for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>names</command>
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>List the names of all known branches and tags.  Tells
 you what things are legal within angle brackets and
