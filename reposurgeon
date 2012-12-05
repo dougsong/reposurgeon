@@ -4996,6 +4996,22 @@ leading and trailing whitespace and then appending a linefeed.
 at write time. This option is mainly useful for debugging conversion edge cases.
 """),
         )
+    class LineParse:
+        "Preparse a command line."
+        def __init__(self, line):
+            self.line = line
+            self.stdout = sys.stdout
+        def __enter__(self):
+            if self.line.startswith(">"):
+                outfile = self.line[1:]
+                if outfile and outfile != '-':
+                    try:
+                        self.stdout = open(outfile, "w")
+                    except (IOError, OSError):
+                        raise Recoverable("can't open %s for write" % outfile)
+            return self
+        def __exit__(self, extype_unused, value_unused, traceback_unused):
+            pass
     def __init__(self):
         cmd.Cmd.__init__(self)
         RepositoryList.__init__(self)
@@ -6061,28 +6077,19 @@ following argument.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        fp = sys.stdout
-        if line.startswith(">"):
-            outfile = line[1:]
-            if outfile and outfile != '-':
-                try:
-                    fp = open(outfile, "w")
-                except (IOError, OSError):
-                    raise Recoverable("can't open %s for write" % outfile)
-        for ei in self.selection:
-            event = self.chosen().events[ei]
-            header = "Event %s, " % repr(ei+1)
-            if hasattr(event, "fossil_id"):
-                header += "Fossil-ID %s, " % event.fossil_id
-            header = header[:-2]
-            header += " " + ((72 - len(header)) * "=") + "\n"
-            fp.write(header)
-            if isinstance(event, Commit):
-                fp.write(event.dump(write_properties=True))
-            else:
-                fp.write(str(event))
-        if fp != sys.stdout:
-            fp.close()
+        with RepoSurgeon.LineParse(line) as parse:
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                header = "Event %s, " % repr(ei+1)
+                if hasattr(event, "fossil_id"):
+                    header += "Fossil-ID %s, " % event.fossil_id
+                header = header[:-2]
+                header += " " + ((72 - len(header)) * "=") + "\n"
+                parse.stdout.write(header)
+                if isinstance(event, Commit):
+                    parse.stdout.write(event.dump(write_properties=True))
+                else:
+                    parse.stdout.write(str(event))
 
     def help_rebuild(self):
         print("""
