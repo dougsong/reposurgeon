@@ -5472,26 +5472,13 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             return
         default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
         line = self.set_selection_set(line, default)
-        fp = sys.stdout
-        modifiers = []
-        for tok in line.strip().split():
-            if tok.startswith(">"):
-                outfile = tok[1:]
-                if outfile and outfile != '-':
-                    try:
-                        fp = open(outfile, "w")
-                    except (IOError, OSError):
-                        raise Recoverable("can't open %s for write" % outfile)
-            else:
-                modifiers.append(tok)
-        for i in self.selection:
-            event = self.chosen().events[i]
-            if hasattr(event, method):
-                summary = getattr(event, method)(*((modifiers, i,)+optargs))
-                if summary:
-                    fp.write(summary + "\n")
-        if fp != sys.stdout:
-            fp.close()
+        with RepoSurgeon.LineParse(line) as parse:
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if hasattr(event, method):
+                    summary = getattr(event, method)(*((parse.line, i,)+optargs))
+                    if summary:
+                        parse.stdout.write(summary + "\n")
     @staticmethod
     def pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
