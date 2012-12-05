@@ -5765,7 +5765,7 @@ file in the blob.  Supports > redirection.
             complain("no repo has been chosen.")
             return
         # We could do all this logic using report_select() and index() methods
-        # in the objects, but that would have two disavadntages.  First, we'd
+        # in the objects, but that would have two disadvantages.  First, we'd
         # get a default-set computation we don't want.  Second, for this
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
@@ -5805,45 +5805,37 @@ gathers statistics only on code executed via '-'.
     def help_stats(self):
         print("""
 Report size statistics and import/export method information of the
-currently chosen repository.
+currently chosen repository. Supports > redirection.
 """)
     def do_stats(self, line):
         "Report information on repositories."
-        if not line:
-            line = self.chosen().name
-            if line is None:
-                complain("no repo has been chosen.")
-                return                
-        for name in line.split():
-            repo = self.repo_by_name(name)
-            if repo is None:
-                raise Recoverable("no such repo as %s" % name)
-        if repo is not None:
-            def count(otype):
-                return len([x for x in repo.events if isinstance(x,otype)])
-            print("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s." % \
-                  (repo.name, repo.size() / 1000.0, len(repo),
-                   count(Blob), count(Commit), count(Tag), count(Reset),
-                   rfc3339(repo.readtime)))
-            if repo.sourcedir:
-                print("  Loaded from " + repo.sourcedir)
-            if repo.vcs:
-                print(repr(repo.vcs))
-        else:
-            complain("no repository has been chosen.")
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            if not parse.line:
+                parse.line = self.chosen().name
+                if parse.line is None:
+                    complain("no repo has been chosen.")
+                    return
+            for name in parse.tokens():
+                repo = self.repo_by_name(name)
+                if repo is None:
+                    raise Recoverable("no such repo as %s" % name)
+                else:
+                    def count(otype):
+                        return len([x for x in repo.events if isinstance(x,otype)])
+                    parse.stdout.write("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" % \
+                          (repo.name, repo.size() / 1000.0, len(repo),
+                           count(Blob), count(Commit), count(Tag), count(Reset),
+                           rfc3339(repo.readtime)))
+                    if repo.sourcedir:
+                        parse.stdout.write("  Loaded from %s\n" % repo.sourcedir)
+                    if repo.vcs:
+                        parse.stdout.write(repr(repo.vcs) + "\n")
 
     def help_list(self):
         print("""
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp, and the third the leading text
-of the comment.  If there is a second argument, or the first is not
-recognized as a selection set, it will be taken as the name of the
-file to report to; no argument, or one of '-'; writes to standard
-output.
-
-The output from this command can optionally be redirected to a named
-output file. Prefix the filename with '&lt;' and give it as a
-following argument.
+of the comment. Supports > redirection.
 """)
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
@@ -5861,9 +5853,7 @@ only one child, its tip is the child's tip.  If it has multiple children,
 then if there is a child with a matching branch name its tip is the
 child's tip.  Otherwise this function throws a recoverable error.
 
-The output from this command can optionally be redirected to a named
-output file. Prefix the filename with '&lt;' and give it as a
-following argument.
+Supports > redirection.
 """)
     def do_tip(self, line):
         "Generate a human-friendly listing of objects."
@@ -5871,14 +5861,8 @@ following argument.
 
     def help_tags(self):
         print("""
-Display lightweight tags: two fields, an event number and a tag name.  If
-there is a second argument, or the first is not recognized as a
-selection set, it will be taken as the name of the file to report to;
-no argument, or one of '-'; writes to standard output.
-
-The output from this command can optionally be redirected to a named
-output file. Prefix the filename with '&lt;' and give it as a
-following argument.
+Display lightweight tags: two fields, an event number and a tag name.
+Supports > redirection.
 """)
     def do_tags(self, line):
         "Generate a human-friendly listing of lightweight tags."
@@ -6096,11 +6080,7 @@ anything other than a plain file. The default selection is all events.
 Dump a fast-import stream representing selected events to standard output.
 Just like a write, except (1) the progress meter is disabled, (2) properties
 are always dumped, and (3) there is an identifying header before each event
-dump.
-
-The output from this command can optionally be redirected to a named
-output file. Prefix the filename with '&lt;' and give it as a
-following argument.
+dump.  Supports > redirection.
 """)
     def do_inspect(self, line):
         "Dump raw events."
@@ -6145,10 +6125,7 @@ its contents are backed up to a save directory.
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
-is, presently, blobs and resets).  If there is a second argument, or
-the first is not recognized as a selection set, it will be taken as
-the name of the file to report to; no argument, or one of '-'; writes
-to standard output.
+is, presently, blobs and resets). Supports > redirection.
 """)
     def do_mailbox_out(self, line):
         "Generate a mailbox file representing object metadata."
@@ -6556,7 +6533,7 @@ file path matches.
 Split a specified commit in two, the opposite of coalesce.
 
     split N at M
-    split N in PREFIX
+    split N by PREFIX
 
 The first argument is required to be a commit location; the second is
 a preposition which indicates which splitting method to use. If the

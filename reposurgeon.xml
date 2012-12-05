@@ -548,7 +548,7 @@ afterwards.</para></listitem>
 <para>Commands in this group report information about the selected
 repository.</para>
 
-<para>The output of most of these commands can individually be redirected to
+<para>The output of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
 output filename with <quote>&lt;</quote> and give it as a following
 argument.</para>
@@ -597,6 +597,7 @@ will list the lightweight tags in the selection set.
 <varlistentry>
 <term><command>stats</command>
         [<emphasis>repo-name</emphasis>...]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 Report size statistics and import/export method information about
