@@ -2273,8 +2273,9 @@ class StreamParser:
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl('+')
-        if verbose >= DEBUG_FILEMAP:
-            announce("filemaps %s" % filemaps)
+        # Blows up huge on large repos...
+        #if verbose >= DEBUG_FILEMAP:
+        #    announce("filemaps %s" % filemaps)
         # Build from sets in each directory copy record.
         if verbose >= DEBUG_EXTRACT:
             announce("Pass 3")
@@ -5455,22 +5456,25 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             return
         default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
         line = self.set_selection_set(line, default)
-        outfile = line.strip()
-        if outfile and outfile != '-':
-            try:
-                fp = open(outfile, "w")
-            except (IOError, OSError):
-                raise Recoverable("can't open %s for write" % outfile)
-        else:
-            fp = sys.stdout
-        modifiers = line.strip().split()
+        fp = sys.stdout
+        modifiers = []
+        for tok in line.strip().split():
+            if tok.startswith(">"):
+                outfile = tok[1:]
+                if outfile and outfile != '-':
+                    try:
+                        fp = open(outfile, "w")
+                    except (IOError, OSError):
+                        raise Recoverable("can't open %s for write" % outfile)
+            else:
+                modifiers.append(tok)
         for i in self.selection:
             event = self.chosen().events[i]
             if hasattr(event, method):
                 summary = getattr(event, method)(*((modifiers, i,)+optargs))
                 if summary:
                     fp.write(summary + "\n")
-        if outfile:
+        if fp != sys.stdout:
             fp.close()
     @staticmethod
     def pop_token(line):
