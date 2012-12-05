@@ -552,19 +552,22 @@ repository.</para>
 <varlistentry>
 <term><command>list</command>
         [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
 event numbers, the second a timestamp in local time, and the third the
-leading text of the comment.  If there is a second argument, or the
-first is not recognized as a selection set, it will be taken as the
-name of the file to report to; no argument, or one of '-'; writes to
-standard output.</para></listitem>
+leading text of the comment. </para></listitem>
+
+<para>The output from this command can optionally be redirected
+to a named output file. Prefix the filename with <quote>&lt;</quote>
+and give it as a following argument.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>
         [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>Display the branch tip names associated with commits
 in the selection set.  These will not necessarily be the same as their
@@ -576,17 +579,27 @@ it has only one child, its tip is the child's tip.  If it has multiple
 children, then if there is a child with a matching branch name its tip
 is the child's tip.  Otherwise this function throws a recoverable
 error.</para>
+
+<para>The output from this command can optionally be redirected
+to a named output file. Prefix the filename with <quote>&lt;</quote>
+and give it as a following argument.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><command>tags</command>
         [<emphasis>selection-set</emphasis>...]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 For each commit in the selection set with a branch member that
 contains "/tags/", list the event and the branch member.  This
 will list the lightweight tags in the selection set.
-</para></listitem>
+</para>
+
+<para>The output from this command can optionally be redirected
+to a named output file. Prefix the filename with <quote>&lt;</quote>
+and give it as a following argument.</para>
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><command>stats</command>
@@ -834,16 +847,17 @@ ever cares about mark ordering or gaps in the sequence.</para>
 <varlistentry>
 <term><command>mailbox_out</command>
         [<emphasis>selection-set</emphasis>]
-        [<emphasis>outfile</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
 the contents of repository metadata. Takes a selection set; members of
 the set other than commits, annotated tags, and passthroughs are
-ignored (that is, presently, blobs and resets).  If there is a second
-argument, or the first is not recognized as a selection set, it will
-be taken as the name of the file to report to; no argument, or one of
-'-'; writes to standard output.</para>
+ignored (that is, presently, blobs and resets).</para>
+
+<para>The output from this command can optionally be redirected
+to a named output file. Prefix the filename with <quote>&lt;</quote>
+and give it as a following argument.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
