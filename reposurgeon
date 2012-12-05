@@ -704,7 +704,7 @@ class Attribution:
                 self.date = Date(person.strip().split("|")[2])
             except (ValueError, IndexError):
                 raise Fatal("malformed attribution date in %s" % person)
-    def email_out(self, msg, hdr):
+    def email_out(self, _modifiers, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
         msg[hdr + "-Date"] = self.date.rfc822()
@@ -775,13 +775,13 @@ class Tag:
         self.tagger = tagger
         self.comment = comment
         self.color = None
-    def email_out(self, eventnum):
+    def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Tag-Name"] = self.name
         if self.tagger:
-            self.tagger.email_out(msg, "Tagger")
+            self.tagger.email_out(modifiers, msg, "Tagger")
         msg.set_payload(self.comment)
         if not self.comment.endswith("\n"):
             complain("in tag %s, comment was not LF-terminated." % self.name)
@@ -1043,32 +1043,32 @@ class Commit:
         if repo is not None:
             c.moveto(repo)
         return c
-    def lister(self, eventnum, cols):
+    def lister(self, _modifiers, eventnum, cols):
         "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         return (summary + topline)[:cols]
-    def tip(self, eventnum, cols):
-        "Enable do_list() to report deduced branch tips."
+    def tip(self, _modifiers, eventnum, cols):
+        "Enable do_tip() to report deduced branch tips."
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         return (summary + self.head())[:cols]
-    def tags(self, eventnum, cols):
+    def tags(self, _modifiers, eventnum, cols):
         "Enable do_list() to report lightweight tags."
         assert cols > -1    # pacify pylint
         return self.branch and "/tags/" in self.branch and "%6d %s" % (eventnum+1, self.branch) 
-    def email_out(self, eventnum):
+    def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Branch"] = self.branch
         msg["Parents"] = " ".join(self._parent_marks)
         if self.authors:
-            self.authors[0].email_out(msg, "Author")
+            self.authors[0].email_out(modifiers, msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, "Author" + repr(2+i))
-        self.committer.email_out(msg, "Committer")
+        self.committer.email_out(modifiers, msg, "Committer")
         if self.fossil_id:
             msg["Fossil-ID"] = self.fossil_id
         for (name, value) in self.properties.items():
@@ -1331,7 +1331,7 @@ class Passthrough:
     "Represents a passthrough line."
     def __init__(self, line):
         self.text = line
-    def email_out(self, eventnum):
+    def email_out(self, _modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
@@ -5463,10 +5463,11 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 raise Recoverable("can't open %s for write" % outfile)
         else:
             fp = sys.stdout
+        modifiers = line.strip().split()
         for i in self.selection:
             event = self.chosen().events[i]
             if hasattr(event, method):
-                summary = getattr(event, method)(*((i,)+optargs))
+                summary = getattr(event, method)(*((modifiers, i,)+optargs))
                 if summary:
                     fp.write(summary + "\n")
         if outfile:
@@ -5518,7 +5519,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 for i in selection:
                     event = self.chosen()[i]
                     if hasattr(event, "email_out"):
-                        tfp.write(event.email_out(i))
+                        tfp.write(event.email_out([], i))
         except IOError:
             raise Recoverable("write of editor tempfile failed")
         if os.system(editor + " " + tfname):
