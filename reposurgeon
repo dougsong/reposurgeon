@@ -4998,11 +4998,14 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         )
     class LineParse:
         "Preparse a command line."
-        def __init__(self, line):
+        def __init__(self, line, capabilities=None):
             self.line = line
+            self.capabilities = capabilities or []
             self.stdout = sys.stdout
         def __enter__(self):
             if self.line.startswith(">"):
+                if "stdout" not in self.capabilities:
+                    raise Recoverable("no support for output redirection")
                 outfile = self.line[1:]
                 if outfile and outfile != '-':
                     try:
@@ -5472,11 +5475,11 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             return
         default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
         line = self.set_selection_set(line, default)
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
                 event = self.chosen().events[i]
                 if hasattr(event, method):
-                    summary = getattr(event, method)(*((parse.line, i,)+optargs))
+                    summary = getattr(event, method)(*((parse, i,)+optargs))
                     if summary:
                         parse.stdout.write(summary + "\n")
     @staticmethod
@@ -6064,7 +6067,7 @@ following argument.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 header = "Event %s, " % repr(ei+1)
