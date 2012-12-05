@@ -2,6 +2,8 @@
 
 2.9:
      The syntax of the "list" and "mailbox_out" commands has changed.
+     Various commands can now redirect output to a named file prefixed with '>'.
+     These include 'list', 'tip', 'mailbox_out', 'tags' and 'inspect'.
 
 2.8: 2012-12-04
      Fix for a nasty optimizer bug that could cause file loss.

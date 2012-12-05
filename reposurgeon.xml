@@ -612,13 +612,20 @@ named repositories, or with no argument the currently chosen repository.
 </varlistentry>
 <varlistentry>
 <term><command>inspect</command>
+        [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 Dump a fast-import stream representing selected events to standard output.
 Just like a write, except (1) the progress meter is disabled, (2) properties
 are always dumped, and (3) there is an identifying header before each event
 dump.
-</para></listitem>
+</para>
+
+<para>The output from this command can optionally be redirected
+to a named output file. Prefix the filename with <quote>&lt;</quote>
+and give it as a following argument.</para>
+</listitem>
 </varlistentry>
 </variablelist>
 </refsect2>
