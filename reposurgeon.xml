@@ -950,11 +950,12 @@ list.</para>
         [<emphasis>selection-set</emphasis>]
 	[<command>{sub|sup}</command>]
 	[<command>dirname</command>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Takes a selection set. Without a modifier, list all paths
 touched by fileops in the selection set (which defaults to the entire
-repo). This rteporting variant does &gt;-redirection.</para>
+repo). This reporting variant does &gt;-redirection.</para>
 
 <para>With the 'sub' modifier, take a second argument that is a
 directory name and prepend it to every path. With the 'sup' modifier,
@@ -1063,13 +1064,17 @@ fossil-reference map) without having to do the lookup by hand.</para>
 <term><command>references</command>
           [<emphasis>selection-set</emphasis>]
           [<command>lift</command>]
+          [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Search commit comments for strings that might be CVS- or
 Subversion-style revision identifiers. This will be useful when you
 want to replace them with equivalent cookies that can automatically be
-translated into VCS-independent action stamps. With the modifier
-'edit', edit the set where revision IDs are found.</para>
+translated into VCS-independent action stamps. This reporting
+command supports &gt;-redirection.</para>
+
+<para>With the modifier 'edit', edit the set where revision IDs are
+found.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the fossil map. An action
