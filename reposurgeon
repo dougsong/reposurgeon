@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-version="2.7"
+version="2.8"
 
 #
 # This code is intended to be hackable to support for special-purpose or
