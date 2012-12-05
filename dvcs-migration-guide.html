@@ -80,9 +80,10 @@ some education in good practice to get the most out of the tools.
 I'll cover that aspect as well.</p>
 
 <p>In 90% of cases you'll be converting from CVS or Subversion, and
-those are the cases we'll discuss.  If you're using something older or
-weirder, you're on your own - though reading this document may give
-helpful hints.</p>
+those are the cases we'll discuss in detail.  If you're using
+something older or weirder, see the short section on <a
+href="#other">other VCSes</a> for some hints, but you're mostly on
+your own.</p>
 
 <h1 id="preparation">Step Zero: Preparation</h1>
 
@@ -275,6 +276,21 @@ differences; if they do, report a bug in <code>reposurgeon</code>.
 tool that handles multibranch Subversion repositories in full
 generality. It can even translate Subversion commits that alter
 multiple branches.</p>
+
+<h2 id="other">Other VCSes</h2>
+
+<p>SCCS: Use <a href="http://www.catb.org/esr/sccs2rcs/">sccs2rcs</a>
+to get to RCS, then follow the directions for RCS. There is a script
+called sccs2git on CPAN which I don't recommend, as it is poorly
+documented and makes no attempt to group commits into changesets.</p>
+
+<p>RCS: Use <a
+href="http://git.oblomov.eu/rcs-fast-export">rcs-fast-import</a> to
+get to git. It will group your RCS commits into changesets.</p>
+
+<p>For other systems, see the <a
+href="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools#Interaction_with_other_Revision_Control_Systems">Git
+wiki page on conversion tools</a>.
 
 <h1 id="cleanup">Step Three: Cleanup</h1>
 
@@ -649,6 +665,8 @@ earlier conversion tools obsolete.</p>
 Makefile.</p>
 
 <p>3.1 (2012-11-18) It's a good idea to run 'make compare'.</p>
+
+<p>3.2 (2012-12-05) Add hints on other systems.</p>
 
 </div>
 <hr />
