@@ -1098,7 +1098,8 @@ associated with repository conversions from order systems.</para>
 <term><command>authors</command>
           [<emphasis>selection-set</emphasis>]
           [<command>read</command>|<command>write</command>]
-          [<command>filename</command>]
+          [[&lt;]<command>filename</command>]
+          [[&gt;]<command>filename</command>]
 </term>
 <listitem>
 <para>Apply or dump author-map information for the specified selection
@@ -1119,18 +1120,18 @@ according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
 (this handles what git-cvsimport and cvs2git do) </para>
 
-<para>With the 'read' modifier, or no modifier and a filename
-argument, apply author mapping data (no filename argument, read the
-mapping from standard input).  May be useful if you are editing a repo
-or dump created by <command>cvs2git</command> or by
-<command>git-svn</command> invoked without -A.</para>
+<para>With the 'read' modifier, or no modifier, apply author mapping
+data (from standard input or a &lt;-redirected file).  May be useful
+if you are editing a repo or dump created by
+<command>cvs2git</command> or by <command>git-svn</command> invoked
+without -A.</para>
 
-<para>With no file argument, or with the 'write' modifier and a file
-argument: write a mapping file that could be interpreted by 'authors
-read', with entries for each unique committer, author, and tagger (no
-file argument sends the report to standard output). This may be
-helpful as a start on building an authors file, though each part to
-the right of an equals sign will need editing.</para>
+<para>With the 'write' modifier, write a mapping file that could be
+interpreted by 'authors read', with entries for each unique committer,
+author, and tagger (to standard output or a &lt;-redirected mapping
+file). This may be helpful as a start on building an authors file,
+though each part to the right of an equals sign will need
+editing.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

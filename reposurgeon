@@ -5012,7 +5012,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 infile = m.group(0)[1:]
                 if infile and infile != '-':
                     try:
-                        self.stdout = open(infile, "r")
+                        self.stdin = open(infile, "r")
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
                                           % infile)
@@ -5556,7 +5556,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         if os.system(editor + " " + tfname):
             raise Recoverable("%s returned a failure status" % editor)
         else:
-            self.do_mailbox_in(tfname)
+            self.do_mailbox_in("<" + tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
@@ -5604,11 +5604,16 @@ All commands begin with a command keyword.  Most take a selection set
 immediately following it; see 'help selection' for details.  Some
 commands take additional modifier arguments after the selection set.
 
-Many report-generation commands support output redirection. When
+Most report-generation commands support output redirection. When
 arguments for these are parsed, any argument beginning with '>' is
 extracted and interpreted as the name of a file to which command
 output should be redirected.  Any remaining arguments are available to
 the command logic.
+
+Some commands support input redirection. When arguments for these are
+parsed, any argument beginning with '<' is extracted and interpreted
+as the name of a file from which command output should be taken.  Any
+remaining arguments are available to the command logic.
 """)
             
     ##
@@ -5722,7 +5727,8 @@ Read and execute commands from a named file.
                             else:
                                 heredoc.write(nextline)
                         heredoc.close()
-                        scriptline += heredoc.name
+                        # Note: the command must accept < redirection!
+                        scriptline += "<" + heredoc.name
                     # End of heredoc simulation
                     for i in range(len(self.callstack[-1])):
                         scriptline = scriptline.replace('$' + str(i), self.callstack[-1][i])
@@ -6133,11 +6139,9 @@ is, presently, blobs and resets). Supports > redirection.
 
     def help_mailbox_in(self):
         print("""
-Accept a mailbox file of messages in RFC822 format representing the
-contents of the metadata in selected commits and annotated tags. Takes
-no selection set.  If there is an argument it will be taken as the
-name of a mailbox file to read from; no argument, or one of '-'; reads
-from standard output.
+Accept on standard input a mailbox file of messages in RFC822 format
+representing the contents of the metadata in selected commits and
+annotated tags. Takes no selection set. Takes < redirection.
 
 Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
@@ -6149,22 +6153,15 @@ committer ID and timestamp pair.
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
-        infile = line.strip()
-        if infile and infile != '-':
-            try:
-                fp = open(infile)
-            except (OSError, IOError):
-                raise Recoverable("couldn't read %s" % infile)
-        else:
-            fp = sys.stdin
-        update_list = []
-        while True:
-            msg = RepoSurgeonEmail.readmsg(fp)
-            if not msg:
-                break
-            update_list.append(email.message_from_string(msg))
-        if infile:
-            fp.close()
+        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            if parse.line:
+                raise Recoverable("no longer takes an argument - use < redirection")
+            update_list = []
+            while True:
+                msg = RepoSurgeonEmail.readmsg(parse.stdin)
+                if not msg:
+                    break
+                update_list.append(email.message_from_string(msg))
         # First, a validation pass
         attribution_map = {}
         attribution_counts = collections.Counter()
@@ -6823,49 +6820,35 @@ according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
 (this handles what git-cvsimport and cvs2git do) 
 
-With the 'read' modifier, or no modifier and a filename
-argument, apply author mapping data (no filename argument, read the
-mapping from standard input).  May be useful if you are editing a repo
-or dump created by cvs2git or by git-svn invoked without -A.
+With the 'read' modifier, or no modifier, apply author mapping data
+(from standard input or a <-redirected input file).  May be useful if
+you are editing a repo or dump created by cvs2git or by git-svn
+invoked without -A.
 
-With no file argument, or with the 'write' modifier and a file
-argument: write a mapping file that could be interpreted by 'authors
-read', with entries for each unique committer, author, and tagger (no
-file argument sends the report to standard output). This may be
-helpful as a start on building an authors file, though each part to
-the right of an equals sign will need editing.""")
+With the 'write' modifier, write a mapping file that could be
+interpreted by 'authors read', with entries for each unique committer,
+author, and tagger (to standard output or a >-redirected file). This
+may be helpful as a start on building an authors file, though each
+part to the right of an equals sign will need editing.
+""")
     def do_authors(self, line):
         "Apply or dump author-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
-        fields = rest.split()
-        if not fields or (fields[0] == "write" and len(fields) == 1):
-            self.chosen().write_authormap(self.selection, sys.stdout)
-        elif fields[0] == "write":
-            try:
-                with open(fields[1], "w") as wfp:
-                    self.chosen().write_authormap(self.selection, wfp)
-            except (OSError, IOError):
-                raise Recoverable("authors file %s could not be written." \
-                                  % fields[1])
-        elif fields[0] == "read" and len(fields) == 1:
-            self.chosen().read_authormap(self.selection, sys.stdin)
-        elif fields[0] == "read":
-            try:
-                with open(fields[1]) as fp:
-                    self.chosen().read_authormap(self.selection, fp)
-            except (OSError, IOError):
-                raise Recoverable("authors file %s could not be read." \
-                                  % fields[1])
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        if line.startswith("write"):
+            with RepoSurgeon.LineParse(line[5:].strip(), capabilities=["stdout"]) as parse:
+                if parse.tokens():
+                    raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
+                self.chosen().write_authormap(self.selection, parse.stdout)
         else:
-            try:
-                with open(fields[0]) as fp:
-                    self.chosen().read_authormap(self.selection, fp)
-            except (OSError, IOError):
-                raise Recoverable("authors file %s could not be read." \
-                                  % fields[0])
+            if line.startswith("read"):
+                line = line[4:].strip()
+            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+                if parse.tokens():
+                    raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
+                self.chosen().read_authormap(self.selection, parse.stdin)
 
     #
     # Reference lifting
