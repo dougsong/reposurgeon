@@ -6066,17 +6066,13 @@ anything other than a plain file. The default selection is all events.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
-        if not line:
-            line = '-'
-        export = self.chosen().svndump if self.preferred and self.preferred.name == "svn" else self.chosen().fast_export
-        if line == '-':
-            export(self.selection, sys.stdout, progress=(verbose==1 and not quiet))
-        else:
-            try:
-                with open(line, "w") as out:
-                    export(self.selection, out, progress=verbose==1)
-            except (IOError, OSError):
-                complain("open of %s for write failed.\n" % line)
+        # Backward-compatibility hack.  Will have to be removed if we
+        # ever define modifiers for this command.
+        if line:
+            line =  ">" + line
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            export = self.chosen().svndump if self.preferred and self.preferred.name == "svn" else self.chosen().fast_export
+            export(self.selection, parse.stdout, progress=(verbose==1 and not quiet))
 
     def help_inspect(self):
         print("""
