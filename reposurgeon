@@ -6645,23 +6645,27 @@ list.
     def help_paths(self):
         print("""
 Without a modifier, list all paths touched by fileops in
-the selection set (which defaults to the entire repo). With the 'sub'
-modifier, take a second argument that is a directory name and prepend
-it to every path. With the 'sup' modifier, strip the first directory
-component from every path.""" )
+the selection set (which defaults to the entire repo). This
+variant does > redirection.
+
+With the 'sub' modifier, take a second argument that is a directory
+name and prepend it to every path. With the 'sup' modifier, strip the
+first directory component from every path.
+""" )
     def do_paths(self, line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         rest = self.set_selection_set(line, list(range(len(self.chosen()))))
         if not rest:
-            allpaths = set([])
-            self.chosen().path_walk(self.selection,
-                                  lambda f: allpaths.add(f) or f)
-            allpaths = list(allpaths)
-            allpaths.sort()
-            print "\n".join(allpaths)
-            return
+            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+                allpaths = set([])
+                self.chosen().path_walk(self.selection,
+                                      lambda f: allpaths.add(f) or f)
+                allpaths = list(allpaths)
+                allpaths.sort()
+                parse.stdout.write("\n".join(allpaths) + "\n")
+                return
         fields = rest.split()
         if fields[0] == "sub":
             prefix = fields[1]

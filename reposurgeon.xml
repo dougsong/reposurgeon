@@ -954,7 +954,9 @@ list.</para>
 <listitem>
 <para>Takes a selection set. Without a modifier, list all paths
 touched by fileops in the selection set (which defaults to the entire
-repo). With the 'sub' modifier, take a second argument that is a
+repo). This rteporting variant does &gt;-redirection.</para>
+
+<para>With the 'sub' modifier, take a second argument that is a
 directory name and prepend it to every path. With the 'sup' modifier,
 strip the first directory component from every path.</para>
 </listitem>
