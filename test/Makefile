@@ -10,9 +10,9 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .svn.chk:
 	../reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
-	../reposurgeon "read $<" "prefer git" "write $@"
+	../reposurgeon "read $<" "prefer git" "write" >$@
 .svn.map:
-	../reposurgeon "read $<" "prefer git" "fossils write $@"
+	../reposurgeon "read $<" "prefer git" "fossils write" >$@
 
 buildregress: fi-buildregress svnload-buildregress fossil-buildregress svndump-buildregress
 

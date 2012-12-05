@@ -6068,7 +6068,7 @@ anything other than a plain file. The default selection is all events.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         # Backward-compatibility hack.  Will have to be removed if we
         # ever define modifiers for this command.
-        if line:
+        if line and not line.startswith(">"):
             line =  ">" + line
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             export = self.chosen().svndump if self.preferred and self.preferred.name == "svn" else self.chosen().fast_export
