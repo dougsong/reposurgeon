@@ -1098,8 +1098,8 @@ associated with repository conversions from order systems.</para>
 <term><command>authors</command>
           [<emphasis>selection-set</emphasis>]
           [<command>read</command>|<command>write</command>]
-          [[&lt;]<command>filename</command>]
-          [[&gt;]<command>filename</command>]
+          [&lt;<command>filename</command>]
+          [&gt;<command>filename</command>]
 </term>
 <listitem>
 <para>Apply or dump author-map information for the specified selection
@@ -1355,11 +1355,14 @@ reference.</para>
 <varlistentry>
 <term><command>fossils</command>
           [<command>read</command>|<command>write</command>]
-          [<command>filename</command>]
+          [<command>&lt;filename</command>]
+          [<command>&gt;filename</command>]
 </term>
 <listitem>
 <para>Apply or list fossil-reference information. Does not take a
-selection set.</para>
+selection set. The 'read' variant reads from standard input or a
+&lt;-redirected filename; the 'write' variant writes to standard
+output or a &gt;-redirected filename.</para>
 
 <para> A fossil-reference file maps reference cookies to (committer,
 commit-date, sequence-number) pairs; these in turn (should) uniquely

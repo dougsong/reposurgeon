@@ -6838,7 +6838,8 @@ part to the right of an equals sign will need editing.
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         if line.startswith("write"):
-            with RepoSurgeon.LineParse(line[5:].strip(), capabilities=["stdout"]) as parse:
+            line = line[5:].strip()
+            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
                     raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
                 self.chosen().write_authormap(self.selection, parse.stdout)
@@ -6855,38 +6856,29 @@ part to the right of an equals sign will need editing.
     #
     def help_fossils(self):
         print("""
-Read or write the fossil-references data.  The format of each line is
-three whitespace-separated fields: a reference cookie, a timestamp, and
-a committer email address.  Does not take a selection set.
+Apply or list fossil-reference information. Does not take a
+selection set. The 'read' variant reads from standard input or a
+<-redirected filename; the 'write' variant writes to standard
+output or a >-redirected filename.
 """)
     def do_fossils(self, line):
         "Apply a reference-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        fields = line.split()
-        if not fields or (fields[0] == "write" and len(fields) == 1):
-            self.chosen().write_fossilmap(sys.stdout)
-        elif fields[0] == "write":
-            try:
-                with open(fields[1], "w") as wfp:
-                    self.chosen().write_fossilmap(wfp)
-            except (OSError, IOError):
-                raise Recoverable("can't open %s for write" % fields[1])
-        elif fields[0] == "read" and len(fields) == 1:
-            self.chosen().read_fossilmap(sys.stdin)
-        elif fields[0] == "read":
-            try:
-                with open(fields[1]) as fp:
-                    self.chosen().read_fossilmap(fp)
-            except (OSError, IOError):
-                raise Recoverable("can't open %s for read" % fields[1])
+        if line.startswith("write"):
+            line = line[5:].strip()
+            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+                if parse.tokens():
+                    raise Recoverable("fossils write no longer takes a filename argument - use > redirection instead")
+                self.chosen().write_fossilmap(parse.stdout)
         else:
-            try:
-                with open(fields[0]) as fp:
-                    self.chosen().read_fossilmap(fp)
-            except (OSError, IOError):
-                raise Recoverable("can't open %s for read" % fields[1])
+            if line.startswith("read"):
+                line = line[4:].strip()
+            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+                if parse.tokens():
+                    raise Recoverable("fossils read no longer takes a filename argument - use < redirection instead")
+                self.chosen().read_fossilmap(parse.stdin)
 
     def help_references(self):
         print("""

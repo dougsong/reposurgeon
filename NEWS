@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.9:
-     The syntax of "authors", "list", and "mailbox_{in|out}" have changed.  
+     Syntax of "authors", "fossils", "list", and "mailbox_{in|out}" has changed.
      Many commands can now redirect output to a named file prefixed with '>'.
 
 2.8: 2012-12-04
