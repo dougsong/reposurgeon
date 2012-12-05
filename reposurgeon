@@ -5658,11 +5658,8 @@ failures in regression testing are suppressed.
         if not line:
             announce("quiet %s" % ("on" if quiet else "off"))
 
-    def help_echo(self):
-        print("""
-Set or clear echoing commands before processing (for regression tests).
-""")
     def do_echo(self, line):
+        "Set or clear echoing commands before processing."
         try:
             self.echo = int(line)
         except ValueError:
@@ -5699,11 +5696,8 @@ List all known symbolic names of branches and tags. Supports > redirection.
                 if isinstance(event, Tag):
                     parse.stdout.write("tag    %s" % event.name)
 
-    def help_script(self):
-        print("""
-Read and execute commands from a named file.
-""")
     def do_script(self, line):
+        "Read and execute commands from a named file."
         if not line:
             complain("script requires a file argument")
             return
@@ -5742,10 +5736,6 @@ Read and execute commands from a named file.
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
-    def help_history(self):
-        print("""
-Dump your command list from this session so far.
-""")
     def do_history(self, line):
         "Dump your command list from this session so far."
         for line in self.history:
