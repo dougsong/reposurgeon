@@ -6727,7 +6727,7 @@ from the highest member (child) to the lowest (parent).
         later.addParent(earlier.mark)
         earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         later_id = "%s (%s)" % (later.mark, later.branch)
-        announce("%s added as a parent of %s" % (earlier_id, later_id))
+        #announce("%s added as a parent of %s" % (earlier_id, later_id))
 
     def help_branch(self):
         print("""
