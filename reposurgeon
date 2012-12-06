@@ -440,9 +440,13 @@ def screenwidth():
     with popen_or_die('stty size', 'r') as tp:
         return int(tp.read().split()[1])
 
+def debug_enable(level):
+    "Hook for debug filtering."
+    return verbose >= level
+
 def nuke(directory, legend):
     "Remove a (large) directory, with a progress indicator."
-    with Baton(legend, enable=verbose>=DEBUG_SHUFFLE) as baton:
+    with Baton(legend, enable=debug_enable(DEBUG_SHUFFLE)) as baton:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
                 os.remove(os.path.join(root, name))
@@ -747,7 +751,7 @@ class Blob:
         oldloc = self.blobfile()
         self.repo = repo
         newloc = self.blobfile()
-        if verbose >= DEBUG_SHUFFLE:
+        if debug_enable(DEBUG_SHUFFLE):
             announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
         os.rename(oldloc, newloc)
         return self
@@ -756,7 +760,7 @@ class Blob:
         c = copy.copy(self)
         c.repo = repo
         c.colors = []
-        if verbose >= DEBUG_SHUFFLE:
+        if debug_enable(DEBUG_SHUFFLE):
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
         os.link(self.blobfile(), c.blobfile())
         return c
@@ -793,7 +797,7 @@ class Tag:
         modified = False
         newname = msg["Tag-Name"]
         if self.name != newname:
-            if verbose >= DEBUG_EMAILIN:
+            if debug_enable(DEBUG_EMAILIN):
                 announce("in tag %d, Tag-Name is modified %s -> %s" \
                       % (int(msg["Event-Number"]), repr(self.name), repr(newname)))
             self.name = newname
@@ -805,14 +809,14 @@ class Tag:
             else:
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
-                    if verbose >= DEBUG_EMAILIN:
+                    if debug_enable(DEBUG_EMAILIN):
                         announce("in tag %d, Tagger is modified" \
                               % (int(msg["Event-Number"])))
                     modified = True
             if "Tagger-Date" in msg:
                 date = Date(msg["Tagger-Date"])
                 if self.tagger.date is None or date != self.tagger.date:
-                    if verbose >= DEBUG_EMAILIN:
+                    if debug_enable(DEBUG_EMAILIN):
                         announce("in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
                               % (int(msg["Event-Number"]),
                                  self.tagger.date, date,
@@ -823,7 +827,7 @@ class Tag:
         if global_options["canonicalize"]:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
-            if verbose >= DEBUG_EMAILIN:
+            if debug_enable(DEBUG_EMAILIN):
                 announce("in tag %d, comment is modified %s -> %s" \
                       % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
@@ -1106,13 +1110,13 @@ class Commit:
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
-                if verbose >= DEBUG_EMAILIN:
+                if debug_enable(DEBUG_EMAILIN):
                     announce("in commit %d, Committer is modified" \
                           % (int(msg["Event-Number"])))
                 modified = True
         date = Date(msg["Committer-Date"])
         if self.committer.date is None or date != self.committer.date:
-            if verbose >= DEBUG_EMAILIN:
+            if debug_enable(DEBUG_EMAILIN):
                 announce("in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                       % (int(msg["Event-Number"]),
                          self.committer.date, date,
@@ -1139,14 +1143,14 @@ class Commit:
                 else:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
-                        if verbose >= DEBUG_EMAILIN:
+                        if debug_enable(DEBUG_EMAILIN):
                             announce("in commit %s, Author #%d is modified" \
                                   % (msg["Event-Number"], i+1))
                         modified = True
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if date != self.authors[i].date:
-                        if verbose >= DEBUG_EMAILIN:
+                        if debug_enable(DEBUG_EMAILIN):
                             announce("in event %s, %s-Date #%d is modified" \
                                   % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
@@ -1173,7 +1177,7 @@ class Commit:
         if global_options["canonicalize"]:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
-            if verbose >= DEBUG_EMAILIN:
+            if debug_enable(DEBUG_EMAILIN):
                 announce("in commit %d, comment is modified %s -> %s" \
                       % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
@@ -1373,7 +1377,7 @@ class signature:
             elif self.perms & 0o100600 == 0o100600:
                 self.perms = 0o100644
     def __eq__(self, other):
-        #if verbose >= DEBUG_EXTRACT:
+        #if debug_enable(DEBUG_EXTRACT):
         #    announce("%s == %s -> %s" % (str(self),
         #                                 str(other),
         #                                 self.__dict__ == other.__dict__))
@@ -1386,13 +1390,13 @@ class signature:
 
 def capture(command):
     "Run a specified command, capturing the output."
-    if verbose >= DEBUG_COMMANDS:
+    if debug_enable(DEBUG_COMMANDS):
         announce("%s: capturing %s" % (rfc3339(time.time()), command))
     try:
         content = subprocess.check_output(command, shell=True)
     except (subprocess.CalledProcessError, OSError) as oe:
         raise Fatal("execution of '%s' failed: %s" % (command, oe))
-    if verbose >= DEBUG_COMMANDS:
+    if debug_enable(DEBUG_COMMANDS):
         sys.stderr.write(content)
     return content
 
@@ -1560,7 +1564,7 @@ class RepoStreamer:
                 commit.setParents([self.markmap[rev] for rev in parents])
                 commit.branch = self.extractor.get_branch(revision)
                 commit.comment = self.extractor.get_comment(revision)
-                if verbose >= DEBUG_EXTRACT:
+                if debug_enable(DEBUG_EXTRACT):
                     msg = commit.comment
                     if msg == None:
                         msg = ""
@@ -1579,7 +1583,7 @@ class RepoStreamer:
                             continue
                         newsig = signature(path)
                         if newsig.hashval in self.hash_to_mark:
-                            #if verbose >= DEBUG_EXTRACT:
+                            #if debug_enable(DEBUG_EXTRACT):
                             #    announce("r%s: %s has old hash" \
                             #             % (revision, path))
                             # The file's hash corresponds to an existing
@@ -1587,7 +1591,7 @@ class RepoStreamer:
                             # appropriate.
                             if path not in self.filemap[revision] \
                                    or self.filemap[revision][path]!=newsig:
-                                if verbose >= DEBUG_EXTRACT:
+                                if debug_enable(DEBUG_EXTRACT):
                                     announce("r%s: update for %s" % (revision, path))
                                 for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
@@ -1610,7 +1614,7 @@ class RepoStreamer:
                                     commit.fileops.append(op)
                         else:
                             # Content hash doesn't match any existing blobs
-                            if verbose >= DEBUG_EXTRACT:
+                            if debug_enable(DEBUG_EXTRACT):
                                 announce("r%s: %s has new hash" \
                                          % (revision, path))
                             blobmark = self.__newmark()
@@ -1640,7 +1644,7 @@ class RepoStreamer:
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
                 commit.mark = self.__newmark(revision)
-                if verbose >= DEBUG_EXTRACT:
+                if debug_enable(DEBUG_EXTRACT):
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
             # Now append reset objects
@@ -1854,7 +1858,7 @@ class StreamParser:
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
-            if verbose >= DEBUG_SVNPARSE:
+            if debug_enable(DEBUG_SVNPARSE):
                 announce("readprops, line %d: %s" % \
                          (self.import_line, repr(line)))
             if line.startswith("PROPS-END"):
@@ -1873,7 +1877,7 @@ class StreamParser:
                     raise self.error("property value garbled")
                 value = self.sd_read_blob(int(line.split()[1]))
                 props[key] = value
-                if verbose >= DEBUG_SVNPARSE:
+                if debug_enable(DEBUG_SVNPARSE):
                     announce("readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
         return props
@@ -1906,7 +1910,7 @@ class StreamParser:
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
                             baton.twirl()
-                            if verbose >= DEBUG_SVNPARSE:
+                            if debug_enable(DEBUG_SVNPARSE):
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
                             revision = StreamParser.sd_body(line)
@@ -1922,7 +1926,7 @@ class StreamParser:
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
-                                if verbose >= DEBUG_SVNPARSE:
+                                if debug_enable(DEBUG_SVNPARSE):
                                     announce("node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
                                 if not line:
@@ -1979,14 +1983,14 @@ class StreamParser:
                                 elif line.startswith("Content-length: "):
                                     continue
                                 else:
-                                    if verbose >= DEBUG_SVNPARSE:
+                                    if debug_enable(DEBUG_SVNPARSE):
                                         announce("node list parsing, line %d: uninterpreted line %s" % \
                                              (self.import_line, repr(line)))
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
-                            if verbose >= DEBUG_SVNPARSE:
+                            if debug_enable(DEBUG_SVNPARSE):
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
@@ -2209,7 +2213,7 @@ class StreamParser:
         def countfmt(count):
             return " %%%dd of %s" % (len(str(count)), count)
         # Find all copy sources and compute the set of branches
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
         baton.twirl("copynodes")
         baton.startcounter(countfmt(len(self.revisions)))
@@ -2219,7 +2223,7 @@ class StreamParser:
             for node in record.nodes:
                 if node.from_path is not None:
                     copynodes.append(node)
-                    if verbose >= DEBUG_EXTRACT:
+                    if debug_enable(DEBUG_EXTRACT):
                         announce("copynode at %s" % node)
                 if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not global_options['svn_nobranch']:
                     for trial in global_options['svn_branchify']:
@@ -2230,14 +2234,14 @@ class StreamParser:
                             self.branches[node.path+os.sep] = None
                         elif trial == '*' and not node.path + os.sep + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
-                    if node.path in self.branches and verbose >= DEBUG_TOPOLOGY:
+                    if node.path in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
             baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
         baton.twirl('+')
         # Build filemaps.
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             announce("Pass 2")
         baton.twirl("filemaps")
         baton.startcounter(countfmt(len(self.revisions)))
@@ -2252,13 +2256,13 @@ class StreamParser:
                     assert int(node.from_rev) < int(revision)
                     filemap.copy_from(node.path, filemaps[node.from_rev],
                                       node.from_path)
-                    if verbose >= DEBUG_FILEMAP:
+                    if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s copied to %s" \
                                  % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds/deletes/changes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    if verbose >= DEBUG_FILEMAP:
+                    if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s added" % (node.revision, node.path))
                 elif node.action == SD_DELETE:
                     if node.kind == SD_NONE:
@@ -2267,27 +2271,27 @@ class StreamParser:
                     node.from_set = PathMap()
                     node.from_set.copy_from(node.path, filemap, node.path)
                     del filemap[node.path]
-                    if verbose >= DEBUG_FILEMAP:
+                    if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s deleted" \
                                  % (node.revision, node.path))
                 elif node.action == SD_CHANGE and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    if verbose >= DEBUG_FILEMAP:
+                    if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl('+')
         # Blows up huge on large repos...
-        #if verbose >= DEBUG_FILEMAP:
+        #if debug_enable(DEBUG_FILEMAP):
         #    announce("filemaps %s" % filemaps)
         # Build from sets in each directory copy record.
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             announce("Pass 3")
         baton.twirl("copysets")
         baton.startcounter(countfmt(len(copynodes)))
         for copynode in copynodes:
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
@@ -2311,13 +2315,13 @@ class StreamParser:
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             announce("Pass 4")
         baton.twirl("commits")
         baton.startcounter(countfmt(len(self.revisions)))
         for revision in self.revisions:
             record = self.revisions[revision]
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("Revision %s:" % revision)
             for node in record.nodes:
                 # if node.props is None, no property section.
@@ -2364,11 +2368,11 @@ class StreamParser:
                                          for node in record.nodes \
                                          if node.kind == SD_FILE]
             for (n, node) in enumerate(record.nodes):
-                if verbose >= DEBUG_EXTRACT:
+                if debug_enable(DEBUG_EXTRACT):
                     announce("r%s:%d: %s" % (revision, n+1, node))
                 elif node.kind == SD_DIR \
                          and node.action != SD_CHANGE \
-                         and verbose >= DEBUG_TOPOLOGY:
+                         and debug_enable(DEBUG_TOPOLOGY):
                     announce(str(node))
                 # Handle per-path properties.
                 if node.props is not None:
@@ -2410,7 +2414,7 @@ class StreamParser:
                             # We can just ignore this case.
                             if node.from_set is not None:
                                 for child in node.from_set:
-                                    if verbose >= DEBUG_EXTRACT:
+                                    if debug_enable(DEBUG_EXTRACT):
                                         announce("r%s: deleting %s" \
                                                  % (revision, child))
                                     newnode = StreamParser.NodeAction()
@@ -2430,7 +2434,7 @@ class StreamParser:
                         # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
                     if node.props is not None:
-                        if verbose >= DEBUG_EXTRACT:
+                        if debug_enable(DEBUG_EXTRACT):
                             announce("r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
                         # svn:mergeinfo gets handled here
@@ -2459,7 +2463,7 @@ class StreamParser:
                                             # then ignore later ones.
                                             if (node.path, end) not in self.mergeinfo:
                                                 self.mergeinfo[(node.path, end)] = revision
-                                            if verbose >= DEBUG_EXTRACT:
+                                            if debug_enable(DEBUG_EXTRACT):
                                                 announce("r%s: mergeinfo link from %s\n" \
                                                         % (revision, end))
                         # svn:ignore gets handled here,
@@ -2480,7 +2484,7 @@ class StreamParser:
                             newnode.action = SD_ADD
                             newnode.kind = SD_FILE
                             newnode.blob = blob
-                            if verbose >= DEBUG_IGNORES:
+                            if debug_enable(DEBUG_IGNORES):
                                 announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                             # Must append rather than simply performing.
                             # Otherwise when the property is unset we
@@ -2493,7 +2497,7 @@ class StreamParser:
                             newnode.revision = revision
                             newnode.action = SD_DELETE
                             newnode.kind = SD_FILE
-                            if verbose >= DEBUG_IGNORES:
+                            if debug_enable(DEBUG_IGNORES):
                                 announce("r%s: queuing up %s deletion." % (revision, newnode.path))
                             generated_nodes.append(newnode)
                             self.active_gitignores.remove(gitignore_path)
@@ -2508,7 +2512,7 @@ class StreamParser:
                         branchcopy = node.from_path in self.branches \
                                          and node.path in self.branches \
                                          and node.path not in self.branchdeletes
-                        if verbose >= DEBUG_TOPOLOGY:
+                        if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: directory copy to %s from r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
@@ -2520,7 +2524,7 @@ class StreamParser:
                         for source in node.from_set:
                             if self.branchpath(source) in never_generate_overwrites:
                                 continue
-                            if verbose >= DEBUG_TOPOLOGY:
+                            if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s: generating copy to %s from r%s~%s" \
                                          % (revision,
                                             node.path,
@@ -2540,7 +2544,7 @@ class StreamParser:
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
                             subnode.implicit = branchcopy
-                            if verbose >= DEBUG_TOPOLOGY:
+                            if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s: local copy is %s from r%s~%s" \
                                          % (revision,
                                             subnode.path,
@@ -2649,18 +2653,18 @@ class StreamParser:
                                                  node.path)
                                 self.mark_counter[node.blobmark] += 1
                                 actions.append((node, fileop))
-                            elif verbose >= DEBUG_EXTRACT:
+                            elif debug_enable(DEBUG_EXTRACT):
                                 announce("r%s~%s: unmodified" % (node.revision, node.path))
                             self.permissions[node.path] = perms
                     # These are directory actions.
                     elif node.action in (SD_DELETE, SD_REPLACE):
-                        if verbose >= DEBUG_EXTRACT:
+                        if debug_enable(DEBUG_EXTRACT):
                             announce("r%s: deleteall %s" % (revision,node.path))
                         fileop = FileOp()
                         fileop.construct("deleteall", node.path[:-1])
                         actions.append((node, fileop))
             # Time to generate commits from actions and fileops.
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
             cliques = {}
@@ -2703,7 +2707,7 @@ class StreamParser:
                 else:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.mark = self.__newmark()
-                if verbose >= DEBUG_EXTRACT:
+                if debug_enable(DEBUG_EXTRACT):
                     announce("r%s gets mark %s" % (revision, commit.mark))
                 newcommits.append(commit)
             # If the commit is mixed, or there are deletealls left over,
@@ -2737,14 +2741,14 @@ class StreamParser:
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
                               and node.path.startswith(newcommit.common)]
-                    if copies and verbose >= DEBUG_TOPOLOGY:
+                    if copies and debug_enable(DEBUG_TOPOLOGY):
                         announce("r%s: copy operations %s" %
                                      (newcommit.fossil_id, copies))
                     linkback = False
                     # If the copies include one for the directory, we're good.
                     if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
                         self.directory_branchlinks.add(newcommit.common)
-                        if verbose >= DEBUG_TOPOLOGY:
+                        if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: directory copy with %s" \
                                      % (newcommit.fossil_id, copies))
                         linkback = True
@@ -2771,7 +2775,7 @@ class StreamParser:
                     # I don't know what generates these things - cvs2svn, maybe.
                     elif len(copies) > 1:
                         self.fileop_branchlinks.add(newcommit.common)
-                        if verbose >= DEBUG_TOPOLOGY:
+                        if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: making branch link %s" %
                                      (newcommit.fossil_id, newcommit.common))
                         linkback = True
@@ -2784,17 +2788,17 @@ class StreamParser:
                         for i in xrange(ncommits):
                             prev = commits[ncommits - i - 1]
                             if prev.fossil_id == latest.from_rev:
-                                if verbose >= DEBUG_TOPOLOGY:
+                                if debug_enable(DEBUG_TOPOLOGY):
                                     announce("r%s: found %s looking for %s" \
                                              % (newcommit.fossil_id, latest, newcommit.common))
                                 threshold = True
                             if threshold:
-                                if verbose >= DEBUG_TOPOLOGY:
+                                if debug_enable(DEBUG_TOPOLOGY):
                                     announce("r%s: looking at %s" \
                                              % (newcommit.fossil_id, prev.fossil_id))
                                 if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
                                     self.branchlink[newcommit.mark] = prev.mark
-                                    if verbose >= DEBUG_TOPOLOGY:
+                                    if debug_enable(DEBUG_TOPOLOGY):
                                         announce("r%s: link %s (%s) back to %s (%s, %s)" % \
                                                  (newcommit.fossil_id,
                                                   newcommit.mark,
@@ -2805,7 +2809,7 @@ class StreamParser:
                                                   ))
                                     break
                         else:
-                            if verbose >= DEBUG_TOPOLOGY:
+                            if debug_enable(DEBUG_TOPOLOGY):
                                 complain("lookback for %s failed" % latest)
                             raise Fatal("couldn't find a branch root for the copy of %s at r%s." % (latest.path, latest.revision))
             # We're done, add all the new commits 
@@ -2820,7 +2824,7 @@ class StreamParser:
         if self.fileop_branchlinks - self.directory_branchlinks:
             self.gripe("branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
         baton.endcounter()
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             announce("at post-parsing time:")
             for commit in self.repo.commits():
                 msg = commit.comment
@@ -2855,7 +2859,7 @@ class StreamParser:
                 baton.bumpcounter()
         else:
             # Instead, determine a branch for each commit...
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("Branches: %s" % (self.branches,))
             for commit in self.repo.commits():
                 for branch in self.branches:
@@ -2899,7 +2903,7 @@ class StreamParser:
                         break
                 self.branchlink[commit.mark] = self.repo.commits()[0].mark
             # Add links due to Subversion copy operations
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
             baton.twirl("branchlinks")
@@ -2928,7 +2932,7 @@ class StreamParser:
                     if early_commit.mark not in late_commit.parentMarks():
                         late_commit.addParent(early_commit.mark)
             baton.twirl("+")
-            if verbose >= DEBUG_EXTRACT:
+            if debug_enable(DEBUG_EXTRACT):
                 announce("after branch analysis")
                 for commit in self.repo.commits():
                     parents = commit.parents()
@@ -3215,7 +3219,7 @@ class SubversionDumper:
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("filedelete%s" % repr((branch, path)))
         svnpath = SubversionDumper.svnize(branch, path)
         fp.write("Node-path: %s\n" % svnpath)
@@ -3237,7 +3241,7 @@ class SubversionDumper:
                 fp.write("Node-action: delete\n\n\n")
                 del self.pathmap[svnpath]
     def directory_create(self, fp, revision, branch, path, parents=None):
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("directory_create%s" % repr((revision, branch, path)))
         creations = []
         # Branch creation may be required
@@ -3280,7 +3284,7 @@ class SubversionDumper:
             self.pathmap[path].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("filemodify%s" % repr((revision, branch, mode, ref, path,
                                             [event.mark for event in parents])))
         # Branch and directory creation may be required.
@@ -3293,7 +3297,7 @@ class SubversionDumper:
         else:
             svnop = "add"
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("Generating %s %s" % (svnpath, svnop))
         with open(self.repo.objfind(ref).blobfile()) as dp:
             content = dp.read()
@@ -3315,7 +3319,7 @@ class SubversionDumper:
                   props=changeprops,
                   content=content)
     def filecopy(self, fp, revision, branch, source, target):
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("filecopy%s" % repr((revision, branch, source, target)))
         svnsource = SubversionDumper.svnize(branch, source)
         try:
@@ -3332,7 +3336,7 @@ class SubversionDumper:
                                    from_path=svnsource,
                                    from_rev=flow.rev)
     def make_tag(self, fp, revision, branch, name, log, author):
-        if verbose >= DEBUG_SVNDUMP:
+        if debug_enable(DEBUG_SVNDUMP):
             announce("make_tag%s" % repr((revision, branch, name, log, str(author))))
         svnsource = SubversionDumper.svnize(branch)
         svntarget = os.path.join("tags", name)
@@ -3501,7 +3505,7 @@ class Repository:
             return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
     def makedir(self):
         try:
-            if verbose >= DEBUG_SHUFFLE:
+            if debug_enable(DEBUG_SHUFFLE):
                 announce("repository fast import creates " + self.subdir())
             target = self.subdir()
             if not os.path.exists(target):
@@ -3620,7 +3624,7 @@ class Repository:
                                            serial))
     def tagify(self, commit, name, committish, legend=""):
         "Turn a commit into a tag."
-        if verbose >= DEBUG_EXTRACT:
+        if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
             if commit.fossil_id:
                 commit_id += " (%s)" % commit.fossil_id
@@ -3707,7 +3711,7 @@ class Repository:
                     baton.twirl()
                     event = self.events[ei]
                     #fossil_latch = fossil_latch or hasattr(event, "fossil_id")
-                    if verbose >= DEBUG_UNITE:
+                    if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(str(event))
@@ -3746,7 +3750,7 @@ class Repository:
         "Rename the repo."
         try:
             # Can fail if the target directory exists.
-            if verbose >= DEBUG_SHUFFLE:
+            if debug_enable(DEBUG_SHUFFLE):
                 announce("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
@@ -3918,7 +3922,7 @@ class Repository:
             if a.op == "deleteall":
                 lastdeleteall = i
         if lastdeleteall is not None:
-            if verbose >= DEBUG_DELETE:
+            if debug_enable(DEBUG_DELETE):
                 announce("removing all before rightmost deleteall")
             commit.fileops = commit.fileops[lastdeleteall:]
             commit._pathset = None
@@ -3932,13 +3936,13 @@ class Repository:
                     b = commit.fileops[j]
                     if a is not None and b is not None and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
-                        if verbose >= DEBUG_DELETE:
+                        if debug_enable(DEBUG_DELETE):
                             announce("Reduction case %d fired on %s" % (case, (i,j)))
                         if modified:
                             mutated = True
                             commit.fileops[i] = newa
                             commit.fileops[j] = newb
-                            if verbose >= DEBUG_DELETE:
+                            if debug_enable(DEBUG_DELETE):
                                 announce("During canonicalization:")
                                 commit.fileop_dump(j)
                             if warn:
@@ -3954,7 +3958,7 @@ class Repository:
         # Make sure we do deletions from greatest commit number to least
         selected = copy.copy(selected)
         selected.sort(reverse=True)
-        if verbose >= DEBUG_DELETE:
+        if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
         # Sanity checks
         for ei in selected:
@@ -4058,25 +4062,25 @@ class Repository:
                 if not isinstance(event, Commit):
                     continue
                 elif event.pushed_to:
-                    if verbose >= DEBUG_DELETE:
+                    if debug_enable(DEBUG_DELETE):
                         announce("Before canonicalization:")
                         event.fileop_dump(ei)
                     self.case_coverage |= self.canonicalize(self.events[ei])
-                    if verbose >= DEBUG_DELETE:
+                    if debug_enable(DEBUG_DELETE):
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
                     for (path, oplist) in list(event.cliques().items()):
                         if len(oplist) == 1:
                             continue
-                        if ("coalesce" not in policy and "obliterate" not in policy) or verbose >= DEBUG_DELETE:
+                        if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
                             complain("commit %s has multiple Ms for %s" % (event.mark, path))
                         if "coalesce" in policy:
                             # Remove all but the last M.
                             while len(oplist) > 1:
                                 event.fileops.pop(oplist.pop(0))
                             event._pathset = None
-                        if verbose >= DEBUG_DELETE:
+                        if debug_enable(DEBUG_DELETE):
                             print("Commit %d, after applying policy:" % (ei +1,))
                             for op in event.fileops:
                                 print(str(op))
@@ -4118,7 +4122,7 @@ class Repository:
                 if hasattr(event, fld) and getattr(event, fld):
                     old = getattr(event, fld)
                     new = remark(old)
-                    if verbose >= DEBUG_UNITE:
+                    if debug_enable(DEBUG_UNITE):
                         announce("renumbering %s -> %s in %s.%s" % (old, new,
                                                                     event.__class__.__name__,
                                                                     fld))
@@ -4127,14 +4131,14 @@ class Repository:
                 parent_marks = event.parentMarks()
                 for (i, old) in enumerate(parent_marks):
                     new = remark(old)
-                    if verbose >= DEBUG_UNITE:
+                    if debug_enable(DEBUG_UNITE):
                         announce("renumbering %s -> %s in parents" % (old, new))
                     parent_marks[i] = new
                 event.setParents(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = remark(fileop.ref)
-                        if verbose >= DEBUG_UNITE:
+                        if debug_enable(DEBUG_UNITE):
                             announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
                         fileop.ref = new
             if baton:
@@ -4154,7 +4158,7 @@ class Repository:
                 if isinstance(event, objtype):
                     old = getattr(event, attr)
                     new = old + "-" + color
-                    if verbose >= DEBUG_UNITE:
+                    if debug_enable(DEBUG_UNITE):
                         announce("moving %s -> %s in %s.%s"
                                  % (old, new,
                                     objtype.__name__,
@@ -4170,7 +4174,7 @@ class Repository:
                         raise Fatal("field not in mark format")
                     else:
                         new = old + "-" + color
-                        if verbose >= DEBUG_UNITE:
+                        if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in %s.%s"
                                      % (old, new,
                                         event.__class__.__name__,
@@ -4181,14 +4185,14 @@ class Repository:
                 parent_marks = event.parentMarks()
                 for (j, old) in enumerate(parent_marks):
                     new = old + "-" + color
-                    if verbose >= DEBUG_UNITE:
+                    if debug_enable(DEBUG_UNITE):
                         announce("moving %s -> %s in parents" % (old, new))
                     parent_marks[j] = new
                 event.setParents(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
-                        if verbose >= DEBUG_UNITE:
+                        if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in fileop"
                                      % (fileop.ref, new))
                         fileop.ref = new
@@ -4354,7 +4358,7 @@ def read_repo(source, preferred):
         repo = Repository()
         repo.fast_import(open(source), progress=(verbose==1 and not quiet))
     else:
-        if verbose >= DEBUG_SHUFFLE:
+        if debug_enable(DEBUG_SHUFFLE):
             if preferred:
                 announce("looking for a %s repo..." % preferred.name)
             else:
@@ -4485,7 +4489,7 @@ class CriticalRegion:
         self.handlers = None	# Pacifies pylint
     def __enter__(self):
         "Begin critical region."
-        if verbose >= DEBUG_COMMANDS:
+        if debug_enable(DEBUG_COMMANDS):
             complain("critical region begins...")
         # Alas that we lack sigblock support
         self.handlers = [None]*(CriticalRegion.NSIG+1)
@@ -4497,7 +4501,7 @@ class CriticalRegion:
         for sig in range(1, CriticalRegion.NSIG):
             if not sig in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, self.handlers[sig])
-        if verbose >= DEBUG_COMMANDS:
+        if debug_enable(DEBUG_COMMANDS):
             complain("critical region ends.")
         return False
 
@@ -4622,7 +4626,7 @@ def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
         legend = " "  + legend
-    if verbose >= DEBUG_COMMANDS:
+    if debug_enable(DEBUG_COMMANDS):
         announce("executing '%s'%s" % (dcmd, legend))
     try:
         retcode = subprocess.call(dcmd, shell=True)
@@ -4644,7 +4648,7 @@ class popen_or_die:
             self.legend = " "  + self.legend
         self.fp = None
     def __enter__(self):
-        if verbose >= DEBUG_COMMANDS:
+        if debug_enable(DEBUG_COMMANDS):
             if self.mode == "r":
                 announce("%s: reading from '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
             else:
@@ -4864,7 +4868,7 @@ class RepositoryList:
                 deletia = []
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.fileops):
-                        if verbose >= DEBUG_DELETE:
+                        if debug_enable(DEBUG_DELETE):
                             print(str(fileop))
                         if fileop.op in "DM":
                             if expunge.search(fileop.path):
@@ -5092,7 +5096,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
-        if verbose >= DEBUG_SHUFFLE:
+        if debug_enable(DEBUG_SHUFFLE):
             announce("interpreter cleanup called.")
         for repo in self.repolist:
             repo.cleanup()
@@ -5123,7 +5127,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             self.line = self.line[1:]
             return c
     def eval_expression(self):
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_expression(%s)" % self.line)
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
@@ -5151,12 +5155,12 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             value |= set(add_list)
             value -= set(remove_list)
         self.line = self.line.lstrip()
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
     def eval_disjunct(self):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         disjunct = set([])
@@ -5171,12 +5175,12 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 self.pop()
             else:
                 break
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line)))
         return disjunct
     def eval_conjunct(self):
         "Evaluate a conjunctive expression (& has higher precedence)" 
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_conjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         conjunct = set(range(0, len(self.chosen())))
@@ -5191,11 +5195,11 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 self.pop()
             else:
                 break
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line)))
         return conjunct
     def eval_term(self):
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
         if self.peek() == '{':
@@ -5216,12 +5220,12 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                         term = self.eval_branchset()
                         if term == None:
                             term = self.eval_pathset()
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
     def eval_visibility(self):
         "Parse a visibility spec."
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_visibility(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == "=":
@@ -5245,7 +5249,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
-            if verbose >= DEBUG_LEXER:
+            if debug_enable(DEBUG_LEXER):
                 announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
             selected = []
             for (i, event) in enumerate(self.chosen()):
@@ -5254,12 +5258,12 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                         selected.append(i)
                         break
             visibility = set(selected)
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
     def eval_polyrange(self):
         "Parse a polyrange specification (list of intervals)."
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
         polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
@@ -5386,7 +5390,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                             matched = True
                     if not matched:
                         raise Recoverable("couldn't match a name at <%s>" % ref)
-            if verbose >= DEBUG_LEXER:
+            if debug_enable(DEBUG_LEXER):
                 announce("location list is %s with %s left" % (selection, repr(self.line)))
             # Resolve spans
             resolved = []
@@ -5402,7 +5406,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                         resolved.append(elt)
                     last = elt
             selection = resolved
-            if verbose >= DEBUG_LEXER:
+            if debug_enable(DEBUG_LEXER):
                 announce("resolved list is %s with %s left" % (selection, repr(self.line)))
             # Sanity checks
             if spanning:
@@ -5411,12 +5415,12 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                 if elt < 0 or elt > len(self.chosen())-1:
                     raise Recoverable("event number %s out of range" % (elt+1))
             polyrange = set(selection)
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line)))
         return polyrange
     def eval_textsearch(self):
         "Parse a text search specification."
-        if verbose >= DEBUG_LEXER:
+        if debug_enable(DEBUG_LEXER):
             announce("eval_textsearch(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == '/':
@@ -5440,7 +5444,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                         matchers.append(i)
                 # We don't do blobs because it would be too slow
                 # and not very useful.
-            if verbose >= DEBUG_LEXER:
+            if debug_enable(DEBUG_LEXER):
                 announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return set(matchers)
     def eval_pathset(self):
