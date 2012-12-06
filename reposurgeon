@@ -2646,18 +2646,24 @@ class StreamParser:
                                 perms = self.node_permissions(node)
                             # This ugly nasty guard is critically important.
                             # We need to generate a modify if:
-                            # 1. There is new content (first disjunct).
-                            # 2. There's no blob, but this node was generated
-                            # as an expansion of a directory copy and we've
-                            # found an ancestor for it (second disjunct).
-                            # 3. The permissions for this path have changed;
-                            # we need to generate a modify with an old mark
-                            # but new permissions (third disjunct).
-                            # 4. The node was produced by an explicit
+                            # 1. There is new content.
+                            # 2. This node was generated as an
+                            # expansion of a directory copy.
+                            # 3. The node was produced by an explicit
                             # Subversion file copy (not a directory copy)
                             # in which case it has an MD5 hash that points
-                            # back to a source (fourth disjunct).
-                            if node.blob is not None or (node.blobmark and n >= non_generated) or (perms != oldperms) or node.from_hash:
+                            # back to a source.
+                            # 4. The permissions for this path have changed;
+                            # we need to generate a modify with an old mark
+                            # but new permissions.
+                            new_content = (node.blob is not None)
+                            generated_file_copy = (n >= non_generated)
+                            subversion_file_copy = (node.from_hash is not None)
+                            permissions_changed = (perms != oldperms)
+                            if node.blobmark and (new_content or
+                                                  generated_file_copy or
+                                                  subversion_file_copy or
+                                                  permissions_changed):
                                 assert perms
                                 fileop = FileOp()
                                 fileop.construct("M",
