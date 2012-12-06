@@ -1048,6 +1048,11 @@ class Commit:
         topline = self.comment.split("\n")[0]
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
+        if self.fossil_id:
+            # This format tacitly assumes the fossil IDs are from Subversion.
+            # Someday this assumption might have to be revisted.
+            fossil = "r%s" % self.fossil_id
+            summary += "%6s " % fossil
         return (summary + topline)[:cols]
     def tip(self, _modifiers, eventnum, cols):
         "Enable do_tip() to report deduced branch tips."
@@ -5837,8 +5842,9 @@ currently chosen repository. Supports > redirection.
     def help_list(self):
         print("""
 Display commits in a human-friendly format; the first column is raw
-event numbers, the second a timestamp, and the third the leading text
-of the comment. Supports > redirection.
+event numbers, the second a timestamp in local time. If the repository
+has fossil IDs, they will be displayed in the third column. The
+leading portion of the comment follows. Supports > redirection.
 """)
     def do_list(self, line):
         "Generate a human-friendly listing of objects."
