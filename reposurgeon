@@ -2644,7 +2644,20 @@ class StreamParser:
                                 perms = oldperms = 0o100644
                             if node.props is not None:
                                 perms = self.node_permissions(node)
-                            if node.blob is not None or (perms != oldperms) or node.from_hash:
+                            # This ugly nasty guard is critically important.
+                            # We need to generate a modify if:
+                            # 1. There is new content (first disjunct).
+                            # 2. There's no blob, but this node was generated
+                            # as an expansion of a directory copy and we've
+                            # found an ancestor for it (second disjunct).
+                            # 3. The permissions for this path have changed;
+                            # we need to generate a modify with an old mark
+                            # but new permissions (third disjunct).
+                            # 4. The node was produced by an explicit
+                            # Subversion file copy (not a directory copy)
+                            # in which case it has an MD5 hash that points
+                            # back to a source (fourth disjunct).
+                            if node.blob is not None or (node.blobmark and n >= non_generated) or (perms != oldperms) or node.from_hash:
                                 assert perms
                                 fileop = FileOp()
                                 fileop.construct("M",

@@ -4,6 +4,7 @@
      Syntax of "authors", "fossils", "list", and "mailbox_{in|out}" has changed.
      Many commands can now redirect output to a named file prefixed with '>'.
      The list command now displays fossil IDs if the repo has them.
+     A subtle bug affecting generated directory copies has been fixed.
 
 2.8: 2012-12-04
      Fix for a nasty optimizer bug that could cause file loss.
