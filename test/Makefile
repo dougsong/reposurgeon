@@ -3,7 +3,8 @@
 PATH := ${PATH}:..
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
-		git-regress svnload-regress fossil-regress svndump-regress
+		git-regress svnload-regress fossil-regress svndump-regress \
+		repodiffer-regress
 	@echo "=== No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
@@ -16,7 +17,8 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .svn.map:
 	reposurgeon "read $<" "prefer git" "fossils write" >$@
 
-buildregress: fi-buildregress svnload-buildregress fossil-buildregress svndump-buildregress
+buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
+	svndump-buildregress repodiffer-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout *~
@@ -184,5 +186,21 @@ svndump-regress:
 	    fi \
 	done
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
+
+# Rereesion-testing f repodiffer; look at the *.cmd and
+# corresponding *.chk files to see which tests this runs.
+REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
+repodiffer-buildregress:
+	@-for file in $(REPODIFFER); do \
+	    echo "Remaking $${file}.chk"; \
+	    sh $${file}.sh >$${file}.chk; \
+	done
+repodiffer-regress:
+	@echo "=== Running repodiffer tests:"
+	@-for file in $(REPODIFFER); do \
+	    echo -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    sh $${file}.sh | diff -u $${file}.chk -; \
+	done
+	@rm -f /tmp/regress
 
 # end
