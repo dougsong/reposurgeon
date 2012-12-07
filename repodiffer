@@ -126,12 +126,15 @@ class Repository:
                 self.signature[-1].text = self.signature[-1].text[:-1]
             self.mark_to_sha1 = {}
             self.sha1_to_mark = {}
-            for line in open(".git/marks"):
-                (mark, sha1) = line.strip().split()
-                self.sha1_to_mark[sha1] = mark
-                self.mark_to_sha1[mark] = sha1
-            for item in self.signature:
-                item.mark = self.sha1_to_mark[item.commit]
+            try:
+                for line in open(".git/marks"):
+                    (mark, sha1) = line.strip().split()
+                    self.sha1_to_mark[sha1] = mark
+                    self.mark_to_sha1[mark] = sha1
+                for item in self.signature:
+                    item.mark = self.sha1_to_mark[item.commit]
+            except (IOError, OSError):
+                pass
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
