@@ -2,7 +2,7 @@
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svnload-regress fossil-regress svndump-regress
-	@echo "No diff output is good news."
+	@echo "=== No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
 
@@ -28,10 +28,11 @@ listcheck:
 	    if ( head -3 $$f | grep -q '^ *##' ); then :; else echo "$$f needs a description"; fi; \
 	done
 
-# Test that all dumpfiles round-trip properly
+# Test that all stream files round-trip properly
 roundtrip:
+	@echo "=== Testing stream-file round-tripping:" 
 	@for file in *.fi; do \
-	    echo "Testing round-tripping of $${file}"; \
+	    echo "  $${file}"; \
 	    ../reposurgeon "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
@@ -40,8 +41,9 @@ roundtrip:
 # Test that dumping metadata to mailbox form and updating from the mailbox
 # is idempotent if you make no changes to the mailbox.
 mailboxing:
+	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
 	@for file in *.fi; do \
-	    echo "Testing mailbox-out/mailbox-in roundtripping using $${file}";\
+	    echo "  $${file}";\
 	    ../reposurgeon "read $${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
 	    diff -u $${file} /tmp/regress; \
 	done
@@ -56,8 +58,9 @@ fi-buildregress:
 	    ../reposurgeon "script $${file}.tst testing123" >$${file}.chk 2>&1; \
 	done
 fi-regress:
+	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
-	    echo -n $${file} " "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
+	    echo -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if ../reposurgeon "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
@@ -73,8 +76,9 @@ buildcoalesce:
 	done
 	@rm -f /tmp/regress
 coalesce:
+	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
-	    echo "Coalescence regression test using $${file}.fi"; \
+	    echo "  $${file}.fi"; \
 	    ../reposurgeon "read $${file}.fi; coalesce; write -" >/tmp/regress; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
@@ -83,8 +87,9 @@ coalesce:
 # Test the git extractor
 GITLOADS = bs
 git-regress:
+	@echo "=== Testing git-extractor:"
 	@for test in $(GITLOADS); do \
-	    if (echo "Testing git-extractor on $${test}" >&2; \
+	    if (echo "  $${test}.fi" >&2; \
 	    ./fi-to-fi) <$${test}.fi >/tmp/regress; \
 	    then diff -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
@@ -118,12 +123,12 @@ svnload-buildregress:
 	    fi \
 	done
 svnload-regress:
-	@echo "Test loading of Subversion streams:"
+	@echo "== Testing loading of Subversion streams:"
 	@for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo -n "$${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
+		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		../reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
@@ -144,9 +149,10 @@ fossil-buildregress:
 	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null; \
 	done
 fossil-regress:
+	@echo "=== Testing fossil-map generation:"
 	@for test in $(REFLOADS); \
 	do \
-	    if echo "Checking $${test} map" >&2; \
+	    if echo "  $${test}.svn" >&2; \
 	    ../reposurgeon "read $${test}.svn" "fossils write" >/tmp/regress 2>/dev/null; \
 	    then diff -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
@@ -163,12 +169,12 @@ svndump-buildregress:
 	done
 	@make --quiet clean
 svndump-regress:
-	@echo "Test dumping of Subversion streams:"
+	@echo "=== Test dumping of Subversion streams:"
 	@for test in $(DUMPLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		if echo "$${test}.fi" >&2; \
+		if echo "  $${test}.fi" >&2; \
 		../reposurgeon "read $${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
