@@ -8,9 +8,10 @@
 # 4. Set TARGET_VCS to git, hg, or bzr
 # 5. For svn, set SVN_URL to point at the remote repository you want to convert.
 # 6. For cvs, set CVS_HOST to the repository hostname
-# 6. Create a $(PROJECT).lift script for your custom commands, initially empty.
-# 7. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
-# 8. Invoke make on this file.
+# 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
+# 8. Create a $(PROJECT).authormap file mapping local usernames to DVCS IDs.
+# 9. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
+# 10. Invoke make on this file.
 
 PROJECT = foo
 SOURCE_VCS = svn
@@ -33,7 +34,7 @@ $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read $(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
 # Build the fast-import stream from the Subversion stream dump
-$(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(EXTRAS)
+$(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
 	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
@@ -100,7 +101,7 @@ gc: $(PROJECT)-git
 
 # Make a conversion using a competing tool
 $(PROJECT)-git-svn:
-	git svn --stdlayout clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
+	git svn --stdlayout --authors-file=$(PROJECT).authormap clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
 
 # Compare the results
 compare: $(PROJECT)-git-svn $(PROJECT)-git
