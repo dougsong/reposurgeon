@@ -135,6 +135,7 @@ class Repository:
                     item.mark = self.sha1_to_mark[item.commit]
             except (IOError, OSError):
                 pass
+        # Also get a list of annotated tags
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
@@ -145,7 +146,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "m:qv")
+    (options, arguments) = getopt.getopt(sys.argv[1:], "v:")
     alpha = '.'
     beta = None
     quiet = False
@@ -155,7 +156,7 @@ if __name__ == '__main__':
         if opt == '-q':
             quiet = True
         elif opt == '-v':
-            verbose += 1
+            verbose int(val)
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
