@@ -19,6 +19,7 @@
 
 <cmdsynopsis>
   <command>repodiffer</command>
+      <arg choice='opt'>--ignore <replaceable>parts</replaceable></arg>
       <arg choice='opt'>-v <replaceable>level</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream2</replaceable></arg>
@@ -48,6 +49,11 @@ indicates the nature of the changes.</para>
 </refsect1>
 
 <refsect1 id='options'><title>OPTIONS</title>
+
+<para>The --ignore option causes differences between specified parts to be
+ignorted.  Part tags are <quote>author</quote>, <quote>committer</quote>,
+<quote>comment</quote>, and <quote>tree</quote>; one, or a comma-separated
+list, can be specified.</para>
 
 <para>The -v option enables debugging messages that are probably only
 of interest to developers; consult the source code for details.</para>

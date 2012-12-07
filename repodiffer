@@ -86,19 +86,20 @@ class Commit:
         return (self.tree, self.author, self.committer, self.comment)
     def difference(self, other):
         res = []
-        if self.author != other.author:
+        # Alas, there's no better way to do this than with an ignores global
+        if "author" not in ignores and self.author != other.author:
             res.append('author')
-        if self.committer != other.committer:
+        if "committer" not in ignores and self.committer != other.committer:
             res.append('committer')
-        if self.comment != other.comment:
+        if "comment" not in ignores and self.comment != other.comment:
             res.append('comment')
-        if self.tree != other.tree:
+        if "tree" not in ignores and self.tree != other.tree:
             res.append('tree')
         return res
     def __hash__(self):
         return hash(self.parts())
     def __eq__(self, other):
-        return self.parts() == other.parts()
+        return not self.difference(other)
 
 class Repository:
     "A repository, for comparison purposes."
@@ -146,17 +147,20 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "v:")
+    (options, arguments) = getopt.getopt(sys.argv[1:], "v:", ["ignore="])
     alpha = '.'
     beta = None
     quiet = False
     maxcommit = 0
     verbose = 0
+    ignores = ""
     for (opt, val) in options:
         if opt == '-q':
             quiet = True
         elif opt == '-v':
-            verbose int(val)
+            verbose = int(val)
+        elif opt == '--ignore':
+            ignores = val
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
