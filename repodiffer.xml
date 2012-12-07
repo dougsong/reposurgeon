@@ -20,7 +20,8 @@
 <cmdsynopsis>
   <command>repodiffer</command>
       <arg choice='opt'>--ignore <replaceable>parts</replaceable></arg>
-      <arg choice='opt'>-v <replaceable>level</replaceable></arg>
+      <arg choice='opt'>--verbose <replaceable>level</replaceable></arg>
+      <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream2</replaceable></arg>
 </cmdsynopsis>
@@ -50,16 +51,21 @@ indicates the nature of the changes.</para>
 
 <refsect1 id='options'><title>OPTIONS</title>
 
-<para>The --ignore option causes differences between specified parts to be
+<para>The --single or -s option compares single commits in detail.  The
+argument must be a pair of commit IDs (marks or hashes) separated by an
+equals sign.</para>
+
+<para>The --ignore or -i option causes differences between specified parts to be
 ignorted.  Part tags are <quote>author</quote>, <quote>committer</quote>,
 <quote>comment</quote>, and <quote>tree</quote>; one, or a comma-separated
 list, can be specified.</para>
 
-<para>The --longhash option forces reporting of full 40-digit hash IDs,
-rather than the normal short hash.</para>
+<para>The --fullhash or -f option forces reporting of full 40-digit
+hash IDs, rather than the normal short hash.</para>
 
-<para>The -v option enables debugging messages that are probably only
-of interest to developers; consult the source code for details.</para>
+<para>The --verbose or -v option enables debugging messages that are
+probably only of interest to developers; consult the source code for
+details.</para>
 
 </refsect1>
 

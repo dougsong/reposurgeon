@@ -87,6 +87,13 @@ class Commit:
             return self.commit
         else:
             return self.commit[:7]
+    def __repr__(self):
+        r = "commit %s\n" % str(self)
+        r += "committer %s\n" % self.committer
+        r += "author %s\n" % self.author
+        r += "tree %s\n" % self.tree
+        r += self.comment
+        return r
     def parts(self):
         return (self.tree, self.author, self.committer, self.comment)
     def difference(self, other):
@@ -141,12 +148,38 @@ class Repository:
                     item.mark = self.sha1_to_mark[item.commit]
             except (IOError, OSError):
                 pass
-        # Also get a list of annotated tags
+        # TODO: Also get a list of annotated tags
+    def lookup(self, name):
+        "Look up an object by name."
+        for commit in self.signature:
+            if commit.commit.startswith(name) or commit.mark == name:
+                return commit
+        else:
+            return None
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
         if self.streamed:
             os.system("rm -fr " + self.directory)
+
+def diff_single(single, alpha, beta):
+    "Examine the difference between two specified commits."
+    try:
+        (a, b) = single.split("=")
+    except ValueError:
+        sys.stderr.write("repodiffer: need hashes or marks separated by =\n")
+        sys.exit(1)
+    ac = alpha.lookup(a)
+    if ac is None:
+        sys.stderr.write("repodiffer: no match for %s\n" % a)
+        sys.exit(1)
+    bc = beta.lookup(b)
+    if bc is None:
+        sys.stderr.write("repodiffer: no match for %s\n" % b)
+        sys.exit(1)
+    sys.stdout.write("differences: %s\n" % (ac.difference(bc),))
+    sys.stdout.write("from:\n%s" % repr(ac))
+    sys.stdout.write("to:\n%s" % repr(bc))
 
 def diff_all(alpha, beta):
     "Diff the entire repositories."
@@ -198,22 +231,22 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "v:", ["ignore=", "fullhash"])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "fi:s:v:", ["fullhash", "ignore=", "single=", "verbose="])
     alpha = '.'
     beta = None
-    quiet = False
     maxcommit = 0
     verbose = 0
     ignores = ""
+    single = None
     fullhash = False
     for (opt, val) in options:
-        if opt == '-q':
-            quiet = True
-        elif opt == '-v':
+        if opt == '-v' or opt == '--verbose':
             verbose = int(val)
-        elif opt == '--ignore':
+        elif opt == '-s' or opt == '--single':
+            single = val
+        elif opt == '-i' or opt == '--ignore':
             ignores = val
-        elif opt == '--fullhash':
+        elif opt == '-f' or opt == '--fullhash':
             fullhash = True
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
@@ -231,7 +264,10 @@ if __name__ == '__main__':
     try:
         alpha = Repository(alpha)
         beta  = Repository(beta)
-        diff_all(alpha, beta)
+        if single:
+            diff_single(single, alpha, beta)
+        else:
+            diff_all(alpha, beta)
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
         sys.exit(1)
