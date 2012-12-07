@@ -101,7 +101,7 @@ gc: $(PROJECT)-git
 
 # Make a conversion using a competing tool
 $(PROJECT)-git-svn:
-	git svn --stdlayout --authors-file=$(PROJECT).authormap clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
+	git svn --stdlayout --no-metadata --authors-file=$(PROJECT).authormap clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
 
 # Compare the results
 compare: $(PROJECT)-git-svn $(PROJECT)-git
