@@ -6,12 +6,12 @@ VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 SOURCES = README NEWS COPYING TODO 
 SOURCES += \
 	reposurgeon reposurgeon.xml \
-	repopull repopull.xml \
+	repopuller repopuller.xml \
 	repodiffer repodiffer.xml \
 	conversion.mk 
 SOURCES += Makefile control reposturgeon.png
 
-all: reposurgeon.1 repopull.1 repodiffer.1
+all: reposurgeon.1 repopuller.1 repodiffer.1
 
 reposurgeon.1: reposurgeon.xml
 	xmlto man reposurgeon.xml
@@ -19,11 +19,11 @@ reposurgeon.1: reposurgeon.xml
 reposurgeon.html: reposurgeon.xml
 	xmlto html-nochunks reposurgeon.xml
 
-repopull.1: repopull.xml
-	xmlto man repopull.xml
+repopuller.1: repopuller.xml
+	xmlto man repopuller.xml
 
-repopull.html: repopull.xml
-	xmlto html-nochunks repopull.xml
+repopuller.html: repopuller.xml
+	xmlto html-nochunks repopuller.xml
 
 repodiffer.1: repodiffer.xml
 	xmlto man repodiffer.xml
@@ -58,7 +58,7 @@ check: pylint
 	./reposurgeon "runtests"
 	cd test; make --quiet
 
-dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopull.1 repodiffer.1
+dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopuller.1 repodiffer.1
 
 release: reposurgeon-$(VERS).tar.gz reposurgeon.html repodiffer.html
 	shipper -u -m -t; make clean

@@ -2,7 +2,7 @@
 #
 # Steps to using this:
 # 0. Copy this into a scratch directory as Makefile
-# 1. Make sure rsync, reposurgeon and repopull are on your $PATH.
+# 1. Make sure rsync, reposurgeon and repopuller are on your $PATH.
 # 2. Set PROJECT to the name of your project
 # 3. Set SOURCE_VCS to svn or cvs
 # 4. Set TARGET_VCS to git, hg, or bzr
@@ -38,12 +38,12 @@ $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(EXTRAS)
 
 # Build the Subversion stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
-	repopull $(PROJECT)-mirror
+	repopuller $(PROJECT)-mirror
 	svnadmin dump $(PROJECT)-mirror/ >$(PROJECT).svn
 
 # Build a local mirror of the remote Subversion repo
 $(PROJECT)-mirror:
-	repopull $(SVN_URL)
+	repopuller $(SVN_URL)
 
 # Force rebuild of the fast-import stream from the local mirror on the next make
 local-clobber: clean
