@@ -6015,7 +6015,9 @@ if there is already one by the new name.
     def do_rename(self, line):
         "Rename a repository."
         if line in self.reponames():
-            complain("there is already a repo named %s" % line)
+            complain("there is already a repo named %s." % line)
+        elif not self.chosen():
+            complain("no repository is currently chosen.")
         else:
             self.chosen().rename(line)
 
@@ -6725,8 +6727,8 @@ from the highest member (child) to the lowest (parent).
         earlier = repo.events[list(self.selection)[0]]
         later = repo.events[list(self.selection)[-1]]
         later.addParent(earlier.mark)
-        earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
-        later_id = "%s (%s)" % (later.mark, later.branch)
+        #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
+        #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce("%s added as a parent of %s" % (earlier_id, later_id))
 
     def help_branch(self):
