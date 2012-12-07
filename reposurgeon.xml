@@ -1418,7 +1418,7 @@ gathers statistics only on code executed via '-'.</para>
 dumpfiles or edit a Subversion repository (and you must point it at a
 repository, not a checkout directory).  The
 <application>reposurgeon</application> distribution includes a script
-named <quote>svnpull</quote> that you can use to make and then
+named <quote>repopull</quote> that you can use to make and then
 incrementally update a local mirror of a remote repository for
 editing or conversion purposes.</para>
 

@@ -4,7 +4,7 @@
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
 SOURCES = README NEWS COPYING TODO 
-SOURCES += reposurgeon reposurgeon.xml conversion.mk svnpull svnpull.xml
+SOURCES += reposurgeon reposurgeon.xml conversion.mk repopull repopull.xml
 SOURCES += Makefile control reposturgeon.png
 
 all: reposurgeon.1
@@ -15,11 +15,11 @@ reposurgeon.1: reposurgeon.xml
 reposurgeon.html: reposurgeon.xml
 	xmlto html-nochunks reposurgeon.xml
 
-svnpull.1: svnpull.xml
-	xmlto man svnpull.xml
+repopull.1: repopull.xml
+	xmlto man repopull.xml
 
-svnpull.html: svnpull.xml
-	xmlto html-nochunks svnpull.xml
+repopull.html: repopull.xml
+	xmlto html-nochunks repopull.xml
 
 clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
@@ -48,7 +48,7 @@ check: pylint
 	./reposurgeon "runtests"
 	cd test; make --quiet
 
-dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 svnpull.1
+dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopull.1
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon.html svnpull.html
+release: reposurgeon-$(VERS).tar.gz reposurgeon.html repopull.html
 	shipper -u -m -t; make clean
