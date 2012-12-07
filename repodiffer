@@ -174,25 +174,47 @@ if __name__ == '__main__':
         beta  = Repository(beta)
         differ = difflib.SequenceMatcher(isjunk=None, autojunk=False)
         differ.set_seqs(alpha.signature, beta.signature)
+        n_alpha = n_beta = 0
+        n_equal = n_replacements = n_deletions = n_insertions = 0
         for (op, slo, shi, tlo, thi) in differ.get_opcodes():
             if op == 'equal':
-                continue
+                eqcount = (shi - slo)
+                n_equal += eqcount
+                n_alpha += eqcount
+                n_beta += eqcount
             elif op == 'replace':
                 for (source, target) in zip(range(slo, shi), range(tlo, thi)):
+                    n_replacements += 1
+                    n_alpha += 1
+                    n_beta += 1
                     sourcecommit = alpha.signature[source]
                     targetcommit = beta.signature[target]
                     sys.stdout.write("changed: %s -> %s in %s.\n" % (sourcecommit, targetcommit, ",".join(sourcecommit.difference(targetcommit))))
             elif op == 'delete':
                 for source in range(slo, shi):
+                    n_deletions += 1
+                    n_alpha += 1
                     sourcecommit = alpha.signature[source]
                     sys.stdout.write("deleted: %s\n" % sourcecommit)
             elif op == 'insert':
                 for target in range(tlo, thi):
+                    n_insertions += 1
+                    n_beta += 1
                     targetcommit = beta.signature[target]
                     sys.stdout.write("inserted: %s\n" % targetcommit)
             else:
                 sys.stdout.write("unexpected opcode: %s\n" \
                                  % ((op, slo, shi, tlo, thi),))
+        if n_replacements or n_deletions or n_insertions:
+            sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted.\n"
+                             % (n_equal,
+                                n_insertions,
+                                n_beta,
+                                n_deletions,
+                                n_alpha))
+            sys.exit(1)
+        else:
+            sys.exit(0)
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
         sys.exit(1)
