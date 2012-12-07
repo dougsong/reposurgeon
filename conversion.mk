@@ -2,7 +2,7 @@
 #
 # Steps to using this:
 # 0. Copy this into a scratch directory as Makefile
-# 1. Make sure rsync, reposurgeon and repopuller are on your $PATH.
+# 1. Make sure git, svn, rsync, reposurgeon and repopuller are on your $PATH.
 # 2. Set PROJECT to the name of your project
 # 3. Set SOURCE_VCS to svn or cvs
 # 4. Set TARGET_VCS to git, hg, or bzr
