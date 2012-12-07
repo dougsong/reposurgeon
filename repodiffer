@@ -1,0 +1,199 @@
+#!/usr/bin/env python
+#
+# Compare git repositories or fast-import streams for differences.
+
+import sys, os, getopt, subprocess, time, tempfile, difflib, shutil, re
+
+DEBUG_GENERAL  = 1
+DEBUG_PROGRESS = 2
+DEBUG_COMMANDS = 3
+
+class Fatal(Exception):
+    "Unrecoverable error."
+    def __init__(self, msg):
+        Exception.__init__(self)
+        self.msg = msg
+
+def do_or_die(dcmd, legend=""):
+    "Either execute a command or raise a fatal exception."
+    if legend:
+        legend = " "  + legend
+    if verbose >= DEBUG_COMMANDS:
+        sys.stdout.write("repodiffer: executing '%s'%s\n" % (dcmd, legend))
+    try:
+        retcode = subprocess.call(dcmd, shell=True)
+        if retcode < 0:
+            raise Fatal("repodiffer: child was terminated by signal %d." % -retcode)
+        elif retcode != 0:
+            raise Fatal("repodiffer: child returned %d." % retcode)
+    except (OSError, IOError) as e:
+        raise Fatal("repodiffer: execution of %s%s failed: %s" % (dcmd, legend, e))
+
+def capture_or_die(dcmd, legend=""):
+    "Either execute a command and capture its output or die."
+    if legend:
+        legend = " "  + legend
+    if verbose >= DEBUG_COMMANDS:
+        sys.stdout.write("repodiffer: executing '%s'%s\n" % (dcmd, legend))
+    try:
+        return subprocess.check_output(dcmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        if e.returncode < 0:
+            raise Fatal("repodiffer: child was terminated by signal %d." % -e.returncode)
+        elif e.returncode != 0:
+            sys.stderr.write("repodiffer: child returned %d." % e.returncode)
+        sys.exit(1)
+
+class directory_context:
+    def __init__(self, target):
+        self.target = target
+        self.source = None
+    def __enter__(self):
+        self.source = os.getcwd()
+        os.chdir(self.target)
+    def __exit__(self, extype, value_unused, traceback_unused):
+        os.chdir(self.source)
+
+class Commit:
+    def __init__(self, repo, text):
+        self.repo = repo
+        self.text = text
+        self.commit = None
+        self.tree = self.author = self.committer = self.comment =  None
+        for line in text.split("\n"):
+            if line.startswith("commit "):
+                self.commit = line.strip().split()[1]
+            elif line.startswith("parent "):
+                continue
+            elif line.startswith("tree "):
+                self.tree = line.strip().split()[1]
+            elif line.startswith("author "):
+                self.author = line[7:]
+            elif line.startswith("committer "):
+                self.committer = line[10:]
+            elif not line:
+                if self.comment == None:
+                    self.comment = ""
+            else:
+                if self.comment is not None:
+                    self.comment += line + "\n"
+            assert self.commit and self.parts()
+        self.mark = None
+    def __str__(self):
+        "Generate an ID for this commit that is useful to humans."
+        return self.mark if self.repo.streamed else self.commit 
+    def parts(self):
+        return (self.tree, self.author, self.committer, self.comment)
+    def difference(self, other):
+        res = []
+        if self.author != other.author:
+            res.append('author')
+        if self.committer != other.committer:
+            res.append('committer')
+        if self.comment != other.comment:
+            res.append('comment')
+        if self.tree != other.tree:
+            res.append('tree')
+        return res
+    def __hash__(self):
+        return hash(self.parts())
+    def __eq__(self, other):
+        return self.parts() == other.parts()
+
+class Repository:
+    "A repository, for comparison purposes."
+    def __init__(self, sourcepath):
+        self.path = sourcepath
+        # Accept either a repository directory or an import stream
+        if os.path.isdir(self.path):
+            self.streamed = False
+            self.directory = self.path
+        elif os.path.isfile(self.path):
+            self.streamed = True
+            self.directory = tempfile.mkdtemp()
+            source = os.path.abspath(self.path)
+            with directory_context(self.directory):
+                do_or_die("git init --quiet; git fast-import --quiet --export-marks=.git/marks <%s" % source)
+        else:
+            raise Fatal("repodiffer: I don't know how to turn %s into a repo.")
+        # Get a list of metadata and tree signatures for this repo
+        with directory_context(self.directory):
+            log = capture_or_die("git log --all --reverse --date-order --format=raw")
+            # Ugh.  This split logic is ugly.  Is there a better way?
+            self.signature = [Commit(self, "commit %s\n" % el) for el in log.split("\ncommit ")]
+            if self.signature:
+                self.signature.pop(0)
+                self.signature[-1].text = self.signature[-1].text[:-1]
+            self.mark_to_sha1 = {}
+            self.sha1_to_mark = {}
+            for line in open(".git/marks"):
+                (mark, sha1) = line.strip().split()
+                self.sha1_to_mark[sha1] = mark
+                self.mark_to_sha1[mark] = sha1
+            for item in self.signature:
+                item.mark = self.sha1_to_mark[item.commit]
+    def __str__(self):
+        return "<%s: %s>" % (self.path, self.signature)
+    def __del__(self):
+        if self.streamed:
+            os.system("rm -fr " + self.directory)
+
+if __name__ == '__main__':
+    if sys.hexversion < 0x02070000:
+        sys.stderr.write("git-weave: requires Python 2.7 or later.")
+        sys.exit(1)
+    (options, arguments) = getopt.getopt(sys.argv[1:], "m:qv")
+    alpha = '.'
+    beta = None
+    quiet = False
+    maxcommit = 0
+    verbose = 0
+    for (opt, val) in options:
+        if opt == '-q':
+            quiet = True
+        elif opt == '-v':
+            verbose += 1
+    if len(arguments) < 2:
+        sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
+        sys.exit(1)
+    else:
+        (alpha, beta) = arguments[:2] 
+    if not os.path.exists(alpha):
+        sys.stderr.write("repodiffer: %s must exist.\n" % alpha)
+        sys.exit(1)
+    if not os.path.exists(beta):
+        sys.stderr.write("repodiffer: %s must exist.\n" % beta)
+        sys.exit(1)
+    if verbose >= DEBUG_PROGRESS:
+        sys.stderr.write("repodiffer: compare %s to %s.\n" % (alpha, beta))
+    try:
+        alpha = Repository(alpha)
+        beta  = Repository(beta)
+        differ = difflib.SequenceMatcher(isjunk=None, autojunk=False)
+        differ.set_seqs(alpha.signature, beta.signature)
+        for (op, slo, shi, tlo, thi) in differ.get_opcodes():
+            if op == 'equal':
+                continue
+            elif op == 'replace':
+                for (source, target) in zip(range(slo, shi), range(tlo, thi)):
+                    sourcecommit = alpha.signature[source]
+                    targetcommit = beta.signature[target]
+                    sys.stdout.write("changed: %s -> %s in %s.\n" % (sourcecommit, targetcommit, ",".join(sourcecommit.difference(targetcommit))))
+            elif op == 'delete':
+                for source in range(slo, shi):
+                    sourcecommit = alpha.signature[source]
+                    sys.stdout.write("deleted: %s\n" % sourcecommit)
+            elif op == 'insert':
+                for target in range(tlo, thi):
+                    targetcommit = beta.signature[target]
+                    sys.stdout.write("inserted: %s\n" % targetcommit)
+            else:
+                sys.stdout.write("unexpected opcode: %s\n" \
+                                 % ((op, slo, shi, tlo, thi),))
+    except Fatal, err:
+        sys.stderr.write(err.msg + "\n")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        pass
+
+# end
