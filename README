@@ -15,7 +15,7 @@ mixed-branch commits, and generally at coping with Subversion's many
 odd corner cases.  Normally Subversion repos should be analyzed at a
 rate of upwards of a thousand commits per minute.
 
-An auxiliary script, svnpull, assists in mirroring Subversion
+An auxiliary script, repopull, assists in mirroring Subversion
 repositories. This distribution also includes a generic Makefile
 describing a repeatable conversion workflow using these tools.
 

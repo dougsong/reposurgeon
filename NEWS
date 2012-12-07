@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.10:
+     svnpull renamed to repopull in anticipation of pulling CVS repositories.
+
 2.9: 2012-12-06
      Syntax of "authors", "fossils", "list", and "mailbox_{in|out}" has changed.
      Many commands can now redirect output to a named file prefixed with '>'.
