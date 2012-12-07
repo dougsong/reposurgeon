@@ -81,7 +81,12 @@ class Commit:
         self.mark = None
     def __str__(self):
         "Generate an ID for this commit that is useful to humans."
-        return self.mark if self.repo.streamed else self.commit 
+        if self.repo.streamed:
+            return self.mark
+        elif fullhash:
+            return self.commit
+        else:
+            return self.commit[:7]
     def parts(self):
         return (self.tree, self.author, self.committer, self.comment)
     def difference(self, other):
@@ -147,13 +152,14 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "v:", ["ignore="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "v:", ["ignore=", "fullhash"])
     alpha = '.'
     beta = None
     quiet = False
     maxcommit = 0
     verbose = 0
     ignores = ""
+    fullhash = False
     for (opt, val) in options:
         if opt == '-q':
             quiet = True
@@ -161,6 +167,8 @@ if __name__ == '__main__':
             verbose = int(val)
         elif opt == '--ignore':
             ignores = val
+        elif opt == '--fullhash':
+            fullhash = True
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
