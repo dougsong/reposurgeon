@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC 
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "docbook/docbookx.dtd">
+<refentry id='repodiffer.1'>
+<refmeta>
+<refentrytitle>repodiffer</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>Dec 07 2012</refmiscinfo>
+<refmiscinfo class='productname'>repodiffer</refmiscinfo>
+<refmiscinfo class='source'>repodiffer</refmiscinfo>
+<refmiscinfo class='manual'>Development Tools</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>repodiffer</refname>
+<refpurpose>report differences between repository histories</refpurpose>
+</refnamediv>
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>repodiffer</command>
+      <arg choice='opt'>-v <replaceable>level</replaceable></arg>
+      <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
+      <arg choice='plain'><replaceable>repo-or-stream2</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+<para>This tool reports differences between two repository histories.
+The histories may be presented as git repository directories or
+as fast-import streams, or as one of each.</para>
+
+<para>Revisions are compared in commit order; each is represented by a
+SHA1 hash of the tree content and its metadata (committer name/date,
+author name/date).  An algorithm resembling that of 
+<citerefentry><refentrytitle>diff</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+is used to identify spans of identical commits and pick out changes, 
+insertions, and deletions.</para>
+
+<para>For each changed, inserted, or deleted revision, one line is
+normally emitted identifying it by commit ID (for a repo) or mark (for
+a stream file) in the first history.  In change reports, the corresponding
+revision in the second history is similarly identified and the report
+indicates the nature of the changes.</para>
+</refsect1>
+
+<refsect1 id='options'><title>OPTIONS</title>
+
+<para>The -v option enables debugging messages that are probably only
+of interest to developers; consult the source code for details.</para>
+
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+
+<para>Parent pointers are not yet compared, so on multibranched repos
+differences in DAG structure will not appear in the report.</para>
+
+<para>Tags are not yet compared.</para>
+
+<para>The above deficiencies are likely to be fixed in a future release.</para>
+
+<para>When a blob changes, it causes tree differences to be reported in all
+subsequent revisions containing the blob, rather than only the first commit
+in which it occurs.  This probably will not be fixed; while it would be
+theoretically possible, the computational cost of the comparison would 
+become quite high.</para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+
+<para>Eric S. Raymond <email>esr@thyrsus.com</email>. This tool is
+distributed with reposurgeon; see the project page at <ulink
+url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>.</para>
+</refsect1>
+</refentry>

@@ -138,3 +138,21 @@ outputs:
 
 	    Initial import.
 
+== The repodiffer test loads ==
+
+sample1.fi::
+   A small sample repository with branches and tags.  Started out identical
+   to svnfodder.fi
+
+sample2.fi::
+   Identical to sample1.fi, except for the change comment in the third commit.
+
+sample3.fi::
+   Identical to sample1.fi, except for one changed blob in the third commit.
+
+sample4.fi::
+   Identical to sample1.fi, except :29 (the second commit on the alternate 
+   branch) has been removed.
+
+// end
+
