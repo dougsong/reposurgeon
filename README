@@ -15,9 +15,17 @@ mixed-branch commits, and generally at coping with Subversion's many
 odd corner cases.  Normally Subversion repos should be analyzed at a
 rate of upwards of a thousand commits per minute.
 
-An auxiliary script, repopull, assists in mirroring Subversion
-repositories. This distribution also includes a generic Makefile
-describing a repeatable conversion workflow using these tools.
+repodiffer is a program that reports differences between repository 
+histories. It uses a diff(1)-like algorithm to identify spans of
+identical revisions, and to pick out revisions that have been 
+changed or deleted or inserted. It may be useful for comparing the
+output of different repository-conversion tools in detail.
+
+Another auxiliary program, repopull, assists in mirroring Subversion
+repositories. 
+
+This distribution also includes a generic Makefile describing a
+repeatable conversion workflow using these tools.
 
 There is an extensive regression-test suite in the test/ directory.
 To test the correctness of this software, ensure that pylint
