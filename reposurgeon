@@ -329,7 +329,8 @@ class GitExtractor:
                             comment += line + "\n"
                             if objecthash != taghash:
                                 # committish isn't a mark; we'll fix that later
-                                self.tags.append(Tag(name=tag,
+                                self.tags.append(Tag(None,
+                                                     name=tag,
                                                      tagger=Attribution(tagger),
                                                      comment=comment,
                                                      committish=objecthash))
@@ -773,12 +774,20 @@ class Blob:
 
 class Tag:
     "Represents an annotated tag."
-    def __init__(self, name=None, committish=None, tagger=None, comment=None):
+    def __init__(self, repo=None,
+                 name=None, committish=None, tagger=None, comment=None):
+        self.repo = repo
         self.name = name
         self.committish = committish
         self.tagger = tagger
         self.comment = comment
         self.color = None
+    def index(self):
+        "Our 0-origin index in our repo."
+        return self.repo.index(self)
+    def id_me(self):
+        "ID this tag for humans."
+        return "tag@%d (%s)" % (self.index()+1, self.name)
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -816,11 +825,12 @@ class Tag:
             if "Tagger-Date" in msg:
                 date = Date(msg["Tagger-Date"])
                 if self.tagger.date is None or date != self.tagger.date:
-                    if debug_enable(DEBUG_EMAILIN):
-                        announce("in event %d, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
-                              % (int(msg["Event-Number"]),
-                                 self.tagger.date, date,
-                                 self.tagger.date.delta(date)))
+                    # Yes, display this unconditionally
+                    if self.repo:
+                        announce("in %s, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
+                             % (self.id_me(),
+                                self.tagger.date, date,
+                                self.tagger.date.delta(date)))
                     self.tagger.date = date
                     modified = True
         newcomment = msg.get_payload()
@@ -1012,7 +1022,7 @@ class FileOp:
 
 class Commit:
     "Generic commit object."
-    def __init__(self, repo):
+    def __init__(self, repo=None):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
         self.authors = []            # Authors of commit
@@ -1030,6 +1040,15 @@ class Commit:
         self.common = None           # Used only by the Subversion parser
         self._pathset = None
         self.splits = None          # split command increments this to avoid creating multiple new commits with duplicate marks
+    def index(self):
+        "Our 0-origin index in our repo."
+        return self.repo.index(self)
+    def id_me(self):
+        "ID this commit for humans."
+        myid = "commit@%d" % (self.index()+1)
+        if self.fossil_id:
+            myid += "=<%s>" % self.fossil_id
+        return myid
     def when(self):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
@@ -1110,15 +1129,16 @@ class Commit:
         else:
             if self.committer.name != newname or self.committer.email != newemail:
                 (self.committer.name, self.committer.email) = (newname, newemail)
-                if debug_enable(DEBUG_EMAILIN):
-                    announce("in commit %d, Committer is modified" \
-                          % (int(msg["Event-Number"])))
+                # Yes, display this unconditionally
+                if self.repo:
+                    announce("in %s, Committer is modified" % self.id_me())
                 modified = True
         date = Date(msg["Committer-Date"])
         if self.committer.date is None or date != self.committer.date:
-            if debug_enable(DEBUG_EMAILIN):
-                announce("in event %d, Committer-Date is modified '%s' -> '%s' (delta %d)" \
-                      % (int(msg["Event-Number"]),
+            # Yes, display this unconditionally
+            if self.repo:
+                announce("in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
+                      % (self.id_me(),
                          self.committer.date, date,
                          self.committer.date.delta(date)))
             self.committer.date = date
@@ -1150,9 +1170,10 @@ class Commit:
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if date != self.authors[i].date:
-                        if debug_enable(DEBUG_EMAILIN):
+                        # Yes, display this unconditionally
+                        if self.repo:
                             announce("in event %s, %s-Date #%d is modified" \
-                                  % (msg["Event-Number"], hdr, i+1))
+                                     % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
         if "Fossil-ID" in msg:
@@ -1178,8 +1199,8 @@ class Commit:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
             if debug_enable(DEBUG_EMAILIN):
-                announce("in commit %d, comment is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
+                announce("in %s, comment is modified %s -> %s" \
+                      % (self.id_me(), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
         return modified
@@ -2165,7 +2186,7 @@ class StreamParser:
                             else:
                                 self.warn("missing tagger after from in tag")
                                 self.pushback(line)
-                            self.repo.addEvent(Tag(tagname,
+                            self.repo.addEvent(Tag(self.repo, tagname,
                                                    referent, tagger,
                                                    self.fi_read_data()))
                             baton.twirl()
@@ -3549,6 +3570,12 @@ class Repository:
             if commit.branch not in lst:
                 lst.append(commit.branch)
         return lst
+    def index(self, obj):
+        "Index of the specified object."
+        for (ind, event) in enumerate(self.events):
+            if event == obj:
+                return ind
+        raise Fatal("internal error: <%s> not matched in repository %s" % (obj.fossil_id, self.name))
     def find(self, mark):
         "Find an object index by mark"
         for (ind, event) in enumerate(self.events):
@@ -3662,7 +3689,8 @@ class Repository:
             pref = ""
         else:
             pref = commit.comment + "\n"
-        self.addEvent(Tag(name=name,
+        self.addEvent(Tag(commit.repo,
+                          name=name,
                           committish=committish,
                           tagger=commit.committer,
                           comment=pref + legend))
@@ -6232,7 +6260,7 @@ committer ID and timestamp pair.
                                       % message["Fossil-ID"])
                     errors += 1
             elif "Committer" in message and "Committer-Date" in message:
-                blank = Commit(self.chosen())
+                blank = Commit()
                 blank.committer = Attribution()
                 blank.email_in(message)
                 stamp = blank.committer.action_stamp()
