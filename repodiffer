@@ -261,6 +261,7 @@ if __name__ == '__main__':
     alpha = None
     beta = None
     showequal = False
+    fullhash = False
     ignores = ""
     single = None
     verbose = 0
