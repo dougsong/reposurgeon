@@ -85,6 +85,13 @@ class Commit:
         "Extract a git-format date"
         ee = text.rindex(">")
         return (text[:ee+1], text[ee+2:])
+    @staticmethod
+    def time_not_equal(a, b):
+        "Time equality check, which sometimes wants to ignore timezone skew."
+        if "timezone" in ignores:
+            return int(a.split()[0]) % 360 != int(a.split()[0]) % 360
+        else:
+            return a != b
     def __str__(self):
         "Generate an ID for this commit that is useful to humans."
         if self.repo.streamed:
@@ -110,12 +117,14 @@ class Commit:
         # Alas, there's no better way to do this than with an ignores global
         if "author" not in ignores and self.author != other.author:
             res.append('author')
-        if "authordate" not in ignores and self.authordate != other.authordate:
-            res.append('authordate')
+        if "authordate" not in ignores and \
+               Commit.time_not_equal(self.authordate, other.authordate):
+                res.append('authordate')
         if "committer" not in ignores and self.committer != other.committer:
             res.append('committer')
-        if "commitdate" not in ignores and self.commitdate != other.commitdate:
-            res.append('commitdate')
+        if "commitdate" not in ignores \
+               and Commit.time_not_equal(self.commitdate, other.commitdate):
+                res.append('commitdate')
         if "comment" not in ignores and self.comment != other.comment:
             res.append('comment')
         if "tree" not in ignores and self.tree != other.tree:
@@ -244,7 +253,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "fi:s:v:", ["fullhash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "fi:s:v", ["fullhash", "ignore=", "single=", "verbose="])
     alpha = '.'
     beta = None
     maxcommit = 0
@@ -252,6 +261,7 @@ if __name__ == '__main__':
     ignores = ""
     single = None
     fullhash = False
+    elide_timezone = False
     for (opt, val) in options:
         if opt == '-v' or opt == '--verbose':
             verbose = int(val)
