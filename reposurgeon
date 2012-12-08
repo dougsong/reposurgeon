@@ -2525,6 +2525,13 @@ class StreamParser:
                             subnode = StreamParser.NodeAction()
                             subnode.path = os.path.join(node.path,
                                                         source[len(node.from_path+os.sep)-1:])
+                            # This test prevents operations generated
+                            # by directory copies from stepping on explicit
+                            # file copies eithrer before or after the directory
+                            # copy. It compensates for the fact that (because
+                            # we're looping over the revisions array) we can't
+                            # insert the generated file copies in place of the
+                            # directory-copy node they are generated from.
                             if self.branchpath(subnode.path) in never_generate_overwrites:
                                 continue
                             if debug_enable(DEBUG_TOPOLOGY):
