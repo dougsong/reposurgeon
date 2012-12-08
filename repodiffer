@@ -60,6 +60,7 @@ class Commit:
         self.text = text
         self.commit = None
         self.tree = self.author = self.committer = self.comment =  None
+        self.authordate = self.commitdate = None
         for line in text.split("\n"):
             if line.startswith("commit "):
                 self.commit = line.strip().split()[1]
@@ -68,9 +69,9 @@ class Commit:
             elif line.startswith("tree "):
                 self.tree = line.strip().split()[1]
             elif line.startswith("author "):
-                self.author = line[7:]
+                (self.author, self.authordate) = Commit.date_extract(line[7:])
             elif line.startswith("committer "):
-                self.committer = line[10:]
+                (self.committer, self.commitdate) = Commit.date_extract(line[10:])
             elif not line:
                 if self.comment == None:
                     self.comment = ""
@@ -79,6 +80,11 @@ class Commit:
                     self.comment += line + "\n"
             assert self.commit and self.parts()
         self.mark = None
+    @staticmethod
+    def date_extract(text):
+        "Extract a git-format date"
+        ee = text.rindex(">")
+        return (text[:ee+1], text[ee+2:])
     def __str__(self):
         "Generate an ID for this commit that is useful to humans."
         if self.repo.streamed:
@@ -89,20 +95,27 @@ class Commit:
             return self.commit[:7]
     def __repr__(self):
         r = "commit %s\n" % str(self)
-        r += "committer %s\n" % self.committer
-        r += "author %s\n" % self.author
+        r += "committer %s %s\n" % (self.committer, self.commitdate)
+        r += "author %s %s\n" % (self.author, self.authordate)
         r += "tree %s\n" % self.tree
         r += self.comment
         return r
     def parts(self):
-        return (self.tree, self.author, self.committer, self.comment)
+        return (self.tree,
+                self.author, self.authordate,
+                self.committer, self.commitdate,
+                self.comment)
     def difference(self, other):
         res = []
         # Alas, there's no better way to do this than with an ignores global
         if "author" not in ignores and self.author != other.author:
             res.append('author')
+        if "authordate" not in ignores and self.authordate != other.authordate:
+            res.append('authordate')
         if "committer" not in ignores and self.committer != other.committer:
             res.append('committer')
+        if "commitdate" not in ignores and self.commitdate != other.commitdate:
+            res.append('commitdate')
         if "comment" not in ignores and self.comment != other.comment:
             res.append('comment')
         if "tree" not in ignores and self.tree != other.tree:
