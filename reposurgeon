@@ -1701,7 +1701,6 @@ class StreamParser:
             # These are set during the analysis phase
             self.from_set = None
             self.blobmark = None
-            self.implicit = False
             self.generated = False
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
@@ -1713,8 +1712,6 @@ class StreamParser:
                 tell += "from=%s~%s " % (self.from_rev, self.from_path)
             if self.from_set:
                 tell += "sources=%s " % self.from_set
-            if self.implicit:
-                tell += "implicit "
             if self.generated:
                 tell += "generated "
             if self.props is not None:
@@ -2367,6 +2364,7 @@ class StreamParser:
             if revision == "0": 
                 continue
             expanded_nodes = []
+            directory_adds = []
             never_generate_overwrites = [self.branchpath(node.path) \
                                          for node in record.nodes \
                                          if node.kind == SD_FILE]
@@ -2397,21 +2395,23 @@ class StreamParser:
                         self.has_properties.discard(node.path)
                         announce("r%s~%s: properties cleared." \
                                  % (node.revision, node.path))
-                # Actions on directories
-                if node.kind == SD_DIR:
+                if node.kind == SD_FILE:
+                    expanded_nodes.append(node)
+                elif node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
                     node.path += os.sep                   
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
-                        node.implicit = True
+                        if node.from_path:
+                            directory_adds.append(node.path)
+                        pass
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
-                            assert node.implicit == False
                             self.branchdeletes.add(node.path)
+                            expanded_nodes.append(node)
                         else:
-                            node.implicit = True
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
                             # We can just ignore this case.
@@ -2567,19 +2567,10 @@ class StreamParser:
                                             subnode.from_path))
                             subnode.generated = True
                             expanded_nodes.append(subnode)
-            # Node expansion ends. Concatenate the expansions of directory
-            # copies onto the record so future lookbacks never have
-            # to do inference from directory structure.
-            record.nodes += expanded_nodes
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
-            directory_adds = []
-            for (n, node) in enumerate(record.nodes):
-                if node.kind == SD_DIR and node.action == SD_ADD and node.from_path:
-                    directory_adds.append(node.path)
-                if node.implicit:
-                    continue
+            for (n, node) in enumerate(expanded_nodes):
                 if node.kind == SD_FILE:
                     if node.action == SD_DELETE:
                         assert node.blob is None
