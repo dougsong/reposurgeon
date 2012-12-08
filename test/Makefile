@@ -185,6 +185,7 @@ svndump-regress:
 		svn-to-svn -n -q </tmp/prestripped$$$$; \
 	    fi \
 	done
+	@make --quiet clean
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
 
 # Rereesion-testing f repodiffer; look at the *.cmd and
