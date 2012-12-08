@@ -1,4 +1,3 @@
-reposurgeon: branch links detected by file ops only: proj1/
 reposurgeon: r2: deleting parentless zero-op commit.
 blob
 mark :1
