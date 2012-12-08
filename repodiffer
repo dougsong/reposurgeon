@@ -218,7 +218,7 @@ def diff_all(alpha, beta):
             if showequal:
                 sourcecommit = alpha.signature[source]
                 targetcommit = beta.signature[target]
-                sys.stdout.write("equal: %s = %s.\n")
+                sys.stdout.write("equal: %s = %s\n" % (sourcecommit, targetcommit))
         elif op == 'replace':
             for (source, target) in zip(range(slo, shi), range(tlo, thi)):
                 n_replacements += 1
