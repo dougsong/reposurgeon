@@ -2607,6 +2607,8 @@ class StreamParser:
                                    and ancestor is not None \
                                    and (os.path.dirname(node.path) + os.sep) in directory_adds\
                                    and self.branchpath(node.path) == self.branchpath(ancestor.path):
+                                if debug_enable(DEBUG_TOPOLOGY):
+                                    announce("r%s.%s: %s ignored" % (revision, n, node))
                                 continue
                         elif node.from_path:
                             # A copy node is somehow missing its hash.
