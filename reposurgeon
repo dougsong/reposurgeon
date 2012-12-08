@@ -2552,7 +2552,6 @@ class StreamParser:
                             subnode.from_hash = lookback.content_hash
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
-                            subnode.implicit = branchcopy
                             if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s: local copy is %s from r%s~%s" \
                                          % (revision,
