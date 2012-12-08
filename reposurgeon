@@ -2522,7 +2522,10 @@ class StreamParser:
                         if not branchcopy:
                             self.branchdeletes.discard(node.path)
                         for source in node.from_set:
-                            if self.branchpath(source) in never_generate_overwrites:
+                            subnode = StreamParser.NodeAction()
+                            subnode.path = os.path.join(node.path,
+                                                        source[len(node.from_path+os.sep)-1:])
+                            if self.branchpath(subnode.path) in never_generate_overwrites:
                                 continue
                             if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s: generating copy to %s from r%s~%s" \
@@ -2534,9 +2537,6 @@ class StreamParser:
                             if lookback is None:
                                 raise Fatal("r%s: can't find ancestor %s" \
                                          % (revision, source))
-                            subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(node.path,
-                                                        source[len(node.from_path+os.sep)-1:])
                             subnode.revision = revision
                             subnode.from_path = lookback.path
                             subnode.from_rev = lookback.revision
