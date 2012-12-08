@@ -56,9 +56,9 @@ argument must be a pair of commit IDs (marks or hashes) separated by an
 equals sign.</para>
 
 <para>The --ignore or -i option causes differences between specified
-parts to be ignorted.  Part tags are <quote>author</quote>,
+parts to be ignored.  Part tags are <quote>author</quote>,
 <quote>authordate</quote>, <quote>committer</quote>,
-<quote>commitdate</quote>, <quote>comment</quote>, and
+<quote>commitdate</quote>, <quote>comment</quote>, <quote>timezone</quote>, and
 <quote>tree</quote>; one, or a comma-separated list, can be
 specified.</para>
 
