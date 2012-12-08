@@ -188,7 +188,7 @@ svndump-regress:
 	@make --quiet clean
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
 
-# Rereesion-testing f repodiffer; look at the *.cmd and
+# Regression-testing of repodiffer; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
 REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
 repodiffer-buildregress:
