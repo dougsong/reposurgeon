@@ -1702,6 +1702,7 @@ class StreamParser:
             self.from_set = None
             self.blobmark = None
             self.implicit = False
+            self.generated = False
         def __str__(self):
             tell = "<NodeAction: r%s %s %s '%s' " \
                    % (self.revision,
@@ -1714,6 +1715,8 @@ class StreamParser:
                 tell += "sources=%s " % self.from_set
             if self.implicit:
                 tell += "implicit "
+            if self.generated:
+                tell += "generated "
             if self.props is not None:
                 # Trim off the OrderedDict wrapper
                 showprops = repr(self.props)
@@ -2422,6 +2425,7 @@ class StreamParser:
                                     newnode.revision = revision
                                     newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
+                                    newnode.generated = True
                                     expanded_nodes.append(newnode)
                                 ignorepath = os.path.join(node.path, ".gitignore")
                                 if ignorepath in self.active_gitignores:
@@ -2430,6 +2434,7 @@ class StreamParser:
                                     newnode.revision = revision
                                     newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
+                                    newnode.generated = True
                                     expanded_nodes.append(newnode)
                         # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
@@ -2489,6 +2494,7 @@ class StreamParser:
                             # Must append rather than simply performing.
                             # Otherwise when the property is unset we
                             # won't have the right thing happen.
+                            newnode.generated = True
                             expanded_nodes.append(newnode)
                             self.active_gitignores.add(gitignore_path)
                         elif gitignore_path in self.active_gitignores:
@@ -2499,6 +2505,7 @@ class StreamParser:
                             newnode.kind = SD_FILE
                             if debug_enable(DEBUG_IGNORES):
                                 announce("r%s: queuing up %s deletion." % (revision, newnode.path))
+                            newnode.generated = True
                             expanded_nodes.append(newnode)
                             self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
@@ -2558,11 +2565,11 @@ class StreamParser:
                                             subnode.path,
                                             subnode.from_rev,
                                             subnode.from_path))
+                            subnode.generated = True
                             expanded_nodes.append(subnode)
             # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
             # to do inference from directory structure.
-            non_generated = len(record.nodes)
             record.nodes += expanded_nodes
             # Create actions corresponding to both
             # parsed and generated nodes.
@@ -2593,7 +2600,7 @@ class StreamParser:
                             # distinguishable by the fact that
                             # they have a hash pointer and no
                             # content or properties.
-                            if n < non_generated \
+                            if not node.generated \
                                    and node.action == SD_ADD \
                                    and node.blob is None \
                                    and node.props is None \
@@ -2666,7 +2673,7 @@ class StreamParser:
                         # we need to generate a modify with an old mark
                         # but new permissions.
                         new_content = (node.blob is not None)
-                        generated_file_copy = (n >= non_generated)
+                        generated_file_copy = node.generated
                         subversion_file_copy = (node.from_hash is not None)
                         permissions_changed = (perms != oldperms)
                         if node.blobmark and (new_content or
