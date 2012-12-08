@@ -215,6 +215,10 @@ def diff_all(alpha, beta):
             n_equal += eqcount
             n_alpha += eqcount
             n_beta += eqcount
+            if showequal:
+                sourcecommit = alpha.signature[source]
+                targetcommit = beta.signature[target]
+                sys.stdout.write("equal: %s = %s.\n")
         elif op == 'replace':
             for (source, target) in zip(range(slo, shi), range(tlo, thi)):
                 n_replacements += 1
@@ -253,24 +257,24 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "fi:s:v", ["fullhash", "ignore=", "single=", "verbose="])
-    alpha = '.'
+    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:s:v", ["showequal", "fullhash", "ignore=", "single=", "verbose="])
+    alpha = None
     beta = None
-    maxcommit = 0
-    verbose = 0
+    showequal = False
     ignores = ""
     single = None
-    fullhash = False
-    elide_timezone = False
+    verbose = 0
     for (opt, val) in options:
-        if opt == '-v' or opt == '--verbose':
-            verbose = int(val)
-        elif opt == '-s' or opt == '--single':
-            single = val
-        elif opt == '-i' or opt == '--ignore':
-            ignores = val
+        if opt == '-e' or opt == '--showequal':
+            showequal = True
         elif opt == '-f' or opt == '--fullhash':
             fullhash = True
+        elif opt == '-i' or opt == '--ignore':
+            ignores = val
+        elif opt == '-s' or opt == '--single':
+            single = val
+        elif opt == '-v' or opt == '--verbose':
+            verbose = int(val)
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
