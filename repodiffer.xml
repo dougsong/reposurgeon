@@ -55,10 +55,12 @@ indicates the nature of the changes.</para>
 argument must be a pair of commit IDs (marks or hashes) separated by an
 equals sign.</para>
 
-<para>The --ignore or -i option causes differences between specified parts to be
-ignorted.  Part tags are <quote>author</quote>, <quote>committer</quote>,
-<quote>comment</quote>, and <quote>tree</quote>; one, or a comma-separated
-list, can be specified.</para>
+<para>The --ignore or -i option causes differences between specified
+parts to be ignorted.  Part tags are <quote>author</quote>,
+<quote>authordate</quote>, <quote>committer</quote>,
+<quote>commitdate</quote>, <quote>comment</quote>, and
+<quote>tree</quote>; one, or a comma-separated list, can be
+specified.</para>
 
 <para>The --fullhash or -f option forces reporting of full 40-digit
 hash IDs, rather than the normal short hash.</para>
