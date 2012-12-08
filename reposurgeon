@@ -2363,7 +2363,7 @@ class StreamParser:
             # non-incremental dump.
             if revision == "0": 
                 continue
-            generated_nodes = []
+            expanded_nodes = []
             never_generate_overwrites = [self.branchpath(node.path) \
                                          for node in record.nodes \
                                          if node.kind == SD_FILE]
@@ -2422,7 +2422,7 @@ class StreamParser:
                                     newnode.revision = revision
                                     newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
-                                    generated_nodes.append(newnode)
+                                    expanded_nodes.append(newnode)
                                 ignorepath = os.path.join(node.path, ".gitignore")
                                 if ignorepath in self.active_gitignores:
                                     newnode = StreamParser.NodeAction()
@@ -2430,7 +2430,7 @@ class StreamParser:
                                     newnode.revision = revision
                                     newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
-                                    generated_nodes.append(newnode)
+                                    expanded_nodes.append(newnode)
                         # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
                     if node.props is not None:
@@ -2489,7 +2489,7 @@ class StreamParser:
                             # Must append rather than simply performing.
                             # Otherwise when the property is unset we
                             # won't have the right thing happen.
-                            generated_nodes.append(newnode)
+                            expanded_nodes.append(newnode)
                             self.active_gitignores.add(gitignore_path)
                         elif gitignore_path in self.active_gitignores:
                             newnode = StreamParser.NodeAction()
@@ -2499,7 +2499,7 @@ class StreamParser:
                             newnode.kind = SD_FILE
                             if debug_enable(DEBUG_IGNORES):
                                 announce("r%s: queuing up %s deletion." % (revision, newnode.path))
-                            generated_nodes.append(newnode)
+                            expanded_nodes.append(newnode)
                             self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
                     # If this is a copy between branches, do nothing;
@@ -2521,6 +2521,8 @@ class StreamParser:
                                         branchcopy))
                         if not branchcopy:
                             self.branchdeletes.discard(node.path)
+                        else:
+                            continue
                         for source in node.from_set:
                             subnode = StreamParser.NodeAction()
                             subnode.path = os.path.join(node.path,
@@ -2557,12 +2559,12 @@ class StreamParser:
                                             subnode.path,
                                             subnode.from_rev,
                                             subnode.from_path))
-                            generated_nodes.append(subnode)
+                            expanded_nodes.append(subnode)
             # Node expansion ends. Concatenate the expansions of directory
             # copies onto the record so future lookbacks never have
             # to do inference from directory structure.
             non_generated = len(record.nodes)
-            record.nodes += generated_nodes
+            record.nodes += expanded_nodes
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
