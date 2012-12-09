@@ -539,22 +539,23 @@ class Baton:
 
 class RepoSurgeonEmail(email.message.Message):
     "Specialized email message with a distinguishing starter."
+    Divider = 78 * "-"
     def __init__(self, **kwargs):
         email.message.Message.__init__(self, **kwargs)        
-        self.set_unixfrom(78 * "-")
+        self.set_unixfrom(RepoSurgeonEmail.Divider)
     @staticmethod
     def readmsg(fp):
         msg = ''
         firstline = fp.readline()
         if not firstline:
             return None
-        elif not firstline.startswith(78 * "-"):
+        elif not firstline.startswith(RepoSurgeonEmail.Divider):
             msg = firstline
         while True:
             line = fp.readline()
             if not line:
                 break
-            if line.startswith(78 * "-"):
+            if line.startswith(RepoSurgeonEmail.Divider):
                 break
             msg += line
         return msg
@@ -6238,7 +6239,7 @@ committer ID and timestamp pair.
         for commit in self.chosen().commits():
             if commit.fossil_id:
                 fossil_map[commit.fossil_id] = commit
-        commits = []
+        events = []
         errors = 0
         for (i, message) in enumerate(update_list):
             if "Event-Number" in message:
@@ -6251,10 +6252,10 @@ committer ID and timestamp pair.
                     complain("event number %d out of range in update %d" \
                                       % (eventnum, i+1))
                     errors += 1
-                commit = self.chosen()[eventnum]
+                event = self.chosen()[eventnum]
             elif "Fossil-ID" in message:
                 try:
-                    commit = fossil_map[message["Fossil-ID"]]
+                    event = fossil_map[message["Fossil-ID"]]
                 except KeyError:
                     complain("no commit matches fossil %s" \
                                       % message["Fossil-ID"])
@@ -6265,7 +6266,7 @@ committer ID and timestamp pair.
                 blank.email_in(message)
                 stamp = blank.committer.action_stamp()
                 try:
-                    commit = attribution_map[stamp]
+                    event = attribution_map[stamp]
                 except KeyError:
                     complain("no commit matches stamp %s" % stamp)
                     errors += 1
@@ -6278,7 +6279,7 @@ committer ID and timestamp pair.
                 blank.email_in(message)
                 stamp = blank.tagger.action_stamp()
                 try:
-                    commit = attribution_map[stamp]
+                    event = attribution_map[stamp]
                 except KeyError:
                     complain("no tag matches stamp %s" % stamp)
                     errors += 1
@@ -6288,16 +6289,16 @@ committer ID and timestamp pair.
             else:
                 complain("no commit matches update %d:\n%s" % (i+1, message))
                 errors += 1
-            if not hasattr(commit, "email_in"):
+            if not hasattr(event, "email_in"):
                 complain("event %d cannot be modified"%(eventnum+1,))
                 errors += 1
-            commits.append(commit)
+            events.append(event)
         if errors > 0:
             raise Recoverable("%d errors in metadata updates" % errors)
         # Now apply the updates
         modified = 0
-        for (commit, update) in zip(commits, update_list):
-            if commit.email_in(update):
+        for (event, update) in zip(events, update_list):
+            if event.email_in(update):
                 modified += 1
         if verbose:
             if not modified:
