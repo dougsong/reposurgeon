@@ -6211,12 +6211,13 @@ unlikely to have good results.
 If the Event-Number field is absent, the mailbox_in logic will
 attempt to match the commit or tag first by Fossil-ID, then by a unique
 committer ID and timestamp pair.
+
+If output is redirected and the modifier 'changed' appears, a minimal
+set of modifications actually made is written to the output file.
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
-        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
-            if parse.line:
-                raise Recoverable("no longer takes an argument - use < redirection")
+        with RepoSurgeon.LineParse(line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
             while True:
                 msg = RepoSurgeonEmail.readmsg(parse.stdin)
@@ -6296,15 +6297,18 @@ committer ID and timestamp pair.
         if errors > 0:
             raise Recoverable("%d errors in metadata updates" % errors)
         # Now apply the updates
-        modified = 0
+        changers = []
         for (event, update) in zip(events, update_list):
             if event.email_in(update):
-                modified += 1
+                changers.append(update)
         if verbose:
-            if not modified:
+            if not changers:
                 announce("no events modified.")
             else:
-                announce("%d modified events." % modified)
+                announce("%d events modified." % len(changers))
+        if parse.stdout != sys.stdout:
+            for update in changers:
+                parse.stdout.write(RepoSurgeonEmail.Divider + "\n" + update.as_string(unixfrom=False))
 
     def help_edit(self):
         print("""
