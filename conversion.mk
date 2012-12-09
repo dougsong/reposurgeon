@@ -52,11 +52,11 @@ local-clobber: clean
 
 # Force full rebuild from the remote repo on the next make.
 remote-clobber: local-clobber
-	rm -fr $(PROJECT).svn $(PROJECT)-mirror svn-checkout
+	rm -fr $(PROJECT).svn $(PROJECT)-mirror $(PROJECT)-checkout
 
 # Make a local checkout of the Subversion mirror for inspection
-svn-checkout: $(PROJECT)-mirror
-	svn co file://${PWD}/$(PROJECT)-mirror svn-checkout
+$(PROJECT)-checkout: $(PROJECT)-mirror
+	svn co file://${PWD}/$(PROJECT)-mirror $(PROJECT)-checkout
 
 # Get the Subversion state of the author mapping
 $(PROJECT).map: $(PROJECT).svn
