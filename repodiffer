@@ -209,6 +209,18 @@ def diff_single(single, alpha, beta):
     sys.stdout.write("from:\n%s" % repr(ac))
     sys.stdout.write("to:\n%s" % repr(bc))
 
+def diff_walk(alpha, beta):
+    "Diff the entire repositories."
+    alpha.sort()
+    beta.sort()
+    i = 0
+    tied = []
+    for a in alpha.signature:
+        for b in beta.signature:
+            if a.comment == b.comment:
+                tied.append((a, b))
+    print "repodiffer: %d comments can be tued together." % len(tied)
+
 def diff_all(alpha, beta):
     "Diff the entire repositories."
     alpha.sort()
@@ -265,7 +277,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:s:v", ["showequal", "fullhash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:s:vw", ["showequal", "fullhash", "ignore=", "single=", "verbose=", "walkdiff"])
     alpha = None
     beta = None
     showequal = False
@@ -273,6 +285,7 @@ if __name__ == '__main__':
     ignores = ""
     single = None
     verbose = 0
+    walkdiff = False
     for (opt, val) in options:
         if opt == '-e' or opt == '--showequal':
             showequal = True
@@ -284,6 +297,8 @@ if __name__ == '__main__':
             single = val
         elif opt == '-v' or opt == '--verbose':
             verbose = int(val)
+        elif opt == '-w' or opt == '--walkdiff':
+            walkdiff = True
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
@@ -302,6 +317,8 @@ if __name__ == '__main__':
         beta  = Repository(beta)
         if single:
             diff_single(single, alpha, beta)
+        elif walkdiff:
+            diff_walk(alpha, beta)
         else:
             diff_all(alpha, beta)
     except Fatal, err:
