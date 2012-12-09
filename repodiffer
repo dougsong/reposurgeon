@@ -84,6 +84,9 @@ class Commit:
     def timestamp(self):
         "UTC timestamp of commit."
         return int(self.commitdate.split()[0])
+    def action_stamp(self):
+        "A timestamp/committer pair.  Should be unique!"
+        return(self.committer, self.timestamp())
     @staticmethod
     def date_extract(text):
         "Extract a git-format date"
@@ -220,13 +223,13 @@ def diff_walk(alpha, beta):
     duplicates =  []
     for a in alpha.signature:
         for b in beta.signature:
-            if a.timestamp() == b.timestamp():
+            if a.action_stamp() == b.action_stamp():
                 # Throw out duplicates so all our pairs consist of
                 # unique matches.
-                if a.timestamp() in duplicates:
+                if a.action_stamp() in duplicates:
                     continue
                 elif a.matched or b.matched:
-                    duplicates.append(a.timestamp())
+                    duplicates.append(a.action_stamp())
                     continue
                 tied.append((a, b))
                 a.matched = b
