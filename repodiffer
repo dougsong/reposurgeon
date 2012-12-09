@@ -49,6 +49,8 @@ class directory_context:
         self.target = target
         self.source = None
     def __enter__(self):
+        if verbose >= DEBUG_COMMANDS:
+            sys.stdout.write("repodiffer: in %s...\n" % self.target)
         self.source = os.getcwd()
         os.chdir(self.target)
     def __exit__(self, extype, value_unused, traceback_unused):
@@ -137,6 +139,10 @@ class Commit:
         if "tree" not in ignores and self.tree != other.tree:
             res.append('tree')
         return res
+    def manifest(self):
+        "Return a file manifest for this revision."
+        with directory_context(self.repo.path):
+            return set(capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split())
     def __hash__(self):
         return hash(self.parts())
     def __eq__(self, other):
@@ -271,7 +277,19 @@ def diff_walk(alpha, beta):
         if a is None or b is None:
             print "%s -> %s" % (a, b)
         else:
-            print "%s -> %s: %s" % (a, b, a.difference(b))
+            d = a.difference(b)
+            print "%s -> %s: %s" % (a, b, d)
+            if 'tree' in d:
+                a_files = a.manifest()
+                b_files = b.manifest()
+                left_only = a_files - b_files
+                right_only = b_files - a_files
+                if left_only:
+                    print "In the left-hand commit only:"
+                    print "\n".join(list(left_only))
+                if right_only:
+                    print "In the right-hand commit only:"
+                    print "\n".join(list(right_only))
 
 def diff_all(alpha, beta):
     "Diff the entire repositories."
@@ -329,7 +347,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:s:vw", ["showequal", "fullhash", "ignore=", "single=", "verbose=", "walkdiff"])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:sv:w", ["showequal", "fullhash", "ignore=", "single=", "verbose=", "walkdiff"])
     alpha = None
     beta = None
     showequal = False
