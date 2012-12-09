@@ -1322,7 +1322,10 @@ class Commit:
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
     def dump(self, write_properties=True):
         "Dump this commit in import-stream format."
-        st = "commit %s\n" % self.branch
+        st = ""
+        if self.fossil_id:
+            st += "# Fossil-ID: %s\n" % self.fossil_id
+        st += "commit %s\n" % self.branch
         if self.mark:
             st += "mark %s\n" % self.mark
         if self.authors:
@@ -6158,8 +6161,6 @@ dump.  Supports > redirection.
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 header = "Event %s, " % repr(ei+1)
-                if hasattr(event, "fossil_id"):
-                    header += "Fossil-ID %s, " % event.fossil_id
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
                 parse.stdout.write(header)

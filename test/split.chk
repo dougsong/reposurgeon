@@ -8,7 +8,8 @@ reposurgeon: fileop index out of range
 split :19 at 3
 reposurgeon: fileop index out of range
 split :19 at 2
-Event 21, Fossil-ID 8 ===================================================
+Event 21 ================================================================
+# Fossil-ID: 8
 commit refs/heads/master
 mark :19
 committer db48x <db48x> 1352206637 +0000
@@ -17,7 +18,8 @@ trunk development proceeds
 from :16
 M 100644 :18 src
 
-Event 22, Fossil-ID 8 ===================================================
+Event 22 ================================================================
+# Fossil-ID: 8
 commit refs/heads/master
 mark :19.1
 committer db48x <db48x> 1352206637 +0000
@@ -29,7 +31,8 @@ M 100644 :17 VERSION
 split :24 at 1
 reposurgeon: fileop argument doesn't point at a commit
 split :25 at 2
-Event 28, Fossil-ID 10 ==================================================
+Event 28 ================================================================
+# Fossil-ID: 10
 commit refs/heads/v1.0
 mark :25
 committer db48x <db48x> 1352206641 +0000
@@ -38,7 +41,8 @@ emergency bugfix for v1.0, releasing 1.0.3
 from :22
 M 100644 :24 src
 
-Event 29, Fossil-ID 10 ==================================================
+Event 29 ================================================================
+# Fossil-ID: 10
 commit refs/heads/v1.0
 mark :25.1
 committer db48x <db48x> 1352206641 +0000
@@ -68,7 +72,8 @@ feature development
 
 Event 4 =================================================================
 reset refs/heads/master
-Event 5, Fossil-ID 2 ====================================================
+Event 5 =================================================================
+# Fossil-ID: 2
 commit refs/heads/master
 mark :4
 committer db48x <db48x> 1352206624 +0000
@@ -91,7 +96,8 @@ data 40
 feature development
 feature development
 
-Event 8, Fossil-ID 3 ====================================================
+Event 8 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :7
 committer db48x <db48x> 1352206626 +0000
@@ -115,7 +121,8 @@ feature development
 feature development
 feature development
 
-Event 11, Fossil-ID 5 ===================================================
+Event 11 ================================================================
+# Fossil-ID: 5
 commit refs/heads/master
 mark :10
 committer db48x <db48x> 1352206631 +0000
@@ -141,7 +148,8 @@ bugfix
 
 Event 14 ================================================================
 reset refs/heads/v1.0
-Event 15, Fossil-ID 6 ===================================================
+Event 15 ================================================================
+# Fossil-ID: 6
 commit refs/heads/v1.0
 mark :13
 committer db48x <db48x> 1352206633 +0000
@@ -166,7 +174,8 @@ feature development
 feature development
 bugfix
 
-Event 18, Fossil-ID 7 ===================================================
+Event 18 ================================================================
+# Fossil-ID: 7
 commit refs/heads/master
 mark :16
 committer db48x <db48x> 1352206635 +0000
@@ -193,7 +202,8 @@ feature development
 bugfix
 feature development
 
-Event 21, Fossil-ID 8 ===================================================
+Event 21 ================================================================
+# Fossil-ID: 8
 commit refs/heads/master
 mark :19
 committer db48x <db48x> 1352206637 +0000
@@ -202,7 +212,8 @@ trunk development proceeds
 from :16
 M 100644 :18 src
 
-Event 22, Fossil-ID 8 ===================================================
+Event 22 ================================================================
+# Fossil-ID: 8
 commit refs/heads/master
 mark :19.1
 committer db48x <db48x> 1352206637 +0000
@@ -226,7 +237,8 @@ feature development
 bugfix
 bugfix
 
-Event 25, Fossil-ID 9 ===================================================
+Event 25 ================================================================
+# Fossil-ID: 9
 commit refs/heads/v1.0
 mark :22
 committer db48x <db48x> 1352206639 +0000
@@ -252,7 +264,8 @@ bugfix
 bugfix
 bugfix
 
-Event 28, Fossil-ID 10 ==================================================
+Event 28 ================================================================
+# Fossil-ID: 10
 commit refs/heads/v1.0
 mark :25
 committer db48x <db48x> 1352206641 +0000
@@ -261,7 +274,8 @@ emergency bugfix for v1.0, releasing 1.0.3
 from :22
 M 100644 :24 src
 
-Event 29, Fossil-ID 10 ==================================================
+Event 29 ================================================================
+# Fossil-ID: 10
 commit refs/heads/v1.0
 mark :25.1
 committer db48x <db48x> 1352206641 +0000
@@ -287,7 +301,8 @@ bugfix
 feature development
 bugfix
 
-Event 32, Fossil-ID 11 ==================================================
+Event 32 ================================================================
+# Fossil-ID: 11
 commit refs/heads/master
 mark :28
 committer db48x <db48x> 1352206643 +0000
@@ -316,7 +331,8 @@ feature development
 bugfix
 feature development
 
-Event 35, Fossil-ID 12 ==================================================
+Event 35 ================================================================
+# Fossil-ID: 12
 commit refs/heads/master
 mark :31
 committer db48x <db48x> 1352206643 +0000
@@ -345,7 +361,8 @@ bugfix
 feature development
 feature development
 
-Event 38, Fossil-ID 14 ==================================================
+Event 38 ================================================================
+# Fossil-ID: 14
 commit refs/heads/master
 mark :34
 committer db48x <db48x> 1352206648 +0000
@@ -376,7 +393,8 @@ bugfix
 
 Event 41 ================================================================
 reset refs/heads/v2.0
-Event 42, Fossil-ID 15 ==================================================
+Event 42 ================================================================
+# Fossil-ID: 15
 commit refs/heads/v2.0
 mark :37
 committer db48x <db48x> 1352206650 +0000
@@ -406,7 +424,8 @@ feature development
 feature development
 bugfix
 
-Event 45, Fossil-ID 16 ==================================================
+Event 45 ================================================================
+# Fossil-ID: 16
 commit refs/heads/master
 mark :40
 committer db48x <db48x> 1352206652 +0000

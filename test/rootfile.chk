@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322776643 +0000
@@ -17,6 +18,7 @@ data 81
 This is an exiguous file which should be stuffed in a root branch on conversion.
 
 reset refs/heads/root
+# Fossil-ID: 3
 commit refs/heads/root
 mark :4
 committer esr <esr> 1322776854 +0000
@@ -32,6 +34,7 @@ This is a test Subversion repository
 
 One more brick in the wall...
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :6
 committer esr <esr> 1323037435 +0000

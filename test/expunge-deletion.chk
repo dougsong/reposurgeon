@@ -9,7 +9,8 @@ mark :3
 data 77
 This file is doomed.  It exists only so we can check translation of deletes.
 
-Event 2, Fossil-ID 3 ====================================================
+Event 2 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer esr <esr> 1323707473 +0000
@@ -17,7 +18,8 @@ data 71
 Create a doomed file so we can delete it and see the fileop generated.
 M 100644 :3 doomed
 
-Event 3, Fossil-ID 4 ====================================================
+Event 3 =================================================================
+# Fossil-ID: 4
 commit refs/heads/master
 mark :5
 committer esr <esr> 1323707585 +0000

@@ -6,6 +6,7 @@ The purpose of this test repo is to check what happens in conversion when
 a branchy repo has no trunk.
 
 reset refs/heads/nontrunk
+# Fossil-ID: 2
 commit refs/heads/nontrunk
 mark :2
 committer esr <esr> 1352756560 +0000
@@ -22,6 +23,7 @@ a branchy repo has no trunk.
 This is a random modification on the branch side.
 
 reset refs/heads/nontrunkbranch
+# Fossil-ID: 4
 commit refs/heads/nontrunkbranch
 mark :4
 committer esr <esr> 1352757592 +0000

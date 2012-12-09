@@ -2,7 +2,7 @@ read roundup.fi
 resolve :1?
 [3, 41]
 inspect :39,:42
-Event 41, Fossil-ID None ================================================
+Event 41 ================================================================
 commit refs/tags/release-0-5-0
 mark :39
 author Richard Jones <richard@users.sourceforge.net> 995508979 +0000
@@ -34,7 +34,7 @@ M 100644 :36 templates/msg.item
 M 100644 :37 templates/user.index
 M 100644 :38 templates/user.item
 
-Event 44, Fossil-ID None ================================================
+Event 44 ================================================================
 commit refs/tags/release-0-5-0
 mark :42
 author Richard Jones <richard@users.sourceforge.net> 995512284 +0000
@@ -51,7 +51,7 @@ M 100644 :41 dummy_config.py
 
 delete :42 pushback
 inspect :39
-Event 43, Fossil-ID None ================================================
+Event 43 ================================================================
 commit refs/tags/release-0-5-0
 mark :39
 author Richard Jones <richard@users.sourceforge.net> 995508979 +0000

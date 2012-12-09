@@ -94,7 +94,7 @@ git-regress:
 	@echo "=== Testing git-extractor:"
 	@for test in $(GITLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
-	    ./fi-to-fi) <$${test}.fi >/tmp/regress; \
+	    ./fi-to-fi) <$${test}.fi | sed '/# Fossil-ID:/d' >/tmp/regress; \
 	    then diff -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done

@@ -15,6 +15,7 @@ data 22
 feature development A
 
 reset refs/heads/proj1
+# Fossil-ID: 3
 commit refs/heads/proj1
 mark :4
 committer brooksd <brooksd> 1354779386 +0000
@@ -36,6 +37,7 @@ data 44
 feature development A
 feature development B
 
+# Fossil-ID: 4
 commit refs/heads/proj1
 mark :7
 committer brooksd <brooksd> 1354779388 +0000
@@ -58,6 +60,7 @@ feature development A
 feature development B
 feature development C
 
+# Fossil-ID: 5
 commit refs/heads/proj1
 mark :10
 committer brooksd <brooksd> 1354779392 +0000

@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1324128964 +0000
@@ -26,6 +27,7 @@ mark :5
 data 51
 This is the example child2 from the foo directory.
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :6
 committer esr <esr> 1324129126 +0000
@@ -41,6 +43,7 @@ mark :7
 data 17
 Modified README.
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :8
 committer esr <esr> 1324129213 +0000
@@ -50,6 +53,7 @@ from :6
 M 100644 :7 README
 
 reset refs/heads/foocopy
+# Fossil-ID: 5
 commit refs/heads/foocopy
 mark :9
 committer esr <esr> 1324319862 +0000
@@ -69,6 +73,7 @@ mark :10
 data 23
 Twice-modified README.
 
+# Fossil-ID: 6
 commit refs/heads/master
 mark :11
 committer esr <esr> 1324319931 +0000
@@ -77,6 +82,7 @@ Another spacer commit.
 from :8
 M 100644 :10 README
 
+# Fossil-ID: 7
 commit refs/heads/master
 mark :12
 committer esr <esr> 1324320054 +0000
@@ -94,6 +100,7 @@ mark :13
 data 24
 Thrice-modified README.
 
+# Fossil-ID: 8
 commit refs/heads/master
 mark :14
 committer esr <esr> 1324320090 +0000
@@ -102,6 +109,7 @@ Yet another spacer commit.
 from :12
 M 100644 :13 README
 
+# Fossil-ID: 9
 commit refs/heads/master
 mark :15
 committer esr <esr> 1324320228 +0000

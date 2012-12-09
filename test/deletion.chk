@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1323707257 +0000
@@ -16,6 +17,7 @@ mark :3
 data 77
 This file is doomed.  It exists only so we can check translation of deletes.
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer esr <esr> 1323707473 +0000
@@ -24,6 +26,7 @@ Create a doomed file so we can delete it and see the fileop generated.
 from :2
 M 100644 :3 doomed
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :5
 committer esr <esr> 1323707585 +0000
