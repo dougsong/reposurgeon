@@ -1179,7 +1179,7 @@ class Commit:
         if "Fossil-ID" in msg:
             if msg["Fossil-ID"] != self.fossil_id:
                 modified = True
-            msg["Fossil-ID"] = self.fossil_id
+                msg["Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
         for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
