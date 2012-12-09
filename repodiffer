@@ -291,7 +291,7 @@ def diff_walk(alpha, beta):
             print "%s -> %s" % (a, b)
         else:
             d = a.difference(b)
-            print "%s -> %s: %s" % (a, b, d)
+            left_only = right_only = different = None
             if 'tree' in d:
                 a_files = a.manifest()
                 b_files = b.manifest()
@@ -299,14 +299,18 @@ def diff_walk(alpha, beta):
                 b_fileset = set(b_files.keys())
                 left_only = a_fileset - b_fileset
                 right_only = b_fileset - a_fileset
+                different = [fn for fn in (a_fileset & b_fileset)
+                             if a_files[fn] != b_files[fn]]
+                if not (left_only or right_only or different):
+                    d.remove('tree')
+            if d:
+                print "%s -> %s: %s" % (a, b, d)
                 if left_only:
                     print "In the left-hand commit only:"
                     print "\n".join(list(left_only))
                 if right_only:
                     print "In the right-hand commit only:"
                     print "\n".join(list(right_only))
-                different = [fn for fn in (a_fileset & b_fileset)
-                             if a_files[fn] != b_files[fn]]
                 if different:
                     print "Differing files:"
                     print "\n".join(list(different))
