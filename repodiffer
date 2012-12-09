@@ -220,18 +220,18 @@ def diff_walk(alpha, beta):
     duplicates =  []
     for a in alpha.signature:
         for b in beta.signature:
-            if a.comment == b.comment:
+            if a.timestamp() == b.timestamp():
                 # Throw out duplicates so all our pairs consist of
                 # unique matches.
-                if a.comment in duplicates:
+                if a.timestamp() in duplicates:
                     continue
                 elif a.matched or b.matched:
-                    duplicates.append(a.comment)
+                    duplicates.append(a.timestamp())
                     continue
                 tied.append((a, b))
                 a.matched = b
                 b.matched = a 
-    print "repodiffer: %d comments can be tied together of %d vs %d objects." \
+    print "repodiffer: %d pairs can be tied together of %d vs %d objects." \
           % (len(tied), len(alpha.signature), len(beta.signature))
     i = j = 0
     # Build the pairing table.
