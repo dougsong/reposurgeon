@@ -6307,8 +6307,9 @@ set of modifications actually made is written to the output file.
             else:
                 announce("%d events modified." % len(changers))
         if parse.stdout != sys.stdout:
-            for update in changers:
-                parse.stdout.write(RepoSurgeonEmail.Divider + "\n" + update.as_string(unixfrom=False))
+            if "changed" in parse.line:
+                for update in changers:
+                    parse.stdout.write(RepoSurgeonEmail.Divider + "\n" + update.as_string(unixfrom=False))
 
     def help_edit(self):
         print("""
