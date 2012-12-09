@@ -2,7 +2,8 @@
 #
 # Compare git repositories or fast-import streams for differences.
 
-import sys, os, getopt, subprocess, time, tempfile, difflib, shutil, re
+import sys, os, getopt, subprocess, time, tempfile
+import difflib, shutil, re, hashlib
 
 DEBUG_GENERAL  = 1
 DEBUG_PROGRESS = 2
@@ -141,8 +142,21 @@ class Commit:
         return res
     def manifest(self):
         "Return a file manifest for this revision."
+        filemap = {}
         with directory_context(self.repo.path):
-            return set(capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split())
+            do_or_die("git checkout --quiet %s" % self.commit)
+            for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
+                if path:
+                    if path.endswith(".gitignore") and "gitignore" in ignores:
+                        continue
+                    elif os.path.islink(path):
+                        filemap[path] = os.readlink(path)
+                    elif os.path.isfile(path):
+                        with open(path) as fp:
+                            filemap[path] = hashlib.md5(fp.read()).digest()
+                    else:
+                        sys.stderr.write("repodiffer: ignoring non-file non-symlink path %s\n" % path)
+        return filemap
     def __hash__(self):
         return hash(self.parts())
     def __eq__(self, other):
@@ -221,7 +235,6 @@ def diff_single(single, alpha, beta):
 
 def diff_walk(alpha, beta):
     "Walk through time-ordered commit pairs, finding differences."
-    # Experimental, undocumented
     alpha.sort()
     beta.sort()
     i = 0
@@ -282,14 +295,21 @@ def diff_walk(alpha, beta):
             if 'tree' in d:
                 a_files = a.manifest()
                 b_files = b.manifest()
-                left_only = a_files - b_files
-                right_only = b_files - a_files
+                a_fileset = set(a_files.keys())
+                b_fileset = set(b_files.keys())
+                left_only = a_fileset - b_fileset
+                right_only = b_fileset - a_fileset
                 if left_only:
                     print "In the left-hand commit only:"
                     print "\n".join(list(left_only))
                 if right_only:
                     print "In the right-hand commit only:"
                     print "\n".join(list(right_only))
+                different = [fn for fn in (a_fileset & b_fileset)
+                             if a_files[fn] != b_files[fn]]
+                if different:
+                    print "Differing files:"
+                    print "\n".join(list(different))
 
 def diff_all(alpha, beta):
     "Diff the entire repositories."
