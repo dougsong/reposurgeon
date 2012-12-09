@@ -6,6 +6,7 @@ data 23
 This is a sample file.
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322671432 +0000
@@ -20,6 +21,7 @@ This is a sample file.
 
 This is our first line of modified content.
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer esr <esr> 1322671521 +0000
@@ -37,6 +39,7 @@ This is our first line of modified content.
 
 This is our second line of modified content.
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :6
 committer esr <esr> 1322671565 +0000

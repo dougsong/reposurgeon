@@ -4,6 +4,7 @@ data 12
 Hello world
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer khan <khan> 1354595761 +0000
@@ -11,6 +12,7 @@ data 8
 Develop
 M 100644 :1 hello
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :3
 committer khan <khan> 1354595761 +0000

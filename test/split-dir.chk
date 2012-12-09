@@ -10,7 +10,8 @@ reposurgeon: fileop argument doesn't point at a commit
 split 5 in zed
 reposurgeon: couldn't find 'zed' in a fileop path.
 split 5 in f
-Event 5, Fossil-ID 3 ====================================================
+Event 5 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
@@ -20,7 +21,8 @@ from :2
 M 100644 :3 bar/src
 M 100644 :3 baz/src
 
-Event 6, Fossil-ID 3 ====================================================
+Event 6 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4.1
 committer brooksd <brooksd> 1353813665 +0000
@@ -30,7 +32,8 @@ from :4
 M 100644 :3 foo/src
 
 split 5 in bar/
-Event 5, Fossil-ID 3 ====================================================
+Event 5 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
@@ -39,7 +42,8 @@ modify the file in each directory
 from :2
 M 100644 :3 baz/src
 
-Event 6, Fossil-ID 3 ====================================================
+Event 6 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4.2
 committer brooksd <brooksd> 1353813665 +0000
@@ -61,7 +65,8 @@ a
 
 Event 2 =================================================================
 reset refs/heads/master
-Event 3, Fossil-ID 2 ====================================================
+Event 3 =================================================================
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer brooksd <brooksd> 1353813663 +0000
@@ -78,7 +83,8 @@ data 4
 a
 b
 
-Event 5, Fossil-ID 3 ====================================================
+Event 5 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
@@ -87,7 +93,8 @@ modify the file in each directory
 from :2
 M 100644 :3 baz/src
 
-Event 6, Fossil-ID 3 ====================================================
+Event 6 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4.2
 committer brooksd <brooksd> 1353813665 +0000
@@ -96,7 +103,8 @@ modify the file in each directory
 from :4
 M 100644 :3 bar/src
 
-Event 7, Fossil-ID 3 ====================================================
+Event 7 =================================================================
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4.1
 committer brooksd <brooksd> 1353813665 +0000
@@ -105,7 +113,8 @@ modify the file in each directory
 from :4.2
 M 100644 :3 foo/src
 
-Event 8, Fossil-ID 4 ====================================================
+Event 8 =================================================================
+# Fossil-ID: 4
 commit refs/heads/master
 mark :5
 committer brooksd <brooksd> 1353813667 +0000

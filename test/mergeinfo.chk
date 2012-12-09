@@ -14,6 +14,7 @@ data 20
 feature development
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :4
 committer db48x <db48x> 1352206624 +0000
@@ -34,6 +35,7 @@ data 40
 feature development
 feature development
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :7
 committer db48x <db48x> 1352206626 +0000
@@ -55,6 +57,7 @@ feature development
 feature development
 feature development
 
+# Fossil-ID: 5
 commit refs/heads/master
 mark :10
 committer db48x <db48x> 1352206631 +0000
@@ -77,6 +80,7 @@ feature development
 bugfix
 
 reset refs/heads/v1.0
+# Fossil-ID: 6
 commit refs/heads/v1.0
 mark :13
 committer db48x <db48x> 1352206633 +0000
@@ -99,6 +103,7 @@ feature development
 feature development
 bugfix
 
+# Fossil-ID: 7
 commit refs/heads/master
 mark :16
 committer db48x <db48x> 1352206635 +0000
@@ -123,6 +128,7 @@ feature development
 bugfix
 feature development
 
+# Fossil-ID: 8
 commit refs/heads/master
 mark :19
 committer db48x <db48x> 1352206637 +0000
@@ -145,6 +151,7 @@ feature development
 bugfix
 bugfix
 
+# Fossil-ID: 9
 commit refs/heads/v1.0
 mark :22
 committer db48x <db48x> 1352206639 +0000
@@ -168,6 +175,7 @@ bugfix
 bugfix
 bugfix
 
+# Fossil-ID: 10
 commit refs/heads/v1.0
 mark :25
 committer db48x <db48x> 1352206641 +0000
@@ -192,6 +200,7 @@ bugfix
 feature development
 bugfix
 
+# Fossil-ID: 11
 commit refs/heads/master
 mark :28
 committer db48x <db48x> 1352206643 +0000
@@ -218,6 +227,7 @@ feature development
 bugfix
 feature development
 
+# Fossil-ID: 12
 commit refs/heads/master
 mark :31
 committer db48x <db48x> 1352206643 +0000
@@ -244,6 +254,7 @@ bugfix
 feature development
 feature development
 
+# Fossil-ID: 14
 commit refs/heads/master
 mark :34
 committer db48x <db48x> 1352206648 +0000
@@ -271,6 +282,7 @@ feature development
 bugfix
 
 reset refs/heads/v2.0
+# Fossil-ID: 15
 commit refs/heads/v2.0
 mark :37
 committer db48x <db48x> 1352206650 +0000
@@ -298,6 +310,7 @@ feature development
 feature development
 bugfix
 
+# Fossil-ID: 16
 commit refs/heads/master
 mark :40
 committer db48x <db48x> 1352206652 +0000

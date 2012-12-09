@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1352221384 +0000
@@ -20,6 +21,7 @@ generated when a directory is created at the same time as its
 svn:ignore property is set."
 
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer esr <esr> 1352221483 +0000
@@ -33,6 +35,7 @@ mark :5
 data 6
 *.pyc
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :6
 committer esr <esr> 1352221597 +0000
@@ -54,6 +57,7 @@ svn:ignore property is set."
 
 Add another commit so we can see if the .gitignore gets created.
 
+# Fossil-ID: 5
 commit refs/heads/master
 mark :8
 committer esr <esr> 1352221642 +0000

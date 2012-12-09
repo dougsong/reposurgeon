@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1323741972 +0000
@@ -18,6 +19,7 @@ This is a placeholder.  We want a commit between the copies we're
 going to do.
 
 reset refs/heads/testbranch
+# Fossil-ID: 4
 commit refs/heads/testbranch
 mark :4
 committer esr <esr> 1323742474 +0000
@@ -31,6 +33,7 @@ mark :5
 data 55
 After creating this, we'll copy it to the test branch.
 
+# Fossil-ID: 5
 commit refs/heads/master
 mark :6
 committer esr <esr> 1323742614 +0000
@@ -39,6 +42,7 @@ This will be our source for the file copy to the test branch.
 from :2
 M 100644 :5 copysource
 
+# Fossil-ID: 6
 commit refs/heads/testbranch
 mark :7
 committer esr <esr> 1323742713 +0000
@@ -54,6 +58,7 @@ mark :8
 data 46
 A random modification for the file copy test.
 
+# Fossil-ID: 7
 commit refs/heads/testbranch
 mark :9
 committer esr <esr> 1323742854 +0000

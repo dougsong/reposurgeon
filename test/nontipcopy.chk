@@ -8,6 +8,7 @@ It is normally formed, with trunk and branches and tags directories
 at the top level.  Initially, the only content is this README.
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322088164 +0000
@@ -26,6 +27,7 @@ at the top level.  Initially, the only content is this README.
 
 Now we do ur first modification.
 
+# Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer esr <esr> 1322088260 +0000
@@ -45,6 +47,7 @@ at the top level.  Initially, the only content is this README.
 
 Now we do our first modification.
 
+# Fossil-ID: 4
 commit refs/heads/master
 mark :6
 committer esr <esr> 1322088662 +0000
@@ -59,6 +62,7 @@ data 74
 This file only exists so repostreamer won't process this branch as a tag.
 
 reset refs/heads/sample-branch
+# Fossil-ID: 7
 commit refs/heads/sample-branch
 mark :8
 committer esr <esr> 1322509428 +0000
@@ -79,6 +83,7 @@ at the top level.  Initially, the only content is this README.
 Now we do our first modification.
 And our second content modification.
 
+# Fossil-ID: 8
 commit refs/heads/master
 mark :10
 committer esr <esr> 1322533305 +0000
@@ -92,6 +97,7 @@ mark :11
 data 6
 *.pyc
 
+# Fossil-ID: 9
 commit refs/heads/master
 mark :12
 committer esr <esr> 1322533492 +0000

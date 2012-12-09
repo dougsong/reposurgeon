@@ -4,6 +4,7 @@ data 37
 This is a test Subversion repository
 
 reset refs/heads/master
+# Fossil-ID: 2
 commit refs/heads/master
 mark :2
 committer esr <esr> 1323170744 +0000
@@ -19,6 +20,7 @@ This is a test Subversion repository
 This is a modification that goes in the branch version only.
 
 reset refs/heads/realbranch
+# Fossil-ID: 4
 commit refs/heads/realbranch
 mark :4
 committer esr <esr> 1323170893 +0000
