@@ -61,6 +61,7 @@ class Commit:
         self.commit = None
         self.tree = self.author = self.committer = self.comment =  None
         self.authordate = self.commitdate = None
+        self.matched = False
         for line in text.split("\n"):
             if line.startswith("commit "):
                 self.commit = line.strip().split()[1]
@@ -210,7 +211,8 @@ def diff_single(single, alpha, beta):
     sys.stdout.write("to:\n%s" % repr(bc))
 
 def diff_walk(alpha, beta):
-    "Diff the entire repositories."
+    "Walk through time-ordered commit pairs, finding differences."
+    # Experimental, undocumented
     alpha.sort()
     beta.sort()
     i = 0
@@ -219,7 +221,47 @@ def diff_walk(alpha, beta):
         for b in beta.signature:
             if a.comment == b.comment:
                 tied.append((a, b))
-    print "repodiffer: %d comments can be tued together." % len(tied)
+                a.matched = b.matched = True 
+    print "repodiffer: %d comments can be tied together of %d vs %d objects." \
+          % (len(tied), len(alpha.signature), len(beta.signature))
+    i = j = 0
+    # Build the pairing table.
+    # Requires that matched alpha and beta commits have the same ordering
+    pairs = []
+    while i < len(alpha.signature) and j < len(beta.signature):
+        a = alpha.signature[i]
+        b = beta.signature[j]
+        if (a, b) in tied:
+            pairs.append((a, b))
+            i += 1
+            j += 1
+        elif a.matched and b.matched:
+            sys.stderr.write("repodiff: matches are out of order at %d:%d\n" \
+                             % (i+1, j+1))
+            print repr(a)
+            print repr(b)
+            sys.exit(1)
+        if a.matched and not b.matched:
+            pairs.append((None, b))
+            j += 1
+        if b.matched and not a.matched:
+            pairs.append((a, None))
+            i += 1
+        if not a.matched and not b.matched:
+            if a.timestamp() <= b.timestamp():
+                pairs.append((a, None))
+                pairs.append((None, b))
+            else:
+                pairs.append((a, None))
+                pairs.append((None, b))
+            i += 1
+            j += 1
+    # Report on the pair table
+    for (a, b) in pairs:
+        if a is None or b is None:
+            print "%s -> %s" (a, b)
+        else:
+            print "%s -> %s: %s" % (a, b, a.difference(b))
 
 def diff_all(alpha, beta):
     "Diff the entire repositories."
