@@ -217,11 +217,20 @@ def diff_walk(alpha, beta):
     beta.sort()
     i = 0
     tied = []
+    duplicates =  []
     for a in alpha.signature:
         for b in beta.signature:
             if a.comment == b.comment:
+                # Throw out duplicates so all our pairs consist of
+                # unique matches.
+                if a.comment in duplicates:
+                    continue
+                elif a.matched or b.matched:
+                    duplicates.append(a.comment)
+                    continue
                 tied.append((a, b))
-                a.matched = b.matched = True 
+                a.matched = b
+                b.matched = a 
     print "repodiffer: %d comments can be tied together of %d vs %d objects." \
           % (len(tied), len(alpha.signature), len(beta.signature))
     i = j = 0
@@ -238,8 +247,6 @@ def diff_walk(alpha, beta):
         elif a.matched and b.matched:
             sys.stderr.write("repodiff: matches are out of order at %d:%d\n" \
                              % (i+1, j+1))
-            print repr(a)
-            print repr(b)
             sys.exit(1)
         if a.matched and not b.matched:
             pairs.append((None, b))
@@ -259,7 +266,7 @@ def diff_walk(alpha, beta):
     # Report on the pair table
     for (a, b) in pairs:
         if a is None or b is None:
-            print "%s -> %s" (a, b)
+            print "%s -> %s" % (a, b)
         else:
             print "%s -> %s: %s" % (a, b, a.difference(b))
 
