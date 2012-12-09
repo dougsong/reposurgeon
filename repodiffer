@@ -80,6 +80,9 @@ class Commit:
                     self.comment += line + "\n"
             assert self.commit and self.parts()
         self.mark = None
+    def timestamp(self):
+        "UTC timestamp of commit."
+        return int(self.commitdate.split()[0])
     @staticmethod
     def date_extract(text):
         "Extract a git-format date"
@@ -89,7 +92,7 @@ class Commit:
     def time_not_equal(a, b):
         "Time equality check, which sometimes wants to ignore timezone skew."
         if "timezone" in ignores:
-            return int(a.split()[0]) % 360 != int(a.split()[0]) % 360
+            return int(a.split()[0]) % 360 != int(b.split()[0]) % 360
         else:
             return a != b
     def __str__(self):
@@ -178,6 +181,9 @@ class Repository:
                 return commit
         else:
             return None
+    def sort(self):
+        "Sort by Committer-Date in case commits were generated in topo order."
+        self.signature.sort(key=lambda c: c.timestamp())
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
@@ -205,6 +211,8 @@ def diff_single(single, alpha, beta):
 
 def diff_all(alpha, beta):
     "Diff the entire repositories."
+    alpha.sort()
+    beta.sort()
     differ = difflib.SequenceMatcher(isjunk=None, autojunk=False)
     differ.set_seqs(alpha.signature, beta.signature)
     n_alpha = n_beta = 0
