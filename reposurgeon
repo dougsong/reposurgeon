@@ -1110,9 +1110,6 @@ class Commit:
         return str(msg)
     def email_in(self, msg):
         "Update this commit from a parsed email message."
-        idme = self.mark or "unmarked"
-        if "Committer" not in msg or "Committer-Date" not in msg:
-            raise Fatal("update to commit %s is malformed" % idme)
         modified = False
         if "Branch" in msg:
             if self.branch != msg["Branch"]:
@@ -1122,27 +1119,29 @@ class Commit:
             if self._parent_marks != msg["Parents"].split():
                 modified = True
             self.setParents(msg["Parents"].split())
-        (newname, newemail) = email.utils.parseaddr(msg["Committer"])
+        if "Committer" in msg:
+            (newname, newemail) = email.utils.parseaddr(msg["Committer"])
 
-        if not newemail:
-            raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
-        else:
-            if self.committer.name != newname or self.committer.email != newemail:
-                (self.committer.name, self.committer.email) = (newname, newemail)
+            if not newemail:
+                raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
+            else:
+                if self.committer.name != newname or self.committer.email != newemail:
+                    (self.committer.name, self.committer.email) = (newname, newemail)
+                    # Yes, display this unconditionally
+                    if self.repo:
+                        announce("in %s, Committer is modified" % self.id_me())
+                    modified = True
+        if "Committer-Date" in msg:
+            date = Date(msg["Committer-Date"])
+            if self.committer.date is None or date != self.committer.date:
                 # Yes, display this unconditionally
                 if self.repo:
-                    announce("in %s, Committer is modified" % self.id_me())
+                    announce("in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
+                          % (self.id_me(),
+                             self.committer.date, date,
+                             self.committer.date.delta(date)))
+                self.committer.date = date
                 modified = True
-        date = Date(msg["Committer-Date"])
-        if self.committer.date is None or date != self.committer.date:
-            # Yes, display this unconditionally
-            if self.repo:
-                announce("in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
-                      % (self.id_me(),
-                         self.committer.date, date,
-                         self.committer.date.delta(date)))
-            self.committer.date = date
-            modified = True
         if "Author" in msg:
             author_re = re.compile("Author[0-9]*$")
             authorkeys = list(filter(author_re.match, list(msg.keys())))
@@ -6287,7 +6286,7 @@ committer ID and timestamp pair.
                     complain("multiple events match %s" % stamp)
                     errors += 1
             else:
-                complain("no commit matches update %d" % (i+1))
+                complain("no commit matches update %d:\n%s" % (i+1, message))
                 errors += 1
             if not hasattr(commit, "email_in"):
                 complain("event %d cannot be modified"%(eventnum+1,))
