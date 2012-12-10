@@ -252,11 +252,11 @@ def report_pair(a, b):
         if left_only:
             print "L only:"
             for fn in left_only:
-                sys.stdout.write("  " + fn)
+                sys.stdout.write("  " + fn + "\n")
         if right_only:
             print "R only:"
             for fn in right_only:
-                sys.stdout.write("  " + fn)
+                sys.stdout.write("  " + fn + "\n")
         if different:
             print "Differing files:"
             for fn in different:
