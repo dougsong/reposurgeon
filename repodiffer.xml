@@ -22,6 +22,7 @@
       <arg choice='opt'>--ignore <replaceable>parts</replaceable></arg>
       <arg choice='opt'>--verbose <replaceable>level</replaceable></arg>
       <arg choice='opt'>--showequal</arg>
+      <arg choice='opt'>--treediff</arg>
       <arg choice='opt'>--fullhash</arg>
       <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
@@ -35,18 +36,18 @@
 The histories may be presented as git repository directories or
 as fast-import streams, or as one of each.</para>
 
-<para>Revisions are compared in commit order; each is represented by a
-SHA1 hash of the tree content and its metadata (committer name/date,
-author name/date).  An algorithm resembling that of 
-<citerefentry><refentrytitle>diff</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-is used to identify spans of identical commits and pick out changes, 
-insertions, and deletions.</para>
+<para>Revisions are first paired into correspondence by committer and
+commit date.  Any revision in the left-hand history that cannot be paired
+with a revision in the right-hand history is interpreted as having been
+deleted; any revision in the right-hand history that cannot be paired
+with a revision in the left-hand history is interpreted as having been
+inserted.</para> 
 
-<para>For each changed, inserted, or deleted revision, one line is
-normally emitted identifying it by commit ID (for a repo) or mark (for
-a stream file) in the first history.  In change reports, the corresponding
-revision in the second history is similarly identified and the report
-indicates the nature of the changes.</para>
+<para>For each changed, inserted, or deleted revision, a summary line
+is emitted identifying it by commit ID (for a repo) or mark (for a
+stream file) in the first history.  In change reports, the
+corresponding revision in the second history is similarly identified
+and the report indicates the nature of the changes.</para>
 
 <para>A trailing statistics line summarizes the operation counts.</para>
 </refsect1>
@@ -62,8 +63,9 @@ equals sign.</para>
 <para>The --ignore or -i option causes differences between specified
 parts to be ignored.  Part tags are <quote>author</quote>,
 <quote>authordate</quote>, <quote>committer</quote>,
-<quote>commitdate</quote>, <quote>comment</quote>, <quote>timezone</quote>, and
-<quote>tree</quote>; one, or a comma-separated list, can be
+<quote>commitdate</quote>, <quote>comment</quote>,
+<quote>timezone</quote>, <quote>tree</quote>,
+<quote>gitignore</quote>; one, or a comma-separated list, can be
 specified.</para>
 
 <para>The --fullhash or -f option forces reporting of full 40-digit
