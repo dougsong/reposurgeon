@@ -103,7 +103,7 @@ gc: $(PROJECT)-git
 $(PROJECT)-git-svn:
 	git svn --stdlayout --no-metadata --authors-file=$(PROJECT).authormap clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
 
-# Compare the results
+# Compare file manifests on the master branch
 compare: $(PROJECT)-git-svn $(PROJECT)-git
 	@echo; echo "Comparing the directory manifests..."
 	@rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
@@ -116,11 +116,16 @@ compare: $(PROJECT)-git-svn $(PROJECT)-git
 	@set -e; for file in `cd $(PROJECT)-git-svn >/dev/null; git ls-files`; do cmp $(PROJECT)-git-svn/$$file $(PROJECT)-git/$$file; done
 	@echo "No cmp output is good news"
 
+# Compare all files in all revisions.  Ignore .gitignores, as reposurgeon
+# makes them  but git-svn does not.
+repodiffer: $(PROJECT)-git-svn $(PROJECT)-git
+	repodiffer --ignore="gitignore,comment" $(PROJECT)-git $(PROJECT)-git-svn | tee REPODIFFER.LOG
+
 endif
 
 # General cleanup and utility
 clean:
-	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz 
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG
 
 # Bundle up the conversion metadata for shipping
 SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
