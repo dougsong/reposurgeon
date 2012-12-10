@@ -37,11 +37,11 @@ The histories may be presented as git repository directories or
 as fast-import streams, or as one of each.</para>
 
 <para>Revisions are first paired into correspondence by committer and
-commit date.  Any revision in the left-hand history that cannot be paired
-with a revision in the right-hand history is interpreted as having been
-deleted; any revision in the right-hand history that cannot be paired
-with a revision in the left-hand history is interpreted as having been
-inserted.</para> 
+commit date.  Any revision in the left-hand (L) history that cannot be
+paired with a revision in the right-hand (R) history is interpreted as
+having been deleted; any revision in the R history that cannot be
+paired with a revision in the L history is interpreted as having been
+inserted.</para>
 
 <para>For each changed, inserted, or deleted revision, a summary line
 is emitted identifying it by commit ID (for a repo) or mark (for a

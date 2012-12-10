@@ -6,9 +6,8 @@ import sys, os, getopt, subprocess, time, tempfile
 import difflib, shutil, re, hashlib
 
 DEBUG_GENERAL  = 1
-DEBUG_PROGRESS = 2
-DEBUG_COMMANDS = 3
-DEBUG_LOWLEVEL = 4
+DEBUG_COMMANDS = 2
+DEBUG_LOWLEVEL = 3
 
 class Fatal(Exception):
     "Unrecoverable error."
@@ -207,7 +206,8 @@ class Repository:
                     item.mark = self.sha1_to_mark[item.commit]
             except (IOError, OSError):
                 pass
-        # TODO: Also get a list of annotated tags
+        # Also get a list of tags
+        self.tagnames = set(capture-or-die("git tag -l").strip().split())
     def lookup(self, name):
         "Look up an object by name."
         for commit in self.signature:
@@ -251,10 +251,10 @@ def report_pair(a, b):
         n_replacements += 1
         print "changed: %s -> %s in %s." % (a, b, ",".join(d))
         if left_only:
-            print "In the left-hand commit only:"
+            print "L only:"
             print "\n".join(list(left_only))
         if right_only:
-            print "In the right-hand commit only:"
+            print "R only:"
             print "\n".join(list(right_only))
         if different:
             print "Differing files:"
@@ -342,6 +342,10 @@ def diff_all(alpha, beta):
                             len(beta.signature),
                             n_deletions,
                             len(alpha.signature)))
+    if alpha.tagnames - beta.tagnames:
+        sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames - beta.tagnames)))
+    if beta.tagnames - alpha.tagnames:
+        sys.stdout.write("tags only in R: %s\n" % ",".join(list(beta.tagnames - alpha.tagnames)))
 
 if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
@@ -378,8 +382,6 @@ if __name__ == '__main__':
     if not os.path.exists(beta):
         sys.stderr.write("repodiffer: %s must exist.\n" % beta)
         sys.exit(1)
-    if verbose >= DEBUG_PROGRESS:
-        sys.stderr.write("repodiffer: compare %s to %s.\n" % (alpha, beta))
     try:
         alpha = Repository(alpha)
         beta  = Repository(beta)
