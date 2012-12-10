@@ -2,8 +2,7 @@
 #
 # Compare git repositories or fast-import streams for differences.
 
-import sys, os, getopt, subprocess, time, tempfile
-import difflib, shutil, re, hashlib
+import sys, os, getopt, subprocess, tempfile, hashlib
 
 DEBUG_GENERAL  = 1
 DEBUG_COMMANDS = 2
@@ -134,12 +133,12 @@ class Commit:
             res.append('author')
         if "authordate" not in ignores and \
                Commit.time_not_equal(self.authordate, other.authordate):
-                res.append('authordate')
+            res.append('authordate')
         if "committer" not in ignores and self.committer != other.committer:
             res.append('committer')
         if "commitdate" not in ignores \
                and Commit.time_not_equal(self.commitdate, other.commitdate):
-                res.append('commitdate')
+            res.append('commitdate')
         if "comment" not in ignores and self.comment != other.comment:
             res.append('comment')
         if "tree" not in ignores and self.tree != other.tree:
