@@ -2590,6 +2590,12 @@ class StreamParser:
                                             subnode.from_path))
                             subnode.generated = True
                             expanded_nodes.append(subnode)
+            # Lift .cvsignore files, which we can assume are fossils
+            # from a bygone era and happen to have syntax upward-compatible
+            # with that of .gitignore
+            for node in expanded_nodes:
+                if node.path.endswith(".cvsignore"):
+                    node.path = node.path[:-len(".cvsignore")] + ".gitignore"
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
