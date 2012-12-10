@@ -8,6 +8,7 @@ import difflib, shutil, re, hashlib
 DEBUG_GENERAL  = 1
 DEBUG_PROGRESS = 2
 DEBUG_COMMANDS = 3
+DEBUG_LOWLEVEL = 4
 
 class Fatal(Exception):
     "Unrecoverable error."
@@ -53,7 +54,12 @@ class directory_context:
         if verbose >= DEBUG_COMMANDS:
             sys.stdout.write("repodiffer: in %s...\n" % self.target)
         self.source = os.getcwd()
-        os.chdir(self.target)
+        if os.path.isdir(self.target):
+            os.chdir(self.target)
+        else:
+            enclosing = os.path.dirname(self.target)
+            if enclosing:
+                os.chdir()
     def __exit__(self, extype, value_unused, traceback_unused):
         os.chdir(self.source)
 
@@ -143,7 +149,7 @@ class Commit:
     def manifest(self):
         "Return a file manifest for this revision."
         filemap = {}
-        with directory_context(self.repo.path):
+        with directory_context(self.repo.directory):
             do_or_die("git checkout --quiet %s" % self.commit)
             for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
                 if path:
@@ -172,7 +178,7 @@ class Repository:
             self.directory = self.path
         elif os.path.isfile(self.path):
             self.streamed = True
-            self.directory = tempfile.mkdtemp()
+            self.directory = tempfile.mkdtemp(prefix="rpd", suffix=str(os.getpid()))
             source = os.path.abspath(self.path)
             with directory_context(self.directory):
                 do_or_die("git init --quiet; git fast-import --quiet --export-marks=.git/marks <%s" % source)
@@ -186,6 +192,10 @@ class Repository:
             if self.signature:
                 self.signature.pop(0)
                 self.signature[-1].text = self.signature[-1].text[:-1]
+            if verbose >= DEBUG_LOWLEVEL:
+                print "Commits in %s" % self.path
+                for commit in self.signature:
+                    print commit.commit
             self.mark_to_sha1 = {}
             self.sha1_to_mark = {}
             try:
@@ -214,6 +224,46 @@ class Repository:
         if self.streamed:
             os.system("rm -fr " + self.directory)
 
+def report_pair(a, b):
+    global n_equal, n_insertions, n_deletions, n_replacements
+    if a is None:
+        n_insertions += 1
+        print "inserted: %s" % b
+        return
+    if b is None:
+        n_deletions += 1
+        print "deleted: %s" % a
+        return
+    d = a.difference(b)
+    left_only = right_only = different = None
+    if 'tree' in d:
+        a_files = a.manifest()
+        b_files = b.manifest()
+        a_fileset = set(a_files.keys())
+        b_fileset = set(b_files.keys())
+        left_only = a_fileset - b_fileset
+        right_only = b_fileset - a_fileset
+        different = [fn for fn in (a_fileset & b_fileset)
+                     if a_files[fn] != b_files[fn]]
+        if not (left_only or right_only or different):
+            d.remove('tree')
+    if d:
+        n_replacements += 1
+        print "changed: %s -> %s in %s." % (a, b, ",".join(d))
+        if left_only:
+            print "In the left-hand commit only:"
+            print "\n".join(list(left_only))
+        if right_only:
+            print "In the right-hand commit only:"
+            print "\n".join(list(right_only))
+        if different:
+            print "Differing files:"
+            print "\n".join(list(different))
+    else:
+        n_equal += 1
+        if showequal:
+            print "equal: %s == %s" % (a, b)
+
 def diff_single(single, alpha, beta):
     "Examine the difference between two specified commits."
     try:
@@ -229,11 +279,9 @@ def diff_single(single, alpha, beta):
     if bc is None:
         sys.stderr.write("repodiffer: no match for %s\n" % b)
         sys.exit(1)
-    sys.stdout.write("differences: %s\n" % (ac.difference(bc),))
-    sys.stdout.write("from:\n%s" % repr(ac))
-    sys.stdout.write("to:\n%s" % repr(bc))
+    report_pair(ac, bc)
 
-def diff_walk(alpha, beta):
+def diff_all(alpha, beta):
     "Walk through time-ordered commit pairs, finding differences."
     alpha.sort()
     beta.sort()
@@ -253,11 +301,10 @@ def diff_walk(alpha, beta):
                 tied.append((a, b))
                 a.matched = b
                 b.matched = a 
-    print "repodiffer: %d pairs can be tied together of %d vs %d objects." \
-          % (len(tied), len(alpha.signature), len(beta.signature))
+    #print "repodiffer: %d pairs can be tied together of %d vs %d objects." \
+    #      % (len(tied), len(alpha.signature), len(beta.signature))
     i = j = 0
     # Build the pairing table.
-    # Requires that matched alpha and beta commits have the same ordering
     pairs = []
     while i < len(alpha.signature) and j < len(beta.signature):
         a = alpha.signature[i]
@@ -287,91 +334,20 @@ def diff_walk(alpha, beta):
             j += 1
     # Report on the pair table
     for (a, b) in pairs:
-        if a is None or b is None:
-            print "%s -> %s" % (a, b)
-        else:
-            d = a.difference(b)
-            left_only = right_only = different = None
-            if 'tree' in d:
-                a_files = a.manifest()
-                b_files = b.manifest()
-                a_fileset = set(a_files.keys())
-                b_fileset = set(b_files.keys())
-                left_only = a_fileset - b_fileset
-                right_only = b_fileset - a_fileset
-                different = [fn for fn in (a_fileset & b_fileset)
-                             if a_files[fn] != b_files[fn]]
-                if not (left_only or right_only or different):
-                    d.remove('tree')
-            if d:
-                print "%s -> %s: %s" % (a, b, d)
-                if left_only:
-                    print "In the left-hand commit only:"
-                    print "\n".join(list(left_only))
-                if right_only:
-                    print "In the right-hand commit only:"
-                    print "\n".join(list(right_only))
-                if different:
-                    print "Differing files:"
-                    print "\n".join(list(different))
-
-def diff_all(alpha, beta):
-    "Diff the entire repositories."
-    alpha.sort()
-    beta.sort()
-    differ = difflib.SequenceMatcher(isjunk=None, autojunk=False)
-    differ.set_seqs(alpha.signature, beta.signature)
-    n_alpha = n_beta = 0
-    n_equal = n_replacements = n_deletions = n_insertions = 0
-    for (op, slo, shi, tlo, thi) in differ.get_opcodes():
-        if op == 'equal':
-            eqcount = (shi - slo)
-            n_equal += eqcount
-            n_alpha += eqcount
-            n_beta += eqcount
-            if showequal:
-                sourcecommit = alpha.signature[source]
-                targetcommit = beta.signature[target]
-                sys.stdout.write("equal: %s = %s\n" % (sourcecommit, targetcommit))
-        elif op == 'replace':
-            for (source, target) in zip(range(slo, shi), range(tlo, thi)):
-                n_replacements += 1
-                n_alpha += 1
-                n_beta += 1
-                sourcecommit = alpha.signature[source]
-                targetcommit = beta.signature[target]
-                sys.stdout.write("changed: %s -> %s in %s.\n" % (sourcecommit, targetcommit, ",".join(sourcecommit.difference(targetcommit))))
-        elif op == 'delete':
-            for source in range(slo, shi):
-                n_deletions += 1
-                n_alpha += 1
-                sourcecommit = alpha.signature[source]
-                sys.stdout.write("deleted: %s\n" % sourcecommit)
-        elif op == 'insert':
-            for target in range(tlo, thi):
-                n_insertions += 1
-                n_beta += 1
-                targetcommit = beta.signature[target]
-                sys.stdout.write("inserted: %s\n" % targetcommit)
-        else:
-            sys.stdout.write("unexpected opcode: %s\n" \
-                             % ((op, slo, shi, tlo, thi),))
+        report_pair(a, b)
     if n_replacements or n_deletions or n_insertions:
         sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted.\n"
                          % (n_equal,
                             n_insertions,
-                            n_beta,
+                            len(beta.signature),
                             n_deletions,
-                            n_alpha))
-        sys.exit(1)
-    else:
-        sys.exit(0)
+                            len(alpha.signature)))
 
 if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:sv:w", ["showequal", "fullhash", "ignore=", "single=", "verbose=", "walkdiff"])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:sv:", ["showequal", "fullhash", "ignore=", "single=", "verbose="])
     alpha = None
     beta = None
     showequal = False
@@ -379,7 +355,7 @@ if __name__ == '__main__':
     ignores = ""
     single = None
     verbose = 0
-    walkdiff = False
+    n_equal = n_insertions = n_deletions = n_replacements = 0 
     for (opt, val) in options:
         if opt == '-e' or opt == '--showequal':
             showequal = True
@@ -391,8 +367,6 @@ if __name__ == '__main__':
             single = val
         elif opt == '-v' or opt == '--verbose':
             verbose = int(val)
-        elif opt == '-w' or opt == '--walkdiff':
-            walkdiff = True
     if len(arguments) < 2:
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
@@ -411,8 +385,6 @@ if __name__ == '__main__':
         beta  = Repository(beta)
         if single:
             diff_single(single, alpha, beta)
-        elif walkdiff:
-            diff_walk(alpha, beta)
         else:
             diff_all(alpha, beta)
     except Fatal, err:
