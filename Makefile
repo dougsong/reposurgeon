@@ -31,6 +31,9 @@ repodiffer.1: repodiffer.xml
 repodiffer.html: repodiffer.xml
 	xmlto html-nochunks repodiffer.xml
 
+features.html: features.asc
+	asciidoc features.asc
+
 clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
 	rm -fr .rs .rs* test/.rs test/.rs*
@@ -63,5 +66,5 @@ check: pylint
 
 dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopuller.1 repodiffer.1
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon.html repodiffer.html
+release: reposurgeon-$(VERS).tar.gz reposurgeon.html repodiffer.html features.html
 	shipper -u -m -t; make clean
