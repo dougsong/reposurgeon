@@ -251,13 +251,16 @@ def report_pair(a, b):
         print "changed: %s -> %s in %s." % (a, b, ",".join(d))
         if left_only:
             print "L only:"
-            print "\n".join(list(left_only))
+            for fn in left_only:
+                sys.stdout.write("  " + fn)
         if right_only:
             print "R only:"
-            print "\n".join(list(right_only))
+            for fn in right_only:
+                sys.stdout.write("  " + fn)
         if different:
             print "Differing files:"
-            print "\n".join(list(different))
+            for fn in different:
+                sys.stdout.write("  " + fn + "\n")
     else:
         n_equal += 1
         if showequal:
