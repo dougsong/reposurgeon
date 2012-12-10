@@ -207,7 +207,7 @@ class Repository:
             except (IOError, OSError):
                 pass
         # Also get a list of tags
-        self.tagnames = set(capture-or-die("git tag -l").strip().split())
+        self.tagnames = set(capture_or_die("git tag -l").strip().split())
     def lookup(self, name):
         "Look up an object by name."
         for commit in self.signature:
