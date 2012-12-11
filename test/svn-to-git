@@ -21,6 +21,8 @@ do
 done
 shift $(($OPTIND - 1))
 
+trap 'rm -fr git-repo test-checkout test-repo git-scratch /tmp/agito$$' 0 1 2 15
+
 (
 
 # Build a repo from a dump presented on standard input
@@ -148,6 +150,5 @@ if  [ -d git-repo ]
 then
     cd git-repo; git fast-export --all
 fi
-rm -fr git-repo test-checkout test-repo git-scratch /tmp/agito$$
 
 exit 0
