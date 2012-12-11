@@ -32,14 +32,117 @@ svn co file://${PWD}/test-repo test-checkout >/dev/null
 # Convert the repo to a local git repository.
 rm -fr git-repo
 case $tool in
-git-svn) git svn clone --stdlayout --quiet file://${PWD}/test-repo git-repo; ;;
+git-svn) git svn clone --stdlayout --quiet file://${PWD}/test-repo git-repo ;;
+agito) #git submodule update
+	cat >/tmp/agito$$ <<EOF
+# URL of the Subversion repository.
+SVN_REPO = "file://${PWD}/test-repo"
+
+# Path to directory where the Git repository containing the converted
+# history should be stored.
+GIT_REPO = "git-repo"
+
+BRANCHES = {
+	"/trunk" : "master",
+	"/branches/%" : "%",
+}
+
+TAGS = {
+	"/tags/%" : "%",
+}
+
+# Subversion username to Git author mapping.
+
+AUTHORS = {
+	None : ("Nobody", "nobody@localhost"),
+}
+
+# Default author, when not found in the AUTHORS map above. The '%'
+# is replaced with the Subversion username.
+
+DEFAULT_AUTHOR = ("%", "%@example.com")
+
+CREATE_TAG_OBJECTS = True
+
+# These lines are always included in the root .gitignore file.
+
+SVN_DEFAULT_IGNORES = """
+# These are the default patterns globally ignored by Subversion:
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+"""
+
+# Functions to apply to commit messages to convert from Subversion
+# commit messages to Git ones.
+
+COMMIT_MESSAGE_FILTERS = [
+	agito.reflow_text,         # Reflow text to 72 columns
+	agito.append_branch_info,  # Append SVN branch/rev info.
+]
+
+# List of revision numbers of Subversion revisions that should be
+# "filtered" from the converted history: any changes made in a filtered
+# revision will be included in the following revision instead. If you
+# filter a commit that is the head of a branch, you're going to have a
+# bad time.
+
+FILTER_REVISIONS = []
+
+# Callback function to invoke before creating each commit. This is
+# similar to Git's 'filter-branch' command. Invoked with the branch
+# path, log entry metadata dictionary, and Directory object representing
+# the tree.
+#
+# The metadata dictionary contains the data used in constructing the Git
+# commit - the keys are the same names as the environment variables set
+# by 'git filter-branch'.
+
+#def my_filter_callback(path, entry, metadata, treedir):
+#	pass
+#
+#FILTER_BRANCH_CALLBACK = my_filter_callback
+
+# Subversion properties used for tracking merges. This maps from a
+# property name to a callback function to invoke when the property with
+# that value is changed on the root of a branch. The function returns a
+# tuple containing the Subversion path of the branch that was merged,
+# and the revision number of the point on the branch that was merged.
+
+#def my_merge_callback(path, entry, changed):
+#	old_value, new_value = changed
+#	...
+#	return ("/branches/foo-branch", 1234)
+
+MERGE_CALLBACKS = {
+
+}
+
+# vim: set ft=python:
+EOF
+	python ../externals/agito/agito.py /tmp/agito$$ ;;
 *)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
 esac
 
 ) >&2
 
 # Stream a dump to standard output
-(cd git-repo; git fast-export --all)
-rm -fr git-repo test-checkout test-repo
+if  [ -d git-repo ]
+then
+    cd git-repo; git fast-export --all
+fi
+rm -fr git-repo test-checkout test-repo /tmp/agito$$
 
 exit 0

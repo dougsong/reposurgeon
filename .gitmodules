@@ -1,0 +1,3 @@
+[submodule "externals/agito"]
+	path = externals/agito
+	url = git@github.com:fragglet/agito.git
