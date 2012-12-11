@@ -133,8 +133,8 @@ MERGE_CALLBACKS = {
 # vim: set ft=python:
 EOF
 	python ../externals/agito/agito.py /tmp/agito$$ ;;
-svn2git) mkdir git-scratch;
-	(cd git-scratch && ruby -I../../externals/svn2git/lib ../../externals/svn2git/bin/svn2git file://${PWD}/test-repo && mv git-scratch git-repo) ;;
+svn2git) mkdir git-scratch; mv test-repo git-scratch;
+	(cd git-scratch >/dev/null && ruby -I../../externals/svn2git/lib ../../externals/svn2git/bin/svn2git file://${PWD}/test-repo && mv git-scratch git-repo) ;;
 *)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
 esac
 
@@ -145,6 +145,6 @@ if  [ -d git-repo ]
 then
     cd git-repo; git fast-export --all
 fi
-rm -fr git-repo test-checkout test-repo /tmp/agito$$
+rm -fr git-repo test-checkout test-repo git-scratch /tmp/agito$$
 
 exit 0
