@@ -229,11 +229,13 @@ def report_pair(a, b):
     global n_equal, n_insertions, n_deletions, n_replacements
     if a is None:
         n_insertions += 1
-        print "inserted: %s" % b
+        if not changes_only:
+            print "inserted: %s" % b
         return
     if b is None:
         n_deletions += 1
-        print "deleted: %s" % a
+        if not changes_only:
+            print "deleted: %s" % a
         return
     d = a.difference(b)
     left_only = right_only = different = None
@@ -355,9 +357,10 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "efi:sv:", ["showequal", "fullhash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:sv:", ["changes-only", "show-equal", "fullhash", "ignore=", "single=", "verbose="])
     alpha = None
     beta = None
+    changes_only = False
     showequal = False
     fullhash = False
     ignores = ""
@@ -365,6 +368,8 @@ if __name__ == '__main__':
     verbose = 0
     n_equal = n_insertions = n_deletions = n_replacements = 0 
     for (opt, val) in options:
+        if opt == '-c' or opt == '--changes':
+            changes_only = True
         if opt == '-e' or opt == '--showequal':
             showequal = True
         elif opt == '-f' or opt == '--fullhash':
