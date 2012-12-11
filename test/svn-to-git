@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# svn-to-git - Subversion dump on stdin to git fast-import stream on stdout
+#
+# The -t option sets the conversion tool. The default is 'reposurgeon'.
+#
+# The -s option is only useful when the tool is 'reposurgeon'; it suppresses
+# the normal "prefer git" so that properties will be written.
+#
+PATH=$PATH:..
+
+# Suppress fossil emission by default
+sopts='prefer git'
+
+while getopts st: opt
+do
+    case $opt in
+	s) streamopts="" ;;
+	t) tool="$OPTARG" ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+(
+
+# Build a repo from a dump presented on standard input
+rm -fr test-repo test-checkout
+svnadmin create test-repo
+svnadmin load test-repo
+svn co file://${PWD}/test-repo test-checkout >/dev/null
+
+# Convert the repo to a local git repository.
+rm -fr git-repo
+case $tool in
+git-svn) git svn clone --stdlayout --quiet file://${PWD}/test-repo git-repo; ;;
+*)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
+esac
+
+) >&2
+
+# Stream a dump to standard output
+(cd git-repo; git fast-export --all)
+rm -fr git-repo test-checkout test-repo
+
+exit 0

@@ -29,6 +29,13 @@ Build a Subversion repo from a Subversion stream dump on stdin, or
 dump an existing repo as a stream to stdout.  Can also be used to edit
 a Subversion test load, regenerating its checksums.
 
+== svn-to-git ==
+
+Build a Subversion repo from a Subversion stream dump on stdin,
+convert it to a local gir repository, and stream the result to
+standard output. Mainly a wrapper around git-svn, to be used
+for comparison tests.
+
 == The tests ==
 
 Keeping live Subversion repos under version control doesn't work very well; 
