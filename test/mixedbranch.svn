@@ -1,0 +1,149 @@
+SVN-fs-dump-format-version: 2
+ ## Test translation of parthological mixed-branch commits.
+
+UUID: 8d4d824f-fe21-4bfb-b6e5-7899da3909af
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-12-10T23:48:44.732698Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 8
+svn:date
+V 27
+2012-12-10T23:48:47.957419Z
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-12-10T23:48:49.111291Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 135
+Content-length: 135
+
+K 8
+svn:date
+V 27
+2012-12-10T23:54:31.141338Z
+K 7
+svn:log
+V 37
+This is an evil mixed-branch commit.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/foobar
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/foobar/README
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/README
+Text-copy-source-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-copy-source-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Text-content-length: 92
+Text-content-md5: dfa943f0c1cb17e260a45c6a3e468a49
+Text-content-sha1: f22bf6353d5c22deb9e3c759430077140883ee15
+Content-length: 92
+
+This is a test Subversion repository
+
+About to do an evil mixed-branch commit; branch side.
+
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 88
+Text-content-md5: 0560ab5b84948f6a1f86b4b440609af0
+Text-content-sha1: 4d096c89e5113fff03498570d7ab665cbb902be8
+Content-length: 88
+
+This is a test Subversion repository
+
+About to do evil mixed-branch commit: trunk side.
+
+
