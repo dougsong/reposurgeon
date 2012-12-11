@@ -32,9 +32,16 @@ a Subversion test load, regenerating its checksums.
 == svn-to-git ==
 
 Build a Subversion repo from a Subversion stream dump on stdin,
-convert it to a local gir repository, and stream the result to
+convert it to a local git repository, and stream the result to
 standard output. Mainly a wrapper around git-svn, to be used
 for comparison tests.
+
+To add a new tool for comparison, do something like:
+
+   git submodule add GIT-URL/foobar externals/foobar
+   git update submodules
+
+from the repo root.
 
 == The tests ==
 
