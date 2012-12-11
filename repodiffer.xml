@@ -61,11 +61,44 @@ argument must be a pair of commit IDs (marks or hashes) separated by an
 equals sign.</para>
 
 <para>The --ignore or -i option causes differences between specified
-parts to be ignored.  Part tags are <quote>author</quote>,
-<quote>authordate</quote>, <quote>committer</quote>,
-<quote>commitdate</quote>, <quote>comment</quote>,
-<quote>timezone</quote>, <quote>tree</quote>,
-<quote>gitignore</quote>; one, or a comma-separated list, can be
+parts to be ignored.  Part tags are as follows:</para>
+
+<variablelist>
+<varlistentry>
+<term>author</term>
+<listitem><para>Ignore differences in the (name part of the) 
+author field.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>authordate</term>
+<listitem><para>Ignore differences in the author date part.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>author</term>
+<listitem><para>Ignore differences in the (name part of the) 
+committer field.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>authordate</term>
+<listitem><para>Ignore differences in the commit date part</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>timezone</term>
+<listitem><para>Apply a modulo 360 operation to timestamps before 
+comparison, so as to ignore time-zone skew.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>tree</term>
+<listitem><para>Ignore tree-content differences.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>gitignore</term>
+<listitem><para>Ignore .gitignore and .cvsignore files when comparing
+tree content.</para></listitem>
+</varlistentry>
+</variablelist>
+
+<para>One of these or a comma-separated list of several can be
 specified.</para>
 
 <para>The --fullhash or -f option forces reporting of full 40-digit
