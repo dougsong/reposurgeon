@@ -134,7 +134,7 @@ MERGE_CALLBACKS = {
 EOF
 	python ../externals/agito/agito.py /tmp/agito$$ ;;
 svn2git) mkdir git-scratch;
-	(cd git-scratch && ruby -I../externals/svn2git/lib ../externals/svn2git/bin/svn2git file://${PWD}/test-repo && mv git-scratch git-repo) ;;
+	(cd git-scratch && ruby -I../../externals/svn2git/lib ../../externals/svn2git/bin/svn2git file://${PWD}/test-repo && mv git-scratch git-repo) ;;
 *)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
 esac
 
