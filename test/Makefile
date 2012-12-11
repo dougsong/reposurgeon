@@ -21,7 +21,7 @@ buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
 	svndump-buildregress repodiffer-buildregress
 
 clean:
-	rm -fr .rs* test-repo test-checkout *~
+	rm -fr .rs* test-repo test-checkout git-repo *~
 
 # Show summary lines for all tests.
 testlist:
