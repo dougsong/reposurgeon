@@ -81,7 +81,7 @@ then
     done
 fi
 
-# Should we build a repo from the input file?
+# Should we build a repo from a dump presented on standard input?
 if [ $extract = T ]
 then
     rm -fr test-repo test-checkout
