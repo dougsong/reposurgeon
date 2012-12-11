@@ -153,6 +153,8 @@ class Commit:
                 if path:
                     if path.endswith(".gitignore") and "gitignore" in ignores:
                         continue
+                    elif path.endswith(".cvsignore") and "gitignore" in ignores:
+                        continue
                     elif os.path.islink(path):
                         filemap[path] = os.readlink(path)
                     elif os.path.isfile(path):
