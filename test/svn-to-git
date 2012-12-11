@@ -135,7 +135,8 @@ EOF
 	python ../externals/agito/agito.py /tmp/agito$$ ;;
 svn2git) mkdir git-scratch; mv test-repo git-scratch;
 	(cd git-scratch >/dev/null && \
-	    RB=../../externals/svn2git ruby -I${RB}/lib ${RB}/bin/svn2git file://${PWD}/test-repo) && \
+	    ruby -I../../externals/svn2git/lib \
+	    ../../externals/svn2git/bin/svn2git file://${PWD}/test-repo) && \
 	    mv git-scratch git-repo ;;
 *)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
 esac
