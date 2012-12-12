@@ -257,24 +257,35 @@ class Difference:
 diffdict = {}
 
 def report_pair(a, b):
-    global n_equal, n_insertions, n_deletions, n_replacements
+    global n_equal, n_insertions, n_deletions, n_replacements, spancount
     global diffdict
     if a is None:
         n_insertions += 1
         if not changes_only:
-            print "inserted: %s" % b
+            if spancount and not showequal:
+                print "%d equal pairs." % spancount
+                spancount = 0
+            print "R only: %s" % b
         return
     if b is None:
         n_deletions += 1
         if not changes_only:
-            print "deleted: %s" % a
+            if spancount and not showequal:
+                print "%d equal pairs." % spancount
+                spancount = 0
+            print "L only: %s" % a
         return
     diff = Difference(a, b)
     if not diff.difference_types:
         n_equal += 1
+        spancount += 1
         if showequal:
             print "equal: %s == %s" % (a, b)
-    elif diff in diffdict:
+        return
+    if spancount and not showequal:
+        print "%d equal pairs." % spancount
+        spancount = 0
+    if diff in diffdict:
         print "%s -> %s: same differences as for %s." % (a, b, diffdict[diff])
     else:
         diffdict[diff] = "%s -> %s" % (a, b)
@@ -389,7 +400,8 @@ if __name__ == '__main__':
     ignores = ""
     single = None
     verbose = 0
-    n_equal = n_insertions = n_deletions = n_replacements = 0 
+    n_equal = n_insertions = n_deletions = n_replacements = 0
+    spancount = 0
     for (opt, val) in options:
         if opt == '-c' or opt == '--changes-only':
             changes_only = True
