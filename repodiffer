@@ -243,18 +243,22 @@ class Difference:
             b_files = b.manifest()
             a_fileset = set(a_files.keys())
             b_fileset = set(b_files.keys())
-            self.left_only = a_fileset - b_fileset
-            self.right_only = b_fileset - a_fileset
-            self.different = [fn for fn in (a_fileset & b_fileset)
-                              if a_files[fn] != b_files[fn]]
+            self.left_only = tuple(a_fileset - b_fileset)
+            self.right_only = tuple(b_fileset - a_fileset)
+            self.different = tuple([fn for fn in (a_fileset & b_fileset)
+                              if a_files[fn] != b_files[fn]])
             if not (self.left_only or self.right_only or self.different):
                 self.difference_types.remove('tree')
+    def __hash__(self):
+        return hash((tuple(self.difference_types), self.different))
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+diffdict = {}
 
 def report_pair(a, b):
     global n_equal, n_insertions, n_deletions, n_replacements
+    global diffdict
     if a is None:
         n_insertions += 1
         if not changes_only:
@@ -266,7 +270,14 @@ def report_pair(a, b):
             print "deleted: %s" % a
         return
     diff = Difference(a, b)
-    if diff.difference_types:
+    if not diff.difference_types:
+        n_equal += 1
+        if showequal:
+            print "equal: %s == %s" % (a, b)
+    elif diff in diffdict:
+        print "%s -> %s: same differences as for %s." % (a, b, diffdict[diff])
+    else:
+        diffdict[diff] = "%s -> %s" % (a, b)
         n_replacements += 1
         print "changed: %s -> %s in %s." % (a, b, ",".join(diff.difference_types))
         if diff.left_only:
@@ -281,10 +292,6 @@ def report_pair(a, b):
             print "Differing files:"
             for fn in diff.different:
                 sys.stdout.write("  " + fn + "\n")
-    else:
-        n_equal += 1
-        if showequal:
-            print "equal: %s == %s" % (a, b)
 
 def diff_single(single, alpha, beta):
     "Examine the difference between two specified commits."
