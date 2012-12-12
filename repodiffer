@@ -234,6 +234,25 @@ class Repository:
         if self.streamed:
             os.system("rm -fr " + self.directory)
 
+class Difference:
+    def __init__(self, a, b):
+        self.difference_types = a.difference(b)
+        self.left_only = self.right_only = self.different = None
+        if 'tree' in self.difference_types:
+            a_files = a.manifest()
+            b_files = b.manifest()
+            a_fileset = set(a_files.keys())
+            b_fileset = set(b_files.keys())
+            self.left_only = a_fileset - b_fileset
+            self.right_only = b_fileset - a_fileset
+            self.different = [fn for fn in (a_fileset & b_fileset)
+                              if a_files[fn] != b_files[fn]]
+            if not (self.left_only or self.right_only or self.different):
+                self.difference_types.remove('tree')
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
 def report_pair(a, b):
     global n_equal, n_insertions, n_deletions, n_replacements
     if a is None:
@@ -246,33 +265,21 @@ def report_pair(a, b):
         if not changes_only:
             print "deleted: %s" % a
         return
-    d = a.difference(b)
-    left_only = right_only = different = None
-    if 'tree' in d:
-        a_files = a.manifest()
-        b_files = b.manifest()
-        a_fileset = set(a_files.keys())
-        b_fileset = set(b_files.keys())
-        left_only = a_fileset - b_fileset
-        right_only = b_fileset - a_fileset
-        different = [fn for fn in (a_fileset & b_fileset)
-                     if a_files[fn] != b_files[fn]]
-        if not (left_only or right_only or different):
-            d.remove('tree')
-    if d:
+    diff = Difference(a, b)
+    if diff.difference_types:
         n_replacements += 1
-        print "changed: %s -> %s in %s." % (a, b, ",".join(d))
-        if left_only:
+        print "changed: %s -> %s in %s." % (a, b, ",".join(diff.difference_types))
+        if diff.left_only:
             print "L only:"
-            for fn in left_only:
+            for fn in diff.left_only:
                 sys.stdout.write("  " + fn + "\n")
-        if right_only:
+        if diff.right_only:
             print "R only:"
-            for fn in right_only:
+            for fn in diff.right_only:
                 sys.stdout.write("  " + fn + "\n")
-        if different:
+        if diff.different:
             print "Differing files:"
-            for fn in different:
+            for fn in diff.different:
                 sys.stdout.write("  " + fn + "\n")
     else:
         n_equal += 1
