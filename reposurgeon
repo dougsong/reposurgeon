@@ -2708,10 +2708,10 @@ class StreamParser:
                         generated_file_copy = node.generated
                         subversion_file_copy = (node.from_hash is not None)
                         permissions_changed = (perms != oldperms)
-                        if node.blobmark and (new_content or
-                                              generated_file_copy or
-                                              subversion_file_copy or
-                                              permissions_changed):
+                        if (new_content or
+                            generated_file_copy or
+                            subversion_file_copy or
+                            permissions_changed):
                             assert perms
                             fileop = FileOp()
                             fileop.construct("M",
