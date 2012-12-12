@@ -100,6 +100,14 @@ comparison, so as to ignore time-zone skew.</para></listitem>
 <listitem><para>Ignore .gitignore and .cvsignore files when comparing
 tree content.</para></listitem>
 </varlistentry>
+<varlistentry>
+<term>email</term>
+<listitem><para>Ignore email addresses when comparing names.  This 
+can be useful when comparing two repositories translated from Subversion;
+typically they'll have the Subversion Unix user ID as the name part of the
+adress, but whether and how a host part is generated for the address varies.
+</para></listitem>
+</varlistentry>
 </variablelist>
 
 <para>One of these or a comma-separated list of several can be
