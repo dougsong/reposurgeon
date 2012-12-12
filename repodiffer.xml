@@ -24,7 +24,7 @@
       <arg choice='opt'>--show-equal</arg>
       <arg choice='opt'>--changes-only</arg>
       <arg choice='opt'>--treediff</arg>
-      <arg choice='opt'>--fullhash</arg>
+      <arg choice='opt'>--full-hash</arg>
       <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream2</replaceable></arg>

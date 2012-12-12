@@ -366,7 +366,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:sv:", ["changes-only", "show-equal", "fullhash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:sv:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "verbose="])
     alpha = None
     beta = None
     changes_only = False
@@ -377,11 +377,11 @@ if __name__ == '__main__':
     verbose = 0
     n_equal = n_insertions = n_deletions = n_replacements = 0 
     for (opt, val) in options:
-        if opt == '-c' or opt == '--changes':
+        if opt == '-c' or opt == '--changes-only':
             changes_only = True
-        if opt == '-e' or opt == '--showequal':
+        if opt == '-e' or opt == '--show-equal':
             showequal = True
-        elif opt == '-f' or opt == '--fullhash':
+        elif opt == '-f' or opt == '--full-hash':
             fullhash = True
         elif opt == '-i' or opt == '--ignore':
             ignores = val
