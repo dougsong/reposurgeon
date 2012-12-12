@@ -49,7 +49,7 @@ fi
 # Convert the repo to a local git repository.
 rm -fr $gitrepo
 case $tool in
-git-svn) git svn clone --stdlayout --quiet file://${PWD}/$svnrepo $gitrepo ;;
+git-svn) git svn clone --stdlayout --no-metadata --quiet file://${PWD}/$svnrepo $gitrepo ;;
 agito) #git submodule update
 	cat >/tmp/agito$$ <<EOF
 # URL of the Subversion repository.
