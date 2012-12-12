@@ -91,9 +91,16 @@ class Commit:
     def timestamp(self):
         "UTC timestamp of commit."
         return int(self.commitdate.split()[0])
+    @staticmethod
+    def idname(fld):
+        "Relevant part of user name."
+        if "email" in ignores:
+            return fld.split("<")[0].strip()
+        else:
+            return fld
     def action_stamp(self):
         "A timestamp/committer pair.  Should be unique!"
-        return(self.committer, self.timestamp())
+        return(Commit.idname(self.committer), self.timestamp())
     @staticmethod
     def date_extract(text):
         "Extract a git-format date"
@@ -129,12 +136,14 @@ class Commit:
     def difference(self, other):
         res = []
         # Alas, there's no better way to do this than with an ignores global
-        if "author" not in ignores and self.author != other.author:
+        if "author" not in ignores and \
+               Commit.idname(self.author) != Commit.idname(other.author):
             res.append('author')
         if "authordate" not in ignores and \
                Commit.time_not_equal(self.authordate, other.authordate):
             res.append('authordate')
-        if "committer" not in ignores and self.committer != other.committer:
+        if "committer" not in ignores and \
+               Commit.idname(self.committer) != Commit.idname(other.committer):
             res.append('committer')
         if "commitdate" not in ignores \
                and Commit.time_not_equal(self.commitdate, other.commitdate):
