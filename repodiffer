@@ -258,7 +258,6 @@ diffdict = {}
 
 def report_pair(a, b):
     global n_equal, n_insertions, n_deletions, n_changed, spancount
-    global diffdict
     if a is None:
         n_insertions += 1
         if not changes_only:
