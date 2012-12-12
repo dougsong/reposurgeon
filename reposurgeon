@@ -2362,6 +2362,7 @@ class StreamParser:
             announce("Pass 4")
         baton.twirl("commits")
         baton.startcounter(countfmt(len(self.revisions)))
+        previous = None
         for revision in self.revisions:
             record = self.revisions[revision]
             if debug_enable(DEBUG_EXTRACT):
@@ -2653,8 +2654,9 @@ class StreamParser:
                             # A copy node is somehow missing its hash.
                             ancestor = filemaps[node.from_rev][node.from_path]
                         elif node.action != SD_ADD:
-                            # Ordinary inheritance, no node copy.
-                            ancestor = filemaps[str(int(node.revision)-1)][node.path]
+                            # Ordinary inheritance, no node copy.  For
+                            # robustness, we don't assume revisions are 
+                            ancestor = filemaps[previous][node.path]
                         else:
                             ancestor = None
                         # Time for fileop generation
@@ -2895,6 +2897,7 @@ class StreamParser:
             # so as not to eat the processor.
             baton.bumpcounter()
             time.sleep(0)
+            previous = revision
         # Warn about dubious branch links
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
