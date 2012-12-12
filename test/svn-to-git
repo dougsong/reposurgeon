@@ -1,11 +1,14 @@
 #!/bin/sh
 #
-# svn-to-git - Subversion dump on stdin to git fast-import stream on stdout
+# svn-to-git - Subversion-to-git conversion-tool dispatcher
 #
 # The -t option sets the conversion tool. The default is 'reposurgeon'.
 #
 # The -s option is only useful when the tool is 'reposurgeon'; it suppresses
 # the normal "prefer git" so that properties will be written.
+#
+# Requires two arguments: A Subversion repo directory (which must exist) 
+# and a git repo output directory (which must not exist).
 #
 PATH=$PATH:..
 
@@ -21,28 +24,40 @@ do
 done
 shift $(($OPTIND - 1))
 
-trap 'rm -fr git-repo test-checkout test-repo git-scratch /tmp/agito$$' EXIT HUP INT TERM
+trap 'rm -fr git-scratch /tmp/agito$$' EXIT HUP INT TERM
+
+svnrepo=$1
+if [ -z "$svnrepo" ]
+then
+    echo "svn-to-git: requires a path to a Subversion repo as first argument."
+    exit 1
+fi
+gitrepo=$2
+if [ -z "$gitrepo" ]
+then
+    echo "svn-to-git: output directory argument is required."
+    exit 1
+fi
+if [ -d "$gitrepo" ] 
+then
+    echo "svn-to-git: output directory $gitrepo must not already exist."
+    exit 1
+fi
 
 (
 
-# Build a repo from a dump presented on standard input
-rm -fr test-repo test-checkout
-svnadmin create test-repo
-svnadmin load test-repo
-svn co file://${PWD}/test-repo test-checkout >/dev/null
-
 # Convert the repo to a local git repository.
-rm -fr git-repo
+rm -fr $gitrepo
 case $tool in
-git-svn) git svn clone --stdlayout --quiet file://${PWD}/test-repo git-repo ;;
+git-svn) git svn clone --stdlayout --quiet file://${PWD}/$svnrepo $gitrepo ;;
 agito) #git submodule update
 	cat >/tmp/agito$$ <<EOF
 # URL of the Subversion repository.
-SVN_REPO = "file://${PWD}/test-repo"
+SVN_REPO = "file://${PWD}/$svnrepo"
 
 # Path to directory where the Git repository containing the converted
 # history should be stored.
-GIT_REPO = "git-repo"
+GIT_REPO = "$gitrepo"
 
 BRANCHES = {
 	"/trunk" : "master",
@@ -135,20 +150,14 @@ MERGE_CALLBACKS = {
 # vim: set ft=python:
 EOF
 	python ../externals/agito/agito.py /tmp/agito$$ ;;
-svn2git) mkdir git-scratch; mv test-repo git-scratch;
+svn2git) mkdir git-scratch; cp -r $svnrepo git-scratch;
 	(cd git-scratch >/dev/null && \
 	    ruby -I../../externals/svn2git/lib \
-	    ../../externals/svn2git/bin/svn2git file://${PWD}/test-repo) && \
-	    mv git-scratch git-repo ;;
-*)  reposurgeon "verbose $verbose" "read test-repo" "$sopts" "write git-repo"
+	    ../../externals/svn2git/bin/svn2git file://${PWD}/$svnrepo) && \
+	    mv git-scratch $gitrepo ;;
+*)  reposurgeon "verbose $verbose" "read $svnrepo" "$sopts" "write $gitrepo"
 esac
 
 ) >&2
-
-# Stream a dump to standard output
-if  [ -d git-repo ]
-then
-    (cd git-repo >/dev/null; git fast-export --all)
-fi
 
 exit 0
