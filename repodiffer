@@ -257,7 +257,7 @@ class Difference:
 diffdict = {}
 
 def report_pair(a, b):
-    global n_equal, n_insertions, n_deletions, n_replacements, spancount
+    global n_equal, n_insertions, n_deletions, n_changed, spancount
     global diffdict
     if a is None:
         n_insertions += 1
@@ -285,11 +285,11 @@ def report_pair(a, b):
     if spancount and not showequal:
         print "%d equal pairs." % spancount
         spancount = 0
+    n_changed += 1
     if diff in diffdict:
         print "%s -> %s: same differences as for %s." % (a, b, diffdict[diff])
     else:
         diffdict[diff] = "%s -> %s" % (a, b)
-        n_replacements += 1
         print "changed: %s -> %s in %s." % (a, b, ",".join(diff.difference_types))
         if diff.left_only:
             print "L only:"
@@ -375,13 +375,14 @@ def diff_all(alpha, beta):
     # Report on the pair table
     for (a, b) in pairs:
         report_pair(a, b)
-    if n_replacements or n_deletions or n_insertions:
-        sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted.\n"
+    if n_changed or n_deletions or n_insertions:
+        sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted, %d changed.\n"
                          % (n_equal,
                             n_insertions,
                             len(beta.signature),
                             n_deletions,
-                            len(alpha.signature)))
+                            len(alpha.signature),
+                            n_changed))
     if alpha.tagnames - beta.tagnames:
         sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames - beta.tagnames)))
     if beta.tagnames - alpha.tagnames:
@@ -400,7 +401,7 @@ if __name__ == '__main__':
     ignores = ""
     single = None
     verbose = 0
-    n_equal = n_insertions = n_deletions = n_replacements = 0
+    n_equal = n_insertions = n_deletions = n_changed = 0
     spancount = 0
     for (opt, val) in options:
         if opt == '-c' or opt == '--changes-only':
