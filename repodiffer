@@ -177,6 +177,16 @@ class Commit:
     def __eq__(self, other):
         return not self.difference(other)
 
+class Tag:
+    def __init__(self, name, ref, comment=None):
+        self.name = name
+        self.ref = ref
+        self.comment = comment
+        self.committer = None
+        self.author = None
+    def __str__(self):
+        return str(self.__dict__)
+
 class Repository:
     "A repository, for comparison purposes."
     def __init__(self, sourcepath):
@@ -216,8 +226,38 @@ class Repository:
                     item.mark = self.sha1_to_mark[item.commit]
             except (IOError, OSError):
                 pass
-        # Also get a list of tags
-        self.tagnames = set(capture_or_die("git tag -l").strip().split())
+            # Get information about tags
+            self.tags = []
+            for tagname in capture_or_die("git tag -l").split():
+                tagdata = capture_or_die("git show --format=raw " + tagname)
+                if tagdata.startswith("commit"):
+                    commit = tagdata.split("\n")[0].split()[1]
+                    self.tags.append(Tag(tagname, commit))
+                elif tagdata.startswith("tag"):
+                    for line in tagdata.split('\n'):
+                        if line.startswith("commit"):
+                            commit = line.strip().split()[1]
+                            break
+                    else:
+                        raise Fatal("no commit line in annotated tag")
+                    tag = Tag(tagname, commit, comment="")
+                    stanza = capture_or_die("git cat-file -p " + tagname)
+                    body_latch = False
+                    for line in stanza.split("\n")[:-1]:
+                        if not body_latch:
+                            if line == "":
+                                body_latch = True
+                            elif line.startswith("tagger"):
+                                tag.committer = line[7:]
+                        else:
+                            tag.comment += line + "\n"
+                self.tags.append(tag)
+            # And about heads too
+            for line in capture_or_die("git show-ref --head").split("\n"):
+                if line:
+                    (hashid, ref) = line.strip().split()
+                    if ref.startswith("refs/heads"):
+                        self.tags.append(Tag(ref, hashid))
     def lookup(self, name):
         "Look up an object by name."
         for commit in self.signature:
@@ -228,6 +268,8 @@ class Repository:
     def sort(self):
         "Sort by Committer-Date in case commits were generated in topo order."
         self.signature.sort(key=lambda c: c.timestamp())
+    def tagnames(self):
+        return set([tag.name for tag in self.tags]) 
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
@@ -382,10 +424,10 @@ def diff_all(alpha, beta):
                             n_deletions,
                             len(alpha.signature),
                             n_changed))
-    if alpha.tagnames - beta.tagnames:
-        sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames - beta.tagnames)))
-    if beta.tagnames - alpha.tagnames:
-        sys.stdout.write("tags only in R: %s\n" % ",".join(list(beta.tagnames - alpha.tagnames)))
+    if alpha.tagnames() - beta.tagnames():
+        sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames() - beta.tagnames())))
+    if beta.tagnames() - alpha.tagnames():
+        sys.stdout.write("tags only in R: %s\n" % ",".join(list(beta.tagnames() - alpha.tagnames())))
 
 if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
