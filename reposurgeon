@@ -1073,9 +1073,7 @@ class Commit:
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         if self.fossil_id:
-            # This format tacitly assumes the fossil IDs are from Subversion.
-            # Someday this assumption might have to be revisted.
-            fossil = "r%s" % self.fossil_id
+            fossil = "<%s>" % self.fossil_id
             summary += "%6s " % fossil
         return (summary + topline)[:cols]
     def tip(self, _modifiers, eventnum, cols):
@@ -3675,7 +3673,7 @@ class Repository:
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
             if commit.fossil_id:
-                commit_id += " (%s)" % commit.fossil_id
+                commit_id += " <%s>" % commit.fossil_id
             announce("tagifying: %s -> %s" % (commit_id, name))
         if commit.fileops:
             raise Fatal("Attempting to tagify a commit with fileops.")
