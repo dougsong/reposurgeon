@@ -422,7 +422,7 @@ extractors = [GitExtractor()]
 verbose         = 0
 DEBUG_SVNDUMP   = 2    # Debug Subversion dumping
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
-DEBUG_EXTRACT   = 3    # Debug repo-extractor logic (fine-grained)
+DEBUG_EXTRACT   = 2    # Debug repo-extractor logic (fine-grained)
 DEBUG_FILEMAP   = 3    # Debug building of filemaps
 DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_IGNORES   = 3    # Debug ignore generation
@@ -2569,19 +2569,13 @@ class StreamParser:
                         else:
                             continue
                         for source in node.from_set:
-                            subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(node.path,
-                                                        source[len(node.from_path+os.sep)-1:])
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: generating copy to %s from r%s~%s" \
-                                         % (revision,
-                                            node.path,
-                                            node.from_rev,
-                                            source))
                             lookback = filemaps[node.from_rev][source]
                             if lookback is None:
                                 raise Fatal("r%s: can't find ancestor %s" \
                                          % (revision, source))
+                            subnode = StreamParser.NodeAction()
+                            subnode.path = os.path.join(node.path,
+                                                        source[len(node.from_path+os.sep)-1:])
                             subnode.revision = revision
                             subnode.from_path = lookback.path
                             subnode.from_rev = lookback.revision
@@ -2589,11 +2583,11 @@ class StreamParser:
                             subnode.action = SD_ADD
                             subnode.kind = SD_FILE
                             if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: local copy is %s from r%s~%s" \
+                                announce("r%s: generated copy r%s~%s -> %s" \
                                          % (revision,
-                                            subnode.path,
                                             subnode.from_rev,
-                                            subnode.from_path))
+                                            subnode.from_path,
+                                            subnode.path))
                             subnode.generated = True
                             expanded_nodes.append(subnode)
             # Lift .cvsignore files, which we can assume are fossils
