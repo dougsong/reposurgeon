@@ -6458,7 +6458,7 @@ Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
 parent commit, unless it has multiple children in which case the child
-commit must follow.
+commit must follow (separate it with a comma).
 
 If the repo was named 'foo', you will normally end up with two repos
 named 'foo-early' and 'foo-late'.  But if the commit graph would
