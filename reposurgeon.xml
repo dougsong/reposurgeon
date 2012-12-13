@@ -731,14 +731,14 @@ changes may be added in future versions of this tool.</para>
 <varlistentry>
 <term><command>divide</command>
         <emphasis>parent</emphasis>
-        [<emphasis>parent</emphasis>]
+        [<emphasis>child</emphasis>]
 </term>
 <listitem>
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
 parent commit, unless it has multiple children in which case the child
-commit must follow.</para>
+commit must follow  (separate it with a comma).</para>
 
 <para>If the repo was named 'foo', you will normally end up with two
 repos named 'foo-early' and 'foo-late' (option and feature events at
