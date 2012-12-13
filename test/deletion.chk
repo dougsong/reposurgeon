@@ -1,45 +1,65 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1323707257 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1323707257 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 77
 This file is doomed.  It exists only so we can check translation of deletes.
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :4
+mark :6
 committer esr <esr> 1323707473 +0000
 data 71
 Create a doomed file so we can delete it and see the fileop generated.
-from :2
-M 100644 :3 doomed
+from :4
+M 100644 :5 doomed
 
 # Fossil-ID: 4
 commit refs/heads/master
-mark :5
+mark :7
 committer esr <esr> 1323707585 +0000
 data 77
 The import stream representation of this commit should have a delete fileop.
-from :4
+from :6
 D doomed
-
-tag root
-from :2
-tagger esr <esr> 1323707257 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
 

@@ -1,63 +1,91 @@
 blob
 mark :1
-data 60
-This is the trunk version of README, without modifications.
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
-committer esr <esr> 1322682431 +0000
-data 38
-README, base version on trunk branch.
-M 100644 :1 README
+committer esr <esr> 1322682380 +0000
+data 65
+This repo illustrates simple branching with interleaved commits.
+M 100644 :1 .gitignore
 
 blob
 mark :3
-data 73
-This is the trunk version of README, with an illustrative modifications.
+data 60
+This is the trunk version of README, without modifications.
 
-# Fossil-ID: 4
+# Fossil-ID: 2
 commit refs/heads/master
 mark :4
-committer esr <esr> 1322682994 +0000
-data 24
-Second commit on trunk.
+committer esr <esr> 1322682431 +0000
+data 38
+README, base version on trunk branch.
 from :2
 M 100644 :3 README
 
 blob
 mark :5
+data 73
+This is the trunk version of README, with an illustrative modifications.
+
+# Fossil-ID: 4
+commit refs/heads/master
+mark :6
+committer esr <esr> 1322682994 +0000
+data 24
+Second commit on trunk.
+from :4
+M 100644 :5 README
+
+blob
+mark :7
 data 71
 This is the branch version of README, after we've actually changed it.
 
 reset refs/heads/samplebranch
 # Fossil-ID: 5
 commit refs/heads/samplebranch
-mark :6
+mark :8
 committer esr <esr> 1322683160 +0000
 data 39
 First modification on the branch side.
-from :2
-M 100644 :5 README
+from :4
+M 100644 :7 README
 
 blob
-mark :7
+mark :9
 data 61
 This is the trunk version of README, with its typo removed.
 
 
 # Fossil-ID: 6
 commit refs/heads/master
-mark :8
+mark :10
 committer esr <esr> 1322683251 +0000
 data 23
 Third commit on trunk.
-from :4
-M 100644 :7 README
+from :6
+M 100644 :9 README
 
 blob
-mark :9
+mark :11
 data 107
 This is the branch version of README, after we've actually changed it.
 
@@ -65,30 +93,22 @@ Second modification to the README.
 
 # Fossil-ID: 7
 commit refs/heads/samplebranch
-mark :10
+mark :12
 committer esr <esr> 1322691357 +0000
 data 40
 Create another node on the branch side.
-from :6
-M 100644 :9 README
-
-tag root
-from :2
-tagger esr <esr> 1322682380 +0000
-data 108
-This repo illustrates simple branching with interleaved commits.
-
-[[Tag from root commit at Subversion r1]]
+from :8
+M 100644 :11 README
 
 tag samplebranch-root
-from :2
+from :4
 tagger esr <esr> 1322682540 +0000
 data 45
 A branch created for illustrative purposes.
 
 
 tag tipdelete-samplebranch
-from :10
+from :12
 tagger esr <esr> 1324127616 +0000
 data 76
 This is an example of a branch tip delete which should become a deleteall.

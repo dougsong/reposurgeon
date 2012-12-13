@@ -1,19 +1,47 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
-committer esr <esr> 1323737922 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+committer esr <esr> 1323737921 +0000
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1323737922 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 32
 #!/bin/sh
 
@@ -21,24 +49,24 @@ echo "Hello, world!"
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :4
+mark :6
 committer esr <esr> 1323738139 +0000
 data 49
 Create a hello-world script, not yet executable.
-from :2
-M 100644 :3 hello
+from :4
+M 100644 :5 hello
 
 # Fossil-ID: 4
 commit refs/heads/master
-mark :5
+mark :7
 committer esr <esr> 1323738407 +0000
 data 71
 This is a commit after doing 'svn propset svn:executable 'true' hello'
-from :4
-M 100755 :3 hello
+from :6
+M 100755 :5 hello
 
 blob
-mark :6
+mark :8
 data 34
 #!/bin/sh
 
@@ -46,28 +74,28 @@ echo "Goodbye, world!"
 
 # Fossil-ID: 5
 commit refs/heads/master
-mark :7
+mark :9
 committer esr <esr> 1323738534 +0000
 data 111
 Modify the script in a trivial way.
 
 The actual purpose of this commit is to demonstrate property persistance.
-from :5
-M 100755 :6 hello
+from :7
+M 100755 :8 hello
 
 # Fossil-ID: 6
 commit refs/heads/master
-mark :8
+mark :10
 committer esr <esr> 1323739148 +0000
 data 135
 A commit after doing 'svn propdel svn:executable hello'.
 
 Should produce a fileop that changes the permissions back to non-executable.
-from :7
-M 100644 :6 hello
+from :9
+M 100644 :8 hello
 
 blob
-mark :9
+mark :11
 data 108
 This is a test Subversion repository
 
@@ -75,42 +103,42 @@ Now we're going to investigate the behavior of properties under copy.
 
 # Fossil-ID: 7
 commit refs/heads/master
-mark :10
+mark :12
 committer esr <esr> 1324608067 +0000
 data 23
 Another spacer commit.
-from :8
-M 100644 :9 README
+from :10
+M 100644 :11 README
 
 # Fossil-ID: 8
 commit refs/heads/master
-mark :11
+mark :13
 committer esr <esr> 1324608118 +0000
 data 51
 svn propset svn:executable 'true' hello
 
 ...again.
-from :10
-M 100755 :6 hello
+from :12
+M 100755 :8 hello
 
 # Fossil-ID: 9
 commit refs/heads/master
-mark :12
+mark :14
 committer esr <esr> 1324608187 +0000
 data 32
 Perform 'svn cp hello goodbye'.
-from :11
-M 100755 :6 goodbye
+from :13
+M 100755 :8 goodbye
 
 blob
-mark :13
+mark :15
 data 95
 This is a test Subversion repository
 
 After the copy, goodbye has the svn:executable property.
 
 blob
-mark :14
+mark :16
 data 40
 #!/bin/sh
 
@@ -118,19 +146,11 @@ echo "Goodbye, cruel world!"
 
 # Fossil-ID: 10
 commit refs/heads/master
-mark :15
+mark :17
 committer esr <esr> 1324608419 +0000
 data 78
 The translated 'goodbye' fileop for this revision should have executable set.
-from :12
-M 100644 :13 README
-M 100755 :14 goodbye
-
-tag root
-from :2
-tagger esr <esr> 1323737921 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
+from :14
+M 100644 :15 README
+M 100755 :16 goodbye
 

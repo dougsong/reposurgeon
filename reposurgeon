@@ -1764,8 +1764,7 @@ class StreamParser:
         "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         )
     # These are the default patterns globally ignored by Subversion.
-    # TODO: Not presently used. Generate these into new directories?
-    SubversionDefaultIgnores = """
+    SubversionDefaultIgnores = """\
 *.o
 *.lo
 *.la
@@ -2441,7 +2440,9 @@ class StreamParser:
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
-                        pass
+                        if node.path == "trunk" + os.sep and not node.props:
+                            node.props = {"svn:ignore":
+                                          StreamParser.SubversionDefaultIgnores}
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)

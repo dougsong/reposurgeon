@@ -1,31 +1,51 @@
 blob
 mark :1
-data 12
-Hello world
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
 committer khan <khan> 1354595761 +0000
+data 18
+Initial structure
+M 100644 :1 .gitignore
+
+blob
+mark :3
+data 12
+Hello world
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer khan <khan> 1354595761 +0000
 data 8
 Develop
-M 100644 :1 hello
+from :2
+M 100644 :3 hello
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :3
+mark :5
 committer khan <khan> 1354595761 +0000
 data 60
 Replace file with a copy of the previous revision of itself
-from :2
-M 100644 :1 hello
-
-tag root
-from :2
-tagger khan <khan> 1354595761 +0000
-data 61
-Initial structure
-
-[[Tag from root commit at Subversion r1]]
+from :4
+M 100644 :3 hello
 
