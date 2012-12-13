@@ -157,7 +157,7 @@ class Commit:
         "Return a file manifest for this revision."
         filemap = {}
         with directory_context(self.repo.directory):
-            do_or_die("git checkout --quiet %s" % self.commit)
+            do_or_die("git clean -f; git checkout --quiet %s" % self.commit)
             for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
                 if path:
                     if path.endswith(".gitignore") and "gitignore" in ignores:
