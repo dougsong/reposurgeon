@@ -4,5 +4,3 @@
   create confusing merge links in some cases.
 
 * The fossil map isn't partitioned on an expunge.
-
-* repodiffer needs to compare tags and be able to emit diff reports.
