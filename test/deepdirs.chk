@@ -1,61 +1,89 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1324128964 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1324128964 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 53
 This is the example child3 in the foo/bar directory.
 
 blob
-mark :4
+mark :6
 data 51
 This is the example child1 from the foo directory.
 
 blob
-mark :5
+mark :7
 data 51
 This is the example child2 from the foo directory.
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :6
+mark :8
 committer esr <esr> 1324129126 +0000
 data 78
 Create a directory with a subdirectory for recursive copy and delete testing.
-from :2
-M 100644 :3 foo/bar/child3
-M 100644 :4 foo/child1
-M 100644 :5 foo/child2
+from :4
+M 100644 :5 foo/bar/child3
+M 100644 :6 foo/child1
+M 100644 :7 foo/child2
 
 blob
-mark :7
+mark :9
 data 17
 Modified README.
 
 # Fossil-ID: 4
 commit refs/heads/master
-mark :8
+mark :10
 committer esr <esr> 1324129213 +0000
 data 77
 Put some distance between the directory creation and the copy we'll do next.
-from :6
-M 100644 :7 README
+from :8
+M 100644 :9 README
 
 reset refs/heads/foocopy
 # Fossil-ID: 5
 commit refs/heads/foocopy
-mark :9
+mark :11
 committer esr <esr> 1324319862 +0000
 data 148
 Directory copy to branch.
@@ -63,55 +91,55 @@ Directory copy to branch.
 The command that produced this was:
 
 svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
-from :8
-M 100644 :3 bar/child3
-M 100644 :4 child1
-M 100644 :5 child2
+from :10
+M 100644 :5 bar/child3
+M 100644 :6 child1
+M 100644 :7 child2
 
 blob
-mark :10
+mark :12
 data 23
 Twice-modified README.
 
 # Fossil-ID: 6
 commit refs/heads/master
-mark :11
+mark :13
 committer esr <esr> 1324319931 +0000
 data 23
 Another spacer commit.
-from :8
-M 100644 :10 README
+from :10
+M 100644 :12 README
 
 # Fossil-ID: 7
 commit refs/heads/master
-mark :12
+mark :14
 committer esr <esr> 1324320054 +0000
 data 136
 Test to see how recursive delete that is not a branch copy is translated.
 
 The command was "svn remove foo" run in the trunk directory.
-from :11
+from :13
 D foo/bar/child3
 D foo/child1
 D foo/child2
 
 blob
-mark :13
+mark :15
 data 24
 Thrice-modified README.
 
 # Fossil-ID: 8
 commit refs/heads/master
-mark :14
+mark :16
 committer esr <esr> 1324320090 +0000
 data 27
 Yet another spacer commit.
-from :12
-M 100644 :13 README
+from :14
+M 100644 :15 README
 
 # Fossil-ID: 9
 commit refs/heads/master
-mark :15
+mark :17
 committer esr <esr> 1324320228 +0000
 data 174
 A Subversion file copy back from the branch.
@@ -119,14 +147,6 @@ A Subversion file copy back from the branch.
 The command that produced this was:
 
 svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-repo/trunk
-from :14
-M 100644 :3 child3
-
-tag root
-from :2
-tagger esr <esr> 1324128964 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
+from :16
+M 100644 :5 child3
 

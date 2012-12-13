@@ -1,6 +1,25 @@
 reposurgeon: mid-branch deleteall at <3>.
 blob
 mark :1
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+
+blob
+mark :2
 data 76
 #include <stdio.h>
 
@@ -15,34 +34,35 @@ int main()
 reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
-mark :2
+mark :3
 committer fraggle <fraggle> 1254523001 +0000
 data 16
 Initial import.
-M 100644 :1 proj/hello.c
+M 100644 :1 .gitignore
+M 100644 :2 proj/hello.c
 
 reset tags/proj-1.0
 # Fossil-ID: 3
 commit tags/proj-1.0
-mark :3
+mark :4
 committer fraggle <fraggle> 1254523044 +0000
 data 21
 Removing broken tag.
-from :2
+from :3
 deleteall
 
 # Fossil-ID: 4
 commit tags/proj-1.0
-mark :4
+mark :5
 committer fraggle <fraggle> 1254523062 +0000
 data 29
 Recreating the tag properly.
-from :3
-merge :2
-M 100644 :1 hello.c
+from :4
+merge :3
+M 100644 :2 hello.c
 
 tag proj-1.0
-from :2
+from :3
 tagger fraggle <fraggle> 1254523027 +0000
 data 59
 Creating a tag in a BROKEN way, like how cvs2svn does it.

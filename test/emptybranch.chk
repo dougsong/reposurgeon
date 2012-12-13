@@ -1,27 +1,47 @@
 blob
 mark :1
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+
+reset refs/heads/master
+# Fossil-ID: 1
+commit refs/heads/master
+mark :2
+committer esr <esr> 1323167840 +0000
+data 18
+Directory layout.
+M 100644 :1 .gitignore
+
+blob
+mark :3
 data 37
 This is a test Subversion repository
 
-reset refs/heads/master
 # Fossil-ID: 2
 commit refs/heads/master
-mark :2
+mark :4
 committer esr <esr> 1323167841 +0000
 data 24
 Initial README content.
-M 100644 :1 README
-
-tag root
 from :2
-tagger esr <esr> 1323167840 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
+M 100644 :3 README
 
 tag emptybranch-root
-from :2
+from :4
 tagger esr <esr> 1323167895 +0000
 data 74
 Create an empty top-level branch for test purposes.  Should be tagified.

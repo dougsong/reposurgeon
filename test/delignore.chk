@@ -1,19 +1,47 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1352219253 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1352219253 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 156
 The pupose of this test repository is to verify that a ..gitignore generated 
 from an ignore property set on a directory won't survive directory deletion.
@@ -21,41 +49,33 @@ from an ignore property set on a directory won't survive directory deletion.
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :4
+mark :6
 committer esr <esr> 1352220744 +0000
 data 31
 Explain what we're doing here.
-from :2
-M 100644 :3 README
+from :4
+M 100644 :5 README
 
 blob
-mark :5
+mark :7
 data 6
 *.pyc
 
 # Fossil-ID: 4
 commit refs/heads/master
-mark :6
+mark :8
 committer esr <esr> 1352220855 +0000
 data 48
 This follows "svn propset svn:ignore *.pyc foo"
-from :4
-M 100644 :5 foo/.gitignore
+from :6
+M 100644 :7 foo/.gitignore
 
 # Fossil-ID: 5
 commit refs/heads/master
-mark :7
+mark :9
 committer esr <esr> 1352220901 +0000
 data 28
 This follows "svn del foo".
-from :6
+from :8
 D foo/.gitignore
-
-tag root
-from :2
-tagger esr <esr> 1352219253 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
 

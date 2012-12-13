@@ -1,73 +1,101 @@
 reposurgeon: mid-branch deleteall at <7>.
 blob
 mark :1
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+
+reset refs/heads/master
+# Fossil-ID: 1
+commit refs/heads/master
+mark :2
+committer db48x <db48x> 1352540133 +0000
+data 26
+default repository layout
+M 100644 :1 .gitignore
+
+blob
+mark :3
 data 115
 this svn repository is for testing reposurgeon's way of dealing with deleted svn branches that are later recreated
 
 blob
-mark :2
+mark :4
 data 4
 0.1
 
 blob
-mark :3
+mark :5
 data 22
 feature development A
 
-reset refs/heads/master
 # Fossil-ID: 2
 commit refs/heads/master
-mark :4
+mark :6
 committer db48x <db48x> 1352540135 +0000
 data 38
 trunk development proceeds; feature A
-M 100644 :1 README
-M 100644 :2 VERSION
-M 100644 :3 src
+from :2
+M 100644 :3 README
+M 100644 :4 VERSION
+M 100644 :5 src
 
 blob
-mark :5
+mark :7
 data 4
 0.2
 
 blob
-mark :6
+mark :8
 data 44
 feature development A
 feature development B
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :7
+mark :9
 committer db48x <db48x> 1352540137 +0000
 data 38
 trunk development proceeds; feature B
-from :4
-M 100644 :5 VERSION
-M 100644 :6 src
+from :6
+M 100644 :7 VERSION
+M 100644 :8 src
 
 blob
-mark :8
+mark :10
 data 4
 1.0
 
 reset refs/heads/v1.0
 # Fossil-ID: 5
 commit refs/heads/v1.0
-mark :9
+mark :11
 committer db48x <db48x> 1352540141 +0000
 data 27
 bump version number to 1.0
-from :7
-M 100644 :8 VERSION
+from :9
+M 100644 :10 VERSION
 
 blob
-mark :10
+mark :12
 data 4
 0.3
 
 blob
-mark :11
+mark :13
 data 66
 feature development A
 feature development B
@@ -75,51 +103,51 @@ feature development C
 
 # Fossil-ID: 6
 commit refs/heads/master
-mark :12
+mark :14
 committer db48x <db48x> 1352540143 +0000
 data 38
 trunk development proceeds; feature C
-from :7
-M 100644 :10 VERSION
-M 100644 :11 src
+from :9
+M 100644 :12 VERSION
+M 100644 :13 src
 
 # Fossil-ID: 7
 commit refs/heads/v1.0
-mark :13
+mark :15
 committer db48x <db48x> 1352540145 +0000
 data 28
 delete incorrect 1.0 branch
-from :9
+from :11
 deleteall
 
 # Fossil-ID: 8
 commit refs/heads/v1.0
-mark :14
+mark :16
 committer db48x <db48x> 1352540147 +0000
 data 32
 create a release branch for 1.0
-from :13
-merge :12
-M 100644 :1 README
-M 100644 :10 VERSION
-M 100644 :11 src
+from :15
+merge :14
+M 100644 :3 README
+M 100644 :12 VERSION
+M 100644 :13 src
 
 # Fossil-ID: 9
 commit refs/heads/v1.0
-mark :15
+mark :17
 committer db48x <db48x> 1352540149 +0000
 data 27
 bump version number to 1.0
-from :14
-M 100644 :8 VERSION
+from :16
+M 100644 :10 VERSION
 
 blob
-mark :16
+mark :18
 data 4
 1.1
 
 blob
-mark :17
+mark :19
 data 88
 feature development A
 feature development B
@@ -128,21 +156,21 @@ feature development D
 
 # Fossil-ID: 10
 commit refs/heads/master
-mark :18
+mark :20
 committer db48x <db48x> 1352540151 +0000
 data 38
 trunk development proceeds; feature D
-from :12
-M 100644 :16 VERSION
-M 100644 :17 src
+from :14
+M 100644 :18 VERSION
+M 100644 :19 src
 
 blob
-mark :19
+mark :21
 data 6
 1.0.1
 
 blob
-mark :20
+mark :22
 data 75
 feature development A
 feature development B
@@ -151,21 +179,21 @@ bugfix 1
 
 # Fossil-ID: 11
 commit refs/heads/v1.0
-mark :21
+mark :23
 committer db48x <db48x> 1352540153 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.1
-from :15
-M 100644 :19 VERSION
-M 100644 :20 src
+from :17
+M 100644 :21 VERSION
+M 100644 :22 src
 
 blob
-mark :22
+mark :24
 data 4
 1.2
 
 blob
-mark :23
+mark :25
 data 97
 feature development A
 feature development B
@@ -175,17 +203,18 @@ bugfix 1
 
 # Fossil-ID: 12
 commit refs/heads/master
-mark :24
+mark :26
 committer db48x <db48x> 1352540156 +0000
 data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
-from :18
-merge :21
-M 100644 :22 VERSION
-M 100644 :23 src
+from :20
+merge :23
+D .gitignore
+M 100644 :24 VERSION
+M 100644 :25 src
 
 blob
-mark :25
+mark :27
 data 119
 feature development A
 feature development B
@@ -196,23 +225,15 @@ feature development E
 
 # Fossil-ID: 13
 commit refs/heads/master
-mark :26
+mark :28
 committer db48x <db48x> 1352540158 +0000
 data 38
 trunk development proceeds; feature E
-from :24
-M 100644 :25 src
-
-tag root
-from :4
-tagger db48x <db48x> 1352540133 +0000
-data 69
-default repository layout
-
-[[Tag from root commit at Subversion r1]]
+from :26
+M 100644 :27 src
 
 tag v1.0-root
-from :7
+from :9
 tagger db48x <db48x> 1352540139 +0000
 data 33
 create a release branch for 1.0

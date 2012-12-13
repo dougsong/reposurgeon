@@ -6,6 +6,7 @@
      Fossil-IDs are now dumped in pre-commit comments.
      The 'changed' modifier to mailbox_in dumps a minimal set of updates used.
      When reading svn repositories, .cvsignore files are lifted to .gitignores.
+     svn's default ignore-pattern behavior is emulated in translations.
 
 2.9: 2012-12-06
      Syntax of "authors", "fossils", "list", and "mailbox_{in|out}" has changed.

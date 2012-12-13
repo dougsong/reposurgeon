@@ -4,197 +4,190 @@ quiet on
 read mergeinfo.svn
 * mergeinfo.svn
 split :19 at 1
-reposurgeon: fileop index out of range
-split :19 at 3
-reposurgeon: fileop index out of range
-split :19 at 2
-Event 21 ================================================================
-# Fossil-ID: 8
-commit refs/heads/master
-mark :19
-committer db48x <db48x> 1352206637 +0000
-data 27
-trunk development proceeds
-from :16
-M 100644 :18 src
-
-Event 22 ================================================================
-# Fossil-ID: 8
-commit refs/heads/master
-mark :19.1
-committer db48x <db48x> 1352206637 +0000
-data 27
-trunk development proceeds
-from :19
-M 100644 :17 VERSION
-
-split :24 at 1
 reposurgeon: fileop argument doesn't point at a commit
+split :19 at 3
+reposurgeon: fileop argument doesn't point at a commit
+split :19 at 2
+reposurgeon: fileop argument doesn't point at a commit
+split :24 at 1
+reposurgeon: fileop index out of range
 split :25 at 2
-Event 28 ================================================================
-# Fossil-ID: 10
-commit refs/heads/v1.0
-mark :25
-committer db48x <db48x> 1352206641 +0000
-data 43
-emergency bugfix for v1.0, releasing 1.0.3
-from :22
-M 100644 :24 src
-
-Event 29 ================================================================
-# Fossil-ID: 10
-commit refs/heads/v1.0
-mark :25.1
-committer db48x <db48x> 1352206641 +0000
-data 43
-emergency bugfix for v1.0, releasing 1.0.3
-from :25
-M 100644 :23 VERSION
-
+reposurgeon: fileop argument doesn't point at a commit
 inspect
 Event 1 =================================================================
 blob
 mark :1
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+
+Event 2 =================================================================
+reset refs/heads/master
+Event 3 =================================================================
+# Fossil-ID: 1
+commit refs/heads/master
+mark :2
+committer db48x <db48x> 1352206622 +0000
+data 26
+default repository layout
+M 100644 :1 .gitignore
+
+Event 4 =================================================================
+blob
+mark :3
 data 94
 this svn repository is for testing reposurgeon's way of dealing with svn:mergeinfo properties
 
-Event 2 =================================================================
+Event 5 =================================================================
 blob
-mark :2
+mark :4
 data 5
 0.99
-
-Event 3 =================================================================
-blob
-mark :3
-data 20
-feature development
-
-Event 4 =================================================================
-reset refs/heads/master
-Event 5 =================================================================
-# Fossil-ID: 2
-commit refs/heads/master
-mark :4
-committer db48x <db48x> 1352206624 +0000
-data 27
-trunk development proceeds
-M 100644 :1 README
-M 100644 :2 VERSION
-M 100644 :3 src
 
 Event 6 =================================================================
 blob
 mark :5
-data 4
-1.0
+data 20
+feature development
 
 Event 7 =================================================================
-blob
+# Fossil-ID: 2
+commit refs/heads/master
 mark :6
-data 40
-feature development
-feature development
+committer db48x <db48x> 1352206624 +0000
+data 27
+trunk development proceeds
+from :2
+M 100644 :3 README
+M 100644 :4 VERSION
+M 100644 :5 src
 
 Event 8 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
+blob
 mark :7
-committer db48x <db48x> 1352206626 +0000
-data 14
-release party
-from :4
-M 100644 :5 VERSION
-M 100644 :6 src
+data 4
+1.0
 
 Event 9 =================================================================
 blob
 mark :8
+data 40
+feature development
+feature development
+
+Event 10 ================================================================
+# Fossil-ID: 3
+commit refs/heads/master
+mark :9
+committer db48x <db48x> 1352206626 +0000
+data 14
+release party
+from :6
+M 100644 :7 VERSION
+M 100644 :8 src
+
+Event 11 ================================================================
+blob
+mark :10
 data 4
 1.1
 
-Event 10 ================================================================
+Event 12 ================================================================
 blob
-mark :9
+mark :11
 data 60
 feature development
 feature development
 feature development
 
-Event 11 ================================================================
+Event 13 ================================================================
 # Fossil-ID: 5
 commit refs/heads/master
-mark :10
+mark :12
 committer db48x <db48x> 1352206631 +0000
 data 27
 trunk development proceeds
-from :7
-M 100644 :8 VERSION
-M 100644 :9 src
+from :9
+M 100644 :10 VERSION
+M 100644 :11 src
 
-Event 12 ================================================================
+Event 14 ================================================================
 blob
-mark :11
+mark :13
 data 6
 1.0.1
 
-Event 13 ================================================================
+Event 15 ================================================================
 blob
-mark :12
+mark :14
 data 47
 feature development
 feature development
 bugfix
 
-Event 14 ================================================================
+Event 16 ================================================================
 reset refs/heads/v1.0
-Event 15 ================================================================
+Event 17 ================================================================
 # Fossil-ID: 6
 commit refs/heads/v1.0
-mark :13
+mark :15
 committer db48x <db48x> 1352206633 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.1
-from :7
-M 100644 :11 VERSION
-M 100644 :12 src
+from :9
+M 100644 :13 VERSION
+M 100644 :14 src
 
-Event 16 ================================================================
+Event 18 ================================================================
 blob
-mark :14
+mark :16
 data 4
 1.2
 
-Event 17 ================================================================
+Event 19 ================================================================
 blob
-mark :15
+mark :17
 data 67
 feature development
 feature development
 feature development
 bugfix
 
-Event 18 ================================================================
+Event 20 ================================================================
 # Fossil-ID: 7
 commit refs/heads/master
-mark :16
+mark :18
 committer db48x <db48x> 1352206635 +0000
 data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
-from :10
-merge :13
-M 100644 :14 VERSION
-M 100644 :15 src
+from :12
+merge :15
+D .gitignore
+M 100644 :16 VERSION
+M 100644 :17 src
 
-Event 19 ================================================================
+Event 21 ================================================================
 blob
-mark :17
+mark :19
 data 4
 1.3
 
-Event 20 ================================================================
+Event 22 ================================================================
 blob
-mark :18
+mark :20
 data 87
 feature development
 feature development
@@ -202,61 +195,52 @@ feature development
 bugfix
 feature development
 
-Event 21 ================================================================
-# Fossil-ID: 8
-commit refs/heads/master
-mark :19
-committer db48x <db48x> 1352206637 +0000
-data 27
-trunk development proceeds
-from :16
-M 100644 :18 src
-
-Event 22 ================================================================
-# Fossil-ID: 8
-commit refs/heads/master
-mark :19.1
-committer db48x <db48x> 1352206637 +0000
-data 27
-trunk development proceeds
-from :19
-M 100644 :17 VERSION
-
 Event 23 ================================================================
-blob
-mark :20
-data 6
-1.0.2
+# Fossil-ID: 8
+commit refs/heads/master
+mark :21
+committer db48x <db48x> 1352206637 +0000
+data 27
+trunk development proceeds
+from :18
+M 100644 :19 VERSION
+M 100644 :20 src
 
 Event 24 ================================================================
 blob
-mark :21
+mark :22
+data 6
+1.0.2
+
+Event 25 ================================================================
+blob
+mark :23
 data 54
 feature development
 feature development
 bugfix
 bugfix
 
-Event 25 ================================================================
+Event 26 ================================================================
 # Fossil-ID: 9
 commit refs/heads/v1.0
-mark :22
+mark :24
 committer db48x <db48x> 1352206639 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.2
-from :13
-M 100644 :20 VERSION
-M 100644 :21 src
-
-Event 26 ================================================================
-blob
-mark :23
-data 6
-1.0.3
+from :15
+M 100644 :22 VERSION
+M 100644 :23 src
 
 Event 27 ================================================================
 blob
-mark :24
+mark :25
+data 6
+1.0.3
+
+Event 28 ================================================================
+blob
+mark :26
 data 61
 feature development
 feature development
@@ -264,35 +248,26 @@ bugfix
 bugfix
 bugfix
 
-Event 28 ================================================================
-# Fossil-ID: 10
-commit refs/heads/v1.0
-mark :25
-committer db48x <db48x> 1352206641 +0000
-data 43
-emergency bugfix for v1.0, releasing 1.0.3
-from :22
-M 100644 :24 src
-
 Event 29 ================================================================
 # Fossil-ID: 10
 commit refs/heads/v1.0
-mark :25.1
+mark :27
 committer db48x <db48x> 1352206641 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.3
-from :25
-M 100644 :23 VERSION
+from :24
+M 100644 :25 VERSION
+M 100644 :26 src
 
 Event 30 ================================================================
 blob
-mark :26
+mark :28
 data 4
 1.4
 
 Event 31 ================================================================
 blob
-mark :27
+mark :29
 data 94
 feature development
 feature development
@@ -304,24 +279,24 @@ bugfix
 Event 32 ================================================================
 # Fossil-ID: 11
 commit refs/heads/master
-mark :28
+mark :30
 committer db48x <db48x> 1352206643 +0000
 data 61
 merge bugfixes from 1.0.3 into trunk, bumping version to 1.4
-from :19.1
-merge :22
-M 100644 :26 VERSION
-M 100644 :27 src
+from :21
+merge :24
+M 100644 :28 VERSION
+M 100644 :29 src
 
 Event 33 ================================================================
 blob
-mark :29
+mark :31
 data 4
 2.0
 
 Event 34 ================================================================
 blob
-mark :30
+mark :32
 data 114
 feature development
 feature development
@@ -334,23 +309,23 @@ feature development
 Event 35 ================================================================
 # Fossil-ID: 12
 commit refs/heads/master
-mark :31
+mark :33
 committer db48x <db48x> 1352206643 +0000
 data 14
 release party
-from :28
-M 100644 :29 VERSION
-M 100644 :30 src
+from :30
+M 100644 :31 VERSION
+M 100644 :32 src
 
 Event 36 ================================================================
 blob
-mark :32
+mark :34
 data 4
 2.1
 
 Event 37 ================================================================
 blob
-mark :33
+mark :35
 data 134
 feature development
 feature development
@@ -364,23 +339,23 @@ feature development
 Event 38 ================================================================
 # Fossil-ID: 14
 commit refs/heads/master
-mark :34
+mark :36
 committer db48x <db48x> 1352206648 +0000
 data 27
 trunk development proceeds
-from :31
-M 100644 :32 VERSION
-M 100644 :33 src
+from :33
+M 100644 :34 VERSION
+M 100644 :35 src
 
 Event 39 ================================================================
 blob
-mark :35
+mark :37
 data 6
 2.0.1
 
 Event 40 ================================================================
 blob
-mark :36
+mark :38
 data 121
 feature development
 feature development
@@ -396,23 +371,23 @@ reset refs/heads/v2.0
 Event 42 ================================================================
 # Fossil-ID: 15
 commit refs/heads/v2.0
-mark :37
+mark :39
 committer db48x <db48x> 1352206650 +0000
 data 43
 emergency bugfix for v2.0, releasing 2.0.1
-from :31
-M 100644 :35 VERSION
-M 100644 :36 src
+from :33
+M 100644 :37 VERSION
+M 100644 :38 src
 
 Event 43 ================================================================
 blob
-mark :38
+mark :40
 data 4
 2.2
 
 Event 44 ================================================================
 blob
-mark :39
+mark :41
 data 141
 feature development
 feature development
@@ -427,35 +402,26 @@ bugfix
 Event 45 ================================================================
 # Fossil-ID: 16
 commit refs/heads/master
-mark :40
+mark :42
 committer db48x <db48x> 1352206652 +0000
 data 61
 merge bugfixes from 2.0.1 into trunk, bumping version to 2.2
-from :34
-merge :37
-M 100644 :38 VERSION
-M 100644 :39 src
+from :36
+merge :39
+M 100644 :40 VERSION
+M 100644 :41 src
 
 Event 46 ================================================================
-tag root
-from :4
-tagger db48x <db48x> 1352206622 +0000
-data 69
-default repository layout
-
-[[Tag from root commit at Subversion r1]]
-
-Event 47 ================================================================
 tag v1.0-root
-from :7
+from :9
 tagger db48x <db48x> 1352206628 +0000
 data 33
 create a release branch for 1.0
 
 
-Event 48 ================================================================
+Event 47 ================================================================
 tag v2.0-root
-from :31
+from :33
 tagger db48x <db48x> 1352206645 +0000
 data 33
 create a release branch for 2.0

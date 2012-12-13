@@ -1,19 +1,47 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
-committer esr <esr> 1323170744 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+committer esr <esr> 1323170743 +0000
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1323170744 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 99
 This is a test Subversion repository
 
@@ -22,23 +50,15 @@ This is a modification that goes in the branch version only.
 reset refs/heads/realbranch
 # Fossil-ID: 4
 commit refs/heads/realbranch
-mark :4
+mark :6
 committer esr <esr> 1323170893 +0000
 data 55
 Modification on the branch so it doesn't get tagified.
-from :2
-M 100644 :3 README
-
-tag root
-from :2
-tagger esr <esr> 1323170743 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
+from :4
+M 100644 :5 README
 
 tag realbranch-root
-from :2
+from :4
 tagger esr <esr> 1323170783 +0000
 data 54
 We're going to put some real content on this branch.

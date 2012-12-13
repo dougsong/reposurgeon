@@ -1,26 +1,54 @@
 blob
 mark :1
-data 37
-This is a test Subversion repository
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
 
 reset refs/heads/master
-# Fossil-ID: 2
+# Fossil-ID: 1
 commit refs/heads/master
 mark :2
-committer esr <esr> 1355183329 +0000
-data 24
-Initial README content.
-M 100644 :1 README
+committer esr <esr> 1355183327 +0000
+data 18
+Directory layout.
+M 100644 :1 .gitignore
 
 blob
 mark :3
+data 37
+This is a test Subversion repository
+
+# Fossil-ID: 2
+commit refs/heads/master
+mark :4
+committer esr <esr> 1355183329 +0000
+data 24
+Initial README content.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
 data 92
 This is a test Subversion repository
 
 About to do an evil mixed-branch commit; branch side.
 
 blob
-mark :4
+mark :6
 data 88
 This is a test Subversion repository
 
@@ -29,31 +57,23 @@ About to do evil mixed-branch commit: trunk side.
 reset refs/heads/foobar
 # Fossil-ID: 3.1
 commit refs/heads/foobar
-mark :5
+mark :7
 committer esr <esr> 1355183671 +0000
 data 75
 This is an evil mixed-branch commit.
 
 [[Split portion of a mixed commit.]]
-from :2
-M 100644 :3 README
+from :4
+M 100644 :5 README
 
 # Fossil-ID: 3.2
 commit refs/heads/master
-mark :6
+mark :8
 committer esr <esr> 1355183671 +0000
 data 75
 This is an evil mixed-branch commit.
 
 [[Split portion of a mixed commit.]]
-from :2
-M 100644 :4 README
-
-tag root
-from :2
-tagger esr <esr> 1355183327 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
+from :4
+M 100644 :6 README
 

@@ -1,5 +1,33 @@
 blob
 mark :1
+data 88
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*~
+.#*
+.*.swp
+.DS_store
+
+reset refs/heads/master
+# Fossil-ID: 1
+commit refs/heads/master
+mark :2
+committer esr <esr> 1322088070 +0000
+data 21
+Initial repo layout.
+M 100644 :1 .gitignore
+
+blob
+mark :3
 data 233
 This is a test Subversion repository. 
 It has no other actual purpose than to exercise repostreamer.
@@ -7,17 +35,17 @@ It has no other actual purpose than to exercise repostreamer.
 It is normally formed, with trunk and branches and tags directories
 at the top level.  Initially, the only content is this README.
 
-reset refs/heads/master
 # Fossil-ID: 2
 commit refs/heads/master
-mark :2
+mark :4
 committer esr <esr> 1322088164 +0000
 data 21
 First content added.
-M 100644 :1 README
+from :2
+M 100644 :3 README
 
 blob
-mark :3
+mark :5
 data 267
 This is a test Subversion repository. 
 It has no other actual purpose than to exercise repostreamer.
@@ -29,15 +57,15 @@ Now we do ur first modification.
 
 # Fossil-ID: 3
 commit refs/heads/master
-mark :4
+mark :6
 committer esr <esr> 1322088260 +0000
 data 32
 Our first content modification.
-from :2
-M 100644 :3 README
+from :4
+M 100644 :5 README
 
 blob
-mark :5
+mark :7
 data 268
 This is a test Subversion repository. 
 It has no other actual purpose than to exercise repostreamer.
@@ -49,30 +77,30 @@ Now we do our first modification.
 
 # Fossil-ID: 4
 commit refs/heads/master
-mark :6
+mark :8
 committer esr <esr> 1322088662 +0000
 data 24
 And our first typo fix.
-from :4
-M 100644 :5 README
+from :6
+M 100644 :7 README
 
 blob
-mark :7
+mark :9
 data 74
 This file only exists so repostreamer won't process this branch as a tag.
 
 reset refs/heads/sample-branch
 # Fossil-ID: 7
 commit refs/heads/sample-branch
-mark :8
+mark :10
 committer esr <esr> 1322509428 +0000
 data 48
 This is not a tag. Ceci n'est pas un pipe, too.
-from :6
-M 100644 :7 placeholder
+from :8
+M 100644 :9 placeholder
 
 blob
-mark :9
+mark :11
 data 305
 This is a test Subversion repository. 
 It has no other actual purpose than to exercise repostreamer.
@@ -85,44 +113,36 @@ And our second content modification.
 
 # Fossil-ID: 8
 commit refs/heads/master
-mark :10
+mark :12
 committer esr <esr> 1322533305 +0000
 data 66
 Another modification, to make the history graph more interesting.
-from :6
-M 100644 :9 README
+from :8
+M 100644 :11 README
 
 blob
-mark :11
+mark :13
 data 6
 *.pyc
 
 # Fossil-ID: 9
 commit refs/heads/master
-mark :12
+mark :14
 committer esr <esr> 1322533492 +0000
 data 43
 This should commit some property settings.
-from :10
-M 100644 :11 .gitignore
-
-tag root
-from :2
-tagger esr <esr> 1322088070 +0000
-data 64
-Initial repo layout.
-
-[[Tag from root commit at Subversion r1]]
+from :12
+M 100644 :13 .gitignore
 
 tag sample-tag
-from :2
+from :4
 tagger esr <esr> 1322408285 +0000
 data 36
 Create a sample tag at revision 2.
 
 
 tag sample-branch-root
-from :6
+from :8
 tagger esr <esr> 1322509253 +0000
 data 26
 This is a sample branch.
