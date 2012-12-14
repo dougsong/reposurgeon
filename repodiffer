@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 #
 # Compare git repositories or fast-import streams for differences.
+#
+# Requires git and tar(1).
 
-import sys, os, getopt, subprocess, tempfile, hashlib
+import sys, os, getopt, subprocess, tempfile, hashlib, shutil
 
 DEBUG_GENERAL  = 1
 DEBUG_COMMANDS = 2
@@ -156,21 +158,27 @@ class Commit:
     def manifest(self):
         "Return a file manifest for this revision."
         filemap = {}
-        with directory_context(self.repo.directory):
-            do_or_die("git clean -f; git checkout --quiet %s" % self.commit)
-            for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
-                if path:
-                    if path.endswith(".gitignore") and "gitignore" in ignores:
-                        continue
-                    elif path.endswith(".cvsignore") and "gitignore" in ignores:
-                        continue
-                    elif os.path.islink(path):
-                        filemap[path] = os.readlink(path)
-                    elif os.path.isfile(path):
-                        with open(path) as fp:
-                            filemap[path] = hashlib.md5(fp.read()).digest()
-                    else:
-                        sys.stderr.write("repodiffer: ignoring non-file non-symlink path %s\n" % path)
+        scratchdir = tempfile.mkdtemp(prefix="rpds", suffix=str(os.getpid()))
+        try:
+            with directory_context(self.repo.directory):
+                do_or_die("git archive --format=tar %s | (cd %s && tar xf -)" \
+                          % (self.commit, scratchdir))
+                for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
+                    if path:
+                        if path.endswith(".gitignore") and "gitignore" in ignores:
+                            continue
+                        elif path.endswith(".cvsignore") and "gitignore" in ignores:
+                            continue
+                        target = os.path.join(scratchdir, path)
+                        if os.path.islink(target):
+                            filemap[path] = os.readlink(target)
+                        elif os.path.isfile(target):
+                            with open(target) as fp:
+                                filemap[path] = hashlib.md5(fp.read()).digest()
+                        else:
+                            sys.stderr.write("repodiffer: ignoring non-file non-symlink path %s\n" % path)
+        finally:
+            shutil.rmtree(scratchdir)
         return filemap
     def __hash__(self):
         return hash(self.parts())
@@ -486,6 +494,8 @@ if __name__ == '__main__':
             diff_all(alpha, beta)
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
+        del alpha
+        del beta
         sys.exit(1)
     except KeyboardInterrupt:
         pass
