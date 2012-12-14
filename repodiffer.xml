@@ -53,6 +53,9 @@ and the report indicates the nature of the changes.</para>
 <para>A trailing statistics line summarizes the operation counts.</para>
 </refsect1>
 
+<para>Tags and heads are compared as well.  Two tags match if their contents
+do and they point at paired commits.</para>
+
 <refsect1 id='options'><title>OPTIONS</title>
 
 <para>The --changes-only or -c option shows changes only, suppressing 
@@ -126,16 +129,6 @@ details.</para>
 
 <para>Parent pointers are not yet compared, so on multibranched repos
 differences in DAG structure will not appear in the report.</para>
-
-<para>Tags are not yet compared.</para>
-
-<para>The above deficiencies are likely to be fixed in a future release.</para>
-
-<para>When a blob changes, it causes tree differences to be reported in all
-subsequent revisions containing the blob, rather than only the first commit
-in which it occurs.  This probably will not be fixed; while it would be
-theoretically possible, the computational cost of the comparison would 
-become quite high.</para>
 
 </refsect1>
 
