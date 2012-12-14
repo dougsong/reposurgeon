@@ -442,7 +442,9 @@ def diff_all(alpha, beta):
     for tagname in common:
         a = alpha.tags[tagname]
         b = beta.tags[tagname]
-        if (a.metadata() != b.metadata()) or not (alpha.lookup(a.ref), beta.lookup(b.ref)) in pairs:
+        if a.metadata() != b.metadata() or \
+               not alpha.lookup(a.ref).matched or \
+               not beta.lookup(b.ref).matched:
             sys.stdout.write("Tag '%s': different.\n" % tagname)
         elif showequal:
             sys.stdout.write("Tag '%s': same.\n" % tagname)
