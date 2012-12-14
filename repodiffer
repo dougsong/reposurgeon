@@ -289,7 +289,7 @@ class Difference:
     def __init__(self, a, b):
         self.difference_types = a.difference(b)
         self.left_only = self.right_only = self.different = None
-        if 'tree' in self.difference_types:
+        if 'tree' in self.difference_types and not 'tree' in ignores:
             a_files = a.manifest()
             b_files = b.manifest()
             a_fileset = set(a_files.keys())
@@ -433,10 +433,11 @@ def diff_all(alpha, beta):
                             n_deletions,
                             len(alpha.signature),
                             n_changed))
-    if alpha.tagnames() - beta.tagnames():
-        sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames() - beta.tagnames())))
-    if beta.tagnames() - alpha.tagnames():
-        sys.stdout.write("tags only in R: %s\n" % ",".join(list(beta.tagnames() - alpha.tagnames())))
+    if not changes_only:
+        if alpha.tagnames() - beta.tagnames():
+            sys.stdout.write("tags only in L: %s\n" % ",".join(list(alpha.tagnames() - beta.tagnames())))
+        if beta.tagnames() - alpha.tagnames():
+            sys.stdout.write("tags only in R: %s\n" % ",".join(list(beta.tagnames() - alpha.tagnames())))
     common = alpha.tagnames() & beta.tagnames()
     for tagname in common:
         a = alpha.tags[tagname]
