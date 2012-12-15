@@ -2810,7 +2810,13 @@ class StreamParser:
                     # of little merge bubbles with no commits on one side;
                     # these have to be removed by a debubbling pass later.
                     # I don't know what generates these things - cvs2svn, maybe.
-                    elif len(copies) > 1:
+                    #
+                    # The second conjunct of this guard filters out the case
+                    # where the user actually did do a previous Subversion file
+                    # copy to start the branch, in which case we want to link
+                    # through that.
+                    elif len(copies) > 1 \
+                             and newcommit.common not in self.directory_branchlinks:
                         self.fileop_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: making branch link %s" %
