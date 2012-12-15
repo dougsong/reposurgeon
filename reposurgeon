@@ -2831,7 +2831,7 @@ class StreamParser:
                                 threshold = True
                             if threshold:
                                 if debug_enable(DEBUG_TOPOLOGY):
-                                    announce("r%s: looking at %s" \
+                                    announce("r%s: looking at r%s" \
                                              % (newcommit.fossil_id, prev.fossil_id))
                                 if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
                                     self.branchlink[newcommit.mark] = prev.mark
