@@ -51,11 +51,11 @@ corresponding revision in the second history is similarly identified
 and the report indicates the nature of the changes.</para>
 
 <para>A trailing statistics line summarizes the operation counts.</para>
-</refsect1>
 
 <para>Tags and heads are compared as well.  Two tags match if their contents
 do and they point at paired commits.</para>
 
+</refsect1>
 <refsect1 id='options'><title>OPTIONS</title>
 
 <para>The --changes-only or -c option shows changes only, suppressing 
