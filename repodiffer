@@ -90,6 +90,7 @@ class Commit:
                     self.comment += line + "\n"
             assert self.commit and self.parts()
         self.mark = None
+        self.pair_index = None
     def timestamp(self):
         "UTC timestamp of commit."
         return int(self.commitdate.split()[0])
@@ -194,14 +195,16 @@ class Tag:
         self.tagger = None
     def metadata(self):
         return (self.name, self.comment, self.tagger)
-    def differences(self, other):
+    def difference(self, other):
         diff = []
         if "comment" not in ignores and self.comment != other.comment:
             diff.append("comment")
-        #FIXME: implement zone-skew logic here
+        # Implement zone-skew logic here
         if "tagger" not in ignores and self.tagger != other.tagger:
             diff.append("tagger")
-        if self.referent().timestamp() != other.referent().timestamp():
+        sc = self.referent()
+        oc = other.referent()
+        if not sc.matched or not oc.matched or oc.pair_index != sc.pair_index:
             diff.append("referent")
         return diff
     def referent(self):
@@ -209,7 +212,7 @@ class Tag:
     def __str__(self):
         return str(self.__dict__)
     def __eq__(self, other):
-        return self.metadata() == other.metadata() and self.referent().action_stamp() == other.referent().action_stamp()
+        return not self.difference(other)
 
 class Repository:
     "A repository, for comparison purposes."
@@ -439,6 +442,11 @@ def diff_all(alpha, beta):
                 pairs.append((None, b))
             i += 1
             j += 1
+    # Assign each of the pairs a unique index we can use to identify tag
+    # partners and parents.
+    for (i, (a, b)) in enumerate(pairs):
+        if a is not None and b is not None:
+            a.pair_index = b.pair_index = i
     # Report on the pair table
     for (a, b) in pairs:
         report_pair(a, b)
@@ -462,7 +470,7 @@ def diff_all(alpha, beta):
         if a.metadata() != b.metadata() or \
                not alpha.lookup(a.ref).matched or \
                not beta.lookup(b.ref).matched:
-            sys.stdout.write("Tag '%s': different in %s.\n" % (tagname, ",".join(a.differences(b))))
+            sys.stdout.write("Tag '%s': different in %s.\n" % (tagname, ",".join(a.difference(b))))
         elif showequal:
             sys.stdout.write("Tag '%s': same.\n" % tagname)
 
