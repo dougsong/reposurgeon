@@ -71,11 +71,12 @@ class Commit:
         self.tree = self.author = self.committer = self.comment =  None
         self.authordate = self.commitdate = None
         self.matched = False
+        self.parents = []
         for line in text.split("\n"):
             if line.startswith("commit "):
                 self.commit = line.strip().split()[1]
             elif line.startswith("parent "):
-                continue
+                self.parents.append(line.strip().split()[1])
             elif line.startswith("tree "):
                 self.tree = line.strip().split()[1]
             elif line.startswith("author "):
@@ -127,6 +128,8 @@ class Commit:
         r = "commit %s\n" % str(self)
         r += "committer %s %s\n" % (self.committer, self.commitdate)
         r += "author %s %s\n" % (self.author, self.authordate)
+        for parent in self.parents:
+            r += "parent %s\n" % parent
         r += "tree %s\n" % self.tree
         r += self.comment
         return r
@@ -154,6 +157,19 @@ class Commit:
             res.append('comment')
         if "tree" not in ignores and self.tree != other.tree:
             res.append('tree')
+        if "parent" not in ignores:
+            if len(self.parents) != len(other.parents):
+                res.append("parents")
+            else:
+                for (a_id, b_id) in zip(self.parents, other.parents):
+                    a = self.repo.lookup(a_id)
+                    b = other.repo.lookup(b_id)
+                    if a.matched is None or b.matched is None:
+                        res.append("parents")
+                        break
+                    elif not id(a.matched) == id(b) or not id(b.matched) == id(a):
+                        res.append("parents")
+                        break
         return res
     def manifest(self):
         "Return a file manifest for this revision."
@@ -232,11 +248,9 @@ class Repository:
         # Get a list of metadata and tree signatures for this repo
         with directory_context(self.directory):
             log = capture_or_die("git log --all --reverse --date-order --format=raw")
-            # Ugh.  This split logic is ugly.  Is there a better way?
-            self.signature = [Commit(self, "commit %s\n" % el) for el in log.split("\ncommit ")]
-            if self.signature:
-                self.signature.pop(0)
-                self.signature[-1].text = self.signature[-1].text[:-1]
+            stanzas = ["commit " + chunk for chunk in log.split("\ncommit ")]
+            stanzas[0] = stanzas[0][7:]
+            self.signature = [Commit(self, stanza) for stanza in stanzas]
             if verbose >= DEBUG_LOWLEVEL:
                 print "Commits in %s" % self.path
                 for commit in self.signature:
@@ -250,6 +264,7 @@ class Repository:
                     self.mark_to_sha1[mark] = sha1
                 for item in self.signature:
                     item.mark = self.sha1_to_mark[item.commit]
+                    item.parents = [self.sha1_to_mark[h] for h in item.parents]
             except (IOError, OSError):
                 pass
             # Get information about tags

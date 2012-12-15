@@ -90,6 +90,10 @@ committer field.</para></listitem>
 <listitem><para>Ignore differences in the commit date part</para></listitem>
 </varlistentry>
 <varlistentry>
+<term>parents</term>
+<listitem><para>Ignore differences in parent links.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term>timezone</term>
 <listitem><para>Apply a modulo 360 operation to timestamps before 
 comparison, so as to ignore time-zone skew.</para></listitem>
@@ -122,13 +126,6 @@ hash IDs, rather than the normal short hash.</para>
 <para>The --verbose or -v option enables debugging messages that are
 probably only of interest to developers; consult the source code for
 details.</para>
-
-</refsect1>
-
-<refsect1 id='bugs'><title>BUGS</title>
-
-<para>Parent pointers are not yet compared, so on multibranched repos
-differences in DAG structure will not appear in the report.</para>
 
 </refsect1>
 
