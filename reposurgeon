@@ -2330,7 +2330,7 @@ class StreamParser:
         baton.twirl("copysets")
         baton.startcounter(countfmt(len(copynodes)))
         for copynode in copynodes:
-            if debug_enable(DEBUG_EXTRACT):
+            if debug_enable(DEBUG_FILEMAP):
                 announce("r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
