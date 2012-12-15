@@ -2273,7 +2273,7 @@ class StreamParser:
                             self.branches[node.path+os.sep] = None
                         elif trial == '*' and not node.path + os.sep + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
-                    if node.path in self.branches and debug_enable(DEBUG_TOPOLOGY):
+                    if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
             baton.bumpcounter()
             copynodes.sort(key=lambda n: n.from_rev)
