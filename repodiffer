@@ -90,7 +90,6 @@ class Commit:
                     self.comment += line + "\n"
             assert self.commit and self.parts()
         self.mark = None
-        self.pair_index = None
     def timestamp(self):
         "UTC timestamp of commit."
         return int(self.commitdate.split()[0])
@@ -204,7 +203,7 @@ class Tag:
             diff.append("tagger")
         sc = self.referent()
         oc = other.referent()
-        if not sc.matched or not oc.matched or oc.pair_index != sc.pair_index:
+        if not sc.matched or not oc.matched or oc.matched != self or sc.matched != other:
             diff.append("referent")
         return diff
     def referent(self):
@@ -442,11 +441,6 @@ def diff_all(alpha, beta):
                 pairs.append((None, b))
             i += 1
             j += 1
-    # Assign each of the pairs a unique index we can use to identify tag
-    # partners and parents.
-    for (i, (a, b)) in enumerate(pairs):
-        if a is not None and b is not None:
-            a.pair_index = b.pair_index = i
     # Report on the pair table
     for (a, b) in pairs:
         report_pair(a, b)
