@@ -186,15 +186,30 @@ class Commit:
         return not self.difference(other)
 
 class Tag:
-    def __init__(self, name, ref, comment=None):
+    def __init__(self, repo, name, ref, comment=None):
+        self.repo = repo
         self.name = name
         self.ref = ref
         self.comment = comment
         self.tagger = None
     def metadata(self):
         return (self.name, self.comment, self.tagger)
+    def differences(self, other):
+        diff = []
+        if "comment" not in ignores and self.comment != other.comment:
+            diff.append("comment")
+        #FIXME: implement zone-skew logic here
+        if "tagger" not in ignores and self.tagger != other.tagger:
+            diff.append("tagger")
+        if self.referent().timestamp() != other.referent().timestamp():
+            diff.append("referent")
+        return diff
+    def referent(self):
+        return self.repo.lookup(self.ref)
     def __str__(self):
         return str(self.__dict__)
+    def __eq__(self, other):
+        return self.metadata() == other.metadata() and self.referent().action_stamp() == other.referent().action_stamp()
 
 class Repository:
     "A repository, for comparison purposes."
@@ -241,7 +256,7 @@ class Repository:
                 tagdata = capture_or_die("git show --format=raw " + tagname)
                 if tagdata.startswith("commit"):
                     refers_to = tagdata.split("\n")[0].split()[1]
-                    self.tags[tagname] = Tag(tagname, refers_to)
+                    self.tags[tagname] = Tag(self, tagname, refers_to)
                 elif tagdata.startswith("tag"):
                     for line in tagdata.split('\n'):
                         if line.startswith("commit"):
@@ -249,7 +264,7 @@ class Repository:
                             break
                     else:
                         raise Fatal("no commit line in annotated tag")
-                    tag = Tag(tagname, refers_to, comment="")
+                    tag = Tag(self, tagname, refers_to, comment="")
                     stanza = capture_or_die("git cat-file -p " + tagname)
                     body_latch = False
                     for line in stanza.split("\n")[:-1]:
@@ -266,7 +281,7 @@ class Repository:
                 if line:
                     (hashid, ref) = line.strip().split()
                     if ref.startswith("refs/heads"):
-                        self.tags[ref] = Tag(ref, hashid)
+                        self.tags[ref] = Tag(self, ref, hashid)
     def lookup(self, name):
         "Look up an object by name."
         for commit in self.signature:
@@ -390,7 +405,9 @@ def diff_all(alpha, beta):
                     continue
                 tied.append((a, b))
                 a.matched = b
-                b.matched = a 
+                b.matched = a
+    if duplicates:
+        sys.stderr.write("repodiffer: warning - there are duplicate action stamps.\n")
     #print "repodiffer: %d pairs can be tied together of %d vs %d objects." \
     #      % (len(tied), len(alpha.signature), len(beta.signature))
     i = j = 0
@@ -404,7 +421,7 @@ def diff_all(alpha, beta):
             i += 1
             j += 1
         elif a.matched and b.matched:
-            sys.stderr.write("repodiff: matches are out of order at %d:%d\n" \
+            sys.stderr.write("repodiffer: matches are out of order at %d:%d\n" \
                              % (i+1, j+1))
             sys.exit(1)
         if a.matched and not b.matched:
@@ -445,7 +462,7 @@ def diff_all(alpha, beta):
         if a.metadata() != b.metadata() or \
                not alpha.lookup(a.ref).matched or \
                not beta.lookup(b.ref).matched:
-            sys.stdout.write("Tag '%s': different.\n" % tagname)
+            sys.stdout.write("Tag '%s': different in %s.\n" % (tagname, ",".join(a.differences(b))))
         elif showequal:
             sys.stdout.write("Tag '%s': same.\n" % tagname)
 
