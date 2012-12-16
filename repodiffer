@@ -533,7 +533,7 @@ def diff_all(alpha, beta):
         for (a, b) in pairs:
             say += report_pair(a, b)
             baton.bumpcounter()
-        sys.stdout.write(say)
+    sys.stdout.write(say)
     if n_changed or n_deletions or n_insertions:
         sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted, %d changed.\n"
                          % (n_equal,
