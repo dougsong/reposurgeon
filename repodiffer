@@ -371,8 +371,9 @@ def report_pair(a, b):
     if diff in diffdict:
         print "%s -> %s: same differences as for %s." % (a, b, diffdict[diff])
     else:
-        diffdict[diff] = "%s -> %s" % (a, b)
         print "changed: %s -> %s in %s." % (a, b, ",".join(diff.difference_types))
+        if not "parents" in diff.difference_types:
+            diffdict[diff] = "%s -> %s" % (a, b)
         if diff.left_only:
             print "L only:"
             for fn in diff.left_only:
@@ -388,6 +389,7 @@ def report_pair(a, b):
 
 def diff_single(single, alpha, beta):
     "Examine the difference between two specified commits."
+    global ignores
     try:
         (a, b) = single.split("=")
     except ValueError:
@@ -401,6 +403,7 @@ def diff_single(single, alpha, beta):
     if bc is None:
         sys.stderr.write("repodiffer: no match for %s\n" % b)
         sys.exit(1)
+    ignores += "parents"
     report_pair(ac, bc)
 
 def diff_all(alpha, beta):
@@ -418,15 +421,10 @@ def diff_all(alpha, beta):
                 if a.action_stamp() in duplicates:
                     continue
                 elif a.matched or b.matched:
-                    duplicates.append(a.action_stamp())
                     continue
                 tied.append((a, b))
                 a.matched = b
                 b.matched = a
-    if duplicates:
-        sys.stderr.write("repodiffer: warning - there are duplicate action stamps.\n")
-    #print "repodiffer: %d pairs can be tied together of %d vs %d objects." \
-    #      % (len(tied), len(alpha.signature), len(beta.signature))
     i = j = 0
     # Build the pairing table.
     pairs = []
@@ -487,7 +485,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:sv:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:s:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "verbose="])
     alpha = None
     beta = None
     changes_only = False
