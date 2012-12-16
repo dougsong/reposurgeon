@@ -20,6 +20,7 @@
 <cmdsynopsis>
   <command>repodiffer</command>
       <arg choice='opt'>--ignore <replaceable>parts</replaceable></arg>
+      <arg choice='opt'>--quiet</arg>
       <arg choice='opt'>--verbose <replaceable>level</replaceable></arg>
       <arg choice='opt'>--show-equal</arg>
       <arg choice='opt'>--changes-only</arg>
@@ -122,6 +123,8 @@ specified.</para>
 
 <para>The --fullhash or -f option forces reporting of full 40-digit
 hash IDs, rather than the normal short hash.</para>
+
+<para>The --quiet or -q option suppresses the progress meter.</para>
 
 <para>The --verbose or -v option enables debugging messages that are
 probably only of interest to developers; consult the source code for
