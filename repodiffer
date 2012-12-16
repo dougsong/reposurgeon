@@ -4,7 +4,7 @@
 #
 # Requires git and tar(1).
 
-import sys, os, getopt, subprocess, tempfile, hashlib, shutil
+import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time
 
 DEBUG_GENERAL  = 1
 DEBUG_COMMANDS = 2
@@ -62,6 +62,72 @@ class directory_context:
                 os.chdir()
     def __exit__(self, extype, value_unused, traceback_unused):
         os.chdir(self.source)
+
+class Baton:
+    "Ship progress indications to stdout."
+    def __init__(self, prompt, endmsg='done', enable=False):
+        self.prompt = prompt
+        self.endmsg = endmsg
+        self.countfmt = None
+        self.counter = 0
+        if enable:
+            self.stream = sys.stdout
+        else:
+            self.stream = None
+        self.count = 0
+        self.time = 0
+    def __enter__(self):
+        if self.stream:
+            self.stream.write(self.prompt + "...")
+            if os.isatty(self.stream.fileno()):
+                self.stream.write(" \010")
+            self.stream.flush()
+        self.count = 0
+        self.time = time.time()
+        return self
+    def startcounter(self, countfmt, initial=1):
+        self.countfmt = countfmt
+        self.counter = initial
+    def bumpcounter(self):
+        if self.stream is None:
+            return
+        if os.isatty(self.stream.fileno()):
+            if self.countfmt:
+                update = self.countfmt % self.counter
+                self.stream.write(update + ("\010" * len(update)))
+                self.stream.flush()
+            else:
+                self.twirl()
+        self.counter = self.counter + 1
+    def endcounter(self):
+        if self.stream:
+            w = len(self.countfmt % self.count)
+            self.stream.write((" " * w) + ("\010" * w))
+            self.stream.flush()
+        self.countfmt = None
+    def twirl(self, ch=None):
+        "One twirl of the baton."
+        if self.stream is None:
+            return
+        if os.isatty(self.stream.fileno()):
+            if ch:
+                self.stream.write(ch)
+                self.stream.flush()
+                return
+            else:
+                update = "-/|\\"[self.count % 4]
+                self.stream.write(update + ("\010" * len(update)))
+                self.stream.flush()
+        self.count = self.count + 1
+    def __exit__(self, extype, value_unused, traceback_unused):
+        if extype == KeyboardInterrupt:
+            self.endmsg = "interrupted"
+        if extype == Fatal:
+            self.endmsg = "aborted by error"
+        if self.stream:
+            self.stream.write("...(%2.2f sec) %s.\n" \
+                              % (time.time() - self.time, self.endmsg))
+        return False
 
 class Commit:
     def __init__(self, repo, text):
@@ -345,51 +411,53 @@ diffdict = {}
 
 def report_pair(a, b):
     global n_equal, n_insertions, n_deletions, n_changed, spancount
+    tell = ""
     if a is None:
         n_insertions += 1
         if not changes_only:
             if spancount and not showequal:
-                print "%d equal pairs." % spancount
+                tell += "%d equal pairs.\n" % spancount
                 spancount = 0
-            print "R only: %s" % b
-        return
+            tell += "R only: %s\n" % b
+        return tell
     if b is None:
         n_deletions += 1
         if not changes_only:
             if spancount and not showequal:
-                print "%d equal pairs." % spancount
+                tell += "%d equal pairs.\n" % spancount
                 spancount = 0
-            print "L only: %s" % a
-        return
+            tell += "L only: %s\n" % a
+        return tell
     diff = Difference(a, b)
     if not diff.difference_types:
         n_equal += 1
         spancount += 1
         if showequal:
-            print "equal: %s == %s" % (a, b)
-        return
+            tell += "equal: %s == %s\n" % (a, b)
+        return tell
     if spancount and not showequal:
-        print "%d equal pairs." % spancount
+        tell += "%d equal pairs.\n" % spancount
         spancount = 0
     n_changed += 1
     if diff in diffdict:
-        print "%s -> %s: same differences as for %s." % (a, b, diffdict[diff])
+        tell += "%s -> %s: same differences as for %s.\n" % (a, b, diffdict[diff])
     else:
-        print "changed: %s -> %s in %s." % (a, b, ",".join(diff.difference_types))
+        tell += "changed: %s -> %s in %s.\n" % (a, b, ",".join(diff.difference_types))
         if not "parents" in diff.difference_types:
             diffdict[diff] = "%s -> %s" % (a, b)
         if diff.left_only:
-            print "L only:"
+            tell += "L only:\n"
             for fn in diff.left_only:
-                sys.stdout.write("  " + fn + "\n")
+                tell += ("  " + fn + "\n")
         if diff.right_only:
-            print "R only:"
+            tell += "R only:\n"
             for fn in diff.right_only:
-                sys.stdout.write("  " + fn + "\n")
+                tell += ("  " + fn + "\n")
         if diff.different:
-            print "Differing files:"
+            tell += "Differing files:\n"
             for fn in diff.different:
-                sys.stdout.write("  " + fn + "\n")
+                tell += ("  " + fn + "\n")
+    return tell
 
 def diff_single(single, alpha, beta):
     "Examine the difference between two specified commits."
@@ -408,7 +476,7 @@ def diff_single(single, alpha, beta):
         sys.stderr.write("repodiffer: no match for %s\n" % b)
         sys.exit(1)
     ignores += "parents"
-    report_pair(ac, bc)
+    sys.stdout.write(report_pair(ac, bc))
 
 def diff_all(alpha, beta):
     "Walk through time-ordered commit pairs, finding differences."
@@ -458,9 +526,14 @@ def diff_all(alpha, beta):
                 pairs.append((None, b))
             i += 1
             j += 1
-    # Report on the pair table
-    for (a, b) in pairs:
-        report_pair(a, b)
+    with Baton("repodiffer:", enable=(not quiet and verbose==0)) as baton:
+        baton.startcounter("%%d of %d" % len(pairs))
+        # Report on the pair table
+        say = ""
+        for (a, b) in pairs:
+            say += report_pair(a, b)
+            baton.bumpcounter()
+        sys.stdout.write(say)
     if n_changed or n_deletions or n_insertions:
         sys.stdout.write("statistics: %d equal, %d of %d inserted, %d of %d deleted, %d changed.\n"
                          % (n_equal,
@@ -489,7 +562,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:s:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:qs:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "quiet", "verbose="])
     alpha = None
     beta = None
     changes_only = False
@@ -497,6 +570,7 @@ if __name__ == '__main__':
     fullhash = False
     ignores = ""
     single = None
+    quiet = False
     verbose = 0
     n_equal = n_insertions = n_deletions = n_changed = 0
     spancount = 0
@@ -511,6 +585,8 @@ if __name__ == '__main__':
             ignores = val
         elif opt == '-s' or opt == '--single':
             single = val
+        elif opt == '-q' or opt == '--quiet':
+            quiet = True
         elif opt == '-v' or opt == '--verbose':
             verbose = int(val)
     if len(arguments) < 2:

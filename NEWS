@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.11:
+     repodiffer now has a twirly-baton progress meter.
+
 2.10: 2012-12-16
      svnpull renamed to repopuller in anticipation of pulling CVS repositories.
      Introducing repodiffer, a tool to report diffs between histories.
