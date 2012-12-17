@@ -244,8 +244,9 @@ Use the -A option of <code>cvs2svn</code> (which works just like -A in
 <p>There are at least half a dozen utilities out there for lifting
 Subversion repositories to a git repository or import stream.  My
 opinion of them can be gauged by the fact that I wrote my own. (You
-can read a <a href="http://esr.ibiblio.org/?p=4691">list</a> of the
-things it does that other conversion tools don't.)</p>
+can read a <a
+href="http://www.catb.org/~esr/reposurgeon/features.html">description</a>
+of the things it does that other conversion tools don't.)</p>
 
 <p>2.0 and later versions of <a
 href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> can parse
@@ -267,10 +268,13 @@ repo, such as many projects use for website content.)  In unusual
 cases you may want to use the "svn_nobranch" option; find out more
 about this and other options via the "set" command.</p>
 
-<p>When you're done, run <code>make compare</code>.  This is a sanity
-check that redoes your repo conversion with git-svn, then compares the
-file manifests of the head revisions.  They should have no
-differences; if they do, report a bug in <code>reposurgeon</code>.
+<p>When you're done, run <code>make repodiffer</code>.  This is a
+sanity check that redoes your repo conversion with
+<code>git-svn</code>, then compares the file contents of each pair of
+revisions it can match by committer and timestamp.  They should have
+no file-content differences; if they do, there is a bug in either
+<code>reposurgeon</code> or <code>git-svn</code> (I have seen both 
+cases).
 
 <p>To my knowledge, <code>reposurgeon</code> is the only conversion
 tool that handles multibranch Subversion repositories in full
@@ -500,17 +504,11 @@ need to supply that information in some different way.</p>
 <p>A step that too often gets missed and then inelegantly patched in
 later is converting the declarations that tell the version-control
 system to ignore derived files. <code>reposurgeon</code> does this for
-you if you're using it for Subversion-to-git conversion; see the
+you if you're using it for Subversion-to-git conversion, both
+expressing Subversion svn:ignore properties as .gitignore files 
+and lifying .cvsignore files to .gitignore files; see the
 LIMITATIONS AND GUARANTEES section on its manpage if other DVCSes are
 involved.</p>
-
-<p>The format of .gitignore is compatible with .cvsignore; after a
-CVS-to-git conversion you'll want to do something like this:</p> 
-
-<pre><code>
-for x in `find . -print | grep cvsignore`; do t=`dirname $x`/.gitignore; git mv $x $t; done
-git commit -m 'Convert each .cvsignore to a .gitignore.'
-</code></pre>
 
 <h2 id="recovery">Recovering from errors</h2>
 
@@ -667,6 +665,8 @@ Makefile.</p>
 <p>3.1 (2012-11-18) It's a good idea to run 'make compare'.</p>
 
 <p>3.2 (2012-12-05) Add hints on other systems.</p>
+
+<p>3.3 (2012-12-19) Update for reposugeon 2.10.</p>
 
 </div>
 <hr />
