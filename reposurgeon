@@ -1012,8 +1012,6 @@ class FileOp:
             return self.paths() & other.paths()
     def dump(self, vcs=None):
         "Dump this fileop in import-stream format."
-        if vcs is None and self.repo.vcs and self.repo.vcs.importer:
-            vcs = self.repo.vcs
         if self.op == "M":
             showmode = self.mode
             if type(self.mode) == type(0):
