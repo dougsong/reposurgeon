@@ -1,3 +1,3 @@
 ## A change in a comment
-repodiffer sample1.fi sample2.fi
+repodiffer --quiet sample1.fi sample2.fi
 
