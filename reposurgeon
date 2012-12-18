@@ -772,7 +772,8 @@ class Blob:
         if not os.path.exists(self.blobfile()):
             return ''
         else:
-            vcs = vcs or self.repo.vcs
+            if vcs is None and self.repo.vcs and self.repo.vcs.importer:
+                vcs = self.repo.vcs
             content = self.content()
             # Ugh.  This is where we mess with ignore syntax translation
             if vcs and self.repo.vcs and self.path and self.path.endswith(".gitignore"):
@@ -1011,6 +1012,8 @@ class FileOp:
             return self.paths() & other.paths()
     def dump(self, vcs=None):
         "Dump this fileop in import-stream format."
+        if vcs is None and self.repo.vcs and self.repo.vcs.importer:
+            vcs = self.repo.vcs
         if self.op == "M":
             showmode = self.mode
             if type(self.mode) == type(0):
@@ -1344,7 +1347,8 @@ class Commit:
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
     def dump(self, vcs=None):
         "Dump this commit in import-stream format."
-        vcs = vcs or self.repo.vcs
+        if vcs is None and self.repo.vcs and self.repo.vcs.importer:
+            vcs = self.repo.vcs
         st = ""
         if self.fossil_id:
             st += "# Fossil-ID: %s\n" % self.fossil_id
