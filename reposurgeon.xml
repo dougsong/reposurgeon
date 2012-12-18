@@ -612,10 +612,9 @@ named repositories, or with no argument the currently chosen repository.
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
-Dump a fast-import stream representing selected events to standard output.
-Just like a write, except (1) the progress meter is disabled, (2) properties
-are always dumped, and (3) there is an identifying header before each event
-dump.</para>
+Dump a fast-import stream representing selected events to standard
+output.  Just like a write, except (1) the progress meter is disabled,
+and (2) there is an identifying header before each event dump.</para>
 </listitem>
 </varlistentry>
 </variablelist>

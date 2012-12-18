@@ -120,7 +120,8 @@ class VCS:
 
 # Most knowledge about specific version-control systems lives in the
 # following class list. Exception; there's a git-specific hook in the
-# repo reader; also see the extractor classes.
+# repo reader; also see the extractor classes; also see the dump method
+# in the Blob() class.
 # The members are, respectively:
 #
 # * Name of its characteristic subdirectory.
@@ -766,12 +767,20 @@ class Blob:
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
         os.link(self.blobfile(), c.blobfile())
         return c
-    def __str__(self):
+    def dump(self, vcs=None):
         if not os.path.exists(self.blobfile()):
             return ''
         else:
+            vcs = vcs or self.repo.vcs
             content = self.content()
+            # Ugh.  This is where we mess with ignore syntax translation
+            if vcs and self.path and self.path.endswith(".gitignore"):
+                if vcs.name == "hg":
+                    if not content.startswith("syntax: glob\n"):
+                        content = "syntax: glob\n" + content
             return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
+    def __str__(self):
+        return self.dump()
 
 class Tag:
     "Represents an annotated tag."
@@ -868,7 +877,7 @@ class FileOp:
     "Represent a primitive operation on a file."
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     def __init__(self, vcs=None):
-        self.vcs = vcs	# Only used in path_remap method
+        self.vcs = vcs
         self.op = None
         self.committish = None
         self.source = None
@@ -878,8 +887,8 @@ class FileOp:
         self.ref = None
         self.inline = None
         self._paths = None
-    def path_remap(self):
-        "Hack the fileop's basename."
+    def path_remap_in(self):
+        "Hack the fileop's basename to map it to git conventions."
         # Ignore file names from non-git VCSes need to get
         # mapped to .gitignore, because we have to
         # have some way to recognize what they are
@@ -888,6 +897,12 @@ class FileOp:
         if self.vcs is not None:
             if os.path.basename(self.path) == self.vcs.ignorename:
                 self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
+    def path_remap_out(self, path, vcs):
+        "Hack the fileop's basename to map it to a target VCS's conventions."
+        if vcs is not None:
+            if os.path.basename(path) == ".gitignore":
+                return os.path.join(os.path.dirname(path), vcs.ignorename)
+        return path
     def setOp(self, op):
         self.op = op
         self._paths = None
@@ -924,12 +939,12 @@ class FileOp:
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
-            self.path_remap()
+            self.path_remap_in()
             if type(self.mode) == type(0):
                 self.mode = "%06o" % self.mode
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
-            self.path_remap()
+            self.path_remap_in()
         elif opargs[0] == "N":
             (self.op, self.ref, self.committish) = opargs
         elif opargs[0] in ("R", "C"):
@@ -947,7 +962,7 @@ class FileOp:
             self._paths = None
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
-            self.path_remap()
+            self.path_remap_in()
         elif opline[0] == "N":
             try:
                 opline = opline.replace("'", r"\'")
@@ -958,7 +973,7 @@ class FileOp:
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
-            self.path_remap()
+            self.path_remap_in()
         elif opline[0] in ("R", "C"):
             try:
                 opline = opline.replace("'", r"\'")
@@ -989,7 +1004,7 @@ class FileOp:
             return True
         else:
             return self.paths() & other.paths()
-    def __str__(self):
+    def dump(self, vcs=None):
         "Dump this fileop in import-stream format."
         if self.op == "M":
             showmode = self.mode
@@ -999,7 +1014,7 @@ class FileOp:
             if len(self.path.split()) > 1:
                 st += '"' + self.path + '"'
             else:
-                st += self.path
+                st += self.path_remap_out(self.path, vcs)
             if self.ref == 'inline':
                 st += "\ndata %d\n%s" % (len(self.inline), self.inline)
         elif self.op == "N":
@@ -1011,14 +1026,18 @@ class FileOp:
             if len(self.path.split()) > 1:
                 st += '"' + self.path + '"'
             else:
-                st += self.path
+                st += self.path_remap_out(self.path, vcs)
         elif self.op in ("R", "C"):
-            st = '%s "%s" "%s"' %  (self.op, self.source, self.target)
+            st = '%s "%s" "%s"' %  (self.op,
+                                    self.path_remap_out(self.source, vcs),
+                                    self.path_remap_out(self.target, vcs))
         elif self.op == "deleteall":
             st = self.op
         else:
             raise Fatal("unexpected fileop %s while writing" % self.op)
         return st
+    def __str__(self):
+        return self.dump(self.vcs)
     __repr__ = __str__
 
 class Commit:
@@ -1318,8 +1337,9 @@ class Commit:
                 if child.branch == self.branch:
                     return child.head()
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
-    def dump(self, write_properties=True):
+    def dump(self, vcs=None):
         "Dump this commit in import-stream format."
+        vcs = vcs or self.repo.vcs
         st = ""
         if self.fossil_id:
             st += "# Fossil-ID: %s\n" % self.fossil_id
@@ -1343,7 +1363,7 @@ class Commit:
             st += "from %s\n" % self._parent_marks[0]
         for ancestor in self._parent_marks[1:]:
             st += "merge %s\n" % ancestor
-        if write_properties:
+        if vcs and vcs.properties:
             for (name, value) in self.properties.items():
                 if value in (True, False):
                     if value:
@@ -1356,7 +1376,7 @@ class Commit:
             st += "\n"
         return st
     def __str__(self):
-        return self.dump(write_properties=not self.repo or not self.repo.vcs or self.repo.vcs.properties)
+        return self.dump()
 
 class Passthrough:
     "Represents a passthrough line."
@@ -6111,9 +6131,8 @@ anything other than a plain file. The default selection is all events.
     def help_inspect(self):
         print("""
 Dump a fast-import stream representing selected events to standard output.
-Just like a write, except (1) the progress meter is disabled, (2) properties
-are always dumped, and (3) there is an identifying header before each event
-dump.  Supports > redirection.
+Just like a write, except (1) the progress meter is disabled, and (2) there
+is an identifying header before each event dump.  Supports > redirection.
 """)
     def do_inspect(self, line):
         "Dump raw events."
@@ -6129,7 +6148,7 @@ dump.  Supports > redirection.
                 header += " " + ((72 - len(header)) * "=") + "\n"
                 parse.stdout.write(header)
                 if isinstance(event, Commit):
-                    parse.stdout.write(event.dump(write_properties=True))
+                    parse.stdout.write(event.dump())
                 else:
                     parse.stdout.write(str(event))
 
