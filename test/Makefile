@@ -9,13 +9,12 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 
 .SUFFIXES: .svn .chk .fi .map
 
-# The 'prefer git' suppresses writing out properties.
 .svn.chk:
-	reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
+	reposurgeon "read $<" "write" >$@ 2>&1
 .svn.fi:
-	reposurgeon "read $<" "prefer git" "write" >$@
+	reposurgeon "read $<" "write" >$@
 .svn.map:
-	reposurgeon "read $<" "prefer git" "fossils write" >$@
+	reposurgeon "read $<" "fossils write" >$@
 
 buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
 	svndump-buildregress repodiffer-buildregress
@@ -133,7 +132,7 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
-		reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
+		reposurgeon "read $${test}.svn" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
