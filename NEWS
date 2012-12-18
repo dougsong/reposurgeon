@@ -3,6 +3,7 @@
 2.11:
      repodiffer now has a twirly-baton progress meter.
      Ignore pathnames in non-git VCSes are now preserved properly.
+     cvs/svn/git ignore patterns are properly translated on output to hg.
 
 2.10: 2012-12-16
      svnpull renamed to repopuller in anticipation of pulling CVS repositories.
