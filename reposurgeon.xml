@@ -1733,7 +1733,9 @@ filenames.</para>
 
 <para>Translation may not, however, be perfect when the ignore
 patterns are Unix glob patterns or regular expressions.  This
-compatibility table describes which patterns will translate:</para>
+compatibility table describes which patterns will translate;
+<quote>plain</quote> indicates a plain filename with no
+glob or regexp syntax or negation.</para>
 
 <informaltable pgwide='0' frame='all'>
   <tgroup cols='3' align='center'>
@@ -1743,7 +1745,8 @@ compatibility table describes which patterns will translate:</para>
     <colspec colname='c4'/>
     <colspec colname='c5'/>
     <colspec colname='c6'/>
-    <spanspec spanname="all" namest="c2" nameend="c6" align="center"/> 
+    <colspec colname='c7'/>
+    <spanspec spanname="all" namest="c2" nameend="c7" align="center"/> 
     <thead>
       <row>
 	<entry></entry>
@@ -1752,6 +1755,7 @@ compatibility table describes which patterns will translate:</para>
         <entry align='center'>from git</entry>
         <entry align='center'>from hg</entry>
         <entry align='center'>from bzr</entry>
+        <entry align='center'>from darcs</entry>
       </row>
     </thead>
     <tbody>
@@ -1762,6 +1766,7 @@ compatibility table describes which patterns will translate:</para>
 	<!-- git --><entry><para>all except !-prefixed but nonempty</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
 	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+	<!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
 	<entry><para><emphasis role="strong">to svn</emphasis></para></entry>
@@ -1770,6 +1775,7 @@ compatibility table describes which patterns will translate:</para>
 	<!-- git --><entry><para>all except !-prefixed</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
 	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+	<!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
 	<entry><para><emphasis role="strong">to git</emphasis></para></entry>
@@ -1778,6 +1784,7 @@ compatibility table describes which patterns will translate:</para>
 	<!-- git --><entry><para>all</para></entry>
 	<!-- hg  --><entry><para>all except !-prefixed</para></entry>
 	<!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
+	<!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
 	<entry><para><emphasis role="strong">to hg</emphasis></para></entry>
@@ -1786,14 +1793,25 @@ compatibility table describes which patterns will translate:</para>
 	<!-- git --><entry><para>all except !-prefixed</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
 	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+	<!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
 	<entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para></para></entry>
+	<!-- git --><entry><para>all</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
 	<!-- bzr --><entry><para>all</para></entry>
+	<!--darcs--><entry><para>plain</para></entry>
+      </row>
+      <row>
+	<entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
+        <!-- CVS --><entry><para>plain</para></entry>
+        <!-- svn --><entry><para>plain</para></entry>
+	<!-- git --><entry><para>plain</para></entry>
+	<!-- hg  --><entry><para>plain</para></entry>
+	<!-- bzr --><entry><para>plain</para></entry>
+	<!--darcs--><entry><para>all</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -1802,7 +1820,7 @@ compatibility table describes which patterns will translate:</para>
 <para>The hg rows and columns of the table describes compatibility to
 hg's glob syntax rather than its default regular-expression syntax.
 When writing to an hg repository from any other kind,
-<command>reposurgeon</command> prepends to the output .hignore a
+<command>reposurgeon</command> prepends to the output .hgignore a
 "syntax: glob" line.</para>
 
 </refsect1>
