@@ -5,21 +5,14 @@
 # The -t option sets the conversion tool. The default is 'reposurgeon'.
 # Other possible values are 'git-svn', 'agito', and 'svn2git'.
 #
-# The -s option is only useful when the tool is 'reposurgeon'; it suppresses
-# the normal "prefer git" so that properties will be written.
-#
 # Requires two arguments: A Subversion repo directory (which must exist) 
 # and a git repo output directory (which must not exist).
 #
 PATH=$PATH:..
 
-# Suppress fossil emission by default
-sopts='prefer git'
-
-while getopts st: opt
+while getopts t: opt
 do
     case $opt in
-	s) streamopts="" ;;
 	t) tool="$OPTARG" ;;
     esac
 done
@@ -156,7 +149,7 @@ svn2git) mkdir git-scratch; cp -r $svnrepo git-scratch;
 	    ruby -I../../externals/svn2git/lib \
 	    ../../externals/svn2git/bin/svn2git file://${PWD}/$svnrepo) && \
 	    mv git-scratch $gitrepo ;;
-*)  reposurgeon "read $svnrepo" "$sopts" "rebuild $gitrepo"
+*)  reposurgeon "read $svnrepo" "rebuild $gitrepo"
 esac
 
 ) >&2

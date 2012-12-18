@@ -774,8 +774,8 @@ class Blob:
             vcs = vcs or self.repo.vcs
             content = self.content()
             # Ugh.  This is where we mess with ignore syntax translation
-            if vcs and self.path and self.path.endswith(".gitignore"):
-                if vcs.name == "hg":
+            if vcs and self.repo.vcs and self.path and self.path.endswith(".gitignore"):
+                if vcs.name == "hg" and self.repo.vcs.name != "hg":
                     if not content.startswith("syntax: glob\n"):
                         content = "syntax: glob\n" + content
             return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
