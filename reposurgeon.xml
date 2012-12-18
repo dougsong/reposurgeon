@@ -1742,30 +1742,29 @@ compatibility table describes which patterns will translate:</para>
     <colspec colname='c3'/>
     <colspec colname='c4'/>
     <colspec colname='c5'/>
-    <spanspec spanname="all" namest="c1" nameend="c5" align="center"/> 
+    <colspec colname='c6'/>
+    <spanspec spanname="all" namest="c2" nameend="c6" align="center"/> 
     <thead>
       <row>
-	<entry spanname="all"><emphasis role="strong">From</emphasis></entry>
-      </row>
-      <row>
-        <entry align='center'>CVS</entry>
-        <entry align='center'>svn</entry>
-        <entry align='center'>git</entry>
-        <entry align='center'>hg</entry>
-        <entry align='center'>bzr</entry>
+	<entry></entry>
+        <entry align='center'>from CVS</entry>
+        <entry align='center'>from svn</entry>
+        <entry align='center'>from git</entry>
+        <entry align='center'>from hg</entry>
+        <entry align='center'>from bzr</entry>
       </row>
     </thead>
     <tbody>
       <row>
-	<!-- to CVS -->
+	<entry><para><emphasis role="strong">to CVS</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all except !-prefixed and nonempty</para></entry>
+	<!-- git --><entry><para>all except !-prefixed but nonempty</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
 	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
       </row>
       <row>
-	<!-- to svn -->
+	<entry><para><emphasis role="strong">to svn</emphasis></para></entry>
         <!-- CVS --><entry>all except !<para></para></entry>
         <!-- svn --><entry><para>all</para></entry>
 	<!-- git --><entry><para>all except !-prefixed</para></entry>
@@ -1773,7 +1772,7 @@ compatibility table describes which patterns will translate:</para>
 	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
       </row>
       <row>
-	<!-- to git -->
+	<entry><para><emphasis role="strong">to git</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
 	<!-- git --><entry><para>all</para></entry>
@@ -1781,15 +1780,15 @@ compatibility table describes which patterns will translate:</para>
 	<!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
       </row>
       <row>
-	<!-- to hg -->
+	<entry><para><emphasis role="strong">to hg</emphasis></para></entry>
         <!-- CVS --><entry><para>all except !</para></entry>
-        <!-- svn --><entry><para>all (to glob syntax)</para></entry>
+        <!-- svn --><entry><para>all</para></entry>
 	<!-- git --><entry><para>all except !-prefixed</para></entry>
 	<!-- hg  --><entry><para>all</para></entry>
-	<!-- bzr --><entry><para>all except RE:- and!-prefixed</para></entry>
+	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
       </row>
       <row>
-	<!-- to bzr -->
+	<entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
 	<!-- git --><entry><para></para></entry>
@@ -1800,10 +1799,11 @@ compatibility table describes which patterns will translate:</para>
   </tgroup>
 </informaltable>
 
-<para>The hg row of the table describes compastibility to hg's glob
-syntax rather than its default regular-expression syntax.  When
-writing to an hg repository from any other kind, <command>reposurgeon</command>
-prepends to the output .hignore a "syntax: glob" line.</para>
+<para>The hg rows and columns of the table describes compatibility to
+hg's glob syntax rather than its default regular-expression syntax.
+When writing to an hg repository from any other kind,
+<command>reposurgeon</command> prepends to the output .hignore a
+"syntax: glob" line.</para>
 
 </refsect1>
 
