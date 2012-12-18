@@ -1819,10 +1819,11 @@ untranslated in older Subversion repositories, Subversion ignore
 properties, .gitignore/.hgignore/.bzrignore file in other systems) and
 moves ignore declarations among these containers on repo input and
 output. This will be sufficient if the ignore patterns are exact
-filenames.  But <command>reposurgeon</command> does not know about
+filenames.  But <command>reposurgeon</command> does not know about all
 variant pattern syntaxes and does not translate them. CVS's and
-Subversion's shell globbing are forward-compatible to git's, but other
-translation cases may need hand-hacking.</para>
+Subversion's shell globbing are forward-compatible to git's, and both
+will be properly mapped when the preferred output type is Mercurial,
+but other translation cases may need hand-hacking.</para>
 
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
