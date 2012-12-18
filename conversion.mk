@@ -35,7 +35,7 @@ $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 
 # Build the fast-import stream from the Subversion stream dump
 $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "prefer git" "read $(PROJECT).svn" "script $(PROJECT).lift" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
