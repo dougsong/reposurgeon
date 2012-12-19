@@ -225,6 +225,19 @@ vcstypes = [
         authormap=None,
         ignorename=None,
         notes="Run from the repository, not a checkout directory."),
+    VCS(name="cvs",
+        subdirectory="CVS",
+        exporter="cvsps -x --fast-export",
+        styleflags=set([]),
+        properties=False,
+        initializer=None,
+        importer="None",
+        checkout=None,
+        lister=None,
+        preserve=set([]),
+        authormap=None,
+        ignorename=None,
+        notes="Requires cvsps."),
     ]
 
 # How to write extractor classes:

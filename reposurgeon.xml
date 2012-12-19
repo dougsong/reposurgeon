@@ -56,6 +56,9 @@ Subversion repositories has some significant limitations, discussed in
 the section on <link linkend="subversion">Working With
 Subversion</link>.</para>
 
+<para>CVS is supported for read only, not write. Run
+<command>reposurgeon</command> in a checkout directory.</para>
+
 <!--
 <para>In order to deal with version-control systems that do not have
 fast-export equivalents, <command>reposurgeon</command> can also host
