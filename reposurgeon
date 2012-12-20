@@ -237,7 +237,20 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename=None,
-        notes="Requires cvsps."),
+        notes="Requires cvsps at version 3.0 or later: http://www.catb.org/~esr/cvsps/."),
+    VCS(name="rcs",
+        subdirectory="RCS",
+        exporter="rcs-fast-export",
+        styleflags=set([]),
+        properties=False,
+        initializer=None,
+        importer="None",
+        checkout=None,
+        lister=None,
+        preserve=set([]),
+        authormap=None,
+        ignorename=None,
+        notes="Requires rcs-fast-export: http://git.oblomov.eu/rcs-fast-export."),
     ]
 
 # How to write extractor classes:
