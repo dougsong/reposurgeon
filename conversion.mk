@@ -27,11 +27,11 @@ VERBOSITY = "verbose 1"
 
 default: $(PROJECT)-$(TARGET_VCS)
 
-ifeq ($(SOURCE_VCS),svn)
-
 # Build the repo from the fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read $(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
+
+ifeq ($(SOURCE_VCS),svn)
 
 # Build the fast-import stream from the Subversion stream dump
 $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
@@ -72,16 +72,12 @@ ifeq ($(SOURCE_VCS),cvs)
 
 # Mirror a CVS repo (from a site with a SourceForge-like CVS layout).
 # You may need to modify this.
-$(PROJECT)-mirror:
-	rsync -av $(CVSHOST)::cvsroot/$(PROJECT)/* $(PROJECT)-mirror
+$(PROJECT)-checkout:
+	cvs -q "-d:ext:$(CVS_HOST)/$(PROJECT)" co $(PROJECT) $(PROJECT)-checkout
 
-# Build a git repo in project-cvs-git from a CVS repo in project-mirror
-# You must have created an author mapping in $(PROJECT).map.
-CVSIMPORT_OPTS = -s '~' -m -u -k -R -z 90 -v
-$(PROJECT)-git: $(PROJECT)-mirror $(PROJECT).map
-	cd $(PROJECT)-mirror
-	cvs update
-	git cvsimport -C ../$(PROJECT)-git $(CVSIMPORT_OPTS) -A ../$(PROJECT).map $(PROJECT)-mirror
+# Build the fast-import stream from the Subversion stream dump
+$(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
+	reposurgeon $(VERBOSITY) "read $(PROJECT)-checkout" "prefer git" "script $(PROJECT).lift" "write $(PROJECT).fi"
 
 endif
 
