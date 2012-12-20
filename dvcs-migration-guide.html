@@ -114,15 +114,6 @@ in the Makefile. Replace $(PROJECT) with your project name.</p>
 <p>You may find it instructive to type "make -n" to see what the
 entire conversion sequence will look like.</p> 
 
-<p>Now get a mirror of your project repo into the scratch directory.
-That's "make $(PROJECT)-mirror" and will probably work without
-modification if this is a Subversion conversion.</p>
-
-<p>Methods for mirroring CVS repositories vary more; the rsync fetcher
-in the Makefile assumes the repo host has a SourceForge-like layouut
-with each project as a module under /cvsroot. This may need to be
-modified.</p>
-
 <h1 id="author map">Step One: The Author Map</h1>
 
 <p>Subversion and CVS identify users by a Unix login name local to the
@@ -167,97 +158,20 @@ identifications in parallel with the rest of the work.</p>
 
 <p>Your first step will be converting your repository to git. </p>
 
-<h2 id="cvs_to_git">CVS to git</h2> 
-
-<p>If you are using CVS, you have (at least) two conversion options.
-Under most circumstances, the best option is to use the cvsimport
-plugin of git itself.  I recommend passing it the following options:</p>
-
-<dl>
-<dt>-s '~'</dt>
-<dd>Map slashes in CVS tag names to tildes (or something else they
-don't contain). git will cheerfully create directories beneath
-.git/refs/tags, but this is not how most users expect tags to
-look.</dd>
-<dt>-u</dt>
-<dt>Map underscores in tag names to periods. This is just cosmetic</dt>
-<dt>-k</dt>
-<dd>Suppress CVS keyword expansion.  As the manual page says, this
-avoids a lot of tiny, noisy changesets.</dd>
-<dt>-m</dt>
-<dd>Attempt merge recognition by matching committer headers.</dd>
-<dt>-A</dt>
-<dd>Pass in your authors file.</dd>
-<dt>-R</dt>
-<dd>Tell it to generate a map of CVS revisions.</dd>
-<dt>-z 90</dt>
-<dd>Shorten the time interval within which CVS commits can be grouped
-into changesets.  This makes the history noisier, but may protect you
-if the clock on the system where the CVS repo was hosted was unstable;
-in that situation it reduces the odds that <code>git cvsimport</code> 
-will be confused by out-of-time-order commits.</dd>
-<dt>-v</dt>
-<dd>This tool runs for a while on large repositories; its default
-silent mode can be disconcerting.</dd>
-<dt>-C</dt>
-<dd>Unpacking in the current directory is the default behavior, but
-probably not what you want.</dd>
-</dl>
-
-<p>In the generic Makefile, just <code>make $(PROJECT)-git</code> to
-call the command with all these options. You will need to have
-a $(PROJECT).map file in place; an empty one will do for your 
-early experiments.</p>
-
-<p>The reason this tool is normally your best option is that it
-converts straight to git, avoiding issues produced by the other major
-conversion tools which either go through Subversion as an intermediate
-stage or have Subversion-based assumptions baked into them. Also, the
--R option is immensely helpful for reference-lifting. But read the
-warnings on the manual page; under some (rare) circumstances this tool
-can produce incorrect conversions.</p>
-
-<p>Another option is the <a
-href="http://cvs2svn.tigris.org/cvs2git.html">cvs2git</a> tool derived
-from cvs2svn.  The hard part - deducing changesets from CVS's per-file
-commits - is shared with <code>cvs2svn</code>, which has probably been more
-extensively battle-tested than any other CVS converter out there. The
-drawbacks are (1) There is no -A option, and (b) your converted
-history will contain the same sorts of cruft that cvs2svn generates
-(see below).</p>
-
-<p>I have done a test conversion of a CVS repo with ten years of
-history with <code>cvs2git</code> and it seemed to work as well as
-<code>cvs2svn</code> (but not as well as <code>git cvsimport</code>).
-I had to git reset &#45;&#45;hard afterwards to actually materialize
-the files in the working directory.</p>
-
-<p>Finally, you can use <a
-href="http://cvs2svn.tigris.org/cvs2svn.html">cvs2svn</a> to convert
-from CVS to Subversion, then from Subversion to git. I've done this,
-and it worked - but see the description of cvs2svn artifacts later on.
-Use the -A option of <code>cvs2svn</code> (which works just like -A in
-<code>git cvsimport</code>) to pass it your authors file.</p>
-
-<h2 id="svn_to_git">Subversion to git</h2>
-
 <p>There are at least half a dozen utilities out there for lifting
-Subversion repositories to a git repository or import stream.  My
+CVS and Subversion repositories to a git repository or import stream.  My
 opinion of them can be gauged by the fact that I wrote my own. (You
 can read a <a
 href="http://www.catb.org/~esr/reposurgeon/features.html">description</a>
-of the things it does that other conversion tools don't.)</p>
+of the things it does that other conversion tools don't.)  </p>
 
-<p>2.0 and later versions of <a
-href="http://www.catb.org/esr/reposurgeon/">reposurgeon</a> can parse
-Subversion dumpfiles; given local access to a Subversion repository
-(not a checkout, but the actual repository or a mirror of it) the tool
-can use <code>svnadmin dump</code> to mine it. The reposurgeon
-distribution also includes a script named <code>svnpull</code> for
-grabbing and mirroring a remote Subversion repository.</p>
+<p>So, install <code>reposurgeon</code> and whatever tool it needs to
+read your reposotory.  That will be <code>cvsps</code> at version 3.0
+or later for CVS, or the Subversion tools themselves for
+Subversion.</p>
 
-<p>The Makefile will call <code>reposurgeon</code> for you,
-interpreting your $(PROJECT).lift file, when you type "make".
+<p>The generic-workflow Makefile will call <code>reposurgeon</code>
+for you, interpreting your $(PROJECT).lift file, when you type "make".
 You may have to watch the baton spin for a few minutes.</p>
 
 <p>Normally <code>reposurgeon</code> will do branch analysis for you.
@@ -289,7 +203,7 @@ called sccs2git on CPAN which I don't recommend, as it is poorly
 documented and makes no attempt to group commits into changesets.</p>
 
 <p>RCS: Use <a
-href="http://git.oblomov.eu/rcs-fast-export">rcs-fast-import</a> to
+href="http://git.oblomov.eu/rcs-fast-export">rcs-fast-export</a> to
 get to git. It will group your RCS commits into changesets.</p>
 
 <p>For other systems, see the <a
@@ -504,7 +418,7 @@ need to supply that information in some different way.</p>
 <p>A step that too often gets missed and then inelegantly patched in
 later is converting the declarations that tell the version-control
 system to ignore derived files. <code>reposurgeon</code> does this for
-you if you're using it for Subversion-to-git conversion, both
+you if you're using it for CVS- or Subversion-to-git conversion, both
 expressing Subversion svn:ignore properties as .gitignore files 
 and lifying .cvsignore files to .gitignore files; see the
 LIMITATIONS AND GUARANTEES section on its manpage if other DVCSes are
@@ -667,6 +581,8 @@ Makefile.</p>
 <p>3.2 (2012-12-05) Add hints on other systems.</p>
 
 <p>3.3 (2012-12-19) Update for reposugeon 2.10.</p>
+
+<p>3.4 (2012-12-20) Update for reposugeon 2.11.</p>
 
 </div>
 <hr />
