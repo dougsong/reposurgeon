@@ -14,7 +14,7 @@ Description: a tool for editing version-control repository history
 
 XBS-Destinations: freecode
 
-XBS-Gitorious-URL: https://git.gitorious.org/reposurgeon/
+XBS-Gitorious-URL: https://gitorious.org/reposurgeon/
 
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
