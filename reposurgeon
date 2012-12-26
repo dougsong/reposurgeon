@@ -744,10 +744,12 @@ class Attribution:
         msg[hdr + "-Date"] = self.date.rfc822()
     def remap(self, authors):
         "Remap the attribution name."
-        for (local, (name, mail)) in authors.items():
+        for (local, (name, mail, timezone)) in authors.items():
             if self.email.startswith(local + "@") or self.email == local:
                 self.name = name
                 self.email = mail
+                if timezone:
+                    self.date.orig_tz_string = timezone
                 break
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
@@ -3621,10 +3623,13 @@ class Repository:
                 if line.startswith('#'):
                     continue
                 (local, netwide) = line.strip().split('=')
-                (name, mail) = email.utils.parseaddr(netwide.strip())
+                (address, timezone) =  netwide.split(">")
+                address += ">"
+                timezone = timezone.strip()
+                (name, mail) = email.utils.parseaddr(address.strip())
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
-                authormap[local.strip()] = (name, mail)
+                authormap[local.strip()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
