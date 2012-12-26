@@ -1128,8 +1128,14 @@ the repository host in committer and author IDs. DVCSes want email
 addresses (net-wide identifiers) and complete names. To supply the map
 from one to the other, an authors file is expected to consist of
 lines each beginning with a local user ID, followed by a '=' (possibly
-surrounded by whitespace) followed by a full name and email address.
-An authors file may have comment lines beginning with '#'; these
+surrounded by whitespace) followed by a full name and email address,
+optionally followed by a timezone offset field.  Thus:</para>
+
+<literallayout>
+ferd = Ferd J. Foonly &lt;foonly@foo.com&gt; -0500
+</literallayout>
+
+<para>An authors file may have comment lines beginning with '#'; these
 are ignored.</para>
 
 <para>When an authors file is applied, email addresses in committer and author
@@ -1145,11 +1151,11 @@ if you are editing a repo or dump created by
 without -A.</para>
 
 <para>With the 'write' modifier, write a mapping file that could be
-interpreted by 'authors read', with entries for each unique committer,
-author, and tagger (to standard output or a &lt;-redirected mapping
-file). This may be helpful as a start on building an authors file,
-though each part to the right of an equals sign will need
-editing.</para>
+interpreted by <command>authors read</command>, with entries for each
+unique committer, author, and tagger (to standard output or a
+&lt;-redirected mapping file). This may be helpful as a start on
+building an authors file, though each part to the right of an equals
+sign will need editing.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
