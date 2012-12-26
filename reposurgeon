@@ -89,6 +89,7 @@ class VCS:
                  preserve,
                  authormap,
                  ignorename,
+                 project,
                  notes):
         self.name = name
         self.subdirectory = subdirectory
@@ -102,20 +103,22 @@ class VCS:
         self.preserve = preserve
         self.authormap = authormap
         self.ignorename = ignorename
+        self.project = project
         self.notes = notes
     def __repr__(self):
         return "         Name: " + str(self.name) + "\n" \
              + " Subdirectory: " + str(self.subdirectory) + "\n" \
              + "     Exporter: " + str(self.exporter) + "\n" \
-             + " Export-Style: " + repr(self.styleflags) + "\n" \
+             + " Export-Style: {" + ",".join(list(self.styleflags)) + "}\n" \
              + "   Properties: " + repr(self.properties) + "\n" \
              + "  Initializer: " + str(self.initializer) + "\n" \
              + "       Lister: " + str(self.lister) + "\n" \
              + "     Importer: " + str(self.importer) + "\n" \
              + "     Checkout: " + str(self.checkout) + "\n" \
-             + "     Preserve: " + str(self.preserve) + "\n" \
+             + "     Preserve: {" + ",".join(list(self.preserve)) + "}\n" \
              + "    Authormap: " + str(self.authormap) + "\n" \
              + "   Ignorename: " + str(self.ignorename) + "\n" \
+             + "      Project: " + str(self.project) + "\n" \
              + "        Notes: " + str(self.notes) + "\n"
 
 # Most knowledge about specific version-control systems lives in the
@@ -166,6 +169,7 @@ vcstypes = [
         preserve=set(['.git/config', '.git/hooks']),
         authormap=".git/cvs-authors",
         ignorename=".gitignore",
+        project="http://git-scm.com/",
         notes="The authormap is not required, but will be used if present."),
     # 
     VCS(name="bzr",
@@ -179,6 +183,7 @@ vcstypes = [
         checkout="bzr checkout",
         preserve=set([]),
         authormap=None,
+        project="http://bazaar.canonical.com/en/",
         ignorename=".bzrignore",
         notes="Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
@@ -196,6 +201,7 @@ vcstypes = [
         preserve=set([".hg/hgrc"]),
         authormap=None,
         ignorename=".hgignore",
+        project="http://mercurial.selenic.com/",
         notes="The hg export-import methods are not part of stock Mercurial."),
     # Styleflags may need tweaking for round-tripping 
     VCS(name="darcs",
@@ -210,6 +216,7 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename="_darcs/prefs/boring",
+        project="http://darcs.net/",
         notes="Assumes no boringfile preference has been set."),
     # Export is experimental and doesn't round-trip
     VCS(name="svn",
@@ -224,6 +231,7 @@ vcstypes = [
         preserve=set(["hooks"]),
         authormap=None,
         ignorename=None,
+        project="http://subversion.apache.org/",
         notes="Run from the repository, not a checkout directory."),
     VCS(name="cvs",
         subdirectory="CVS",
@@ -237,7 +245,8 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename=None,
-        notes="Requires cvsps at version 3.0 or later: http://www.catb.org/~esr/cvsps/."),
+        project="http://www.catb.org/~esr/cvsps/",
+        notes="Requires cvsps at version 3.0 or later."),
     VCS(name="rcs",
         subdirectory="RCS",
         exporter="rcs-fast-export",
@@ -250,7 +259,8 @@ vcstypes = [
         preserve=set([]),
         authormap=None,
         ignorename=None,
-        notes="Requires rcs-fast-export: http://git.oblomov.eu/rcs-fast-export."),
+        project="http://git.oblomov.eu/rcs-fast-export",
+        notes="Requires rcs-fast-export."),
     ]
 
 # How to write extractor classes:
