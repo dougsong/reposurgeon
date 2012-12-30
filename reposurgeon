@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-version="2.11"
+version="2.12"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -235,7 +235,7 @@ vcstypes = [
         notes="Run from the repository, not a checkout directory."),
     VCS(name="cvs",
         subdirectory="CVS",
-        exporter="cvsps -x --fast-export",
+        exporter="cvsps --fast-export",
         styleflags=set([]),
         properties=False,
         initializer=None,
@@ -246,7 +246,7 @@ vcstypes = [
         authormap=None,
         ignorename=None,
         project="http://www.catb.org/~esr/cvsps/",
-        notes="Requires cvsps at version 3.0 or later."),
+        notes="Requires cvsps at version 3.3 or later."),
     VCS(name="rcs",
         subdirectory="RCS",
         exporter="rcs-fast-export",

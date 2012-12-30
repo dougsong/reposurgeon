@@ -1,9 +1,10 @@
 			reposurgeon project news
 
-2.12:
+2.12: 2012-12-30
      Support for reading RCS repositories.
      Now handling three-field authormap files with timezone offsets.
      Dump fileops in the stype of the output VCS, not the input.
+     Synchronized with cvsps 3.3 release.
 
 2.11: 2012-12-20
      CVS repositories can now be read using cvsps --fast-export as a front end.
