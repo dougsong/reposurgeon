@@ -311,6 +311,7 @@ class GitExtractor:
         self.subdirectory = ".git"
         self.visible = False
         self.properties = False
+        self.ignorename = ".gitignore"
         # These are internal
         self.revlist = []
         self.parents = {}
