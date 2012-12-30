@@ -1416,7 +1416,7 @@ class Commit:
                 else:
                     st += "property %s %d %s\n" % (name, len(str(value)), str(value))
         for op in self.fileops:
-            st += str(op) + "\n"
+            st += op.dump(vcs) + "\n"
         if "nl-after-commit" in self.repo.export_style():
             st += "\n"
         return st
