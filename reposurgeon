@@ -649,7 +649,7 @@ class Date:
             sign = -1 if m.group(1) == "-" else 1
             hours = int(m.group(2))
             mins = int(m.group(3))
-            if hours < -14 or hours > 12 or mins > 59:
+            if hours < -14 or hours > 13 or mins > 59:
                 complain("dubious UTC offset '%s'." % text)
             return (hours * 60 + mins) * 60 * sign
         else:
