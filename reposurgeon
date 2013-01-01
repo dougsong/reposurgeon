@@ -2015,7 +2015,7 @@ class StreamParser:
                 if line.startswith("SVN-fs-dump-format-version: "):
                     if StreamParser.sd_body(line) not in ("1", "2"):
                         raise Fatal("unsupported dump format version %s" \
-                                    % version)
+                                    % StreamParser.sd_body(line))
                     # Beginning of Subversion dump parsing
                     while True:
                         line = self.readline()
