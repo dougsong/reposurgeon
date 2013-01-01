@@ -2361,7 +2361,7 @@ class StreamParser:
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
             baton.bumpcounter()
-            copynodes.sort(key=lambda n: n.from_rev)
+        copynodes.sort(key=lambda n: n.from_rev)
         baton.endcounter()
         baton.twirl('+')
         # Build filemaps.
