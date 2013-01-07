@@ -6207,6 +6207,26 @@ is an identifying header before each event dump.  Supports > redirection.
                 else:
                     parse.stdout.write(str(event))
 
+    def help_graph(self):
+        print("""
+Dump a graph representing selected events to standard output in graphviz form.
+""")
+    def do_graph(self, line):
+        "Dump a commit graph."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            parse.stdout.write("digraph {\n")
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    for mark in event.parentMarks():
+                        parse.stdout.write('\t"%s" -> "%s";\n' \
+                                           % (mark, event.mark))
+            parse.stdout.write("}\n")
+
     def help_rebuild(self):
         print("""
 Rebuild a repository from the state held by reposurgeon.  The argument
