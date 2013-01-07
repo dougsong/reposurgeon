@@ -1517,6 +1517,11 @@ class PathMap:
         if isinstance(source_obj, PathMap):
             source_obj = source_obj.snapshot()
         self._insert(self._split_path(target_path), source_obj)
+    def ls_R(self, path):
+        elt = self._find(self._split_path(path))
+        if isinstance(elt, PathMap):
+            return iter(elt)
+        return iter(()) # empty iterator
     def __contains__(self, path):
         "Return true if path is present in the set as a file."
         elt = self._find(self._split_path(path))
@@ -2427,11 +2432,9 @@ class StreamParser:
             # structure implied by the filemaps is not consistent with
             # what's in the parsed Subversion nodes.  This should never
             # happen.
-            if not copynode.from_set:
-                for path in filemaps[copynode.revision]:
-                    if path.startswith(node.path + os.sep):
-                        self.gripe("inconsistently empty from set for %s" % copynode)
-                        break
+            if not copynode.from_set and \
+                    any(filemaps[copynode.revision].ls_R(node.path)):
+                self.gripe("inconsistently empty from set for %s" % copynode)
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl('+')
