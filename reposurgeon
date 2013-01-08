@@ -5808,6 +5808,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
         if not line:
             complain("script requires a file argument")
             return
+        line = self.set_selection_set(line)
         try:
             self.callstack.append(line.split())
             with open(self.callstack[-1][0]) as scriptfp:
@@ -5837,6 +5838,11 @@ List all known symbolic names of branches and tags. Supports > redirection.
                     for i in range(len(self.callstack[-1])):
                         scriptline = scriptline.replace('$' + str(i), self.callstack[-1][i])
                     scriptline =  scriptline.replace('$$', str(os.getpid()))
+                    if self.selection is None:
+                        reselect = ""
+                    else:
+                        reselect = ",".join([str(i+1) for i in self.selection])
+                    scriptline =  scriptline.replace('$%', reselect)
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
@@ -6225,8 +6231,9 @@ Dump a graph representing selected events to standard output in graphviz form.
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
                     for parent in event.parentMarks():
-                        parse.stdout.write('\t%s -> %s;\n' \
-                                           % (parent[1:], event.mark[1:]))
+                        if self.chosen().find(parent) in self.selection:
+                            parse.stdout.write('\t%s -> %s;\n' \
+                                               % (parent[1:], event.mark[1:]))
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
