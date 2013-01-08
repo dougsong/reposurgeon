@@ -1,76 +1,21 @@
 reposurgeon: r2: deleting parentless zero-op commit.
-blob
-mark :1
-data 115
-this svn repository is for testing reposurgeon's way of dealing with deleted svn branches that are later recreated
-
-blob
-mark :2
-data 4
-0.1
-
-blob
-mark :3
-data 22
-feature development A
-
-reset refs/heads/proj1
-# Fossil-ID: 3
-commit refs/heads/proj1
-mark :4
-committer brooksd <brooksd> 1354779386 +0000
-data 38
-trunk development proceeds; feature A
-M 100644 :1 trunk/README
-M 100644 :2 trunk/VERSION
-M 100644 :3 trunk/subdir/src1
-M 100644 :3 trunk/subdir/src2
-
-blob
-mark :5
-data 4
-0.2
-
-blob
-mark :6
-data 44
-feature development A
-feature development B
-
-# Fossil-ID: 4
-commit refs/heads/proj1
-mark :7
-committer brooksd <brooksd> 1354779388 +0000
-data 38
-trunk development proceeds; feature B
-from :4
-M 100644 :5 trunk/VERSION
-M 100644 :6 trunk/subdir/src1
-M 100644 :6 trunk/subdir/src2
-
-blob
-mark :8
-data 4
-0.3
-
-blob
-mark :9
-data 66
-feature development A
-feature development B
-feature development C
-
-# Fossil-ID: 5
-commit refs/heads/proj1
-mark :10
-committer brooksd <brooksd> 1354779392 +0000
-data 38
-trunk development proceeds; feature C
-from :7
-M 100644 :8 trunk/VERSION
-M 100644 :6 trunk/newdir/src1
-M 100644 :9 trunk/newdir/src1
-M 100644 :6 trunk/newdir/src2
-D trunk/subdir/src1
-D trunk/subdir/src2
-
+Traceback (most recent call last):
+  File "/home/esr/bin/reposurgeon", line 7336, in <module>
+    cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
+  File "/usr/lib/python2.7/cmd.py", line 221, in onecmd
+    return func(arg)
+  File "/home/esr/bin/reposurgeon", line 6176, in do_read
+    repo = read_repo(line, self.preferred)
+  File "/home/esr/bin/reposurgeon", line 4475, in read_repo
+    repo.fast_import(open(source), progress=(verbose==1 and not quiet))
+  File "/home/esr/bin/reposurgeon", line 3767, in fast_import
+    StreamParser(self).fast_import(fp, progress)
+  File "/home/esr/bin/reposurgeon", line 2116, in fast_import
+    self.svn_process(baton)
+  File "/home/esr/bin/reposurgeon", line 3135, in svn_process
+    self.repo.quiet_delete(commit)
+  File "/home/esr/bin/reposurgeon", line 4207, in quiet_delete
+    self.delete([self.events.index(commit)], ["obliterate", "quiet", "tagback"])
+  File "/home/esr/bin/reposurgeon", line 4169, in delete
+    t.committish = event.parents()[0].mark
+IndexError: list index out of range
