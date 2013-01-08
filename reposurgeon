@@ -6219,12 +6219,19 @@ Dump a graph representing selected events to standard output in graphviz form.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
+            parse.stdout.write("\tnode [shape=box];\n")
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
-                    for mark in event.parentMarks():
-                        parse.stdout.write('\t"%s" -> "%s";\n' \
-                                           % (mark, event.mark))
+                    for parent in event.parentMarks():
+                        parse.stdout.write('\t%s -> %s;\n' \
+                                           % (parent[1:], event.mark[1:]))
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Commit):
+                    summary = event.comment.split('\n')[0][:40]
+                    parse.stdout.write('\t%s [label="%s %s"];\n' \
+                                       % (event.mark[1:], event.mark, summary)) 
             parse.stdout.write("}\n")
 
     def help_rebuild(self):
