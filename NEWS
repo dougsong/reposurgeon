@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 2.13: 
+     The new 'graph' command supports making commit graphs in the DOT language.
      On read of an import stream, interpret a "cvs-revisions" property.
 
 2.12: 2012-12-30

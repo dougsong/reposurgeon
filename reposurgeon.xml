@@ -626,6 +626,19 @@ output.  Just like a write, except (1) the progress meter is disabled,
 and (2) there is an identifying header before each event dump.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>graph</command>
+        [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem><para>
+Emit a visualization of the commit graph in the DOT markup language
+used by graphviz tool suite.  This can be fed as input to the main
+graphviz rendering program
+<citerefentry><refentrytitle>dot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+which will yield a viewable image 
+</para></listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
@@ -2151,6 +2164,17 @@ ignored.</para>
 are fatal.</para>
 </refsect1>
 
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>bzr</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>cvs</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>darcs</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>git</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>hg</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rcs</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>svn</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+</para>
+</refsect1>
 <refsect1 id='author'><title>AUTHOR</title>
 
 <para>Eric S. Raymond <email>esr@thyrsus.com</email>; project page at <ulink
