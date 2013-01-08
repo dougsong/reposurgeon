@@ -6238,7 +6238,7 @@ Dump a graph representing selected events to standard output in graphviz form.
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
                     summary = event.comment.split('\n')[0][:32]
-                    parse.stdout.write('\t%s [label="%s %s"];\n' \
+                    parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], event.mark, summary)) 
             parse.stdout.write("}\n")
 
