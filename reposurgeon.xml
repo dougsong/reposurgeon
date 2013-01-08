@@ -1358,7 +1358,8 @@ Reads each line from the file and executes it as a command.</para>
 string $0 and the optional following arguments (if any) replace the
 strings $1, $2 ... $n in the script text. This is done before
 tokenization, so the $1 in a string like <quote>foo$1bar</quote> will
-be expanded.</para>
+be expanded.  Additionally, $$ is expanded to the current process ID
+(which may be useful for scripts that use tempfiles).</para>
 
 <para>Within scripts (and only within scripts) a command that takes an input 
 filename argument can instead take literal following data in the syntax of a 
