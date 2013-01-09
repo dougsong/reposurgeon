@@ -6255,7 +6255,12 @@ for graphviz.
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
-                                       % (event.mark[1:], event.mark, summary)) 
+                                       % (event.mark[1:], event.mark, summary))
+            for ei in self.selection:
+                event = self.chosen().events[ei]
+                if isinstance(event, Reset) and event.committish:
+                    parse.stdout.write('\t"%s" [color=red];\n' % event.ref)
+                    parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.ref, event.committish[1:]))
             parse.stdout.write("}\n")
 
     def help_rebuild(self):
