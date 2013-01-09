@@ -335,6 +335,13 @@ Very occasionally the generated commits will have real fileops on
 them; all you can do in this case is note conversion damage in the
 comment and move on.</p>
 
+<p>Another good way to spot junk commits is to eyeball the picture of
+the commit DAG created by the <code>reposurgeon</code> 'graph' command
+- they tend to stand out visually as leaf nodes in odd places. Be
+aware that the graph command outputs DOT, the language interpreted by
+the <a href="http://www.graphviz.org/">graphviz</a> suite; you will
+need a DOT rendering program and an image viewer.</p>
+
 <p>See the documentation of the <code>references</code> command; for
 details on how fix up Subversion and CVS changeset references in
 comments so they're still meaningful.</p>
@@ -580,9 +587,11 @@ Makefile.</p>
 
 <p>3.2 (2012-12-05) Add hints on other systems.</p>
 
-<p>3.3 (2012-12-19) Update for reposugeon 2.10.</p>
+<p>3.3 (2012-12-19) Update for reposurgeon 2.10.</p>
 
-<p>3.4 (2012-12-20) Update for reposugeon 2.11.</p>
+<p>3.4 (2012-12-20) Update for reposurgeon 2.11.</p>
+
+<p>3.5 (2013-01-09) Update for reposurgeon 2.13 and the 'graph' command.</p>
 
 </div>
 <hr />
