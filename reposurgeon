@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, signal, shutil, copy, shlex, collections, resource, uuid
+import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi
 import time, calendar, unittest
 import email.message, email.parser, email.utils
 
@@ -6231,7 +6231,8 @@ is an identifying header before each event dump.  Supports > redirection.
 
     def help_graph(self):
         print("""
-Dump a graph representing selected events to standard output in graphviz form.
+Dump a graph representing selected events to standard output in DOT markup
+for graphviz.
 """)
     def do_graph(self, line):
         "Dump a commit graph."
@@ -6252,7 +6253,7 @@ Dump a graph representing selected events to standard output in graphviz form.
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
-                    summary = event.comment.split('\n')[0][:32]
+                    summary = cgi.escape(event.comment.split('\n')[0][:32])
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], event.mark, summary)) 
             parse.stdout.write("}\n")
