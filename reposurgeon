@@ -6250,20 +6250,31 @@ for graphviz.
                         if self.chosen().find(parent) in self.selection:
                             parse.stdout.write('\t%s -> %s;\n' \
                                                % (parent[1:], event.mark[1:]))
+                if isinstance(event, Tag):
+                    parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' \
+                                       % (event.name, event.committish[1:], ))
+                    parse.stdout.write('\t{rank=same; "%s"; "%s"}\n' \
+                                       % (event.name, event.committish[1:], ))
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], event.mark, summary))
+                if isinstance(event, Tag):
+                    summary = cgi.escape(event.comment.split('\n')[0][:32])
+                    parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
+                                       % (event.name, event.name, summary))
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Reset) and event.committish:
                     parse.stdout.write('\t"%s" [shape=oval];\n' % event.ref)
                     parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.committish[1:], event.ref))
+            resetnames = [event.ref for event in self.chosen().events \
+                          if isinstance(event, Reset)]
             for ei in self.selection:
                 event = self.chosen().events[ei]
-                if isinstance(event, Commit) and not event.children():
+                if isinstance(event, Commit) and not event.branch in resetnames and not event.children():
                     parse.stdout.write('\t"%s" [shape=oval];\n' % event.branch)
                     parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
             parse.stdout.write("}\n")
