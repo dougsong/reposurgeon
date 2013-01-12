@@ -6990,7 +6990,7 @@ set, defaulting to all events.
 Lifts from CVS and Subversion may have only usernames local to
 the repository host in committer and author IDs. DVCSes want email
 addresses (net-wide identifiers) and complete names. To supply the map
-from oune to the other, an authors file is expected to consist of
+from one to the other, an authors file is expected to consist of
 lines each beginning with a local user ID, followed by a '=' (possibly
 surrounded by whitespace) followed by a full name and email address.
 
