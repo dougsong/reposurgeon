@@ -731,8 +731,9 @@ class DateTests(unittest.TestCase):
         self.assertEqual(d3.delta(d1), 3600)
         self.assertEqual(d1.delta(d1), 0)
 
-class Attribution:
+class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
+    __slots__ = ("name", "email", "date")
     def __init__(self, person=None):
         self.name = self.email = self.date = None
         if person:
@@ -774,8 +775,9 @@ class Attribution:
     def __str__(self):
         return self.name + " <" + self.email + "> " + str(self.date)
 
-class Blob:
+class Blob(object):
     "Represent a detached blob of data referenced by a mark."
+    __slots__ = ("repo", "mark", "path", "colors", "cookie", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
@@ -918,8 +920,11 @@ class Reset:
     def __str__(self):
         return self.dump()
 
-class FileOp:
+class FileOp(object):
     "Represent a primitive operation on a file."
+    __slots__ = ("vcs", "op", "committish", "source", "target",
+                 "mode", "path", "ref", "inline", "_paths",
+                 "sourcedelete", "targetdelete")
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     def __init__(self, vcs=None):
         self.vcs = vcs
@@ -1085,8 +1090,12 @@ class FileOp:
         return self.dump(self.vcs)
     __repr__ = __str__
 
-class Commit:
+class Commit(object):
     "Generic commit object."
+    __slots__ = ("repo", "mark", "authors", "committer", "comment",
+                 "_parent_marks", "_parent_nodes", "branch", "fileops",
+                 "properties", "pushed_to", "filemap", "color",
+                 "fossil_id", "common", "_pathset", "splits", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
@@ -1490,10 +1499,11 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
-class PathMap:
+class PathMap(object):
     """Represent the set of filenames visible in a Subversion
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
+    __slots__ = ("elements", "shared")
     def __init__(self, elements=None):
         # elements is a dictionary mapping single-component names to
         # True (for files) or to another PathMap (for directories).
@@ -1777,8 +1787,12 @@ SD_REPLACE = 3
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
-    # If these don't match the constants above, havoc will ensue
-    class NodeAction:
+    class NodeAction(object):
+        __slots__ = ("revision", "path", "kind", "action",
+                     "from_rev", "from_path", "content_hash",
+                     "from_hash", "blob", "props",
+                     "from_set", "blobmark", "generated")
+        # If these don't match the constants above, havoc will ensue
         ActionValues = ("add", "delete", "change", "replace")
         PathTypeValues = ("none", "file", "dir")
         def __init__(self):
@@ -1817,7 +1831,8 @@ class StreamParser:
                 tell += "properties=%s " % showprops
             return tell[:-1] + ">"
         __repr__ = __str__
-    class RevisionRecord:
+    class RevisionRecord(object):
+        __slots__ = ("nodes", "props")
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
