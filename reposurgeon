@@ -423,9 +423,9 @@ class GitExtractor:
     def get_taglist(self):
         "Return a list of tag name strings."
         return self.tags
-    def get_resetlist(self):
-        "Return a dictionary of reset names with revisions as values."
-        return [item for item in self.refs.items() if "/tags/" not in item[0]]
+    def iter_resets(self):
+        "Return an iterator yielding (reset name, revision) pairs."
+        return (item for item in self.refs.items() if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
@@ -1753,9 +1753,8 @@ class RepoStreamer:
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
             # Now append reset objects
-            resets = self.extractor.get_resetlist()
-            resets.sort(key=lambda (k, v): v)
-            for (resetname, revision) in resets:
+            for (resetname, revision) in sorted(self.extractor.iter_resets(),
+                                                key=lambda (k, v): v):
                 reset = Reset()
                 reset.ref = resetname
                 reset.committish = self.markmap[revision]
