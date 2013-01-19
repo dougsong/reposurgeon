@@ -1600,21 +1600,16 @@ class PathMap(object):
     # Return the object at the location given by components--either
     # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
-    # None if the location does not exist in the set.  Destroys
-    # components as we recurse.
+    # None if the location does not exist in the set.
     def _find(self, components):
         if not components:
             return self
-        first = components.pop()
-        if first not in self.elements:
-            return None
-        down = self.elements[first]
-        if isinstance(down, PathMap):
-            return down._find(components)
-        elif not components:
-            return down
-        else:
-            return None        
+        basename = components.pop(0)
+        for component in reversed(components):
+            self = self.elements.get(component)
+            if not isinstance(self, PathMap):
+                return None
+        return self.elements.get(basename)
     # If elements might be shared with another PathMap, copy it.
     def _unshare(self):
         if self.shared:
