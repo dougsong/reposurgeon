@@ -377,9 +377,8 @@ class GitExtractor:
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
         # git-export order.
-        refnames = self.refs.keys()
-        refnames.sort(key=lambda name: self.revlist.index(self.refs[name]))
-        for ref in refnames:
+        for ref in sorted(self.refs.iterkeys(),
+                key=lambda name: self.revlist.index(self.refs[name])):
             self.__branch_color(self.refs[ref], ref)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
         if uncolored:
@@ -1216,10 +1215,9 @@ class Commit(object):
                 modified = True
         if "Author" in msg:
             author_re = re.compile("Author[0-9]*$")
-            authorkeys = list(filter(author_re.match, list(msg.keys())))
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
-            authorkeys.sort()
+            authorkeys = sorted(filter(author_re.match, msg.keys()))
             for i in range(len(authorkeys) - len(self.authors)):
                 self.authors.append(Attribution())
             # Another potential minor bug: permuting the set of authors
@@ -1555,7 +1553,7 @@ class PathMap(object):
         "Return true if any filenames are present in the set."
         return any(self.elements.itervalues())
     def __iter__(self):
-        for (name, value) in sorted(self.elements.items()):
+        for (name, value) in sorted(self.elements.iteritems()):
             if isinstance(value, PathMap):
                 for path in value:
                     yield os.path.join(name, path)
@@ -1760,9 +1758,8 @@ class RepoStreamer:
                 reset.committish = self.markmap[revision]
                 repo.addEvent(reset)
             # Last, append tag objects.
-            tags = self.extractor.get_taglist()
-            tags.sort(key=lambda t: t.tagger.date)
-            for tag in tags:
+            for tag in sorted(self.extractor.get_taglist(),
+                              key=lambda t: t.tagger.date):
                 tag.committish = self.markmap.get(tag.committish)
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
@@ -3267,11 +3264,8 @@ class SubversionDumper:
             self.subfiles = 0
     @staticmethod
     def svnprops(pdict):
-        keys = pdict.keys()
-        keys.sort()
         flattened = ""
-        for key in keys:
-            val = pdict[key]
+        for key, val in sorted(pdict.iteritems()):
             if val:
                 flattened += "K %d\n%s\nV %d\n%s\n" \
                              % (len(key), key, len(val), val)
@@ -3746,10 +3740,9 @@ class Repository:
             raise Recoverable("bad syntax in fossils file.")
     def write_fossilmap(self, fp):
         "Dump fossil references."
-        cookies = list(self.fossil_map.keys())
-        cookies.sort(key=lambda x: (self.fossil_map[x].committer.date.timestamp, x))
-        for cookie in cookies:
-            commit = self.fossil_map[cookie]
+        for cookie, commit in sorted(
+                self.fossil_map.iteritems(),
+                key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:
@@ -4427,9 +4420,7 @@ class Repository:
                             modified.add(newpath)
                         fileop.target = newpath
                 event._pathset = None
-        modified = list(modified)
-        modified.sort()
-        return modified
+        return sorted(modified)
     def split_commit(self, where, splitfunc):
         event = self.events[where]
         # Fileop split happens here
@@ -5893,9 +5884,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
         for (i, e) in enumerate(self.chosen().events):
             if isinstance(e, Commit):
                 e.fileop_dump(i)
-        coverage = list(self.chosen().case_coverage)
-        coverage.sort()
-        sys.stdout.write("Case coverage: %s\n" % coverage)
+        sys.stdout.write("Case coverage: %s\n" % sorted(self.chosen().case_coverage))
 
     def help_index(self):
         print("""
@@ -6852,9 +6841,7 @@ first directory component from every path.
                 allpaths = set([])
                 self.chosen().path_walk(self.selection,
                                       lambda f: allpaths.add(f) or f)
-                allpaths = list(allpaths)
-                allpaths.sort()
-                parse.stdout.write("\n".join(allpaths) + "\n")
+                parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
                 return
         fields = rest.split()
         if fields[0] == "sub":
@@ -6884,9 +6871,7 @@ from the highest member (child) to the lowest (parent).
         self.set_selection_set(line)
         if not len(self.selection):
             raise Recoverable("merge requires a nonempty selection set.")
-        self.selection = list(self.selection)
-        self.selection.sort()
-        self.selection = [e for e in self.selection \
+        self.selection = [e for e in sorted(self.selection) \
                           if isinstance(repo.events[e], Commit)]
         if not self.selection or len(self.selection) < 2:
             raise Recoverable("merge requires two commit arguments.")
@@ -7203,9 +7188,7 @@ must resolve to exactly two commits.
             return
         repo = self.chosen()
         self.set_selection_set(line, list(range(len(self.chosen()))))
-        bounds = list(self.selection)
-        bounds.sort()
-        bounds = tuple([repo.events[i] for i in bounds])
+        bounds = tuple(repo.events[i] for i in sorted(self.selection))
         if len(self.selection) != 2 or \
                not isinstance(bounds[0], Commit) or \
                not isinstance(bounds[1], Commit):
