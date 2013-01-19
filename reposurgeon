@@ -1570,19 +1570,19 @@ class PathMap(object):
     def __str__(self):
         return '<PathMap: {}>'.format(' '.join(self))
     __repr__ = __str__
-    # Insert obj at the location given by components.  Destroys
-    # components as we recurse.
+    # Insert obj at the location given by components.
     def _insert(self, components, obj):
         if not components:
             return
         self._unshare()
-        first = components.pop()
-        if not components:
-            self.elements[first] = obj
-        else:
-            if not isinstance(self.elements.get(first), PathMap):
-                self.elements[first] = PathMap()
-            self.elements[first]._insert(components, obj)
+        basename = components.pop(0)
+        for component in reversed(components):
+            nxt = self.elements.get(component)
+            if not isinstance(nxt, PathMap):
+                nxt = self.elements[component] = PathMap()
+            self = nxt
+            self._unshare()
+        self.elements[basename] = obj
     # Remove the location given by components.
     def _remove(self, components):
         if not components:
