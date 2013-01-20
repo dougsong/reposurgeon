@@ -3616,6 +3616,7 @@ class Repository:
         self.sourcedir = None
         self.events = []    # A list of the events encountered, in order
         self._commits = None
+        self._branchset = None
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
@@ -3647,7 +3648,9 @@ class Repository:
         return sum([len(str(e)) for e in self.events])
     def branchset(self):
         "Return a set of branchnames in this repo."
-        return set(commit.branch for commit in self.commits())
+        if self._branchset is None:
+            self._branchset = set(commit.branch for commit in self.commits())
+        return self._branchset
     def index(self, obj):
         "Index of the specified object."
         for (ind, event) in enumerate(self.events):
