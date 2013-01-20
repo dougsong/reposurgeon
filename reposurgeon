@@ -6865,12 +6865,12 @@ first directory component from every path.
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
-            print "\n".join(modified)
+            print("\n".join(modified))
         elif fields[0] == "sup":
             try:
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[f.find(os.sep)+1:])
-                print "\n".join(modified)
+                print("\n".join(modified))
             except IndexError:
                 raise Recoverable("no / in sup path.")
 
