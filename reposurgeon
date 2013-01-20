@@ -3647,11 +3647,7 @@ class Repository:
         return sum([len(str(e)) for e in self.events])
     def branchlist(self):
         "Return a list of branchnames in this repo."
-        lst = []
-        for commit in self.commits():
-            if commit.branch not in lst:
-                lst.append(commit.branch)
-        return lst
+        return list(set(commit.branch for commit in self.commits()))
     def index(self, obj):
         "Index of the specified object."
         for (ind, event) in enumerate(self.events):
