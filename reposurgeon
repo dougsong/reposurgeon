@@ -5456,9 +5456,8 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                             break
                     # Next, search branches
                     if not matched:
-                        branchlist = self.chosen().branchlist()
-                        branchlist.sort(key=len, reverse=True) # longest name first
-                        for symbol in branchlist:
+                        for symbol in sorted(self.chosen().branchlist(),
+                                             key=len, reverse=True): # longest name first
                             if ref == os.path.basename(symbol):
                                 loc = None
                                 # Find the last commit with this branchname
@@ -5597,10 +5596,9 @@ at write time. This option is mainly useful for debugging conversion edge cases.
             return None
         else:
             self.pop()
-            branchlist = self.chosen().branchlist()
-            branchlist.sort(key=len, reverse=True) # longest name first
             selection = []
-            for symbol in branchlist:
+            for symbol in sorted(self.chosen().branchlist(),
+                                 key=len, reverse=True): # longest name first
                 if self.line.startswith(os.path.basename(symbol)):
                     for (i, event) in enumerate(self.chosen()):
                         if isinstance(event, Reset):
