@@ -8,7 +8,7 @@
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi
-import time, calendar, unittest
+import time, calendar, unittest, itertools
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -3285,10 +3285,9 @@ class SubversionDumper:
         # should at least round-trip with the logic in the Subversion
         # dump parser.
         parents = parents or []
-        if parents[1:]:
-            ancestral = parents[1:]
-            ancestral.sort()
-            ancestral = ".".join(str(x) for x in ancestral)
+        if len(parents) > 1:
+            ancestral = ".".join(str(x) for x in
+                    sorted(itertools.islice(parents, 1, None)))
             revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
