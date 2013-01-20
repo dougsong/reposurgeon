@@ -3645,9 +3645,9 @@ class Repository:
     def size(self):
         "Return the size of this import stream, for statistics display."
         return sum([len(str(e)) for e in self.events])
-    def branchlist(self):
-        "Return a list of branchnames in this repo."
-        return list(set(commit.branch for commit in self.commits()))
+    def branchset(self):
+        "Return a set of branchnames in this repo."
+        return set(commit.branch for commit in self.commits())
     def index(self, obj):
         "Index of the specified object."
         for (ind, event) in enumerate(self.events):
@@ -4650,7 +4650,7 @@ def rebuild_repo(repo, target, preferred):
         raise Recoverable("%s repositories are supported for read only." \
                           % preferred.name)
 
-    if not os.path.join("refs", "heads", "master") in repo.branchlist():
+    if not os.path.join("refs", "heads", "master") in repo.branchset():
         complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
 
     # Create a new empty directory to do the rebuild in
@@ -5070,7 +5070,7 @@ class RepositoryList:
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged.declare_sequence_mutation()
-        expunged_branches = expunged.branchlist()
+        expunged_branches = expunged.branchset()
         for event in self.repo:
             if event.deletehook:
                 expunged.addEvent(event.deletehook)
@@ -5456,7 +5456,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
                             break
                     # Next, search branches
                     if not matched:
-                        for symbol in sorted(self.chosen().branchlist(),
+                        for symbol in sorted(self.chosen().branchset(),
                                              key=len, reverse=True): # longest name first
                             if ref == os.path.basename(symbol):
                                 loc = None
@@ -5597,7 +5597,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         else:
             self.pop()
             selection = []
-            for symbol in sorted(self.chosen().branchlist(),
+            for symbol in sorted(self.chosen().branchset(),
                                  key=len, reverse=True): # longest name first
                 if self.line.startswith(os.path.basename(symbol)):
                     for (i, event) in enumerate(self.chosen()):
@@ -5824,7 +5824,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
 """)
     def do_names(self, line):
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for branch in self.chosen().branchlist():
+            for branch in self.chosen().branchset():
                 parse.stdout.write("branch %s" % branch)
             for event in self.chosen():
                 if isinstance(event, Tag):
@@ -6917,7 +6917,7 @@ is prepended.
         (branchname, line) = RepoSurgeon.pop_token(line)
         if not "/" in branchname:
             branchname = 'refs/heads/' + branchname
-        if branchname not in repo.branchlist():
+        if branchname not in repo.branchset():
             raise Recoverable("no such branch as %s" % branchname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "rename":
@@ -6926,7 +6926,7 @@ is prepended.
                 raise Recoverable("new branch name must be nonempty.")
             if not "/" in newname:
                 newname = 'refs/heads/' + newname
-            if newname in repo.branchlist():
+            if newname in repo.branchset():
                 raise Recoverable("there is already a branch named '%s'." \
                                   % newname)
             for event in repo:
