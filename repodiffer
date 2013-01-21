@@ -130,7 +130,9 @@ class Baton:
         return False
 
 class Commit(object):
-    __slots__ = ("repo", "text", "commit", "tree", "authordate", "matched", "parents") 
+    __slots__ = ("repo", "text", "commit", "tree", "author", "committer",
+                 "comment", "authordate", "commitdate", "matched",
+                 "parents", "mark") 
     def __init__(self, repo, text):
         self.repo = repo
         self.text = text
