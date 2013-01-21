@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+2.14: 2013-01-19
+     Dramatic decrease in memory footprint on large repositories.
+     Improvements in DAG visualization via 'graph'.
+
 2.13: 2013-01-08
      The new 'graph' command supports making commit graphs in the DOT language.
      On read of an import stream, interpret a "cvs-revisions" property.
