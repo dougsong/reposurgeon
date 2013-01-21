@@ -130,8 +130,8 @@ class Baton:
         return False
 
 class Commit(object):
+    __slots__ = ("repo", "text", "commit", "tree", "authordate", "matched", "parents") 
     def __init__(self, repo, text):
-        __slots__ = ("repo", "text", "commit", "tree", "authordate", "matched", "parents") 
         self.repo = repo
         self.text = text
         self.commit = None
@@ -269,8 +269,8 @@ class Commit(object):
         return not self.difference(other)
 
 class Tag(object):
+    __slots__ = ("repo", "name", "ref", "comment", "tagger")
     def __init__(self, repo, name, ref, comment=None):
-        __slots__ = ("repo", "name", "ref", "comment", "tagger")
         self.repo = repo
         self.name = name
         self.ref = ref
