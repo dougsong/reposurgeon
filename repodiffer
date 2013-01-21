@@ -129,8 +129,9 @@ class Baton:
                               % (time.time() - self.time, self.endmsg))
         return False
 
-class Commit:
+class Commit(object):
     def __init__(self, repo, text):
+        __slots__ = ("repo", "text", "commit", "tree", "authordate", "matched", "parents") 
         self.repo = repo
         self.text = text
         self.commit = None
@@ -267,8 +268,9 @@ class Commit:
     def __eq__(self, other):
         return not self.difference(other)
 
-class Tag:
+class Tag(object):
     def __init__(self, repo, name, ref, comment=None):
+        __slots__ = ("repo", "name", "ref", "comment", "tagger")
         self.repo = repo
         self.name = name
         self.ref = ref
