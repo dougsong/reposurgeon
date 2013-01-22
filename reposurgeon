@@ -1575,7 +1575,7 @@ class PathMap(object):
         if not components:
             return
         self._unshare()
-        basename = components.pop(0)
+        basename = components.popleft()
         for component in reversed(components):
             nxt = self.elements.get(component)
             if not isinstance(nxt, PathMap):
@@ -1588,7 +1588,7 @@ class PathMap(object):
         if not components:
             return
         self._unshare()
-        basename = components.pop(0)
+        basename = components.popleft()
         for component in reversed(components):
             self = self.elements.get(component)
             if not isinstance(self, PathMap):
@@ -1602,7 +1602,7 @@ class PathMap(object):
     def _find(self, components):
         if not components:
             return self
-        basename = components.pop(0)
+        basename = components.popleft()
         for component in reversed(components):
             self = self.elements.get(component)
             if not isinstance(self, PathMap):
@@ -1617,12 +1617,12 @@ class PathMap(object):
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
-        components = []
+        components = collections.deque()
         while True:
             dirname, basename = os.path.split(path)
-            if basename != '':
+            if basename:
                 components.append(basename)
-            if dirname == path or dirname == '':
+            if dirname == path or not dirname:
                 break
             path = dirname
         return components
