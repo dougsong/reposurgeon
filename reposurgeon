@@ -1583,20 +1583,18 @@ class PathMap(object):
             if not isinstance(self.elements.get(first), PathMap):
                 self.elements[first] = PathMap()
             self.elements[first]._insert(components, obj)
-    # Remove the location given by components.  Destroys components as
-    # we recurse.
+    # Remove the location given by components.
     def _remove(self, components):
         if not components:
             return
         self._unshare()
-        first = components.pop()
-        if not components:
-            if first in self.elements:
-                del self.elements[first]
-        else:
-            obj = self.elements.get(first)
-            if isinstance(obj, PathMap):
-                obj._remove(components)
+        basename = components.pop(0)
+        for component in reversed(components):
+            self = self.elements.get(component)
+            if not isinstance(self, PathMap):
+                return
+            self._unshare()
+        self.elements.pop(basename, None) # del if present else ignore KeyError
     # Return the object at the location given by components--either
     # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
