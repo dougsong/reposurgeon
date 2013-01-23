@@ -8,7 +8,7 @@
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi
-import time, calendar, unittest, itertools
+import time, calendar, unittest, itertools, operator
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -1757,14 +1757,14 @@ class RepoStreamer:
                 repo.addEvent(commit)
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
-                                                key=lambda (k, v): v):
+                                                key=operator.itemgetter(1)):
                 reset = Reset()
                 reset.ref = resetname
                 reset.committish = self.markmap[revision]
                 repo.addEvent(reset)
             # Last, append tag objects.
             for tag in sorted(self.extractor.get_taglist(),
-                              key=lambda t: t.tagger.date):
+                              key=operator.attrgetter("tagger.date")):
                 tag.committish = self.markmap.get(tag.committish)
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
@@ -2382,7 +2382,7 @@ class StreamParser:
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
             baton.bumpcounter()
-        copynodes.sort(key=lambda n: n.from_rev)
+        copynodes.sort(key=operator.attrgetter("from_rev"))
         baton.endcounter()
         baton.twirl('+')
         # Build filemaps.
@@ -2853,7 +2853,7 @@ class StreamParser:
                 newcommits.append(commit)
             # If the commit is mixed, or there are deletealls left over,
             # handle that.
-            oplist.sort(key=lambda b: b[0])
+            oplist.sort(key=operator.itemgetter(0))
             for (i, (branch, fileops)) in enumerate(oplist):
                 split = copy.copy(commit)
                 split.common = branch
@@ -4945,7 +4945,7 @@ class RepositoryList:
         return True
     def unite(self, factors):
         "Unite multiple repos into a union repo."
-        factors.sort(key=lambda x: x.earliest())
+        factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.commits()[0] for x in factors]
         union = Repository("+".join([r.name for r in factors]))
         os.mkdir(union.subdir())
@@ -6075,7 +6075,7 @@ repository, '-' for others.
             if verbose > 0:
                 complain("no repositories are loaded.")
                 return
-        self.repolist.sort(key=lambda x: x.name)
+        self.repolist.sort(key=operator.attrgetter("name"))
         if not line:
             for repo in self.repolist:
                 status =  '-'
