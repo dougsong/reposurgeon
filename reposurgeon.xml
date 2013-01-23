@@ -56,10 +56,8 @@ Subversion repositories has some significant limitations, discussed in
 the section on <link linkend="subversion">Working With
 Subversion</link>.</para>
 
-<para>RCS and CVS are supported for read only, not write. For CVS, run
-<command>reposurgeon</command> in a checkout directory, not a
-repository. Also note that the RCS front end may fail on RCS collections
-that are both multi-file and multi-branch; this case is untested.</para>
+<para>RCS and CVS are supported for read only, not write.  Both must be
+run from within a repository directory.</para>
 
 <!--
 <para>In order to deal with version-control systems that do not have
