@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.15: 
+     Switch to cvs-fast-export for reading RCS and CVS collections.
+
 2.14: 2013-01-19
      Dramatic decrease in memory footprint on large repositories.
      Improvements in DAG visualization via 'graph'.
