@@ -377,9 +377,9 @@ class GitExtractor:
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
         # git-export order.
-        for ref in sorted(self.refs.iterkeys(),
-                key=lambda name: self.revlist.index(self.refs[name])):
-            self.__branch_color(self.refs[ref], ref)
+        for refname, refobj in sorted(self.refs.iteritems(),
+                key=lambda ref: self.revlist.index(ref[1])):
+            self.__branch_color(refobj, refname)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
         if uncolored:
             if verbose >= 1:
