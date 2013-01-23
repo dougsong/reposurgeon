@@ -128,6 +128,12 @@ converting. Each line should be in the following form:</p>
 foonly=Fred Foonly &lt;foonly@foobar.com&gt;
 </pre>
 
+<p>You can optionally specify an third field that is a timezone
+description, either an ISO8601 offset (like "-0500") or a named 
+entry in the Unix timezon file (like "America/Chicago").  If you do,
+this timezone will be attached to the timestamps on commits made by
+this person.</p>
+
 <p>Using the generic Makefile for Subversion, "make $(PROJECT).map" will
 display a start on an author-map file.  Edit in real
 names and addresses to the right of the equals signs.</p>
@@ -166,9 +172,9 @@ href="http://www.catb.org/~esr/reposurgeon/features.html">description</a>
 of the things it does that other conversion tools don't.)  </p>
 
 <p>So, install <code>reposurgeon</code> and whatever tool it needs to
-read your reposotory.  That will be <code>cvsps</code> at version 3.0
-or later for CVS, or the Subversion tools themselves for
-Subversion.</p>
+read your reposotory.  That will be <a
+href="http://www.catb.org/~esr/cvs-fast-export">cvs-fast-export</a>
+for CVS, or the Subversion tools themselves for Subversion.</p>
 
 <p>The generic-workflow Makefile will call <code>reposurgeon</code>
 for you, interpreting your $(PROJECT).lift file, when you type "make".
@@ -202,9 +208,10 @@ to get to RCS, then follow the directions for RCS. There is a script
 called sccs2git on CPAN which I don't recommend, as it is poorly
 documented and makes no attempt to group commits into changesets.</p>
 
-<p>RCS: Use <a
-href="http://git.oblomov.eu/rcs-fast-export">rcs-fast-export</a> to
-get to git. It will group your RCS commits into changesets.</p>
+<p>RCS: reposurgeon will read an RCS collection.  It uses <a
+href="http://www.catb.org/~esr/cvs-fast-export">cvs-fast-export</a>,
+which despite its name does not actually require CVS metadata other than
+the RCS master files that store the content.</p>
 
 <p>For other systems, see the <a
 href="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools#Interaction_with_other_Revision_Control_Systems">Git
@@ -593,6 +600,7 @@ Makefile.</p>
 
 <p>3.5 (2013-01-09) Update for reposurgeon 2.13 and the 'graph' command.</p>
 
+<p>3.6 (2013-01-22) Update for reposurgeon 2.15 and cvs-fast-export.</p>
 </div>
 <hr />
 </body>
