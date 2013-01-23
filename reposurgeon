@@ -4164,17 +4164,18 @@ class Repository:
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         parent.pushed_to = True
-                if "tagback" not in policy and "tagforward" not in policy:
+                filter_only = True
+                if "tagforward" in policy and event.children():
+                    filter_only, mark = False, event.children()[0].mark
+                elif "tagback" in policy and event.parents():
+                    filter_only, mark = False, event.parents()[0].mark
+                if filter_only:
                     self.events = [t for t in self.events if not (isinstance(t, Tag)
                                                         and t.committish == event.mark)]
-                elif "tagforward" in policy:
+                else:
                     for t in self.events:
                         if (isinstance(t, Tag) or isinstance(t, Reset)) and t.committish == event.mark:
-                            t.committish = event.children()[0].mark
-                elif "tagback" in policy:
-                    for t in self.events:
-                        if (isinstance(t, Tag) or isinstance(t, Reset)) and t.committish == event.mark:
-                            t.committish = event.parents()[0].mark
+                            t.committish = mark
                 # And remove the deleted event
                 self.events.pop(ei)
             else:
