@@ -3284,10 +3284,10 @@ class SubversionDumper:
         # than branch merging - but it's better than nothing, and
         # should at least round-trip with the logic in the Subversion
         # dump parser.
-        parents = parents or []
-        if len(parents) > 1:
-            ancestral = ".".join(str(x) for x in
-                    sorted(itertools.islice(parents, 1, None)))
+        if len(parents or []) > 1:
+            parents = iter(parents)
+            next(parents) # ignore main parent
+            ancestral = ".".join(itertools.imap(str, sorted(parents)))
             revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
