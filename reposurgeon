@@ -1557,8 +1557,6 @@ class PathMap(object):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
         basename, components = self._split_path(path)
-        if not basename:
-            return
         self._unshare()
         for component in components:
             self = self.elements.get(component)
