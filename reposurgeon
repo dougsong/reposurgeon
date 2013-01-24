@@ -1556,7 +1556,17 @@ class PathMap(object):
     def __delitem__(self, path):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
-        self._remove(self._split_path(path))
+        components = self._split_path(path)
+        if not components:
+            return
+        self._unshare()
+        basename = components.popleft()
+        for component in reversed(components):
+            self = self.elements.get(component)
+            if not isinstance(self, PathMap):
+                return
+            self._unshare()
+        self.elements.pop(basename, None) # del if present else ignore KeyError
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(self.elements.itervalues())
@@ -1584,18 +1594,6 @@ class PathMap(object):
             self = nxt
             self._unshare()
         self.elements[basename] = obj
-    # Remove the location given by components.
-    def _remove(self, components):
-        if not components:
-            return
-        self._unshare()
-        basename = components.popleft()
-        for component in reversed(components):
-            self = self.elements.get(component)
-            if not isinstance(self, PathMap):
-                return
-            self._unshare()
-        self.elements.pop(basename, None) # del if present else ignore KeyError
     # Return the object at the location given by components--either
     # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
