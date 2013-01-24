@@ -1556,12 +1556,11 @@ class PathMap(object):
     def __delitem__(self, path):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
-        components = self._split_path(path)
-        if not components:
+        basename, components = self._split_path(path)
+        if not basename:
             return
         self._unshare()
-        basename = components.popleft()
-        for component in reversed(components):
+        for component in components:
             self = self.elements.get(component)
             if not isinstance(self, PathMap):
                 return
@@ -1582,12 +1581,11 @@ class PathMap(object):
     __repr__ = __str__
     # Insert obj at the location given by components.
     def _insert(self, path, obj):
-        components = self._split_path(path)
-        if not components:
+        basename, components = self._split_path(path)
+        if not basename:
             return
         self._unshare()
-        basename = components.popleft()
-        for component in reversed(components):
+        for component in components:
             nxt = self.elements.get(component)
             if not isinstance(nxt, PathMap):
                 nxt = self.elements[component] = PathMap()
@@ -1599,11 +1597,10 @@ class PathMap(object):
     # containing the descendents if it's a directory name.  Return
     # None if the location does not exist in the set.
     def _find(self, path):
-        components = self._split_path(path)
-        if not components:
+        basename, components = self._split_path(path)
+        if not basename:
             return self
-        basename = components.popleft()
-        for component in reversed(components):
+        for component in components:
             self = self.elements.get(component)
             if not isinstance(self, PathMap):
                 return None
@@ -1625,7 +1622,7 @@ class PathMap(object):
             if dirname == path or not dirname:
                 break
             path = dirname
-        return components
+        return (components.popleft() if components else None, reversed(components))
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
