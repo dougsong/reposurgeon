@@ -1532,7 +1532,7 @@ class PathMap(object):
             return
         if isinstance(source_obj, PathMap):
             source_obj = source_obj.snapshot()
-        self._insert(self._split_path(target_path), source_obj)
+        self._insert(target_path, source_obj)
     def ls_R(self, path):
         elt = self._find(self._split_path(path))
         if isinstance(elt, PathMap):
@@ -1552,7 +1552,7 @@ class PathMap(object):
     def __setitem__(self, path, value):
         "Add a filename to the set, with associated value (not None)."
         assert value is not None
-        self._insert(self._split_path(path), value)
+        self._insert(path, value)
     def __delitem__(self, path):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
@@ -1571,7 +1571,8 @@ class PathMap(object):
         return '<PathMap: {}>'.format(' '.join(self))
     __repr__ = __str__
     # Insert obj at the location given by components.
-    def _insert(self, components, obj):
+    def _insert(self, path, obj):
+        components = self._split_path(path)
         if not components:
             return
         self._unshare()
