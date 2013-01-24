@@ -1527,24 +1527,24 @@ class PathMap(object):
         return PathMap(self.elements)
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
-        source_obj = source_pathset._find(self._split_path(source_path))
+        source_obj = source_pathset._find(source_path)
         if source_obj is None:
             return
         if isinstance(source_obj, PathMap):
             source_obj = source_obj.snapshot()
         self._insert(target_path, source_obj)
     def ls_R(self, path):
-        elt = self._find(self._split_path(path))
+        elt = self._find(path)
         if isinstance(elt, PathMap):
             return iter(elt)
         return iter(()) # empty iterator
     def __contains__(self, path):
         "Return true if path is present in the set as a file."
-        elt = self._find(self._split_path(path))
+        elt = self._find(path)
         return not isinstance(elt, PathMap) and elt is not None
     def __getitem__(self, path):
         "Return the value associated with a specified path."
-        elt = self._find(self._split_path(path))
+        elt = self._find(path)
         if elt is None or isinstance(elt, PathMap):
             # This is not quite like indexing, which would throw IndexError
             return None
@@ -1600,7 +1600,8 @@ class PathMap(object):
     # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
     # None if the location does not exist in the set.
-    def _find(self, components):
+    def _find(self, path):
+        components = self._split_path(path)
         if not components:
             return self
         basename = components.popleft()
