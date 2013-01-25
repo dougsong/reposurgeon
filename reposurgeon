@@ -848,7 +848,7 @@ class Tag:
         if self.tagger:
             self.tagger.email_out(modifiers, msg, "Tagger")
         msg.set_payload(self.comment)
-        if not self.comment.endswith("\n"):
+        if self.comment and not self.comment.endswith("\n"):
             complain("in tag %s, comment was not LF-terminated." % self.name)
         return str(msg)
     def email_in(self, msg):
