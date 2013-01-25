@@ -853,7 +853,7 @@ class Tag:
         return str(msg)
     def email_in(self, msg):
         "Update this Tag from a parsed email message."
-        if "Tag-Name" not in msg or "Tagger" not in msg:
+        if "Tag-Name" not in msg:
             raise Fatal("update to tag %s is malformed" % self.name)
         modified = False
         newname = msg["Tag-Name"]
@@ -900,7 +900,7 @@ class Tag:
         st = "tag %s\nfrom %s\n" % (self.name, self.committish)
         if self.tagger:
             st += "tagger %s\n" % self.tagger
-        st += "data %d\n%s\n" % (len(self.comment), self.comment,)
+        st += "data %d\n%s\n" % (len(self.comment or ""), self.comment or "",)
         return st
     def __str__(self):
         return self.dump()
@@ -6350,7 +6350,7 @@ set of modifications actually made is written to the output file.
             attribution_map[stamp] = commit
             attribution_counts[stamp] += 1
         for event in self.chosen().events:
-            if isinstance(event, Tag):
+            if isinstance(event, Tag) and event.tagger:
                 stamp = event.tagger.action_stamp()
                 attribution_map[stamp] = event
                 attribution_counts[stamp] += 1
