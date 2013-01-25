@@ -35,7 +35,7 @@ ifeq ($(SOURCE_VCS),svn)
 
 # Build the fast-import stream from the Subversion stream dump
 $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "prefer git" "script $(PROJECT).lift" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
@@ -75,9 +75,9 @@ ifeq ($(SOURCE_VCS),cvs)
 $(PROJECT)-checkout:
 	cvs -q "-d:ext:$(CVS_HOST)/$(PROJECT)" co $(PROJECT) $(PROJECT)-checkout
 
-# Build the fast-import stream from the Subversion stream dump
+# Build the fast-import stream from the repository
 $(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT)-checkout" "prefer git" "script $(PROJECT).lift" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "read $(PROJECT)-checkout" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
 
 endif
 
