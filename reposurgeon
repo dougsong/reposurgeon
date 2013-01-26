@@ -5873,11 +5873,6 @@ List all known symbolic names of branches and tags. Supports > redirection.
                     for i in range(len(self.callstack[-1])):
                         scriptline = scriptline.replace('$' + str(i), self.callstack[-1][i])
                     scriptline =  scriptline.replace('$$', str(os.getpid()))
-                    if self.selection is None:
-                        reselect = ""
-                    else:
-                        reselect = ",".join([str(i+1) for i in self.selection])
-                    scriptline =  scriptline.replace('$%', reselect)
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
