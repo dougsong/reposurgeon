@@ -13,6 +13,8 @@ split :24 at 1
 reposurgeon: fileop index out of range
 split :25 at 2
 reposurgeon: fileop argument doesn't point at a commit
+prefer git
+git is the preferred type.
 inspect
 Event 1 =================================================================
 blob
