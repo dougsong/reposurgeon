@@ -4,7 +4,7 @@
 #
 # Requires git and tar(1).
 
-import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time
+import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time, calendar
 
 DEBUG_GENERAL  = 1
 DEBUG_COMMANDS = 2
@@ -165,14 +165,21 @@ class Commit(object):
         return int(self.commitdate.split()[0])
     @staticmethod
     def idname(fld):
-        "Relevant part of user name."
+        "Human part of user name."
         if "email" in ignores:
             return fld.split("<")[0].strip()
         else:
             return fld
-    def action_stamp(self):
-        "A timestamp/committer pair.  Should be unique!"
+    @staticmethod
+    def email(fld):
+        "Email part of user name."
+        return fld.split("<")[1].split(">")[0]
+    def name_stamp(self):
+        "A timestamp/committer pair using full name.  Should be unique!"
         return(Commit.idname(self.committer), self.timestamp())
+    def action_stamp(self):
+        "A timestamp/committer pair using email name.  Should be unique!"
+        return(Commit.email(self.committer), self.timestamp())
     @staticmethod
     def date_extract(text):
         "Extract a git-format date"
@@ -411,9 +418,27 @@ class Difference:
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+def read_fossilmap(fn):
+    fossildict = {}
+    for line in open(fn):
+        (fossil, stamp) = line.split()
+        (timefield, person) = stamp.split('!')
+        if ':' in person:
+            (person, seq) = person.split(':')
+            seq = int(seq) - 1
+        else:
+            seq = 0
+        assert fossil and timefield and person
+        rfc3339date = time.strptime(timefield, "%Y-%m-%dT%H:%M:%SZ")
+        timestamp = calendar.timegm(rfc3339date)
+        # Presently, ignore CVS cookies as they can't be mapped to changesets
+        if not fossil.startswith("CVS"):
+            fossildict[(person, str(timestamp))] = fossil
+    return fossildict
+
 diffdict = {}
 
-def report_pair(a, b):
+def report_pair(a, b, fossils):
     global n_equal, n_insertions, n_deletions, n_changed, spancount
     tell = ""
     if a is None:
@@ -437,16 +462,25 @@ def report_pair(a, b):
         n_equal += 1
         spancount += 1
         if showequal:
-            tell += "equal: %s == %s\n" % (a, b)
+            tell += "equal: %s == %s" % (a, b)
+            fossil = fossils and fossils.get(a.action_stamp())
+            if fossil:
+                tell += " (" + fossil + ")"
+            tell += "\n"
         return tell
     if spancount and not showequal:
         tell += "%d equal pairs.\n" % spancount
         spancount = 0
     n_changed += 1
-    if diff in diffdict:
-        tell += "%s -> %s: same differences as for %s.\n" % (a, b, diffdict[diff])
+    fossil = fossils and fossils.get(a.name_stamp())
+    if fossil:
+        fossilid += "(" + fossil + ") "
     else:
-        tell += "changed: %s -> %s in %s.\n" % (a, b, ",".join(diff.difference_types))
+        fossilid = ""
+    if diff in diffdict:
+        tell += "%s%s -> %s: same differences as for %s.\n" % (fossilid, a, b, diffdict[diff])
+    else:
+        tell += "changed: %s%s -> %s in %s.\n" % (fossilid, a, b, ",".join(diff.difference_types))
         if not "parents" in diff.difference_types:
             diffdict[diff] = "%s -> %s" % (a, b)
         if diff.left_only:
@@ -482,7 +516,7 @@ def diff_single(single, alpha, beta):
     ignores += "parents"
     sys.stdout.write(report_pair(ac, bc))
 
-def diff_all(alpha, beta):
+def diff_all(alpha, beta, fossils):
     "Walk through time-ordered commit pairs, finding differences."
     alpha.sort()
     beta.sort()
@@ -491,10 +525,10 @@ def diff_all(alpha, beta):
     duplicates =  []
     for a in alpha.signature:
         for b in beta.signature:
-            if a.action_stamp() == b.action_stamp():
+            if a.name_stamp() == b.name_stamp():
                 # Throw out duplicates so all our pairs consist of
                 # unique matches.
-                if a.action_stamp() in duplicates:
+                if a.name_stamp() in duplicates:
                     continue
                 elif a.matched or b.matched:
                     continue
@@ -535,7 +569,7 @@ def diff_all(alpha, beta):
         # Report on the pair table
         say = ""
         for (a, b) in pairs:
-            say += report_pair(a, b)
+            say += report_pair(a, b, fossils)
             baton.bumpcounter()
     sys.stdout.write(say)
     if n_changed or n_deletions or n_insertions:
@@ -566,13 +600,14 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:qs:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "single=", "quiet", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "fossil-map=", "single=", "quiet", "verbose="])
     alpha = None
     beta = None
     changes_only = False
     showequal = False
     fullhash = False
     ignores = ""
+    fossilmap = None
     single = None
     quiet = False
     verbose = 0
@@ -581,12 +616,14 @@ if __name__ == '__main__':
     for (opt, val) in options:
         if opt == '-c' or opt == '--changes-only':
             changes_only = True
-        if opt == '-e' or opt == '--show-equal':
+        elif opt == '-e' or opt == '--show-equal':
             showequal = True
         elif opt == '-f' or opt == '--full-hash':
             fullhash = True
         elif opt == '-i' or opt == '--ignore':
             ignores = val
+        elif opt == '-m' or opt == '--fossil-map':
+            fossilmap = val
         elif opt == '-s' or opt == '--single':
             single = val
         elif opt == '-q' or opt == '--quiet':
@@ -607,10 +644,11 @@ if __name__ == '__main__':
     try:
         alpha = Repository(alpha)
         beta  = Repository(beta)
+        fossils = fossilmap and read_fossilmap(fossilmap)
         if single:
             diff_single(single, alpha, beta)
         else:
-            diff_all(alpha, beta)
+            diff_all(alpha, beta, fossils)
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
         del alpha
