@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.17:
-     repodiffer can now take a map file and show fossil IDa with diff reoports.
+     repodiffer can now take a map file and show fossil IDs with diff reports.
 
 2.16: 2013-01-25
      Fix a memoization bug that resulted in misbehavior after branch cuts.

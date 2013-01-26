@@ -639,7 +639,7 @@ which will yield a viewable image. </para>
 <para>You may find a script like this useful:
 
 <programlisting>
-graph $% &gt;/tmp/foo$$
+graph $1 &gt;/tmp/foo$$
 shell dot &lt;/tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 </programlisting>
 
