@@ -3261,7 +3261,8 @@ class StreamParser:
                    and commit.children()]
         for commit in dubious:
             self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
-        self.repo.vcs = [vcstype for vcstype in vcstypes if vcstype.name == "svn"][0]
+        # FIXME: Desirable, but causes ugly breakage in regression tests.
+        #self.repo.vcs = [vcstype for vcstype in vcstypes if vcstype.name == "svn"][0]
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
