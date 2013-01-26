@@ -10,9 +10,9 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .SUFFIXES: .svn .chk .fi .map
 
 .svn.chk:
-	reposurgeon "read $<" "write" >$@ 2>&1
+	reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
-	reposurgeon "read $<" "write" >$@
+	reposurgeon "read $<" "prefer git" "write" >$@
 .svn.map:
 	reposurgeon "read $<" "fossils write" >$@
 
@@ -132,7 +132,7 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
-		reposurgeon "read $${test}.svn" "write" >/tmp/regress 2>&1; \
+		reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \

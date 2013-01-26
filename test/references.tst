@@ -35,4 +35,5 @@ Deleted unused items in HIDItem structure.
 EOF
 inspect <352>
 references lift
+prefer git
 write
