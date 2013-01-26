@@ -115,7 +115,7 @@ compare: $(PROJECT)-git-svn $(PROJECT)-git
 # Compare all files in all revisions.  Ignore .gitignores, as reposurgeon
 # makes them  but git-svn does not.
 repodiffer: $(PROJECT)-git-svn $(PROJECT)-git
-	repodiffer --ignore="gitignore,comment" $(PROJECT)-git $(PROJECT)-git-svn | tee REPODIFFER.LOG
+	repodiffer --ignore="gitignore,comment" --fossil-map=$(PROJECT).fo $(PROJECT)-git $(PROJECT)-git-svn | tee REPODIFFER.LOG
 
 endif
 

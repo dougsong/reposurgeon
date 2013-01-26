@@ -179,7 +179,7 @@ class Commit(object):
         return(Commit.idname(self.committer), self.timestamp())
     def action_stamp(self):
         "A timestamp/committer pair using email name.  Should be unique!"
-        return(Commit.email(self.committer), self.timestamp())
+        return(Commit.email(self.committer), str(self.timestamp()))
     @staticmethod
     def date_extract(text):
         "Extract a git-format date"
@@ -472,9 +472,9 @@ def report_pair(a, b, fossils):
         tell += "%d equal pairs.\n" % spancount
         spancount = 0
     n_changed += 1
-    fossil = fossils and fossils.get(a.name_stamp())
+    fossil = fossils and fossils.get(a.action_stamp())
     if fossil:
-        fossilid += "(" + fossil + ") "
+        fossilid = "(" + fossil + ") "
     else:
         fossilid = ""
     if diff in diffdict:
