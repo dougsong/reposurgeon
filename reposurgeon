@@ -1139,6 +1139,15 @@ class Commit(object):
         if repo is not None:
             c.moveto(repo)
         return c
+    def showfossil(self):
+        "Show a fossil ID in the expected form for the ancestral system."
+        if not self.fossil_id:
+            return None
+        # Special case for Subversion
+        if self.repo and self.repo.vcs and self.repo.vcs.name == "svn":
+            return "r" + self.fossil_id
+        else:
+            return self.fossil_id
     def lister(self, _modifiers, eventnum, cols):
         "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
@@ -3252,6 +3261,7 @@ class StreamParser:
                    and commit.children()]
         for commit in dubious:
             self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
+        self.repo.vcs = [vcstype for vcstype in vcstypes if vcstype.name == "svn"][0]
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
@@ -6269,8 +6279,7 @@ for graphviz.
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
                     cid = event.mark
                     if event.fossil_id:
-                        # FIXME: This will do the wrong thing on non-SVN.
-                        cid += " = r" + event.fossil_id
+                        cid += " = " + event.showfossil()
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
                 if isinstance(event, Tag):
