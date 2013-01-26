@@ -497,7 +497,7 @@ def report_pair(a, b, fossils):
                 tell += ("  " + fn + "\n")
     return tell
 
-def diff_single(single, alpha, beta):
+def diff_single(single, alpha, beta, fossils):
     "Examine the difference between two specified commits."
     global ignores
     try:
@@ -514,7 +514,7 @@ def diff_single(single, alpha, beta):
         sys.stderr.write("repodiffer: no match for %s\n" % b)
         sys.exit(1)
     ignores += "parents"
-    sys.stdout.write(report_pair(ac, bc))
+    sys.stdout.write(report_pair(ac, bc, fossils))
 
 def diff_all(alpha, beta, fossils):
     "Walk through time-ordered commit pairs, finding differences."
@@ -646,7 +646,7 @@ if __name__ == '__main__':
         beta  = Repository(beta)
         fossils = fossilmap and read_fossilmap(fossilmap)
         if single:
-            diff_single(single, alpha, beta)
+            diff_single(single, alpha, beta, fossils)
         else:
             diff_all(alpha, beta, fossils)
     except Fatal, err:
