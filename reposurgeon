@@ -6267,11 +6267,15 @@ for graphviz.
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
+                    cid = event.mark
+                    if event.fossil_id:
+                        # FIXME: This will do the wrong thing on non-SVN.
+                        cid += " = r" + event.fossil_id
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
-                                       % (event.mark[1:], event.mark, summary))
+                                       % (event.mark[1:], cid, summary))
                 if isinstance(event, Tag):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
-                    parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
+                    parse.stdout.write('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.name, event.name, summary))
             for ei in self.selection:
                 event = self.chosen().events[ei]
