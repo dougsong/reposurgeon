@@ -364,7 +364,8 @@ precedence than intersection, but you may use curly brackets '{' and
 members' neighbors and referents.  This extends the set to include the
 parents and children of all commits in the set, and the referents of
 any tags and resets in the set. Each blob reference in the set is
-replaced by all commits that refer to it.</para>
+replaced by all commits that refer to it. The '?' can be repeated
+to extend the neighborhood depth.</para>
 
 <para>Note that
 

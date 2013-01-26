@@ -5268,7 +5268,10 @@ at write time. This option is mainly useful for debugging conversion edge cases.
         self.line = self.line.lstrip()
         value = self.eval_disjunct()
         c = self.peek()
-        if c == '?':
+        while True:
+            c = self.peek()
+            if c != '?':
+                break
             self.pop()
             add_list = []
             remove_list = []
