@@ -130,7 +130,7 @@ class VCS:
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
 # * Export-style flags.
-#     "nl-after-commit" = inserts an extra NL after each commit
+#     "no-nl-after-commit" = no extra NL after each commit
 #     "nl-after-comment" = inserts an extra NL after each comment
 #     "export-progress" = exporter generates its own progress messages,
 #                         no need for baton prompt.
@@ -160,7 +160,7 @@ vcstypes = [
     VCS(name="git",
         subdirectory=".git",
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-        styleflags=set(["nl-after-commit"]),
+        styleflags=set([]),
         properties=False,
         initializer="git init",
         importer="git fast-import --quiet",
@@ -175,7 +175,7 @@ vcstypes = [
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
-        styleflags=set(["export-progress", "nl-after-comment"]),
+        styleflags=set(["export-progress", "no-nl-after-commit", "nl-after-comment"]),
         properties=True,
         initializer=None,
         lister=None,
@@ -191,7 +191,6 @@ vcstypes = [
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
         styleflags=set(["nl-after-comment",
-                        "nl-after-commit",
                         "export-progress"]),
         properties=False,
         initializer="hg init",
@@ -1434,7 +1433,7 @@ class Commit(object):
                     st += "property %s %d %s\n" % (name, len(str(value)), str(value))
         for op in self.fileops:
             st += op.dump(vcs) + "\n"
-        if "nl-after-commit" in self.repo.export_style():
+        if not "no-nl-after-commit" in self.repo.export_style():
             st += "\n"
         return st
     def __str__(self):
