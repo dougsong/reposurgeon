@@ -6279,7 +6279,7 @@ for graphviz.
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
                     cid = event.mark
                     if event.fossil_id:
-                        cid += " = " + event.showfossil()
+                        cid = event.showfossil() + " &rarr; " + cid
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
                 if isinstance(event, Tag):
