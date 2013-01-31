@@ -2087,6 +2087,20 @@ class StreamParser:
                                             node.props = self.sd_read_props(node.path, plen)
                                         if tlen > -1:
                                             text = self.sd_read_blob(tlen)
+                                            # Ugh - cope with strange
+                                            # undocumented Subversion format
+                                            # for storing links.  Apparently the
+                                            # dumper puts 'link ' in front of
+                                            # the path and the loader (or at
+                                            # least git-svn) removes it.
+                                            if node.props and "svn:special" in node.props:
+                                                if text.startswith("link "):
+                                                    text = text[5:]
+                                                else:
+                                                    # Don't know if this will
+                                                    # ever happen.  Best to fail
+                                                    # loudly...
+                                                    self.error("unexpected link prefix in %s" % repr(text))
                                             node.blob = Blob(self.repo)
                                             with open(node.blob.blobfile(), "w") as wfp:
                                                 wfp.write(text)
