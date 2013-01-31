@@ -24,7 +24,6 @@
       <arg choice='opt'>--verbose <replaceable>level</replaceable></arg>
       <arg choice='opt'>--show-equal</arg>
       <arg choice='opt'>--changes-only</arg>
-      <arg choice='opt'>--treediff</arg>
       <arg choice='opt'>--full-hash</arg>
       <arg choice='opt'>--fossil-map <replaceable>mapfile</replaceable></arg>
       <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
