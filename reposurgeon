@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+!/usr/bin/env python
 #
 # reposurgeon - a repository surgeon.
 #
@@ -162,7 +162,7 @@ vcstypes = [
         exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags=set([]),
         properties=False,
-        initializer="git init",
+        initializer="git init --quiet",
         importer="git fast-import --quiet",
         checkout="git checkout",
         lister="git ls-files",
