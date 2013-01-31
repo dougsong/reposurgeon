@@ -1567,7 +1567,7 @@ translation.</para>
 <para>Normally, Subversion local usernames are mapped in the style of
 git cvs-import; thus user "foo" becomes "foo &lt;foo&gt;", which is
 sufficient to pacify git and other systems that require email
-addresses.  With the option "use-uuid", usernames are mapped in the
+addresses.  With the option "svn_use_uuid", usernames are mapped in the
 git-svn style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
 the <command>authors read</command> command.</para>
