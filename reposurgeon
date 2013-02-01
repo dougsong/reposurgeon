@@ -2721,6 +2721,18 @@ class StreamParser:
             for node in expanded_nodes:
                 if node.path.endswith(".cvsignore"):
                     node.path = node.path[:-len(".cvsignore")] + ".gitignore"
+            # Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
+            # for identical paths in generated commits, we have to remove those
+            # D ops here.  Otherwise later on when we're generating ops, if
+            # the M node happens to be missing its hash it will be seen as
+            # unmodified and only the D will be issued.
+            for (d, dnode) in enumerate(expanded_nodes):
+                if dnode.action == SD_DELETE:
+                    for mnode in expanded_nodes[d+1:]:
+                        if mnode.path == dnode.path:
+                            dnode.action = None
+            expanded_nodes = [node for node in expanded_nodes
+                              if node.action is not None]
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
@@ -2740,9 +2752,12 @@ class StreamParser:
                             if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
-                            if ancestor != filemaps[node.from_rev][node.from_path]:
-                                announce("r%s~%s: hash map ancestry doesn't match filemap ancestry." \
-                                         % (node.revision, node.path))
+                            # FIXME: This check generates spurious warnings
+                            # on the references.svn test load - er, or are
+                            # they real?  Investigate...
+                            #if ancestor != filemaps[node.from_rev][node.from_path]:
+                            #    announce("r%s~%s: hash map ancestry doesn't match filemap ancestry." \
+                            #             % (node.revision, node.path))
                         elif node.from_path:
                             # A copy node is somehow missing its hash.
                             ancestor = filemaps[node.from_rev][node.from_path]
