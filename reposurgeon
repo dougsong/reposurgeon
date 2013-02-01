@@ -1525,9 +1525,6 @@ class PathMap(object):
         r = PathMap(dict(self.elements))
         r._unshare()
         return r
-    def _snapshot(self):
-        self.shared = True
-        return self
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(source_path)
@@ -1537,7 +1534,7 @@ class PathMap(object):
             # Do not share toplevel instances, only inner ones
             source_obj = source_obj.snapshot()
         elif isinstance(source_obj, PathMap):
-            source_obj = source_obj._snapshot()
+            source_obj.shared = True
         self._insert(target_path, source_obj)
     def ls_R(self, path):
         elt = self._find(path)
@@ -1614,9 +1611,9 @@ class PathMap(object):
         return self.elements.get(basename)
     # If elements might be shared with another PathMap, copy it.
     def _unshare(self):
-            self.elements = {k: (v._snapshot() if isinstance(v, PathMap) else v)
-                             for k,v in self.elements.iteritems()}
-            self.shared = False
+        for v in self.elements.itervalues():
+            if isinstance(v, PathMap):
+                v.shared = True
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
