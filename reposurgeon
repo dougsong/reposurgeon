@@ -1523,7 +1523,9 @@ class PathMap(object):
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
         r = PathMap(dict(self.elements))
-        r._unshare()
+        for v in r.elements.itervalues():
+            if isinstance(v, PathMap):
+                v.shared = True
         return r
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
@@ -1609,11 +1611,6 @@ class PathMap(object):
             if not isinstance(self, PathMap):
                 return None
         return self.elements.get(basename)
-    # If elements might be shared with another PathMap, copy it.
-    def _unshare(self):
-        for v in self.elements.itervalues():
-            if isinstance(v, PathMap):
-                v.shared = True
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
