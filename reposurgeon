@@ -1568,10 +1568,7 @@ class PathMap(object):
             elif value is not None:
                 yield name
     def __str__(self):
-        tell = '<PathMap: '
-        for path in self:
-            tell += path + ' '
-        return tell[:-1] + '>'
+        return '<PathMap: {}>'.format(' '.join(self))
     __repr__ = __str__
     # Insert obj at the location given by components.  Destroys
     # components as we recurse.
