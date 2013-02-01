@@ -1512,23 +1512,22 @@ class PathMap(object):
     __slots__ = ("elements", "shared")
     def __init__(self, elements=None):
         # elements is a dictionary mapping single-component names to
-        # True (for files) or to another PathMap (for directories).
-        # The dictionary may be shared with other PathMap instances if
-        # shared is true.
+        # another PathMap (for directories) or anything except None
+        # (for files). The instance may be a child of several other
+        # PathMaps if shared is true.
         if elements is None:
             self.elements = {}
-            self.shared = False
         else:
             self.elements = elements
-            self.shared = True
+        self.shared = False
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
-        r = PathMap(self.elements)
+        r = PathMap(dict(self.elements))
         r._unshare()
         return r
     def _snapshot(self):
         self.shared = True
-        return PathMap(self.elements)
+        return self
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(source_path)
@@ -1566,10 +1565,12 @@ class PathMap(object):
         basename, components = self._split_path(path)
         assert(not self.shared)
         for component in components:
-            self = self.elements.get(component)
-            if not isinstance(self, PathMap):
+            nxt = self.elements.get(component)
+            if not isinstance(nxt, PathMap):
                 return
-            self._unshare()
+            if nxt.shared:
+                nxt = self.elements[component] = nxt.snapshot()
+            self = nxt
         self.elements.pop(basename, None) # del if present else ignore KeyError
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
@@ -1594,8 +1595,9 @@ class PathMap(object):
             nxt = self.elements.get(component)
             if not isinstance(nxt, PathMap):
                 nxt = self.elements[component] = PathMap()
+            elif nxt.shared:
+                nxt = self.elements[component] = nxt.snapshot()
             self = nxt
-            self._unshare()
         self.elements[basename] = obj
     # Return the object at the location given by components--either
     # the associated value if it's present as a filename, or a PathMap
@@ -1612,7 +1614,6 @@ class PathMap(object):
         return self.elements.get(basename)
     # If elements might be shared with another PathMap, copy it.
     def _unshare(self):
-        if self.shared:
             self.elements = {k: (v._snapshot() if isinstance(v, PathMap) else v)
                              for k,v in self.elements.iteritems()}
             self.shared = False
