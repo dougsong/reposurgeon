@@ -2737,9 +2737,25 @@ class StreamParser:
                         if node.from_hash:
                             ancestor = self.hashmap[node.from_hash]
                             node.blobmark = ancestor.blobmark
+                            if debug_enable(DEBUG_TOPOLOGY):
+                                announce("r%s~%s -> %s (via hashmap)" % \
+                                         (node.revision, node.path, ancestor))
+                            if ancestor != filemaps[node.from_rev][node.from_path]:
+                                announce("r%s~%s: hash map ancestry doesn't match filemap ancestry." \
+                                         % (node.revision, node.path))
                         elif node.from_path:
                             # A copy node is somehow missing its hash.
                             ancestor = filemaps[node.from_rev][node.from_path]
+                            if debug_enable(DEBUG_TOPOLOGY):
+                                if ancestor:
+                                    announce("r%s~%s -> %s (via filemap)" % \
+                                             (node.revision, node.path, ancestor))
+                                else:
+                                    announce("r%s~%s has no ancestor (via filemap)" % \
+                                             (node.revision, node.path))
+                            if not ancestor:
+                                self.gripe("r%s~%s: missing filemap node." \
+                                          % (node.revision, node.path))
                         elif node.action != SD_ADD:
                             # Ordinary inheritance, no node copy.  For
                             # robustness, we don't assume revisions are
@@ -3598,7 +3614,7 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.head())
-                            for path in self.pathmap:
+                            for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
                             fp.write("Node-path: %s\n" % branchdir)
