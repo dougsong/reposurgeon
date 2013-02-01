@@ -1523,6 +1523,10 @@ class PathMap(object):
             self.shared = True
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
+        r = PathMap(self.elements)
+        r._unshare()
+        return r
+    def _snapshot(self):
         self.shared = True
         return PathMap(self.elements)
     def copy_from(self, target_path, source_pathset, source_path):
@@ -1530,8 +1534,11 @@ class PathMap(object):
         source_obj = source_pathset._find(source_path)
         if source_obj is None:
             return
-        if isinstance(source_obj, PathMap):
+        if source_obj is source_pathset:
+            # Do not share toplevel instances, only inner ones
             source_obj = source_obj.snapshot()
+        elif isinstance(source_obj, PathMap):
+            source_obj = source_obj._snapshot()
         self._insert(target_path, source_obj)
     def ls_R(self, path):
         elt = self._find(path)
@@ -1557,7 +1564,7 @@ class PathMap(object):
         """Remove a filename, or all descendents of a directory name,
         from the set."""
         basename, components = self._split_path(path)
-        self._unshare()
+        assert(not self.shared)
         for component in components:
             self = self.elements.get(component)
             if not isinstance(self, PathMap):
@@ -1582,7 +1589,7 @@ class PathMap(object):
         basename, components = self._split_path(path)
         if not basename:
             return
-        self._unshare()
+        assert(not self.shared)
         for component in components:
             nxt = self.elements.get(component)
             if not isinstance(nxt, PathMap):
@@ -1606,7 +1613,7 @@ class PathMap(object):
     # If elements might be shared with another PathMap, copy it.
     def _unshare(self):
         if self.shared:
-            self.elements = {k: (v.snapshot() if isinstance(v, PathMap) else v)
+            self.elements = {k: (v._snapshot() if isinstance(v, PathMap) else v)
                              for k,v in self.elements.iteritems()}
             self.shared = False
     # Return a list of the components in path in reverse order.
