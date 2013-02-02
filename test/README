@@ -34,7 +34,8 @@ a Subversion test load, regenerating its checksums.
 Build a Subversion repo from a Subversion stream dump on stdin,
 convert it to a local git repository, and stream the result to
 standard output. Mainly a wrapper around git-svn, to be used
-for comparison tests.
+for comparison tests.  Can also be used to test against agito
+and svn2git.
 
 To add a new tool for comparison, do something like:
 
@@ -42,6 +43,12 @@ To add a new tool for comparison, do something like:
    git update submodules
 
 from the repo root.
+
+== convert-check ==
+
+Take a Subversion dump on stdin and convert it two different ways,
+once with reposurgeon and then with git-svn.  Compare the results
+using repodiffer.
 
 == The tests ==
 
