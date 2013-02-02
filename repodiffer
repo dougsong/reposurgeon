@@ -4,7 +4,7 @@
 #
 # Requires git and tar(1).
 
-import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time, calendar
+import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time, calendar, re
 
 DEBUG_GENERAL  = 1
 DEBUG_COMMANDS = 2
@@ -500,20 +500,22 @@ def report_pair(a, b, fossils):
                 tell += ("  " + fn + "\n")
         if diff.different:
             tell += "Differing files:\n"
-            for fn in diff.different:
-                tell += ("  " + fn + "\n")
-            # Directory diffing
-            try:
-                a_tree = a.file_tree()
-                b_tree = b.file_tree()
-                command = "diff -r  -u %s %s || :" % (a_tree, b_tree)
-                difftext = capture_or_die(command)
-                difftext = difftext.replace("--- " + a_tree + "/", "--- ")
-                difftext = difftext.replace("+++ " + b_tree + "/", "+++ ")
-                tell += difftext
-            finally:
-                shutil.rmtree(a_tree)
-                shutil.rmtree(b_tree)
+            if not treediff:
+                for fn in diff.different:
+                    tell += ("  " + fn + "\n")
+            else:
+                try:
+                    a_tree = a.file_tree()
+                    b_tree = b.file_tree()
+                    command = "diff -r  -u %s %s || :" % (a_tree, b_tree)
+                    difftext = capture_or_die(command)
+                    difftext = difftext.replace("--- " + a_tree + "/", "--- ")
+                    difftext = difftext.replace("+++ " + b_tree + "/", "+++ ")
+                    difftext = re.sub("\ndiff .*\n", "\n", "\n" + difftext)[1:]
+                    tell += difftext
+                finally:
+                    shutil.rmtree(a_tree)
+                    shutil.rmtree(b_tree)
     return tell
 
 def diff_single(single, alpha, beta, fossils):
@@ -624,7 +626,7 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("git-weave: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:v:", ["changes-only", "show-equal", "full-hash", "ignore=", "fossil-map=", "single=", "quiet", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:tv:", ["changes-only", "show-equal", "full-hash", "ignore=", "fossil-map=", "single=", "quiet", "tree-diff", "verbose="])
     alpha = None
     beta = None
     changes_only = False
@@ -634,6 +636,7 @@ if __name__ == '__main__':
     fossilmap = None
     single = None
     quiet = False
+    treediff = False
     verbose = 0
     n_equal = n_insertions = n_deletions = n_changed = 0
     spancount = 0
@@ -652,6 +655,8 @@ if __name__ == '__main__':
             single = val
         elif opt == '-q' or opt == '--quiet':
             quiet = True
+        elif opt == '-t' or opt == '--tree-diff':
+            treediff = True
         elif opt == '-v' or opt == '--verbose':
             verbose = int(val)
     if len(arguments) < 2:

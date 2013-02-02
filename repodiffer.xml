@@ -25,6 +25,7 @@
       <arg choice='opt'>--show-equal</arg>
       <arg choice='opt'>--changes-only</arg>
       <arg choice='opt'>--full-hash</arg>
+      <arg choice='opt'>--tree-diff</arg>
       <arg choice='opt'>--fossil-map <replaceable>mapfile</replaceable></arg>
       <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
@@ -135,6 +136,9 @@ specified.</para>
 
 <para>The --fullhash or -f option forces reporting of full 40-digit
 hash IDs, rather than the normal short hash.</para>
+
+<para>Normally only the names of differing files are listed.  With the
+--tree-diff option, context diffs of the files are listed.</para>
 
 <para>The --quiet or -q option suppresses the progress meter.</para>
 
