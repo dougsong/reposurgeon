@@ -515,6 +515,7 @@ def diff_single(single, alpha, beta, fossils):
         sys.exit(1)
     ignores += "parents"
     sys.stdout.write(report_pair(ac, bc, fossils))
+    return 1 if a and b and Difference(a, b).different else 0
 
 def diff_all(alpha, beta, fossils):
     "Walk through time-ordered commit pairs, finding differences."
@@ -523,6 +524,7 @@ def diff_all(alpha, beta, fossils):
     i = 0
     tied = []
     duplicates =  []
+    content_differences = 0
     for a in alpha.signature:
         for b in beta.signature:
             if a.name_stamp() == b.name_stamp():
@@ -570,6 +572,8 @@ def diff_all(alpha, beta, fossils):
         say = ""
         for (a, b) in pairs:
             say += report_pair(a, b, fossils)
+            if a and b and Difference(a, b).different:
+                content_differences += 1
             baton.bumpcounter()
     sys.stdout.write(say)
     if n_changed or n_deletions or n_insertions:
@@ -595,6 +599,7 @@ def diff_all(alpha, beta, fossils):
             sys.stdout.write("Tag '%s': different in %s.\n" % (tagname, ",".join(a.difference(b))))
         elif showequal:
             sys.stdout.write("Tag '%s': same.\n" % tagname)
+    return 1 if content_differences > 0 else 0
 
 if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
@@ -646,9 +651,9 @@ if __name__ == '__main__':
         beta  = Repository(beta)
         fossils = fossilmap and read_fossilmap(fossilmap)
         if single:
-            diff_single(single, alpha, beta, fossils)
+            sys.exit(diff_single(single, alpha, beta, fossils))
         else:
-            diff_all(alpha, beta, fossils)
+            sys.exit(diff_all(alpha, beta, fossils))
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
         del alpha

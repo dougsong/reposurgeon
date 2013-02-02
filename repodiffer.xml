@@ -109,12 +109,16 @@ comparison, so as to ignore time-zone skew.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>tree</term>
-<listitem><para>Ignore tree-content differences.</para></listitem>
+<listitem><para>Ignore tree-content differences. (It is not expected
+that this option will be useful; it is provided for completeness's
+sake.)</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>gitignore</term>
 <listitem><para>Ignore .gitignore and .cvsignore files when comparing
-tree content.</para></listitem>
+tree content.  Useful if you are comparing translations done by pairs
+of lifting tools only one of which lifts these; a notable case of this
+is reposurgeon vs. git-svn.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>email</term>
@@ -138,6 +142,14 @@ hash IDs, rather than the normal short hash.</para>
 probably only of interest to developers; consult the source code for
 details.</para>
 
+</refsect1>
+
+<refsect1 id='return'><title>RETURN VALUES</title>
+
+<para>For scripting use, this programn returns 0 unless content (tree)
+differences were found in matching commits, in which case it returns 1.  
+Right-side-only or left-side-only commits do not cause a return of 1, nor
+do differences in change comments only.</para>
 </refsect1>
 
 <refsect1 id='author'><title>AUTHOR</title>
