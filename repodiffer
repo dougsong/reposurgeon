@@ -247,11 +247,18 @@ class Commit(object):
                         res.append("parents")
                         break
         return res
+    def file_tree(self):
+        "Return a temporary directory holding a checkout of this commit."
+        scratchdir = tempfile.mkdtemp(prefix="rpds", suffix=str(os.getpid()))
+        with directory_context(self.repo.directory):
+            do_or_die("git archive --format=tar %s | (cd %s && tar xf -)" \
+                      % (self.commit, scratchdir))
+        return scratchdir
     def manifest(self):
         "Return a file manifest for this revision."
         filemap = {}
-        scratchdir = tempfile.mkdtemp(prefix="rpds", suffix=str(os.getpid()))
         try:
+            scratchdir = self.file_tree()
             with directory_context(self.repo.directory):
                 do_or_die("git archive --format=tar %s | (cd %s && tar xf -)" \
                           % (self.commit, scratchdir))
