@@ -1509,52 +1509,33 @@ class PathMap(object):
     """Represent the set of filenames visible in a Subversion
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
-    __slots__ = ("elements", "shared")
-    class evolvingdict(object):
-        __slots__ = ("maxid", "snapid", "store")
-        def __init__(self, other = None):
-            if not isinstance(other, PathMap.evolvingdict):
-                self.store = {}
-                self.maxid = [0]
-                self.snapid = 0
-                return
+    __slots__ = ("shared", "maxid", "snapid", "store")
+    def __init__(self, other = None):
+        # The instance may be a child of several other PathMaps if |shared|
+        # is True. |snapid| is an integer unique among related PathMaps,
+        # and |maxid| is a list (for reference sharing) whose only value is
+        # the maximum |snapid| of the collection. |store| is a dict mapping
+        # single-component names to lists of values indexed by snapids. The
+        # values which can be other PathMaps (for directories) or anything
+        # except PathMaps and None (for files).
+        if not isinstance(other, PathMap):
+            self.store = {}
+            self.maxid = [0]
+            self.snapid = 0
+        else:
             self.store = other.store
             self.maxid = other.maxid
             self.snapid = self.maxid[0] = self.maxid[0] + 1
-            if other.snapid < self.snapid - 1:
-                # Late snapshot of an "old" PathMap. Restore values which may
-                # have changed since. This is uncommon, don't over-optimize.
-                for key in self.store: # self.iteritems() would skip None
-                    self[key] = other.get(key)
-        def get(self, key):
-            snaplist = self.store.get(key) or [None]
-            return snaplist[min(self.snapid, len(snaplist) - 1)]
-        def __setitem__(self, key, value):
-            snaplist = self.store.setdefault(key, [None])
-            needed = min(self.maxid[0], self.snapid + 1) + 1
-            if len(snaplist) < needed:
-                last = snaplist[-1]
-                snaplist.extend(last for _ in xrange(len(snaplist), needed))
-            snaplist[self.snapid] = value
-        def iteritems(self):
-            snapid = self.snapid
-            for key, snaplist in self.store.iteritems():
-                val = snaplist[min(snapid, len(snaplist) - 1)]
-                if val is not None: yield (key, val)
-    def __init__(self, elements=None):
-        # elements is a dict-like class mapping single-component names
-        # to another PathMap (for directories) or anything except None
-        # (for files). The instance may be a child of several other
-        # PathMaps if shared is true.
-        if elements is None:
-            self.elements = self.evolvingdict()
-        else:
-            self.elements = elements
         self.shared = False
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
-        r = PathMap(self.evolvingdict(self.elements))
-        for _, v in r.elements.iteritems():
+        r = PathMap(self)
+        if self.snapid < r.snapid - 1:
+            # Late snapshot of an "old" PathMap. Restore values which may
+            # have changed since. This is uncommon, don't over-optimize.
+            for component in self.store: # _elt_items() would skip None
+                r._elts_set(component, self._elts_get(component))
+        for _, v in r._elts_items():
             if isinstance(v, PathMap):
                 v.shared = True
         return r
@@ -1595,19 +1576,19 @@ class PathMap(object):
         basename, components = self._split_path(path)
         assert(not self.shared)
         for component in components:
-            nxt = self.elements.get(component)
+            nxt = self._elts_get(component)
             if not isinstance(nxt, PathMap):
                 return
             if nxt.shared:
-                nxt = self.elements[component] = nxt.snapshot()
+                nxt = self._elts_set(component, nxt.snapshot())
             self = nxt
         # Set value to None since PathMap doesn't tell None and absence apart
-        self.elements[basename] = None
+        self._elts_set(basename, None)
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
-        return any(v for _, v in self.elements.iteritems())
+        return any(v for _, v in self._elts_items())
     def __iter__(self):
-        for (name, value) in sorted(self.elements.iteritems()):
+        for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
                 for path in value:
                     yield os.path.join(name, path)
@@ -1616,6 +1597,25 @@ class PathMap(object):
     def __str__(self):
         return '<PathMap: {}>'.format(' '.join(self))
     __repr__ = __str__
+    # Return the current value associated with the component in the store
+    def _elts_get(self, component):
+        snaplist = self.store.get(component) or [None]
+        return snaplist[min(self.snapid, len(snaplist) - 1)]
+    # Set the current value associated with the component in the store
+    def _elts_set(self, component, value):
+        snaplist = self.store.setdefault(component, [None])
+        needed = min(self.maxid[0], self.snapid + 1) + 1
+        if len(snaplist) < needed:
+            last = snaplist[-1]
+            snaplist.extend(last for _ in xrange(len(snaplist), needed))
+        snaplist[self.snapid] = value
+        return value
+    # Iterate through (component, current values) pairs
+    def _elts_items(self):
+        snapid = self.snapid
+        for component, snaplist in self.store.iteritems():
+            val = snaplist[min(snapid, len(snaplist) - 1)]
+            if val is not None: yield (component, val)
     # Insert obj at the location given by components.
     def _insert(self, path, obj):
         basename, components = self._split_path(path)
@@ -1623,13 +1623,13 @@ class PathMap(object):
             return
         assert(not self.shared)
         for component in components:
-            nxt = self.elements.get(component)
+            nxt = self._elts_get(component)
             if not isinstance(nxt, PathMap):
-                nxt = self.elements[component] = PathMap()
+                nxt = self._elts_set(component, PathMap())
             elif nxt.shared:
-                nxt = self.elements[component] = nxt.snapshot()
+                nxt = self._elts_set(component, nxt.snapshot())
             self = nxt
-        self.elements[basename] = obj
+        self._elts_set(basename, obj)
     # Return the object at the location given by components--either
     # the associated value if it's present as a filename, or a PathMap
     # containing the descendents if it's a directory name.  Return
@@ -1639,10 +1639,10 @@ class PathMap(object):
         if not basename:
             return self
         for component in components:
-            self = self.elements.get(component)
+            self = self._elts_get(component)
             if not isinstance(self, PathMap):
                 return None
-        return self.elements.get(basename)
+        return self._elts_get(basename)
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
