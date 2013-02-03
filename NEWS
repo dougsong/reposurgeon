@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.18:
+2.18: 2013-02-02
      Translation of symlinks in Subversion repos was buggy, is now fixed.
      repodiffer now has a useful and documented return value.
      New --treediff option of repodiffer shows context diffs of mismatches.
