@@ -3,7 +3,7 @@
 2.18: 2013-02-02
      Translation of symlinks in Subversion repos was buggy, is now fixed.
      repodiffer now has a useful and documented return value.
-     New --treediff option of repodiffer shows context diffs of mismatches.
+     New --tree-diff option of repodiffer shows context diffs of mismatches.
 
 2.17: 2013-01-26
      repodiffer can now take a map file and show fossil IDs with diff reports.
