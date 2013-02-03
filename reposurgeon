@@ -1542,19 +1542,19 @@ class PathMap(object):
                 val = snaplist[min(snapid, len(snaplist) - 1)]
                 if val is not None: yield (key, val)
     def __init__(self, elements=None):
-        # elements is a dictionary mapping single-component names to
-        # another PathMap (for directories) or anything except None
+        # elements is a dict-like class mapping single-component names
+        # to another PathMap (for directories) or anything except None
         # (for files). The instance may be a child of several other
         # PathMaps if shared is true.
         if elements is None:
-            self.elements = {}
+            self.elements = self.evolvingdict()
         else:
             self.elements = elements
         self.shared = False
     def snapshot(self):
         "Return a copy-on-write snapshot of the set."
-        r = PathMap(dict(self.elements))
-        for v in r.elements.itervalues():
+        r = PathMap(self.evolvingdict(self.elements))
+        for _, v in r.elements.iteritems():
             if isinstance(v, PathMap):
                 v.shared = True
         return r
@@ -1601,10 +1601,11 @@ class PathMap(object):
             if nxt.shared:
                 nxt = self.elements[component] = nxt.snapshot()
             self = nxt
-        self.elements.pop(basename, None) # del if present else ignore KeyError
+        # Set value to None since PathMap doesn't tell None and absence apart
+        self.elements[basename] = None
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
-        return any(self.elements.itervalues())
+        return any(v for _, v in self.elements.iteritems())
     def __iter__(self):
         for (name, value) in sorted(self.elements.iteritems()):
             if isinstance(value, PathMap):
