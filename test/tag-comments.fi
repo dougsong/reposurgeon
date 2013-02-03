@@ -63,9 +63,11 @@ Adding a property setting.
 
 tag no-comment
 from :4
+tagger esr <esr> 1322671316 +0000
 data 0
 
 tag with-comment
 from :6
+tagger esr <esr> 1322671317 +0000
 data 18
 this is a test tag

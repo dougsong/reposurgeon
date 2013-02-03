@@ -1,6 +1,4 @@
 read tag-comments.fi
-reposurgeon: missing tagger after from in tag at line 46
-reposurgeon: missing tagger after from in tag at line 50
 tags
 names
 branch refs/heads/mastertag    roottag    emptycommit-5tag    no-commenttag    with-commentwrite
@@ -69,9 +67,11 @@ Adding a property setting.
 
 tag no-comment
 from :4
+tagger esr <esr> 1322671316 +0000
 data 0
 
 tag with-comment
 from :6
+tagger esr <esr> 1322671317 +0000
 data 18
 this is a test tag
