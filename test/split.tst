@@ -1,4 +1,4 @@
-## test the split command
+## Test the split command
 echo 1
 verbose 1
 quiet on
