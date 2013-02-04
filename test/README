@@ -159,6 +159,156 @@ outputs:
 
 	    Initial import.
 
+== A note about branchreplace.svn ==
+
+This was produced from the NUT Subversion repo as follows:
+
+svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
+    | svncutter -q expunge 'tags/' \
+        'branches/regex_branch' \
+        'branches/Tripp_Lite_Omni' \
+        'branches/r2.0.1' \
+        'branches/v2.1.0' \
+        'branches/Stable' \
+        '.*/ChangeLog' \
+        '.*/CHANGES' \
+        '.*/README' \
+        '.*/INSTALL' \
+        '.*/UPGRADING' \
+        '.*/NEWS' \
+        '.*/CREDITS' \
+        '.*/COPYING' \
+        '.*/man/' \
+        '.*/docs/' \
+        '.*/.*txt' \
+        '.*/.cvsignore' \
+        '.*/MAINTAINERS' \
+        '.*/configure' \
+        '.*/config.sub' \
+        '.*/config.guess' \
+        '.*\.conf' \
+        '.*mge.*' \
+        '.*hid.*' \
+        '.*libupsclient.*' \
+        '.*missing.*' \
+        '.*aclocal.*' \
+        '.*/ltmain.sh' \
+        '.*/Makefile.in' \
+        '.*/Makefile.am' \
+        '.*/stamp.h.in' \
+        '.*/depcomp' \
+        '.*\.h' \
+        'trunk/drivers/megatec.c' \
+        'trunk/drivers/optiups.c' \
+        'trunk/drivers/tripplite-hid.c' \
+        'branches/reportbuf/server/conf.c' \
+        'branches/Development/drivers/apc-hid.c' \
+        'branches/reportbuf/Makefile' \
+        'branches/Testing/drivers/apc-hid.c' \
+        'branches/Testing/drivers/tripplite_usb.c' \
+        'trunk/drivers/al175.c' \
+        'trunk/drivers/apc-hid.c' \
+        'trunk/drivers/belkin-hid.c' \
+        'branches/reportbuf/packaging/debian' \
+        'branches/automake/packaging/debian' \
+        'branches/JD-NewConf/common/data_types.c' \
+        'branches/JD-NewConf/lib/libupsconfig.c' \
+        'branches/JD-NewConf/utils/Makefile.in' \
+        'branches/JD-NewConf/utils/migratetool.c' \
+        'branches/JD-NewConf/utils/upsconfig.c' \
+        'branches/JD-NewConf/clients/upsmon.c' \
+        'branches/JD-NewConf/common/nutparser.c' \
+        'branches/JD-NewConf/common/tree.c' \
+        'branches/JD-NewConf/drivers/main.c' \
+        'branches/JD-NewConf/drivers/upsdrvctl.c' \
+        'branches/JD-NewConf/server/conf.c' \
+        'branches/JD-NewConf/server/user.c' \
+        'branches/JD-NewConf/utils/migrateconfig.c' \
+        'branches/HAL/Makefile.in' \
+        'branches/HAL/drivers' \
+        'branches/HAL/utils' \
+        'branches/JD-NewConf/conf' \
+        'branches/JD-NewConf/drivers' \
+        'branches/JD-NewConf/Makefile.in' \
+        'branches/reportbuf/drivers' \
+        'trunk/drivers/rhino.c' \
+        'branches/Testing/drivers/rhino.c' \
+        'branches/automake/AUTHORS' \
+        'branches/reportbuf/scripts' \
+        'trunk/scripts' \
+        'trunk/clients' \
+        'trunk/server' \
+        'branches/Testing/scripts' \
+        'branches/Testing/clients' \
+        'branches/Testing/server' \
+        'branches/Development/scripts' \
+        'branches/Development/clients' \
+        'branches/Development/server' \
+        'branches/Development/drivers/tripplite_usb.c' \
+        'branches/Development/drivers/dummy-ups.c' \
+        'branches/automake/m4' \
+        'branches/automake/clients' \
+        'branches/automake/server' \
+        'branches/automake/scripts' \
+        'branches/Development/data' \
+        'branches/automake/data' \
+        'trunk/common' \
+        'branches/automake/common' \
+        'branches/Development/debian' \
+        'trunk/packaging' \
+        'branches/Development/packaging' \
+        'branches/Testing/packaging' \
+        'branches/automake/packaging' \
+        'branches/automake/.*\.[ch]' \
+        'trunk/drivers/belkin.c' \
+        'trunk/drivers/belkinunv.c' \
+        'trunk/drivers/bestfcom.c' \
+        'trunk/drivers/bestuferrups.c' \
+        'trunk/drivers/bestups.c' \
+        'trunk/drivers/blazer.c' \
+        'trunk/drivers/dstate.c' \
+        'trunk/drivers/dummycons.c' \
+        'trunk/drivers/esupssmart.c' \
+        'trunk/drivers/everups.c' \
+        'trunk/drivers/genericups.c' \
+        'trunk/drivers/liebert.c' \
+        'trunk/drivers/masterguard.c' \
+        'trunk/drivers/metasys.c' \
+        'trunk/drivers/mustek.c' \
+        'trunk/drivers/oneac.c' \
+        'trunk/drivers/powercom.c' \
+        'trunk/drivers/safenet.c' \
+        'trunk/drivers/skel.c' \
+        'trunk/drivers/sms.c' \
+        'trunk/drivers/tripplitesu.c' \
+        'trunk/drivers/victronups.c' \
+        '.*/apcsmart.c' \
+        '.*/ippon.c' \
+        '.*/isbmex.c' \
+        '.*/powermust.c' \
+        '.*/cyberpower.c' \
+        '.*/solis.c' \
+        '.*/fentonups.c' \
+        '.*/tripplite.c' \
+        'trunk/Makefile' \
+        '.*/energizerups.c' \
+        '.*/etapro.c' \
+        '.*/upsdrvctl.c' \
+        '.*/snmp-ups.c' \
+        '.*/cpsups.c' \
+        '.*/main.c' \
+        '.*/upscode2.c' \
+        '.*/bcmxcp.c' \
+        'branches/automake/Makefile.dist' \
+        '.*/gendb' \
+        '.*/version' \
+        '.*/install-sh' \
+        '.*/upsd.users' \
+    | svncutter -q renumber \
+>reduced.svn
+
+It captures the most serious pathologies in the NUT repo.
+
 == The repodiffer test loads ==
 
 sample1.fi::
