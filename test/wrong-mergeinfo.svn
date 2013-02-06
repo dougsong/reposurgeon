@@ -1,0 +1,166 @@
+SVN-fs-dump-format-version: 2
+ ## Test graceful ignore of egregious mergeinfo
+
+UUID: 4cb049b9-25f1-4443-b27c-5e4925053850
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-02-06T13:18:49.583967Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 129
+Content-length: 129
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-02-06T13:26:43.404800Z
+K 7
+svn:log
+V 25
+This is a test revision
+
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/a
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
+Text-content-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-02-06T13:27:58.661283Z
+K 7
+svn:log
+V 22
+Create branch "test"
+
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Revision-number: 3
+Prop-content-length: 140
+Content-length: 140
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-02-06T13:32:37.954595Z
+K 7
+svn:log
+V 36
+Another test revision, branch test
+
+
+PROPS-END
+
+Node-path: branches/test/b
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
+Text-content-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 110
+Content-length: 110
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-02-06T13:46:43.103624Z
+K 7
+svn:log
+V 7
+Merge
+
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 53
+Content-length: 53
+
+K 13
+svn:mergeinfo
+V 18
+/branches/test:3-9
+PROPS-END
+
+
+Node-path: trunk/b
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: branches/test/b
+Text-copy-source-md5: d41d8cd98f00b204e9800998ecf8427e
+Text-copy-source-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+
+
