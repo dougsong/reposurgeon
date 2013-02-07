@@ -1,4 +1,6 @@
 			reposurgeon project news
+2.19:
+     Serious tuning of internals for reduced memory usage.
 
 2.18: 2013-02-02
      Translation of symlinks in Subversion repos was buggy, is now fixed.
