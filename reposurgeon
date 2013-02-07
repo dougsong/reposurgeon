@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-version="2.18"
+version="2.19"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -6364,11 +6364,9 @@ for graphviz.
                 if isinstance(event, Reset) and event.committish:
                     parse.stdout.write('\t"%s" [shape=oval];\n' % event.ref)
                     parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.committish[1:], event.ref))
-            resetnames = [event.ref for event in self.chosen().events \
-                          if isinstance(event, Reset)]
             for ei in self.selection:
                 event = self.chosen().events[ei]
-                if isinstance(event, Commit) and not event.branch in resetnames and not event.children():
+                if isinstance(event, Commit) and not event.branch in [child.branch for child in event.children()]:
                     parse.stdout.write('\t"%s" [shape=oval];\n' % event.branch)
                     parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
             parse.stdout.write("}\n")
