@@ -1,5 +1,10 @@
 			reposurgeon project news
-2.19:
+
+2.20:
+     Teach repodiffer how not to choke on revisions with empty manifests.
+     Improvements to the graph commanyt's output of branches.
+
+2.19: 2013-02-06
      Serious tuning of internals for reduced memory usage.
 
 2.18: 2013-02-02

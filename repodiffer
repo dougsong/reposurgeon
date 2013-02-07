@@ -256,13 +256,18 @@ class Commit(object):
         return scratchdir
     def manifest(self):
         "Return a file manifest for this revision."
+        with directory_context(self.repo.directory):
+            paths = capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit)
+        # Because older versions of git-archive barf on empty trees.
+        if not paths.strip():
+            return {}
         filemap = {}
         try:
             scratchdir = self.file_tree()
             with directory_context(self.repo.directory):
                 do_or_die("git archive --format=tar %s | (cd %s && tar xf -)" \
                           % (self.commit, scratchdir))
-                for path in capture_or_die("git ls-tree -r --full-name --name-only %s" % self.commit).split():
+                for path in paths.split():
                     if path:
                         if path.endswith(".gitignore") and "gitignore" in ignores:
                             continue
