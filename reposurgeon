@@ -6333,7 +6333,7 @@ for graphviz.
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
-            parse.stdout.write("\tnode [shape=box,width=4];\n")
+            parse.stdout.write("\tnode [shape=box,width=5];\n")
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
@@ -6349,26 +6349,19 @@ for graphviz.
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
-                    summary = cgi.escape(event.comment.split('\n')[0][:32])
+                    summary = cgi.escape(event.comment.split('\n')[0][:42])
                     cid = event.mark
                     if event.fossil_id:
                         cid = event.showfossil() + " &rarr; " + cid
                     parse.stdout.write('\t%s [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
+                    if not event.branch in [child.branch for child in event.children()]:
+                        parse.stdout.write('\t"%s" [shape=oval];\n' % event.branch)
+                        parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
                 if isinstance(event, Tag):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
                     parse.stdout.write('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.name, event.name, summary))
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Reset) and event.committish:
-                    parse.stdout.write('\t"%s" [shape=oval];\n' % event.ref)
-                    parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.committish[1:], event.ref))
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit) and not event.branch in [child.branch for child in event.children()]:
-                    parse.stdout.write('\t"%s" [shape=oval];\n' % event.branch)
-                    parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
             parse.stdout.write("}\n")
 
     def help_rebuild(self):
