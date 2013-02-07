@@ -3148,8 +3148,11 @@ class StreamParser:
                 elif late in split_commits:
                     self.gripe("cannot resolve mergeinfo from %s to split commit %s." % (early, late))
                 else:
-                    late_commit = self.repo.fossil_map["SVN:%s" % late]
-                    early_commit = self.repo.fossil_map["SVN:%s" % early]
+                    try:
+                        late_commit = self.repo.fossil_map["SVN:%s" % late]
+                        early_commit = self.repo.fossil_map["SVN:%s" % early]
+                    except KeyError:
+                        continue
                     if early_commit.mark not in late_commit.parentMarks():
                         late_commit.addParent(early_commit.mark)
             baton.twirl("+")
