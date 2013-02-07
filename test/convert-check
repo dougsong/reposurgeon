@@ -20,7 +20,7 @@ then
 fi
 
 stem=cc$$
-trap "rm -fr ${stem}-repo ${stem}-svn ${stem}-git ${stem}*~ ${stem}.fo" 0 1 2 15
+trap "rm -fr ${stem}-repo ${stem}-svn ${stem}-git ${stem}*~ ${stem}.fo" 0
 
 # Build a Subversion repo from a dump on standard input
 svnadmin create ${stem}-repo
