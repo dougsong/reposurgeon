@@ -150,7 +150,7 @@ details.</para>
 
 <refsect1 id='return'><title>RETURN VALUES</title>
 
-<para>For scripting use, this programn returns 0 unless content (tree)
+<para>For scripting use, this program returns 0 unless content (tree)
 differences were found in matching commits, in which case it returns 1.  
 Right-side-only or left-side-only commits do not cause a return of 1, nor
 do differences in change comments only.</para>
