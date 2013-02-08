@@ -2,7 +2,8 @@
 
 2.20:
      Teach repodiffer how not to choke on revisions with empty manifests.
-     Improvements to the graph commanyt's output of branches.
+     Make repodiffer more explicit when a revision's parent set changes.
+     Improvements to the graph command's output of branches.
 
 2.19: 2013-02-06
      Serious tuning of internals for reduced memory usage.
