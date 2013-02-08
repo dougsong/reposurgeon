@@ -494,10 +494,18 @@ def report_pair(a, b, fossils):
     else:
         tell += "changed: %s%s -> %s in %s.\n" % (fossilid, a, b, ",".join(diff.difference_types))
         if "parents" in diff.difference_types:
-            tell += " "
-            tell += ", ".join([str(a.repo.fastlookup[parent]) for parent in a.parents])
+            def parent_show(c, p):
+                commit = c.repo.fastlookup[p]
+                fossil = fossils and fossils.get(commit.action_stamp())
+                if fossil:
+                    fossilid = "(" + fossil + ") "
+                else:
+                    fossilid = ""
+                return fossilid + str(commit)
+            tell += "parents: "
+            tell += ", ".join([parent_show(a, parent) for parent in a.parents])
             tell += " -> "
-            tell += ", ".join([str(b.repo.fastlookup[parent]) for parent in b.parents])
+            tell += ", ".join([parent_show(b, parent) for parent in b.parents])
             tell += "\n"
         else:
             diffdict[diff] = "%s -> %s" % (a, b)
