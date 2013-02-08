@@ -493,7 +493,13 @@ def report_pair(a, b, fossils):
         tell += "%s%s -> %s: same differences as for %s.\n" % (fossilid, a, b, diffdict[diff])
     else:
         tell += "changed: %s%s -> %s in %s.\n" % (fossilid, a, b, ",".join(diff.difference_types))
-        if not "parents" in diff.difference_types:
+        if "parents" in diff.difference_types:
+            tell += " "
+            tell += ", ".join([str(a.repo.fastlookup[parent]) for parent in a.parents])
+            tell += " -> "
+            tell += ", ".join([str(b.repo.fastlookup[parent]) for parent in b.parents])
+            tell += "\n"
+        else:
             diffdict[diff] = "%s -> %s" % (a, b)
         if diff.left_only:
             tell += "L only:\n"
