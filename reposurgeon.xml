@@ -1651,15 +1651,17 @@ link in by hand with the 'merge' command.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>dubious deleteall</term>
+<term>mid-branch deleteall</term>
 <listitem>
 <para>A deleteall operation has been found in the middle of a branch
 history.  This usually indicates that a Subversion tag or branch was
 created by mistake, and someone later tried to undo the error by
-deleting the tag/branch directory before recreating it.  You may want
-to cut the forward link from the deleteall with
-<command>divide</command> and then use a <command>branch
-rename</command> to rename the old branch.</para>
+deleting the tag/branch directory before recreating it with a copy
+operation.  Examine the topology near the deleteall closely, it may
+need hand-hacking. It is fairly likely that both (a) the
+<command>reposurgeon</command> translation will be different from what
+other translators (such as <command>git-svn</command>) produce,
+and (b) it will not be immediately obvious which is right.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
