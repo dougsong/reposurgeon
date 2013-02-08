@@ -502,7 +502,7 @@ def report_pair(a, b, fossils):
                 else:
                     fossilid = ""
                 return fossilid + str(commit)
-            tell += "parents: "
+            tell += " parents: "
             tell += ", ".join([parent_show(a, parent) for parent in a.parents])
             tell += " -> "
             tell += ", ".join([parent_show(b, parent) for parent in b.parents])
