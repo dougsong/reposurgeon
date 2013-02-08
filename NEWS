@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.20:
+2.20: 2013-02-08
      Teach repodiffer how not to choke on revisions with empty manifests.
      Make repodiffer more explicit when a revision's parent set changes.
      Improvements to the graph command's output of branches.
