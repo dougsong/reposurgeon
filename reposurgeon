@@ -1852,24 +1852,21 @@ class StreamParser:
             self.blobmark = None
             self.generated = False
         def __str__(self):
-            tell = "<NodeAction: r%s %s %s '%s' " \
-                   % (self.revision,
-                      StreamParser.NodeAction.ActionValues[self.action],
-                      StreamParser.NodeAction.PathTypeValues[self.kind],
-                      self.path)
-            if self.from_rev:
-                tell += "from=%s~%s " % (self.from_rev, self.from_path)
-            if self.from_set:
-                tell += "sources=%s " % self.from_set
-            if self.generated:
-                tell += "generated "
-            if self.props is not None:
-                # Trim off the OrderedDict wrapper
-                showprops = repr(self.props)
-                if showprops.startswith("OrderedDict("):
-                    showprops = showprops[12:-1]
-                tell += "properties=%s " % showprops
-            return tell[:-1] + ">"
+            # Prefer dict's repr() to OrderedDict's verbose one
+            fmt = dict.__repr__ if isinstance(self.props, dict) else repr
+            return "<NodeAction: r{rev} {action} {kind} '{path}'" \
+                    "{from_rev}{from_set}{generated}{props}>".format(
+                    rev = self.revision,
+                    action = StreamParser.NodeAction.ActionValues[self.action],
+                    kind = StreamParser.NodeAction.PathTypeValues[self.kind],
+                    path = self.path,
+                    from_rev = " from=%s~%s" % (self.from_rev, self.from_path)
+                                    if self.from_rev else "",
+                    from_set = " sources=%s" % self.from_set
+                                    if self.from_set else "",
+                    generated = " generated" if self.generated else "",
+                    props = " properties=%s" % fmt(self.props)
+                                    if self.props else "")
         __repr__ = __str__
     class RevisionRecord(object):
         __slots__ = ("nodes", "props")
