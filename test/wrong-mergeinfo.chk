@@ -57,12 +57,12 @@ M 100644 :2 b
 tag emptycommit-2
 from :3
 tagger frnchfrgg <frnchfrgg> 1360157278 +0000
-data 206
+data 194
 Create branch "test"
 
 
 [[Tag from zero-fileop commit at Subversion r2:
-<NodeAction: r2 add dir 'branches/' properties=>
+<NodeAction: r2 add dir 'branches/'>
 <NodeAction: r2 add dir 'branches/test/' from=1~trunk/ sources=<PathMap: trunk/a>>
 ]]
 
