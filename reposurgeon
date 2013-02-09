@@ -3188,7 +3188,7 @@ class StreamParser:
                        and commit.hasParents() \
                        and not commit.fileops:
                     tagname = os.path.basename(commit.branch[:-1])
-                    if "tags" not in commit.branch:
+                    if not commit.branch.startswith("tags"):
                         tagname += "-root"
                     self.repo.tagify(commit,
                                      tagname,
