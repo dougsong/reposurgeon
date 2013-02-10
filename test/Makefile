@@ -40,6 +40,13 @@ roundtrip:
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
+	@echo "=== Testing stream-file round-tripping with compression:" 
+	@for file in *.fi; do \
+	    echo "  $${file}"; \
+	    reposurgeon "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
+	    diff -u $${file} /tmp/rs$$$$; \
+	    rm -f /tmp/rs$$$$; \
+	done
 
 # Test that dumping metadata to mailbox form and updating from the mailbox
 # is idempotent if you make no changes to the mailbox.
