@@ -33,6 +33,14 @@ This is a test revision
 
 PROPS-END
 
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
 Node-path: trunk
 Node-kind: dir
 Node-action: add
@@ -73,15 +81,6 @@ Create branch "test"
 
 
 PROPS-END
-
-Node-path: branches
-Node-kind: dir
-Node-action: add
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
 
 Node-path: branches/test
 Node-kind: dir
@@ -151,7 +150,7 @@ Content-length: 53
 K 13
 svn:mergeinfo
 V 18
-/branches/test:3-9
+/branches/test:2-9
 PROPS-END
 
 
