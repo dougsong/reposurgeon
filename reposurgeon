@@ -785,10 +785,14 @@ class Blob(object):
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
-    def content(self):
-        "Content of the blob as a string."
-        with open(self.blobfile()) as dp:
-            return dp.read()
+    def get_content(self):
+        "Get the content of the blob as a string."
+        with open(self.blobfile(), "r") as rfp:
+            return rfp.read()
+    def set_content(self, text):
+        "Set the content of the blob from a string."
+        with open(self.blobfile(), "w") as wfp:
+            wfp.write(text)
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -813,7 +817,7 @@ class Blob(object):
         else:
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
-            content = self.content()
+            content = self.get_content()
             # Ugh.  This is where we mess with ignore syntax translation
             if vcs and self.repo.vcs and self.path and self.path.endswith(".gitignore"):
                 if vcs.name == "hg" and self.repo.vcs.name != "hg":
@@ -2121,8 +2125,7 @@ class StreamParser:
                                                     # loudly...
                                                     self.error("unexpected link prefix in %s" % repr(text))
                                             node.blob = Blob(self.repo)
-                                            with open(node.blob.blobfile(), "w") as wfp:
-                                                wfp.write(text)
+                                            node.blob.set_content(text)
                                         node.revision = revision
                                         nodes.append(node)
                                         in_header = False
@@ -2194,7 +2197,6 @@ class StreamParser:
                             line = self.readline()
                             if line.startswith("mark"):
                                 blob.mark = line[5:].strip()
-                                wfp = open(blob.blobfile(), "w")
                                 blobcontent = self.fi_read_data()
                                 # Parse CVS and Subversion $-headers
                                 # There'd better not be more than one of these.
@@ -2217,8 +2219,7 @@ class StreamParser:
                                     if '.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                wfp.write(blobcontent)
-                                wfp.close()
+                                blob.set_content(blobcontent)
                             else:
                                 self.error("missing mark after blob")
                             self.repo.addEvent(blob)
@@ -2663,8 +2664,7 @@ class StreamParser:
                         # turn into fileops.
                         if "svn:ignore" in node.props:
                             blob = Blob(self.repo)
-                            with open(blob.blobfile(), "w") as wfp:
-                                wfp.write(node.props["svn:ignore"])
+                            blob.set_content(node.props["svn:ignore"])
                             newnode = StreamParser.NodeAction()
                             newnode.path = gitignore_path
                             newnode.revision = revision
@@ -3514,8 +3514,7 @@ class SubversionDumper:
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
         if debug_enable(DEBUG_SVNDUMP):
             announce("Generating %s %s" % (svnpath, svnop))
-        with open(self.repo.objfind(ref).blobfile()) as dp:
-            content = dp.read()
+        content = self.repo.objfind(ref).get_content()
         changeprops = None
         if svnpath in self.pathmap:
             if mode == '100755':
@@ -3622,7 +3621,7 @@ class SubversionDumper:
                                 blob = self.repo.objfind(fileop.ref)
                                 if svnpath not in self.pathmap:
                                     self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
-                                self.pathmap[svnpath].props["svn:ignore"] = blob.content()
+                                self.pathmap[svnpath].props["svn:ignore"] = blob.get_content()
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
                                           kind="dir",
