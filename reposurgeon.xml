@@ -1431,6 +1431,14 @@ the repository subdirectory..</para>
 </term>
 <listitem>
 <para>Turn on an option flag.  With no arguments, list all options</para>
+
+<para>Most options are described in conjunction with the specific
+operations that the modify. One of general interest is
+<quote>compressblobs</quote>; this enables compression on the blob
+files in the internal representation
+<application>reposurgeon</application> uses for editing. With this
+option, reading and writing of repositories is slower, but editing a
+repository requires less (sometimes much less) disk space.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

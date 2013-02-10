@@ -7,7 +7,7 @@
 # Requires Python 2.7.2 or newer.
 #
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
-import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi
+import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator
 import email.message, email.parser, email.utils
 
@@ -787,12 +787,20 @@ class Blob(object):
         return self.repo.subdir() + "/blob-" + repr(id(self))
     def get_content(self):
         "Get the content of the blob as a string."
-        with open(self.blobfile(), "r") as rfp:
-            return rfp.read()
+        if global_options["compressblobs"]:
+            with bz2.BZ2File(self.blobfile(), "r") as rfp:
+                return rfp.read()
+        else:
+            with open(self.blobfile(), "r") as rfp:
+                return rfp.read()
     def set_content(self, text):
         "Set the content of the blob from a string."
-        with open(self.blobfile(), "w") as wfp:
-            wfp.write(text)
+        if global_options["compressblobs"]:
+            with bz2.BZ2File(self.blobfile(), "w") as wfp:
+                return wfp.write(text)
+        else:
+            with open(self.blobfile(), "w") as wfp:
+                wfp.write(text)
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         oldloc = self.blobfile()
@@ -5212,6 +5220,11 @@ leading and trailing whitespace and then appending a linefeed.
         ("fossilize", """\
     If set, the Fossil-ID of each commit is appended to its commit comment
 at write time. This option is mainly useful for debugging conversion edge cases.
+"""),
+        ("compressblobs", """\
+Use compression for on-disk copies of blobs. Accepts an increase in repository
+read and write time in order to reduce the anount of disk space required while
+editing; this may be useful for large repositories.
 """),
         )
     class LineParse:

@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.21:
+     Added the "compressblobs" option for very large repositories. 
+
 2.20: 2013-02-08
      Teach repodiffer how not to choke on revisions with empty manifests.
      Make repodiffer more explicit when a revision's parent set changes.
