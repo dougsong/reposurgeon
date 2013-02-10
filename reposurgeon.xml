@@ -1994,6 +1994,21 @@ hg-fast-export.py script.</para>
 <para>Stock darcs commands support export and import.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>CVS</term>
+<listitem>
+<para>Requires cvs-fast-export. Note that the quality of CVS lifts may
+be poor, with individual lifts requiring serious hand-hacking. This
+is due to inherent problems with CVS's file-oriented model.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>RCS</term>
+<listitem>
+<para>Requires cvs-fast-export (yes, that's not a typo; cvs-fast-export
+handles RCS collections as well). The caveat for CVS applies.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 </refsect1>
