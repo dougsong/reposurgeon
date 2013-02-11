@@ -775,13 +775,14 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "path", "colors", "cookie", "deletehook")
+    __slots__ = ("repo", "mark", "path", "colors", "cookie", "size", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.colors = []
         self.cookie = None
+        self.size = 0
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
@@ -795,6 +796,7 @@ class Blob(object):
                 return rfp.read()
     def set_content(self, text):
         "Set the content of the blob from a string."
+        self.size = len(text)
         if global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "w") as wfp:
                 return wfp.write(text)
@@ -6105,6 +6107,51 @@ Supports > redirection.
     def do_tags(self, line):
         "Generate a human-friendly listing of lightweight tags."
         self.report_select(line, "tags", (screenwidth(),))
+    def help_sizes(self):
+        print("""
+Print a report on data volume per branch; takes a selection set,
+defaulting to all events. The numbers tally the size of uncompressed
+blobs, commit and tag comments, and other metadata strings (a blob is
+counted each time a commit points at it).  Not an exact measure of
+storage size: intended mainly as a way to get information on how to
+efficiently partition a repository that has become large enough to be
+unwieldy.
+""")
+    def do_sizes(self, line):
+        "Report branch relative sizes."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        sizes = {}
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if isinstance(event, Commit):
+                    if event.branch not in sizes:
+                        sizes[event.branch] = 0
+                    sizes[event.branch] += len(str(event.committer))
+                    for author in event.authors:
+                        sizes[event.branch] += len(str(author))
+                    sizes[event.branch] += len(event.comment)
+                    for fileop in event.fileops:
+                        if fileop.op == "M":
+                            sizes[event.branch] += self.repo.objfind(fileop.ref).size
+                elif isinstance(event, Tag):
+                    commit = self.repo.objfind(event.committish)
+                    if commit.branch not in sizes:
+                        sizes[commit.branch] = 0
+                    sizes[commit.branch] += len(str(event.tagger))
+                    sizes[commit.branch] += len(event.comment)
+            total = sum(sizes.values())
+            keys = sizes.keys()
+            keys.sort()
+            def sz(n, s):
+                parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
+                                   % (n, (n * 100.0) / total, s))
+            for key in keys:
+                sz(sizes[key], key)
+            sz(total, "")
 
     #
     # Housekeeping
@@ -7074,7 +7121,7 @@ tag). For a 'delete', no third argument is required.
             raise Recoverable("unknown verb '%s' in tag command.")
 
     #
-    # Artifact Removal
+    # Artifact removal
     #
     def help_authors(self):
         print("""
