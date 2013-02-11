@@ -647,6 +647,24 @@ shell dot &lt;/tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 You can substitute in your own preferred image viewer, of course.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>sizes</command>
+        [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem>
+<para>Print a report on data volume per branch; takes a selection set,
+defaulting to all events. The numbers tally the size of uncompressed
+blobs, commit and tag comments, and other metadata strings (a blob is
+counted each time a commit points at it). </para>
+
+<para>The numbers are not an exact measure of storage size: they are
+intended mainly as a way to get information on how to efficiently
+partition a repository that has become large enough to be
+unwieldy.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 </variablelist>
 </refsect2>
 
