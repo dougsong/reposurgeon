@@ -7,7 +7,6 @@
 # Requires Python 2.7.2 or newer.
 #
 
-
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, pickle
 import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator
@@ -378,7 +377,7 @@ class GitExtractor:
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
         # git-export order.
-        for refname, refobj in sorted(iter(self.refs.items()),
+        for refname, refobj in sorted(iter(list(self.refs.items())),
                 key=lambda ref: self.revlist.index(ref[1])):
             self.__branch_color(refobj, refname)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
@@ -425,7 +424,7 @@ class GitExtractor:
         return self.tags
     def iter_resets(self):
         "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in self.refs.items() if "/tags/" not in item[0])
+        return (item for item in list(self.refs.items()) if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
@@ -673,7 +672,7 @@ class DateTests(unittest.TestCase):
     def test_conversion(self):
         def do_test(init, formats):
             date = Date(init)
-            for (func, result) in formats.items():
+            for (func, result) in list(formats.items()):
                 self.assertEqual(getattr(date, func)(), result)
         data = [['2010-10-27T18:43:32Z',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
@@ -756,7 +755,7 @@ class Attribution(object):
         msg[hdr + "-Date"] = self.date.rfc822()
     def remap(self, authors):
         "Remap the attribution name."
-        for (local, (name, mail, timezone)) in authors.items():
+        for (local, (name, mail, timezone)) in list(authors.items()):
             if self.email.startswith(local + "@") or self.email == local:
                 self.name = name
                 self.email = mail
@@ -1194,7 +1193,7 @@ class Commit(object):
         self.committer.email_out(modifiers, msg, "Committer")
         if self.fossil_id:
             msg["Fossil-ID"] = self.fossil_id
-        for (name, value) in self.properties.items():
+        for (name, value) in list(self.properties.items()):
             hdr = "-".join([s.capitalize() for s in name.split("-")])
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
@@ -1274,7 +1273,7 @@ class Commit(object):
                 modified = True
                 msg["Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
-        for prophdr in [s for s in msg.keys() if s.startswith("Property-")]:
+        for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
             if propval == "True":
@@ -1390,7 +1389,7 @@ class Commit(object):
         try:
             sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
-            for (path, mark) in self.manifest().items():
+            for (path, mark) in list(self.manifest().items()):
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -1441,7 +1440,7 @@ class Commit(object):
         for ancestor in self._parent_marks[1:]:
             st += "merge %s\n" % ancestor
         if vcs and vcs.properties:
-            for (name, value) in self.properties.items():
+            for (name, value) in list(self.properties.items()):
                 if value in (True, False):
                     if value:
                         st += "property %s\n" % name
@@ -1629,7 +1628,7 @@ class PathMap(object):
     # Iterate through (component, current values) pairs
     def _elts_items(self):
         snapid = self.snapid
-        for component, snaplist in self.store.items():
+        for component, snaplist in list(self.store.items()):
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
     # Insert obj at the location given by components.
@@ -1744,7 +1743,7 @@ class RepoStreamer:
                                 # dict is not supported by Python. The following loop thus
                                 # uses items(), which returns a new independent list
                                 # containing the (key,value) pairs.
-                                for (oldpath, oldsig) in self.filemap[revision].items():
+                                for (oldpath, oldsig) in list(self.filemap[revision].items()):
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp()
@@ -2578,7 +2577,7 @@ class StreamParser:
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
                     latch = False
-                    for (prop, val) in node.props.items():
+                    for (prop, val) in list(node.props.items()):
                         if prop not in StreamParser.IgnoreProperties:
                             if not latch:
                                 self.gripe("r%s~%s properties set:" \
@@ -2907,7 +2906,7 @@ class StreamParser:
                     cliques[""].append((node, fileop))
             # Make an operation list from the cliques.
             oplist = []
-            for (branch, actions) in cliques.items():
+            for (branch, actions) in list(cliques.items()):
                 oplist.append((branch, [action[1] for action in actions]))
             # Figure out which branch cliques contain only branch deletes
             deletealls = set([])
@@ -3140,7 +3139,7 @@ class StreamParser:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
             baton.twirl("branchlinks")
-            for (later, earlier) in self.branchlink.items():
+            for (later, earlier) in list(self.branchlink.items()):
                 child = self.repo.objfind(later)
                 if earlier not in child.parentMarks():
                     child.addParent(earlier)
@@ -3154,7 +3153,7 @@ class StreamParser:
             baton.twirl("+")
             # Add links due to svn:mergeinfo properties
             baton.twirl("svn-mergeinfo")
-            for ((_, early), late) in self.mergeinfo.items():
+            for ((_, early), late) in list(self.mergeinfo.items()):
                 if early in split_commits:
                     self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
                 elif late in split_commits:
@@ -3662,7 +3661,7 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.head())
-                            for path in self.pathmap.keys():
+                            for path in list(self.pathmap.keys()):
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
                             fp.write("Node-path: %s\n" % branchdir)
@@ -3803,7 +3802,7 @@ class Repository:
                     contributors[author.name] = author.who()
             elif isinstance(event, Tag):
                 contributors[event.tagger.name] = event.tagger.who()
-        for (name, cid) in contributors.items():
+        for (name, cid) in list(contributors.items()):
             fp.write("%s = %s\n" % (name, cid))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
@@ -3841,7 +3840,7 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for cookie, commit in sorted(
-                iter(self.fossil_map.items()),
+                iter(list(self.fossil_map.items())),
                 key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
@@ -4295,7 +4294,7 @@ class Repository:
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
-                    for (path, oplist) in event.cliques().items():
+                    for (path, oplist) in list(event.cliques().items()):
                         if len(oplist) == 1:
                             continue
                         if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
@@ -4688,7 +4687,7 @@ def read_repo(source, preferred):
                             for commit in repo.commits():
                                 action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
                             # Pass 4: use it to set commit properties
-                            for ((path, rev), value) in pathrev_to_hash.items():
+                            for ((path, rev), value) in list(pathrev_to_hash.items()):
                                 if value in hash_to_action:
                                     (ctime, cperson) = hash_to_action[value]
                                     action_to_mark[(ctime, cperson)].fossil_id = "CVS:%s:%s" % (path, rev)
@@ -4890,7 +4889,7 @@ class popen_or_die:
             else:
                 try:
                     # Python 3.2 chokes on this syntax.
-                    raise extype, value, traceback
+                    raise extype(value).with_traceback(traceback)
                 except SyntaxError:
                     pass
         if self.fp.close() is not None:
