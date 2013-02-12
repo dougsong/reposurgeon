@@ -24,7 +24,7 @@ reposurgeon: r356~trunk/scripts/hotplug/.gitignore: missing filemap node.
 reposurgeon: r356~trunk/scripts/hotplug/.gitignore: permission information may be lost.
 reposurgeon: r356~trunk/server/.gitignore: missing filemap node.
 reposurgeon: r356~trunk/server/.gitignore: permission information may be lost.
-reposurgeon: mid-branch deleteall at <355>.
+reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1957 ==============================================================
 # Fossil-ID: 352
 commit refs/heads/Development
