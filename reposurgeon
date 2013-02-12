@@ -963,7 +963,7 @@ class FileOp(object):
                 self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
     def path_remap_out(self, path, vcs):
         "Hack the fileop's basename to map it to a target VCS's conventions."
-        if vcs is not None:
+        if vcs is not None and vcs.ignorename is not None:
             if os.path.basename(path) == ".gitignore":
                 return os.path.join(os.path.dirname(path), vcs.ignorename)
         return path
@@ -2799,7 +2799,7 @@ class StreamParser:
                                 else:
                                     announce("r%s~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
-                            if not ancestor:
+                            if not ancestor and not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
                                           % (node.revision, node.path))
                         elif node.action != SD_ADD:
@@ -2840,8 +2840,9 @@ class StreamParser:
                             # pure property change.  There's no
                             # way to figure out what mark to use
                             # in a fileop.
-                            self.gripe("r%s~%s: permission information may be lost." \
-                                          % (node.revision, node.path))
+                            if not node.path.endswith(".gitignore"):
+                                self.gripe("r%s~%s: permission information may be lost." \
+                                           % (node.revision, node.path))
                             continue
                         assert node.blobmark
                         # Time for fileop generation
@@ -6154,6 +6155,29 @@ unwieldy.
             for key in keys:
                 sz(sizes[key], key)
             sz(total, "")
+    def help_lint(self):
+        print("""
+Look for metadata configurations that may indicate a problem. Presently
+checks for: (1) Mid-branch deletes, (2) committer and author IDs that
+don't look well-formed as DVCS IDs.
+""")
+    def do_lint(self, line):
+        "Look for lint in a repo."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            unmapped = re.compile("[^@]*|[^@]*@" + self.chosen().uuid)
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if isinstance(event, Commit):
+                    if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
+                        parse.stdout.write("mid-branch deleteall on %s at %s.\n" % (event.branch, event.id_me()))
+                    for person in [event.committer] + event.authors:
+                        if unmapped.match(person.email):
+                            parse.stdout.write("unmapped shortname %s at %s\n" \
+                                               % (person.email, event.id_me()))
 
     #
     # Housekeeping

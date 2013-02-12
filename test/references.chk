@@ -1,29 +1,3 @@
-reposurgeon: r326~tags/reportbuf_base0/scripts/hotplug/.gitignore: missing filemap node.
-reposurgeon: r326~tags/reportbuf_base0/scripts/hotplug/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/clients/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/clients/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/common/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/common/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/conf/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/conf/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/data/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/data/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/data/html/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/data/html/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/drivers/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/drivers/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/include/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/include/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/lib/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/lib/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/man/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/man/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/scripts/hotplug/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/scripts/hotplug/.gitignore: permission information may be lost.
-reposurgeon: r356~trunk/server/.gitignore: missing filemap node.
-reposurgeon: r356~trunk/server/.gitignore: permission information may be lost.
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1957 ==============================================================
 # Fossil-ID: 352

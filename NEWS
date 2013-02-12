@@ -2,7 +2,7 @@
 
 2.21:
      Added the "compressblobs" option for very large repositories. 
-     Added the "sizes" command.
+     Added the "sizes" and "lint" commands.
 
 2.20: 2013-02-08
      Teach repodiffer how not to choke on revisions with empty manifests.

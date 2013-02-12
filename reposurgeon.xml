@@ -665,6 +665,16 @@ unwieldy.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>lint</command>
+        [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem>
+<para>Look for metadata configurations that may indicate a problem. Presently
+checks for: (1) Mid-branch deletes, (2) committer and author IDs that
+don't look well-formed as DVCS IDs.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
