@@ -757,7 +757,7 @@ class Attribution(object):
     def remap(self, authors):
         "Remap the attribution name."
         for (local, (name, mail, timezone)) in list(authors.items()):
-            if self.email.startswith(local + "@") or self.email == local:
+            if self.email.lower().startswith(local + "@") or self.email.lower() == local:
                 self.name = name
                 self.email = mail
                 if timezone:
@@ -3779,7 +3779,7 @@ class Repository:
                 (name, mail) = email.utils.parseaddr(address.strip())
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
-                authormap[local.strip()] = (name, mail, timezone)
+                authormap[local.strip().lower()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
