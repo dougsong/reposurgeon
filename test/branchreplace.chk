@@ -1,4 +1,4 @@
-reposurgeon: mid-branch deleteall at <12>.
+reposurgeon: mid-branch deleteall on refs/heads/master at <12>.
 blob
 mark :1
 data 160

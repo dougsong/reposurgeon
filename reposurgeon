@@ -3346,7 +3346,7 @@ class StreamParser:
                    commit.fileops and commit.fileops[0].op == 'deleteall' \
                    and commit.children()]
         for commit in dubious:
-            self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
+            self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
         # Treat this in-core state is though it was eread from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
