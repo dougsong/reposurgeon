@@ -6159,7 +6159,8 @@ unwieldy.
         print("""
 Look for metadata configurations that may indicate a problem. Presently
 checks for: (1) Mid-branch deletes, (2) committer and author IDs that
-don't look well-formed as DVCS IDs.
+don't look well-formed as DVCS IDs.  These reports can be individually
+selected with the modifiers 'structure' and 'names'. 
 """)
     def do_lint(self, line):
         "Look for lint in a repo."
@@ -6168,17 +6169,27 @@ don't look well-formed as DVCS IDs.
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            unmapped = re.compile("[^@]*|[^@]*@" + self.chosen().uuid)
+            unmapped = re.compile("[^@]*$|[^@]*@" + self.chosen().uuid + "$")
+            shortset = set([])
+            deletealls = set([])
             for i in self.selection:
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
-                    if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
-                        parse.stdout.write("mid-branch deleteall on %s at %s.\n" % (event.branch, event.id_me()))
-                    for person in [event.committer] + event.authors:
-                        if unmapped.match(person.email):
-                            parse.stdout.write("unmapped shortname %s at %s\n" \
-                                               % (person.email, event.id_me()))
-
+                    if not line or "structure" in line:
+                        if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
+                            deletealls.add("on %s at %s" % (event.branch, event.id_me()))
+                    if not line or "names" in line:
+                        for person in [event.committer] + event.authors:
+                            if unmapped.match(person.email):
+                                shortset.add(person.email)
+            if not line or "structure" in line:
+                for item in deletealls:
+                    parse.stdout.write("mid-branch delete: %s\n" % item)
+            if "names" in line:
+                parse.stdout.write("\n".join(list(shortset)) + "\n")
+            elif not line:
+                for item in shortset:
+                    parse.stdout.write("unknown shortname: %s\n" % item)
     #
     # Housekeeping
     #
