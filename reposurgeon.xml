@@ -667,12 +667,14 @@ unwieldy.</para>
 <varlistentry>
 <term><command>lint</command>
         [<emphasis>selection-set</emphasis>]
+        [structure | names]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Look for metadata configurations that may indicate a problem. Presently
 checks for: (1) Mid-branch deletes, (2) committer and author IDs that
-don't look well-formed as DVCS IDs.</para>
+don't look well-formed as DVCS IDs. These reports can be individually
+selected with the modifiers 'structure' and 'names'.</para>
 </listitem>
 </varlistentry>
 </variablelist>
