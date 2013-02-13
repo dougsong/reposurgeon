@@ -6,7 +6,9 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
+from __future__ import absolute_import, print_function #unicode_literals
+
+import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, pickle
 import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator
 import email.message, email.parser, email.utils
@@ -376,7 +378,7 @@ class GitExtractor:
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
         # git-export order.
-        for refname, refobj in sorted(self.refs.iteritems(),
+        for refname, refobj in sorted(iter(list(self.refs.items())),
                 key=lambda ref: self.revlist.index(ref[1])):
             self.__branch_color(refobj, refname)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
@@ -423,7 +425,7 @@ class GitExtractor:
         return self.tags
     def iter_resets(self):
         "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in self.refs.iteritems() if "/tags/" not in item[0])
+        return (item for item in list(self.refs.items()) if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
@@ -671,7 +673,7 @@ class DateTests(unittest.TestCase):
     def test_conversion(self):
         def do_test(init, formats):
             date = Date(init)
-            for (func, result) in formats.iteritems():
+            for (func, result) in list(formats.items()):
                 self.assertEqual(getattr(date, func)(), result)
         data = [['2010-10-27T18:43:32Z',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
@@ -754,8 +756,8 @@ class Attribution(object):
         msg[hdr + "-Date"] = self.date.rfc822()
     def remap(self, authors):
         "Remap the attribution name."
-        for (local, (name, mail, timezone)) in authors.iteritems():
-            if self.email.startswith(local + "@") or self.email == local:
+        for (local, (name, mail, timezone)) in list(authors.items()):
+            if self.email.lower().startswith(local + "@") or self.email.lower() == local:
                 self.name = name
                 self.email = mail
                 if timezone:
@@ -775,13 +777,14 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "path", "colors", "cookie", "deletehook")
+    __slots__ = ("repo", "mark", "path", "colors", "cookie", "size", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.colors = []
         self.cookie = None
+        self.size = 0
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
@@ -795,6 +798,7 @@ class Blob(object):
                 return rfp.read()
     def set_content(self, text):
         "Set the content of the blob from a string."
+        self.size = len(text)
         if global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "w") as wfp:
                 return wfp.write(text)
@@ -959,7 +963,7 @@ class FileOp(object):
                 self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
     def path_remap_out(self, path, vcs):
         "Hack the fileop's basename to map it to a target VCS's conventions."
-        if vcs is not None:
+        if vcs is not None and vcs.ignorename is not None:
             if os.path.basename(path) == ".gitignore":
                 return os.path.join(os.path.dirname(path), vcs.ignorename)
         return path
@@ -1190,7 +1194,7 @@ class Commit(object):
         self.committer.email_out(modifiers, msg, "Committer")
         if self.fossil_id:
             msg["Fossil-ID"] = self.fossil_id
-        for (name, value) in self.properties.iteritems():
+        for (name, value) in list(self.properties.items()):
             hdr = "-".join([s.capitalize() for s in name.split("-")])
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
@@ -1237,7 +1241,7 @@ class Commit(object):
             author_re = re.compile("Author[0-9]*$")
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
-            authorkeys = sorted(filter(author_re.match, msg.keys()))
+            authorkeys = sorted(filter(author_re.match, list(msg.keys())))
             for i in range(len(authorkeys) - len(self.authors)):
                 self.authors.append(Attribution())
             # Another potential minor bug: permuting the set of authors
@@ -1270,7 +1274,7 @@ class Commit(object):
                 modified = True
                 msg["Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
-        for prophdr in [s for s in msg.keys() if s.startswith("Property-")]:
+        for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
             if propval == "True":
@@ -1386,7 +1390,7 @@ class Commit(object):
         try:
             sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
-            for (path, mark) in self.manifest().iteritems():
+            for (path, mark) in list(self.manifest().items()):
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -1437,7 +1441,7 @@ class Commit(object):
         for ancestor in self._parent_marks[1:]:
             st += "merge %s\n" % ancestor
         if vcs and vcs.properties:
-            for (name, value) in self.properties.iteritems():
+            for (name, value) in list(self.properties.items()):
                 if value in (True, False):
                     if value:
                         st += "property %s\n" % name
@@ -1596,7 +1600,7 @@ class PathMap(object):
             self = nxt
         # Set value to None since PathMap doesn't tell None and absence apart
         self._elts_set(basename, None)
-    def __nonzero__(self):
+    def __bool__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
     def __iter__(self):
@@ -1619,13 +1623,13 @@ class PathMap(object):
         needed = min(self.maxid[0], self.snapid + 1) + 1
         if len(snaplist) < needed:
             last = snaplist[-1]
-            snaplist.extend(last for _ in xrange(len(snaplist), needed))
+            snaplist.extend(last for _ in range(len(snaplist), needed))
         snaplist[self.snapid] = value
         return value
     # Iterate through (component, current values) pairs
     def _elts_items(self):
         snapid = self.snapid
-        for component, snaplist in self.store.iteritems():
+        for component, snaplist in list(self.store.items()):
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
     # Insert obj at the location given by components.
@@ -1740,7 +1744,7 @@ class RepoStreamer:
                                 # dict is not supported by Python. The following loop thus
                                 # uses items(), which returns a new independent list
                                 # containing the (key,value) pairs.
-                                for (oldpath, oldsig) in self.filemap[revision].items():
+                                for (oldpath, oldsig) in list(self.filemap[revision].items()):
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp()
@@ -2400,7 +2404,7 @@ class StreamParser:
             if path.startswith(branch):
                 return path[len(branch):]
         raise Fatal("couldn't assign %s to a branch in %s" \
-                    % (path, self.branches.keys()))
+                    % (path, list(self.branches.keys())))
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         def countfmt(count):
@@ -2534,7 +2538,7 @@ class StreamParser:
             commit = Commit(self.repo)
             try:
                 ad = record.props.pop("svn:date")
-            except KeyError, key:
+            except KeyError as key:
                 self.error("missing required %s" % key)
             if "svn:author" in record.props:
                 au = record.props.pop("svn:author")
@@ -2571,7 +2575,7 @@ class StreamParser:
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
                     latch = False
-                    for (prop, val) in node.props.iteritems():
+                    for (prop, val) in list(node.props.items()):
                         if prop not in StreamParser.IgnoreProperties:
                             if not latch:
                                 self.gripe("r%s~%s properties set:" \
@@ -2792,7 +2796,7 @@ class StreamParser:
                                 else:
                                     announce("r%s~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
-                            if not ancestor:
+                            if not ancestor and not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
                                           % (node.revision, node.path))
                         elif node.action != SD_ADD:
@@ -2833,8 +2837,9 @@ class StreamParser:
                             # pure property change.  There's no
                             # way to figure out what mark to use
                             # in a fileop.
-                            self.gripe("r%s~%s: permission information may be lost." \
-                                          % (node.revision, node.path))
+                            if not node.path.endswith(".gitignore"):
+                                self.gripe("r%s~%s: permission information may be lost." \
+                                           % (node.revision, node.path))
                             continue
                         assert node.blobmark
                         # Time for fileop generation
@@ -2900,7 +2905,7 @@ class StreamParser:
                     cliques[""].append((node, fileop))
             # Make an operation list from the cliques.
             oplist = []
-            for (branch, actions) in cliques.iteritems():
+            for (branch, actions) in list(cliques.items()):
                 oplist.append((branch, [action[1] for action in actions]))
             # Figure out which branch cliques contain only branch deletes
             deletealls = set([])
@@ -3010,7 +3015,7 @@ class StreamParser:
                         threshold = False
                         commits = self.repo.commits()
                         ncommits = len(commits)
-                        for i in xrange(ncommits):
+                        for i in range(ncommits):
                             prev = commits[ncommits - i - 1]
                             if prev.fossil_id == latest.from_rev:
                                 if debug_enable(DEBUG_TOPOLOGY):
@@ -3133,7 +3138,7 @@ class StreamParser:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
             baton.twirl("branchlinks")
-            for (later, earlier) in self.branchlink.iteritems():
+            for (later, earlier) in list(self.branchlink.items()):
                 child = self.repo.objfind(later)
                 if earlier not in child.parentMarks():
                     child.addParent(earlier)
@@ -3147,7 +3152,7 @@ class StreamParser:
             baton.twirl("+")
             # Add links due to svn:mergeinfo properties
             baton.twirl("svn-mergeinfo")
-            for ((_, early), late) in self.mergeinfo.iteritems():
+            for ((_, early), late) in list(self.mergeinfo.items()):
                 if early in split_commits:
                     self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
                 elif late in split_commits:
@@ -3329,9 +3334,10 @@ class StreamParser:
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl("+")
-        baton.twirl("renumbering")
-        self.repo.renumber(baton=baton)
-        baton.twirl("+")
+        if not global_options["svn_no_renumber"]:
+            baton.twirl("renumbering")
+            self.repo.renumber(baton=baton)
+            baton.twirl("+")
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
@@ -3339,8 +3345,8 @@ class StreamParser:
                    commit.fileops and commit.fileops[0].op == 'deleteall' \
                    and commit.children()]
         for commit in dubious:
-            self.gripe("mid-branch deleteall at <%s>." % commit.fossil_id)
-        # Treat this in-core state is though it was eread from an SVN repo 
+            self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
+        # Treat this in-core state is though it was read from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
 class SubversionDumper:
@@ -3360,7 +3366,7 @@ class SubversionDumper:
     @staticmethod
     def svnprops(pdict):
         flattened = ""
-        for key, val in sorted(pdict.iteritems()):
+        for key, val in sorted(pdict.items()):
             if val:
                 flattened += "K %d\n%s\nV %d\n%s\n" \
                              % (len(key), key, len(val), val)
@@ -3382,7 +3388,7 @@ class SubversionDumper:
         if len(parents or []) > 1:
             parents = iter(parents)
             next(parents) # ignore main parent
-            ancestral = ".".join(itertools.imap(str, sorted(parents)))
+            ancestral = ".".join(map(str, sorted(parents)))
             revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
@@ -3475,7 +3481,7 @@ class SubversionDumper:
                 # Iterating through dict keys (with __iter__ or iterkeys) is not supported
                 # by Python. The following loop thus uses keys() which returns a new
                 # independent list of the dict keys.
-                for key in self.pathmap.keys():
+                for key in list(self.pathmap.keys()):
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
@@ -3655,7 +3661,7 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.head())
-                            for path in self.pathmap.keys():
+                            for path in list(self.pathmap.keys()):
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
                             fp.write("Node-path: %s\n" % branchdir)
@@ -3772,7 +3778,7 @@ class Repository:
                 (name, mail) = email.utils.parseaddr(address.strip())
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
-                authormap[local.strip()] = (name, mail, timezone)
+                authormap[local.strip().lower()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
@@ -3796,7 +3802,7 @@ class Repository:
                     contributors[author.name] = author.who()
             elif isinstance(event, Tag):
                 contributors[event.tagger.name] = event.tagger.who()
-        for (name, cid) in contributors.iteritems():
+        for (name, cid) in list(contributors.items()):
             fp.write("%s = %s\n" % (name, cid))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
@@ -3834,7 +3840,7 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for cookie, commit in sorted(
-                self.fossil_map.iteritems(),
+                iter(list(self.fossil_map.items())),
                 key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
@@ -4288,7 +4294,7 @@ class Repository:
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
-                    for (path, oplist) in event.cliques().iteritems():
+                    for (path, oplist) in list(event.cliques().items()):
                         if len(oplist) == 1:
                             continue
                         if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
@@ -4318,10 +4324,10 @@ class Repository:
                 and (e.text.startswith("option") or e.text.startswith("feature"))]
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
-        marklist = []
+        markmap = {}
         def remark(m, e):
             try:
-                return ":" + repr(origin + marklist.index(m))
+                return ":" + repr(markmap[m])
             except ValueError:
                 raise Fatal("unknown mark %s in %s cannot be renumbered!" % \
                             (m, e.__class__.__name__.lower()))
@@ -4335,7 +4341,7 @@ class Repository:
                 elif not event.mark.startswith(":"):
                     raise Fatal("field not in mark format")
                 else:
-                    marklist.append(event.mark)
+                    markmap[event.mark] = origin + len(markmap)
         for event in self.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
@@ -4633,7 +4639,7 @@ def read_repo(source, preferred):
                 if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                     announce("reading author map.")
                     with open(repo.vcs.authormap) as fp:
-                        repo.read_authormap(range(len(repo.events)),fp)
+                        repo.read_authormap(list(range(len(repo.events))),fp)
                 fossils = os.path.join(vcs.subdirectory, "fossils")
                 if os.path.exists(fossils):
                     with open(fossils) as rfp:
@@ -4681,7 +4687,7 @@ def read_repo(source, preferred):
                             for commit in repo.commits():
                                 action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
                             # Pass 4: use it to set commit properties
-                            for ((path, rev), value) in pathrev_to_hash.iteritems():
+                            for ((path, rev), value) in list(pathrev_to_hash.items()):
                                 if value in hash_to_action:
                                     (ctime, cperson) = hash_to_action[value]
                                     action_to_mark[(ctime, cperson)].fossil_id = "CVS:%s:%s" % (path, rev)
@@ -4883,7 +4889,7 @@ class popen_or_die:
             else:
                 try:
                     # Python 3.2 chokes on this syntax.
-                    raise extype, value, traceback
+                    raise extype(value).with_traceback(traceback)
                 except SyntaxError:
                     pass
         if self.fp.close() is not None:
@@ -5209,6 +5215,11 @@ Otherwise, fake up addresses the way git cvs-import does it.
     If set, don't perform branch analysis when lifting a Subversion repo. Leave
 it as a linear sequence of commits. This may be useful if the repo has an
 unusual topology and you intend to do your own branch surgery.
+"""),
+        ("svn_no_renumber", """\
+    If set, don't renumber the marks in Subversion repositories immediately.
+after they are analyzed.  This is an O(n**2) operation and can actually
+dominate load time on sufficiently large repositories.
 """),
         ("canonicalize", """\
     If set, mailbox_in and edit will canonicalize comments by stripping
@@ -6102,7 +6113,86 @@ Supports > redirection.
     def do_tags(self, line):
         "Generate a human-friendly listing of lightweight tags."
         self.report_select(line, "tags", (screenwidth(),))
-
+    def help_sizes(self):
+        print("""
+Print a report on data volume per branch; takes a selection set,
+defaulting to all events. The numbers tally the size of uncompressed
+blobs, commit and tag comments, and other metadata strings (a blob is
+counted each time a commit points at it).  Not an exact measure of
+storage size: intended mainly as a way to get information on how to
+efficiently partition a repository that has become large enough to be
+unwieldy.
+""")
+    def do_sizes(self, line):
+        "Report branch relative sizes."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        sizes = {}
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if isinstance(event, Commit):
+                    if event.branch not in sizes:
+                        sizes[event.branch] = 0
+                    sizes[event.branch] += len(str(event.committer))
+                    for author in event.authors:
+                        sizes[event.branch] += len(str(author))
+                    sizes[event.branch] += len(event.comment)
+                    for fileop in event.fileops:
+                        if fileop.op == "M":
+                            sizes[event.branch] += self.repo.objfind(fileop.ref).size
+                elif isinstance(event, Tag):
+                    commit = self.repo.objfind(event.committish)
+                    if commit.branch not in sizes:
+                        sizes[commit.branch] = 0
+                    sizes[commit.branch] += len(str(event.tagger))
+                    sizes[commit.branch] += len(event.comment)
+            total = sum(sizes.values())
+            keys = list(sizes.keys())
+            keys.sort()
+            def sz(n, s):
+                parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
+                                   % (n, (n * 100.0) / total, s))
+            for key in keys:
+                sz(sizes[key], key)
+            sz(total, "")
+    def help_lint(self):
+        print("""
+Look for metadata configurations that may indicate a problem. Presently
+checks for: (1) Mid-branch deletes, (2) committer and author IDs that
+don't look well-formed as DVCS IDs.  These reports can be individually
+selected with the modifiers 'structure' and 'names'. 
+""")
+    def do_lint(self, line):
+        "Look for lint in a repo."
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            unmapped = re.compile("[^@]*$|[^@]*@" + self.chosen().uuid + "$")
+            shortset = set([])
+            deletealls = set([])
+            for i in self.selection:
+                event = self.chosen().events[i]
+                if isinstance(event, Commit):
+                    if not line or "structure" in line:
+                        if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
+                            deletealls.add("on %s at %s" % (event.branch, event.id_me()))
+                    if not line or "names" in line:
+                        for person in [event.committer] + event.authors:
+                            if unmapped.match(person.email):
+                                shortset.add(person.email)
+            if not line or "structure" in line:
+                for item in deletealls:
+                    parse.stdout.write("mid-branch delete: %s\n" % item)
+            if "names" in line:
+                parse.stdout.write("\n".join(list(shortset)) + "\n")
+            elif not line:
+                for item in shortset:
+                    parse.stdout.write("unknown shortname: %s\n" % item)
     #
     # Housekeeping
     #
@@ -7071,7 +7161,7 @@ tag). For a 'delete', no third argument is required.
             raise Recoverable("unknown verb '%s' in tag command.")
 
     #
-    # Artifact Removal
+    # Artifact removal
     #
     def help_authors(self):
         print("""
