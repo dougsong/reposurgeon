@@ -3,6 +3,7 @@
 2.21:
      Added "compressblobs" and "svn_no_renumber" option for very large repos. 
      Added the "sizes" and "lint" commands.
+     Interpretation of timezone field in author maps was buggy, is now fixed.
 
 2.20: 2013-02-08
      Teach repodiffer how not to choke on revisions with empty manifests.
