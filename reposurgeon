@@ -663,6 +663,27 @@ class Date:
         return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
     def delta(self, other):
         return other.timestamp - self.timestamp
+    @staticmethod
+    def tzresolve(tz):
+        "Hacky way to beat the Unix timezone database into resolving TZ names."
+        if tz[0] in "+-":
+            return tz
+        oldtz = os.getenv("TZ")
+        os.putenv("TZ", tz)
+        time.tzset()
+        now = int(time.time())
+        tm = time.localtime(int(now))
+        os.putenv("TZ", "UTC")
+        time.tzset()
+        seconds = int(time.mktime(tm)) - now
+        os.putenv("TZ", oldtz or "")
+        time.tzset()
+        if str(seconds).startswith("-"):
+            sgn = "-"
+            seconds = -seconds
+        else:
+            sgn = "+"
+        return sgn + ("%02d" % (seconds / 3600)) + str("%02d" % abs(seconds % 3600))
     def __str__(self):
         "Format as a git timestamp."
         return str(self.timestamp) + " " + self.orig_tz_string
@@ -699,6 +720,9 @@ class DateTests(unittest.TestCase):
         self.assertEqual(d2, d2)
         self.assertEqual(d2, d3)
         self.assertEqual(d3, d3)
+        self.assertEqual(Date.tzresolve("EST"), "-0500")
+        self.assertEqual(Date.tzresolve("-0500"), "-0500")
+        self.assertEqual(Date.tzresolve("Europe/Warsaw"), "+0100")
     def test_inequality(self):
         d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
         d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
@@ -3775,6 +3799,8 @@ class Repository:
                 (address, timezone) =  netwide.split(">")
                 address += ">"
                 timezone = timezone.strip()
+                if timezone:
+                    timezone = Date.tzresolve(timezone)
                 (name, mail) = email.utils.parseaddr(address.strip())
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
