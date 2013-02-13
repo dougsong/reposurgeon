@@ -647,6 +647,36 @@ shell dot &lt;/tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 You can substitute in your own preferred image viewer, of course.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>sizes</command>
+        [<emphasis>selection-set</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem>
+<para>Print a report on data volume per branch; takes a selection set,
+defaulting to all events. The numbers tally the size of uncompressed
+blobs, commit and tag comments, and other metadata strings (a blob is
+counted each time a commit points at it). </para>
+
+<para>The numbers are not an exact measure of storage size: they are
+intended mainly as a way to get information on how to efficiently
+partition a repository that has become large enough to be
+unwieldy.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>lint</command>
+        [<emphasis>selection-set</emphasis>]
+        [structure | names]
+	[&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem>
+<para>Look for metadata configurations that may indicate a problem. Presently
+checks for: (1) Mid-branch deletes, (2) committer and author IDs that
+don't look well-formed as DVCS IDs. These reports can be individually
+selected with the modifiers 'structure' and 'names'.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
@@ -1692,6 +1722,12 @@ report a bug in <command>reposurgeon</command>.</para>
 </listitem>
 </varlistentry>
 </variablelist>
+
+<para>If your Subversion repository is very large, consider using the
+"svn_no_renumber" option. If this is set, the marks in Subversion
+repositories won't be renumbered immediately at the end of analysis.
+This is an O(n**2) operation and can actually dominate load time on
+sufficiently large repositories.</para>
 
 </refsect2>
 <refsect2><title>WRITING SUBVERSION REPOSITORIES</title>
