@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.21:
-     Added the "compressblobs" option for very large repositories. 
+     Added "compressblobs" and svn_no_renumber" option for very large repos. 
      Added the "sizes" and "lint" commands.
 
 2.20: 2013-02-08
