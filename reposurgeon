@@ -5384,7 +5384,8 @@ editing; this may be useful for large repositories.
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
                 elif isinstance(event, Tag) or isinstance(event, Reset):
-                    add_list.append(self.chosen().find(event.committish))
+                    if event.committish:
+                        add_list.append(self.chosen().find(event.committish))
             value |= set(add_list)
             value -= set(remove_list)
         self.line = self.line.lstrip()
