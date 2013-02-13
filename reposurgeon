@@ -3337,9 +3337,10 @@ class StreamParser:
             baton.bumpcounter()
         baton.endcounter()
         baton.twirl("+")
-        baton.twirl("renumbering")
-        self.repo.renumber(baton=baton)
-        baton.twirl("+")
+        if not global_options["svn_no_renumber"]:
+            baton.twirl("renumbering")
+            self.repo.renumber(baton=baton)
+            baton.twirl("+")
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
@@ -5217,6 +5218,11 @@ Otherwise, fake up addresses the way git cvs-import does it.
     If set, don't perform branch analysis when lifting a Subversion repo. Leave
 it as a linear sequence of commits. This may be useful if the repo has an
 unusual topology and you intend to do your own branch surgery.
+"""),
+        ("svn_no_renumber", """\
+    If set, don't renumber the marks in Subversion repositories immediately.
+after they are analyzed.  This is an O(n**2) operation and can actually
+dominate load time on sufficiently large repositories.
 """),
         ("canonicalize", """\
     If set, mailbox_in and edit will canonicalize comments by stripping

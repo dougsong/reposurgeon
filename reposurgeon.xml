@@ -1723,6 +1723,12 @@ report a bug in <command>reposurgeon</command>.</para>
 </varlistentry>
 </variablelist>
 
+<para>If your Subversion repository is very large, consider using the
+"svn_no_renumber" option. If this is set, the marks in Subversion
+repositories won't be renumbered immediately at the end of analysis.
+This is an O(n**2) operation and can actually dominate load time on
+sufficiently large repositories.</para>
+
 </refsect2>
 <refsect2><title>WRITING SUBVERSION REPOSITORIES</title>
 
