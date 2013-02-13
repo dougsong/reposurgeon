@@ -5933,10 +5933,10 @@ List all known symbolic names of branches and tags. Supports > redirection.
     def do_names(self, line):
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for branch in self.chosen().branchset():
-                parse.stdout.write("branch %s" % branch)
+                parse.stdout.write("branch %s\n" % branch)
             for event in self.chosen():
                 if isinstance(event, Tag):
-                    parse.stdout.write("tag    %s" % event.name)
+                    parse.stdout.write("tag    %s\n" % event.name)
 
     def do_script(self, line):
         "Read and execute commands from a named file."
