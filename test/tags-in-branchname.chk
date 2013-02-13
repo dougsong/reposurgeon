@@ -42,8 +42,22 @@ Add a file
 from :2
 M 100644 :3 a
 
+reset refs/heads/root
+# Fossil-ID: 4
+commit refs/heads/root
+mark :5
+committer frnchfrgg <frnchfrgg> 1360157557 +0000
+data 43
+Commit on "test" to make it a real branch
+
+from :2
+M 100644 :3 branches/test/b
+
 tag stags-root
 from :4
 tagger frnchfrgg <frnchfrgg> 1360515905 +0000
 data 23
 Create a test branch
+
+
+

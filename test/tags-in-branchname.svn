@@ -108,3 +108,36 @@ Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 2
 Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 147
+Content-length: 147
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-02-06T13:32:37.954595Z
+K 7
+svn:log
+V 43
+Commit on "test" to make it a real branch
+
+
+PROPS-END
+
+Node-path: branches/test/b
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
+Text-content-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+Content-length: 10
+
+PROPS-END
+
