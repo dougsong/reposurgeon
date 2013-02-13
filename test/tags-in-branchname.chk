@@ -42,8 +42,12 @@ Add a file
 from :2
 M 100644 :3 a
 
-tag stags-root
-from :4
+tag emptycommit-3
+from :2
 tagger frnchfrgg <frnchfrgg> 1360515905 +0000
-data 23
+data 72
 Create a test branch
+
+
+[[Tag from zero-fileop commit at Subversion r3]]
+
