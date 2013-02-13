@@ -1,7 +1,12 @@
 read tag-comments.fi
 tags
 names
-branch refs/heads/mastertag    roottag    emptycommit-5tag    no-commenttag    with-commentwrite
+branch refs/heads/master
+tag    root
+tag    emptycommit-5
+tag    no-comment
+tag    with-comment
+write
 blob
 mark :1
 data 23
