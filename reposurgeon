@@ -4324,10 +4324,10 @@ class Repository:
                 and (e.text.startswith("option") or e.text.startswith("feature"))]
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
-        marklist = []
+        markmap = {}
         def remark(m, e):
             try:
-                return ":" + repr(origin + marklist.index(m))
+                return ":" + repr(markmap[m])
             except ValueError:
                 raise Fatal("unknown mark %s in %s cannot be renumbered!" % \
                             (m, e.__class__.__name__.lower()))
@@ -4341,7 +4341,7 @@ class Repository:
                 elif not event.mark.startswith(":"):
                     raise Fatal("field not in mark format")
                 else:
-                    marklist.append(event.mark)
+                    markmap[event.mark] = origin + len(markmap)
         for event in self.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
