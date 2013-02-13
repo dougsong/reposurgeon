@@ -669,15 +669,17 @@ class Date:
         if tz[0] in "+-":
             return tz
         oldtz = os.getenv("TZ")
-        os.putenv("TZ", tz)
-        time.tzset()
-        now = int(time.time())
-        tm = time.localtime(int(now))
-        os.putenv("TZ", "UTC")
-        time.tzset()
-        seconds = int(time.mktime(tm)) - now
-        os.putenv("TZ", oldtz or "")
-        time.tzset()
+        try:
+            os.putenv("TZ", tz)
+            time.tzset()
+            now = int(time.time())
+            tm = time.localtime(int(now))
+            os.putenv("TZ", "UTC")
+            time.tzset()
+            seconds = int(time.mktime(tm)) - now
+        finally:
+            os.putenv("TZ", oldtz or "")
+            time.tzset()
         if str(seconds).startswith("-"):
             sgn = "-"
             seconds = -seconds
