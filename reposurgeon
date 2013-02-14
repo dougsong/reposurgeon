@@ -6201,7 +6201,7 @@ selected with the modifiers 'structure' and 'names'.
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            unmapped = re.compile("[^@]*$|[^@]*@" + self.chosen().uuid + "$")
+            unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set([])
             deletealls = set([])
             for i in self.selection:
