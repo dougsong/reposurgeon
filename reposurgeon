@@ -6201,7 +6201,7 @@ selected with the modifiers 'structure' and 'names'.
             return
         line = self.set_selection_set(line, list(range(len(self.chosen()))))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            unmapped = re.compile("[^@]*$|[^@]*@" + self.chosen().uuid + "$")
+            unmapped = re.compile("[^@]*$|[^@]*@" + self.chosen().uuid + "$") if self.chosen().uuid else None
             shortset = set([])
             deletealls = set([])
             for i in self.selection:
@@ -6210,7 +6210,7 @@ selected with the modifiers 'structure' and 'names'.
                     if not line or "structure" in line:
                         if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
                             deletealls.add("on %s at %s" % (event.branch, event.id_me()))
-                    if not line or "names" in line:
+                    if unmapped and (not line or "names" in line):
                         for person in [event.committer] + event.authors:
                             if unmapped.match(person.email):
                                 shortset.add(person.email)
