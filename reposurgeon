@@ -6550,16 +6550,20 @@ set of modifications actually made is written to the output file.
                 update_list.append(email.message_from_string(msg))
         # First, a validation pass
         attribution_map = {}
+        name_map = {}
         attribution_counts = collections.Counter()
         for commit in self.chosen().commits():
             stamp = commit.committer.action_stamp()
             attribution_map[stamp] = commit
             attribution_counts[stamp] += 1
         for event in self.chosen().events:
-            if isinstance(event, Tag) and event.tagger:
-                stamp = event.tagger.action_stamp()
-                attribution_map[stamp] = event
-                attribution_counts[stamp] += 1
+            if isinstance(event, Tag):
+                if event.name:
+                    name_map[event.name] = event
+                if event.tagger:
+                    stamp = event.tagger.action_stamp()
+                    attribution_map[stamp] = event
+                    attribution_counts[stamp] += 1
         fossil_map = {}
         for commit in self.chosen().commits():
             if commit.fossil_id:
@@ -6610,6 +6614,15 @@ set of modifications actually made is written to the output file.
                     errors += 1
                 if attribution_counts[stamp] > 1:
                     complain("multiple events match %s" % stamp)
+                    errors += 1
+            elif "Tag-Name" in message:
+                blank = Tag()
+                blank.tagger = Attribution()
+                blank.email_in(message)
+                try:
+                    event = name_map[blank.name]
+                except KeyError:
+                    complain("no tag matches name %s" % blank.name)
                     errors += 1
             else:
                 complain("no commit matches update %d:\n%s" % (i+1, message))
