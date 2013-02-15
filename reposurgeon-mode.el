@@ -44,7 +44,7 @@
   "Break the first line of a paragraph comment following git conventions."
   (interactive)
   (delete-horizontal-space)
-  (if (= (char-after ?\n)) (delete-char 1))
+  (if (= (char-after) ?\n) (delete-char 1))
   (let ((c (char-before)))
 	(cond ((member c '(?\. ?\! ?\?))
 	       (insert "\n\n"))
