@@ -27,6 +27,9 @@ repositories.
 This distribution also includes a generic Makefile describing a
 repeatable conversion workflow using these tools.
 
+Finally, an Emacs Lisp mode with useful functions for editing large 
+comment mailboxes is included.
+
 There is an extensive regression-test suite in the test/ directory.
 To test the correctness of this software, ensure that pylint
 is installed and then type 'make check'.
