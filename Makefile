@@ -8,7 +8,8 @@ SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repopuller repopuller.xml \
 	repodiffer repodiffer.xml \
-	conversion.mk features.asc
+	conversion.mk features.asc \
+	reposurgeon.el
 SOURCES += Makefile control reposturgeon.png
 
 all: reposurgeon.1 repopuller.1 repodiffer.1

@@ -1,5 +1,10 @@
 ;; A mode for editing the mailbox-like comment dumps produced by reposurgeon.
 ;;
+;; Canonicalizing thousands of comments in a mailbox_out dump is the grottiest
+;; part of lifting a repository, but if you don't do it you are probably going
+;; to miss things that should turn into reference cookies.  This mode aims to
+;; speed up the process.
+;;
 ;; Work in progress - neither code nor bindings should be considered stable.
 
 (defun decimal-digit-after ()
