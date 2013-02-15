@@ -1,4 +1,6 @@
 ;; A mode for editing the mailbox-like comment dumps produced by reposurgeon.
+;;
+;; Work in progress - neither code nor bindings should be considered stable.
 
 (defun decimal-digit-after ()
   (and (>= (char-after) ?0) (<= (char-after) ?9)))
@@ -32,6 +34,19 @@
   (insert "]]")
   )
 
+(defun cvs-split-summary ()
+  "Break the first line of a paragraph comment following git conventions."
+  (interactive)
+  (delete-horizontal-space)
+  (if (== (char-after ?\n)) (delete-char 1))
+  (let ((c (char-before)))
+	(cond ((member c '(?\. ?\! ?\?))
+	       (insert "\n\n"))
+	      ((member c '(?\, ?\: [semicolon] ?\,))
+	       (insert "\n\n..."))
+	      (t
+	       (insert "...\n\n...")))))
+
 (defun svn-reference-lift ()
   "Interactively lift probable SVN references en masse."
   (interactive)
@@ -43,6 +58,7 @@
   (setq reposurgeon-mode-map (make-sparse-keymap))
   (define-key reposurgeon-mode-map (kbd "C-x s") 'svn-cookify)
   (define-key reposurgeon-mode-map (kbd "C-x c") 'cvs-cookify)
+  (define-key reposurgeon-mode-map (kbd "C-x .") 'cvs-split-summary)
   )
 
 (define-derived-mode reposurgeon-mode
