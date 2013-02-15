@@ -32,6 +32,11 @@
   (insert "]]")
   )
 
+(defun svn-reference-lift ()
+  "Interactively lift probable SVN references en masse."
+  (interactive)
+  (query-replace-regexp "\\br\\([0-9][0-9]+\\)\\b" "[[SVN:\\1]]"))
+
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
 (when (not reposurgeon-mode-map)
