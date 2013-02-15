@@ -11,11 +11,12 @@
   (and (>= (char-after) ?0) (<= (char-after) ?9)))
 
 (defun svn-cookify ()
-  "Turn a numeric token describing a Subversion reference into a ref cookie."
+  "Turn a Subversion revision number around point into a reference cookie."
   (interactive)
   (if (not (decimal-digit-after))
       (error "Expecting decimal digit."))
   (backward-word)
+  ;; Ignore preceding r
   (if (= (char-after 1) ?r)
       (delete-char 1))
   (insert "[[SVN:")
@@ -28,7 +29,7 @@
   (or (== (char-after) ?.) (decimal-digit-after)))
 
 (defun cvs-cookify ()
-  "Turn a token describing a CVS reference into a ref cookie."
+  "Turn CVS reference around point into a reference cookie."
   (interactive)
   (if (not (cvs-rev-char-after))
       (error "Expecting decimal digit or dot."))
@@ -43,7 +44,7 @@
   "Break the first line of a paragraph comment following git conventions."
   (interactive)
   (delete-horizontal-space)
-  (if (== (char-after ?\n)) (delete-char 1))
+  (if (= (char-after ?\n)) (delete-char 1))
   (let ((c (char-before)))
 	(cond ((member c '(?\. ?\! ?\?))
 	       (insert "\n\n"))
@@ -53,7 +54,7 @@
 	       (insert "...\n\n...")))))
 
 (defun svn-reference-lift ()
-  "Interactively lift probable SVN references en masse."
+  "Interactively lift probable SVN revision numbers into ref cookies en masse."
   (interactive)
   (query-replace-regexp "\\br\\([0-9][0-9]+\\)\\b" "[[SVN:\\1]]"))
 
