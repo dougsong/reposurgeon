@@ -9,7 +9,7 @@
 from __future__ import absolute_import, print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, pickle
-import re, signal, shutil, copy, shlex, collections, resource, uuid, cgi, bz2
+import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator
 import email.message, email.parser, email.utils
 
@@ -7543,8 +7543,12 @@ if __name__ == '__main__':
     # Increase max stack size from 8MB to 512MB
     # Needed to handle really large repositories.
     try:
-        resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
         sys.setrecursionlimit(10**6)
+        import resource
+        resource.setrlimit(resource.RLIMIT_STACK, (2**29,-1))
+    except ImportError:
+        # Don't fail to start if 'resource' isn't available
+        pass
     except ValueError:
         # May not be allowed on some systems.  Whether or not we can do it
         # isn't interesting, it only matters whether the limit is actually
