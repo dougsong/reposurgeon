@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.21:
+2.21: 2013-02-21
      Added "compressblobs" and "svn_no_renumber" option for very large repos. 
      Added the "sizes" and "lint" commands.
      Interpretation of timezone field in author maps was buggy, is now fixed.
