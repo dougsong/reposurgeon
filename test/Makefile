@@ -1,6 +1,6 @@
 # Test-suite makefile for reposurgeon
 
-PATH := ..:${PATH}
+PATH := ..:.:${PATH}
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svnload-regress fossil-regress svndump-regress \
