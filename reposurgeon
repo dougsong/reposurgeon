@@ -7045,6 +7045,64 @@ list.
         self.chosen().graft(graft_repo, graft_point)
         self.remove_by_name(graft_repo.name)
 
+    def help_debranch(self):
+        print("""
+Takes one or two arguments which must be the names of source and target
+branches; if the second (target) argument is omitted it defaults to 'master'.
+The history of the source branch is merged into the history of the target
+branch, becoming the history of a subdirectory with the name of the branch.
+""")
+    def do_debranch(self, line):
+        "Turn a branch into a subdirectory."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+        args = line.split()
+        if not args:
+            complain("debranch command requires at least one argument")
+        else:
+            target = 'refs/heads/master'
+            source = args[0]
+            if len(args) == 2:
+                target = args[1]
+            repo = self.chosen()
+            if not source in repo.branches:
+                for candidate in repo.branches:
+                    if candidate.endswith(os.sep + source):
+                        source = candidate
+                else:
+                    complain("no branch matches source %s" % source)
+                    return
+            if not target in repo.branches:
+                for candidate in repo.branches:
+                    if candidate.endswith(os.sep + target):
+                        target = candidate
+                else:
+                    complain("no branch matches %s" % target)
+                    return
+            # Now that the arguments are in proper form, implement
+            self.set_selection("(" + source + ")")
+            repo.path_walk(self.selection,
+                           lambda f: os.path.join(os.path.basename(source), f))
+            last_parent = None
+            source_reset = None
+            for i in len(repo.events):
+                event = repo.events[i]
+                if hasattr(event, "branch"):
+                    if event.branch == source or event.branch == target:
+                        if last_parent is not None:
+                            if len(event.parentMarks()) == 0:
+                                event.parent_marks = [last_parent]
+                            else:
+                                event.parent_marks[0] = last_parent
+                        last_parent = event.mark
+                elif isinstance(event, Reset):
+                    if event.ref == source:
+                        source_reset = i
+            self.branches[target] = last_parent
+            if source_reset is not None:
+                del repo.events[source_reset]
+            repo.declare_sequence_mutation()
+
     def help_paths(self):
         print("""
 Without a modifier, list all paths touched by fileops in
