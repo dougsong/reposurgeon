@@ -7164,7 +7164,7 @@ existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
-a 'rename', the third argument may be any token token that is a
+a 'rename', the third argument may be any token that is a
 syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.
 """)
