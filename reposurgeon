@@ -4592,7 +4592,7 @@ class Repository:
                                               [op for op in ops if (op.path or op.target) and
                                                                    (op.path or op.target).startswith(prefix)]))
 
-    # Container emulation methods
+    # Sequence emulation methods
     def __len__(self):
         return len(self.events)
     def __getitem__(self, i):
@@ -6733,10 +6733,10 @@ separation in seconds; the default is 90 seconds.
         # it; this operation only make sense for cleaning up
         # artifacts in linear stretches of history that have been
         # lifted from file-oriented VCSes like RCS and CVS.
-        commits = [i for i in enumerate(self.chosen()) if isinstance(i[1], Commit)]
+        commits = [(i,c) for i,c in enumerate(self.chosen()) if isinstance(c, Commit)]
         for i in range(len(commits)-1):
-            cthis = self.chosen().events[commits[i][0]]
-            cnext = self.chosen().events[commits[i+1][0]]
+            cthis = commits[i][1]
+            cnext = commits[i+1][1]
             if not (isinstance(cthis, Commit) and isinstance(cnext, Commit)):
                 continue
             elif cthis.branch != cnext.branch:
