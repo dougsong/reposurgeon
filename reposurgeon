@@ -6737,15 +6737,11 @@ separation in seconds; the default is 90 seconds.
         for i in range(len(commits)-1):
             cthis = commits[i][1]
             cnext = commits[i+1][1]
-            if not (isinstance(cthis, Commit) and isinstance(cnext, Commit)):
-                continue
-            elif cthis.branch != cnext.branch:
-                continue
-            elif cthis.comment != cnext.comment:
+            if cthis.branch != cnext.branch or cthis.comment != cnext.comment:
                 continue
             #elif cthis.committer.email != cnext.committer.email:
             #    continue
-            elif cthis.committer.date.delta(cnext.committer.date) < timefuzz:
+            if cthis.committer.date.delta(cnext.committer.date) < timefuzz:
                 eligible.append(commits[i][0])
         if verbose:
             announce("deletion set is %s" % [x+1 for x in eligible])
