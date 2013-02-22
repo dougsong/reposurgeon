@@ -4911,15 +4911,7 @@ class popen_or_die:
         if extype:
             if verbose:
                 complain("fatal exception in popen_or_die.")
-            # This is what we want, but it's only in true Python 3.x
-            if sys.version_info.major >= 3:
-                raise extype(value).with_traceback(traceback)
-            else:
-                try:
-                    # Python 3.2 chokes on this syntax.
-                    raise extype(value).with_traceback(traceback)
-                except SyntaxError:
-                    pass
+            raise extype, value, traceback
         if self.fp.close() is not None:
             raise Fatal("%s%s returned error." % (self.command, self.legend))
         return False
