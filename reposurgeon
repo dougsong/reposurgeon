@@ -6172,12 +6172,10 @@ unwieldy.
                     sizes[commit.branch] += len(str(event.tagger))
                     sizes[commit.branch] += len(event.comment)
             total = sum(sizes.values())
-            keys = list(sizes.keys())
-            keys.sort()
             def sz(n, s):
                 parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
-            for key in keys:
+            for key in sorted(sizes.iterkeys()):
                 sz(sizes[key], key)
             sz(total, "")
     def help_lint(self):
