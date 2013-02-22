@@ -111,13 +111,13 @@ class VCS:
         return "         Name: " + str(self.name) + "\n" \
              + " Subdirectory: " + str(self.subdirectory) + "\n" \
              + "     Exporter: " + str(self.exporter) + "\n" \
-             + " Export-Style: {" + ",".join(list(self.styleflags)) + "}\n" \
+             + " Export-Style: {" + ",".join(self.styleflags) + "}\n" \
              + "   Properties: " + repr(self.properties) + "\n" \
              + "  Initializer: " + str(self.initializer) + "\n" \
              + "       Lister: " + str(self.lister) + "\n" \
              + "     Importer: " + str(self.importer) + "\n" \
              + "     Checkout: " + str(self.checkout) + "\n" \
-             + "     Preserve: {" + ",".join(list(self.preserve)) + "}\n" \
+             + "     Preserve: {" + ",".join(self.preserve) + "}\n" \
              + "    Authormap: " + str(self.authormap) + "\n" \
              + "   Ignorename: " + str(self.ignorename) + "\n" \
              + "      Project: " + str(self.project) + "\n" \
@@ -1221,7 +1221,7 @@ class Commit(object):
         if self.fossil_id:
             msg["Fossil-ID"] = self.fossil_id
         for (name, value) in self.properties.iteritems():
-            hdr = "-".join([s.capitalize() for s in name.split("-")])
+            hdr = "-".join(s.capitalize() for s in name.split("-"))
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
@@ -1301,7 +1301,8 @@ class Commit(object):
                 modified = True
                 msg["Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
-        for prophdr in [s for s in msg.keys() if s.startswith("Property-")]:
+        for prophdr in msg.keys():
+            if not prophdr.startswith("Property-"): continue
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
             if propval == "True":
@@ -2997,7 +2998,7 @@ class StreamParser:
                                      (newcommit.fossil_id, copies))
                     linkback = False
                     # If the copies include one for the directory, we're good.
-                    if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
+                    if any(node.kind == SD_DIR and node.from_path and node.path == newcommit.common for node in copies):
                         self.directory_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: directory copy with %s" \
@@ -3169,7 +3170,7 @@ class StreamParser:
                 child = self.repo.objfind(later)
                 if earlier not in child.parentMarks():
                     child.addParent(earlier)
-            nonempty = set([c for c in self.repo.commits() if c.fileops]) 
+            nonempty = set(c for c in self.repo.commits() if c.fileops)
             for root in branchroots:
                 rootrev = root.fossil_id
                 if commit.branch in nonempty and root.branch != ("trunk" + os.sep):
@@ -3316,7 +3317,7 @@ class StreamParser:
         baton.twirl("canonicalizing")
         baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
-            if [fileop for fileop in commit.fileops if fileop is None]:
+            if any(fileop is None for fileop in commit.fileops):
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
             for i in range(len(commit.fileops)-1):
                 if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
@@ -3766,7 +3767,7 @@ class Repository:
             raise Fatal("can't create operating directory")
     def size(self):
         "Return the size of this import stream, for statistics display."
-        return sum([len(str(e)) for e in self.events])
+        return sum(len(str(e)) for e in self.events)
     def branchset(self):
         "Return a set of branchnames in this repo."
         return set(commit.branch for commit in self.commits())
@@ -4457,8 +4458,8 @@ class Repository:
         self.case_coverage |= other.case_coverage
         # Strip feature events off the front, they have to stay in front.
         while isinstance(other[0], Passthrough):
-            front = [x for x in self.events if isinstance(x, Passthrough)]
-            self.events.insert(len(front), other.events.pop(0))
+            lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
+            self.events.insert(lenfront, other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
         self.declare_sequence_mutation()
@@ -5008,7 +5009,7 @@ class RepositoryList:
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
             event.color = "early"        
-        assert all([hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo])
+        assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo)
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
@@ -5060,7 +5061,7 @@ class RepositoryList:
         "Unite multiple repos into a union repo."
         factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.commits()[0] for x in factors]
-        union = Repository("+".join([r.name for r in factors]))
+        union = Repository("+".join(r.name for r in factors))
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             if i != 0:
@@ -5099,7 +5100,7 @@ class RepositoryList:
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
-            return re.compile("|".join(["(?:" + s + ")" for s in toklist]))
+            return re.compile("|".join("(?:" + s + ")" for s in toklist))
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -5200,11 +5201,11 @@ class RepositoryList:
         for event in self.repo.events + expunged.events:
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
-        expunged_marks = set([event.mark for event in expunged.events if hasattr(event, "mark")])
+        expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
                 event.setParents([e for e in event.parentMarks() if e in expunged_marks])
-        keeper_marks = set([event.mark for event in self.repo.events if hasattr(event, "mark")])
+        keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
                 event.setParents([e for e in event.parentMarks() if e in keeper_marks])
@@ -5215,8 +5216,8 @@ class RepositoryList:
                     if fileop.op == 'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events]
-        deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
+        deletia = (not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events)
+        deletia = [i for i,e in enumerate(deletia) if not e]
         self.repolist.append(expunged)
         if not deletia:
             announce("deletion set is empty.")
@@ -5654,7 +5655,7 @@ editing; this may be useful for large repositories.
                     spanning = True
                 else:
                     if spanning:
-                        resolved += list(range(last+1, elt+1))
+                        resolved.extend(range(last+1, elt+1))
                         spanning = False
                     else:
                         resolved.append(elt)
@@ -5756,7 +5757,7 @@ editing; this may be useful for large repositories.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
+        default = [n for n,o in enumerate(self.chosen()) if hasattr(o, method)]
         line = self.set_selection_set(line, default)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
@@ -6036,7 +6037,7 @@ file in the blob.  Supports > redirection.
         # get a default-set computation we don't want.  Second, for this
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
-        default = [x[0] for x in [n_o1 for n_o1 in enumerate(self.chosen()) if not isinstance(n_o1[1], Blob)]]
+        default = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
         line = self.set_selection_set(line, default)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
@@ -6088,7 +6089,7 @@ currently chosen repository. Supports > redirection.
                     raise Recoverable("no such repo as %s" % name)
                 else:
                     def count(otype):
-                        return len([x for x in repo.events if isinstance(x,otype)])
+                        return sum(1 for x in repo.events if isinstance(x,otype))
                     parse.stdout.write("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" % \
                           (repo.name, repo.size() / 1000.0, len(repo),
                            count(Blob), count(Commit), count(Tag), count(Reset),
@@ -6240,7 +6241,7 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
-            if [ext for ext in extractors if ext.visible]:
+            if any(ext.visible for ext in extractors):
                 print("Other systems supported for read only: %s\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
         else:
@@ -6475,7 +6476,7 @@ for graphviz.
                         cid = event.showfossil() + " &rarr; " + cid
                     parse.stdout.write('\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
-                    if not event.branch in [child.branch for child in event.children()]:
+                    if all(event.branch != child.branch for child in event.children()):
                         parse.stdout.write('\t"%s" [shape=oval,width=2];\n' % event.branch)
                         parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
                 if isinstance(event, Tag):
@@ -6658,7 +6659,7 @@ are multiline and not in summary/blank-line/details form.
         if not self.chosen():
             complain("no repo is loaded")
             return
-        default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
+        default = [n for n, o2 in enumerate(self.chosen()) if hasattr(o2, "email_out")]
         rest = self.set_selection_set(line, default)
         if "multiline" in rest:
             rest = rest.replace("multiline", "")
@@ -6959,7 +6960,7 @@ file operations in the original commit.
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
-                if splitpoint not in list(range(1, len(event.fileops))):
+                if splitpoint not in range(1, len(event.fileops)):
                     raise Recoverable("fileop index out of range")
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
@@ -7090,8 +7091,8 @@ from the highest member (child) to the lowest (parent).
                           if isinstance(repo.events[e], Commit)]
         if not self.selection or len(self.selection) < 2:
             raise Recoverable("merge requires two commit arguments.")
-        earlier = repo.events[list(self.selection)[0]]
-        later = repo.events[list(self.selection)[-1]]
+        earlier = repo.events[self.selection[0]]
+        later = repo.events[self.selection[-1]]
         later.addParent(earlier.mark)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
@@ -7493,7 +7494,7 @@ means the surgical language is not backwards compatible).
 """)
     def do_version(self, line):
         if not line:
-            announce("reposurgeon " + version + " supporting " + " ".join([x.name for x in (vcstypes+extractors)]))
+            announce("reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
         else:
             (vmajor, _) = version.split(".")
             if '.' in line:
