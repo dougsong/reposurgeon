@@ -6733,16 +6733,16 @@ separation in seconds; the default is 90 seconds.
         # it; this operation only make sense for cleaning up
         # artifacts in linear stretches of history that have been
         # lifted from file-oriented VCSes like RCS and CVS.
-        commits = [(i,c) for i,c in enumerate(self.chosen()) if isinstance(c, Commit)]
-        for i in range(len(commits)-1):
-            cthis = commits[i][1]
-            cnext = commits[i+1][1]
+        icthis, icnext = itertools.tee(
+                ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit)))
+        next(icnext, None)
+        for (ithis, cthis), (inext, cnext) in itertools.izip(icthis, icnext):
             if cthis.branch != cnext.branch or cthis.comment != cnext.comment:
                 continue
             #elif cthis.committer.email != cnext.committer.email:
             #    continue
             if cthis.committer.date.delta(cnext.committer.date) < timefuzz:
-                eligible.append(commits[i][0])
+                eligible.append(ithis)
         if verbose:
             announce("deletion set is %s" % [x+1 for x in eligible])
         self.chosen().delete(eligible, "coalesce")
