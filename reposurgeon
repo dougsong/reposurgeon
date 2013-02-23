@@ -4025,6 +4025,17 @@ class Repository:
     def earliest(self):
         "Return the date of earliest commit."
         return self.commits()[0].committer.date
+    def ancestors(self, ei):
+        "Return ancestors of an event, in reverse order."
+        trail = []
+        while True:
+            if not self.events[ei].parentMarks():
+                break
+            else:
+                efrom = self.find(self.events[ei].parentMarks()[0])
+                trail.append(efrom)
+                ei = efrom
+        return trail
     #
     # Delete machinery begins here
     #
@@ -7083,25 +7094,24 @@ branch, becoming the history of a subdirectory with the name of the branch.
                     complain("no branch matches %s" % target)
                     return
             # Now that the arguments are in proper form, implement
-            self.set_selection("(" + source + ")")
-            repo.path_walk(self.selection,
-                           lambda f: os.path.join(os.path.basename(source), f))
+            scommits = repo.events.ancestors(self.find(self.branches[source]))
+            tcommits = repo.events.ancestors(self.find(self.branches[target]))
+            merged = list(set(scommits + tcommits))
+            merged.sort()
             last_parent = None
             source_reset = None
-            for i in len(repo.events):
+            for i in merged:
                 event = repo.events[i]
-                if hasattr(event, "branch"):
-                    if event.branch == source or event.branch == target:
-                        if last_parent is not None:
-                            if len(event.parentMarks()) == 0:
-                                event.parent_marks = [last_parent]
-                            else:
-                                event.parent_marks[0] = last_parent
-                        last_parent = event.mark
-                elif isinstance(event, Reset):
-                    if event.ref == source:
-                        source_reset = i
+                if last_parent is not None:
+                    if len(event.parentMarks()) == 0:
+                        event.parent_marks = [last_parent]
+                    else:
+                        event.parent_marks[0] = last_parent
+                last_parent = event.mark
             self.branches[target] = last_parent
+            for (i, event) in enumerate(self.repo.events):
+                if isinstance(event, Reset) and event.ref == source:
+                    source_reset = i
             if source_reset is not None:
                 del repo.events[source_reset]
             repo.declare_sequence_mutation()
