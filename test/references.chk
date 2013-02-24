@@ -4567,8 +4567,8 @@ Revision is 89, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 mark :728
 committer Arnaud Quette <arnaud.quette@free.fr> 1122043987 +0000
-data 34
-bump newhidups release to �0.24
+data 32
+bump newhidups release to v0.24
 from :725
 M 100644 :726 CHANGES
 M 100644 :727 drivers/newhidups.h
