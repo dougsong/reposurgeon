@@ -3770,6 +3770,9 @@ class Repository:
     def branchset(self):
         "Return a set of branchnames in this repo."
         return set(commit.branch for commit in self.commits())
+    def branchmap(self):
+        "Return a map of branchnames to terminal marks in this repo."
+        return dict((commit.branch, commit.mark) for commit in self.commits())
     def index(self, obj):
         "Index of the specified object."
         for (ind, event) in enumerate(self.events):
@@ -7079,23 +7082,26 @@ branch, becoming the history of a subdirectory with the name of the branch.
             if len(args) == 2:
                 target = args[1]
             repo = self.chosen()
-            if not source in repo.branches:
-                for candidate in repo.branches:
+            branches = repo.branchmap()
+            if not source in branches.keys():
+                for candidate in branches.keys():
                     if candidate.endswith(os.sep + source):
                         source = candidate
+                        break
                 else:
                     complain("no branch matches source %s" % source)
                     return
-            if not target in repo.branches:
-                for candidate in repo.branches:
+            if not target in branches.keys():
+                for candidate in branches.keys():
                     if candidate.endswith(os.sep + target):
                         target = candidate
+                        break
                 else:
                     complain("no branch matches %s" % target)
                     return
             # Now that the arguments are in proper form, implement
-            scommits = repo.events.ancestors(self.find(self.branches[source]))
-            tcommits = repo.events.ancestors(self.find(self.branches[target]))
+            scommits = repo.ancestors(repo.find(branches[source]))
+            tcommits = repo.ancestors(repo.find(branches[target]))
             merged = list(set(scommits + tcommits))
             merged.sort()
             last_parent = None
@@ -7103,12 +7109,9 @@ branch, becoming the history of a subdirectory with the name of the branch.
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    if len(event.parentMarks()) == 0:
-                        event.parent_marks = [last_parent]
-                    else:
-                        event.parent_marks[0] = last_parent
+                    event.setParents([last_parent] + event.parentMarks()[1:])
+                event.branch = target
                 last_parent = event.mark
-            self.branches[target] = last_parent
             for (i, event) in enumerate(self.repo.events):
                 if isinstance(event, Reset) and event.ref == source:
                     source_reset = i
