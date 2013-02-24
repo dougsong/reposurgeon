@@ -7067,7 +7067,10 @@ list.
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
 The history of the source branch is merged into the history of the target
-branch, becoming the history of a subdirectory with the name of the branch.
+branch, becoming the history of a subdirectory with the name of the source
+branch. Any trailing segment of a branch name is accepted as a synonym for
+it; thus 'master' is the same as 'refs/heads/master'.  Any resets of the
+source branch are removed.
 """)
     def do_debranch(self, line):
         "Turn a branch into a subdirectory."
