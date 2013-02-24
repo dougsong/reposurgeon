@@ -3,8 +3,9 @@
 PATH := ..:.:${PATH}
 
 default:
-	reposurgeon "runtests"
-	make --quiet all
+	@(cd ..; make --quiet pylint)
+	@reposurgeon "runtests"
+	@make --quiet all
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svnload-regress fossil-regress svndump-regress \

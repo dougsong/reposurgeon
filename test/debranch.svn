@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Multibranch repo to test the debranch feature.
 
 UUID: 6fad1ae1-3725-445d-8b78-8da59b727a5a
 

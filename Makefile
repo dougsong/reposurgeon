@@ -61,7 +61,7 @@ pylint:
 	@pylint --output-format=parseable $(PYLINTOPTS1) reposurgeon
 	@pylint --output-format=parseable $(PYLINTOPTS2) repodiffer
 
-check: pylint
+check:
 	cd test; make --quiet
 
 dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopuller.1 repodiffer.1
