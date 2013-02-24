@@ -341,7 +341,7 @@ class GitExtractor:
             for leaf in files:
                 assert dirs is not None  # Pacify pylint
                 ref = os.path.join(root, leaf)
-                with file(ref) as fp:
+                with open(ref) as fp:
                     self.refs[ref[5:]] = fp.read().strip()
         self.baton.twirl()
         # Next, grab all tag objects.
@@ -1521,7 +1521,7 @@ class signature:
         self.hashval = None
         self.perms = None
         if not os.path.isdir(path):
-            with file(path) as fp:
+            with open(path, "rb") as fp:
                 self.hashval = hashlib.sha1(fp.read()).hexdigest()
             self.perms = os.stat(path).st_mode
             # Map to the restricted set of modes that are allowed in
