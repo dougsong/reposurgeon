@@ -1013,23 +1013,23 @@ class FileOp(object):
             return ""
         else:
             raise Fatal("internal error while extracting pathname")
-    @staticmethod
-    def compare(a, b):
+    def __lt__(a, b):
         "Emulates the sort that git fast-export uses."
+        # Renames are later than every other op
+        if a.op != "R" and b.op == "R":
+            return True
+        if a.op == "R" and b.op != "R":
+            return False
+        # Now either both a and b are renames, or both aren't. Compare the paths
         name_a = FileOp.__pathname__(a)
         name_b = FileOp.__pathname__(b)
+        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
         len_a = len(name_a)
         len_b = len(name_b)
         slen = min(len_a, len_b)
-        # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
-        c = cmp(name_a[:slen], name_b[:slen])
-        if c:
-            return c
-        c = len_b - len_a
-        if c:
-            return c
-        # renames go last
-        return (a.op == 'R') - (b.op == 'R') 
+        if name_a[:slen] == name_b[:slen]:
+            return len_a > len_b
+        return name_a < name_b
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
@@ -1823,7 +1823,7 @@ class RepoStreamer:
                     reset = Reset()
                     reset.ref = commit.branch
                     repo.addEvent(reset)
-                commit.fileops.sort(cmp=FileOp.compare)
+                commit.fileops.sort()
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
                 commit.mark = self.__newmark(revision)
@@ -2992,7 +2992,7 @@ class StreamParser:
             # copy). Fortunately, we can resolve such sets by the simple
             # expedient of picking the *latest* revision in them!
             for newcommit in newcommits:
-                newcommit.fileops.sort(cmp=FileOp.compare)
+                newcommit.fileops.sort()
                 if commit.mark not in self.branchlink:
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
