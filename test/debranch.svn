@@ -1,0 +1,507 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 6fad1ae1-3725-445d-8b78-8da59b727a5a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-02-23T19:50:17.738927Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+Directory layout.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T19:50:19.027376Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T19:50:19.893951Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 140
+Content-length: 140
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T20:41:03.209943Z
+K 7
+svn:log
+V 42
+Creation of a branch which we later fold.
+
+PROPS-END
+
+Node-path: branches/resources
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 137
+Content-length: 137
+
+K 8
+svn:date
+V 27
+2013-02-23T20:44:14.743474Z
+K 7
+svn:log
+V 39
+First modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Text-content-md5: 27754c3f27b289095af7c53ec730bece
+Text-content-sha1: ad5da0f1fa43d2ab5b0b115543244ec58f405159
+Content-length: 77
+
+This is a test Subversion repository
+
+First modification on the main branch.
+
+
+Revision-number: 5
+Prop-content-length: 138
+Content-length: 138
+
+K 8
+svn:date
+V 27
+2013-02-23T20:47:03.395089Z
+K 7
+svn:log
+V 40
+Begin to populate the resources branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/resources/random
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 75
+Text-content-md5: 2e0855943c7b097456ea6a8c085f65b6
+Text-content-sha1: e11e418a073c0c1d5237c47ff505589cbfee9edd
+Content-length: 85
+
+PROPS-END
+This is a random resource file being added to the branch we'll later fold.
+
+
+Revision-number: 6
+Prop-content-length: 138
+Content-length: 138
+
+K 8
+svn:date
+V 27
+2013-02-23T20:49:41.012964Z
+K 7
+svn:log
+V 40
+Second modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 78
+Text-content-md5: 0a2ae79f65da648d2d2e27afe44b63f2
+Text-content-sha1: fa5bbc64645557f80c5d70ae46306cffc3892c23
+Content-length: 78
+
+This is a test Subversion repository
+
+Second modification on the main branch.
+
+
+Revision-number: 7
+Prop-content-length: 128
+Content-length: 128
+
+K 8
+svn:date
+V 27
+2013-02-23T21:49:59.372483Z
+K 7
+svn:log
+V 30
+Creation of alternate branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/alternate
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/alternate/README
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk/README
+Text-copy-source-md5: 0a2ae79f65da648d2d2e27afe44b63f2
+Text-copy-source-sha1: fa5bbc64645557f80c5d70ae46306cffc3892c23
+
+
+Revision-number: 8
+Prop-content-length: 137
+Content-length: 137
+
+K 8
+svn:date
+V 27
+2013-02-23T21:50:36.585694Z
+K 7
+svn:log
+V 39
+Third modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Text-content-md5: 24d0d8ceb247fc3bb6fbce36bf50e59d
+Text-content-sha1: 7df4ed6c1cb981464cf7b3a4a13a68f5a0d6e915
+Content-length: 77
+
+This is a test Subversion repository
+
+Third modification on the main branch.
+
+
+Revision-number: 9
+Prop-content-length: 158
+Content-length: 158
+
+K 8
+svn:date
+V 27
+2013-02-23T21:52:21.665269Z
+K 7
+svn:log
+V 60
+This is the first modification to the random resource file.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/resources/random
+Node-kind: file
+Node-action: change
+Text-content-length: 136
+Text-content-md5: 9ad82e688c7df02bcd092d5f32bcc1d0
+Text-content-sha1: c26840b074c5cad1c2345161f4cec5a1323c5365
+Content-length: 136
+
+This is a random resource file being added to the branch we'll later fold.
+
+This is the first modification to the random resource file.
+
+
+Revision-number: 10
+Prop-content-length: 138
+Content-length: 138
+
+K 8
+svn:date
+V 27
+2013-02-23T21:56:05.364613Z
+K 7
+svn:log
+V 40
+Fourth modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 78
+Text-content-md5: 8e681dde13a0658446489cbb495a7edf
+Text-content-sha1: 439739431fdc3934d02ec889e56a827454a56bf6
+Content-length: 78
+
+This is a test Subversion repository
+
+Fourth modification on the main branch.
+
+
+Revision-number: 11
+Prop-content-length: 159
+Content-length: 159
+
+K 8
+svn:date
+V 27
+2013-02-23T21:56:28.471602Z
+K 7
+svn:log
+V 61
+This is the second modification to the random resource file.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/resources/random
+Node-kind: file
+Node-action: change
+Text-content-length: 137
+Text-content-md5: b7852944c0adb9c3b735adebfd78ac50
+Text-content-sha1: 3a79cc3b70f3b391de054b6433297fd974440a33
+Content-length: 137
+
+This is a random resource file being added to the branch we'll later fold.
+
+This is the second modification to the random resource file.
+
+
+Revision-number: 12
+Prop-content-length: 142
+Content-length: 142
+
+K 7
+svn:log
+V 44
+First modification on the alternate branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T23:00:58.701387Z
+PROPS-END
+
+Node-path: branches/alternate/README
+Node-kind: file
+Node-action: change
+Text-content-length: 82
+Text-content-md5: d8ea121b459457fe8a2ea2617d8e6e67
+Text-content-sha1: 61bb5dd9053834c3f7dd065d4c6d1bf100b9db0f
+Content-length: 82
+
+This is a test Subversion repository
+
+First modification on the alternate branch.
+
+
+Revision-number: 13
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 39
+Fifth modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T23:02:56.924343Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Text-content-md5: e9b44477b6186bb68a5b5e117327c545
+Text-content-sha1: e735188e64dd0d6f1ccfb11b43b7366ec04dcb38
+Content-length: 77
+
+This is a test Subversion repository
+
+Fifth modification on the main branch.
+
+
+Revision-number: 14
+Prop-content-length: 158
+Content-length: 158
+
+K 8
+svn:date
+V 27
+2013-02-23T23:03:42.189642Z
+K 7
+svn:log
+V 60
+This is the third modification to the random resource file.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches/resources/random
+Node-kind: file
+Node-action: change
+Text-content-length: 136
+Text-content-md5: 9ddfc3f144e704ca0464c9396b587a19
+Text-content-sha1: e5f8db3c1ba64049b0e42765d353f61e444c8954
+Content-length: 136
+
+This is a random resource file being added to the branch we'll later fold.
+
+This is the third modification to the random resource file.
+
+
+Revision-number: 15
+Prop-content-length: 137
+Content-length: 137
+
+K 7
+svn:log
+V 39
+Sixth modification on the main branch.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-02-23T23:04:17.788648Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Text-content-md5: 6cb50f354d4c3bce6247728397169476
+Text-content-sha1: 3a90e693effb084e5f9908dd82384d969a70eeeb
+Content-length: 77
+
+This is a test Subversion repository
+
+Sixth modification on the main branch.
+
+
