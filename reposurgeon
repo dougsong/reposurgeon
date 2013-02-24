@@ -365,7 +365,7 @@ class GitExtractor:
                             objecthash = line.split()[1]
                         elif comment is None and not line:
                             comment = ""
-                        elif type(comment) == type(""):
+                        elif isinstance(comment, str):
                             comment += line + "\n"
                             if objecthash != taghash:
                                 # committish isn't a mark; we'll fix that later
@@ -1030,7 +1030,7 @@ class FileOp(object):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
             self.path_remap_in()
-            if type(self.mode) == type(0):
+            if isinstance(self.mode, int):
                 self.mode = "%06o" % self.mode
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
@@ -1098,7 +1098,7 @@ class FileOp(object):
         "Dump this fileop in import-stream format."
         if self.op == "M":
             showmode = self.mode
-            if type(self.mode) == type(0):
+            if isinstance(self.mode, int):
                 showmode = "%06o" % self.mode
             st = " ".join((self.op, showmode, self.ref)) + " "
             if len(self.path.split()) > 1:
@@ -3935,7 +3935,7 @@ class Repository:
                     if "fossil" in commit.properties:
                         complain("fossil property of %s overwritten" \
                                  % commit.mark)
-                    if type(event.cookie) == type(""):
+                    if isinstance(event.cookie, str):
                         svnkey = "SVN:" + event.cookie
                         self.dollar_map[svnkey] = commit
                     else:
@@ -5961,7 +5961,7 @@ for exploring the selection-set language.
         self.set_selection_set(line)
         if self.selection is None:
             print("No selection")
-        elif type(self.selection) == type([]):
+        elif isinstance(self.selection, list):
             print([x+1 for x in self.selection])
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
@@ -7095,8 +7095,7 @@ source branch are removed.
             scommits = repo.ancestors(stip) + [stip]
             ttip = repo.find(branches[target])
             tcommits = repo.ancestors(ttip) + [ttip]
-            merged = list(set(scommits + tcommits))
-            merged.sort()
+            merged = sorted(set(scommits + tcommits))
             last_parent = None
             source_reset = None
             for i in merged:
