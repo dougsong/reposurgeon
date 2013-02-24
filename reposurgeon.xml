@@ -1074,6 +1074,24 @@ syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>debranch</command>
+        <emphasis>source-branch</emphasis>...
+        <command>[target-branch]</command>.
+</term>
+<listitem>
+<para>Takes one or two arguments which must be the names of source and
+target branches; if the second (target) argument is omitted it
+defaults to 'refs/heads/master'.  Any trailing segment of a branch
+name is accepted as a synonym for it; thus 'master' is the same as
+'refs/heads/master'. Does not take a selection set.</para>
+
+<para>The history of the source branch is merged into the history of
+the target branch, becoming the history of a subdirectory with the
+name of the source branch.  Any resets of the source branch are
+removed.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
