@@ -168,7 +168,7 @@ vcstypes = [
         importer="git fast-import --quiet",
         checkout="git checkout",
         lister="git ls-files",
-        preserve=set(['.git/config', '.git/hooks']),
+        preserve={'.git/config', '.git/hooks'},
         authormap=".git/cvs-authors",
         ignorename=".gitignore",
         project="http://git-scm.com/",
@@ -177,7 +177,7 @@ vcstypes = [
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
-        styleflags=set(["export-progress", "no-nl-after-commit", "nl-after-comment"]),
+        styleflags={"export-progress", "no-nl-after-commit", "nl-after-comment"},
         properties=True,
         initializer=None,
         lister=None,
@@ -192,14 +192,14 @@ vcstypes = [
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags=set(["nl-after-comment",
-                        "export-progress"]),
+        styleflags={"nl-after-comment",
+                        "export-progress"},
         properties=False,
         initializer="hg init",
         lister="hg locate",
         importer="hg fastimport %(tempfile)s",
         checkout="hg checkout",
-        preserve=set([".hg/hgrc"]),
+        preserve={".hg/hgrc"},
         authormap=None,
         ignorename=".hgignore",
         project="http://mercurial.selenic.com/",
@@ -223,13 +223,13 @@ vcstypes = [
     VCS(name="svn",
         subdirectory="locks",
         exporter="svnadmin dump .",
-        styleflags=set(["export-progress"]),
+        styleflags={"export-progress"},
         properties=False,
         initializer="svn create .",
         importer="svnadmin load .",
         checkout=None,
         lister=None,
-        preserve=set(["hooks"]),
+        preserve={"hooks"},
         authormap=None,
         ignorename=None,
         project="http://subversion.apache.org/",
@@ -237,7 +237,7 @@ vcstypes = [
     VCS(name="cvs",
         subdirectory="CVS",
         exporter="find . -name '*,v' -print | cvs-fast-export -k --reposurgeon",
-        styleflags=set(["export-progress"]),
+        styleflags={"export-progress"},
         properties=False,
         initializer=None,
         importer="None",
@@ -251,7 +251,7 @@ vcstypes = [
     VCS(name="rcs",
         subdirectory="RCS",
         exporter="find . -name '*,v' -print | cvs-fast-export -k --reposurgeon",
-        styleflags=set(["export-progress"]),
+        styleflags={"export-progress"},
         properties=False,
         initializer=None,
         importer="None",
@@ -1080,9 +1080,9 @@ class FileOp(object):
         "Return the set of all paths touched by this file op."
         if self._paths is None:
             if self.op in ("M", "D"):
-                self._paths = set([self.path])
+                self._paths = {self.path}
             elif self.op in ("R", "C"):
-                self._paths = set([self.source, self.target])
+                self._paths = {self.source, self.target}
             # Ugh...this isn't right for deleteall, but since we don't expect
             # to see that except at branch tips we'll ignore it for now.
             elif self.op in ("N", "deleteall"):
