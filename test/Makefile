@@ -2,6 +2,10 @@
 
 PATH := ..:.:${PATH}
 
+default:
+	reposurgeon "runtests"
+	make --quiet all
+
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svnload-regress fossil-regress svndump-regress \
 		repodiffer-regress
