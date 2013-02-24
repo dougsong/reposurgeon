@@ -7100,8 +7100,10 @@ branch, becoming the history of a subdirectory with the name of the branch.
                     complain("no branch matches %s" % target)
                     return
             # Now that the arguments are in proper form, implement
-            scommits = repo.ancestors(repo.find(branches[source]))
-            tcommits = repo.ancestors(repo.find(branches[target]))
+            stip = repo.find(branches[source])
+            scommits = repo.ancestors(stip) + [stip]
+            ttip = repo.find(branches[target])
+            tcommits = repo.ancestors(ttip) + [ttip]
             merged = list(set(scommits + tcommits))
             merged.sort()
             last_parent = None
