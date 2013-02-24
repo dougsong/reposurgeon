@@ -689,8 +689,12 @@ class Date:
     def __str__(self):
         "Format as a git timestamp."
         return str(self.timestamp) + " " + self.orig_tz_string
-    def __cmp__(self, other):
-        return cmp(self.timestamp, other.timestamp)
+    def __eq__(self, other):
+        return self.timestamp == other.timestamp
+    def __ne__(self, other):
+        return self.timestamp != other.timestamp
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
 
 class DateTests(unittest.TestCase):
     def test_conversion(self):
