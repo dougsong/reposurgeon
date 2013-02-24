@@ -506,6 +506,7 @@ def rfc3339(t):
 def complain(msg):
     sys.stdout.flush()
     sys.stderr.write("reposurgeon: %s\n" % msg)
+    sys.stderr.flush()
 
 def announce(msg):
     sys.stdout.write("reposurgeon: %s\n" % msg)
