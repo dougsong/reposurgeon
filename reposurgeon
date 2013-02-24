@@ -3689,6 +3689,7 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.head())
+                            # Here again the object is mutated, so a copy list must be used.
                             for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
@@ -5672,7 +5673,7 @@ editing; this may be useful for large repositories.
                     spanning = True
                 else:
                     if spanning:
-                        resolved.extend(range(last+1, elt+1))
+                        resolved.extend(xrange(last+1, elt+1))
                         spanning = False
                     else:
                         resolved.append(elt)
@@ -6189,7 +6190,7 @@ unwieldy.
                         sizes[commit.branch] = 0
                     sizes[commit.branch] += len(str(event.tagger))
                     sizes[commit.branch] += len(event.comment)
-            total = sum(sizes.values())
+            total = sum(sizes.itervalues())
             def sz(n, s):
                 parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
@@ -6973,7 +6974,7 @@ file operations in the original commit.
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
-                if splitpoint not in range(1, len(event.fileops)):
+                if splitpoint not in xrange(1, len(event.fileops)):
                     raise Recoverable("fileop index out of range")
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
@@ -7074,16 +7075,16 @@ source branch are removed.
                 target = args[1]
             repo = self.chosen()
             branches = repo.branchmap()
-            if not source in branches.keys():
-                for candidate in branches.keys():
+            if not source in branches.iterkeys():
+                for candidate in branches.iterkeys():
                     if candidate.endswith(os.sep + source):
                         source = candidate
                         break
                 else:
                     complain("no branch matches source %s" % source)
                     return
-            if not target in branches.keys():
-                for candidate in branches.keys():
+            if not target in branches.iterkeys():
+                for candidate in branches.iterkeys():
                     if candidate.endswith(os.sep + target):
                         target = candidate
                         break
