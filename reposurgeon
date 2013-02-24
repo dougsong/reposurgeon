@@ -8,7 +8,7 @@
 #
 from __future__ import absolute_import, print_function #unicode_literals
 
-import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, pickle
+import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator
 import email.message, email.parser, email.utils
@@ -111,13 +111,13 @@ class VCS:
         return "         Name: " + str(self.name) + "\n" \
              + " Subdirectory: " + str(self.subdirectory) + "\n" \
              + "     Exporter: " + str(self.exporter) + "\n" \
-             + " Export-Style: {" + ",".join(list(self.styleflags)) + "}\n" \
+             + " Export-Style: {" + ",".join(self.styleflags) + "}\n" \
              + "   Properties: " + repr(self.properties) + "\n" \
              + "  Initializer: " + str(self.initializer) + "\n" \
              + "       Lister: " + str(self.lister) + "\n" \
              + "     Importer: " + str(self.importer) + "\n" \
              + "     Checkout: " + str(self.checkout) + "\n" \
-             + "     Preserve: {" + ",".join(list(self.preserve)) + "}\n" \
+             + "     Preserve: {" + ",".join(self.preserve) + "}\n" \
              + "    Authormap: " + str(self.authormap) + "\n" \
              + "   Ignorename: " + str(self.ignorename) + "\n" \
              + "      Project: " + str(self.project) + "\n" \
@@ -378,8 +378,8 @@ class GitExtractor:
         self.baton.twirl()
         # Color branches in the order the tips occur.  Emulate the
         # git-export order.
-        for refname, refobj in sorted(iter(list(self.refs.items())),
-                key=lambda ref: self.revlist.index(ref[1])):
+        for refname, refobj in sorted(self.refs.iteritems(),
+                                      key=lambda ref: self.revlist.index(ref[1])):
             self.__branch_color(refobj, refname)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
         if uncolored:
@@ -425,7 +425,7 @@ class GitExtractor:
         return self.tags
     def iter_resets(self):
         "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in list(self.refs.items()) if "/tags/" not in item[0])
+        return (item for item in self.refs.iteritems() if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
@@ -696,7 +696,7 @@ class DateTests(unittest.TestCase):
     def test_conversion(self):
         def do_test(init, formats):
             date = Date(init)
-            for (func, result) in list(formats.items()):
+            for (func, result) in formats.iteritems():
                 self.assertEqual(getattr(date, func)(), result)
         data = [['2010-10-27T18:43:32Z',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
@@ -782,7 +782,7 @@ class Attribution(object):
         msg[hdr + "-Date"] = self.date.rfc822()
     def remap(self, authors):
         "Remap the attribution name."
-        for (local, (name, mail, timezone)) in list(authors.items()):
+        for (local, (name, mail, timezone)) in authors.iteritems():
             if self.email.lower().startswith(local + "@") or self.email.lower() == local:
                 self.name = name
                 self.email = mail
@@ -1220,8 +1220,8 @@ class Commit(object):
         self.committer.email_out(modifiers, msg, "Committer")
         if self.fossil_id:
             msg["Fossil-ID"] = self.fossil_id
-        for (name, value) in list(self.properties.items()):
-            hdr = "-".join([s.capitalize() for s in name.split("-")])
+        for (name, value) in self.properties.iteritems():
+            hdr = "-".join(s.capitalize() for s in name.split("-"))
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
@@ -1267,7 +1267,8 @@ class Commit(object):
             author_re = re.compile("Author[0-9]*$")
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
-            authorkeys = sorted(filter(author_re.match, list(msg.keys())))
+            # msg is *not* a dict so the .keys() is correct
+            authorkeys = sorted(filter(author_re.match, msg.keys()))
             for i in range(len(authorkeys) - len(self.authors)):
                 self.authors.append(Attribution())
             # Another potential minor bug: permuting the set of authors
@@ -1300,7 +1301,8 @@ class Commit(object):
                 modified = True
                 msg["Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
-        for prophdr in [s for s in list(msg.keys()) if s.startswith("Property-")]:
+        for prophdr in msg.keys():
+            if not prophdr.startswith("Property-"): continue
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
             if propval == "True":
@@ -1416,7 +1418,7 @@ class Commit(object):
         try:
             sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
-            for (path, mark) in list(self.manifest().items()):
+            for (path, mark) in self.manifest().iteritems():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -1467,7 +1469,7 @@ class Commit(object):
         for ancestor in self._parent_marks[1:]:
             st += "merge %s\n" % ancestor
         if vcs and vcs.properties:
-            for (name, value) in list(self.properties.items()):
+            for (name, value) in self.properties.iteritems():
                 if value in (True, False):
                     if value:
                         st += "property %s\n" % name
@@ -1626,7 +1628,7 @@ class PathMap(object):
             self = nxt
         # Set value to None since PathMap doesn't tell None and absence apart
         self._elts_set(basename, None)
-    def __bool__(self):
+    def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
     def __iter__(self):
@@ -1649,13 +1651,13 @@ class PathMap(object):
         needed = min(self.maxid[0], self.snapid + 1) + 1
         if len(snaplist) < needed:
             last = snaplist[-1]
-            snaplist.extend(last for _ in range(len(snaplist), needed))
+            snaplist.extend(last for _ in xrange(len(snaplist), needed))
         snaplist[self.snapid] = value
         return value
     # Iterate through (component, current values) pairs
     def _elts_items(self):
         snapid = self.snapid
-        for component, snaplist in list(self.store.items()):
+        for component, snaplist in self.store.iteritems():
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
     # Insert obj at the location given by components.
@@ -1770,7 +1772,7 @@ class RepoStreamer:
                                 # dict is not supported by Python. The following loop thus
                                 # uses items(), which returns a new independent list
                                 # containing the (key,value) pairs.
-                                for (oldpath, oldsig) in list(self.filemap[revision].items()):
+                                for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp()
@@ -2430,7 +2432,7 @@ class StreamParser:
             if path.startswith(branch):
                 return path[len(branch):]
         raise Fatal("couldn't assign %s to a branch in %s" \
-                    % (path, list(self.branches.keys())))
+                    % (path, self.branches.keys()))
     def svn_process(self, baton):
         "Subversion actions to import-stream commits."
         def countfmt(count):
@@ -2601,7 +2603,7 @@ class StreamParser:
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
                     latch = False
-                    for (prop, val) in list(node.props.items()):
+                    for (prop, val) in node.props.iteritems():
                         if prop not in StreamParser.IgnoreProperties:
                             if not latch:
                                 self.gripe("r%s~%s properties set:" \
@@ -2931,7 +2933,7 @@ class StreamParser:
                     cliques[""].append((node, fileop))
             # Make an operation list from the cliques.
             oplist = []
-            for (branch, actions) in list(cliques.items()):
+            for (branch, actions) in cliques.iteritems():
                 oplist.append((branch, [action[1] for action in actions]))
             # Figure out which branch cliques contain only branch deletes
             deletealls = set([])
@@ -2996,7 +2998,7 @@ class StreamParser:
                                      (newcommit.fossil_id, copies))
                     linkback = False
                     # If the copies include one for the directory, we're good.
-                    if [node for node in copies if node.kind == SD_DIR and node.from_path and node.path == newcommit.common]:
+                    if any(node.kind == SD_DIR and node.from_path and node.path == newcommit.common for node in copies):
                         self.directory_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: directory copy with %s" \
@@ -3041,7 +3043,7 @@ class StreamParser:
                         threshold = False
                         commits = self.repo.commits()
                         ncommits = len(commits)
-                        for i in range(ncommits):
+                        for i in xrange(ncommits):
                             prev = commits[ncommits - i - 1]
                             if prev.fossil_id == latest.from_rev:
                                 if debug_enable(DEBUG_TOPOLOGY):
@@ -3164,11 +3166,11 @@ class StreamParser:
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
             baton.twirl("+")
             baton.twirl("branchlinks")
-            for (later, earlier) in list(self.branchlink.items()):
+            for (later, earlier) in self.branchlink.iteritems():
                 child = self.repo.objfind(later)
                 if earlier not in child.parentMarks():
                     child.addParent(earlier)
-            nonempty = set([c for c in self.repo.commits() if c.fileops]) 
+            nonempty = set(c for c in self.repo.commits() if c.fileops)
             for root in branchroots:
                 rootrev = root.fossil_id
                 if commit.branch in nonempty and root.branch != ("trunk" + os.sep):
@@ -3178,7 +3180,7 @@ class StreamParser:
             baton.twirl("+")
             # Add links due to svn:mergeinfo properties
             baton.twirl("svn-mergeinfo")
-            for ((_, early), late) in list(self.mergeinfo.items()):
+            for ((_, early), late) in self.mergeinfo.iteritems():
                 if early in split_commits:
                     self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
                 elif late in split_commits:
@@ -3315,7 +3317,7 @@ class StreamParser:
         baton.twirl("canonicalizing")
         baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
-            if [fileop for fileop in commit.fileops if fileop is None]:
+            if any(fileop is None for fileop in commit.fileops):
                 raise Fatal("Null fileop at r%s" % commit.fossil_id)
             for i in range(len(commit.fileops)-1):
                 if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
@@ -3392,7 +3394,7 @@ class SubversionDumper:
     @staticmethod
     def svnprops(pdict):
         flattened = ""
-        for key, val in sorted(pdict.items()):
+        for key, val in sorted(pdict.iteritems()):
             if val:
                 flattened += "K %d\n%s\nV %d\n%s\n" \
                              % (len(key), key, len(val), val)
@@ -3414,7 +3416,7 @@ class SubversionDumper:
         if len(parents or []) > 1:
             parents = iter(parents)
             next(parents) # ignore main parent
-            ancestral = ".".join(map(str, sorted(parents)))
+            ancestral = ".".join(itertools.imap(str, sorted(parents)))
             revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
         revprops += "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(revprops))
@@ -3504,10 +3506,10 @@ class SubversionDumper:
                 from_rev = self.mark_to_revision[parents[0].mark],
                 from_branch = SubversionDumper.svnbranch(parents[0].branch)
                 creations.append((svnout, from_rev, from_branch))
-                # Iterating through dict keys (with __iter__ or iterkeys) is not supported
-                # by Python. The following loop thus uses keys() which returns a new
-                # independent list of the dict keys.
-                for key in list(self.pathmap.keys()):
+                # Iterating through dict keys while mutating the dict is not supported
+                # by Python. The following thus uses keys() which returns a new list of
+                # the dict keys to loop over.
+                for key in self.pathmap.keys():
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
@@ -3687,7 +3689,7 @@ class SubversionDumper:
                                           fileop.target)
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.head())
-                            for path in list(self.pathmap.keys()):
+                            for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
                                     del self.pathmap[path]
                             fp.write("Node-path: %s\n" % branchdir)
@@ -3766,7 +3768,7 @@ class Repository:
             raise Fatal("can't create operating directory")
     def size(self):
         "Return the size of this import stream, for statistics display."
-        return sum([len(str(e)) for e in self.events])
+        return sum(len(str(e)) for e in self.events)
     def branchset(self):
         "Return a set of branchnames in this repo."
         return set(commit.branch for commit in self.commits())
@@ -3835,7 +3837,7 @@ class Repository:
                     contributors[author.name] = author.who()
             elif isinstance(event, Tag):
                 contributors[event.tagger.name] = event.tagger.who()
-        for (name, cid) in list(contributors.items()):
+        for (name, cid) in contributors.iteritems():
             fp.write("%s = %s\n" % (name, cid))
     def read_fossilmap(self, fp):
         "Read a fossil-references dump and initialize the repo's fossil map."
@@ -3873,7 +3875,7 @@ class Repository:
     def write_fossilmap(self, fp):
         "Dump fossil references."
         for cookie, commit in sorted(
-                iter(list(self.fossil_map.items())),
+                self.fossil_map.iteritems(),
                 key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
@@ -4339,7 +4341,7 @@ class Repository:
                         announce("After canonicalization:")
                         event.fileop_dump(ei)
                     # Now apply policy in the mutiple-M case
-                    for (path, oplist) in list(event.cliques().items()):
+                    for (path, oplist) in event.cliques().iteritems():
                         if len(oplist) == 1:
                             continue
                         if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
@@ -4473,8 +4475,8 @@ class Repository:
         self.case_coverage |= other.case_coverage
         # Strip feature events off the front, they have to stay in front.
         while isinstance(other[0], Passthrough):
-            front = [x for x in self.events if isinstance(x, Passthrough)]
-            self.events.insert(len(front), other.events.pop(0))
+            lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
+            self.events.insert(lenfront, other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
         self.declare_sequence_mutation()
@@ -4607,7 +4609,7 @@ class Repository:
                                               [op for op in ops if (op.path or op.target) and
                                                                    (op.path or op.target).startswith(prefix)]))
 
-    # Container emulation methods
+    # Sequence emulation methods
     def __len__(self):
         return len(self.events)
     def __getitem__(self, i):
@@ -4684,7 +4686,7 @@ def read_repo(source, preferred):
                 if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                     announce("reading author map.")
                     with open(repo.vcs.authormap) as fp:
-                        repo.read_authormap(list(range(len(repo.events))),fp)
+                        repo.read_authormap(range(len(repo.events)),fp)
                 fossils = os.path.join(vcs.subdirectory, "fossils")
                 if os.path.exists(fossils):
                     with open(fossils) as rfp:
@@ -4732,7 +4734,7 @@ def read_repo(source, preferred):
                             for commit in repo.commits():
                                 action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
                             # Pass 4: use it to set commit properties
-                            for ((path, rev), value) in list(pathrev_to_hash.items()):
+                            for ((path, rev), value) in pathrev_to_hash.iteritems():
                                 if value in hash_to_action:
                                     (ctime, cperson) = hash_to_action[value]
                                     action_to_mark[(ctime, cperson)].fossil_id = "CVS:%s:%s" % (path, rev)
@@ -4928,15 +4930,7 @@ class popen_or_die:
         if extype:
             if verbose:
                 complain("fatal exception in popen_or_die.")
-            # This is what we want, but it's only in true Python 3.x
-            if sys.version_info.major >= 3:
-                raise extype(value).with_traceback(traceback)
-            else:
-                try:
-                    # Python 3.2 chokes on this syntax.
-                    raise extype(value).with_traceback(traceback)
-                except SyntaxError:
-                    pass
+            raise extype, value, traceback
         if self.fp.close() is not None:
             raise Fatal("%s%s returned error." % (self.command, self.legend))
         return False
@@ -5032,7 +5026,7 @@ class RepositoryList:
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
             event.color = "early"        
-        assert all([hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo])
+        assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo)
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
@@ -5084,7 +5078,7 @@ class RepositoryList:
         "Unite multiple repos into a union repo."
         factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.commits()[0] for x in factors]
-        union = Repository("+".join([r.name for r in factors]))
+        union = Repository("+".join(r.name for r in factors))
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
             if i != 0:
@@ -5123,7 +5117,7 @@ class RepositoryList:
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
-            return re.compile("|".join(["(?:" + s + ")" for s in toklist]))
+            return re.compile("|".join("(?:" + s + ")" for s in toklist))
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -5224,11 +5218,11 @@ class RepositoryList:
         for event in self.repo.events + expunged.events:
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
-        expunged_marks = set([event.mark for event in expunged.events if hasattr(event, "mark")])
+        expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
                 event.setParents([e for e in event.parentMarks() if e in expunged_marks])
-        keeper_marks = set([event.mark for event in self.repo.events if hasattr(event, "mark")])
+        keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
                 event.setParents([e for e in event.parentMarks() if e in keeper_marks])
@@ -5239,8 +5233,8 @@ class RepositoryList:
                     if fileop.op == 'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = [not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events]
-        deletia = [x[0] for x in [i_e for i_e in enumerate(deletia) if not i_e[1]]]
+        deletia = (not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events)
+        deletia = [i for i,e in enumerate(deletia) if not e]
         self.repolist.append(expunged)
         if not deletia:
             announce("deletion set is empty.")
@@ -5678,7 +5672,7 @@ editing; this may be useful for large repositories.
                     spanning = True
                 else:
                     if spanning:
-                        resolved += list(range(last+1, elt+1))
+                        resolved.extend(range(last+1, elt+1))
                         spanning = False
                     else:
                         resolved.append(elt)
@@ -5780,7 +5774,7 @@ editing; this may be useful for large repositories.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        default = [x[0] for x in [n_o for n_o in enumerate(self.chosen()) if hasattr(n_o[1], method)]]
+        default = [n for n,o in enumerate(self.chosen()) if hasattr(o, method)]
         line = self.set_selection_set(line, default)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
@@ -6060,7 +6054,7 @@ file in the blob.  Supports > redirection.
         # get a default-set computation we don't want.  Second, for this
         # function it's helpful to have the method strings close together so
         # we can maintain columnation.
-        default = [x[0] for x in [n_o1 for n_o1 in enumerate(self.chosen()) if not isinstance(n_o1[1], Blob)]]
+        default = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
         line = self.set_selection_set(line, default)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
@@ -6112,7 +6106,7 @@ currently chosen repository. Supports > redirection.
                     raise Recoverable("no such repo as %s" % name)
                 else:
                     def count(otype):
-                        return len([x for x in repo.events if isinstance(x,otype)])
+                        return sum(1 for x in repo.events if isinstance(x,otype))
                     parse.stdout.write("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" % \
                           (repo.name, repo.size() / 1000.0, len(repo),
                            count(Blob), count(Commit), count(Tag), count(Reset),
@@ -6196,12 +6190,10 @@ unwieldy.
                     sizes[commit.branch] += len(str(event.tagger))
                     sizes[commit.branch] += len(event.comment)
             total = sum(sizes.values())
-            keys = list(sizes.keys())
-            keys.sort()
             def sz(n, s):
                 parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
-            for key in keys:
+            for key in sorted(sizes.iterkeys()):
                 sz(sizes[key], key)
             sz(total, "")
     def help_lint(self):
@@ -6266,7 +6258,7 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
-            if [ext for ext in extractors if ext.visible]:
+            if any(ext.visible for ext in extractors):
                 print("Other systems supported for read only: %s\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
         else:
@@ -6501,7 +6493,7 @@ for graphviz.
                         cid = event.showfossil() + " &rarr; " + cid
                     parse.stdout.write('\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
-                    if not event.branch in [child.branch for child in event.children()]:
+                    if all(event.branch != child.branch for child in event.children()):
                         parse.stdout.write('\t"%s" [shape=oval,width=2];\n' % event.branch)
                         parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
                 if isinstance(event, Tag):
@@ -6684,7 +6676,7 @@ are multiline and not in summary/blank-line/details form.
         if not self.chosen():
             complain("no repo is loaded")
             return
-        default = [x[0] for x in [n_o2 for n_o2 in enumerate(self.chosen()) if hasattr(n_o2[1], "email_out")]]
+        default = [n for n, o2 in enumerate(self.chosen()) if hasattr(o2, "email_out")]
         rest = self.set_selection_set(line, default)
         if "multiline" in rest:
             rest = rest.replace("multiline", "")
@@ -6758,20 +6750,16 @@ separation in seconds; the default is 90 seconds.
         # it; this operation only make sense for cleaning up
         # artifacts in linear stretches of history that have been
         # lifted from file-oriented VCSes like RCS and CVS.
-        commits = [i for i in enumerate(self.chosen()) if isinstance(i[1], Commit)]
-        for i in range(len(commits)-1):
-            cthis = self.chosen().events[commits[i][0]]
-            cnext = self.chosen().events[commits[i+1][0]]
-            if not (isinstance(cthis, Commit) and isinstance(cnext, Commit)):
-                continue
-            elif cthis.branch != cnext.branch:
-                continue
-            elif cthis.comment != cnext.comment:
+        icthis, icnext = itertools.tee(
+                ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit)))
+        next(icnext, None)
+        for (ithis, cthis), (inext, cnext) in itertools.izip(icthis, icnext):
+            if cthis.branch != cnext.branch or cthis.comment != cnext.comment:
                 continue
             #elif cthis.committer.email != cnext.committer.email:
             #    continue
-            elif cthis.committer.date.delta(cnext.committer.date) < timefuzz:
-                eligible.append(commits[i][0])
+            if cthis.committer.date.delta(cnext.committer.date) < timefuzz:
+                eligible.append(ithis)
         if verbose:
             announce("deletion set is %s" % [x+1 for x in eligible])
         self.chosen().delete(eligible, "coalesce")
@@ -6985,7 +6973,7 @@ file operations in the original commit.
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
-                if splitpoint not in list(range(1, len(event.fileops))):
+                if splitpoint not in range(1, len(event.fileops)):
                     raise Recoverable("fileop index out of range")
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
@@ -7178,8 +7166,8 @@ from the highest member (child) to the lowest (parent).
                           if isinstance(repo.events[e], Commit)]
         if not self.selection or len(self.selection) < 2:
             raise Recoverable("merge requires two commit arguments.")
-        earlier = repo.events[list(self.selection)[0]]
-        later = repo.events[list(self.selection)[-1]]
+        earlier = repo.events[self.selection[0]]
+        later = repo.events[self.selection[-1]]
         later.addParent(earlier.mark)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
@@ -7581,7 +7569,7 @@ means the surgical language is not backwards compatible).
 """)
     def do_version(self, line):
         if not line:
-            announce("reposurgeon " + version + " supporting " + " ".join([x.name for x in (vcstypes+extractors)]))
+            announce("reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
         else:
             (vmajor, _) = version.split(".")
             if '.' in line:
