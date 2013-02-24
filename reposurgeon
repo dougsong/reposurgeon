@@ -107,7 +107,7 @@ class VCS:
         self.ignorename = ignorename
         self.project = project
         self.notes = notes
-    def __repr__(self):
+    def __str__(self):
         return "         Name: " + str(self.name) + "\n" \
              + " Subdirectory: " + str(self.subdirectory) + "\n" \
              + "     Exporter: " + str(self.exporter) + "\n" \
@@ -1134,7 +1134,6 @@ class FileOp(object):
         return st
     def __str__(self):
         return self.dump(self.vcs)
-    __repr__ = __str__
 
 class Commit(object):
     "Generic commit object."
@@ -1541,7 +1540,6 @@ class signature:
         return not signature.__eq__(self, other)
     def __str__(self):
         return "<%s:%s:%s>" % (self.path, "%6o" % self.perms, self.hashval[:4])
-    __repr__ = __str__
 
 def capture(command):
     "Run a specified command, capturing the output."
@@ -1646,7 +1644,6 @@ class PathMap(object):
                 yield name
     def __str__(self):
         return '<PathMap: {}>'.format(' '.join(self))
-    __repr__ = __str__
     # Return the current value associated with the component in the store
     def _elts_get(self, component):
         snaplist = self.store.get(component) or [None]
@@ -1905,7 +1902,6 @@ class StreamParser:
                     generated = " generated" if self.generated else "",
                     props = " properties=%s" % fmt(self.props)
                                     if self.props else "")
-        __repr__ = __str__
     class RevisionRecord(object):
         __slots__ = ("nodes", "props")
         def __init__(self, nodes, props):
