@@ -576,7 +576,7 @@ class Baton:
                               % (time.time() - self.time, self.endmsg))
         return False
 
-class RepoSurgeonEmail(email.message.Message):
+class RepoSurgeonEmail(email.message.Message, object):
     "Specialized email message with a distinguishing starter."
     Divider = 78 * "-"
     def __init__(self, **kwargs):
@@ -599,7 +599,7 @@ class RepoSurgeonEmail(email.message.Message):
             msg += line
         return msg
     def __str__(self):
-        return email.message.Message.__str__(self).replace("\n--", "\n.--")
+        return super(RepoSurgeonEmail, self).as_string(unixfrom=True).replace("\n--", "\n.--")
 
 class Date:
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
