@@ -18294,13 +18294,13 @@ Revision is 88, file path is branches/Development/drivers/genericups.h.
 
 
 Revision-number: 89
-Prop-content-length: 136
-Content-length: 136
+Prop-content-length: 134
+Content-length: 134
 
 K 7
 svn:log
-V 34
-bump newhidups release to �0.24
+V 31
+bump newhidups release to v0.24
 
 K 10
 svn:author
