@@ -1014,23 +1014,24 @@ class FileOp(object):
             return ""
         else:
             raise Fatal("internal error while extracting pathname")
-    def __lt__(a, b):
+    def __lt__(self, other):
         "Emulates the sort that git fast-export uses."
         # Renames are later than every other op
-        if a.op != "R" and b.op == "R":
+        if self.op != "R" and other.op == "R":
             return True
-        if a.op == "R" and b.op != "R":
+        if self.op == "R" and other.op != "R":
             return False
-        # Now either both a and b are renames, or both aren't. Compare the paths
-        name_a = FileOp.__pathname__(a)
-        name_b = FileOp.__pathname__(b)
+        # Now either both self and other are renames,
+        # or both aren't. Compare the paths
+        name_self = FileOp.__pathname__(self)
+        name_other = FileOp.__pathname__(other)
         # strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd'
-        len_a = len(name_a)
-        len_b = len(name_b)
-        slen = min(len_a, len_b)
-        if name_a[:slen] == name_b[:slen]:
-            return len_a > len_b
-        return name_a < name_b
+        len_self = len(name_self)
+        len_other = len(name_other)
+        slen = min(len_self, len_other)
+        if name_self[:slen] == name_other[:slen]:
+            return len_self > len_other
+        return name_self < name_other
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
