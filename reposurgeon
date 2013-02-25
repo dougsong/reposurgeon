@@ -823,7 +823,7 @@ class Blob(object):
         "Get the content of the blob as a string."
         if global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "r") as rfp:
-                return rfp.read().decode()
+                return rfp.read()
         else:
             with open(self.blobfile(), "r") as rfp:
                 return rfp.read()
@@ -832,7 +832,7 @@ class Blob(object):
         self.size = len(text)
         if global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "w") as wfp:
-                return wfp.write(text.encode())
+                return wfp.write(text)
         else:
             with open(self.blobfile(), "w") as wfp:
                 wfp.write(text)
