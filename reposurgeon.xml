@@ -1975,7 +1975,16 @@ child object's hash (git and hg both do this).</para>
 
 <para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
-history, not its entire content history. Blobs are stored on disk.</para>
+history, not its entire content history.</para>
+
+<para>Guarantee: In the worst case, <command>reposurgeon</command>
+makes its own copy of every content blob in the repository's history
+and thus uses intermediate disk space approximately equal to the size
+of a repository's content history. However, when the repository to be
+edited is presented as a stream file, <command>reposurgeon</command>
+requires no or only very little extra disk space to represent it; the
+internal representation of content blobs is a (seek-offset, length)
+pair pointing into the stream file.</para>
 
 <para>Guarantee: <command>reposurgeon</command> never modifies
 the contents of a repository it reads, nor deletes any repository. The

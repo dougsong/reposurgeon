@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.23:
+     Drastically cut the amount of disk storage and I/O required for surgery.
+
 2.22: 2013-02-26
      New debranch feature for merging branches that should be subdirectories.
      Minor speed tuning via memoization.

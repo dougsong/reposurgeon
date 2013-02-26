@@ -808,42 +808,52 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "path", "colors", "cookie", "size", "deletehook")
+    __slots__ = ("repo", "mark", "path", "colors", "cookie", "start", "size", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
         self.path = None      # First in-repo path associated with this blob
         self.colors = []
         self.cookie = None
+        self.start = None
         self.size = 0
     def blobfile(self):
         "File where the content lives."
         return self.repo.subdir() + "/blob-" + repr(id(self))
+    def hasfile(self):
+        "Does this blob have its own file?"
+        return not self.repo.seekstream or self.start is None
     def get_content(self):
         "Get the content of the blob as a string."
-        if global_options["compressblobs"]:
+        if not self.hasfile():
+            self.repo.seekstream.seek(self.start)
+            return self.repo.seekstream.read(self.size)
+        elif global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "r") as rfp:
                 return rfp.read()
         else:
             with open(self.blobfile(), "r") as rfp:
                 return rfp.read()
-    def set_content(self, text):
+    def set_content(self, text, tell=None):
         "Set the content of the blob from a string."
+        self.start = tell
         self.size = len(text)
-        if global_options["compressblobs"]:
-            with bz2.BZ2File(self.blobfile(), "w") as wfp:
-                return wfp.write(text)
-        else:
-            with open(self.blobfile(), "w") as wfp:
-                wfp.write(text)
+        if self.hasfile():
+            if global_options["compressblobs"]:
+                with bz2.BZ2File(self.blobfile(), "w") as wfp:
+                    return wfp.write(text)
+            else:
+                with open(self.blobfile(), "w") as wfp:
+                    wfp.write(text)
     def moveto(self, repo):
         "Change the repo this blob is associated with."
-        oldloc = self.blobfile()
-        self.repo = repo
-        newloc = self.blobfile()
-        if debug_enable(DEBUG_SHUFFLE):
-            announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
-        os.rename(oldloc, newloc)
+        if self.hasfile():
+            oldloc = self.blobfile()
+            self.repo = repo
+            newloc = self.blobfile()
+            if debug_enable(DEBUG_SHUFFLE):
+                announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
+            os.rename(oldloc, newloc)
         return self
     def clone(self, repo):
         "Clone a copy of this blob, pointing at the same file."
@@ -852,15 +862,17 @@ class Blob(object):
         c.colors = []
         if debug_enable(DEBUG_SHUFFLE):
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
-        os.link(self.blobfile(), c.blobfile())
+        if self.hasfile():
+            os.link(self.blobfile(), c.blobfile())
         return c
     def dump(self, vcs=None):
-        if not os.path.exists(self.blobfile()):
+        content = self.get_content()
+        if self.hasfile() and not os.path.exists(self.blobfile()):
             return ''
         else:
+            content = self.get_content()
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
-            content = self.get_content()
             # Ugh.  This is where we mess with ignore syntax translation
             if vcs and self.repo.vcs and self.path and self.path.endswith(".gitignore"):
                 if vcs.name == "hg" and self.repo.vcs.name != "hg":
@@ -1428,7 +1440,12 @@ class Commit(object):
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
                     os.makedirs(fulldir)
-                os.link(self.repo.objfind(mark).blobfile(), fullpath)
+                blob = self.repo.objfind(mark)
+                if blob.hasfile():
+                    os.link(blob.blobfile(), fullpath)
+                else:
+                    with open(fullpath, "w") as wfp:
+                        wfp.write(blob.get_content())
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
         return directory
@@ -1992,6 +2009,9 @@ class StreamParser:
         self.ccount += len(line)
         self.import_line += 1
         return line
+    def tell(self):
+        "Return the current read offset in the source stream."
+        return self.fp.tell()
     def pushback(self, line):
         self.ccount -= len(line)
         self.import_line -= 1
@@ -2004,6 +2024,7 @@ class StreamParser:
         if line.startswith("data <<"):
             delim = line[7:]
             data = ""
+            start = self.tell()
             while True:
                 dataline = self.readline()
                 if dataline == delim:
@@ -2015,6 +2036,7 @@ class StreamParser:
         elif line.startswith("data"):
             try:
                 count = int(line[5:])
+                start = self.tell()
                 data = self.fp.read(count)
             except ValueError:
                 self.error("bad count in data")
@@ -2023,19 +2045,20 @@ class StreamParser:
             line = line[line.index(" "):]	# Skip the property name
             nextws = line.index(" ")
             count = int(line[:nextws-1])
+            start = self.tell()
             data = line[nextws:] + self.fp.read(count)
         else:
             self.error("malformed data header %s" % repr(line))
         line = self.readline()
         if line != '\n':
             self.pushback(line) # Data commands optionally end with LF
-        return data
+        return (data, start)
     def fi_parse_fileop(self, fileop):
         # Read a fast-import fileop
         if fileop.ref[0] == ':':
             pass
         elif fileop.ref == 'inline':
-            fileop.inline = self.fi_read_data()
+            fileop.inline = self.fi_read_data()[0]
         else:
             self.error("unknown content type in filemodify")
     # Helpers for Subversion dumpfiles
@@ -2099,6 +2122,10 @@ class StreamParser:
         self.repo.makedir()
         try:
             self.fp = fp
+            # Optimization: if we're reading from a plain file,
+            # no need to clone all the blobs. 
+            if os.path.isfile(self.fp.name):
+                self.repo.seekstream = fp
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = 0
                 self.linebuffers = []
@@ -2148,7 +2175,9 @@ class StreamParser:
                                         if plen > -1:
                                             node.props = self.sd_read_props(node.path, plen)
                                         if tlen > -1:
+                                            start = self.tell()
                                             text = self.sd_read_blob(tlen)
+                                            node.blob = Blob(self.repo)
                                             # Ugh - cope with strange
                                             # undocumented Subversion format
                                             # for storing links.  Apparently the
@@ -2157,14 +2186,15 @@ class StreamParser:
                                             # least git-svn) removes it.
                                             if node.props and "svn:special" in node.props:
                                                 if text.startswith("link "):
-                                                    text = text[5:]
+                                                    node.blob.set_content(
+                                                        text[5:], start+5)
                                                 else:
                                                     # Don't know if this will
                                                     # ever happen.  Best to fail
                                                     # loudly...
                                                     self.error("unexpected link prefix in %s" % repr(text))
-                                            node.blob = Blob(self.repo)
-                                            node.blob.set_content(text)
+                                            else:
+                                                node.blob.set_content(text, start)
                                         node.revision = revision
                                         nodes.append(node)
                                         in_header = False
@@ -2236,7 +2266,7 @@ class StreamParser:
                             line = self.readline()
                             if line.startswith("mark"):
                                 blob.mark = line[5:].strip()
-                                blobcontent = self.fi_read_data()
+                                (blobcontent, blobstart) = self.fi_read_data()
                                 # Parse CVS and Subversion $-headers
                                 # There'd better not be more than one of these.
                                 for m in re.finditer(r"\$Id *:[^$]*\$",
@@ -2258,7 +2288,7 @@ class StreamParser:
                                     if '.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                blob.set_content(blobcontent)
+                                blob.set_content(blobcontent, blobstart)
                             else:
                                 self.error("missing mark after blob")
                             self.repo.addEvent(blob)
@@ -2312,7 +2342,7 @@ class StreamParser:
                                                 if line:
                                                     self.repo.fossil_map["CVS:"+line] = commit
                                 elif line.startswith("data"):
-                                    commit.comment = self.fi_read_data(line)
+                                    commit.comment = self.fi_read_data(line)[0]
                                 elif line.startswith("from") or line.startswith("merge"):
                                     commit.addParent(line.split()[1])
                                 # Handling of file ops begins.
@@ -2394,7 +2424,7 @@ class StreamParser:
                                 self.pushback(line)
                             self.repo.addEvent(Tag(self.repo, tagname,
                                                    referent, tagger,
-                                                   self.fi_read_data()))
+                                                   self.fi_read_data()[0]))
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.
@@ -3740,6 +3770,7 @@ class Repository:
         self.readtime = time.time()
         self.vcs = None
         self.sourcedir = None
+        self.seekstream = None
         self.events = []    # A list of the events encountered, in order
         self._commits = None
         self._mark_to_index = {}
@@ -5160,6 +5191,7 @@ class RepositoryList:
             raise Recoverable("you confused the regexp processor!")
         # Second pass: perform actual fileop expunges
         expunged = Repository(self.repo.name + "-expunges")
+        expunged.seekstream = self.repo.seekstream
         expunged.makedir()
         for event in self.repo:
             event.deletehook = None
@@ -5823,6 +5855,7 @@ editing; this may be useful for large repositories.
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
                             break
+                # FIXME: Won't work if repo has a seek stream
                 os.system(editor + " " + singleton.blobfile())
                 return
             # Fall through
