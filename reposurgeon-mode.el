@@ -7,6 +7,14 @@
 ;;
 ;; Work in progress - neither code nor bindings should be considered stable.
 
+(defconst svn-log-delimiter
+  "------------------------------------------------------------------------\n"
+  "Delimiter line used in the output of svn log")
+
+(defconst reposurgeon-mail-delimiter
+  "------------------------------------------------------------------------------\n"
+  "Delimiter line used in reposurgeon comment mailboxes.")
+
 (defun decimal-digit-after ()
   (and (>= (char-after) ?0) (<= (char-after) ?9)))
 
@@ -57,6 +65,13 @@
   "Interactively lift probable SVN revision numbers into ref cookies en masse."
   (interactive)
   (query-replace-regexp "\\br\\([0-9][0-9]+\\)\\b" "[[SVN:\\1]]"))
+
+(defun svn-lift-log ()
+  "After pasting a segment of a Subversion log dump, this will fix delimiters
+and headers so it's in the same format as the rest of the mailbox."
+  (interactive)
+  (while (re-search-forward (concat svn-log-delimiter "r\\([0-9]+\\).*") nil t)
+    (replace-match (concat reposurgeon-mail-delimiter "Fossil-ID: \\1") nil nil)))
 
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
