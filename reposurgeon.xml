@@ -1484,9 +1484,10 @@ the repository subdirectory..</para>
 operations that the modify. One of general interest is
 <quote>compressblobs</quote>; this enables compression on the blob
 files in the internal representation
-<application>reposurgeon</application> uses for editing. With this
-option, reading and writing of repositories is slower, but editing a
-repository requires less (sometimes much less) disk space.</para>
+<application>reposurgeon</application> uses for editing
+repositories. With this option, reading and writing of repositories is
+slower, but editing a repository requires less (sometimes much less)
+disk space.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
