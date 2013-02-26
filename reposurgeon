@@ -823,6 +823,13 @@ class Blob(object):
     def hasfile(self):
         "Does this blob have its own file?"
         return not self.repo.seekstream or self.start is None
+    def materialize(self):
+        "Materialize this content as a separate file, if it isn't already."
+        if not self.hasfile():
+            with open(self.blobfile(), "w") as wfp:
+                wfp.write(self.get_content())
+            self.start = None
+        return self.blobfile()
     def get_content(self):
         "Get the content of the blob as a string."
         if not self.hasfile():
@@ -5857,8 +5864,7 @@ copies at all (it points into sections of the input stream instead).
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
                             break
-                # FIXME: Won't work if repo has a seek stream
-                os.system(editor + " " + singleton.blobfile())
+                os.system(editor + " " + singleton.materialize())
                 return
             # Fall through
         (tfdesc, tfname) = tempfile.mkstemp()
