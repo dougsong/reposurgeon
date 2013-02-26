@@ -1,7 +1,8 @@
 			reposurgeon project news
 
-2.22:
+2.22: 2013-02-26
      New debranch feature for merging branches that should be subdirectories.
+     Minor speed tuning via memoization.
 
 2.21: 2013-02-21
      Added "compressblobs" and "svn_no_renumber" option for very large repos. 
