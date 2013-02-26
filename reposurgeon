@@ -2644,16 +2644,18 @@ class StreamParser:
                     latch = False
                     for (prop, val) in node.props.iteritems():
                         if prop not in StreamParser.IgnoreProperties:
-                            if not latch:
-                                self.gripe("r%s~%s properties set:" \
-                                           % (node.revision, node.path))
-                                latch = True
-                            self.gripe("\t%s = '%s'" % (prop, val))
+                            if not global_options["svn_ignore_properties"]:
+                                if not latch:
+                                    self.gripe("r%s~%s properties set:" \
+                                               % (node.revision, node.path))
+                                    latch = True
+                                self.gripe("\t%s = '%s'" % (prop, val))
                             self.has_properties.add(node.path)
                     if node.path in self.has_properties and not latch:
                         self.has_properties.discard(node.path)
-                        announce("r%s~%s: properties cleared." \
-                                 % (node.revision, node.path))
+                        if not global_options["svn_ignore_properties"]:
+                            announce("r%s~%s: properties cleared." \
+                                     % (node.revision, node.path))
                 if node.kind == SD_FILE:
                     expanded_nodes.append(node)
                 elif node.kind == SD_DIR:
@@ -5296,6 +5298,9 @@ Otherwise, fake up addresses the way git cvs-import does it.
     If set, don't perform branch analysis when lifting a Subversion repo. Leave
 it as a linear sequence of commits. This may be useful if the repo has an
 unusual topology and you intend to do your own branch surgery.
+"""),
+        ("svn_ignore_properties", """\
+    Suppress read-time warnings about discarded property settings.
 """),
         ("svn_no_renumber", """\
     If set, don't renumber the marks in Subversion repositories immediately.
