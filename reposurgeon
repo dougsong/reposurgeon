@@ -5002,6 +5002,8 @@ class RepositoryList:
         "Uniquify a repo name in the repo list."
         if name.endswith(".fi"):
             name = name[:-3]
+        elif name.endswith(".svn"):
+            name = name[:-4]
         if name not in self.reponames():
             return name
         else:
