@@ -418,10 +418,11 @@ subdirectory has a file named <filename>fossils</filename>, that file
 will be read as though passed to a <filename>fossil read</filename>
 command.</para>
 
-<para>The just-read-in repo is added to the list of loaded repositories and
-becomes the current one, selected for surgery. If it was read from a
-plain file and the file name ends with the extension <filename>.fi</filename>,
-that is removed from the load list name.</para>
+<para>The just-read-in repo is added to the list of loaded
+repositories and becomes the current one, selected for surgery. If it
+was read from a plain file and the file name ends with the extension
+<filename>.fi</filename>, of <filename>.svn</filename>, that extension
+is removed from the load list name.</para>
 
 <para>Note: this command does not take a selection set.</para>
 </listitem>
