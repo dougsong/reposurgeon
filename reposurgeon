@@ -826,9 +826,7 @@ class Blob(object):
     def materialize(self):
         "Materialize this content as a separate file, if it isn't already."
         if not self.hasfile():
-            with open(self.blobfile(), "w") as wfp:
-                wfp.write(self.get_content())
-            self.start = None
+            self.set_content(self.get_content())
         return self.blobfile()
     def get_content(self):
         "Get the content of the blob as a string."
