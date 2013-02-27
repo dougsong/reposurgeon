@@ -5869,6 +5869,8 @@ copies at all (it points into sections of the input stream instead).
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
                             break
+                # FIXME: if compressblobs is true, user will be editing a compressed stream
+                #        which is less than helpful. Use a temporary file instead ?
                 os.system(editor + " " + singleton.materialize())
                 return
             # Fall through
