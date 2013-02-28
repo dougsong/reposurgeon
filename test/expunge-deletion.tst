@@ -3,5 +3,5 @@ echo 1
 quiet on
 read deletion.svn
 expunge doomed
-choose deletion.svn-expunges
+choose deletion-expunges
 inspect

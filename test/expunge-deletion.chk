@@ -1,7 +1,7 @@
 quiet on
 read deletion.svn
 expunge doomed
-choose deletion.svn-expunges
+choose deletion-expunges
 inspect
 Event 1 =================================================================
 blob
