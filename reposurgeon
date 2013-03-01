@@ -2016,7 +2016,10 @@ class StreamParser:
         return line
     def tell(self):
         "Return the current read offset in the source stream."
-        return self.fp.tell()
+        try:
+            return self.fp.tell()
+        except IOError:
+            return None
     def pushback(self, line):
         self.ccount -= len(line)
         self.import_line -= 1
