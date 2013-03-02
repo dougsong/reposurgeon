@@ -1155,7 +1155,8 @@ class FileOp(object):
 class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
-                 "_parent_marks", "_parent_nodes", "branch", "fileops",
+                 "_parent_marks", "_parent_nodes", "_child_nodes",
+                 "branch", "fileops",
                  "properties", "pushed_to", "filemap", "color",
                  "fossil_id", "common", "_pathset", "splits", "deletehook")
     def __init__(self, repo=None):
@@ -1166,6 +1167,7 @@ class Commit(object):
         self.comment = None          # Commit comment
         self._parent_marks = []      # marks from each of the parent nodes
         self._parent_nodes = None    # cached list of parent nodes; invalidated by changes to _parent_marks
+        self._child_nodes = []       # Memoized list of child nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
@@ -1347,12 +1349,14 @@ class Commit(object):
             modified = True
             self.comment = newcomment
         return modified
-    def children(self):
-        "Get a list of this commit's children."
-        return [e for e in self.repo.commits() if self.mark in e._parent_marks] 
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
+    def children(self):
+        "Get a list of this commit's children."
+        if self._child_nodes is None:
+            self._child_nodes = [e for e in self.repo.commits() if self.mark in e._parent_marks]
+        return self._child_nodes
     def parents(self):
         "Get a list of this commit's parents."
         if self._parent_nodes == None:
@@ -1363,15 +1367,22 @@ class Commit(object):
     def setParents(self, marks):
         self._parent_nodes = None
         self._parent_marks = marks
+        for parent in [self.repo.objfind(x) for x in self._parent_marks]:
+            # FIXME: Should never be None, back this out and retest
+            if parent is not None:
+                parent._child_nodes = None
     def addParent(self, mark):
         self._parent_nodes = None
         self._parent_marks.append(mark)
+        self.repo.objfind(mark)._child_nodes = None
     def insertParent(self, idx, mark):
         self._parent_nodes = None
         self._parent_marks.insert(idx, mark)
+        self.repo.objfind(mark)._child_nodes = None
     def removeParent(self, mark):
         self._parent_nodes = None
         self._parent_marks.remove(mark)
+        self.repo.objfind(mark)._child_nodes = None
     def hasParents(self):
         return len(self._parent_marks) > 0
     def descended_from(self, other):
@@ -4521,6 +4532,7 @@ class Repository:
         while isinstance(other[0], Passthrough):
             lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
             self.events.insert(lenfront, other.events.pop(0))
+        other.renumber(len(self.events))
         # Merge in the non-feature events and blobs
         self.events += other.events
         self.declare_sequence_mutation()
@@ -4539,8 +4551,9 @@ class Repository:
                               (where.mark, self.name))
         # Errors aren't recoverable after this
         graft_repo.uniquify(graft_repo.name)
-        graft_repo.commits()[0].addParent(where.mark)
+        graftroot = graft_repo.commits()[0]
         self.absorb(graft_repo)
+        graftroot.addParent(where.mark)
         self.renumber()
     def __last_modification(self, commit, path):
         "Locate the last modification of the specified path before this commit."
@@ -6267,12 +6280,15 @@ selected with the modifiers 'structure' and 'names'.
             unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set([])
             deletealls = set([])
+            disconnected = set([])
             for i in self.selection:
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
                     if not line or "structure" in line:
                         if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
                             deletealls.add("on %s at %s" % (event.branch, event.id_me()))
+                        if not event.hasParents() and not event.children():
+                            disconnected.add(event.idme())
                     if unmapped and (not line or "names" in line):
                         for person in [event.committer] + event.authors:
                             if unmapped.match(person.email):
