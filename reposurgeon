@@ -3845,10 +3845,11 @@ class Repository:
         return self._mark_to_index.get(mark)
     def objfind(self, mark):
         "Find an object by mark"
-        for (ind, event) in enumerate(self.events):
-            if hasattr(event, "mark") and mark == event.mark:
-                return self.events[ind]
-        return None
+        ind = self.find(mark)
+        if ind is None:
+            return None
+        else:
+            return self.events[ind]
     def read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         authormap = {}
@@ -4454,6 +4455,7 @@ class Repository:
                                                                     event.__class__.__name__,
                                                                     fld))
                     setattr(event, fld, new)
+            self.declare_sequence_mutation()
             if isinstance(event, Commit):
                 parent_marks = event.parentMarks()
                 for (i, old) in enumerate(parent_marks):
