@@ -2009,7 +2009,7 @@ class StreamParser:
             complain(msg)
     def gripe(self, msg):
         "Display or queue up an error message."
-        if verbose == 1:
+        if verbose < 2:
             self.warnings.append(msg)
         else:
             complain(msg)
