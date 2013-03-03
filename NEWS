@@ -1,4 +1,8 @@
 			reposurgeon project news
+
+2.25:
+     Improved packaging for distributions (thanks, Mike Swanson).
+
 2.24: 2013-03-03
      Fix a crash bug in the new blob handling, and more performance tweaks.
 
