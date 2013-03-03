@@ -46,7 +46,7 @@ install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/share/man/man1"
-	$(INSTALL) -m 755 reposurgeon "$(target)/bin"
+	$(INSTALL) -m 755 reposurgeon repopuller repodiffer "$(target)/bin"
 	$(INSTALL) -m 644 README NEWS TODO *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/share/man/man1"
