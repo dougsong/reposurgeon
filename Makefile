@@ -17,7 +17,9 @@ SOURCES += \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png
 
-all: reposurgeon.1 repopuller.1 repodiffer.1
+all: reposurgeon.1 repopuller.1 repodiffer.1 \
+     reposurgeon.html repopuller.html repodiffer.html \
+     features.html
 
 reposurgeon.1: reposurgeon.xml
 	xmlto man reposurgeon.xml
@@ -45,7 +47,8 @@ install: all
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/share/man/man1"
 	$(INSTALL) -m 755 reposurgeon "$(target)/bin"
-	$(INSTALL) -m 644 README NEWS TODO "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -m 644 README NEWS TODO *.html \
+		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/share/man/man1"
 
 clean:
