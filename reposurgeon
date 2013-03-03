@@ -6298,6 +6298,8 @@ selected with the modifiers 'structure' and 'names'.
             if not line or "structure" in line:
                 for item in deletealls:
                     parse.stdout.write("mid-branch delete: %s\n" % item)
+                for item in disconnected:
+                    parse.stdout.write("disconnected commit: %s\n" % item)
             if "names" in line:
                 parse.stdout.write("\n".join(list(shortset)) + "\n")
             elif not line:
