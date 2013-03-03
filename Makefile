@@ -1,9 +1,14 @@
 #
 # makefile for reposurgeon
 #
+
+INSTALL=install
+prefix?=/usr/local
+target=$(DESTDIR)$(prefix)
+
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README NEWS COPYING TODO 
+SOURCES = README NEWS COPYING TODO
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repopuller repopuller.xml \
@@ -34,6 +39,14 @@ repodiffer.html: repodiffer.xml
 
 features.html: features.asc
 	asciidoc features.asc
+
+install: all
+	$(INSTALL) -d "$(target)/bin"
+	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -d "$(target)/share/man/man1"
+	$(INSTALL) -m 755 reposurgeon "$(target)/bin"
+	$(INSTALL) -m 644 README NEWS TODO "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -m 644 *.1 "$(target)/share/man/man1"
 
 clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
