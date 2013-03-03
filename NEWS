@@ -1,6 +1,6 @@
 			reposurgeon project news
 2.24: 2013-03-03
-     Fix a crash bug in the new blob handling, and more performnce tweaks.
+     Fix a crash bug in the new blob handling, and more performance tweaks.
 
 2.23: 2013-03-01
      Drastically cut the amount of disk storage and I/O required for surgery.
