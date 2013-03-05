@@ -2139,6 +2139,7 @@ class StreamParser:
     def fast_import(self, fp, progress=False):
         "Initialize the repo from a fast-import stream or Subversion dump."
         self.repo.makedir()
+        self.repo.timings = [("start", time.time())]
         try:
             self.fp = fp
             # Optimization: if we're reading from a plain file,
@@ -2267,6 +2268,7 @@ class StreamParser:
                                          (self.import_line))
                             # End Revision processing
                     # End of Subversion dump parsing
+                    self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(baton)
                     elapsed = time.time() - baton.time
                     baton.twirl("%d revisions (%d/s)" %
@@ -2449,6 +2451,7 @@ class StreamParser:
                             # Simply pass through any line we don't understand.
                             self.repo.addEvent(Passthrough(line))
                     # End of fast-import parsing
+                    self.repo.timings.append(("parsing", time.time()))
                 self.import_line = 0
             if self.warnings:
                 for warning in self.warnings:
@@ -2491,7 +2494,6 @@ class StreamParser:
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
-        timings = [("start", time.time())]
         baton.twirl("copynodes")
         baton.startcounter(countfmt(len(self.revisions)))
         copynodes = []
@@ -2516,7 +2518,7 @@ class StreamParser:
             baton.bumpcounter()
         copynodes.sort(key=operator.attrgetter("from_rev"))
         baton.endcounter()
-        timings.append(["copynodes", time.time()]) 
+        self.repo.timings.append(["copynodes", time.time()])
         baton.twirl('+')
         # Build filemaps.
         if debug_enable(DEBUG_EXTRACT):
@@ -2559,7 +2561,7 @@ class StreamParser:
             filemaps[revision] = filemap.snapshot()
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["filemaps", time.time()]) 
+        self.repo.timings.append(["filemaps", time.time()]) 
         baton.twirl('+')
         # Blows up huge on large repos...
         #if debug_enable(DEBUG_FILEMAP):
@@ -2587,7 +2589,7 @@ class StreamParser:
                 self.gripe("inconsistently empty from set for %s" % copynode)
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["copysets", time.time()]) 
+        self.repo.timings.append(["copysets", time.time()]) 
         baton.twirl('+')
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -3140,7 +3142,7 @@ class StreamParser:
         if self.fileop_branchlinks - self.directory_branchlinks:
             self.gripe("branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
         baton.endcounter()
-        timings.append(["commits", time.time()]) 
+        self.repo.timings.append(["commits", time.time()]) 
         if debug_enable(DEBUG_EXTRACT):
             announce("at post-parsing time:")
             for commit in self.repo.commits():
@@ -3195,7 +3197,7 @@ class StreamParser:
                     self.branches["root"] = None
                 baton.bumpcounter()
             baton.endcounter()
-            timings.append(["branches", time.time()]) 
+            self.repo.timings.append(["branches", time.time()]) 
             baton.twirl("+")
             # ...then rebuild parent links so they follow the branches
             branchroots = []
@@ -3210,7 +3212,7 @@ class StreamParser:
                 self.branches[commit.branch] = commit.mark
                 baton.bumpcounter()
             baton.endcounter()
-            timings.append(["parents", time.time()]) 
+            self.repo.timings.append(["parents", time.time()]) 
             baton.twirl("+")
             baton.twirl("root")
             # The root branch is special. It wasn't made by a copy, so
@@ -3224,7 +3226,7 @@ class StreamParser:
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
                 announce("branch roots: %s, links %s" % ([c.mark for c in branchroots], self.branchlink))
-            timings.append(["root", time.time()]) 
+            self.repo.timings.append(["root", time.time()]) 
             baton.twirl("+")
             baton.twirl("branchlinks")
             for (later, earlier) in self.branchlink.iteritems():
@@ -3238,7 +3240,7 @@ class StreamParser:
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (rootrev, root.branch))
                 baton.twirl()
-            timings.append(["branchlinks", time.time()]) 
+            self.repo.timings.append(["branchlinks", time.time()]) 
             baton.twirl("+")
             # Add links due to svn:mergeinfo properties
             baton.twirl("mergeinfo")
@@ -3255,7 +3257,7 @@ class StreamParser:
                         continue
                     if early_commit.mark not in late_commit.parentMarks():
                         late_commit.addParent(early_commit.mark)
-            timings.append(["mergeinfo", time.time()]) 
+            self.repo.timings.append(["mergeinfo", time.time()]) 
             baton.twirl("+")
             if debug_enable(DEBUG_EXTRACT):
                 announce("after branch analysis")
@@ -3291,7 +3293,7 @@ class StreamParser:
                                      commit.parentMarks()[0])
                 baton.bumpcounter()
             baton.endcounter()
-            timings.append(["tagifying", time.time()]) 
+            self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl("+")
         # Code controlled by svn_nobranch option ends.
         # Now clean up junk commits generated by cvs2svn.
@@ -3312,7 +3314,7 @@ class StreamParser:
                 self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["mergeinfo", time.time()]) 
+        self.repo.timings.append(["mergeinfo", time.time()]) 
         baton.twirl('+')
         baton.twirl("tagify-empty")
         baton.startcounter(countfmt(len(self.repo.commits())))
@@ -3357,7 +3359,7 @@ class StreamParser:
                     self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["tagify-empty", time.time()]) 
+        self.repo.timings.append(["tagify-empty", time.time()]) 
         baton.twirl("+")
         baton.twirl("polishing")
         # Now pretty up the branch names
@@ -3375,7 +3377,7 @@ class StreamParser:
                                                  os.path.basename(commit.branch[:-1]))
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["polishing", time.time()]) 
+        self.repo.timings.append(["polishing", time.time()]) 
         baton.twirl("+")
         # cvs2svn likes to crap out sequences of deletes followed by
         # filecopies on the same node when it's generating tag commits.
@@ -3393,7 +3395,7 @@ class StreamParser:
             commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["canonicalizing", time.time()]) 
+        self.repo.timings.append(["canonicalizing", time.time()]) 
         baton.twirl("+")
         # Issue resets when required
         baton.twirl("resets")
@@ -3410,7 +3412,7 @@ class StreamParser:
                 issued.add(event.branch)
             self.repo.addEvent(event)
             baton.bumpcounter()
-        timings.append(["resets", time.time()]) 
+        self.repo.timings.append(["resets", time.time()]) 
         baton.twirl("+")
         # Remove spurious parent links caused by random cvs2svn file copies.
         baton.twirl("debubbling")
@@ -3430,12 +3432,12 @@ class StreamParser:
                     commit.removeParent(a.mark)
             baton.bumpcounter()
         baton.endcounter()
-        timings.append(["debubbling", time.time()]) 
+        self.repo.timings.append(["debubbling", time.time()]) 
         baton.twirl("+")
         baton.twirl("renumbering")
         self.repo.renumber(baton=baton)
         baton.twirl("+")
-        timings.append(["renumbering", time.time()]) 
+        self.repo.timings.append(["renumbering", time.time()]) 
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
@@ -3444,17 +3446,7 @@ class StreamParser:
                    and commit.children()]
         for commit in dubious:
             self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
-        timings.append(["linting", time.time()]) 
-        if global_options["svn_profile"]:
-            total = timings[-1][1] - timings[0][-1]
-            print("        commits: %s" % len(self.repo.commits()))
-            for (i, (phase, _interval)) in enumerate(timings):
-                if i > 0:
-                    interval = timings[i][1] - timings[i-1][1]
-                    print("%15s: %.3f (%2.2f%%)" % (phase,
-                                                  interval,
-                                                  (interval * 100)/total))
-            print("          total: %.3f (100%%)" % total)
+        self.repo.timings.append(["linting", time.time()]) 
         # Treat this in-core state is though it was read from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
@@ -3830,6 +3822,7 @@ class Repository:
         self.write_fossils = False
         self.dollar_map = {}        # From dollar cookies in files
         self.fossil_map = {}    # From anything that doesn't survive rebuild
+        self.timings = []
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -6183,6 +6176,22 @@ gathers statistics only on code executed via '-'.
         assert line is not None # Pacify pylint
         self.profile_log = line
         announce("profiling enabled.")
+
+    def help_timing(self):
+        print("""
+Report phase-timing results from repository analysis.
+""")
+    def do_timing(self, line):
+        "Report repo-analysis times."
+        total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
+        print("        commits: %s" % len(self.repo.commits()))
+        for (i, (phase, _interval)) in enumerate(self.repo.timings):
+            if i > 0:
+                interval = self.repo.timings[i][1] - self.repo.timings[i-1][1]
+                print("%15s: %.3f (%2.2f%%)" % (phase,
+                                              interval,
+                                              (interval * 100)/total))
+        print("          total: %.3f (100%%)" % total)
 
     #
     # Information-gathering
