@@ -602,8 +602,9 @@ class RepoSurgeonEmail(email.message.Message, object):
     def __str__(self):
         return super(RepoSurgeonEmail, self).as_string(unixfrom=True).replace("\n--", "\n.--")
 
-class Date:
+class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
+    __slots__ = ("timestamp", "tz_offset", "orig_tz_string")
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
         # First, look for git's preferred format, which is a timestamp
