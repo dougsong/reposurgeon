@@ -2282,7 +2282,8 @@ class StreamParser:
                     self.svn_process(baton)
                     elapsed = time.time() - baton.time
                     baton.twirl("%d revisions (%d/s)" %
-                                 (int(revision), int(int(revision)/elapsed)))
+                                 (self.repo.fossil_count,
+                                  int(self.repo.fossil_count/elapsed)))
                 else:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
@@ -6205,7 +6206,7 @@ Report phase-timing results from repository analysis.
                 print("%15s: %.3f (%2.2f%%)" % (phase,
                                               interval,
                                               (interval * 100)/total))
-        print("          total: %.3f (100%%)" % total)
+        print("          total: %.3f (%d/sec)" % (total, int((self.repo.fossil_count or len(self.repo.commits()))/total)))
 
     #
     # Information-gathering
