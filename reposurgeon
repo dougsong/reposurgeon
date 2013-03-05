@@ -3448,9 +3448,10 @@ class StreamParser:
             self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
         timings.append(["linting", time.time()]) 
         if global_options["svn_profile"]:
-            #timings.append(["total", total])
+            print("        commits: %s" % len(self.repo.commits()))
             for (i, (phase, interval)) in enumerate(timings):
                 print("%15s: %.3f" % (phase, interval-start))
+            print("          total: %.3f" % (timings[-1][1] - start))
         # Treat this in-core state is though it was read from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
