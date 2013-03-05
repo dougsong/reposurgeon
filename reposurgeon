@@ -2268,6 +2268,7 @@ class StreamParser:
                                          (self.import_line))
                             # End Revision processing
                     # End of Subversion dump parsing
+                    self.repo.fossil_count = revision
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(baton)
                     elapsed = time.time() - baton.time
@@ -3399,7 +3400,7 @@ class StreamParser:
         baton.twirl("+")
         # Issue resets when required
         baton.twirl("resets")
-        baton.startcounter(countfmt(len(self.repo.commits())))
+        baton.startcounter(countfmt(len(self.repo.events)))
         save_events = self.repo.events
         self.repo.events = []
         self.repo.declare_sequence_mutation()
@@ -3822,6 +3823,7 @@ class Repository:
         self.write_fossils = False
         self.dollar_map = {}        # From dollar cookies in files
         self.fossil_map = {}    # From anything that doesn't survive rebuild
+        self.fossil_count = None
         self.timings = []
     def cleanup(self):
         "Release blob files associated with this repo."
@@ -6181,10 +6183,13 @@ gathers statistics only on code executed via '-'.
         print("""
 Report phase-timing results from repository analysis.
 """)
-    def do_timing(self, line):
+    def do_timing(self, _line):
         "Report repo-analysis times."
         total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
-        print("        commits: %s" % len(self.repo.commits()))
+        if self.repo.fossil_count is None:
+            print("        commits: %d" % len(self.repo.commits()))
+        else:
+            print("        commits: %d (from %d)" % (len(self.repo.commits()), self.repo.fossil_count))
         for (i, (phase, _interval)) in enumerate(self.repo.timings):
             if i > 0:
                 interval = self.repo.timings[i][1] - self.repo.timings[i-1][1]
