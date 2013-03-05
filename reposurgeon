@@ -2670,7 +2670,7 @@ class StreamParser:
                     if node.path in self.has_properties and not latch:
                         self.has_properties.discard(node.path)
                         if not global_options["svn_ignore_properties"]:
-                            announce("r%s~%s: properties cleared." \
+                            self.gripe("r%s~%s: properties cleared." \
                                      % (node.revision, node.path))
                 if node.kind == SD_FILE:
                     expanded_nodes.append(node)
