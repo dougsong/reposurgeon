@@ -4449,29 +4449,32 @@ class Repository:
                     newcount += 1
         for event in self.events:
             for fld in ("mark", "committish"):
-                if hasattr(event, fld) and getattr(event, fld):
+                try:
                     old = getattr(event, fld)
-                    new = remark(old, event)
-                    if debug_enable(DEBUG_UNITE):
-                        announce("renumbering %s -> %s in %s.%s" % (old, new,
-                                                                    event.__class__.__name__,
-                                                                    fld))
-                    setattr(event, fld, new)
-            self.declare_sequence_mutation()
-            if isinstance(event, Commit):
-                parent_marks = event.parentMarks()
-                for (i, old) in enumerate(parent_marks):
-                    new = remark(old, event)
-                    if debug_enable(DEBUG_UNITE):
-                        announce("renumbering %s -> %s in parents" % (old, new))
-                    parent_marks[i] = new
-                event.setParents(parent_marks)
-                for fileop in event.fileops:
-                    if fileop.op == "M" and fileop.ref.startswith(":"):
-                        new = remark(fileop.ref, fileop)
+                    if old is not None:    
+                        new = remark(old, event)
                         if debug_enable(DEBUG_UNITE):
-                            announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
-                        fileop.ref = new
+                            announce("renumbering %s -> %s in %s.%s" % (old, new,
+                                                                        event.__class__.__name__,
+                                                                        fld))
+                        setattr(event, fld, new)
+                except AttributeError:
+                    pass
+        self.declare_sequence_mutation()
+        for commit in self.commits():
+            parent_marks = commit.parentMarks()
+            for (i, old) in enumerate(parent_marks):
+                new = remark(old, commit)
+                if debug_enable(DEBUG_UNITE):
+                    announce("renumbering %s -> %s in parents" % (old, new))
+                parent_marks[i] = new
+            commit.setParents(parent_marks)
+            for fileop in commit.fileops:
+                if fileop.op == "M" and fileop.ref.startswith(":"):
+                    new = remark(fileop.ref, fileop)
+                    if debug_enable(DEBUG_UNITE):
+                        announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
+                    fileop.ref = new
             if baton:
                 baton.bumpcounter()
         if baton:
