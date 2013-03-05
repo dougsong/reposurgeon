@@ -1,8 +1,10 @@
 			reposurgeon project news
 
 2.25:
+     More speed tuning in repository analysis.
+     O(n**2) cost for renumbering has been eliminated, svn_no_renumber is gone.
+     New 'timings' command displays phase timings for repo analysis.
      Improved packaging for distributions (thanks, Mike Swanson).
-     O(n**2) costbor renumbering has been eliminated, svn_no_renumber is gone.
 
 2.24: 2013-03-03
      Fix a crash bug in the new blob handling, and more performance tweaks.

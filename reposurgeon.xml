@@ -1507,6 +1507,14 @@ disk space.</para>
 gathers statistics only on code executed via '-'.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>timing</command>
+</term>
+<listitem>
+<para>Display statistics on phase timing in repository analysis.
+Mainly of interest to developers trying to speed up the program.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 </refsect1>
