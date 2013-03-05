@@ -3432,11 +3432,10 @@ class StreamParser:
         baton.endcounter()
         timings.append(["debubbling", time.time()]) 
         baton.twirl("+")
-        if not global_options["svn_no_renumber"]:
-            baton.twirl("renumbering")
-            self.repo.renumber(baton=baton)
-            baton.twirl("+")
-            timings.append(["renumbering", time.time()]) 
+        baton.twirl("renumbering")
+        self.repo.renumber(baton=baton)
+        baton.twirl("+")
+        timings.append(["renumbering", time.time()]) 
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
@@ -5353,11 +5352,6 @@ unusual topology and you intend to do your own branch surgery.
 """),
         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
-"""),
-        ("svn_no_renumber", """\
-    If set, don't renumber the marks in Subversion repositories immediately.
-after they are analyzed.  This is an O(n**2) operation and can actually
-dominate load time on sufficiently large repositories.
 """),
         ("svn_profile", """\
     Emit timing statistics on Subversion analysis phases.
