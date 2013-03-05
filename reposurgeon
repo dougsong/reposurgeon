@@ -4437,6 +4437,7 @@ class Repository:
         if baton:
             count = len(self.events)
             baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
+        newcount = 0
         for event in self.events:
             if hasattr(event, "mark"):
                 if event.mark is None:
@@ -4444,7 +4445,8 @@ class Repository:
                 elif not event.mark.startswith(":"):
                     raise Fatal("field not in mark format")
                 else:
-                    markmap[event.mark] = origin + len(markmap)
+                    markmap[event.mark] = origin + newcount
+                    newcount += 1
         for event in self.events:
             for fld in ("mark", "committish"):
                 if hasattr(event, fld) and getattr(event, fld):
