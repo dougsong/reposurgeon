@@ -1356,12 +1356,20 @@ class Commit(object):
     def children(self):
         "Get a list of this commit's children."
         if self._child_nodes is None:
-            self._child_nodes = [e for e in self.repo.commits() if self.mark in e._parent_marks]
+            self._child_nodes = []
+            for e in self.repo.events:
+                if isinstance(e, Commit):
+                    if self.mark in e._parent_marks:
+                        self._child_nodes.append(e)
         return self._child_nodes
     def parents(self):
         "Get a list of this commit's parents."
         if self._parent_nodes == None:
-            self._parent_nodes = [e for e in self.repo.commits() if e.mark in self._parent_marks]
+            self._parent_nodes = []
+            for e in self.repo.events:
+                if isinstance(e, Commit):
+                    if e.mark in self._parent_marks:
+                        self._parent_nodes.append(e)
         return self._parent_nodes
     def parentMarks(self):
         return self._parent_marks
@@ -2148,7 +2156,7 @@ class StreamParser:
             if os.path.isfile(self.fp.name):
                 self.repo.seekstream = fp
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
-                self.import_line = 0
+                self.import_line = self.repo.fossil_count = 0
                 self.linebuffers = []
                 # First, determine the input type
                 line = self.readline()
@@ -2264,12 +2272,12 @@ class StreamParser:
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
+                            self.repo.fossil_count += 1
                             if debug_enable(DEBUG_SVNPARSE):
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
                     # End of Subversion dump parsing
-                    self.repo.fossil_count = revision
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(baton)
                     elapsed = time.time() - baton.time
