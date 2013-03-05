@@ -2491,8 +2491,7 @@ class StreamParser:
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
-        start = time.time()
-        timings = []
+        timings = [("start", time.time())]
         baton.twirl("copynodes")
         baton.startcounter(countfmt(len(self.revisions)))
         copynodes = []
@@ -3448,10 +3447,15 @@ class StreamParser:
             self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
         timings.append(["linting", time.time()]) 
         if global_options["svn_profile"]:
+            total = timings[-1][1] - timings[0][-1]
             print("        commits: %s" % len(self.repo.commits()))
-            for (i, (phase, interval)) in enumerate(timings):
-                print("%15s: %.3f" % (phase, interval-start))
-            print("          total: %.3f" % (timings[-1][1] - start))
+            for (i, (phase, _interval)) in enumerate(timings):
+                if i > 0:
+                    interval = timings[i][1] - timings[i-1][1]
+                    print("%15s: %.3f (%2.2f%%)" % (phase,
+                                                  interval,
+                                                  (interval * 100)/total))
+            print("          total: %.3f (100%%)" % total)
         # Treat this in-core state is though it was read from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
