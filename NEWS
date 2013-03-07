@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.25:
+2.25: 2013-03-07
      More speed tuning in repository analysis.
      O(n**2) cost for renumbering has been eliminated, svn_no_renumber is gone.
      New 'timings' command displays phase timings for repo analysis.
