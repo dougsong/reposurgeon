@@ -1423,8 +1423,8 @@ class Commit(object):
         elif other.mark in self._parent_marks:
             return True
         else:
-            return any([parent.descended_from(other) \
-                        for parent in self.parents()])
+            return any(parent.descended_from(other) \
+                        for parent in self.parents())
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = {}
