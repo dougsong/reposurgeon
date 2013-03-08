@@ -3330,7 +3330,7 @@ class StreamParser:
                 self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
-        self.repo.timings.append(["mergeinfo", time.time()]) 
+        self.repo.timings.append(["junk", time.time()]) 
         baton.twirl('+')
         baton.twirl("tagify-empty")
         baton.startcounter(countfmt(len(self.repo.commits())))
