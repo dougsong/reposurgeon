@@ -1365,6 +1365,9 @@ class Commit(object):
                     if self.mark in e._parent_marks:
                         self._child_nodes.append(e)
         return self._child_nodes
+    def hasChildren(self):
+        "Predicate - does this commit have children?"
+        return not not self.children()
     def parents(self):
         "Get a list of this commit's parents."
         if self._parent_nodes == None:
@@ -3319,14 +3322,14 @@ class StreamParser:
             # Things that cvs2svn created as tag surrogates
             # get turned into actual tags.
             m = StreamParser.cvs2svn_tag_re.search(commit.comment)
-            if m and not commit.children():
+            if m and not commit.hasChildren():
                 fulltag = os.path.join("refs", "tags", m.group(1))
                 self.repo.events.append(Reset(fulltag, commit.mark))
                 self.repo.quiet_delete(commit)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
             m = StreamParser.cvs2svn_branch_re.search(commit.comment)
-            if m and not commit.children():
+            if m and not commit.hasChildren():
                 self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
@@ -3360,7 +3363,7 @@ class StreamParser:
             # The fileops aren't worth saving; the comment metadata
             # just might be.
             elif commit.alldeletes(killset={"deleteall"}) \
-                     and not commit.children():
+                     and not commit.hasChildren():
                 if commit.hasParents():
                     if commit.branch.endswith(os.sep):
                         commit.branch = commit.branch[:-1]
@@ -3459,7 +3462,7 @@ class StreamParser:
         # tag or branch creation
         dubious = [commit for commit in self.repo.commits() if \
                    commit.fileops and commit.fileops[0].op == 'deleteall' \
-                   and commit.children()]
+                   and commit.hasChildren()]
         for commit in dubious:
             self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
         self.repo.timings.append(["linting", time.time()]) 
@@ -4351,7 +4354,7 @@ class Repository:
                             if not identical:
                                 event.parents()[0].branch = event.branch
                     elif "tagforward" in policy:
-                        if event.children():
+                        if event.hasChildren():
                             identical = event.children()[0].branch == event.branch
                             if not identical:
                                 event.children()[0].branch = event.branch
@@ -4360,7 +4363,7 @@ class Repository:
                             if event.parents():
                                 identical = event.parents()[0].branch == event.branch
                         else:
-                            if event.children():
+                            if event.hasChildren():
                                 identical = event.children()[0].branch == event.branch        
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
@@ -4406,7 +4409,7 @@ class Repository:
                         parent._pathset = None
                         parent.pushed_to = True
                 filter_only = True
-                if "tagforward" in policy and event.children():
+                if "tagforward" in policy and event.hasChildren():
                     filter_only, mark = False, event.children()[0].mark
                 elif "tagback" in policy and event.parents():
                     filter_only, mark = False, event.parents()[0].mark
@@ -5618,7 +5621,7 @@ copies at all (it points into sections of the input stream instead).
                 "T" : lambda e: isinstance(e, Tag),
                 "R" : lambda e: isinstance(e, Reset),
                 "P" : lambda e: isinstance(e, Passthrough),
-                "H" : lambda e: isinstance(e, Commit) and not e.children(),
+                "H" : lambda e: isinstance(e, Commit) and not e.hasChildren(),
                 }
             visible = set([])
             self.pop()
@@ -6345,9 +6348,9 @@ selected with the modifiers 'structure' and 'names'.
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
                     if not line or "structure" in line:
-                        if event.fileops and event.fileops[0].op == 'deleteall' and event.children():
+                        if event.fileops and event.fileops[0].op == 'deleteall' and event.hasChildren():
                             deletealls.add("on %s at %s" % (event.branch, event.id_me()))
-                        if not event.hasParents() and not event.children():
+                        if not event.hasParents() and not event.hasChildren():
                             disconnected.add(event.idme())
                     if unmapped and (not line or "names" in line):
                         for person in [event.committer] + event.authors:
