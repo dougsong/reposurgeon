@@ -1370,7 +1370,7 @@ class Commit(object):
         return not not self.children()
     def parents(self):
         "Get a list of this commit's parents."
-        if self._parent_nodes == None:
+        if self._parent_nodes is None:
             self._parent_nodes = []
             for e in self.repo.events:
                 if id(e) == id(self):
