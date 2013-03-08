@@ -1157,8 +1157,7 @@ class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "_parent_marks", "_parent_nodes", "_child_nodes",
-                 "branch", "fileops",
-                 "properties", "pushed_to", "filemap", "color",
+                 "branch", "fileops", "properties", "filemap", "color",
                  "fossil_id", "common", "_pathset", "splits", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
@@ -1172,7 +1171,6 @@ class Commit(object):
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
-        self.pushed_to = False       # Flagged for resolution after delete
         self.filemap = {}
         self.color = None
         self.fossil_id = None        # Commit's ID in an alien system
@@ -1436,9 +1434,9 @@ class Commit(object):
                     cliques[fileop.path] = []
                 cliques[fileop.path].append(i)
         return cliques
-    def fileop_dump(self, i):
+    def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
-        print("commit %d, mark %s:" % (i+1, self.mark))
+        print("commit %d, mark %s:" % (self.repo.find(self.mark)+1, self.mark))
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print("%d: %-20s" % (i, str(op)))
@@ -4327,7 +4325,7 @@ class Repository:
                             commit.fileops[j] = newb
                             if debug_enable(DEBUG_DELETE):
                                 announce("During canonicalization:")
-                                commit.fileop_dump(j)
+                                commit.fileop_dump()
                             if warn:
                                 complain(warn)
                             coverage.add(case)
@@ -4356,6 +4354,7 @@ class Repository:
                     if not event.alldeletes():
                         announce(speak + "non-delete fileops.")
                         break
+        altered = []
         # Here are the deletions
         for ei in selected:
             event = self.events[ei]
@@ -4395,7 +4394,7 @@ class Repository:
                         # needing resolution.
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child._pathset = None
-                        child.pushed_to = True
+                        altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
                 if "pushback" in policy:
                     for parent in event.parents():
@@ -4423,7 +4422,7 @@ class Repository:
                                     self.declare_sequence_mutation()
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
-                        parent.pushed_to = True
+                        altered.append(parent)
                 filter_only = True
                 if "tagforward" in policy and event.hasChildren():
                     filter_only, mark = False, event.children()[0].mark
@@ -4442,36 +4441,30 @@ class Repository:
                 raise Fatal("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
         if "obliterate" not in policy:
-            for (ei, event) in enumerate(self.events):
-                if not isinstance(event, Commit):
-                    continue
-                elif event.pushed_to:
+            for event in altered:
+                if debug_enable(DEBUG_DELETE):
+                    announce("Before canonicalization:")
+                    event.fileop_dump()
+                self.case_coverage |= self.canonicalize(event)
+                if debug_enable(DEBUG_DELETE):
+                    announce("After canonicalization:")
+                    event.fileop_dump()
+                # Now apply policy in the mutiple-M case
+                for (path, oplist) in event.cliques().iteritems():
+                    if len(oplist) == 1:
+                        continue
+                    if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
+                        complain("commit %s has multiple Ms for %s" % (event.mark, path))
+                    if "coalesce" in policy:
+                        # Remove all but the last M.
+                        while len(oplist) > 1:
+                            event.fileops.pop(oplist.pop(0))
+                        event._pathset = None
                     if debug_enable(DEBUG_DELETE):
-                        announce("Before canonicalization:")
-                        event.fileop_dump(ei)
-                    self.case_coverage |= self.canonicalize(self.events[ei])
-                    if debug_enable(DEBUG_DELETE):
-                        announce("After canonicalization:")
-                        event.fileop_dump(ei)
-                    # Now apply policy in the mutiple-M case
-                    for (path, oplist) in event.cliques().iteritems():
-                        if len(oplist) == 1:
-                            continue
-                        if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
-                            complain("commit %s has multiple Ms for %s" % (event.mark, path))
-                        if "coalesce" in policy:
-                            # Remove all but the last M.
-                            while len(oplist) > 1:
-                                event.fileops.pop(oplist.pop(0))
-                            event._pathset = None
-                        if debug_enable(DEBUG_DELETE):
-                            print("Commit %d, after applying policy:" % (ei +1,))
-                            for op in event.fileops:
-                                print(str(op))
+                        print("Commit %d, after applying policy:" % (ei + 1,))
+                        for op in event.fileops:
+                            print(str(op))
         self.declare_sequence_mutation()
-        # Clear everybody's problem flag
-        for commit in self.commits():
-            commit.pushed_to = False
     def quiet_delete(self, commit):
         self.delete([self.events.index(commit)], ["obliterate", "quiet", "tagback"])
     #
@@ -6158,9 +6151,8 @@ List all known symbolic names of branches and tags. Supports > redirection.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        for (i, e) in enumerate(self.chosen().events):
-            if isinstance(e, Commit):
-                e.fileop_dump(i)
+        for e in self.chosen().commits():
+            e.fileop_dump()
         sys.stdout.write("Case coverage: %s\n" % sorted(self.chosen().case_coverage))
 
     def help_index(self):
