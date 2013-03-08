@@ -1367,7 +1367,20 @@ class Commit(object):
         return self._child_nodes
     def hasChildren(self):
         "Predicate - does this commit have children?"
-        return not not self.children()
+        if self._child_nodes:
+            return True
+        else:
+            above = False
+            for e in self.repo.events:
+                if id(e) == id(self):
+                    above = True
+                elif above and isinstance(e, Commit):
+                    if self.mark in e._parent_marks:
+                        # Early return makes this much faster in the
+                        # normal case, which is that the commit has
+                        # one child that is an immediate successor.
+                        return True
+        return False
     def parents(self):
         "Get a list of this commit's parents."
         if self._parent_nodes is None:
