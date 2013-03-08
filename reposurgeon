@@ -1357,8 +1357,11 @@ class Commit(object):
         "Get a list of this commit's children."
         if self._child_nodes is None:
             self._child_nodes = []
+            above = False
             for e in self.repo.events:
-                if isinstance(e, Commit):
+                if id(e) == id(self):
+                    above = True
+                elif above and isinstance(e, Commit):
                     if self.mark in e._parent_marks:
                         self._child_nodes.append(e)
         return self._child_nodes
@@ -1367,7 +1370,9 @@ class Commit(object):
         if self._parent_nodes == None:
             self._parent_nodes = []
             for e in self.repo.events:
-                if isinstance(e, Commit):
+                if id(e) == id(self):
+                    break
+                elif isinstance(e, Commit):
                     if e.mark in self._parent_marks:
                         self._parent_nodes.append(e)
         return self._parent_nodes
