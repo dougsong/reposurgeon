@@ -2922,8 +2922,17 @@ class StreamParser:
                         elif node.action != SD_ADD:
                             # Ordinary inheritance, no node copy.  For
                             # robustness, we don't assume revisions are
-                            # consecutive numbers.
-                            ancestor = filemaps[previous][node.path]
+                            # consecutive numbers.  The loop handles
+                            # a semi-pathological case.
+                            for prev in expanded_nodes[:n]:
+                                if prev.action == SD_ADD \
+                                   and prev.kind == SD_FILE \
+                                   and prev.path == node.path:
+                                    ancestor = prev
+                                    break
+                            else:
+                                # Normal case
+                                ancestor = filemaps[previous][node.path]
                         else:
                             ancestor = None
                         # Time for fileop generation
