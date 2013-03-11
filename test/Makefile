@@ -1,11 +1,15 @@
 # Test-suite makefile for reposurgeon
 
+# By setting the REPOSURGEON environment variable and using -e
+# a different implementation can be plugged in to the tests.
+
 PATH := ..:.:${PATH}
+REPOSURGEON = reposurgeon 
 
 default:
-	@(cd ..; make --quiet pylint)
-	@reposurgeon "runtests"
-	@make --quiet all
+	@(cd ..; make -e --quiet pylint)
+	@$(REPOSURGEON) "runtests"
+	@make -e --quiet all
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress svnload-regress fossil-regress svndump-regress \
@@ -15,11 +19,11 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .SUFFIXES: .svn .chk .fi .map
 
 .svn.chk:
-	reposurgeon "read $<" "prefer git" "write" >$@ 2>&1
+	$(REPOSURGEON) "read $<" "prefer git" "write" >$@ 2>&1
 .svn.fi:
-	reposurgeon "read $<" "prefer git" "write" >$@
+	$(REPOSURGEON) "read $<" "prefer git" "write" >$@
 .svn.map:
-	reposurgeon "read $<" "fossils write" >$@
+	$(REPOSURGEON) "read $<" "fossils write" >$@
 
 buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
 	svndump-buildregress repodiffer-buildregress
@@ -41,14 +45,14 @@ roundtrip:
 	@echo "=== Testing stream-file round-tripping:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    reposurgeon "read -;write -" <$$file >/tmp/rs$$$$; \
+	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    reposurgeon "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
+	    $(REPOSURGEON) "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
 	    diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
@@ -59,7 +63,7 @@ mailboxing:
 	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
-	    reposurgeon "read $${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
+	    $(REPOSURGEON) "read $${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
 	    diff -u $${file} /tmp/regress; \
 	done
 	@rm -f /tmp/regress
@@ -70,13 +74,13 @@ TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
 fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    reposurgeon "script $${file}.tst testing123" >$${file}.chk 2>&1; \
+	    $(REPOSURGEON) "script $${file}.tst testing123" >$${file}.chk 2>&1; \
 	done
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
 	    echo -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if reposurgeon "script $${file}.tst testing123" >/tmp/regress 2>&1; \
+	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done
@@ -87,14 +91,14 @@ COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    reposurgeon "read $${file}.fi; coalesce; write -" > $${file}.chk; \
+	    $(REPOSURGEON) "read $${file}.fi; coalesce; write -" > $${file}.chk; \
 	done
 	@rm -f /tmp/regress
 coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
-	    reposurgeon "read $${file}.fi; coalesce; write -" >/tmp/regress; \
+	    $(REPOSURGEON) "read $${file}.fi; coalesce; write -" >/tmp/regress; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress
@@ -144,13 +148,13 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
-		reposurgeon "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
+		$(REPOSURGEON) "read $${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
 		(cd /tmp/reposurgeon$$$$; \
 		    git init --quiet; \
-		    grep -v '^reposurgeon:' /tmp/regress | git fast-import --quiet); \
+		    grep -v 'reposurgeon:' /tmp/regress | git fast-import --quiet); \
 		rm -fr /tmp/reposurgeon$$$$) \
 	    fi \
 	done
@@ -168,7 +172,7 @@ fossil-regress:
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    reposurgeon "read $${test}.svn" "fossils write" >/tmp/regress 2>/dev/null; \
+	    $(REPOSURGEON) "read $${test}.svn" "fossils write" >/tmp/regress 2>/dev/null; \
 	    then diff -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
@@ -180,7 +184,7 @@ svndump-buildregress:
 	@for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
-	    reposurgeon "read $${f}.fi" "prefer svn" "write" | svn-to-svn -s >$${f}.chk; \
+	    $(REPOSURGEON) "read $${f}.fi" "prefer svn" "write" | svn-to-svn -s >$${f}.chk; \
 	done
 	@make --quiet clean
 svndump-regress:
@@ -190,7 +194,7 @@ svndump-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		if echo "  $${test}.fi" >&2; \
-		reposurgeon "read $${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "read $${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 		svn-to-svn -n -q </tmp/prestripped$$$$; \
