@@ -1,6 +1,7 @@
 			reposurgeon project news
 2.26:
      Enable Subversion dump reader to handle yet another pathological case.
+     Code has been tested and verified with PyPy.
 
 2.25: 2013-03-07
      More speed tuning in repository analysis.
