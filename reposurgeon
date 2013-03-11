@@ -2884,6 +2884,7 @@ class StreamParser:
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
+            ancestor_nodes = {}
             for (n, node) in enumerate(expanded_nodes):
                 if node.kind == SD_FILE:
                     if node.action == SD_DELETE:
@@ -2891,6 +2892,7 @@ class StreamParser:
                         fileop = FileOp()
                         fileop.construct("D", node.path)
                         actions.append((node, fileop))
+                        ancestor_nodes[node.path] = None
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
                         # Try to figure out who the ancestor of
                         # this node is.
@@ -2922,16 +2924,10 @@ class StreamParser:
                         elif node.action != SD_ADD:
                             # Ordinary inheritance, no node copy.  For
                             # robustness, we don't assume revisions are
-                            # consecutive numbers.  The loop handles
-                            # a semi-pathological case.
-                            for prev in expanded_nodes[:n]:
-                                if prev.action == SD_ADD \
-                                   and prev.kind == SD_FILE \
-                                   and prev.path == node.path:
-                                    ancestor = prev
-                                    break
-                            else:
-                                # Normal case
+                            # consecutive numbers.
+                            try:
+                                ancestor = ancestor_nodes[node.path]
+                            except KeyError:
                                 ancestor = filemaps[previous][node.path]
                         else:
                             ancestor = None
@@ -2970,6 +2966,7 @@ class StreamParser:
                                 self.gripe("r%s~%s: permission information may be lost." \
                                            % (node.revision, node.path))
                             continue
+                        ancestor_nodes[node.path] = node
                         assert node.blobmark
                         # Time for fileop generation
                         if ancestor:
