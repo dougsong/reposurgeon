@@ -110,7 +110,7 @@ mark :4.1
 committer brooksd <brooksd> 1353813665 +0000
 data 34
 modify the file in each directory
-from :4
+from :4.2
 M 100644 :3 foo/src
 
 Event 8 =================================================================
