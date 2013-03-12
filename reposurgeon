@@ -1156,9 +1156,9 @@ class FileOp(object):
 class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
-                 "_parent_marks", "_parent_nodes", "_child_nodes",
                  "branch", "fileops", "properties", "filemap", "color",
-                 "fossil_id", "common", "_pathset", "splits", "deletehook")
+                 "fossil_id", "common", "splits", "deletehook",
+                 "_parent_marks", "_parent_nodes", "_child_nodes", "_pathset")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
@@ -1166,8 +1166,8 @@ class Commit(object):
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
         self._parent_marks = []      # marks from each of the parent nodes
-        self._parent_nodes = None    # cached list of parent nodes; invalidated by changes to _parent_marks
-        self._child_nodes = []       # Memoized list of child nodes
+        self._parent_nodes = []      # list of parent nodes
+        self._child_nodes = []       # list of child nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
