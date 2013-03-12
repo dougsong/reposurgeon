@@ -1158,14 +1158,13 @@ class Commit(object):
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
                  "fossil_id", "common", "splits", "deletehook",
-                 "_parent_marks", "_parent_nodes", "_child_nodes", "_pathset")
+                 "_parent_nodes", "_child_nodes", "_pathset")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
         self.authors = []            # Authors of commit
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
-        self._parent_marks = []      # marks from each of the parent nodes
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self.branch = None           # branch name
@@ -1363,7 +1362,7 @@ class Commit(object):
                 if id(e) == id(self):
                     above = True
                 elif above and isinstance(e, Commit):
-                    if self.mark in e._parent_marks:
+                    if self in e._parent_nodes:
                         self._child_nodes.append(e)
         return self._child_nodes
     def hasChildren(self):
@@ -1376,7 +1375,7 @@ class Commit(object):
                 if id(e) == id(self):
                     above = True
                 elif above and isinstance(e, Commit):
-                    if self.mark in e._parent_marks:
+                    if self in e._parent_nodes:
                         # Early return makes this much faster in the
                         # normal case, which is that the commit has
                         # one child that is an immediate successor.
@@ -1384,43 +1383,37 @@ class Commit(object):
         return False
     def parents(self):
         "Get a list of this commit's parents."
-        if self._parent_nodes is None:
-            self._parent_nodes = []
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    break
-                elif isinstance(e, Commit):
-                    if e.mark in self._parent_marks:
-                        self._parent_nodes.append(e)
         return self._parent_nodes
     def parentMarks(self):
-        return self._parent_marks
+        return [x.mark for x in self._parent_nodes]
     def setParents(self, marks):
-        self._parent_nodes = None
-        self._parent_marks = marks
-        for parent in [self.repo.objfind(x) for x in self._parent_marks]:
-            # FIXME: Should never be None, back this out and retest
-            if parent is not None:
-                parent._child_nodes = None
+        self._parent_nodes = [self.repo.objfind(x) for x in marks]
+        assert all(self._parent_nodes)
+        for parent in self._parent_nodes:
+            parent._child_nodes = None
     def addParent(self, mark):
-        self._parent_nodes = None
-        self._parent_marks.append(mark)
-        self.repo.objfind(mark)._child_nodes = None
+        newparent = self.repo.objfind(mark)
+        assert(newparent)
+        self._parent_nodes.append(newparent)
+        newparent._child_nodes = None
     def insertParent(self, idx, mark):
-        self._parent_nodes = None
-        self._parent_marks.insert(idx, mark)
+        newparent = self.repo.objfind(mark)
+        assert(newparent)
+        self._parent_nodes.insert(idx, newparent)
         self.repo.objfind(mark)._child_nodes = None
     def removeParent(self, mark):
-        self._parent_nodes = None
-        self._parent_marks.remove(mark)
-        self.repo.objfind(mark)._child_nodes = None
+        oldparent = self.repo.objfind(mark)
+        self._parent_nodes.remove(oldparent)
+        oldparent._child_nodes = None
+    def replaceParent(self, e1, e2):
+        self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def hasParents(self):
-        return len(self._parent_marks) > 0
+        return len(self._parent_nodes) > 0
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
         if not self.hasParents() or self.committer.date < other.committer.date:
             return False
-        elif other.mark in self.parentMarks():
+        elif other in self.parents():
             return True
         else:
             return any(parent.descended_from(other) \
@@ -1533,11 +1526,11 @@ class Commit(object):
             st += comment
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
-        parents = self.parentMarks()
+        parents = self.parents()
         if parents:
-            st += "from %s\n" % parents[0]
+            st += "from %s\n" % parents[0].mark
         for ancestor in parents[1:]:
-            st += "merge %s\n" % ancestor
+            st += "merge %s\n" % ancestor.mark
         if vcs and vcs.properties:
             for (name, value) in self.properties.iteritems():
                 if value in (True, False):
@@ -4519,13 +4512,6 @@ class Repository:
                     pass
         self.declare_sequence_mutation()
         for commit in self.commits():
-            parent_marks = commit.parentMarks()
-            for (i, old) in enumerate(parent_marks):
-                new = remark(old, commit)
-                if debug_enable(DEBUG_UNITE):
-                    announce("renumbering %s -> %s in parents" % (old, new))
-                parent_marks[i] = new
-            commit.setParents(parent_marks)
             for fileop in commit.fileops:
                 if fileop.op == "M" and fileop.ref.startswith(":"):
                     new = remark(fileop.ref, fileop)
@@ -4575,10 +4561,11 @@ class Repository:
             if isinstance(event, Commit):
                 parent_marks = event.parentMarks()
                 for (j, old) in enumerate(parent_marks):
-                    new = old + "-" + color
-                    if debug_enable(DEBUG_UNITE):
-                        announce("moving %s -> %s in parents" % (old, new))
-                    parent_marks[j] = new
+                    if '-' not in old:
+                        new = old + "-" + color
+                        if debug_enable(DEBUG_UNITE):
+                            announce("moving %s -> %s in parents" % (old, new))
+                        parent_marks[j] = new
                 event.setParents(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
@@ -4703,16 +4690,11 @@ class Repository:
                 event.splits = 1
             else:
                 event.splits += 1
-            newmark = "%s.%s" % (event.mark, event.splits)
+            event2.mark = "%s.%s" % (event.mark, event.splits)
             # Fix up parent/child relationships
             for child in event.children():
-                parent_marks = child.parentMarks()
-                for (j, mark) in enumerate(parent_marks):
-                    if mark == event.mark:
-                        parent_marks[j] = newmark
-                child.setParents(parent_marks)
+                child.replaceParent(event, event2)
             event2.setParents([event.mark])
-            event2.mark = newmark
             # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
