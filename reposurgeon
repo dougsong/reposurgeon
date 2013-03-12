@@ -4386,7 +4386,7 @@ class Repository:
                 for child in event.children():
                     child.removeParent(event.mark)
                     for parent in event.parents():
-                        if parent.mark not in child.parentMarks():
+                        if parent not in child.parents():
                             child.addParent(parent.mark)
                     if "obliterate" not in policy and "pushback" not in policy:
                         # Prepend a copy of this event's file ops to
