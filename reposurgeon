@@ -4145,7 +4145,7 @@ class Repository:
         "Return ancestors of an event, in reverse order."
         trail = []
         while True:
-            if not self.events[ei].parentMarks():
+            if not self.events[ei].hasParents():
                 break
             else:
                 efrom = self.find(self.events[ei].parentMarks()[0])
