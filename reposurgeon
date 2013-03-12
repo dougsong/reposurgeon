@@ -4341,13 +4341,15 @@ class Repository:
         selected.sort(reverse=True)
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
+        dquiet = "quiet" in policy
+        obliterate = "obliterate" in policy
         # Sanity checks
         for ei in selected:
             event = self.events[ei]
-            if isinstance(event, Blob) and not "quiet" in policy:
+            if isinstance(event, Blob) and not dquiet:
                 raise Recoverable("attempt to directly delete blob %d" % (ei+1))
             elif  isinstance(event, Commit):
-                if "obliterate" in policy and not "quiet" in policy:
+                if obliterate and not dquiet:
                     speak = "warning: commit %s to be obliterated has " % event.mark 
                     if '/' in event.branch and not '/heads/' in event.branch:
                         complain(speak + "non-head branch attribute %s" % event.branch)
@@ -4388,7 +4390,7 @@ class Repository:
                     for parent in event.parents():
                         if parent not in child.parents():
                             child.addParent(parent.mark)
-                    if "obliterate" not in policy and "pushback" not in policy:
+                    if not obliterate and "pushback" not in policy:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
                         # needing resolution.
@@ -4442,7 +4444,7 @@ class Repository:
             else:
                 raise Fatal("unexpected object in event array")
         # Canonicalize all the commits that got ops pushed to them
-        if "obliterate" not in policy:
+        if not obliterate:
             for event in altered:
                 if debug_enable(DEBUG_DELETE):
                     announce("Before canonicalization:")
@@ -4455,7 +4457,7 @@ class Repository:
                 for (path, oplist) in event.cliques().iteritems():
                     if len(oplist) == 1:
                         continue
-                    if ("coalesce" not in policy and "obliterate" not in policy) or debug_enable(DEBUG_DELETE):
+                    if ("coalesce" not in policy and not obliterate) or debug_enable(DEBUG_DELETE):
                         complain("commit %s has multiple Ms for %s" % (event.mark, path))
                     if "coalesce" in policy:
                         # Remove all but the last M.
