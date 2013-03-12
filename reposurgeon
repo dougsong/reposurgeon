@@ -4425,9 +4425,11 @@ class Repository:
                         altered.append(parent)
                 filter_only = True
                 if "tagforward" in policy and event.hasChildren():
-                    filter_only, mark = False, event.children()[0].mark
+                    filter_only = False
+                    mark = event.children()[0].mark
                 elif "tagback" in policy and event.parents():
-                    filter_only, mark = False, event.parents()[0].mark
+                    filter_only = False
+                    mark = event.parents()[0].mark
                 if filter_only:
                     self.events = [t for t in self.events if not (isinstance(t, Tag)
                                                         and t.committish == event.mark)]
