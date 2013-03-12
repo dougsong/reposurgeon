@@ -3451,9 +3451,9 @@ class StreamParser:
         baton.twirl("debubbling")
         baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
-            if len(commit.parentMarks()) == 2:
-                parents = commit.parents()
-                if len(parents) != 2:
+            parents = commit.parents()
+            if len(parents) == 2:
+                if parents[0] == parents[1]:
                     self.gripe("r%s: duplicate parent marks" % commit.fossil_id)
                     continue
                 (a, b) = parents
