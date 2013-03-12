@@ -1238,7 +1238,7 @@ class Commit(object):
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Branch"] = self.branch
-        msg["Parents"] = " ".join(self._parent_marks)
+        msg["Parents"] = " ".join(self.parentMarks())
         if self.authors:
             self.authors[0].email_out(modifiers, msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
@@ -1263,7 +1263,7 @@ class Commit(object):
                 modified = True
             self.setbranch(msg["Branch"])
         if "Parents" in msg:
-            if self._parent_marks != msg["Parents"].split():
+            if self.parentMarks() != msg["Parents"].split():
                 modified = True
             self.setParents(msg["Parents"].split())
         if "Committer" in msg:
@@ -1418,9 +1418,9 @@ class Commit(object):
         return len(self._parent_marks) > 0
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
-        if not self._parent_marks or self.committer.date < other.committer.date:
+        if not self.hasParents() or self.committer.date < other.committer.date:
             return False
-        elif other.mark in self._parent_marks:
+        elif other.mark in self.parentMarks():
             return True
         else:
             return any(parent.descended_from(other) \
@@ -1449,7 +1449,7 @@ class Commit(object):
         return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
-        if self.filemap or not self._parent_marks:
+        if self.filemap or not self.hasParents():
             return self.filemap
         ancestors = {}
         sys.setrecursionlimit(len(self.repo.events) * 2)
@@ -1533,9 +1533,10 @@ class Commit(object):
             st += comment
         if "nl-after-comment" in self.repo.export_style():
             st += "\n"
-        if self._parent_marks:
-            st += "from %s\n" % self._parent_marks[0]
-        for ancestor in self._parent_marks[1:]:
+        parents = self.parentMarks()
+        if parents:
+            st += "from %s\n" % parents[0]
+        for ancestor in parents[1:]:
             st += "merge %s\n" % ancestor
         if vcs and vcs.properties:
             for (name, value) in self.properties.iteritems():
