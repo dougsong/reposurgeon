@@ -7250,14 +7250,14 @@ source branch are removed.
             ttip = repo.find(branches[target])
             tcommits = repo.ancestors(ttip) + [ttip]
             merged = sorted(set(scommits + tcommits))
-            last_parent = None
+            last_parent = []
             source_reset = None
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    event.setParents([last_parent] + event.parentMarks()[1:])
+                    event.setParents(last_parent + event.parentMarks()[1:])
                 event.setbranch(target)
-                last_parent = event.mark
+                last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
                 if isinstance(event, Reset) and event.ref == source:
                     source_reset = i
