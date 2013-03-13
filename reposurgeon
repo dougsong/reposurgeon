@@ -1401,10 +1401,9 @@ class Commit(object):
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
         self.repo.objfind(mark)._child_nodes = None
-    def removeParent(self, mark):
-        oldparent = self.repo.objfind(mark)
-        self._parent_nodes.remove(oldparent)
-        oldparent._child_nodes = None
+    def removeParent(self, event):
+        self._parent_nodes.remove(event)
+        event._child_nodes = None
     def replaceParent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def hasParents(self):
@@ -3462,7 +3461,7 @@ class StreamParser:
                 if b.committer.date < a.committer.date:
                     (a, b) = (b, a)
                 if b.descended_from(a):
-                    commit.removeParent(a.mark)
+                    commit.removeParent(a)
             baton.bumpcounter()
         baton.endcounter()
         self.repo.timings.append(["debubbling", time.time()]) 
@@ -4387,7 +4386,7 @@ class Repository:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Reparent each child
                 for child in event.children():
-                    child.removeParent(event.mark)
+                    child.removeParent(event)
                     for parent in event.parents():
                         if parent not in child.parents():
                             child.addParent(parent.mark)
@@ -5088,7 +5087,7 @@ class RepositoryList:
     def cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
         self.cut_index = late.parentMarks().index(early.mark)
-        late.removeParent(early.mark)
+        late.removeParent(early)
         def do_color(commit, color):
             commit.color = color
             for fileop in commit.fileops:
@@ -7020,7 +7019,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         # Try the topological cut first
         if not self.cut(early, late):
             # If that failed, cut anyway and rename the branch segments
-            late.removeParent(early.mark)
+            late.removeParent(early)
             if early.branch != late.branch:
                 announce("no branch renames were required")
             else:
