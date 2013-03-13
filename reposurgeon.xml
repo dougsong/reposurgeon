@@ -317,7 +317,7 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>commit with that date</entry>
       </row>
       <row>
-        <entry align='center'>action stamp (date!email[:seq])</entry>
+        <entry align='center'>action stamp (date!email)</entry>
         <entry align='center'>commit or tag with that date and creator</entry>
       </row>
     </tbody>
@@ -1123,10 +1123,16 @@ to the specified mark. You may want to hand-patch this in when one of
 previous forms is inconvenient.</para>
 
 <para>An action stamp is an RFC3339 timestamp, followed by a '!',
-followed by a committer email address, followed by ':' and a 1-origin
-sequence number if the date/time pair is not unique in the repository;
-it refers to a commit without being VCS-specific.  Thus, instead of
-"commit 304a53c2" or "r2355", "2011-10-25T15:11:09Z!fred@foonly.com".</para>
+followed by a author email address.  It attempts to refers to a commit
+without being VCS-specific.  Thus, instead of "commit 304a53c2" or
+"r2355", "2011-10-25T15:11:09Z!fred@foonly.com".</para>
+
+<para>There is a rare case in which an action stamp 
+will not refer uniquely to one commit. It is theoretically possible
+that the same author might check in revisions on different branches
+within the one-second resolution of the timestamps in a fast-import stream.
+There is nothing to be done about this; tools using action stamps need to be 
+aware of the possibility and throw a warning when it occurs.</para>
 
 <para>In order to support reference lifting,
 <command>reposurgeon</command> internally builds a fossil-reference
