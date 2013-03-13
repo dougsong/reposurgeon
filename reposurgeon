@@ -4381,7 +4381,7 @@ class Repository:
                 if event.branch and "/tags/" in event.branch:
                     identical = False
                     if tagback:
-                        if event.parents():
+                        if event.hasParents():
                             identical = event.parents()[0].branch == event.branch
                             if not identical:
                                 event.parents()[0].setbranch(event.branch)
