@@ -1237,7 +1237,7 @@ class Commit(object):
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Branch"] = self.branch
-        msg["Parents"] = " ".join(self.parentMarks())
+        msg["Parents"] = " ".join(self.parent_marks())
         if self.authors:
             self.authors[0].email_out(modifiers, msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
@@ -1271,9 +1271,9 @@ class Commit(object):
                 modified = True
             self.setbranch(msg["Branch"])
         if "Parents" in msg:
-            if self.parentMarks() != msg["Parents"].split():
+            if self.parent_marks() != msg["Parents"].split():
                 modified = True
-            self.setParents(msg["Parents"].split())
+            self.set_parents(msg["Parents"].split())
         if "Committer" in msg:
             (newname, newemail) = email.utils.parseaddr(msg["Committer"])
 
@@ -1359,7 +1359,7 @@ class Commit(object):
             modified = True
             self.comment = newcomment
         return modified
-    def setMark(self, mark):
+    def set_mark(self, mark):
         "Set the mark, updating the repository mark map."
         self.mark = mark
     # Hide the parent list behind an interface, so that we can memoize
@@ -1377,7 +1377,7 @@ class Commit(object):
                     if self in e._parent_nodes:
                         self._child_nodes.append(e)
         return self._child_nodes
-    def hasChildren(self):
+    def has_children(self):
         "Predicate - does this commit have children?"
         if self._child_nodes:
             return True
@@ -1396,14 +1396,14 @@ class Commit(object):
     def parents(self):
         "Get a list of this commit's parents."
         return self._parent_nodes
-    def parentMarks(self):
+    def parent_marks(self):
         return [x.mark for x in self._parent_nodes]
-    def setParents(self, marks):
+    def set_parents(self, marks):
         self._parent_nodes = [self.repo.objfind(x) for x in marks]
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
             parent._child_nodes = None
-    def addParent(self, mark):
+    def add_parent(self, mark):
         if isinstance(mark, Commit):
             newparent = mark
         else:
@@ -1411,21 +1411,21 @@ class Commit(object):
         assert(newparent)
         self._parent_nodes.append(newparent)
         newparent._child_nodes = None
-    def insertParent(self, idx, mark):
+    def insert_parent(self, idx, mark):
         newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
         self.repo.objfind(mark)._child_nodes = None
-    def removeParent(self, event):
+    def remove_parent(self, event):
         self._parent_nodes.remove(event)
         event._child_nodes = None
-    def replaceParent(self, e1, e2):
+    def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
-    def hasParents(self):
+    def has_parents(self):
         return len(self._parent_nodes) > 0
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
-        if not self.hasParents() or self.committer.date < other.committer.date:
+        if not self.has_parents() or self.committer.date < other.committer.date:
             return False
         elif other in self.parents():
             return True
@@ -1456,7 +1456,7 @@ class Commit(object):
         return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
-        if self.filemap or not self.hasParents():
+        if self.filemap or not self.has_parents():
             return self.filemap
         ancestors = {}
         sys.setrecursionlimit(len(self.repo.events) * 2)
@@ -1810,7 +1810,7 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.setParents([self.markmap[rev] for rev in parents])
+                commit.set_parents([self.markmap[rev] for rev in parents])
                 commit.setbranch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
@@ -1897,7 +1897,7 @@ class RepoStreamer:
                 commit.fileops.sort()
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
-                commit.setMark(self.__newmark(revision))
+                commit.set_mark(self.__newmark(revision))
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
@@ -2367,7 +2367,7 @@ class StreamParser:
                                 if not line:
                                     break
                                 elif line.startswith("mark"):
-                                    commit.setMark(line[5:].strip())
+                                    commit.set_mark(line[5:].strip())
                                 elif line.startswith("author"):
                                     try:
                                         commit.authors.append(Attribution(line[7:]))
@@ -2406,7 +2406,7 @@ class StreamParser:
                                 elif line.startswith("data"):
                                     commit.comment = self.fi_read_data(line)[0]
                                 elif line.startswith("from") or line.startswith("merge"):
-                                    commit.addParent(line.split()[1])
+                                    commit.add_parent(line.split()[1])
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
                                     commit.fileops.append(FileOp(self.repo.vcs).parse(line))
@@ -3064,7 +3064,7 @@ class StreamParser:
                     commit._pathset = None
                 else:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
-                commit.setMark(self.__newmark())
+                commit.set_mark(self.__newmark())
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s gets mark %s" % (revision, commit.mark))
                 newcommits.append(commit)
@@ -3078,7 +3078,7 @@ class StreamParser:
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
                 self.repo.fossil_map["SVN:%s" % split.fossil_id] = split
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
-                split.setMark(self.__newmark())
+                split.set_mark(self.__newmark())
                 split.fileops = fileops
                 split._pathset = None
                 newcommits.append(split)
@@ -3220,7 +3220,7 @@ class StreamParser:
             for commit in self.repo.commits():
                 commit.setbranch(os.path.join("refs", "heads", "master") + os.sep)
                 if lastmark:
-                    commit.setParents([lastmark])
+                    commit.set_parents([lastmark])
                 lastmark = commit.mark
                 baton.bumpcounter()
         else:
@@ -3253,9 +3253,9 @@ class StreamParser:
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
-                    commit.setParents([])
+                    commit.set_parents([])
                 else:
-                    commit.setParents([self.branches[commit.branch]])
+                    commit.set_parents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
                 baton.bumpcounter()
             baton.endcounter()
@@ -3278,8 +3278,8 @@ class StreamParser:
             baton.twirl("branchlinks")
             for (later, earlier) in self.branchlink.iteritems():
                 child = self.repo.objfind(later)
-                if earlier not in child.parentMarks():
-                    child.addParent(earlier)
+                if earlier not in child.parent_marks():
+                    child.add_parent(earlier)
             nonempty = set(c for c in self.repo.commits() if c.fileops)
             for root in branchroots:
                 rootrev = root.fossil_id
@@ -3302,8 +3302,8 @@ class StreamParser:
                         early_commit = self.repo.fossil_map["SVN:%s" % early]
                     except KeyError:
                         continue
-                    if early_commit.mark not in late_commit.parentMarks():
-                        late_commit.addParent(early_commit.mark)
+                    if early_commit.mark not in late_commit.parent_marks():
+                        late_commit.add_parent(early_commit.mark)
             self.repo.timings.append(["mergeinfo", time.time()]) 
             baton.twirl("+")
             if debug_enable(DEBUG_EXTRACT):
@@ -3330,14 +3330,14 @@ class StreamParser:
                 if commit in branchroots \
                        and commit.branch != ("trunk"+os.sep) \
                        and commit.branch != "root" \
-                       and commit.hasParents() \
+                       and commit.has_parents() \
                        and not commit.fileops:
                     tagname = os.path.basename(commit.branch[:-1])
                     if not commit.branch.startswith("tags"):
                         tagname += "-root"
                     self.repo.tagify(commit,
                                      tagname,
-                                     commit.parentMarks()[0])
+                                     commit.parent_marks()[0])
                 baton.bumpcounter()
             baton.endcounter()
             self.repo.timings.append(["tagifying", time.time()]) 
@@ -3350,14 +3350,14 @@ class StreamParser:
             # Things that cvs2svn created as tag surrogates
             # get turned into actual tags.
             m = StreamParser.cvs2svn_tag_re.search(commit.comment)
-            if m and not commit.hasChildren():
+            if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
                 self.repo.events.append(Reset(fulltag, commit.mark))
                 self.repo.quiet_delete(commit)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
             m = StreamParser.cvs2svn_branch_re.search(commit.comment)
-            if m and not commit.hasChildren():
+            if m and not commit.has_children():
                 self.repo.quiet_delete(commit)
             baton.bumpcounter()
         baton.endcounter()
@@ -3371,7 +3371,7 @@ class StreamParser:
             # they might possibly contain interesting metadata.  Usually they're
             # just debris from tagging, though.
             if not commit.fileops:
-                if commit.hasParents():
+                if commit.has_parents():
                     legend = "[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.fossil_id
                     if self.revisions[commit.fossil_id].nodes:
@@ -3381,7 +3381,7 @@ class StreamParser:
                     legend += "]]\n"
                     self.repo.tagify(commit,
                                      "emptycommit-%s" % commit.fossil_id,
-                                     commit.parentMarks()[0],
+                                     commit.parent_marks()[0],
                                      legend)
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
@@ -3391,15 +3391,15 @@ class StreamParser:
             # The fileops aren't worth saving; the comment metadata
             # just might be.
             elif commit.alldeletes(killset={"deleteall"}) \
-                     and not commit.hasChildren():
-                if commit.hasParents():
+                     and not commit.has_children():
+                if commit.has_parents():
                     if commit.branch.endswith(os.sep):
                         commit.setbranch(commit.branch[:-1])
                     label = os.path.basename(commit.branch)
                     commit.fileops = []
                     self.repo.tagify(commit,
                                      "tipdelete-%s" % label,
-                                     commit.parentMarks()[0])
+                                     commit.parent_marks()[0])
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
@@ -3476,7 +3476,7 @@ class StreamParser:
                 if b.committer.date < a.committer.date:
                     (a, b) = (b, a)
                 if b.descended_from(a):
-                    commit.removeParent(a)
+                    commit.remove_parent(a)
             baton.bumpcounter()
         baton.endcounter()
         self.repo.timings.append(["debubbling", time.time()]) 
@@ -3490,7 +3490,7 @@ class StreamParser:
         # tag or branch creation
         dubious = [commit for commit in self.repo.commits() if \
                    commit.fileops and commit.fileops[0].op == 'deleteall' \
-                   and commit.hasChildren()]
+                   and commit.has_children()]
         for commit in dubious:
             self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
         self.repo.timings.append(["linting", time.time()]) 
@@ -3755,7 +3755,7 @@ class SubversionDumper:
                     # lost.  So is everything but the local part of
                     # the committer name.
                     backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parentMarks()]
+                                 for mark in event.parent_marks()]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment,
                                                    author=event.committer.email.split("@")[0],
@@ -4159,10 +4159,10 @@ class Repository:
         "Return ancestors of an event, in reverse order."
         trail = []
         while True:
-            if not self.events[ei].hasParents():
+            if not self.events[ei].has_parents():
                 break
             else:
-                efrom = self.find(self.events[ei].parentMarks()[0])
+                efrom = self.find(self.events[ei].parent_marks()[0])
                 trail.append(efrom)
                 ei = efrom
         return trail
@@ -4384,30 +4384,30 @@ class Repository:
                 if event.branch and "/tags/" in event.branch:
                     identical = False
                     if tagback:
-                        if event.hasParents():
+                        if event.has_parents():
                             identical = event.parents()[0].branch == event.branch
                             if not identical:
                                 event.parents()[0].setbranch(event.branch)
                     elif tagforward:
-                        if event.hasChildren():
+                        if event.has_children():
                             identical = event.children()[0].branch == event.branch
                             if not identical:
                                 event.children()[0].setbranch(event.branch)
                     else:
                         if pushback:
-                            if event.hasParents():
+                            if event.has_parents():
                                 identical = event.parents()[0].branch == event.branch
                         else:
-                            if event.hasChildren():
+                            if event.has_children():
                                 identical = event.children()[0].branch == event.branch        
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Reparent each child
                 for child in event.children():
-                    child.removeParent(event)
+                    child.remove_parent(event)
                     for parent in event.parents():
                         if parent not in child.parents():
-                            child.addParent(parent)
+                            child.add_parent(parent)
                     if not obliterate and not pushback:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
@@ -4444,7 +4444,7 @@ class Repository:
                         parent._pathset = None
                         altered.append(parent)
                 filter_only = True
-                if tagforward and event.hasChildren():
+                if tagforward and event.has_children():
                     filter_only = False
                     mark = event.children()[0].mark
                 elif tagback and event.parents():
@@ -4581,14 +4581,14 @@ class Repository:
                         setattr(event, fld, new)
             # Now marks in fileops
             if isinstance(event, Commit):
-                parent_marks = event.parentMarks()
+                parent_marks = event.parent_marks()
                 for (j, old) in enumerate(parent_marks):
                     if '-' not in old:
                         new = old + "-" + color
                         if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in parents" % (old, new))
                         parent_marks[j] = new
-                event.setParents(parent_marks)
+                event.set_parents(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
@@ -4626,7 +4626,7 @@ class Repository:
         graft_repo.uniquify(graft_repo.name)
         graftroot = graft_repo.commits()[0]
         self.absorb(graft_repo)
-        graftroot.addParent(where.mark)
+        graftroot.add_parent(where.mark)
         self.renumber()
     def __last_modification(self, commit, path):
         "Locate the last modification of the specified path before this commit."
@@ -4712,11 +4712,11 @@ class Repository:
                 event.splits = 1
             else:
                 event.splits += 1
-            event2.setMark("%s.%s" % (event.mark, event.splits))
+            event2.set_mark("%s.%s" % (event.mark, event.splits))
             # Fix up parent/child relationships
             for child in event.children():
-                child.replaceParent(event, event2)
-            event2.setParents([event.mark])
+                child.replace_parent(event, event2)
+            event2.set_parents([event.mark])
             # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
@@ -5104,8 +5104,8 @@ class RepositoryList:
         self.repolist.pop(self.reponames().index(name))        
     def cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
-        self.cut_index = late.parentMarks().index(early.mark)
-        late.removeParent(early)
+        self.cut_index = late.parent_marks().index(early.mark)
+        late.remove_parent(early)
         def do_color(commit, color):
             commit.color = color
             for fileop in commit.fileops:
@@ -5132,7 +5132,7 @@ class RepositoryList:
         return conflict
     def cut_clear(self, early, late):
         "Undo a cut operation and clear all colors."
-        late.insertParent(self.cut_index, early.mark)
+        late.insert_parent(self.cut_index, early.mark)
         for event in self.repo:
             if hasattr(event, "color"):
                 event.color = None
@@ -5237,7 +5237,7 @@ class RepositoryList:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
             else:
-                root.addParent(most_recent.mark)
+                root.add_parent(most_recent.mark)
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)
@@ -5349,11 +5349,11 @@ class RepositoryList:
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                event.setParents([e for e in event.parentMarks() if e in expunged_marks])
+                event.set_parents([e for e in event.parent_marks() if e in expunged_marks])
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
-                event.setParents([e for e in event.parentMarks() if e in keeper_marks])
+                event.set_parents([e for e in event.parent_marks() if e in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
@@ -5641,7 +5641,7 @@ copies at all (it points into sections of the input stream instead).
                 "T" : lambda e: isinstance(e, Tag),
                 "R" : lambda e: isinstance(e, Reset),
                 "P" : lambda e: isinstance(e, Passthrough),
-                "H" : lambda e: isinstance(e, Commit) and not e.hasChildren(),
+                "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
                 }
             visible = set([])
             self.pop()
@@ -6367,9 +6367,9 @@ selected with the modifiers 'structure' and 'names'.
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
                     if not line or "structure" in line:
-                        if event.fileops and event.fileops[0].op == 'deleteall' and event.hasChildren():
+                        if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
                             deletealls.add("on %s at %s" % (event.branch, event.id_me()))
-                        if not event.hasParents() and not event.hasChildren():
+                        if not event.has_parents() and not event.has_children():
                             disconnected.add(event.idme())
                     if unmapped and (not line or "names" in line):
                         for person in [event.committer] + event.authors:
@@ -6629,7 +6629,7 @@ for graphviz.
             for ei in self.selection:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
-                    for parent in event.parentMarks():
+                    for parent in event.parent_marks():
                         if self.chosen().find(parent) in self.selection:
                             parse.stdout.write('\t%s -> %s;\n' \
                                                % (parent[1:], event.mark[1:]))
@@ -7028,7 +7028,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
                 return
         elif len(self.selection) == 2:
             late = self.chosen()[self.selection[1]]
-            if early.mark not in late.parentMarks():
+            if early.mark not in late.parent_marks():
                 complain("not a parent-child pair")
                 return
         elif len(self.selection) > 2:
@@ -7037,7 +7037,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         # Try the topological cut first
         if not self.cut(early, late):
             # If that failed, cut anyway and rename the branch segments
-            late.removeParent(early)
+            late.remove_parent(early)
             if early.branch != late.branch:
                 announce("no branch renames were required")
             else:
@@ -7255,7 +7255,7 @@ source branch are removed.
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    event.setParents(last_parent + event.parentMarks()[1:])
+                    event.set_parents(last_parent + event.parent_marks()[1:])
                 event.setbranch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
@@ -7321,7 +7321,7 @@ from the highest member (child) to the lowest (parent).
             raise Recoverable("merge requires two commit arguments.")
         earlier = repo.events[self.selection[0]]
         later = repo.events[self.selection[-1]]
-        later.addParent(earlier.mark)
+        later.add_parent(earlier.mark)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce("%s added as a parent of %s" % (earlier_id, later_id))
