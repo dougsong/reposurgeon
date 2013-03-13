@@ -1359,6 +1359,9 @@ class Commit(object):
             modified = True
             self.comment = newcomment
         return modified
+    def setMark(self, mark):
+        "Set the mark, updating the repository mark map."
+        self.mark = mark
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
@@ -1894,7 +1897,7 @@ class RepoStreamer:
                 commit.fileops.sort()
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
-                commit.mark = self.__newmark(revision)
+                commit.setMark(self.__newmark(revision))
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
@@ -2364,7 +2367,7 @@ class StreamParser:
                                 if not line:
                                     break
                                 elif line.startswith("mark"):
-                                    commit.mark = line[5:].strip()
+                                    commit.setMark(line[5:].strip())
                                 elif line.startswith("author"):
                                     try:
                                         commit.authors.append(Attribution(line[7:]))
@@ -3061,7 +3064,7 @@ class StreamParser:
                     commit._pathset = None
                 else:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
-                commit.mark = self.__newmark()
+                commit.setMark(self.__newmark())
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s gets mark %s" % (revision, commit.mark))
                 newcommits.append(commit)
@@ -3075,7 +3078,7 @@ class StreamParser:
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
                 self.repo.fossil_map["SVN:%s" % split.fossil_id] = split
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
-                split.mark = self.__newmark()
+                split.setMark(self.__newmark())
                 split.fileops = fileops
                 split._pathset = None
                 newcommits.append(split)
@@ -4709,7 +4712,7 @@ class Repository:
                 event.splits = 1
             else:
                 event.splits += 1
-            event2.mark = "%s.%s" % (event.mark, event.splits)
+            event2.setMark("%s.%s" % (event.mark, event.splits))
             # Fix up parent/child relationships
             for child in event.children():
                 child.replaceParent(event, event2)
