@@ -4344,18 +4344,19 @@ class Repository:
         dquiet = "quiet" in policy
         obliterate = "obliterate" in policy
         # Sanity checks
-        for ei in selected:
-            event = self.events[ei]
-            if isinstance(event, Blob) and not dquiet:
-                raise Recoverable("attempt to directly delete blob %d" % (ei+1))
-            elif  isinstance(event, Commit):
-                if obliterate and not dquiet:
-                    speak = "warning: commit %s to be obliterated has " % event.mark 
-                    if '/' in event.branch and not '/heads/' in event.branch:
-                        complain(speak + "non-head branch attribute %s" % event.branch)
-                    if not event.alldeletes():
-                        announce(speak + "non-delete fileops.")
-                        break
+        if not dquiet:
+            for ei in selected:
+                event = self.events[ei]
+                if isinstance(event, Blob):
+                    raise Recoverable("attempt to directly delete blob %d" % (ei+1))
+                elif  isinstance(event, Commit):
+                    if obliterate:
+                        speak = "warning: commit %s to be obliterated has " % event.mark 
+                        if '/' in event.branch and not '/heads/' in event.branch:
+                            complain(speak + "non-head branch attribute %s" % event.branch)
+                        if not event.alldeletes():
+                            announce(speak + "non-delete fileops.")
+                            break
         altered = []
         # Here are the deletions
         for ei in selected:
