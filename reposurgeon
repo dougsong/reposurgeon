@@ -4377,7 +4377,7 @@ class Repository:
                                 event.children()[0].setbranch(event.branch)
                     else:
                         if "pushback" in policy:
-                            if event.parents():
+                            if event.hasParents():
                                 identical = event.parents()[0].branch == event.branch
                         else:
                             if event.hasChildren():
