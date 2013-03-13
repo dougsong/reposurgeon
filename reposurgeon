@@ -1254,6 +1254,15 @@ class Commit(object):
         if not self.comment.endswith("\n"):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
         return str(msg)
+    def action_stamp(self):
+        "Control how a commit stamp is made."
+        # Prefer the primary author to the committer because it
+        # doesn't get messed with when passing around and applying
+        # patch sets.
+        if self.authors:
+            return self.authors[0].action_stamp()
+        else:
+            return self.committer.action_stamp()
     def email_in(self, msg):
         "Update this commit from a parsed email message."
         modified = False
@@ -1392,7 +1401,10 @@ class Commit(object):
         for parent in self._parent_nodes:
             parent._child_nodes = None
     def addParent(self, mark):
-        newparent = self.repo.objfind(mark)
+        if isinstance(mark, Commit):
+            newparent = mark
+        else:
+            newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.append(newparent)
         newparent._child_nodes = None
@@ -4392,8 +4404,8 @@ class Repository:
                     child.removeParent(event)
                     for parent in event.parents():
                         if parent not in child.parents():
-                            child.addParent(parent.mark)
-                    if not obliterate and "pushback" not in policy:
+                            child.addParent(parent)
+                    if not obliterate and not pushback:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
                         # needing resolution.
@@ -6701,7 +6713,7 @@ set of modifications actually made is written to the output file.
         name_map = {}
         attribution_counts = collections.Counter()
         for commit in self.chosen().commits():
-            stamp = commit.committer.action_stamp()
+            stamp = commit.action_stamp()
             attribution_map[stamp] = commit
             attribution_counts[stamp] += 1
         for event in self.chosen().events:
@@ -6741,7 +6753,7 @@ set of modifications actually made is written to the output file.
                 blank = Commit()
                 blank.committer = Attribution()
                 blank.email_in(message)
-                stamp = blank.committer.action_stamp()
+                stamp = blank.action_stamp()
                 try:
                     event = attribution_map[stamp]
                 except KeyError:
@@ -7520,7 +7532,7 @@ map when the repo is written or rebuilt.
                     complain("no commit matches " + repr(payload))
                     return matchobj.group(0) # no replacement
                 elif commit:
-                    text = commit.committer.action_stamp()
+                    text = commit.action_stamp()
                     return text
                 else:
                     complain("cannot resolve %s" % payload)
