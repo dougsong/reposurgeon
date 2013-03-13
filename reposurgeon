@@ -4342,6 +4342,9 @@ class Repository:
             announce("Deletion list is %s" % [x+1 for x in selected])
         dquiet = "quiet" in policy
         obliterate = "obliterate" in policy
+        tagback = "tagback" in policy
+        tagforward = "tagforward" in policy
+        pushback = "pushback" in policy
         # Sanity checks
         if not dquiet:
             for ei in selected:
@@ -4365,18 +4368,18 @@ class Repository:
             elif isinstance(event, Commit):
                 if event.branch and "/tags/" in event.branch:
                     identical = False
-                    if "tagback" in policy:
+                    if tagback:
                         if event.parents():
                             identical = event.parents()[0].branch == event.branch
                             if not identical:
                                 event.parents()[0].setbranch(event.branch)
-                    elif "tagforward" in policy:
+                    elif tagforward:
                         if event.hasChildren():
                             identical = event.children()[0].branch == event.branch
                             if not identical:
                                 event.children()[0].setbranch(event.branch)
                     else:
-                        if "pushback" in policy:
+                        if pushback:
                             if event.hasParents():
                                 identical = event.parents()[0].branch == event.branch
                         else:
@@ -4398,7 +4401,7 @@ class Repository:
                         child._pathset = None
                         altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
-                if "pushback" in policy:
+                if pushback:
                     for parent in event.parents():
                         # Append a copy of this event's file ops to
                         # each parent's list and mark the parent as needing
@@ -4426,10 +4429,10 @@ class Repository:
                         parent._pathset = None
                         altered.append(parent)
                 filter_only = True
-                if "tagforward" in policy and event.hasChildren():
+                if tagforward and event.hasChildren():
                     filter_only = False
                     mark = event.children()[0].mark
-                elif "tagback" in policy and event.parents():
+                elif tagback and event.parents():
                     filter_only = False
                     mark = event.parents()[0].mark
                 if filter_only:
