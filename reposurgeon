@@ -1940,7 +1940,7 @@ class StreamParser:
                      "from_hash", "blob", "props",
                      "from_set", "blobmark", "generated")
         # If these don't match the constants above, havoc will ensue
-        ActionValues = ("add", "delete", "change", "replace", "ILLEGAL-ACTION")
+        ActionValues = ("add", "delete", "change", "replace")
         PathTypeValues = ("none", "file", "dir", "ILLEGAL-TYPE")
         def __init__(self):
             # These are set during parsing
@@ -1964,7 +1964,7 @@ class StreamParser:
             return "<NodeAction: r{rev} {action} {kind} '{path}'" \
                     "{from_rev}{from_set}{generated}{props}>".format(
                     rev = self.revision,
-                    action = StreamParser.NodeAction.ActionValues[self.action or -1],
+                    action = "ILLEGAL-ACTION" if self.action is None else StreamParser.NodeAction.ActionValues[self.action],
                     kind = StreamParser.NodeAction.PathTypeValues[self.kind or -1],
                     path = self.path,
                     from_rev = " from=%s~%s" % (self.from_rev, self.from_path)
