@@ -844,6 +844,9 @@ class Blob(object):
         "Set the blob's mark."
         self.mark = mark
         return mark
+    def forget(self):
+        "De-link this commit from its repo."
+        self.repo = None
     def set_content(self, text, tell=None):
         "Set the content of the blob from a string."
         self.start = tell
@@ -1428,6 +1431,9 @@ class Commit(object):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def has_parents(self):
         return len(self._parent_nodes) > 0
+    def forget(self):
+        "De-link this commit from its parents."
+        self.repo = self._parent_nodes = None
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
         if not self.has_parents() or self.committer.date < other.committer.date:
@@ -4463,6 +4469,7 @@ class Repository:
                         if (isinstance(t, Tag) or isinstance(t, Reset)) and t.committish == event.mark:
                             t.committish = mark
                 # And remove the deleted event
+                event.forget()
                 self.events.pop(ei)
             else:
                 raise Fatal("unexpected object in event array")
