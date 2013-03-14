@@ -1227,7 +1227,7 @@ class Commit(object):
         c._pathset = None
         c.color = None
         if repo is not None:
-            c.moveto(repo)
+            c.repo = repo
         return c
     def showfossil(self):
         "Show a fossil ID in the expected form for the ancestral system."
