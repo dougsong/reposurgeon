@@ -10,7 +10,7 @@ from __future__ import absolute_import, print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
-import time, calendar, unittest, itertools, operator
+import time, calendar, unittest, itertools, operator, functools
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -510,6 +510,23 @@ def complain(msg):
 
 def announce(msg):
     sys.stdout.write("reposurgeon: %s\n" % msg)
+
+def memoize_iterator(iterator_f, mem_attr = None):
+    if mem_attr is None:
+        mem_attr = "_mem_attr_" + iterator_f.__name__
+    def f(self):
+        try:
+            cache, it = getattr(self, mem_attr)
+        except TypeError:
+            cache = []; it = iterator_f(self)
+            setattr(self, mem_attr, (cache, it))
+        for pos in itertools.count():
+            if len(cache) <= pos: cache.append(next(it))
+            yield cache[pos]
+    return functools.update_wrapper(f, iterator_f)
+
+def memoized_iterator(mem_attr = None):
+    return functools.partial(memoize_iterator, mem_attr = mem_attr)
 
 class Baton:
     "Ship progress indications to stdout."
@@ -1173,7 +1190,7 @@ class Commit(object):
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
         self._parent_nodes = []      # list of parent nodes
-        self._child_nodes = []       # list of child nodes
+        self._child_nodes = None     # list of child nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
@@ -1376,34 +1393,27 @@ class Commit(object):
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
+    @memoized_iterator("_child_nodes")
     def children(self):
         "Get a list of this commit's children."
-        if self._child_nodes is None:
-            self._child_nodes = []
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        self._child_nodes.append(e)
-        return self._child_nodes
+        later_events = itertools.dropwhile(lambda e: e is not self, self.repo.events)
+        next(later_events) # skip events up to self included
+        return itertools.ifilter(
+                lambda e: isinstance(e, Commit) and self in e._parent_nodes,
+                later_events)
     def has_children(self):
         "Predicate - does this commit have children?"
-        if self._child_nodes:
+        try:
+            next(self.children())
             return True
-        else:
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        # Early return makes this much faster in the
-                        # normal case, which is that the commit has
-                        # one child that is an immediate successor.
-                        return True
-        return False
+        except StopIteration:
+            return False
+    def first_child(self):
+        "Get the first child of this commit, or None if not has_children()."
+        try:
+            return next(self.children())
+        except StopIteration:
+            return None
     def parents(self):
         "Get a list of this commit's parents."
         return self._parent_nodes
@@ -1445,12 +1455,9 @@ class Commit(object):
                         for parent in self.parents())
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
-        cliques = {}
+        cliques = collections.defaultdict(list)
         for (i, fileop) in enumerate(self.fileops):
-            if fileop.op == "M":
-                if fileop.path not in cliques:
-                    cliques[fileop.path] = []
-                cliques[fileop.path].append(i)
+            if fileop.op == "M": cliques[fileop.path].append(i)
         return cliques
     def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
@@ -1516,17 +1523,14 @@ class Commit(object):
         return directory
     def head(self):
         "Return the branch to which this commit belongs."
-        if self.branch.startswith("refs/heads/"):
+        if self.branch.startswith("refs/heads/") or not self.has_children():
             return self.branch
-        offspring = self.children()
-        if not offspring:
-            return self.branch
-        elif len(offspring) == 1:
-            return offspring[0].head()
-        else:
-            for child in offspring:
-                if child.branch == self.branch:
-                    return child.head()
+        rank = 0; child = None # pacify pylint
+        for rank, child in enumerate(self.children()):
+            if child.branch == self.branch:
+                return child.head()
+        if rank == 0:
+            return child.head() # there was only one child
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
     def dump(self, vcs=None):
         "Dump this commit in import-stream format."
@@ -3843,9 +3847,8 @@ class SubversionDumper:
                             break
                     else:
                         # Preserve lightweight tags, too.  Ugh, O(n**2).
-                        children = event.children()
-                        if children:
-                            for child in children:
+                        if event.has_children():
+                            for child in event.children():
                                 if child.branch == event.branch: 
                                     break
                             else:
@@ -4401,16 +4404,11 @@ class Repository:
                                 event.parents()[0].set_branch(event.branch)
                     elif tagforward:
                         if event.has_children():
-                            identical = event.children()[0].branch == event.branch
+                            identical = event.first_child().branch == event.branch
                             if not identical:
-                                event.children()[0].set_branch(event.branch)
-                    else:
-                        if pushback:
-                            if event.has_parents():
-                                identical = event.parents()[0].branch == event.branch
-                        else:
+                                event.first_child().setbranch(event.branch)
                             if event.has_children():
-                                identical = event.children()[0].branch == event.branch        
+                                identical = event.first_child().branch == event.branch
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Reparent each child
@@ -4457,7 +4455,7 @@ class Repository:
                 filter_only = True
                 if tagforward and event.has_children():
                     filter_only = False
-                    mark = event.children()[0].mark
+                    mark = event.first_child().mark
                 elif tagback and event.parents():
                     filter_only = False
                     mark = event.parents()[0].mark
@@ -5133,7 +5131,7 @@ class RepositoryList:
             keepgoing = False
             for event in self.repo.commits():
                 if event.color:
-                    for neighbor in event.parents() + event.children():
+                    for neighbor in itertools.chain(event.parents(), event.children()):
                         if neighbor.color == None:
                             do_color(neighbor, event.color)
                             keepgoing = True
@@ -7027,13 +7025,12 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             complain("one or possibly two arguments specifying a link are required")
             return
         early = self.chosen()[self.selection[0]]
-        possibles = early.children() 
+        possibles = list(early.children())
         if len(self.selection) == 1:    
             if len(possibles) > 1:
                 complain("commit has multiple children, one must be specified")
                 return
             elif len(possibles) == 1:
-                possibles = early.children()
                 late = possibles[0]
             else:
                 complain("parent has no children")
