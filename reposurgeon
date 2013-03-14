@@ -1198,7 +1198,7 @@ class Commit(object):
     def moveto(self, repo):
         "Change the repo this commit is associated with."
         self.repo = repo
-    def setbranch(self, branch):
+    def set_branch(self, branch):
         "Set the repo's branch field, optimizing for fast comparisons."
         self.branch = intern(branch)
     def clone(self, repo=None):
@@ -1276,7 +1276,7 @@ class Commit(object):
         if "Branch" in msg:
             if self.branch != msg["Branch"]:
                 modified = True
-            self.setbranch(msg["Branch"])
+            self.set_branch(msg["Branch"])
         if "Parents" in msg:
             if self.parent_marks() != msg["Parents"].split():
                 modified = True
@@ -1370,6 +1370,9 @@ class Commit(object):
         "Set the commit's mark."
         self.mark = mark
         return mark
+    def forget(self):
+        "De-link this commit from its parents."
+        self.repo = self._parent_nodes = None
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
@@ -1431,9 +1434,6 @@ class Commit(object):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def has_parents(self):
         return len(self._parent_nodes) > 0
-    def forget(self):
-        "De-link this commit from its parents."
-        self.repo = self._parent_nodes = None
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
         if not self.has_parents() or self.committer.date < other.committer.date:
@@ -1822,7 +1822,7 @@ class RepoStreamer:
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
                 commit.set_parents([self.markmap[rev] for rev in parents])
-                commit.setbranch(self.extractor.get_branch(revision))
+                commit.set_branch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
                     msg = commit.comment
@@ -2372,7 +2372,7 @@ class StreamParser:
                             baton.twirl()
                             commitbegin = self.import_line
                             commit = Commit(self.repo)
-                            commit.setbranch(line.split()[1])
+                            commit.set_branch(line.split()[1])
                             while True:
                                 line = self.readline()
                                 if not line:
@@ -3229,7 +3229,7 @@ class StreamParser:
         if not self.branches or global_options['svn_nobranch']:
             lastmark = None
             for commit in self.repo.commits():
-                commit.setbranch(os.path.join("refs", "heads", "master") + os.sep)
+                commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
                 if lastmark:
                     commit.set_parents([lastmark])
                 lastmark = commit.mark
@@ -3241,7 +3241,7 @@ class StreamParser:
             for commit in self.repo.commits():
                 for branch in self.branches:
                     if commit.common.startswith(branch):
-                        commit.setbranch(branch)
+                        commit.set_branch(branch)
                         for fileop in commit.fileops:
                             if fileop.op in ("M", "D"):
                                 fileop.path = fileop.path[len(branch):]
@@ -3251,7 +3251,7 @@ class StreamParser:
                         commit._pathset = None
                         break
                 else:
-                    commit.setbranch("root")
+                    commit.set_branch("root")
                     self.branches["root"] = None
                 baton.bumpcounter()
             baton.endcounter()
@@ -3405,7 +3405,7 @@ class StreamParser:
                      and not commit.has_children():
                 if commit.has_parents():
                     if commit.branch.endswith(os.sep):
-                        commit.setbranch(commit.branch[:-1])
+                        commit.set_branch(commit.branch[:-1])
                     label = os.path.basename(commit.branch)
                     commit.fileops = []
                     self.repo.tagify(commit,
@@ -3424,14 +3424,14 @@ class StreamParser:
         baton.startcounter(countfmt(len(self.repo.commits())))
         for commit in self.repo.commits():
             if commit.branch == "root":
-                commit.setbranch(os.path.join("refs", "heads", "root"))
+                commit.set_branch(os.path.join("refs", "heads", "root"))
             elif commit.branch.startswith("tags" + os.sep):
                 if commit.branch.endswith(os.sep):
-                    commit.setbranch(commit.branch[:-1])
+                    commit.set_branch(commit.branch[:-1])
             elif commit.branch == "trunk" + os.sep:
-                commit.setbranch(os.path.join("refs", "heads", "master"))
+                commit.set_branch(os.path.join("refs", "heads", "master"))
             else:
-                commit.setbranch(os.path.join("refs", "heads",
+                commit.set_branch(os.path.join("refs", "heads",
                                               os.path.basename(commit.branch[:-1])))
             baton.bumpcounter()
         baton.endcounter()
@@ -4112,7 +4112,7 @@ class Repository:
                 if fossil_latch:
                     fp.write("reset fossil_id\n")
                     endcommit = Commit(self)
-                    endcommit.setbranch("refs/heads/master")
+                    endcommit.set_branch("refs/heads/master")
                     endcommit.comment = "Fossil-ID notes\n"
                     endcommit.committer = Attribution("Nowhere Man <nowhere@nobody.net> " + rfc3339(time.time()))
                     for ei in selection:
@@ -4398,12 +4398,12 @@ class Repository:
                         if event.has_parents():
                             identical = event.parents()[0].branch == event.branch
                             if not identical:
-                                event.parents()[0].setbranch(event.branch)
+                                event.parents()[0].set_branch(event.branch)
                     elif tagforward:
                         if event.has_children():
                             identical = event.children()[0].branch == event.branch
                             if not identical:
-                                event.children()[0].setbranch(event.branch)
+                                event.children()[0].set_branch(event.branch)
                     else:
                         if pushback:
                             if event.has_parents():
@@ -7268,7 +7268,7 @@ source branch are removed.
                 event = repo.events[i]
                 if last_parent is not None:
                     event.set_parents(last_parent + event.parent_marks()[1:])
-                event.setbranch(target)
+                event.set_branch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
                 if isinstance(event, Reset) and event.ref == source:
@@ -7375,7 +7375,7 @@ is prepended.
             for event in repo:
                 if isinstance(event, Commit):
                     if event.branch == branchname:
-                        event.setbranch(newname)
+                        event.set_branch(newname)
                 elif isinstance(event, Reset):
                     if event.ref == branchname:
                         event.ref = newname
