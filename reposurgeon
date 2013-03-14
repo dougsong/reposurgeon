@@ -860,6 +860,7 @@ class Blob(object):
     def set_mark(self, mark):
         "Set the blob's mark."
         self.mark = mark
+        self.repo._mark_to_object[mark] = self
         return mark
     def forget(self):
         "De-link this commit from its repo."
@@ -1386,6 +1387,7 @@ class Commit(object):
     def set_mark(self, mark):
         "Set the commit's mark."
         self.mark = mark
+        self.repo._mark_to_object[mark] = self
         return mark
     def forget(self):
         "De-link this commit from its parents."
@@ -3876,6 +3878,7 @@ class Repository:
         self.events = []    # A list of the events encountered, in order
         self._commits = None
         self._mark_to_index = {}
+        self._mark_to_object = {}
         self.preserve_set = set([])
         self.case_coverage = set([])
         self.basedir = os.getcwd()
@@ -3928,11 +3931,11 @@ class Repository:
         return self._mark_to_index.get(mark)
     def objfind(self, mark):
         "Find an object by mark"
-        ind = self.find(mark)
-        if ind is None:
-            return None
-        else:
-            return self.events[ind]
+        if not self._mark_to_object:
+            for event in self.events:
+                if hasattr(event, "mark"):
+                    self._mark_to_object[event.mark] = event
+        return self._mark_to_object.get(mark)
     def read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         authormap = {}
@@ -4542,7 +4545,6 @@ class Repository:
                         setattr(event, fld, new)
                 except AttributeError:
                     pass
-        self.declare_sequence_mutation()
         for commit in self.commits():
             for fileop in commit.fileops:
                 if fileop.op == "M" and fileop.ref.startswith(":"):
@@ -4552,6 +4554,7 @@ class Repository:
                     fileop.ref = new
             if baton:
                 baton.bumpcounter()
+        self._mark_to_object = {}
         if baton:
             baton.endcounter()
     def uniquify(self, color):
@@ -4589,6 +4592,7 @@ class Repository:
                                         event.__class__.__name__,
                                         fld))
                         setattr(event, fld, new)
+            self._mark_to_object = {}
             # Now marks in fileops
             if isinstance(event, Commit):
                 parent_marks = event.parent_marks()
@@ -4723,6 +4727,7 @@ class Repository:
             else:
                 event.splits += 1
             event2.set_mark("%s.%s" % (event.mark, event.splits))
+            self._mark_to_object = {}
             # Fix up parent/child relationships
             for child in event.children():
                 child.replace_parent(event, event2)
