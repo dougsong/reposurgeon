@@ -3936,6 +3936,9 @@ class Repository:
                 if hasattr(event, "mark"):
                     self._mark_to_object[event.mark] = event
         return self._mark_to_object.get(mark)
+    def invalidate_object_map(self):
+        "Force an object-map rebuild on the next lookup."
+        self._mark_to_object = {}
     def read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         authormap = {}
@@ -4554,7 +4557,7 @@ class Repository:
                     fileop.ref = new
             if baton:
                 baton.bumpcounter()
-        self._mark_to_object = {}
+        self.invalidate_object_map()
         if baton:
             baton.endcounter()
     def uniquify(self, color):
@@ -4592,7 +4595,7 @@ class Repository:
                                         event.__class__.__name__,
                                         fld))
                         setattr(event, fld, new)
-            self._mark_to_object = {}
+            self.invalidate_object_map()
             # Now marks in fileops
             if isinstance(event, Commit):
                 parent_marks = event.parent_marks()
@@ -4727,7 +4730,7 @@ class Repository:
             else:
                 event.splits += 1
             event2.set_mark("%s.%s" % (event.mark, event.splits))
-            self._mark_to_object = {}
+            self.invalidate_object_map()
             # Fix up parent/child relationships
             for child in event.children():
                 child.replace_parent(event, event2)
