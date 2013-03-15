@@ -42,6 +42,11 @@ repodiffer.html: repodiffer.xml
 features.html: features.asc
 	asciidoc features.asc
 
+PYVERSION=2.7
+cyreposurgeon: reposurgeon
+	cython --embed reposurgeon -o cyreposurgeon.c
+	$(CC) -I /usr/include/python$(PYVERSION) cyreposurgeon.c -lpython$(PYVERSION) -o cyreposurgeon
+
 install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
@@ -55,6 +60,7 @@ clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
+	rm -f cyreposurgeon.c cyreposurgeon
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
 	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
