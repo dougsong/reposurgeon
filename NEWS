@@ -1,4 +1,9 @@
 			reposurgeon project news
+
+2.27:
+     More speed tuning.
+     Simplify the baton display in SVN processing, its overhead was high.
+
 2.26: 2013-03-13
      Enable Subversion dump reader to handle yet another pathological case.
      Code has been tested and verified with PyPy.
