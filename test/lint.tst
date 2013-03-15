@@ -1,4 +1,4 @@
-## make sure the lint command works
+## Make sure the lint command works
 echo 1
 quiet on
 read bs.fi
