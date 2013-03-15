@@ -2569,7 +2569,8 @@ class StreamParser:
                             self.branches[node.path+os.sep] = None
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
-            baton.twirl()
+            # Per-commit spinner disabled because this pass is fast
+            #baton.twirl()
         copynodes.sort(key=operator.attrgetter("from_rev"))
         self.repo.timings.append(["copynodes", time.time()])
         baton.twirl()
@@ -3254,7 +3255,8 @@ class StreamParser:
                 else:
                     commit.set_parents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
-                baton.twirl()
+                # Per-commit spinner disabled because this pass is fast
+                #baton.twirl()
             self.repo.timings.append(["parents", time.time()]) 
             baton.twirl()
             # The root branch is special. It wasn't made by a copy, so
@@ -3451,7 +3453,8 @@ class StreamParser:
                     (a, b) = (b, a)
                 if b.descended_from(a):
                     commit.remove_parent(a)
-            baton.twirl()
+            # Per-commit spinner disabled because this pass is fast
+            #baton.twirl()
         self.repo.timings.append(["debubbling", time.time()]) 
         baton.twirl()
         self.repo.renumber(baton=baton)
