@@ -3198,14 +3198,14 @@ class StreamParser:
                           msg.strip()[:20]))
         baton.twirl()
         # First, turn the root commit into a tag
-        initial = self.repo.earliest_commit()
-        if not initial.fileops:
-            if len(self.repo.commits()) >= 2:
+        if not self.repo.earliest_commit().fileops:
+            try:
+                initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
                                  "root",
-                                 self.repo.commits()[1].mark,
+                                 second.mark,
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
-            else:
+            except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
         # Now, branch analysis.
         if not self.branches or global_options['svn_nobranch']:
