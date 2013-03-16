@@ -4921,13 +4921,13 @@ def rebuild_repo(repo, target, preferred):
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
                 with open(tfname, "w") as tp:
-                    repo.fast_export(list(range(len(repo))), tp, progress=verbose>0, target=preferred)
+                    repo.fast_export(range(len(repo)), tp, progress=verbose>0, target=preferred)
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(list(range(len(repo))), tp,
+                repo.fast_export(range(len(repo)), tp,
                                  target=preferred,
                                  progress=verbose>0)
         if repo.write_fossils:
@@ -6293,7 +6293,7 @@ unwieldy.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         sizes = {}
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i in self.selection:
@@ -6333,7 +6333,7 @@ selected with the modifiers 'structure' and 'names'.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set([])
@@ -6557,7 +6557,7 @@ anything other than a plain file. The default selection is all events.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         # Backward-compatibility hack.  Will have to be removed if we
         # ever define modifiers for this command.
         if line and not line.startswith(">"):
@@ -6576,7 +6576,7 @@ is an identifying header before each event dump.  Supports > redirection.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for ei in self.selection:
                 event = self.chosen().events[ei]
@@ -6599,7 +6599,7 @@ for graphviz.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
             for ei in self.selection:
@@ -6923,7 +6923,7 @@ an offset literal of +0 or -0.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         if not line:
             complain("a signed time offset argument is required.")
             return
@@ -7058,7 +7058,7 @@ file path matches.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         line = str(line)   # pacify pylint by forcing string type
         self.expunge(self.selection, line.split())
 
@@ -7254,7 +7254,7 @@ first directory component from every path.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        rest = self.set_selection_set(line, range(len(self.chosen())))
         if not rest:
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 allpaths = set([])
@@ -7433,7 +7433,7 @@ part to the right of an equals sign will need editing.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        line = self.set_selection_set(line, list(range(len(self.chosen()))))
+        line = self.set_selection_set(line, range(len(self.chosen())))
         if line.startswith("write"):
             line = line[5:].strip()
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
@@ -7500,7 +7500,7 @@ map when the repo is written or rebuilt.
             return
         repo = self.chosen()
         repo.parse_dollar_cookies()
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        rest = self.set_selection_set(line, range(len(self.chosen())))
         if "lift" in rest:
             hits = 0
             def substitute(getter, matchobj):
@@ -7583,7 +7583,7 @@ set must resolve to a singleton commit.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        rest = self.set_selection_set(line, list(range(len(self.chosen()))))
+        rest = self.set_selection_set(line, range(len(self.chosen())))
         if not rest:
             raise Recoverable("no target directory specified.")
         if len(self.selection) == 1:
@@ -7605,7 +7605,7 @@ must resolve to exactly two commits.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        self.set_selection_set(line, list(range(len(self.chosen()))))
+        self.set_selection_set(line, range(len(self.chosen())))
         bounds = tuple(repo.events[i] for i in sorted(self.selection))
         if len(self.selection) != 2 or \
                not isinstance(bounds[0], Commit) or \
