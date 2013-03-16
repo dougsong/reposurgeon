@@ -3152,10 +3152,7 @@ class StreamParser:
                         copies.sort(key=lambda node: int(node.from_rev))
                         latest = copies[-1]
                         threshold = False
-                        commits = self.repo.commits()
-                        ncommits = len(commits)
-                        for i in xrange(ncommits):
-                            prev = commits[ncommits - i - 1]
+                        for prev in reversed(self.repo.commits()):
                             if prev.fossil_id == latest.from_rev:
                                 if debug_enable(DEBUG_TOPOLOGY):
                                     announce("r%s: found %s looking for %s" \
