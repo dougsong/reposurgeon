@@ -6,7 +6,7 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-from __future__ import absolute_import, print_function #unicode_literals
+from __future__ import print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
