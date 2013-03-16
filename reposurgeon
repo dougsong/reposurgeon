@@ -6197,17 +6197,18 @@ Report phase-timing results from repository analysis.
     def do_timing(self, _line):
         "Report repo-analysis times."
         total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
+        commit_count = sum(1 for _ in self.commits())
         if self.repo.fossil_count is None:
-            print("        commits: %d" % len(self.repo.commits()))
+            print("        commits: %d" % commit_count)
         else:
-            print("        commits: %d (from %d)" % (len(self.repo.commits()), self.repo.fossil_count))
+            print("        commits: %d (from %d)" % (commit_count, self.repo.fossil_count))
         for (i, (phase, _interval)) in enumerate(self.repo.timings):
             if i > 0:
                 interval = self.repo.timings[i][1] - self.repo.timings[i-1][1]
                 print("%15s: %.3f (%2.2f%%)" % (phase,
                                               interval,
                                               (interval * 100)/total))
-        print("          total: %.3f (%d/sec)" % (total, int((self.repo.fossil_count or len(self.repo.commits()))/total)))
+        print("          total: %.3f (%d/sec)" % (total, int((self.repo.fossil_count or commit_count))/total))
 
     #
     # Information-gathering
