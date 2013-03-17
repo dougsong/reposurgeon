@@ -5196,24 +5196,21 @@ class RepositoryList:
         # order - leading to "mark not defined" errors from the importer at
         # rebuild time.  This method gives less intuitive results but at
         # least means we never need to reorder.
-        commits = union.commits()
         for root in roots[1:]:
             most_recent = None
-            for (i, event) in enumerate(commits):
-                if root.when() >= event.when():
-                    continue
-                elif not most_recent or event.when() < most_recent.when():
-                    most_recent = commits[i-1]
-                    break
-            if most_recent is None:
-                # Should never fire bacause we sorted the factors array
-                # so root[0] is the oldest commit and the first in union.
-                raise Fatal("should never happen!")
-            elif most_recent.mark is None:
+            def predicate(event):
+                return root.when() >= event.when() \
+                        or (most_recent and event.when() >= most_recent.when())
+            # Get last commit such that it and all before satisfy predicate()
+            # Never raises IndexError since union.earliest_commit() is root[0]
+            # which satisfies predicate() thanks to factors sorting.
+            most_recent = collections.deque(
+                    itertools.takewhile(predicate, union.commits()),
+                    maxlen = 1).pop()
+            if most_recent.mark is None:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
-            else:
-                root.add_parent(most_recent.mark)
+            root.add_parent(most_recent.mark)
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)
