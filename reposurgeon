@@ -3273,12 +3273,11 @@ class StreamParser:
                 child = self.repo.objfind(later)
                 if earlier not in child.parent_marks():
                     child.add_parent(earlier)
-            nonempty = set(c for c in self.repo.commits() if c.fileops)
             for root in branchroots:
-                rootrev = root.fossil_id
-                if commit.branch in nonempty and root.branch != ("trunk" + os.sep):
+                if getattr(commit.branch, "fileops", None) \
+                        and root.branch != ("trunk" + os.sep):
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
-                                % (rootrev, root.branch))
+                                % (root.fossil_id, root.branch))
             self.repo.timings.append(["branchlinks", time.time()]) 
             baton.twirl()
             # Add links due to svn:mergeinfo properties
