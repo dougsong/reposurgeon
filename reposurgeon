@@ -3314,9 +3314,8 @@ class StreamParser:
             # information other than their metadata. The exceptions
             # are trunk and root (if the later exists); neither is
             # the result of a normal copy operation.
-            for commit in self.repo.commits():
-                if commit in branchroots \
-                       and commit.branch != ("trunk"+os.sep) \
+            for commit in branchroots:
+                if commit.branch != ("trunk"+os.sep) \
                        and commit.branch != "root" \
                        and commit.has_parents() \
                        and not commit.fileops:
