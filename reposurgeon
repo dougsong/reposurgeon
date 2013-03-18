@@ -1395,27 +1395,6 @@ class Commit(object):
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
-    @memoized_iterator("_child_nodes")
-    def children(self):
-        "Get a list of this commit's children."
-        later_events = itertools.dropwhile(lambda e: e is not self, self.repo.events)
-        next(later_events) # skip events up to self included
-        return itertools.ifilter(
-                lambda e: isinstance(e, Commit) and self in e._parent_nodes,
-                later_events)
-    def has_children(self):
-        "Predicate - does this commit have children?"
-        try:
-            next(self.children())
-            return True
-        except StopIteration:
-            return False
-    def first_child(self):
-        "Get the first child of this commit, or None if not has_children()."
-        try:
-            return next(self.children())
-        except StopIteration:
-            return None
     def parents(self):
         "Get a list of this commit's parents."
         return self._parent_nodes
@@ -1446,6 +1425,27 @@ class Commit(object):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def has_parents(self):
         return len(self._parent_nodes) > 0
+    @memoized_iterator("_child_nodes")
+    def children(self):
+        "Get a list of this commit's children."
+        later_events = itertools.dropwhile(lambda e: e is not self, self.repo.events)
+        next(later_events) # skip events up to self included
+        return itertools.ifilter(
+                lambda e: isinstance(e, Commit) and self in e._parent_nodes,
+                later_events)
+    def has_children(self):
+        "Predicate - does this commit have children?"
+        try:
+            next(self.children())
+            return True
+        except StopIteration:
+            return False
+    def first_child(self):
+        "Get the first child of this commit, or None if not has_children()."
+        try:
+            return next(self.children())
+        except StopIteration:
+            return None
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
         if not self.has_parents() or self.committer.date < other.committer.date:
