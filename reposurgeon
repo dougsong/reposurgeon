@@ -6193,7 +6193,7 @@ Report phase-timing results from repository analysis.
     def do_timing(self, _line):
         "Report repo-analysis times."
         total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
-        commit_count = sum(1 for _ in self.commits())
+        commit_count = sum(1 for _ in self.repo.commits())
         if self.repo.fossil_count is None:
             print("        commits: %d" % commit_count)
         else:
