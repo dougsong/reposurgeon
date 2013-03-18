@@ -13,7 +13,8 @@ automatically cleaning up cvs2svn conversion artifacts, dealing with
 nonstandard repository layouts, recognizing branch merges, handling
 mixed-branch commits, and generally at coping with Subversion's many
 odd corner cases.  Normally Subversion repos should be analyzed at a
-rate of upwards of five thousand commits per minute.
+rate of upwards of five thousand commits per minute (that rate will
+fall off somewhat on extremely large repositories).
 
 repodiffer is a program that reports differences between repository 
 histories. It uses a diff(1)-like algorithm to identify spans of
@@ -46,6 +47,6 @@ When you find a bug, please send me
 behavior.
 
 (b) A git fast-import or Subversion dump file of the repository you
-were operating on.
+were operating on, or a pointer to where I can pull it from.
 
 (c) The sequence of reposurgeon commands that tickled the bug.
