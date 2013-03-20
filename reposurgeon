@@ -6118,7 +6118,9 @@ List all known symbolic names of branches and tags. Supports > redirection.
 """)
     def do_names(self, line):
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for branch in self.chosen().branchset():
+            branches = list(self.chosen().branchset())
+            branches.sort()
+            for branch in branches:
                 parse.stdout.write("branch %s\n" % branch)
             for event in self.chosen():
                 if isinstance(event, Tag):
@@ -7455,7 +7457,7 @@ reset). For a 'delete', no third argument is required.
         repo = self.chosen()
         (resetname, line) = RepoSurgeon.pop_token(line)
         for event in repo.events:
-            if isinstance(event, Reset) and event.name == resetname:
+            if isinstance(event, Reset) and event.ref == resetname:
                 reset = event
                 break
         else:
@@ -7474,7 +7476,7 @@ reset). For a 'delete', no third argument is required.
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new reset name must be nonempty.")
-            reset.name = newname
+            reset.ref = newname
         elif verb == "delete":
             repo.events.remove(reset)
             repo.declare_sequence_mutation()
