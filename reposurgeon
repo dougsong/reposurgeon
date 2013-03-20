@@ -1455,7 +1455,7 @@ class Commit(object):
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
     def has_parents(self):
-        return len(self._parent_nodes) > 0
+        return bool(self._parent_nodes)
     def children(self):
         "Get a list of this commit's children."
         if self._child_nodes is None:
