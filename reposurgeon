@@ -7264,6 +7264,14 @@ source branch are removed.
             # Now that the arguments are in proper form, implement
             stip = repo.find(branches[source])
             scommits = repo.ancestors(stip) + [stip]
+            pref = os.path.basename(source)
+            for ci in scommits:
+                for fileop in repo.events[ci].fileops:
+                    if fileop.op in ("D", "M"):
+                        fileop.path = os.path.join(pref, fileop.path)
+                    elif fileop.op in ("R", "C"):
+                        fileop.source = os.path.join(pref, fileop.source)
+                        fileop.target = os.path.join(pref, fileop.target)
             ttip = repo.find(branches[target])
             tcommits = repo.ancestors(ttip) + [ttip]
             merged = sorted(set(scommits + tcommits))
