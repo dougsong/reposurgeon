@@ -1459,7 +1459,8 @@ class Commit(object):
         newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
-        self.repo.objfind(mark)._child_nodes = None
+        if newparent._child_nodes is not None:
+            newparent._child_nodes.append(self)
     def remove_parent(self, event):
         self._parent_nodes.remove(event)
         event._child_nodes = None
