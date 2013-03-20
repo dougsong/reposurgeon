@@ -70,7 +70,7 @@ committer esr <esr> 1361652423 +0000
 data 40
 Begin to populate the resources branch.
 from :6
-M 100644 :7 random
+M 100644 :7 resources/random
 
 blob
 mark :9
@@ -128,7 +128,7 @@ committer esr <esr> 1361656341 +0000
 data 60
 This is the first modification to the random resource file.
 from :13
-M 100644 :14 random
+M 100644 :14 resources/random
 
 blob
 mark :16
@@ -160,7 +160,7 @@ committer esr <esr> 1361656588 +0000
 data 61
 This is the second modification to the random resource file.
 from :17
-M 100644 :18 random
+M 100644 :18 resources/random
 
 blob
 mark :20
@@ -208,7 +208,7 @@ committer esr <esr> 1361660622 +0000
 data 60
 This is the third modification to the random resource file.
 from :23
-M 100644 :24 random
+M 100644 :24 resources/random
 
 blob
 mark :26
