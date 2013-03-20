@@ -148,7 +148,7 @@ list 29..71            ;; list summary index of events 20..71
 
 list 236..$            ;; List events from 236 to the last
 
-inspect &lt;2317&gt;   ;; Look for a tag with the name 2317, a tip commit
+inspect &lt;2317&gt;         ;; Look for a tag with the name 2317, a tip commit
                        ;; of a branch named 2317, or a commit with fossil-ID
                        ;; 2317. Inspect what is found. A plain number is
                        ;; probably a fossil-ID inherited from a Subversion
