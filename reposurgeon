@@ -1464,7 +1464,9 @@ class Commit(object):
     def remove_parent(self, event):
         # remove *all* occurences of event in parents
         self._parent_nodes = [n for n in self._parent_nodes if n is not event]
-        event._child_nodes = None
+        if event._child_nodes is not None:
+            # and all occurences of self in events children
+            event._child_nodes = [n for n in event._child_nodes if n is not self]
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
         e1._child_nodes = None
