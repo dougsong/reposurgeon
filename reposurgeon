@@ -1458,6 +1458,8 @@ class Commit(object):
         event._child_nodes = None
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
+        e1._child_nodes = None
+        e2._child_nodes = None
     def has_parents(self):
         return bool(self._parent_nodes)
     def children(self):
