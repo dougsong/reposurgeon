@@ -1427,7 +1427,8 @@ class Commit(object):
         return mark
     def forget(self):
         "De-link this commit from its parents."
-        self.repo = self._parent_nodes = None
+        self.set_parents([])
+        self.repo = None
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
