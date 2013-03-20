@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.28:
+     There is now a 'reset' command like the tag command.
+
 2.27: 2013-03-18
      More speed tuning.
      Simplify the baton display in SVN processing, its overhead was high.
