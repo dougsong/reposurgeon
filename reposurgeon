@@ -7436,6 +7436,51 @@ tag). For a 'delete', no third argument is required.
         else:
             raise Recoverable("unknown verb '%s' in tag command.")
 
+    def help_reset(self):
+        print("""
+Move, rename, or delete a reset.  First argument must be an
+existing reset name; second argument must be one of the verbs 'move',
+'rename', or 'delete'.
+
+For a 'move', a third argument must be a singleton selection set. For
+a 'rename', the third argument may be any token that is a
+syntactically valid reset name (but not the name of an existing
+reset). For a 'delete', no third argument is required.
+""")
+    def do_reset(self, line):
+        "Move a reset to point to a specified commit, or rename it, or delete it."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        (resetname, line) = RepoSurgeon.pop_token(line)
+        for event in repo.events:
+            if isinstance(event, Reset) and event.name == resetname:
+                reset = event
+                break
+        else:
+            raise Recoverable("no such reset as %s" % resetname)
+        (verb, line) = RepoSurgeon.pop_token(line)
+        if verb == "move":
+            self.set_selection_set(line)
+            if len(self.selection) != 1:
+                raise Recoverable("reset move requires a singleton set.")
+            else:
+                target = self.selection.pop(0)
+            if not isinstance(repo.events[target], Commit):
+                raise Recoverable("move target must be a commit.")
+            reset.committish = repo.events[target].mark
+        elif verb == "rename":
+            (newname, line) = RepoSurgeon.pop_token(line)
+            if not newname:
+                raise Recoverable("new reset name must be nonempty.")
+            reset.name = newname
+        elif verb == "delete":
+            repo.events.remove(reset)
+            repo.declare_sequence_mutation()
+        else:
+            raise Recoverable("unknown verb '%s' in reset command.")
+
     #
     # Artifact removal
     #

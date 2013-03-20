@@ -1076,6 +1076,23 @@ tag). For a 'delete', no third argument is required.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>reset</command>
+        <emphasis>resetname</emphasis>...
+        <command>{move|rename|delete}</command>
+        <command>[arg]</command>.
+</term>
+<listitem>
+<para>Move, rename, or delete a reset.  First argument must be an
+existing reset name; second argument must be one of the verbs 'move',
+'rename', or 'delete'.</para>
+
+<para>For a 'move', a third argument must be a singleton selection set. For
+a 'rename', the third argument may be any token token that is a
+syntactically valid reset name (but not the name of an existing
+reset). For a 'delete', no third argument is required.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>debranch</command>
         <emphasis>source-branch</emphasis>...
         <command>[target-branch]</command>.
