@@ -1480,35 +1480,12 @@ class Commit(object):
         return bool(self._parent_nodes)
     def children(self):
         "Get a list of this commit's children."
-        if self._child_nodes is None:
-            self._child_nodes = []
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        self._child_nodes.append(e)
         return self._child_nodes
     def has_children(self):
         "Predicate - does this commit have children?"
-        if self._child_nodes:
-            return True
-        else:
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        # Early return makes this much faster in the
-                        # normal case, which is that the commit has
-                        # one child that is an immediate successor.
-                        return True
-        return False
+        return bool(self._child_nodes)
     def first_child(self):
         "Get the first child of this commit, or None if not has_children()."
-        # Placeholder - replace this when we go back to using an iterator
         return self.children()[0]
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
