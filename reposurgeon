@@ -1442,13 +1442,11 @@ class Commit(object):
     def set_parents(self, parents):
         for parent in self._parent_nodes:
             # remove all occurences of self in old parent's children cache
-            if parent._child_nodes is not None:
-                parent._child_nodes = [n for n in parent._child_nodes if n is not self]
+            parent._child_nodes = [n for n in parent._child_nodes if n is not self]
         self._parent_nodes = parents
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
-            if parent._child_nodes is not None:
-                parent._child_nodes.append(self)
+            parent._child_nodes.append(self)
     def add_parent(self, mark):
         if isinstance(mark, Commit):
             newparent = mark
@@ -1456,26 +1454,21 @@ class Commit(object):
             newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.append(newparent)
-        if newparent._child_nodes is not None:
-            newparent._child_nodes.append(self)
+        newparent._child_nodes.append(self)
     def insert_parent(self, idx, mark):
         newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
-        if newparent._child_nodes is not None:
-            newparent._child_nodes.append(self)
+        newparent._child_nodes.append(self)
     def remove_parent(self, event):
         # remove *all* occurences of event in parents
         self._parent_nodes = [n for n in self._parent_nodes if n is not event]
-        if event._child_nodes is not None:
-            # and all occurences of self in events children
-            event._child_nodes = [n for n in event._child_nodes if n is not self]
+        # and all occurences of self in events children
+        event._child_nodes = [n for n in event._child_nodes if n is not self]
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
-        if e1._child_nodes is not None:
-            e1._child_nodes.remove(self)
-        if e2._child_nodes is not None:
-            e2._child_nodes.append(self)
+        e1._child_nodes.remove(self)
+        e2._child_nodes.append(self)
     def has_parents(self):
         return bool(self._parent_nodes)
     def children(self):
