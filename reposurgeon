@@ -1441,11 +1441,14 @@ class Commit(object):
         self.set_parents([self.repo.objfind(x) for x in marks])
     def set_parents(self, parents):
         for parent in self._parent_nodes:
-            parent._child_nodes = None
+            # remove all occurences of self in old parent's children cache
+            if parent._child_nodes is not None:
+                parent._child_nodes = [n for n in parent._child_nodes if n is not self]
         self._parent_nodes = parents
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
-            parent._child_nodes = None
+            if parent._child_nodes is not None:
+                parent._child_nodes.append(self)
     def add_parent(self, mark):
         if isinstance(mark, Commit):
             newparent = mark
