@@ -1261,6 +1261,10 @@ class Commit(object):
         if repo is not None:
             c.repo = repo
         c._child_nodes = []
+        # use the encapsulation to set parents instead of relying
+        # on the copy, so that Commit can do its bookkeeping.
+        c._parent_nodes = [] # avoid confusing set_parents()
+        c.set_parents(list(self.parents()))
         return c
     def showfossil(self):
         "Show a fossil ID in the expected form for the ancestral system."
