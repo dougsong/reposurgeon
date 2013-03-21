@@ -1432,7 +1432,9 @@ class Commit(object):
     def parent_marks(self):
         return [x.mark for x in self._parent_nodes]
     def set_parent_marks(self, marks):
-        self._parent_nodes = [self.repo.objfind(x) for x in marks]
+        self.set_parents([self.repo.objfind(x) for x in marks])
+    def set_parents(self, parents):
+        self._parent_nodes = parents
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
             parent._child_nodes = None
