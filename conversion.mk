@@ -92,8 +92,10 @@ gitk: $(PROJECT)-git
 	cd $(PROJECT)-git; gitk --all
 
 # Run a garbage-collect on the generated git repository.  Import doesn't.
+# This repack call is the active part of gc --aggressive.  This call is
+# tuned for very large repositories.
 gc: $(PROJECT)-git
-	cd $(PROJECT)-git; git repack; git gc --aggressive
+	cd $(PROJECT)-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
 
 # Make a conversion using a competing tool
 $(PROJECT)-git-svn:
