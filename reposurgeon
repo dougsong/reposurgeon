@@ -1329,7 +1329,7 @@ class Commit(object):
         if "Parents" in msg:
             if self.parent_marks() != msg["Parents"].split():
                 modified = True
-            self.set_parents(msg["Parents"].split())
+            self.set_parent_marks(msg["Parents"].split())
         if "Committer" in msg:
             (newname, newemail) = email.utils.parseaddr(msg["Committer"])
 
@@ -1431,7 +1431,7 @@ class Commit(object):
         return self._parent_nodes
     def parent_marks(self):
         return [x.mark for x in self._parent_nodes]
-    def set_parents(self, marks):
+    def set_parent_marks(self, marks):
         self._parent_nodes = [self.repo.objfind(x) for x in marks]
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
@@ -1869,7 +1869,7 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.set_parents([self.markmap[rev] for rev in parents])
+                commit.set_parent_marks([self.markmap[rev] for rev in parents])
                 commit.set_branch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
@@ -3261,7 +3261,7 @@ class StreamParser:
             for commit in self.repo.commits():
                 commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
                 if lastmark:
-                    commit.set_parents([lastmark])
+                    commit.set_parent_marks([lastmark])
                 lastmark = commit.mark
         else:
             # Instead, determine a branch for each commit...
@@ -3290,9 +3290,9 @@ class StreamParser:
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
-                    commit.set_parents([])
+                    commit.set_parent_marks([])
                 else:
-                    commit.set_parents([self.branches[commit.branch]])
+                    commit.set_parent_marks([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
@@ -4605,7 +4605,7 @@ class Repository:
                         if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in parents" % (old, new))
                         parent_marks[j] = new
-                event.set_parents(parent_marks)
+                event.set_parent_marks(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
@@ -4734,7 +4734,7 @@ class Repository:
             # Fix up parent/child relationships
             for child in event.children():
                 child.replace_parent(event, event2)
-            event2.set_parents([event.mark])
+            event2.set_parent_marks([event.mark])
             # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
@@ -5364,11 +5364,11 @@ class RepositoryList:
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parent_marks() if e in expunged_marks])
+                event.set_parent_marks([e for e in event.parent_marks() if e in expunged_marks])
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parent_marks() if e in keeper_marks])
+                event.set_parent_marks([e for e in event.parent_marks() if e in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
@@ -7270,7 +7270,7 @@ source branch are removed.
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    event.set_parents(last_parent + event.parent_marks()[1:])
+                    event.set_parent_marks(last_parent + event.parent_marks()[1:])
                 event.set_branch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
