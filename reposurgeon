@@ -1251,7 +1251,7 @@ class Commit(object):
         "Set the repo's branch field, optimizing for fast comparisons."
         self.branch = intern(branch)
     def clone(self, repo=None):
-        "Clone this commit, without its fileops and color."
+        "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
@@ -1260,6 +1260,7 @@ class Commit(object):
         c.color = None
         if repo is not None:
             c.repo = repo
+        c._child_nodes = []
         return c
     def showfossil(self):
         "Show a fossil ID in the expected form for the ancestral system."
