@@ -3292,7 +3292,7 @@ class StreamParser:
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
-                    commit.set_parent_marks([])
+                    commit.set_parents([])
                 else:
                     commit.set_parent_marks([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
@@ -4736,7 +4736,7 @@ class Repository:
             # Fix up parent/child relationships
             for child in event.children():
                 child.replace_parent(event, event2)
-            event2.set_parent_marks([event.mark])
+            event2.set_parents([event])
             # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
@@ -5366,11 +5366,11 @@ class RepositoryList:
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                event.set_parent_marks([e for e in event.parent_marks() if e in expunged_marks])
+                event.set_parents([e for e in event.parents() if e.mark in expunged_marks])
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
-                event.set_parent_marks([e for e in event.parent_marks() if e in keeper_marks])
+                event.set_parents([e for e in event.parents() if e.mark in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
