@@ -3131,7 +3131,7 @@ class StreamParser:
             # handle that.
             oplist.sort(key=operator.itemgetter(0))
             for (i, (branch, fileops)) in enumerate(oplist):
-                split = copy.copy(commit)
+                split = commit.clone()
                 split.common = branch
                 # Sequence numbers for split commits are 1-origin
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
