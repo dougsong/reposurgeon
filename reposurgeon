@@ -4466,32 +4466,31 @@ class Repository:
                         altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
                 if pushback:
+                    # Append a copy of this event's file ops to each parent's
+                    # list and mark the parent as needing resolution.
                     for parent in event.parents():
-                        # Append a copy of this event's file ops to
-                        # each parent's list and mark the parent as needing
-                        # resolution.
-                        for fileop in event.fileops:
-                            # On a pushback (but not a push forward)
-                            # we might have moved the fileop so it's
-                            # now referred to before its actual
-                            # definition.  This will cause a fatal
-                            # error "mark not defined" on import.
-                            if fileop.op == 'M':
-                                swapblob = self.find(fileop.ref)
-                                swapcommit = self.find(parent.mark)
-                                if swapblob > swapcommit:
-                                    #print "Uh oh!", swapcommit, swapblob
-                                    saveblob = self.events[swapblob]
-                                    for i in range(swapblob-swapcommit):
-                                        countdown = swapblob-i
-                                        #print "Moving %d to %d" % (countdown-1, countdown)
-                                        self.events[countdown] = self.events[countdown-1]
-                                    #print "Moving %d to %d" % (swapblob, swapcommit)
-                                    self.events[swapcommit] = saveblob
-                                    self.declare_sequence_mutation()
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         altered.append(parent)
+                    # We need to ensure all fileop blobs are defined before the
+                    # corresponding fileop, in other words ensure that the blobs
+                    # are before the parent with lowest index.
+                    earliest = min(self.find(p.mark) for p in event.parents())
+                    swap_indices = set()
+                    for fileop in event.fileops:
+                        if fileop.op == 'M':
+                            blob_index = self.find(fileop.ref)
+                            if blob_index > earliest: swap_indices.add(blob_index)
+                    if swap_indices:
+                        last = max(swap_indices)
+                        neworder = itertools.chain(
+                                swap_indices, # first take the blobs
+                                # then all others
+                                itertools.ifilterfalse(swap_indices.__contains__,
+                                         xrange(earliest, last+1)) )
+                        self.events[earliest:last+1] = map(
+                                self.events.__getitem__, neworder)
+                        self.declare_sequence_mutation()
                 filter_only = True
                 if tagforward and event.has_children():
                     filter_only = False
