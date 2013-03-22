@@ -1251,7 +1251,7 @@ class Commit(object):
         "Set the repo's branch field, optimizing for fast comparisons."
         self.branch = intern(branch)
     def clone(self, repo=None):
-        "Clone this commit, without its fileops and color."
+        "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
@@ -1260,6 +1260,11 @@ class Commit(object):
         c.color = None
         if repo is not None:
             c.repo = repo
+        c._child_nodes = []
+        # use the encapsulation to set parents instead of relying
+        # on the copy, so that Commit can do its bookkeeping.
+        c._parent_nodes = [] # avoid confusing set_parents()
+        c.set_parents(list(self.parents()))
         return c
     def showfossil(self):
         "Show a fossil ID in the expected form for the ancestral system."
@@ -1329,7 +1334,7 @@ class Commit(object):
         if "Parents" in msg:
             if self.parent_marks() != msg["Parents"].split():
                 modified = True
-            self.set_parents(msg["Parents"].split())
+            self.set_parent_marks(msg["Parents"].split())
         if "Committer" in msg:
             (newname, newemail) = email.utils.parseaddr(msg["Committer"])
 
@@ -1422,7 +1427,8 @@ class Commit(object):
         return mark
     def forget(self):
         "De-link this commit from its parents."
-        self.repo = self._parent_nodes = None
+        self.set_parents([])
+        self.repo = None
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
@@ -1431,11 +1437,16 @@ class Commit(object):
         return self._parent_nodes
     def parent_marks(self):
         return [x.mark for x in self._parent_nodes]
-    def set_parents(self, marks):
-        self._parent_nodes = [self.repo.objfind(x) for x in marks]
+    def set_parent_marks(self, marks):
+        self.set_parents([self.repo.objfind(x) for x in marks])
+    def set_parents(self, parents):
+        for parent in self._parent_nodes:
+            # remove all occurences of self in old parent's children cache
+            parent._child_nodes = [n for n in parent._child_nodes if n is not self]
+        self._parent_nodes = parents
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
-            parent._child_nodes = None
+            parent._child_nodes.append(self)
     def add_parent(self, mark):
         if isinstance(mark, Commit):
             newparent = mark
@@ -1443,50 +1454,31 @@ class Commit(object):
             newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.append(newparent)
-        newparent._child_nodes = None
+        newparent._child_nodes.append(self)
     def insert_parent(self, idx, mark):
         newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
-        self.repo.objfind(mark)._child_nodes = None
+        newparent._child_nodes.append(self)
     def remove_parent(self, event):
-        self._parent_nodes.remove(event)
-        event._child_nodes = None
+        # remove *all* occurences of event in parents
+        self._parent_nodes = [n for n in self._parent_nodes if n is not event]
+        # and all occurences of self in events children
+        event._child_nodes = [n for n in event._child_nodes if n is not self]
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
+        e1._child_nodes.remove(self)
+        e2._child_nodes.append(self)
     def has_parents(self):
-        return len(self._parent_nodes) > 0
+        return bool(self._parent_nodes)
     def children(self):
         "Get a list of this commit's children."
-        if self._child_nodes is None:
-            self._child_nodes = []
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        self._child_nodes.append(e)
         return self._child_nodes
     def has_children(self):
         "Predicate - does this commit have children?"
-        if self._child_nodes:
-            return True
-        else:
-            above = False
-            for e in self.repo.events:
-                if id(e) == id(self):
-                    above = True
-                elif above and isinstance(e, Commit):
-                    if self in e._parent_nodes:
-                        # Early return makes this much faster in the
-                        # normal case, which is that the commit has
-                        # one child that is an immediate successor.
-                        return True
-        return False
+        return bool(self._child_nodes)
     def first_child(self):
         "Get the first child of this commit, or None if not has_children()."
-        # Placeholder - replace this when we go back to using an iterator
         return self.children()[0]
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
@@ -1869,7 +1861,7 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.set_parents([self.markmap[rev] for rev in parents])
+                commit.set_parent_marks([self.markmap[rev] for rev in parents])
                 commit.set_branch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
@@ -3119,7 +3111,7 @@ class StreamParser:
             # handle that.
             oplist.sort(key=operator.itemgetter(0))
             for (i, (branch, fileops)) in enumerate(oplist):
-                split = copy.copy(commit)
+                split = commit.clone()
                 split.common = branch
                 # Sequence numbers for split commits are 1-origin
                 split.fossil_id += StreamParser.SplitSep + str(i + 1)
@@ -3261,7 +3253,7 @@ class StreamParser:
             for commit in self.repo.commits():
                 commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
                 if lastmark:
-                    commit.set_parents([lastmark])
+                    commit.set_parent_marks([lastmark])
                 lastmark = commit.mark
         else:
             # Instead, determine a branch for each commit...
@@ -3292,7 +3284,7 @@ class StreamParser:
                     branchroots.append(commit)
                     commit.set_parents([])
                 else:
-                    commit.set_parents([self.branches[commit.branch]])
+                    commit.set_parent_marks([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit.mark
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
@@ -4605,7 +4597,7 @@ class Repository:
                         if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in parents" % (old, new))
                         parent_marks[j] = new
-                event.set_parents(parent_marks)
+                event.set_parent_marks(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
@@ -4734,7 +4726,7 @@ class Repository:
             # Fix up parent/child relationships
             for child in event.children():
                 child.replace_parent(event, event2)
-            event2.set_parents([event.mark])
+            event2.set_parents([event])
             # and then finalize the ops
             event2.fileops = fileops2
             event2._pathset = None
@@ -5364,11 +5356,11 @@ class RepositoryList:
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parent_marks() if e in expunged_marks])
+                event.set_parents([e for e in event.parents() if e.mark in expunged_marks])
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parent_marks() if e in keeper_marks])
+                event.set_parents([e for e in event.parents() if e.mark in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
@@ -7280,7 +7272,7 @@ source branch are removed.
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    event.set_parents(last_parent + event.parent_marks()[1:])
+                    event.set_parent_marks(last_parent + event.parent_marks()[1:])
                 event.set_branch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
