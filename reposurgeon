@@ -1007,7 +1007,7 @@ class Tag:
                     modified = True
         newcomment = msg.get_payload()
         if global_options["canonicalize"]:
-            newcomment = newcomment.strip() + '\n'
+            newcomment = newcomment.strip().replace("\r\n", "\n") + '\n'
         if newcomment != self.comment:
             if debug_enable(DEBUG_EMAILIN):
                 announce("in tag %d, comment is modified %s -> %s" \
@@ -5397,8 +5397,8 @@ unusual topology and you intend to do your own branch surgery.
     Emit timing statistics on Subversion analysis phases.
 """),
         ("canonicalize", """\
-    If set, mailbox_in and edit will canonicalize comments by stripping
-leading and trailing whitespace and then appending a linefeed.
+    If set, mailbox_in and edit will canonicalize comments by replacing CR-LF
+with LF, stripping leading and trailing whitespace and then appending a LF.
 """),
         ("fossilize", """\
     If set, the Fossil-ID of each commit is appended to its commit comment
