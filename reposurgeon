@@ -4496,7 +4496,7 @@ class Repository:
                             print(str(op))
         self.declare_sequence_mutation()
     def quiet_delete(self, commit):
-        self.delete([self.events.index(commit)], ["obliterate", "quiet", "tagback"])
+        self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
     #
     # Delete machinery ends here
     #
