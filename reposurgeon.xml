@@ -1082,14 +1082,18 @@ tag). For a 'delete', no third argument is required.</para>
         <command>[arg]</command>.
 </term>
 <listitem>
-<para>Move, rename, or delete a reset.  First argument must be an
+<para>Move, rename, or delete a reset.  First argument must match an
 existing reset name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.</para>
 
 <para>For a 'move', a third argument must be a singleton selection set. For
-a 'rename', the third argument may be any token token that is a
+a 'rename', the third argument may be any token token that matches a
 syntactically valid reset name (but not the name of an existing
 reset). For a 'delete', no third argument is required.</para>
+
+<para>An argument matches a reset's name if it is either the entire
+reference (refs/heads/FOO for some some value of FOO) or the basename
+(e.g. FOO).</para>
 
 <para>Beware: the rename variant of this command only modifies the
 reset event, not any branch properties that happen to be identical to
