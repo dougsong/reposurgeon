@@ -3360,7 +3360,7 @@ class StreamParser:
                     self.repo.tagify(commit,
                                      tagname,
                                      commit.parent_marks()[0],
-                                     naked=True)
+                                     naked=False)
                 baton.twirl()
             self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl()
@@ -3406,7 +3406,7 @@ class StreamParser:
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
                                % commit.fossil_id)
-                    self.repo.quiet_delete(commit, naked=True)
+                    self.repo.quiet_delete(commit, naked=False)
             # Also, tagify tip commits that consist only of deletes.
             # The fileops aren't worth saving; the comment metadata
             # just might be.
