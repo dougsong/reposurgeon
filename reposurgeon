@@ -3244,7 +3244,8 @@ class StreamParser:
                 self.repo.tagify(initial,
                                  "root",
                                  second.mark,
-                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
+                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id,
+                                 naked=False)
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
         # Now, branch analysis.
@@ -3358,7 +3359,8 @@ class StreamParser:
                         tagname += "-root"
                     self.repo.tagify(commit,
                                      tagname,
-                                     commit.parent_marks()[0])
+                                     commit.parent_marks()[0],
+                                     naked=True)
                 baton.twirl()
             self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl()
@@ -3372,12 +3374,12 @@ class StreamParser:
             if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
                 self.repo.events.append(Reset(fulltag, commit.mark))
-                self.repo.quiet_delete(commit)
+                self.repo.quiet_delete(commit, naked=False)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
             m = StreamParser.cvs2svn_branch_re.search(commit.comment)
             if m and not commit.has_children():
-                self.repo.quiet_delete(commit)
+                self.repo.quiet_delete(commit, naked=False)
             baton.twirl()
         self.repo.timings.append(["junk", time.time()]) 
         baton.twirl()
@@ -3399,11 +3401,12 @@ class StreamParser:
                     self.repo.tagify(commit,
                                      "emptycommit-%s" % commit.fossil_id,
                                      commit.parent_marks()[0],
-                                     legend)
+                                     legend,
+                                     naked=False)
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
                                % commit.fossil_id)
-                    self.repo.quiet_delete(commit)
+                    self.repo.quiet_delete(commit, naked=True)
             # Also, tagify tip commits that consist only of deletes.
             # The fileops aren't worth saving; the comment metadata
             # just might be.
@@ -3420,7 +3423,7 @@ class StreamParser:
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
-                    self.repo.quiet_delete(commit)
+                    self.repo.quiet_delete(commit, naked=True)
             baton.twirl()
         self.repo.timings.append(["tagify-empty", time.time()]) 
         baton.twirl()
@@ -4021,7 +4024,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, committish, legend=""):
+    def tagify(self, commit, name, committish, legend="", naked=False):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -4039,7 +4042,7 @@ class Repository:
                           committish=committish,
                           tagger=commit.committer,
                           comment=pref + legend))
-        self.quiet_delete(commit)
+        self.quiet_delete(commit, naked=naked)
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
@@ -4372,6 +4375,7 @@ class Repository:
         tagback = "tagback" in policy
         tagforward = "tagforward" in policy
         pushback = "pushback" in policy
+        naked = "naked" in policy
         # Sanity checks
         if not dquiet:
             for ei in selected:
@@ -4450,20 +4454,23 @@ class Repository:
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         altered.append(parent)
-                filter_only = True
-                if tagforward and event.has_children():
-                    filter_only = False
-                    mark = event.first_child().mark
-                elif tagback and event.parents():
-                    filter_only = False
-                    mark = event.parents()[0].mark
-                if filter_only:
-                    self.events = [t for t in self.events if not (isinstance(t, Tag)
-                                                        and t.committish == event.mark)]
-                else:
-                    for t in self.events:
-                        if (isinstance(t, Tag) or isinstance(t, Reset)) and t.committish == event.mark:
-                            t.committish = mark
+                # This is just an optimization, but one that removes a huge
+                # amount of overhead when scanning large Subversion repos.
+                if not naked:
+                    filter_only = True
+                    if tagforward and event.has_children():
+                        filter_only = False
+                        mark = event.first_child().mark
+                    elif tagback and event.parents():
+                        filter_only = False
+                        mark = event.parents()[0].mark
+                    if filter_only:
+                        self.events = [t for t in self.events if not (isinstance(t, Tag)
+                                                            and t.committish == event.mark)]
+                    else:
+                        for t in self.events:
+                            if (isinstance(t, Tag) or isinstance(t, Reset)) and t.committish == event.mark:
+                                t.committish = mark
                 # And remove the deleted event
                 event.forget()
                 self.events.pop(ei)
@@ -4495,8 +4502,11 @@ class Repository:
                         for op in event.fileops:
                             print(str(op))
         self.declare_sequence_mutation()
-    def quiet_delete(self, commit):
-        self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
+    def quiet_delete(self, commit, naked=False):
+        if naked:
+            self.delete([commit.index()], ["obliterate", "quiet", "tagback", "naked"])
+        else:
+            self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
     #
     # Delete machinery ends here
     #
