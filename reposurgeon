@@ -2581,9 +2581,11 @@ class StreamParser:
                             else:
                                 self.warn("missing tagger after from in tag")
                                 self.pushback(line)
-                            self.repo.addEvent(Tag(self.repo, tagname,
-                                                   referent, tagger,
-                                                   self.fi_read_data()[0]))
+                            self.repo.addEvent(Tag(repo = self.repo,
+                                                   name = tagname,
+                                                   committish = referent,
+                                                   tagger = tagger,
+                                                   comment = self.fi_read_data()[0]))
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.
