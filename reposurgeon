@@ -1798,6 +1798,10 @@ class PathMap(object):
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
+    def __len__(self):
+        "Return the number of files in the set."
+        return sum(len(v) if isinstance(v, PathMap) else 1
+                for _, v in self._elts_items())
     def __iter__(self):
         for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
@@ -4539,6 +4543,9 @@ class Repository:
         self.declare_sequence_mutation()
     def quiet_delete(self, commit):
         self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
+    def __delitem__(self, index):
+        # To make Repository a proper container (and please pylint)
+        self.delete([index], ["obliterate", "quiet", "tagback"])
     #
     # Delete machinery ends here
     #
