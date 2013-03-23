@@ -3363,7 +3363,7 @@ class StreamParser:
                     self.repo.tagify(commit,
                                      tagname,
                                      commit.parent_marks()[0],
-                                     naked=False)
+                                     naked=True)
                 baton.twirl()
             self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl()
