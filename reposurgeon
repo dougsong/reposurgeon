@@ -3426,7 +3426,7 @@ class StreamParser:
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
-                    self.repo.quiet_delete(commit, naked=True)
+                    self.repo.quiet_delete(commit, naked=False)
             baton.twirl()
         self.repo.timings.append(["tagify-empty", time.time()]) 
         baton.twirl()
