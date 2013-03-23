@@ -1876,16 +1876,14 @@ class RepoStreamer:
         self.markseq = 0
         self.tagseq = 0
         self.commits = {}
-        self.markmap = {}
+        self.commit_map = {}
         self.filemap = {}
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
-    def __newmark(self, revision=None):
+    def __newmark(self):
         self.markseq += 1
         mark = ":" + str(self.markseq)
-        if revision:
-            self.markmap[revision] = mark
         return mark
     def extract(self, repo, progress=True):
         if not self.extractor.isclean():
@@ -1905,7 +1903,7 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.set_parent_marks([self.markmap[rev] for rev in parents])
+                commit.set_parents([self.commit_map[rev] for rev in parents])
                 commit.set_branch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
@@ -1995,20 +1993,24 @@ class RepoStreamer:
                 commit.fileops.sort()
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
-                commit.set_mark(self.__newmark(revision))
+                commit.set_mark(self.__newmark())
+                self.commit_map[revision] = commit
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=operator.itemgetter(1)):
-                reset = Reset(repo, committish=self.markmap[revision])
+                reset = Reset(repo, committish=self.commit_map[revision].mark)
                 reset.ref = resetname
                 repo.addEvent(reset)
             # Last, append tag objects.
             for tag in sorted(self.extractor.get_taglist(),
                               key=operator.attrgetter("tagger.date")):
-                tag.remember(repo, self.markmap.get(tag.committish))
+                # Hashes produced by the GitExtractor are turned into proper
+                # committish marks here.
+                tag.remember(repo, getattr(self.commit_map.get(tag.committish),
+                                            "mark", None))
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
