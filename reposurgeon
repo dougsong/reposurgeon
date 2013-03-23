@@ -1893,11 +1893,14 @@ class RepoStreamer:
                                    or self.filemap[revision][path]!=newsig:
                                 if debug_enable(DEBUG_EXTRACT):
                                     announce("r%s: update for %s" % (revision, path))
-                                # Iterating through dict items (with iteritems() or
-                                # itemsview() for instance) while mutating the underlying
-                                # dict is not supported by Python. The following loop thus
-                                # uses items(), which returns a new independent list
-                                # containing the (key,value) pairs.
+                                # Iterating through dict items (with
+                                # iteritems() or itemsview() for
+                                # instance) while mutating the
+                                # underlying dict is not supported by
+                                # Python. The following loop thus uses
+                                # items(), which returns a new
+                                # independent list containing the
+                                # (key,value) pairs.
                                 for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
