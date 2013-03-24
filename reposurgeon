@@ -5943,10 +5943,10 @@ copies at all (it points into sections of the input stream instead).
                             if event.branch == symbol:
                                 selection.append(i)
                         elif isinstance(event, Tag):
-                            ti = self.chosen().find(event.committish)
-                            assert(ti is not None)
-                            assert(isinstance(self.chosen()[ti], Commit))
-                            if self.chosen()[ti].branch == symbol:
+                            target = self.chosen().objfind(event.committish)
+                            assert(target is not None)
+                            assert(isinstance(target, Commit))
+                            if target.branch == symbol:
                                 selection.append(i)
                     self.line = self.line[len(os.path.basename(symbol)):]
                     if self.pop() != ')':
