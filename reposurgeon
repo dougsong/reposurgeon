@@ -5392,9 +5392,9 @@ class RepositoryList:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
             elif isinstance(event, Reset) or isinstance(event, Tag):
-                target = self.repo.find(event.committish)
+                target = self.repo.objfind(event.committish)
                 if target is not None:
-                    if self.repo[target].deletehook:
+                    if target.deletehook:
                         expunged.addEvent(copy.deepcopy(event))
                     continue
                 if isinstance(event, Reset) and event.ref in expunged_branches:
