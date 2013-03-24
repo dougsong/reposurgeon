@@ -5391,17 +5391,20 @@ class RepositoryList:
             if event.deletehook:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
-            elif isinstance(event, Reset) or isinstance(event, Tag):
+            elif isinstance(event, Reset):
                 target = self.repo.objfind(event.committish)
                 if target is not None:
                     if target.deletehook:
                         expunged.addEvent(copy.deepcopy(event))
-                    continue
-                if isinstance(event, Reset) and event.ref in expunged_branches:
+                elif isinstance(event, Reset) and event.ref in expunged_branches:
                     newreset = copy.copy(event)
                     newreset.repo = expunged
                     expunged.addEvent(newreset)
-        for event in self.repo.events + expunged.events:
+            elif isinstance(event, Tag):
+                target = self.repo.objfind(event.committish)
+                if target is not None and target.deletehook:
+                    expunged.addEvent(copy.deepcopy(event))
+        for event in itertools.chain(self.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
