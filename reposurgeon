@@ -1221,8 +1221,6 @@ class Commit(object):
         self.authors = []            # Authors of commit
         self.committer = None        # Person responsible for committing it.
         self.comment = None          # Commit comment
-        self._parent_nodes = []      # list of parent nodes
-        self._child_nodes = []       # list of child nodes
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
@@ -1230,8 +1228,13 @@ class Commit(object):
         self.color = None
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
+        self.splits = None           # split command increments this
+                                     # to avoid creating multiple new commits
+                                     # with duplicate marks
+        self.deletehook = None	     # Hook used during deletion operations
+        self._parent_nodes = []      # list of parent nodes
+        self._child_nodes = []       # list of child nodes
         self._pathset = None
-        self.splits = None          # split command increments this to avoid creating multiple new commits with duplicate marks
     def index(self):
         "Our 0-origin index in our repo."
         return self.repo.index(self)
