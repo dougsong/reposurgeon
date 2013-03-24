@@ -948,12 +948,29 @@ class Tag:
     "Represents an annotated tag."
     def __init__(self, repo=None,
                  name=None, committish=None, tagger=None, comment=None):
-        self.repo = repo
+        self.repo = None
         self.name = name
-        self.committish = committish
+        self.color = None
+        self.committish = None
+        self.remember(repo, committish)
         self.tagger = tagger
         self.comment = comment
-        self.color = None
+    def remember(self, repo, committish):
+        "Remember an attachment to a repo and commit."
+        self.repo = repo
+        self.committish = committish
+        if self.repo:
+            commit = self.repo.objfind(self.committish)
+            if commit:
+                commit.attachments.append(self)
+            self.repo = None
+    def forget(self):
+        "Forget this tag's attachment to its commit and repo."
+        if self.repo:
+            commit = self.repo.objfind(self.committish)
+            if commit and self in commit.attachments:
+                commit.attachments.remove(self)
+            self.repo = None
     def index(self):
         "Our 0-origin index in our repo."
         return self.repo.index(self)
@@ -1027,9 +1044,29 @@ class Tag:
 
 class Reset:
     "Represents a branch creation."
-    def __init__(self, ref=None, committish=None):
+    def __init__(self, repo, ref=None, committish=None):
+        self.repo = None
         self.ref = ref
+        self.committish = None
+        self.remember(repo, committish)
+    def remember(self, repo, committish):
+        "Remember an attachment to a commit and repository."
+        self.repo = repo
         self.committish = committish
+        if self.repo:
+            commit = self.repo.objfind(self.committish)
+            if commit:
+                commit.attachments.append(self)
+    def forget(self):
+        "Forget this reset's attachment to its commit and repo."
+        if self.repo:
+            commit = self.repo.objfind(self.committish)
+            if commit and self in commit.attachments:
+                commit.attachments.remove(self)
+            self.repo = None
+    def moveto(self, repo):
+        "Change the repo this reset is associated with."
+        self.repo = repo
     def dump(self, _vcs=None):
         "Dump this reset in import-stream format."
         st = "reset %s\n" % self.ref
@@ -1213,7 +1250,7 @@ class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
-                 "fossil_id", "common", "splits", "deletehook",
+                 "fossil_id", "common", "splits", "deletehook", "attachments",
                  "_parent_nodes", "_child_nodes", "_pathset")
     def __init__(self, repo=None):
         self.repo = repo
@@ -1232,6 +1269,7 @@ class Commit(object):
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
         self.deletehook = None	     # Hook used during deletion operations
+        self.attachments = []
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self._pathset = None
@@ -1948,7 +1986,7 @@ class RepoStreamer:
                         del self.filemap[revision][tbd]
                 self.extractor.cleanup(revision, True)
                 if not parents and commit.branch != "refs/heads/master":
-                    reset = Reset()
+                    reset = Reset(repo)
                     reset.ref = commit.branch
                     repo.addEvent(reset)
                 commit.fileops.sort()
@@ -1961,14 +1999,13 @@ class RepoStreamer:
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=operator.itemgetter(1)):
-                reset = Reset()
+                reset = Reset(repo, committish=self.markmap[revision])
                 reset.ref = resetname
-                reset.committish = self.markmap[revision]
                 repo.addEvent(reset)
             # Last, append tag objects.
             for tag in sorted(self.extractor.get_taglist(),
                               key=operator.attrgetter("tagger.date")):
-                tag.committish = self.markmap.get(tag.committish)
+                tag.remember(repo, self.markmap.get(tag.committish))
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
@@ -2515,11 +2552,11 @@ class StreamParser:
                             self.repo.addEvent(commit)
                             baton.twirl()
                         elif line.startswith("reset"):
-                            reset = Reset()
+                            reset = Reset(self.repo)
                             reset.ref = line[6:].strip()
                             line = self.readline()
                             if line.startswith("from"):
-                                reset.committish = line[5:].strip()
+                                reset.remember(self.repo, line[5:].strip())
                             else:
                                 self.pushback(line)
                             self.repo.addEvent(reset)
@@ -3379,7 +3416,7 @@ class StreamParser:
             m = StreamParser.cvs2svn_tag_re.search(commit.comment)
             if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
-                self.repo.events.append(Reset(fulltag, commit.parent_marks()[0]))
+                self.repo.events.append(Reset(self.repo, fulltag, commit.parent_marks()[0]))
                 self.repo.quiet_delete(commit, naked=True)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
@@ -3470,7 +3507,7 @@ class StreamParser:
         issued = set([])
         for event in save_events:
             if isinstance(event, Commit) and event.branch not in issued:
-                reset = Reset()
+                reset = Reset(self.repo)
                 reset.ref = event.branch
                 self.repo.addEvent(reset)
                 issued.add(event.branch)
@@ -5365,7 +5402,9 @@ class RepositoryList:
                         expunged.addEvent(copy.deepcopy(event))
                     continue
                 if isinstance(event, Reset) and event.ref in expunged_branches:
-                    expunged.addEvent(copy.copy(event))
+                    newreset = copy.copy(event)
+                    newreset.repo = expunged
+                    expunged.addEvent(newreset)
         for event in self.repo.events + expunged.events:
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
@@ -7442,13 +7481,15 @@ tag). For a 'delete', no third argument is required.
                 target = self.selection.pop(0)
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
-            tag.committish = repo.events[target].mark
+            tag.forget()
+            tag.remember(repo, repo.events[target].mark)
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new tag name must be nonempty.")
             tag.name = newname
         elif verb == "delete":
+            tag.forget()
             repo.events.remove(tag)
             repo.declare_sequence_mutation()
         else:
@@ -7492,7 +7533,8 @@ An argument matches a reset's name if it is either the entire reference
                 target = self.selection.pop(0)
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
-            reset.committish = repo.events[target].mark
+            reset.forget()
+            reset.remember(repo, repo.events[target].mark)
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if newname.count("/") == 0:
@@ -7501,6 +7543,7 @@ An argument matches a reset's name if it is either the entire reference
                 raise Recoverable("new reset name must be nonempty.")
             reset.ref = newname
         elif verb == "delete":
+            reset.forget()
             repo.events.remove(reset)
             repo.declare_sequence_mutation()
         else:
