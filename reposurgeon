@@ -20,7 +20,7 @@ try:
 except ImportError:
     pass
 
-version="2.28"
+version="2.29"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -963,7 +963,6 @@ class Tag:
             commit = self.repo.objfind(self.committish)
             if commit:
                 commit.attachments.append(self)
-            self.repo = None
     def forget(self):
         "Forget this tag's attachment to its commit and repo."
         if self.repo:
