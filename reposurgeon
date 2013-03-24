@@ -4504,8 +4504,8 @@ class Repository:
                     mark = event.parents()[0].mark
                 if filter_only:
                     self.events = [t for t in self.events \
-                                   if not ((isinstance(t, Tag) or isinstance(t, Reset)) \
-                                   and t.committish == event.mark)]
+                                   if not (isinstance(t, (Tag, Reset)) \
+                                           and t.committish == event.mark)]
                 else:
                     for t in event.attachments:
                         t.forget()
@@ -5611,7 +5611,7 @@ copies at all (it points into sections of the input stream instead).
                             for fileop in event2.fileops:
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
-                elif isinstance(event, Tag) or isinstance(event, Reset):
+                elif isinstance(event, (Tag, Reset)):
                     if event.committish:
                         add_list.append(self.chosen().find(event.committish))
             value |= set(add_list)
@@ -7675,7 +7675,7 @@ map when the repo is written or rebuilt.
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
                     event = repo.events[ei]
-                    if isinstance(event, Commit) or isinstance(event, Tag):
+                    if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
                             lambda m: substitute(getter, m),
                             event.comment)
