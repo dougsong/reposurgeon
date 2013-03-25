@@ -2976,18 +2976,17 @@ class StreamParser:
             # D ops here.  Otherwise later on when we're generating ops, if
             # the M node happens to be missing its hash it will be seen as
             # unmodified and only the D will be issued.
-            for (d, dnode) in enumerate(expanded_nodes):
-                if dnode.action == SD_DELETE:
-                    for mnode in expanded_nodes[d+1:]:
-                        if mnode.path == dnode.path:
-                            dnode.action = None
-            expanded_nodes = [node for node in expanded_nodes
-                              if node.action is not None]
+            seen = set()
+            for node in reversed(expanded_nodes):
+                if node.action == SD_DELETE and node.path in seen:
+                    node.action = None
+                seen.add(node.path)
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
             ancestor_nodes = {}
-            for (n, node) in enumerate(expanded_nodes):
+            for node in expanded_nodes:
+                if node.action is None: continue
                 if node.kind == SD_FILE:
                     if node.action == SD_DELETE:
                         assert node.blob is None
