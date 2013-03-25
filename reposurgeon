@@ -4518,7 +4518,8 @@ class Repository:
                                    if not (isinstance(t, (Tag, Reset)) \
                                            and t.committish == event.mark)]
                 else:
-                    for t in event.attachments:
+                    # use a copy of attachments since it will be mutated
+                    for t in list(event.attachments):
                         t.forget()
                         t.remember(self, mark)
                 # And remove the deleted event
