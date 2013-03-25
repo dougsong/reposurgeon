@@ -1,0 +1,46 @@
+blob
+mark :1
+data 0
+
+reset refs/tags/v1
+commit refs/tags/v1
+mark :2
+author Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+data 13
+Add a file a
+M 100644 :1 a
+
+blob
+mark :3
+data 2
+A
+
+commit refs/heads/master
+mark :5
+author Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+data 16
+Create a file b
+from :2
+M 100644 :3 a
+M 100644 :1 b
+
+reset refs/heads/master
+from :5
+
+reset refs/tags/v2
+from :2
+
+tag v2
+from :2
+tagger Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+data 12
+And another
+
+tag v1
+from :2
+tagger Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+data 14
+This is a tag
+
