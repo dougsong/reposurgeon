@@ -1798,6 +1798,10 @@ class PathMap(object):
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
+    def __len__(self):
+        "Return the number of files in the set."
+        return sum(len(v) if isinstance(v, PathMap) else 1
+                for _, v in self._elts_items())
     def __iter__(self):
         for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
@@ -1872,16 +1876,14 @@ class RepoStreamer:
         self.markseq = 0
         self.tagseq = 0
         self.commits = {}
-        self.markmap = {}
+        self.commit_map = {}
         self.filemap = {}
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
-    def __newmark(self, revision=None):
+    def __newmark(self):
         self.markseq += 1
         mark = ":" + str(self.markseq)
-        if revision:
-            self.markmap[revision] = mark
         return mark
     def extract(self, repo, progress=True):
         if not self.extractor.isclean():
@@ -1901,7 +1903,7 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.set_parent_marks([self.markmap[rev] for rev in parents])
+                commit.set_parents([self.commit_map[rev] for rev in parents])
                 commit.set_branch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
@@ -1991,20 +1993,24 @@ class RepoStreamer:
                 commit.fileops.sort()
                 commit.fossil_id = revision
                 commit.properties.update(self.extractor.get_properties(revision)) 
-                commit.set_mark(self.__newmark(revision))
+                commit.set_mark(self.__newmark())
+                self.commit_map[revision] = commit
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
                 repo.addEvent(commit)
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=operator.itemgetter(1)):
-                reset = Reset(repo, committish=self.markmap[revision])
+                reset = Reset(repo, committish=self.commit_map[revision].mark)
                 reset.ref = resetname
                 repo.addEvent(reset)
             # Last, append tag objects.
             for tag in sorted(self.extractor.get_taglist(),
                               key=operator.attrgetter("tagger.date")):
-                tag.remember(repo, self.markmap.get(tag.committish))
+                # Hashes produced by the GitExtractor are turned into proper
+                # committish marks here.
+                tag.remember(repo, getattr(self.commit_map.get(tag.committish),
+                                            "mark", None))
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
@@ -2577,9 +2583,11 @@ class StreamParser:
                             else:
                                 self.warn("missing tagger after from in tag")
                                 self.pushback(line)
-                            self.repo.addEvent(Tag(self.repo, tagname,
-                                                   referent, tagger,
-                                                   self.fi_read_data()[0]))
+                            self.repo.addEvent(Tag(repo = self.repo,
+                                                   name = tagname,
+                                                   committish = referent,
+                                                   tagger = tagger,
+                                                   comment = self.fi_read_data()[0]))
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.
@@ -4466,32 +4474,31 @@ class Repository:
                         altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
                 if pushback:
+                    # Append a copy of this event's file ops to each parent's
+                    # list and mark the parent as needing resolution.
                     for parent in event.parents():
-                        # Append a copy of this event's file ops to
-                        # each parent's list and mark the parent as needing
-                        # resolution.
-                        for fileop in event.fileops:
-                            # On a pushback (but not a push forward)
-                            # we might have moved the fileop so it's
-                            # now referred to before its actual
-                            # definition.  This will cause a fatal
-                            # error "mark not defined" on import.
-                            if fileop.op == 'M':
-                                swapblob = self.find(fileop.ref)
-                                swapcommit = self.find(parent.mark)
-                                if swapblob > swapcommit:
-                                    #print "Uh oh!", swapcommit, swapblob
-                                    saveblob = self.events[swapblob]
-                                    for i in range(swapblob-swapcommit):
-                                        countdown = swapblob-i
-                                        #print "Moving %d to %d" % (countdown-1, countdown)
-                                        self.events[countdown] = self.events[countdown-1]
-                                    #print "Moving %d to %d" % (swapblob, swapcommit)
-                                    self.events[swapcommit] = saveblob
-                                    self.declare_sequence_mutation()
                         parent.fileops += copy.copy(event.fileops)
                         parent._pathset = None
                         altered.append(parent)
+                    # We need to ensure all fileop blobs are defined before the
+                    # corresponding fileop, in other words ensure that the blobs
+                    # are before the parent with lowest index.
+                    earliest = min(self.find(p.mark) for p in event.parents())
+                    swap_indices = set()
+                    for fileop in event.fileops:
+                        if fileop.op == 'M':
+                            blob_index = self.find(fileop.ref)
+                            if blob_index > earliest: swap_indices.add(blob_index)
+                    if swap_indices:
+                        last = max(swap_indices)
+                        neworder = itertools.chain(
+                                swap_indices, # first take the blobs
+                                # then all others
+                                itertools.ifilterfalse(swap_indices.__contains__,
+                                         xrange(earliest, last+1)) )
+                        self.events[earliest:last+1] = map(
+                                self.events.__getitem__, neworder)
+                        self.declare_sequence_mutation()
                 filter_only = True
                 if tagforward and event.has_children():
                     filter_only = False
@@ -4501,8 +4508,8 @@ class Repository:
                     mark = event.parents()[0].mark
                 if filter_only:
                     self.events = [t for t in self.events \
-                                   if not ((isinstance(t, Tag) or isinstance(t, Reset)) \
-                                   and t.committish == event.mark)]
+                                   if not (isinstance(t, (Tag, Reset)) \
+                                           and t.committish == event.mark)]
                 else:
                     for t in event.attachments:
                         t.forget()
@@ -4540,6 +4547,9 @@ class Repository:
         self.declare_sequence_mutation()
     def quiet_delete(self, commit):
         self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
+    def __delitem__(self, index):
+        # To make Repository a proper container (and please pylint)
+        self.delete([index], ["obliterate", "quiet", "tagback"])
     #
     # Delete machinery ends here
     #
@@ -5385,17 +5395,20 @@ class RepositoryList:
             if event.deletehook:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
-            elif isinstance(event, Reset) or isinstance(event, Tag):
-                target = self.repo.find(event.committish)
+            elif isinstance(event, Reset):
+                target = self.repo.objfind(event.committish)
                 if target is not None:
-                    if self.repo[target].deletehook:
+                    if target.deletehook:
                         expunged.addEvent(copy.deepcopy(event))
-                    continue
-                if isinstance(event, Reset) and event.ref in expunged_branches:
+                elif isinstance(event, Reset) and event.ref in expunged_branches:
                     newreset = copy.copy(event)
                     newreset.repo = expunged
                     expunged.addEvent(newreset)
-        for event in self.repo.events + expunged.events:
+            elif isinstance(event, Tag):
+                target = self.repo.objfind(event.committish)
+                if target is not None and target.deletehook:
+                    expunged.addEvent(copy.deepcopy(event))
+        for event in itertools.chain(self.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
@@ -5605,7 +5618,7 @@ copies at all (it points into sections of the input stream instead).
                             for fileop in event2.fileops:
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
-                elif isinstance(event, Tag) or isinstance(event, Reset):
+                elif isinstance(event, (Tag, Reset)):
                     if event.committish:
                         add_list.append(self.chosen().find(event.committish))
             value |= set(add_list)
@@ -5937,10 +5950,10 @@ copies at all (it points into sections of the input stream instead).
                             if event.branch == symbol:
                                 selection.append(i)
                         elif isinstance(event, Tag):
-                            ti = self.chosen().find(event.committish)
-                            assert(ti is not None)
-                            assert(isinstance(self.chosen()[ti], Commit))
-                            if self.chosen()[ti].branch == symbol:
+                            target = self.chosen().objfind(event.committish)
+                            assert(target is not None)
+                            assert(isinstance(target, Commit))
+                            if target.branch == symbol:
                                 selection.append(i)
                     self.line = self.line[len(os.path.basename(symbol)):]
                     if self.pop() != ')':
@@ -7669,7 +7682,7 @@ map when the repo is written or rebuilt.
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
                 for ei in self.selection:
                     event = repo.events[ei]
-                    if isinstance(event, Commit) or isinstance(event, Tag):
+                    if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
                             lambda m: substitute(getter, m),
                             event.comment)
