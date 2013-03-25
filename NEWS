@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+2.29: 2013-03-24 
+     Extreme speed tuning in SVN analysis - measured at over 11K commits/sec. 
+     canonicalize option changes CR-LF to LF in commit comments.
+
 2.28: 2013-03-22
      There is now a 'reset' command like the tag command.
      Fix for buggy debranch command.
