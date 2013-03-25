@@ -8,7 +8,7 @@ target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README NEWS COPYING TODO
+SOURCES = README NEWS AUTHORS COPYING TODO
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repopuller repopuller.xml \

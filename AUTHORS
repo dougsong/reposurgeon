@@ -1,0 +1,12 @@
+Eric S. Raymond <esr@tyrsus.com> 
+   Designer and original author
+
+Greg Hudson <ghudson@MIT.EDU>
+   Contributed copy-on-write filemaps, which both tremendously sped up
+   Subversion dumpfile parsing and squashed a nasty bug in the older code.
+
+Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>
+   Lots of high-quality code cleanups and speed tuning.
+
+Daniel Brooks <db48x@db48x.net>
+   Date unit testing, improvements for split and expunge commands.
