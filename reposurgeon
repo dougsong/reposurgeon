@@ -4572,7 +4572,7 @@ class Repository:
         def remark(m, e):
             try:
                 return ":" + repr(markmap[m])
-            except ValueError:
+            except KeyError:
                 raise Fatal("unknown mark %s in %s cannot be renumbered!" % \
                             (m, e.__class__.__name__.lower()))
         if baton:
