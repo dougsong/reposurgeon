@@ -866,9 +866,16 @@ class Blob(object):
         self.cookie = None
         self.start = None
         self.size = 0
-    def blobfile(self):
+    def blobfile(self, create=False):
         "File where the content lives."
-        return self.repo.subdir() + "/blob-" + repr(id(self))
+        stem = repr(id(self))
+        parts = ("blobs", stem[:3], stem[3:6], stem[6:]) 
+        if create:
+            for d in range(len(parts)-1):
+                partial = os.path.join(self.repo.subdir(), *parts[:d+1])
+                if not os.path.exists(partial):
+                    os.mkdir(partial)
+        return os.path.join(self.repo.subdir(), *parts)
     def hasfile(self):
         "Does this blob have its own file?"
         return not self.repo.seekstream or self.start is None
@@ -902,10 +909,10 @@ class Blob(object):
         self.size = len(text)
         if self.hasfile():
             if global_options["compressblobs"]:
-                with bz2.BZ2File(self.blobfile(), "w") as wfp:
+                with bz2.BZ2File(self.blobfile(create=True), "w") as wfp:
                     return wfp.write(text)
             else:
-                with open(self.blobfile(), "w") as wfp:
+                with open(self.blobfile(create=True), "w") as wfp:
                     wfp.write(text)
     def moveto(self, repo):
         "Change the repo this blob is associated with."
@@ -1972,7 +1979,7 @@ class RepoStreamer:
                             # Actual content enters the representation
                             blob = Blob(repo)
                             blob.set_mark(blobmark)
-                            shutil.copyfile(path, blob.blobfile())
+                            shutil.copyfile(path, blob.blobfile(create=True))
                             blob.path = path
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
