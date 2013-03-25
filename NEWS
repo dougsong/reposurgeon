@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+2.30:
+     Fossil map dumps are pruned appropriately after an expunge.
+     More speed tuning.
+
 2.29: 2013-03-24 
      Extreme speed tuning in SVN analysis - measured at over 11K commits/sec. 
      canonicalize option changes CR-LF to LF in commit comments.
