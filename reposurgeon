@@ -4064,7 +4064,10 @@ class Repository:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:
                 serial = ''
-            if commit.fossil_id:
+            # The objfind test is needed in case this repo is an expunge
+            # fragment with a copied fossil map.  It's a simple substitute
+            # for partitioning the map at expunge time.
+            if self.objfind(commit.mark) and commit.fossil_id:
                 fp.write("%s\t%s!%s%s\n" % (cookie,
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
