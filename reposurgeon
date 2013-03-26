@@ -3426,7 +3426,8 @@ class StreamParser:
             m = StreamParser.cvs2svn_tag_re.search(commit.comment)
             if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
-                self.repo.events.append(Reset(self.repo, fulltag, commit.parent_marks()[0]))
+                self.repo.events.append(Reset(self.repo, ref=fulltag,
+                                              committish=commit.parent_marks()[0]))
                 self.repo.quiet_delete(commit)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
