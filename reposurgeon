@@ -959,6 +959,7 @@ class Tag:
         self.name = name
         self.color = None
         self.committish = None
+        self.target = None
         self.remember(repo, committish=committish)
         self.tagger = tagger
         self.comment = comment
@@ -967,16 +968,15 @@ class Tag:
         self.repo = repo
         self.committish = committish
         if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.add(self)
+            self.target = self.repo.objfind(self.committish)
+            if self.target:
+                self.target.attachments.add(self)
     def forget(self):
         "Forget this tag's attachment to its commit and repo."
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.discard(self)
-            self.repo = None
+        if self.target:
+            self.target.attachments.discard(self)
+            self.target = None
+        self.repo = None
     def index(self):
         "Our 0-origin index in our repo."
         return self.repo.index(self)
@@ -1054,22 +1054,22 @@ class Reset:
         self.repo = None
         self.ref = ref
         self.committish = None
+        self.target = None
         self.remember(repo, committish=committish)
     def remember(self, repo, committish):
-        "Remember an attachment to a commit and repository."
+        "Remember an attachment to a repo and commit."
         self.repo = repo
         self.committish = committish
         if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.add(self)
+            self.target = self.repo.objfind(self.committish)
+            if self.target:
+                self.target.attachments.add(self)
     def forget(self):
         "Forget this reset's attachment to its commit and repo."
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.discard(self)
-            self.repo = None
+        if self.target:
+            self.target.attachments.discard(self)
+            self.target = None
+        self.repo = None
     def moveto(self, repo):
         "Change the repo this reset is associated with."
         self.repo = repo
