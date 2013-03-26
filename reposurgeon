@@ -3884,7 +3884,7 @@ class SubversionDumper:
                     # Turn any annotated tag pointing at this commit into
                     # a directory copy.
                     for tag in tags:
-                        if tag.committish == event.mark:
+                        if tag.target is event:
                             revision += 1
                             self.make_tag(fp,
                                           revision,
@@ -4518,7 +4518,7 @@ class Repository:
                 if filter_only:
                     self.events = [t for t in self.events \
                                    if not (isinstance(t, (Tag, Reset)) \
-                                           and t.committish == event.mark)]
+                                           and t.target is event)]
                 else:
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
@@ -5221,7 +5221,7 @@ class RepositoryList:
             if isinstance(t, Tag):
                 for c in self.repo.events:
                     if isinstance(c, Commit):
-                        if c.mark == t.committish:
+                        if c is t.target:
                             t.color = c.color
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
@@ -5406,18 +5406,17 @@ class RepositoryList:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
             elif isinstance(event, Reset):
-                target = self.repo.objfind(event.committish)
-                if target is not None:
-                    if target.deletehook:
+                if event.target is not None:
+                    if event.target.deletehook:
                         expunged.addEvent(copy.deepcopy(event))
                 elif isinstance(event, Reset) and event.ref in expunged_branches:
                     newreset = copy.copy(event)
                     newreset.repo = expunged
                     expunged.addEvent(newreset)
-            elif isinstance(event, Tag):
-                target = self.repo.objfind(event.committish)
-                if target is not None and target.deletehook:
-                    expunged.addEvent(copy.deepcopy(event))
+            elif isinstance(event, Tag) and \
+                    event.target is not None and \
+                    event.target.deletehook:
+                expunged.addEvent(copy.deepcopy(event))
         for event in itertools.chain(self.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
@@ -5629,8 +5628,8 @@ copies at all (it points into sections of the input stream instead).
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
                 elif isinstance(event, (Tag, Reset)):
-                    if event.committish:
-                        add_list.append(self.chosen().find(event.committish))
+                    if event.target:
+                        add_list.append(event.target.index())
             value |= set(add_list)
             value -= set(remove_list)
         self.line = self.line.lstrip()
@@ -5960,10 +5959,9 @@ copies at all (it points into sections of the input stream instead).
                             if event.branch == symbol:
                                 selection.append(i)
                         elif isinstance(event, Tag):
-                            target = self.chosen().objfind(event.committish)
-                            assert(target is not None)
-                            assert(isinstance(target, Commit))
-                            if target.branch == symbol:
+                            assert(event.target is not None)
+                            assert(isinstance(event.target, Commit))
+                            if event.target.branch == symbol:
                                 selection.append(i)
                     self.line = self.line[len(os.path.basename(symbol)):]
                     if self.pop() != ')':
@@ -6411,7 +6409,7 @@ unwieldy.
                         if fileop.op == "M":
                             sizes[event.branch] += self.repo.objfind(fileop.ref).size
                 elif isinstance(event, Tag):
-                    commit = self.repo.objfind(event.committish)
+                    commit = event.target
                     if commit.branch not in sizes:
                         sizes[commit.branch] = 0
                     sizes[commit.branch] += len(str(event.tagger))
