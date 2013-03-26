@@ -959,7 +959,7 @@ class Tag:
         self.name = name
         self.color = None
         self.committish = None
-        self.remember(repo, committish)
+        self.remember(repo, committish=committish)
         self.tagger = tagger
         self.comment = comment
     def remember(self, repo, committish):
@@ -1054,7 +1054,7 @@ class Reset:
         self.repo = None
         self.ref = ref
         self.committish = None
-        self.remember(repo, committish)
+        self.remember(repo, committish=committish)
     def remember(self, repo, committish):
         "Remember an attachment to a commit and repository."
         self.repo = repo
@@ -2016,8 +2016,9 @@ class RepoStreamer:
                               key=operator.attrgetter("tagger.date")):
                 # Hashes produced by the GitExtractor are turned into proper
                 # committish marks here.
-                tag.remember(repo, getattr(self.commit_map.get(tag.committish),
-                                            "mark", None))
+                tag.remember(repo,
+                             committish=getattr(self.commit_map.get(tag.committish),
+                                                "mark", None))
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
@@ -2568,7 +2569,7 @@ class StreamParser:
                             reset.ref = line[6:].strip()
                             line = self.readline()
                             if line.startswith("from"):
-                                reset.remember(self.repo, line[5:].strip())
+                                reset.remember(self.repo, committish=line[5:].strip())
                             else:
                                 self.pushback(line)
                             self.repo.addEvent(reset)
@@ -4521,7 +4522,7 @@ class Repository:
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
                         t.forget()
-                        t.remember(self, mark)
+                        t.remember(self, committish=mark)
                 # And remove the deleted event
                 event.forget()
                 self.events.pop(ei)
@@ -7493,7 +7494,7 @@ tag). For a 'delete', no third argument is required.
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             tag.forget()
-            tag.remember(repo, repo.events[target].mark)
+            tag.remember(repo, committish=repo.events[target].mark)
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
@@ -7545,7 +7546,7 @@ An argument matches a reset's name if it is either the entire reference
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             reset.forget()
-            reset.remember(repo, repo.events[target].mark)
+            reset.remember(repo, committish=repo.events[target].mark)
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if newname.count("/") == 0:
