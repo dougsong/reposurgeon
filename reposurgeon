@@ -963,14 +963,18 @@ class Tag:
         self.remember(repo, committish=committish)
         self.tagger = tagger
         self.comment = comment
-    def remember(self, repo, committish):
+    def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
-        self.committish = committish
-        if self.repo:
-            self.target = self.repo.objfind(self.committish)
-            if self.target:
-                self.target.attachments.add(self)
+        if target is not None:
+            self.target = target
+            self.committish = target.mark
+        else:
+            self.committish = committish
+            if self.repo:
+                self.target = self.repo.objfind(self.committish)
+        if self.target:
+            self.target.attachments.add(self)
     def forget(self):
         "Forget this tag's attachment to its commit and repo."
         if self.target:
@@ -1056,14 +1060,18 @@ class Reset:
         self.committish = None
         self.target = None
         self.remember(repo, committish=committish)
-    def remember(self, repo, committish):
+    def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
-        self.committish = committish
-        if self.repo:
-            self.target = self.repo.objfind(self.committish)
-            if self.target:
-                self.target.attachments.add(self)
+        if target is not None:
+            self.target = target
+            self.committish = target.mark
+        else:
+            self.committish = committish
+            if self.repo:
+                self.target = self.repo.objfind(self.committish)
+        if self.target:
+            self.target.attachments.add(self)
     def forget(self):
         "Forget this reset's attachment to its commit and repo."
         if self.target:
