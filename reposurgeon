@@ -954,13 +954,13 @@ class Blob(object):
 class Tag:
     "Represents an annotated tag."
     def __init__(self, repo=None,
-                 name=None, committish=None, tagger=None, comment=None):
+                 name=None, committish=None, target=None, tagger=None, comment=None):
         self.repo = None
         self.name = name
         self.color = None
         self.committish = None
         self.target = None
-        self.remember(repo, committish=committish)
+        self.remember(repo, committish=committish, target=target)
         self.tagger = tagger
         self.comment = comment
     def remember(self, repo, committish=None, target=None):
@@ -1054,12 +1054,12 @@ class Tag:
 
 class Reset:
     "Represents a branch creation."
-    def __init__(self, repo, ref=None, committish=None):
+    def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
         self.ref = ref
         self.committish = None
         self.target = None
-        self.remember(repo, committish=committish)
+        self.remember(repo, committish=committish, target=target)
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
