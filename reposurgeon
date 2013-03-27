@@ -2016,7 +2016,8 @@ class RepoStreamer:
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=operator.itemgetter(1)):
-                reset = Reset(repo, committish=self.commit_map[revision].mark)
+                # FIXME: what if revision is unknown ? keep previous behavior for now
+                reset = Reset(repo, target=self.commit_map[revision])
                 reset.ref = resetname
                 repo.addEvent(reset)
             # Last, append tag objects.
@@ -3439,7 +3440,7 @@ class StreamParser:
             if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
                 self.repo.events.append(Reset(self.repo, ref=fulltag,
-                                              committish=commit.parent_marks()[0]))
+                                              target=commit.parents()[0]))
                 self.repo.quiet_delete(commit)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
