@@ -3310,7 +3310,7 @@ class StreamParser:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
                                  "root",
-                                 second.mark,
+                                 second,
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
@@ -3425,7 +3425,7 @@ class StreamParser:
                         tagname += "-root"
                     self.repo.tagify(commit,
                                      tagname,
-                                     commit.parent_marks()[0])
+                                     commit.parents()[0])
                 baton.twirl()
             self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl()
@@ -3466,7 +3466,7 @@ class StreamParser:
                     legend += "]]\n"
                     self.repo.tagify(commit,
                                      "emptycommit-%s" % commit.fossil_id,
-                                     commit.parent_marks()[0],
+                                     commit.parents()[0],
                                      legend)
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
@@ -3484,7 +3484,7 @@ class StreamParser:
                     commit.fileops = []
                     self.repo.tagify(commit,
                                      "tipdelete-%s" % label,
-                                     commit.parent_marks()[0])
+                                     commit.parents()[0])
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
@@ -4092,7 +4092,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, committish, legend=""):
+    def tagify(self, commit, name, target, legend=""):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -4107,7 +4107,7 @@ class Repository:
             pref = commit.comment + "\n"
         self.addEvent(Tag(commit.repo,
                           name=name,
-                          committish=committish,
+                          target=target,
                           tagger=commit.committer,
                           comment=pref + legend))
         self.quiet_delete(commit)
