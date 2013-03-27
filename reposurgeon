@@ -2024,9 +2024,13 @@ class RepoStreamer:
                               key=operator.attrgetter("tagger.date")):
                 # Hashes produced by the GitExtractor are turned into proper
                 # committish marks here.
-                tag.remember(repo,
-                             committish=getattr(self.commit_map.get(tag.committish),
-                                                "mark", None))
+                c = self.commit_map.get(tag.committish)
+                if c is None:
+                    # FIXME: we should probably error here, keep previous
+                    # behavior for now
+                    tag.remember(repo, committish=None)
+                else:
+                    tag.remember(repo, target=c)
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
@@ -4519,10 +4523,10 @@ class Repository:
                 filter_only = True
                 if tagforward and event.has_children():
                     filter_only = False
-                    mark = event.first_child().mark
+                    new_target = event.first_child()
                 elif tagback and event.parents():
                     filter_only = False
-                    mark = event.parents()[0].mark
+                    new_target = event.parents()[0]
                 if filter_only:
                     self.events = [t for t in self.events \
                                    if not (isinstance(t, (Tag, Reset)) \
@@ -4531,7 +4535,7 @@ class Repository:
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
                         t.forget()
-                        t.remember(self, committish=mark)
+                        t.remember(self, target=new_target)
                 # And remove the deleted event
                 event.forget()
                 self.events.pop(ei)
@@ -7501,7 +7505,7 @@ tag). For a 'delete', no third argument is required.
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             tag.forget()
-            tag.remember(repo, committish=repo.events[target].mark)
+            tag.remember(repo, target=repo.events[target])
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
@@ -7553,7 +7557,7 @@ An argument matches a reset's name if it is either the entire reference
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             reset.forget()
-            reset.remember(repo, committish=repo.events[target].mark)
+            reset.remember(repo, target=repo.events[target])
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if newname.count("/") == 0:
