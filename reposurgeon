@@ -3120,17 +3120,13 @@ class StreamParser:
             if debug_enable(DEBUG_EXTRACT):
                 announce("r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
-            cliques = {}
+            cliques = collections.defaultdict(list)
             for (node, fileop) in actions:
                 for branch in self.branches:
                     if node.path.startswith(branch):
-                        if branch not in cliques:
-                            cliques[branch] = []
                         cliques[branch].append((node, fileop))
                         break
                 else:
-                    if "" not in cliques:
-                        cliques[""] = []
                     cliques[""].append((node, fileop))
             # Make an operation list from the cliques.
             oplist = []
