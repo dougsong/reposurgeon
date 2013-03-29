@@ -3128,18 +3128,20 @@ class StreamParser:
                         break
                 else:
                     cliques[""].append(fileop)
-            # Make an operation list from the cliques.
-            oplist = cliques.items()
-            # Figure out which branch cliques contain only branch deletes
-            deletealls = set([])
-            for (branch, ops) in oplist:
+            # Make two operation lists from the cliques, sorting cliques
+            # containing only branch deletes from other cliques.
+            deleteall_ops = []
+            other_ops = []
+            for (branch, ops) in cliques.iteritems():
                 if len(ops) == 1 and ops[0].op == "deleteall":
-                    deletealls.add(branch)
+                    deleteall_ops.append((branch, ops))
+                else:
+                    other_ops.append((branch, ops))
             # The commit is truly mixed if there is more than one clique
-            # not consisting entirely of deleteall operations.  Sort the
+            # not consisting entirely of deleteall operations. Create
             # oplist so all non-deleteall cliques are at the front.
-            mixed = len(oplist) - len(deletealls) > 1
-            oplist.sort(key=lambda b: b[0] in deletealls)
+            mixed = len(other_ops) > 1
+            oplist = other_ops + deleteall_ops
             newcommits = []
             # In the ordinary case, we can assign all non-deleteall commits
             # to the base commit.
