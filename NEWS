@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-2.30:
+2.30: 2013-03-28
      Fossil map dumps are pruned appropriately after an expunge.
      More speed tuning.
      An AUTHORS file now credits some significant collaborators
