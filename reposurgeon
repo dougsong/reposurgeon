@@ -954,29 +954,33 @@ class Blob(object):
 class Tag:
     "Represents an annotated tag."
     def __init__(self, repo=None,
-                 name=None, committish=None, tagger=None, comment=None):
+                 name=None, committish=None, target=None, tagger=None, comment=None):
         self.repo = None
         self.name = name
         self.color = None
         self.committish = None
-        self.remember(repo, committish)
+        self.target = None
+        self.remember(repo, committish=committish, target=target)
         self.tagger = tagger
         self.comment = comment
-    def remember(self, repo, committish):
+    def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
-        self.committish = committish
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.append(self)
+        if target is not None:
+            self.target = target
+            self.committish = target.mark
+        else:
+            self.committish = committish
+            if self.repo:
+                self.target = self.repo.objfind(self.committish)
+        if self.target:
+            self.target.attachments.add(self)
     def forget(self):
         "Forget this tag's attachment to its commit and repo."
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit and self in commit.attachments:
-                commit.attachments.remove(self)
-            self.repo = None
+        if self.target:
+            self.target.attachments.discard(self)
+            self.target = None
+        self.repo = None
     def index(self):
         "Our 0-origin index in our repo."
         return self.repo.index(self)
@@ -1050,26 +1054,30 @@ class Tag:
 
 class Reset:
     "Represents a branch creation."
-    def __init__(self, repo, ref=None, committish=None):
+    def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
         self.ref = ref
         self.committish = None
-        self.remember(repo, committish)
-    def remember(self, repo, committish):
-        "Remember an attachment to a commit and repository."
+        self.target = None
+        self.remember(repo, committish=committish, target=target)
+    def remember(self, repo, committish=None, target=None):
+        "Remember an attachment to a repo and commit."
         self.repo = repo
-        self.committish = committish
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit:
-                commit.attachments.append(self)
+        if target is not None:
+            self.target = target
+            self.committish = target.mark
+        else:
+            self.committish = committish
+            if self.repo:
+                self.target = self.repo.objfind(self.committish)
+        if self.target:
+            self.target.attachments.add(self)
     def forget(self):
         "Forget this reset's attachment to its commit and repo."
-        if self.repo:
-            commit = self.repo.objfind(self.committish)
-            if commit and self in commit.attachments:
-                commit.attachments.remove(self)
-            self.repo = None
+        if self.target:
+            self.target.attachments.discard(self)
+            self.target = None
+        self.repo = None
     def moveto(self, repo):
         "Change the repo this reset is associated with."
         self.repo = repo
@@ -1275,7 +1283,7 @@ class Commit(object):
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
         self.deletehook = None	     # Hook used during deletion operations
-        self.attachments = []
+        self.attachments = set()
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self._pathset = None
@@ -2008,7 +2016,8 @@ class RepoStreamer:
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=operator.itemgetter(1)):
-                reset = Reset(repo, committish=self.commit_map[revision].mark)
+                # FIXME: what if revision is unknown ? keep previous behavior for now
+                reset = Reset(repo, target=self.commit_map[revision])
                 reset.ref = resetname
                 repo.addEvent(reset)
             # Last, append tag objects.
@@ -2016,8 +2025,13 @@ class RepoStreamer:
                               key=operator.attrgetter("tagger.date")):
                 # Hashes produced by the GitExtractor are turned into proper
                 # committish marks here.
-                tag.remember(repo, getattr(self.commit_map.get(tag.committish),
-                                            "mark", None))
+                c = self.commit_map.get(tag.committish)
+                if c is None:
+                    # FIXME: we should probably error here, keep previous
+                    # behavior for now
+                    tag.remember(repo, committish=None)
+                else:
+                    tag.remember(repo, target=c)
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
         return repo
@@ -2568,7 +2582,7 @@ class StreamParser:
                             reset.ref = line[6:].strip()
                             line = self.readline()
                             if line.startswith("from"):
-                                reset.remember(self.repo, line[5:].strip())
+                                reset.remember(self.repo, committish=line[5:].strip())
                             else:
                                 self.pushback(line)
                             self.repo.addEvent(reset)
@@ -3297,7 +3311,7 @@ class StreamParser:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
                                  "root",
-                                 second.mark,
+                                 second,
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
@@ -3412,7 +3426,7 @@ class StreamParser:
                         tagname += "-root"
                     self.repo.tagify(commit,
                                      tagname,
-                                     commit.parent_marks()[0])
+                                     commit.parents()[0])
                 baton.twirl()
             self.repo.timings.append(["tagifying", time.time()]) 
         baton.twirl()
@@ -3425,7 +3439,8 @@ class StreamParser:
             m = StreamParser.cvs2svn_tag_re.search(commit.comment)
             if m and not commit.has_children():
                 fulltag = os.path.join("refs", "tags", m.group(1))
-                self.repo.events.append(Reset(self.repo, fulltag, commit.parent_marks()[0]))
+                self.repo.events.append(Reset(self.repo, ref=fulltag,
+                                              target=commit.parents()[0]))
                 self.repo.quiet_delete(commit)
             # Childless generated branch commits carry no informationn,
             # and just get removed.
@@ -3452,7 +3467,7 @@ class StreamParser:
                     legend += "]]\n"
                     self.repo.tagify(commit,
                                      "emptycommit-%s" % commit.fossil_id,
-                                     commit.parent_marks()[0],
+                                     commit.parents()[0],
                                      legend)
                 else:
                     self.gripe("r%s: deleting parentless zero-op commit." \
@@ -3470,7 +3485,7 @@ class StreamParser:
                     commit.fileops = []
                     self.repo.tagify(commit,
                                      "tipdelete-%s" % label,
-                                     commit.parent_marks()[0])
+                                     commit.parents()[0])
                 else:
                     self.gripe("r%s: deleting parentless tip delete of %s" \
                                % (commit.fossil_id, commit.branch))
@@ -3882,7 +3897,7 @@ class SubversionDumper:
                     # Turn any annotated tag pointing at this commit into
                     # a directory copy.
                     for tag in tags:
-                        if tag.committish == event.mark:
+                        if tag.target is event:
                             revision += 1
                             self.make_tag(fp,
                                           revision,
@@ -4078,7 +4093,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, committish, legend=""):
+    def tagify(self, commit, name, target, legend=""):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -4093,7 +4108,7 @@ class Repository:
             pref = commit.comment + "\n"
         self.addEvent(Tag(commit.repo,
                           name=name,
-                          committish=committish,
+                          target=target,
                           tagger=commit.committer,
                           comment=pref + legend))
         self.quiet_delete(commit)
@@ -4509,19 +4524,19 @@ class Repository:
                 filter_only = True
                 if tagforward and event.has_children():
                     filter_only = False
-                    mark = event.first_child().mark
+                    new_target = event.first_child()
                 elif tagback and event.parents():
                     filter_only = False
-                    mark = event.parents()[0].mark
+                    new_target = event.parents()[0]
                 if filter_only:
                     self.events = [t for t in self.events \
                                    if not (isinstance(t, (Tag, Reset)) \
-                                           and t.committish == event.mark)]
+                                           and t.target is event)]
                 else:
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
                         t.forget()
-                        t.remember(self, mark)
+                        t.remember(self, target=new_target)
                 # And remove the deleted event
                 event.forget()
                 self.events.pop(ei)
@@ -5219,7 +5234,7 @@ class RepositoryList:
             if isinstance(t, Tag):
                 for c in self.repo.events:
                     if isinstance(c, Commit):
-                        if c.mark == t.committish:
+                        if c is t.target:
                             t.color = c.color
         # Front events go with early segment, they'll be copied to late one. 
         for event in self.repo.front_events():
@@ -5404,18 +5419,17 @@ class RepositoryList:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
             elif isinstance(event, Reset):
-                target = self.repo.objfind(event.committish)
-                if target is not None:
-                    if target.deletehook:
+                if event.target is not None:
+                    if event.target.deletehook:
                         expunged.addEvent(copy.deepcopy(event))
                 elif isinstance(event, Reset) and event.ref in expunged_branches:
                     newreset = copy.copy(event)
                     newreset.repo = expunged
                     expunged.addEvent(newreset)
-            elif isinstance(event, Tag):
-                target = self.repo.objfind(event.committish)
-                if target is not None and target.deletehook:
-                    expunged.addEvent(copy.deepcopy(event))
+            elif isinstance(event, Tag) and \
+                    event.target is not None and \
+                    event.target.deletehook:
+                expunged.addEvent(copy.deepcopy(event))
         for event in itertools.chain(self.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
@@ -5627,8 +5641,8 @@ copies at all (it points into sections of the input stream instead).
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
                 elif isinstance(event, (Tag, Reset)):
-                    if event.committish:
-                        add_list.append(self.chosen().find(event.committish))
+                    if event.target:
+                        add_list.append(event.target.index())
             value |= set(add_list)
             value -= set(remove_list)
         self.line = self.line.lstrip()
@@ -5958,10 +5972,9 @@ copies at all (it points into sections of the input stream instead).
                             if event.branch == symbol:
                                 selection.append(i)
                         elif isinstance(event, Tag):
-                            target = self.chosen().objfind(event.committish)
-                            assert(target is not None)
-                            assert(isinstance(target, Commit))
-                            if target.branch == symbol:
+                            assert(event.target is not None)
+                            assert(isinstance(event.target, Commit))
+                            if event.target.branch == symbol:
                                 selection.append(i)
                     self.line = self.line[len(os.path.basename(symbol)):]
                     if self.pop() != ')':
@@ -6409,7 +6422,7 @@ unwieldy.
                         if fileop.op == "M":
                             sizes[event.branch] += self.repo.objfind(fileop.ref).size
                 elif isinstance(event, Tag):
-                    commit = self.repo.objfind(event.committish)
+                    commit = event.target
                     if commit.branch not in sizes:
                         sizes[commit.branch] = 0
                     sizes[commit.branch] += len(str(event.tagger))
@@ -7493,7 +7506,7 @@ tag). For a 'delete', no third argument is required.
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             tag.forget()
-            tag.remember(repo, repo.events[target].mark)
+            tag.remember(repo, target=repo.events[target])
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
@@ -7545,7 +7558,7 @@ An argument matches a reset's name if it is either the entire reference
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
             reset.forget()
-            reset.remember(repo, repo.events[target].mark)
+            reset.remember(repo, target=repo.events[target])
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if newname.count("/") == 0:
