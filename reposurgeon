@@ -3239,7 +3239,14 @@ class StreamParser:
                         latest = max(reversed(copies),
                                      key=lambda node: int(node.from_rev))
                         threshold = False
-                        for prev in reversed(list(self.repo.commits())):
+                        # We do not use the memoized commits() iterator since:
+                        #  - for reverse iteration it first needs to be
+                        #    exhausted and fully cached
+                        #  - this is the only need of it in this phase
+                        #  - the cache is clobbered each revision, that is
+                        #    between any two uses of this iterator
+                        for prev in reversed(self.repo):
+                            if not isinstance(prev, Commit): continue
                             if prev.fossil_id == latest.from_rev:
                                 if debug_enable(DEBUG_TOPOLOGY):
                                     announce("r%s: found %s looking for %s" \
