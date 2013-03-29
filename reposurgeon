@@ -3137,23 +3137,22 @@ class StreamParser:
                     deleteall_ops.append((branch, ops))
                 else:
                     other_ops.append((branch, ops))
-            # The commit is truly mixed if there is more than one clique
-            # not consisting entirely of deleteall operations. Create
-            # oplist so all non-deleteall cliques are at the front.
-            mixed = len(other_ops) > 1
-            oplist = other_ops + deleteall_ops
+            oplist = itertools.chain(other_ops, deleteall_ops)
+            # Create all commits corresponding to the revision
             newcommits = []
-            # In the ordinary case, we can assign all non-deleteall commits
-            # to the base commit.
             commit.fossil_id = revision
-            if mixed:
+            # The revision is truly mixed if there is more than one clique
+            # not consisting entirely of deleteall operations.
+            if len(other_ops) > 1:
                 split_commits.append(revision)
             else:
+                # In the ordinary case, we can assign all non-deleteall fileops
+                # to the base commit.
                 self.repo.fossil_map["SVN:%s" % commit.fossil_id] = commit
-                if oplist:
-                    (commit.common, commit.fileops) = oplist.pop(0)
+                try:
+                    commit.common, commit.fileops = next(oplist)
                     commit._pathset = None
-                else:
+                except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.set_mark(self.__newmark())
                 if debug_enable(DEBUG_EXTRACT):
@@ -3161,7 +3160,7 @@ class StreamParser:
                 newcommits.append(commit)
             # If the commit is mixed, or there are deletealls left over,
             # handle that.
-            oplist.sort(key=operator.itemgetter(0))
+            oplist = sorted(oplist, key=operator.itemgetter(0))
             for (i, (branch, fileops)) in enumerate(oplist):
                 split = commit.clone()
                 split.common = branch
