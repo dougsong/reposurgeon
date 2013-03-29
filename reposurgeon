@@ -2138,7 +2138,6 @@ class StreamParser:
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
         self.permissions = {}
-        self.has_properties = set([])
         self.fileop_branchlinks  = set([])
         self.directory_branchlinks  = set([])
         self.active_gitignores = set([])
@@ -2780,6 +2779,7 @@ class StreamParser:
             if revision == "0": 
                 continue
             expanded_nodes = []
+            has_properties = set()
             for (n, node) in enumerate(record.nodes):
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s:%d: %s" % (revision, n+1, node))
@@ -2794,21 +2794,23 @@ class StreamParser:
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
-                    latch = False
-                    for (prop, val) in node.props.iteritems():
-                        if prop not in StreamParser.IgnoreProperties:
-                            if not global_options["svn_ignore_properties"]:
-                                if not latch:
-                                    self.gripe("r%s~%s properties set:" \
-                                               % (node.revision, node.path))
-                                    latch = True
+                    if not global_options["svn_ignore_properties"]:
+                        prop_items = ((prop, val) \
+                                        for (prop,val) in node.props.iteritems() \
+                                        if prop not in StreamParser.IgnoreProperties)
+                        try:
+                            first = next(prop_items)
+                        except StopIteration:
+                            if node.path in has_properties:
+                                self.gripe("r%s~%s: properties cleared." \
+                                             % (node.revision, node.path))
+                                has_properties.discard(node.path)
+                        else:
+                            self.gripe("r%s~%s properties set:" \
+                                                   % (node.revision, node.path))
+                            for prop, val in itertools.chain((first,), prop_items):
                                 self.gripe("\t%s = '%s'" % (prop, val))
-                            self.has_properties.add(node.path)
-                    if node.path in self.has_properties and not latch:
-                        self.has_properties.discard(node.path)
-                        if not global_options["svn_ignore_properties"]:
-                            self.gripe("r%s~%s: properties cleared." \
-                                     % (node.revision, node.path))
+                            has_properties.add(node.path)
                 if node.kind == SD_FILE:
                     expanded_nodes.append(node)
                 elif node.kind == SD_DIR:
