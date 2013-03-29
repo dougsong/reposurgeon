@@ -3124,14 +3124,12 @@ class StreamParser:
             for (node, fileop) in actions:
                 for branch in self.branches:
                     if node.path.startswith(branch):
-                        cliques[branch].append((node, fileop))
+                        cliques[branch].append(fileop)
                         break
                 else:
-                    cliques[""].append((node, fileop))
+                    cliques[""].append(fileop)
             # Make an operation list from the cliques.
-            oplist = []
-            for (branch, actions) in cliques.iteritems():
-                oplist.append((branch, [action[1] for action in actions]))
+            oplist = cliques.items()
             # Figure out which branch cliques contain only branch deletes
             deletealls = set([])
             for (branch, ops) in oplist:
