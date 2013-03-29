@@ -3139,7 +3139,7 @@ class StreamParser:
             # not consisting entirely of deleteall operations.  Sort the
             # oplist so all non-deleteall cliques are at the front.
             mixed = len(oplist) - len(deletealls) > 1
-            oplist.sort(key=lambda b: not b[0] in deletealls)
+            oplist.sort(key=lambda b: b[0] in deletealls)
             newcommits = []
             # In the ordinary case, we can assign all non-deleteall commits
             # to the base commit.

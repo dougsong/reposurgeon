@@ -201,14 +201,12 @@ data 160
 .*.swp
 .DS_store
 
-# Fossil-ID: 13.1
+# Fossil-ID: 13
 commit refs/heads/master
 mark :25
 committer clepple-guest <clepple-guest> 1140096703 +0000
-data 78
+data 40
 Moving branches/Development into trunk.
-
-[[Split portion of a mixed commit.]]
 from :23
 merge :22
 M 100644 :24 .gitignore
@@ -325,7 +323,9 @@ Initial CVS import from nut testing release 2.0.1-pre4
 tag tipdelete-Development
 from :22
 tagger clepple-guest <clepple-guest> 1140096703 +0000
-data 41
+data 79
 Moving branches/Development into trunk.
+
+[[Split portion of a mixed commit.]]
 
 
