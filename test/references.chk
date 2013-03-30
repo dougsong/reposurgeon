@@ -13825,14 +13825,12 @@ data 160
 .*.swp
 .DS_store
 
-# Fossil-ID: 356.1
+# Fossil-ID: 356
 commit refs/heads/master
 mark :1967
 committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 78
+data 40
 Moving branches/Development into trunk.
-
-[[Split portion of a mixed commit.]]
 from :1965
 merge :1964
 M 100644 :1966 .gitignore
@@ -15037,8 +15035,10 @@ Cleaning up repository after initial SVN import
 tag tipdelete-Development
 from :1964
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 41
+data 79
 Moving branches/Development into trunk.
+
+[[Split portion of a mixed commit.]]
 
 
 tag tipdelete-INITIAL_IMPORT_AQ
