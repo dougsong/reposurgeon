@@ -3135,10 +3135,16 @@ class StreamParser:
                 announce("r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
             cliques = collections.defaultdict(list)
+            lastbranch = None
             for (node, fileop) in actions:
+                # Try last seen branch first
+                if lastbranch and node.path.startswith(lastbranch):
+                    cliques[branch].append(fileop)
+                    continue
                 for branch in self.branches:
                     if node.path.startswith(branch):
                         cliques[branch].append(fileop)
+                        lastbranch = branch
                         break
                 else:
                     cliques[""].append(fileop)
