@@ -1875,15 +1875,8 @@ class PathMap(object):
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
-        components = collections.deque()
-        while True:
-            dirname, basename = os.path.split(path)
-            if basename:
-                components.append(basename)
-            if dirname == path or not dirname:
-                break
-            path = dirname
-        return (components.popleft() if components else None, reversed(components))
+        components = filter(None, os.path.normpath(path).split(os.sep))
+        return (components.pop() if components else None, components)
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
