@@ -3547,18 +3547,18 @@ class StreamParser:
         # Remove spurious parent links caused by random cvs2svn file copies.
         #baton.twirl("debubbling")
         for commit in self.repo.commits():
-            parents = commit.parents()
-            if len(parents) == 2:
-                if parents[0] == parents[1]:
+            try:
+                a, b = commit.parents()
+            except ValueError:
+                pass
+            else:
+                if a is b:
                     self.gripe("r%s: duplicate parent marks" % commit.fossil_id)
-                    continue
-                (a, b) = parents
-                if a.branch != commit.branch or b.branch != commit.branch:
-                    continue
-                if b.committer.date < a.committer.date:
-                    (a, b) = (b, a)
-                if b.descended_from(a):
-                    commit.remove_parent(a)
+                elif a.branch == b.branch == commit.branch:
+                    if b.committer.date < a.committer.date:
+                        (a, b) = (b, a)
+                    if b.descended_from(a):
+                        commit.remove_parent(a)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         self.repo.timings.append(["debubbling", time.time()]) 
