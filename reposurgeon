@@ -3569,11 +3569,11 @@ class StreamParser:
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
-        dubious = [commit for commit in self.repo.commits() if \
-                   commit.fileops and commit.fileops[0].op == 'deleteall' \
-                   and commit.has_children()]
-        for commit in dubious:
-            self.gripe("mid-branch deleteall on %s at <%s>." % (commit.branch, commit.fossil_id))
+        for commit in self.repo.commits():
+            if commit.fileops and commit.fileops[0].op == 'deleteall' \
+                    and commit.has_children():
+                self.gripe("mid-branch deleteall on %s at <%s>." % \
+                        (commit.branch, commit.fossil_id))
         self.repo.timings.append(["linting", time.time()]) 
         # Treat this in-core state is though it was read from an SVN repo 
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
