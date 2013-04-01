@@ -6966,12 +6966,12 @@ content is replaced with whatever the filter emits to standard output.
                 elif isinstance(event, Blob):
                     if event.hasfile():
                         do_or_die("%s <%s >%s" % (line, self.blobfile(), outtmp))
-                        same = filecmp.cmp(self.blobfile(), outtmp)
+                        same = filecmp.cmp(self.blobfile(), outtmp, shallow=False)
                     else:
                         with open(intmp, "w") as wfp:
                             wfp.write(event.get_content())
                         do_or_die("%s <%s >%s" % (line, intmp, outtmp))
-                        same = filecmp.cmp(intmp, outtmp)
+                        same = filecmp.cmp(intmp, outtmp, shallow=False)
                     if not same:
                         altered += 1
                         event.materialize()
