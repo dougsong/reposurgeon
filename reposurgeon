@@ -3118,6 +3118,7 @@ class StreamParser:
                                              node.blobmark,
                                              node.path)
                             actions.append((node, fileop))
+                            self.repo.objfind(fileop.ref).paths.append(node.path)
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
                         self.permissions[node.path] = perms
