@@ -172,7 +172,7 @@ href="http://www.catb.org/~esr/reposurgeon/features.html">description</a>
 of the things it does that other conversion tools don't.)  </p>
 
 <p>So, install <code>reposurgeon</code> and whatever tool it needs to
-read your reposotory.  That will be <a
+read your repository.  That will be <a
 href="http://www.catb.org/~esr/cvs-fast-export">cvs-fast-export</a>
 for CVS, or the Subversion tools themselves for Subversion.</p>
 
@@ -200,6 +200,12 @@ cases).
 tool that handles multibranch Subversion repositories in full
 generality. It can even translate Subversion commits that alter
 multiple branches.</p>
+
+<p>Performance tip: <code>reposurgeon</code> should analyze Subversion
+repositories at the rate of over 250 commits a second, but that rate
+falls off somewhat on very large repositories (apparently due to I/O
+costs). You can speed it up significantly by running it under <a
+href="http://pypy.org/compat.html">pypy</a>.
 
 <h2 id="other">Other VCSes</h2>
 
@@ -601,6 +607,10 @@ Makefile.</p>
 <p>3.5 (2013-01-09) Update for reposurgeon 2.13 and the 'graph' command.</p>
 
 <p>3.6 (2013-01-22) Update for reposurgeon 2.15 and cvs-fast-export.</p>
+
+<p>3.7 (2013-04-01) Note that reposurgeon is significantly faster
+under pypy.</p>
+
 </div>
 <hr />
 </body>
