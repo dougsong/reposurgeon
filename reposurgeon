@@ -3132,7 +3132,7 @@ class StreamParser:
             for (node, fileop) in actions:
                 # Try last seen branch first
                 if lastbranch and node.path.startswith(lastbranch):
-                    cliques[branch].append(fileop)
+                    cliques[lastbranch].append(fileop)
                     continue
                 for branch in self.branches:
                     if node.path.startswith(branch):
