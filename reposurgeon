@@ -5469,9 +5469,6 @@ unusual topology and you intend to do your own branch surgery.
         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
 """),
-        ("svn_profile", """\
-    Emit timing statistics on Subversion analysis phases.
-"""),
         ("canonicalize", """\
     If set, mailbox_in and edit will canonicalize comments by replacing CR-LF
 with LF, stripping leading and trailing whitespace and then appending a LF.
