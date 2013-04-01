@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.31: 
+     New 'filter' command supports content filtering with a batch command.
+
 2.30: 2013-03-28
      Fossil map dumps are pruned appropriately after an expunge.
      More speed tuning.
