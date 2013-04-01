@@ -857,11 +857,11 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "path", "colors", "cookie", "start", "size", "deletehook")
+    __slots__ = ("repo", "mark", "paths", "colors", "cookie", "start", "size", "deletehook")
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
-        self.path = None      # First in-repo path associated with this blob
+        self.paths = []      # Set of in-repo paths associated with this blob
         self.colors = []
         self.cookie = None
         self.start = None
@@ -943,7 +943,7 @@ class Blob(object):
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
             # Ugh.  This is where we mess with ignore syntax translation
-            if vcs and self.repo.vcs and self.path and self.path.endswith(".gitignore"):
+            if vcs and self.repo.vcs and len(self.paths) == 1 and self.paths[0].endswith(".gitignore"):
                 if vcs.name == "hg" and self.repo.vcs.name != "hg":
                     if not content.startswith("syntax: glob\n"):
                         content = "syntax: glob\n" + content
@@ -1981,7 +1981,7 @@ class RepoStreamer:
                             blob = Blob(repo)
                             blob.set_mark(blobmark)
                             shutil.copyfile(path, blob.blobfile(create=True))
-                            blob.path = path
+                            blob.paths.append(path)
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
                             op = FileOp()
@@ -2526,6 +2526,11 @@ class StreamParser:
                                     commit.fileops.append(FileOp(self.repo.vcs).parse("deleteall"))
                                 elif line[0] == "M":
                                     fileop = FileOp(self.repo.vcs).parse(line)
+                                    if fileop.ref != 'inline':
+                                        try:
+                                            self.repo.objfind(fileop.ref).paths.append(fileop.path)
+                                        except AttributeError:
+                                            self.error("ref could not be resolved")
                                     commit.fileops.append(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
