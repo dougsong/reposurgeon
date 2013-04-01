@@ -6947,6 +6947,9 @@ Run all blobs, filter comments, and tag comments in the selection
 set (defaulting to all) through the filter specified on the command line.
 Each blob and comment is presented to the filter on standard input; the
 content is replaced with whatever the filter emits to standard output.
+
+If the command line contains the magic cookie '%PATHS%', it is replaced
+with a space-separated list of all paths that reference the blob.
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -6964,19 +6967,24 @@ content is replaced with whatever the filter emits to standard output.
             for ei in self.selection:
                 event = self.chosen().events[ei]            
                 if isinstance(event, (Commit, Tag)):
+                    filtercmd = line.replace("%PATHS%", "")
                     with open(intmp, "w") as wfp:
                         wfp.write(event.comment)
-                    newcomment = capture("%s <%s" % (line, intmp))
+                    newcomment = capture("%s <%s" % (filtercmd, intmp))
                     altered += (newcomment != event.comment)
                     event.comment = newcomment
                 elif isinstance(event, Blob):
+                    if "%PATHS%" in line:
+                        filtercmd = line.replace("%PATHS%", " ".join(event.paths))
+                    else:
+                        filtercmd = line
                     if event.hasfile():
-                        do_or_die("%s <%s >%s" % (line, self.blobfile(), outtmp))
+                        do_or_die("%s <%s >%s" % (filtercmd, self.blobfile(), outtmp))
                         same = filecmp.cmp(self.blobfile(), outtmp, shallow=False)
                     else:
                         with open(intmp, "w") as wfp:
                             wfp.write(event.get_content())
-                        do_or_die("%s <%s >%s" % (line, intmp, outtmp))
+                        do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
                         same = filecmp.cmp(intmp, outtmp, shallow=False)
                     if not same:
                         altered += 1
