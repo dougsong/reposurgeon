@@ -6651,13 +6651,23 @@ constructed with command-line arguments).
             line = os.path.expanduser(line)
         if not line or line == '.':
             line = os.getcwd()
-        repo = read_repo(line, self.preferred)
+        name = line
+        if os.path.isdir(line):
+            repo = read_repo(line, self.preferred)
+        else:
+            repo = Repository()
+            # Backward-compatibility hack.  Will have to be removed if we
+            # ever define modifiers for this command.
+            if line and not line.startswith("<"):
+                line =  "<" + line
+            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+                repo.fast_import(parse.stdin, progress=(verbose==1 and not quiet))
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
             if self.chosen().vcs:
                 self.preferred = self.chosen().vcs
-            name = self.uniquify(os.path.basename(self.chosen().sourcedir or line or "unnamed"))
+            name = self.uniquify(os.path.basename(self.chosen().sourcedir or name or "unnamed"))
             self.chosen().rename(name)
         if verbose:
             self.do_choose('')
