@@ -778,7 +778,7 @@ class DateTests(unittest.TestCase):
         self.assertEqual(d3, d3)
         self.assertEqual(Date.tzresolve("EST"), "-0500")
         self.assertEqual(Date.tzresolve("-0500"), "-0500")
-        self.assertEqual(Date.tzresolve("Europe/Warsaw"), "+0100")
+        self.assertIn(Date.tzresolve("Europe/Warsaw"), ("+0100", "+0200"))
     def test_inequality(self):
         d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
         d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
