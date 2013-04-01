@@ -1,4 +1,4 @@
-reposurgeon: 26 items modified.
+reposurgeon: 30 items modified.
 blob
 mark :1
 data 120
@@ -98,10 +98,10 @@ M 100755 :9 hello
 blob
 mark :13
 data 122
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
 
-This is a spacer commit.
+This is a spacXr commit.
 
 
 
@@ -185,10 +185,10 @@ M 100644 :20 README
 blob
 mark :22
 data 143
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
 
-Second post-split commit on the main branch.
+SXcond post-split commit on thX main branch.
 
 
 
@@ -224,10 +224,10 @@ M 100644 :22 README2
 blob
 mark :26
 data 137
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
 
-First commit on the alternate branch.
+First commit on thX altXrnatX branch.
 
 
 
@@ -268,10 +268,10 @@ M 100644 :28 README
 blob
 mark :30
 data 123
-This is a test repository intended to exercise all the
-features of the Subversion dump code.
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
 
-This is a merge commit.
+This is a mXrgX commit.
 
 
 
