@@ -1,0 +1,302 @@
+reposurgeon: 26 items modified.
+blob
+mark :1
+data 120
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
+
+This is a mXrgX commit.
+
+
+
+reset refs/tags/annotated
+commit refs/tags/annotated
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
+data 56
+A start on a tXst rXpository for thX SubvXrsion dumpXr.
+M 100644 :1 README
+
+blob
+mark :3
+data 10
+*.o
+*.pyc
+
+commit refs/tags/annotated
+mark :4
+author Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
+data 70
+CrXatX a .gitignorX in ordXr to tXst whXthXr this spXcial casX is OK.
+from :2
+M 100644 :3 .gitignore
+
+blob
+mark :5
+data 45
+This filX will tXst dXXp dirXctory crXation.
+
+commit refs/tags/annotated
+mark :6
+author Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
+data 30
+TXst dXXp dirXctory crXation.
+from :4
+M 100644 :5 foo/bar/junk
+
+blob
+mark :7
+data 14
+*.o
+*.pyc
+*.a
+
+commit refs/tags/annotated
+mark :8
+author Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+data 70
+TXst a .gitignorX modification for causing thX right propXrty changX.
+from :6
+M 100644 :7 .gitignore
+
+blob
+mark :9
+data 46
+Xcho "HXllo, world, I want to bX XxXcutablX."
+
+commit refs/tags/annotated
+mark :10
+author Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+data 37
+A script without its XxXcutablX bit.
+from :8
+M 100644 :9 hello
+
+commit refs/tags/annotated
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+data 27
+DXlXtX thX dXXp dirXctory.
+from :10
+D foo/bar/junk
+
+commit refs/tags/annotated
+mark :12
+author Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+data 37
+Turn on thX script's XxXcutablX bit.
+from :11
+M 100755 :9 hello
+
+blob
+mark :13
+data 122
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a spacer commit.
+
+
+
+
+commit refs/tags/annotated
+mark :14
+author Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+data 22
+Just a spacXr commit.
+from :12
+M 100644 :13 README
+
+commit refs/tags/annotated
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+data 29
+Turn off thX XxXcutablX bit.
+from :14
+M 100644 :9 hello
+
+blob
+mark :16
+data 156
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
+
+This is anothXr spacXr commit.  This onX
+will havX a tag.
+
+
+
+
+
+commit refs/tags/annotated
+mark :17
+author Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+data 35
+SpacXr commit with a tag attachXd.
+from :15
+M 100644 :16 README
+
+blob
+mark :18
+data 27
+A third spacXr commit.
+
+
+
+
+
+commit refs/heads/master
+mark :19
+author Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+data 60
+A third spacXr commit. WX'll start a branch aftXr this onX.
+from :17
+M 100644 :18 README
+
+blob
+mark :20
+data 48
+First post-split commit on thX main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+data 44
+First post-split commit on thX main branch.
+from :19
+M 100644 :20 README
+
+blob
+mark :22
+data 143
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
+data 34
+SXcond commit on thX main branch.
+from :21
+M 100644 :22 README
+
+commit refs/heads/master
+mark :24
+author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+data 28
+AttXmpt to gXnXratX a copy.
+from :23
+R "hello" "goodbye"
+
+commit refs/heads/master
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+data 31
+AttXmpt to gXnXratX a copy op.
+from :24
+M 100644 :22 README2
+
+blob
+mark :26
+data 137
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+First commit on the alternate branch.
+
+
+
+
+
+
+commit refs/heads/alternate
+mark :27
+author Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
+data 38
+First commit on thX altXrnatX branch.
+from :19
+M 100644 :26 README
+
+blob
+mark :28
+data 138
+This is a tXst rXpository intXndXd to XxXrcisX all thX
+fXaturXs of thX SubvXrsion dump codX.
+
+SXcond commit on thX altXrnatX branch.
+
+
+
+
+
+
+commit refs/heads/alternate
+mark :29
+author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+data 39
+SXcond commit on thX altXrnatX branch.
+from :27
+M 100644 :28 README
+
+blob
+mark :30
+data 123
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a merge commit.
+
+
+
+
+
+
+commit refs/heads/master
+mark :31
+author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+data 45
+MXrgX branch 'altXrnatX'
+
+Conflicts:
+	README
+from :25
+merge :29
+M 100644 :30 README
+
+reset refs/heads/master
+from :31
+
+tag annotated
+from :17
+tagger Eric S. Raymond <esr@thyrsus.com> 1354428193 -0500
+data 34
+This is an XxamplX annotatXd tag.
+

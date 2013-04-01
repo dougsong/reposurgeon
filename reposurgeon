@@ -10,7 +10,7 @@ from __future__ import print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
 import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
-import time, calendar, unittest, itertools, operator, functools
+import time, calendar, unittest, itertools, operator, functools, filecmp
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -6934,6 +6934,52 @@ are multiline and not in summary/blank-line/details form.
                     filtered.append(ei)
             self.selection = filtered
         self.edit(self.selection, rest)
+
+    def help_filter(self):
+        print("""
+Run all blobs, filter comments, and tag comments in the selection
+set (defaulting to all) through the filter specified on the command line.
+Each blob and comment is presented to the filter on standard input; the
+content is replaced with whatever the filter emits to standard output.
+""")
+    def do_filter(self, line):
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        line = self.set_selection_set(line, range(len(self.chosen())))
+        if not line:
+            complain("no filter is specified")
+            return
+        altered = 0
+        (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+        (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+        assert indesc > -1 and outdesc > -1    # pacify pylint
+        with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
+            for ei in self.selection:
+                event = self.chosen().events[ei]            
+                if isinstance(event, (Commit, Tag)):
+                    with open(intmp, "w") as wfp:
+                        wfp.write(event.comment)
+                    newcomment = capture("%s <%s" % (line, intmp))
+                    altered += (newcomment != event.comment)
+                    event.comment = newcomment
+                elif isinstance(event, Blob):
+                    if event.hasfile():
+                        do_or_die("%s <%s >%s" % (line, self.blobfile(), outtmp))
+                        same = filecmp.cmp(self.blobfile(), outtmp)
+                    else:
+                        with open(intmp, "w") as wfp:
+                            wfp.write(event.get_content())
+                        do_or_die("%s <%s >%s" % (line, intmp, outtmp))
+                        same = filecmp.cmp(intmp, outtmp)
+                    if not same:
+                        altered += 1
+                        event.materialize()
+                        shutil.copyfile(outtmp, event.blobfile())
+                baton.twirl()
+        os.remove(intmp)
+        os.remove(outtmp)
+        announce("%d items modified." % altered)
 
     def help_delete(self):
         print("""
