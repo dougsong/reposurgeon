@@ -1237,37 +1237,36 @@ class FileOp(object):
             return self.paths() & other.paths()
     def dump(self, vcs=None):
         "Dump this fileop in import-stream format."
-        st2 = st3 = ""
         if self.op == "M":
             showmode = self.mode
             if isinstance(self.mode, int):
                 showmode = "%06o" % self.mode
-            st1 = " ".join((self.op, showmode, self.ref)) + " "
+            parts = [" ".join((self.op, showmode, self.ref)), " "]
             if len(self.path.split()) > 1:
-                st2 = '"' + self.path + '"'
+                parts.extend(('"', self.path, '"'))
             else:
-                st2 = self.path_remap_out(self.path, vcs)
+                parts.append(self.path_remap_out(self.path, vcs))
             if self.ref == 'inline':
-                st3 = "\ndata %d\n%s" % (len(self.inline), self.inline)
+                parts.append("\ndata %d\n%s" % (len(self.inline), self.inline))
         elif self.op == "N":
-            st1 = " ".join((self.op, self.ref, self.committish)) + "\n"
+            parts = [" ".join((self.op, self.ref, self.committish)), "\n"]
             if self.ref == 'inline':
-                st2 = "data %d\n%s" % (len(self.inline), self.inline)
+                parts.append("data %d\n%s" % (len(self.inline), self.inline))
         elif self.op == "D":
-            st1 = "D "
+            parts = ["D "]
             if len(self.path.split()) > 1:
-                st2 = '"' + self.path + '"'
+                parts.extend(('"', self.path, '"'))
             else:
-                st2 = self.path_remap_out(self.path, vcs)
+                parts.append(self.path_remap_out(self.path, vcs))
         elif self.op in ("R", "C"):
-            st1 = '%s "%s" "%s"' %  (self.op,
+            parts = ['%s "%s" "%s"' %  (self.op,
                                     self.path_remap_out(self.source, vcs),
-                                    self.path_remap_out(self.target, vcs))
+                                    self.path_remap_out(self.target, vcs))]
         elif self.op == "deleteall":
-            st1 = self.op
+            parts = [self.op]
         else:
             raise Fatal("unexpected fileop %s while writing" % self.op)
-        return st1 + st2 + st3
+        return "".join(parts)
     def __str__(self):
         return self.dump(self.vcs)
 
