@@ -1051,11 +1051,13 @@ class Tag(object):
         return modified
     def dump(self, _vcs=None):
         "Dump this tag in import-stream format."
-        st = "tag %s\nfrom %s\n" % (self.name, self.committish)
+        st1 = "tag %s\nfrom %s\n" % (self.name, self.committish)
         if self.tagger:
-            st += "tagger %s\n" % self.tagger
-        st += "data %d\n%s\n" % (len(self.comment or ""), self.comment or "",)
-        return st
+            st2 = "tagger %s\n" % self.tagger
+        else:
+            st2 = "" 
+        st3 = "data %d\n%s\n" % (len(self.comment or ""), self.comment or "",)
+        return st1 + st2 + st3
     def __str__(self):
         return self.dump()
 
@@ -1093,10 +1095,11 @@ class Reset(object):
         self.repo = repo
     def dump(self, _vcs=None):
         "Dump this reset in import-stream format."
-        st = "reset %s\n" % self.ref
+        st2 = ""
+        st1 = "reset %s\n" % self.ref
         if self.committish:
-            st += "from %s\n\n" % self.committish
-        return st
+            st2 = "from %s\n\n" % self.committish
+        return st1 + st2
     def __str__(self):
         return self.dump()
 
@@ -1237,36 +1240,37 @@ class FileOp(object):
             return self.paths() & other.paths()
     def dump(self, vcs=None):
         "Dump this fileop in import-stream format."
+        st2 = st3 = ""
         if self.op == "M":
             showmode = self.mode
             if isinstance(self.mode, int):
                 showmode = "%06o" % self.mode
-            st = " ".join((self.op, showmode, self.ref)) + " "
+            st1 = " ".join((self.op, showmode, self.ref)) + " "
             if len(self.path.split()) > 1:
-                st += '"' + self.path + '"'
+                st2 = '"' + self.path + '"'
             else:
-                st += self.path_remap_out(self.path, vcs)
+                st2 = self.path_remap_out(self.path, vcs)
             if self.ref == 'inline':
-                st += "\ndata %d\n%s" % (len(self.inline), self.inline)
+                st3 = "\ndata %d\n%s" % (len(self.inline), self.inline)
         elif self.op == "N":
-            st = " ".join((self.op, self.ref, self.committish)) + "\n"
+            st1 = " ".join((self.op, self.ref, self.committish)) + "\n"
             if self.ref == 'inline':
-                st += "data %d\n%s" % (len(self.inline), self.inline)
+                st2 = "data %d\n%s" % (len(self.inline), self.inline)
         elif self.op == "D":
-            st = "D "
+            st1 = "D "
             if len(self.path.split()) > 1:
-                st += '"' + self.path + '"'
+                st2 = '"' + self.path + '"'
             else:
-                st += self.path_remap_out(self.path, vcs)
+                st2 = self.path_remap_out(self.path, vcs)
         elif self.op in ("R", "C"):
-            st = '%s "%s" "%s"' %  (self.op,
+            st1 = '%s "%s" "%s"' %  (self.op,
                                     self.path_remap_out(self.source, vcs),
                                     self.path_remap_out(self.target, vcs))
         elif self.op == "deleteall":
-            st = self.op
+            st1 = self.op
         else:
             raise Fatal("unexpected fileop %s while writing" % self.op)
-        return st
+        return st1 + st2 + st3
     def __str__(self):
         return self.dump(self.vcs)
 
@@ -1637,42 +1641,41 @@ class Commit(object):
         "Dump this commit in import-stream format."
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
             vcs = self.repo.vcs
-        st = ""
+        parts = []
         if self.fossil_id:
-            st += "# Fossil-ID: %s\n" % self.fossil_id
-        st += "commit %s\n" % self.branch
+            parts.append("# Fossil-ID: %s\n" % self.fossil_id)
+        parts.append("commit %s\n" % self.branch)
         if self.mark:
-            st += "mark %s\n" % self.mark
+            parts.append("mark %s\n" % self.mark)
         if self.authors:
             for author in self.authors:
-                st += "author %s\n" % author
+                parts.append("author %s\n" % author)
         if self.committer:
-            st += "committer %s\n" % self.committer
+            parts.append("committer %s\n" % self.committer)
         if self.comment is not None:
             comment = self.comment
             if global_options["fossilize"] and self.fossil_id:
                 comment += "\nFossil-ID: %s\n" % self.fossil_id
-            st += "data %d\n" % len(comment)
-            st += comment
+            parts.append("data %d\n%s" % (len(comment), comment))
         if "nl-after-comment" in self.repo.export_style():
-            st += "\n"
+            parts.append("\n")
         parents = self.parents()
         if parents:
-            st += "from %s\n" % parents[0].mark
+            parts.append("from %s\n" % parents[0].mark)
         for ancestor in parents[1:]:
-            st += "merge %s\n" % ancestor.mark
+            parts.append("merge %s\n" % ancestor.mark)
         if vcs and vcs.properties:
             for (name, value) in self.properties.iteritems():
                 if value in (True, False):
                     if value:
-                        st += "property %s\n" % name
+                        parts.append("property %s\n" % name)
                 else:
-                    st += "property %s %d %s\n" % (name, len(str(value)), str(value))
+                    parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
         for op in self.fileops:
-            st += op.dump(vcs) + "\n"
+            parts.append(op.dump(vcs) + "\n")
         if not "no-nl-after-commit" in self.repo.export_style():
-            st += "\n"
-        return st
+            parts.append("\n")
+        return "".join(parts)
     def __str__(self):
         return self.dump()
 
