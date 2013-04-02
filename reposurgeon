@@ -1093,11 +1093,10 @@ class Reset(object):
         self.repo = repo
     def dump(self, _vcs=None):
         "Dump this reset in import-stream format."
-        st2 = ""
-        st1 = "reset %s\n" % self.ref
-        if self.committish:
-            st2 = "from %s\n\n" % self.committish
-        return st1 + st2
+        st = "reset %s\n" % self.ref
+        if not self.committish:
+            return st
+        return st + "from %s\n\n" % self.committish
     def __str__(self):
         return self.dump()
 
