@@ -653,6 +653,9 @@ class RepoSurgeonEmail(email.message.Message, object):
 class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     __slots__ = ("timestamp", "tz_offset", "orig_tz_string")
+    date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$")
+    subsecond_re = re.compile(r"\.[0-9]+Z")
+    offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$")
     def __init__(self, text):
         "Recognize date formats that exporters or email programs might emit."
         # First, look for git's preferred format, which is a timestamp
@@ -660,7 +663,7 @@ class Date(object):
         # timezone to display the date in when converting to other
         # formats
         text = text.strip()
-        if re.match(r"[0-9]+\s*[+-][0-9]+$", text):
+        if Date.date_re.match(text):
             (self.timestamp, self.orig_tz_string) = text.split()
             self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
@@ -681,7 +684,7 @@ class Date(object):
         # Also accept RFC3339 dates in Zulu time, just because I like them.
         try:
             # Discard subsecond precision, import-stream format can't use it.
-            text = re.sub(r"\.[0-9]+Z", "Z", text)
+            text = re.sub(Date.subsecond_re, "Z", text)
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(rfc3339date)
             self.orig_tz_string = "+0000"
@@ -695,7 +698,7 @@ class Date(object):
         raise Fatal("'%s' is not a valid timestamp" % text)
     @staticmethod
     def secondsFromOffsetString(text):
-        m = re.match(r"^([-+]?)([0-9]{2})([0-9]{2})$", text)
+        m = re.match(Date.offset_re, text)
         if m is not None:
             sign = -1 if m.group(1) == "-" else 1
             hours = int(m.group(2))
