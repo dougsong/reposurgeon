@@ -3615,12 +3615,8 @@ class SubversionDumper:
             self.subfiles = 0
     @staticmethod
     def svnprops(pdict):
-        parts = []
-        for key, val in sorted(pdict.iteritems()):
-            if val:
-                parts.append("K %d\n%s\nV %d\n%s\n" \
-                             % (len(key), key, len(val), val))
-        return "".join(parts)
+        return "".join("K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
+                        for key, val in sorted(pdict.iteritems()) if val)
     @staticmethod
     def dump_revprops(fp, revision, date, author=None, log=None, parents=None):
         "Emit a Revision-number record describing unversioned properties."
