@@ -869,6 +869,7 @@ class Blob(object):
         self.cookie = None
         self.start = None
         self.size = 0
+        self.deletehook = None
     def blobfile(self, create=False):
         "File where the content lives."
         stem = repr(id(self))
@@ -954,8 +955,10 @@ class Blob(object):
     def __str__(self):
         return self.dump()
 
-class Tag:
+class Tag(object):
     "Represents an annotated tag."
+    __slots__ = ("repo", "name", "color", "committish",
+                 "target", "tagger", "comment", "deletehook")
     def __init__(self, repo=None,
                  name=None, committish=None, target=None, tagger=None, comment=None):
         self.repo = None
@@ -966,6 +969,7 @@ class Tag:
         self.remember(repo, committish=committish, target=target)
         self.tagger = tagger
         self.comment = comment
+        self.deletehook = None
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
@@ -1055,14 +1059,17 @@ class Tag:
     def __str__(self):
         return self.dump()
 
-class Reset:
+class Reset(object):
     "Represents a branch creation."
+    __slots__ = ("repo", "ref", "committish", "target", "deletehook", "color")
     def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
         self.ref = ref
         self.committish = None
         self.target = None
         self.remember(repo, committish=committish, target=target)
+        self.deletehook = None
+        self.color = None
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
@@ -1669,10 +1676,13 @@ class Commit(object):
     def __str__(self):
         return self.dump()
 
-class Passthrough:
+class Passthrough(object):
     "Represents a passthrough line."
+    __slots__ = ("text", "deletehook", "color")
     def __init__(self, line):
         self.text = line
+        self.deletehook = None
+        self.color = None
     def email_out(self, _modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
