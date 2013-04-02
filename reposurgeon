@@ -3615,21 +3615,21 @@ class SubversionDumper:
             self.subfiles = 0
     @staticmethod
     def svnprops(pdict):
-        flattened = ""
+        parts = []
         for key, val in sorted(pdict.iteritems()):
             if val:
-                flattened += "K %d\n%s\nV %d\n%s\n" \
-                             % (len(key), key, len(val), val)
-        return flattened
+                parts.append("K %d\n%s\nV %d\n%s\n" \
+                             % (len(key), key, len(val), val))
+        return "".join(parts)
     @staticmethod
     def dump_revprops(fp, revision, date, author=None, log=None, parents=None):
         "Emit a Revision-number record describing unversioned properties."
         fp.write("Revision-number: %d\n" % revision)
-        revprops = ""
-        revprops += SubversionDumper.svnprops({"svn:log": log})
-        revprops += SubversionDumper.svnprops({"svn:author": author})
+        parts = []
+        parts.append(SubversionDumper.svnprops({"svn:log": log}))
+        parts.append(SubversionDumper.svnprops({"svn:author": author}))
         # Ugh.  Subversion apparently insists on those decimal places
-        revprops += SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"})
+        parts.append(SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"}))
         # Hack merge links into mergeinfo properties.  This is a kluge
         # - the Subversion model is really like cherrypicking rather
         # than branch merging - but it's better than nothing, and
@@ -3639,11 +3639,13 @@ class SubversionDumper:
             parents = iter(parents)
             next(parents) # ignore main parent
             ancestral = ".".join(itertools.imap(str, sorted(parents)))
-            revprops += SubversionDumper.svnprops({"svn:mergeinfo": ancestral})
-        revprops += "PROPS-END\n"
-        fp.write("Prop-content-length: %d\n" % len(revprops))
-        fp.write("Content-length: %d\n\n" % len(revprops))
-        fp.write(revprops + "\n")
+            parts.append(SubversionDumper.svnprops({"svn:mergeinfo": ancestral}))
+        parts.append("PROPS-END\n")
+        parts.append("\n")
+        revprops = "".join(parts)
+        fp.write("Prop-content-length: %d\n" % (len(revprops)-1))
+        fp.write("Content-length: %d\n\n" % (len(revprops)-1))
+        fp.write(revprops)
     @staticmethod
     def dump_node(fp, path, kind, action, content="",
                   from_rev=None, from_path=None,
