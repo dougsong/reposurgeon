@@ -1051,13 +1051,11 @@ class Tag(object):
         return modified
     def dump(self, _vcs=None):
         "Dump this tag in import-stream format."
-        st1 = "tag %s\nfrom %s\n" % (self.name, self.committish)
+        parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
         if self.tagger:
-            st2 = "tagger %s\n" % self.tagger
-        else:
-            st2 = "" 
-        st3 = "data %d\n%s\n" % (len(self.comment or ""), self.comment or "",)
-        return st1 + st2 + st3
+            parts.append("tagger %s\n" % self.tagger)
+        parts.append("data %d\n%s\n" % (len(self.comment or ""), self.comment or ""))
+        return "".join(parts)
     def __str__(self):
         return self.dump()
 
