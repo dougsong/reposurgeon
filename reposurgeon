@@ -2867,8 +2867,7 @@ class StreamParser:
                                     newnode.kind = SD_FILE
                                     newnode.generated = True
                                     expanded_nodes.append(newnode)
-                                ignorepath = os.path.join(node.path, ".gitignore")
-                                if ignorepath in self.active_gitignores:
+                                for ignorepath in (gi for gi in self.active_gitignores if gi.startswith(node.path)):
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = ignorepath
                                     newnode.revision = revision
