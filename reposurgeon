@@ -6988,8 +6988,8 @@ with a space-separated list of all paths that reference the blob.
                     else:
                         filtercmd = line
                     if event.hasfile():
-                        do_or_die("%s <%s >%s" % (filtercmd, self.blobfile(), outtmp))
-                        same = filecmp.cmp(self.blobfile(), outtmp, shallow=False)
+                        do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
+                        same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
                     else:
                         with open(intmp, "w") as wfp:
                             wfp.write(event.get_content())
