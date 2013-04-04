@@ -934,7 +934,7 @@ class Blob(object):
         c.repo = repo
         c.colors = []
         if debug_enable(DEBUG_SHUFFLE):
-            announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.path))
+            announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.paths))
         if self.hasfile():
             os.link(self.blobfile(), c.blobfile())
         return c
