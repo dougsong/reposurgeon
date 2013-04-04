@@ -108,20 +108,23 @@ class VCS:
         self.project = project
         self.notes = notes
     def __str__(self):
-        return "         Name: " + str(self.name) + "\n" \
-             + " Subdirectory: " + str(self.subdirectory) + "\n" \
-             + "     Exporter: " + str(self.exporter) + "\n" \
-             + " Export-Style: {" + ",".join(self.styleflags) + "}\n" \
-             + "   Properties: " + repr(self.properties) + "\n" \
-             + "  Initializer: " + str(self.initializer) + "\n" \
-             + "       Lister: " + str(self.lister) + "\n" \
-             + "     Importer: " + str(self.importer) + "\n" \
-             + "     Checkout: " + str(self.checkout) + "\n" \
-             + "     Preserve: {" + ",".join(self.preserve) + "}\n" \
-             + "    Authormap: " + str(self.authormap) + "\n" \
-             + "   Ignorename: " + str(self.ignorename) + "\n" \
-             + "      Project: " + str(self.project) + "\n" \
-             + "        Notes: " + str(self.notes) + "\n"
+        return "         Name: {self.name}\n" \
+               " Subdirectory: {self.subdirectory}\n" \
+               "     Exporter: {self.exporter}\n" \
+               " Export-Style: {{{styleflags}}}\n" \
+               "   Properties: {self.properties!r}\n" \
+               "  Initializer: {self.initializer}\n" \
+               "       Lister: {self.lister}\n" \
+               "     Importer: {self.importer}\n" \
+               "     Checkout: {self.checkout}\n" \
+               "     Preserve: {{{preserve}}}\n" \
+               "    Authormap: {self.authormap}\n" \
+               "   Ignorename: {self.ignorename}\n" \
+               "      Project: {self.project}\n" \
+               "        Notes: {self.notes}\n".format(
+                       self = self,
+                       styleflags = ", ".join(self.styleflags),
+                       preserve = ", ".join(self.preserve))
 
 # Most knowledge about specific version-control systems lives in the
 # following class list. Exception; there's a git-specific hook in the
