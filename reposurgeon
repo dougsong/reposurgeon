@@ -942,7 +942,6 @@ class Blob(object):
             os.link(self.blobfile(), c.blobfile())
         return c
     def dump(self, vcs=None):
-        content = self.get_content()
         if self.hasfile() and not os.path.exists(self.blobfile()):
             return ''
         else:
