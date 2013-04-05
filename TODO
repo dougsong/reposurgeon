@@ -5,5 +5,3 @@
 
 * Someday, port fully to Python 3.  At that point, reapply the commit
   "Ensure BZ2File only work on binary data".
-
-* filter does not process inline blobs.
