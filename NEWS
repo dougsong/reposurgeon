@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.32: 2013-04-03
+     Fix bug introduced in expunges when blobfile path generation changed.
+
 2.31: 2013-04-03
      New 'filter' command supports content filtering with a batch command.
      Yet more speed tuning - now 17K commits/min under cpython, 22K under pypy.
