@@ -939,7 +939,7 @@ class Blob(object):
         if debug_enable(DEBUG_SHUFFLE):
             announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.paths))
         if self.hasfile():
-            os.link(self.blobfile(), c.blobfile())
+            os.link(self.blobfile(), c.blobfile(create=True))
         return c
     def dump(self, vcs=None):
         if self.hasfile() and not os.path.exists(self.blobfile()):
