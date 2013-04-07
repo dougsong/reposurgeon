@@ -7480,7 +7480,7 @@ from the highest member (child) to the lowest (parent).
             raise Recoverable("merge requires two commit arguments.")
         earlier = repo.events[self.selection[0]]
         later = repo.events[self.selection[-1]]
-        later.add_parent(earlier.mark)
+        later.add_parent(earlier)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce("%s added as a parent of %s" % (earlier_id, later_id))
