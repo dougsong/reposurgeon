@@ -5931,13 +5931,22 @@ copies at all (it points into sections of the input stream instead).
         "Resolve a path name to the set of commits that refer to it."
         if self.peek() != "[":
             return None
-        elif self.line.find("]") == -1:
+        self.pop()
+        start = self.peek()
+        if start == "'":
+            end = "']"
+            self.pop()
+        elif start == '"':
+            end = '"]'
+            self.pop()
+        else:
+            end = "]"
+        if end not in self.line:
             raise Recoverable("malformed path wildcard")
         else:
-            self.pop()
-            i = self.line.find("]")
+            i = self.line.find(end)
             path = self.line[:i]
-            self.line = self.line[i+1:]
+            self.line = self.line[i+len(end):]
             selection = []
             for (ei, event) in enumerate(self.chosen().events):
                 if isinstance(event, Commit):
