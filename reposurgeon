@@ -5943,16 +5943,11 @@ copies at all (it points into sections of the input stream instead).
             end = "]"
         if end not in self.line:
             raise Recoverable("malformed path wildcard")
-        else:
-            i = self.line.find(end)
-            path = self.line[:i]
-            self.line = self.line[i+len(end):]
-            selection = []
-            for (ei, event) in enumerate(self.chosen().events):
-                if isinstance(event, Commit):
-                    if path in event.paths():
-                        selection.append(ei)
-            return set(selection)
+        i = self.line.find(end)
+        path = self.line[:i]
+        self.line = self.line[i+len(end):]
+        return {i for (i, event) in enumerate(self.chosen().events)
+                   if isinstance(event, Commit) and path in event.paths()}
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
         if self.peek() != "(":
