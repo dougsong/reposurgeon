@@ -7439,8 +7439,8 @@ first directory component from every path.
             complain("no repo has been chosen.")
             return
         rest = self.set_selection_set(line, range(len(self.chosen())))
-        if not rest:
-            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        if not rest.startswith(("sub", "sup")):
+            with RepoSurgeon.LineParse(rest, capabilities=["stdout"]) as parse:
                 allpaths = set([])
                 self.chosen().path_walk(self.selection,
                                       lambda f: allpaths.add(f) or f)
