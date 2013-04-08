@@ -5936,21 +5936,41 @@ copies at all (it points into sections of the input stream instead).
             return None
         self.pop()
         start = self.peek()
+        regex = False
         if start == "'":
             end = "']"
             self.pop()
         elif start == '"':
             end = '"]'
             self.pop()
+        elif start == "/":
+            end = "/]"
+            regex = True
+            self.pop()
         else:
             end = "]"
-        if end not in self.line:
-            raise Recoverable("malformed path wildcard")
+        if not regex:
+            if end not in self.line:
+                raise Recoverable("malformed path wildcard")
+            i = self.line.find(end)
+            path = self.line[:i]
+            self.line = self.line[i+len(end):]
+            return {i for (i, event) in enumerate(self.chosen().events)
+                       if isinstance(event, Commit) and path in event.paths()}
+        # find the end of the regex
         i = self.line.find(end)
-        path = self.line[:i]
+        escapes = {"\\", "^"}
+        while i > 0 and self.line[i-1] in escapes:
+            i = self.line.find(end, i+1)
+        if i < 0: raise Recoverable("malformed path wildcard")
+        try:
+            regex = re.compile(self.line[:i])
+        except re.error:
+            raise Recoverable("invalid path regular expression")
         self.line = self.line[i+len(end):]
         return {i for (i, event) in enumerate(self.chosen().events)
-                   if isinstance(event, Commit) and path in event.paths()}
+                if isinstance(event, Commit) and
+                    any(regex.search(path) for path in event.paths())}
     def eval_branchset(self):
         "Resolve a branch name to its set of associated events."
         if self.peek() != "(":
