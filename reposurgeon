@@ -3502,8 +3502,11 @@ class StreamParser:
             if commit.branch == "root":
                 commit.set_branch(os.path.join("refs", "heads", "root"))
             elif commit.branch.startswith("tags" + os.sep):
-                if commit.branch.endswith(os.sep):
-                    commit.set_branch(commit.branch[:-1])
+                branch = commit.branch
+                if branch.endswith(os.sep):
+                    branch = branch[:-1]
+                commit.set_branch(os.path.join("refs", "tags",
+                                              os.path.basename(branch)))
             elif commit.branch == "trunk" + os.sep:
                 commit.set_branch(os.path.join("refs", "heads", "master"))
             else:
