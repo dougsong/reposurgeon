@@ -84,6 +84,10 @@ resolve /Raymond/
 [3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
 resolve [Makefile]
 [67, 70, 72, 76, 78]
+resolve ["READ[ME].txt"]
+[50]
+resolve ['READ[ME].txt']
+[50]
 resolve <2010-10-27T18:43:32Z>
 [127]
 resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
@@ -157,6 +161,8 @@ resolve <annotated-sample>
 resolve /regression/
 resolve /Raymond/
 resolve [Makefile]
+resolve ["READ[ME].txt"]
+resolve ['READ[ME].txt']
 resolve <2010-10-27T18:43:32Z>
 resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
 tip :76
@@ -167,7 +173,7 @@ reposurgeon: verbose 1
 paths
 .gitignore
 Makefile
-README
+READ[ME].txt
 reposurgeon
 reposurgeon.xml
 rs
@@ -184,7 +190,7 @@ reposurgeon: deleting blobs and empty commits [6, 7, 9, 23, 24, 28, 51, 52]
 paths
 .gitignore
 Makefile
-README
+READ[ME].txt
 reposurgeon
 reposurgeon.xml
 rs
@@ -194,7 +200,7 @@ verbose 0
 checkout 116 foobar
 !ls foobar
 Makefile
-README
+READ[ME].txt
 reposurgeon
 reposurgeon.xml
 test
