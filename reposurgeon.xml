@@ -347,12 +347,14 @@ It matches against the text of passthrough objects.</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>paths</firstterm></term>
-<listitem><para>A path name enclosed in square brackets resolves to the set of
+<listitem>
+<para>A path name enclosed in square brackets resolves to the set of
 all commits with a fileop that touches that file path - modifies that change
 it, deletes that remove it, renames and copies that have it as a source or
-target. You can enclose the full path in simple or double quotes to prevent the
-parser from confusing a ] in the path with the end of the selection set.
-</para>
+target.</para>
+
+<para>You can enclose the full path in simple or double quotes to prevent the
+parser from confusing a ] in the path with the end of the selection set.</para>
 </listitem>
 </varlistentry>
 </variablelist>
