@@ -2701,7 +2701,7 @@ class StreamParser:
                     if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s deleted" \
                                  % (node.revision, node.path))
-                elif node.action == SD_CHANGE and node.kind == SD_FILE:
+                elif node.action in (SD_CHANGE, SD_REPLACE) and node.kind == SD_FILE:
                     filemap[node.path] = node
                     if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s changed" % (node.revision, node.path))
