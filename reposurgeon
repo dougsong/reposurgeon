@@ -1557,7 +1557,7 @@ class Commit(object):
         return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
-        if self.filemap or not self.has_parents():
+        if self.filemap:
             return self.filemap
         sys.setrecursionlimit(len(self.repo.events) * 2)
         parents = iter(self.parents())
