@@ -6850,6 +6850,7 @@ set of modifications actually made is written to the output file.
         events = []
         errors = 0
         for (i, message) in enumerate(update_list):
+            event = None
             if "Event-Number" in message:
                 try:
                     eventnum = int(message["Event-Number"]) - 1
@@ -6912,9 +6913,13 @@ set of modifications actually made is written to the output file.
             else:
                 complain("no commit matches update %d:\n%s" % (i+1, message))
                 errors += 1
-            if not hasattr(event, "email_in"):
-                complain("event %d cannot be modified"%(eventnum+1,))
+            if event is not None and not hasattr(event, "email_in"):
+                try:
+                    complain("event %d cannot be modified"%(event.index()+1))
+                except AttributeError:
+                    complain("event cannot be modified")
                 errors += 1
+            # Always append, even None, to stay in sync with update_list
             events.append(event)
         if errors > 0:
             raise Recoverable("%d errors in metadata updates" % errors)
