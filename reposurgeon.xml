@@ -355,6 +355,13 @@ target.</para>
 
 <para>You can enclose the full path in simple or double quotes to prevent the
 parser from confusing a ] in the path with the end of the selection set.</para>
+
+<para>A regular expression enclosed in a '[/' and '/]' pair resolves to the set
+of all commits with a fileop that touches a path matching the regular
+expression.  You can use '^' or '$' if you want the expression to only match at
+the beginning or end of paths, and if you need to embed '/]' into your regular
+expression (e.g. to express "all characters but a slash") you can use a python
+string escape such as \x2f.</para>
 </listitem>
 </varlistentry>
 </variablelist>

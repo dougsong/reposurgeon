@@ -14,6 +14,9 @@ resolve <annotated-sample>
 resolve /regression/
 resolve /Raymond/
 resolve [Makefile]
+resolve [/Ma.*le/]
+resolve [/^Ma.*le$/]
+resolve [/D.ME.\.txt/]
 resolve ["READ[ME].txt"]
 resolve ['READ[ME].txt']
 resolve <2010-10-27T18:43:32Z>
