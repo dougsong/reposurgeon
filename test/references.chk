@@ -4801,9 +4801,9 @@ add install-cgi-html to install-cgi rule
 from :754
 M 100644 :761 Makefile
 
-reset tags/alioth_SVN_migration
+reset refs/tags/alioth_SVN_migration
 # Fossil-ID: 99
-commit tags/alioth_SVN_migration
+commit refs/tags/alioth_SVN_migration
 mark :763
 committer no-author <no-author> 1122895733 +0000
 data 78
@@ -6767,9 +6767,9 @@ M 100644 :1024 docs/new-names.txt
 M 100644 :1025 drivers/belkin-hid.h
 M 100644 :1026 drivers/newhidups.h
 
-reset tags/regex_branch_base0
+reset refs/tags/regex_branch_base0
 # Fossil-ID: 167
-commit tags/regex_branch_base0
+commit refs/tags/regex_branch_base0
 mark :1028
 committer no-author <no-author> 1126715194 +0000
 data 76
@@ -8098,9 +8098,9 @@ More Smartpro variables
 from :1197
 M 100644 :1198 drivers/tripplite_usb.c
 
-reset tags/CFL_TL_pre_Dev_merge
+reset refs/tags/CFL_TL_pre_Dev_merge
 # Fossil-ID: 208
-commit tags/CFL_TL_pre_Dev_merge
+commit refs/tags/CFL_TL_pre_Dev_merge
 mark :1200
 committer no-author <no-author> 1127793462 +0000
 data 78
@@ -10199,9 +10199,9 @@ M 100644 :818 scripts/hotplug/README
 M 100644 :1241 scripts/hotplug/libhid.usermap
 M 100644 :272 scripts/hotplug/libhidups.in
 
-reset tags/reportbuf_base
+reset refs/tags/reportbuf_base
 # Fossil-ID: 273
-commit tags/reportbuf_base
+commit refs/tags/reportbuf_base
 mark :1485
 committer no-author <no-author> 1132072688 +0000
 data 72
@@ -11805,9 +11805,9 @@ from :1687
 M 100644 :1688 CHANGES
 M 100644 :1689 drivers/upsdrvctl.c
 
-reset tags/reportbuf_base0
+reset refs/tags/reportbuf_base0
 # Fossil-ID: 326
-commit tags/reportbuf_base0
+commit refs/tags/reportbuf_base0
 mark :1691
 committer no-author <no-author> 1139088241 +0000
 data 73
