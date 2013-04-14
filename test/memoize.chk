@@ -7,11 +7,11 @@ branch refs/heads/master
 branch refs/heads/r2.0.1
 branch refs/heads/reportbuf
 branch refs/heads/v2.1.0
-branch tags/CFL_TL_pre_Dev_merge
-branch tags/alioth_SVN_migration
-branch tags/regex_branch_base0
-branch tags/reportbuf_base
-branch tags/reportbuf_base0
+branch refs/tags/CFL_TL_pre_Dev_merge
+branch refs/tags/alioth_SVN_migration
+branch refs/tags/regex_branch_base0
+branch refs/tags/reportbuf_base
+branch refs/tags/reportbuf_base0
 tag    INITIAL_IMPORT_AQ-root
 tag    INITIAL_IMPORT_V2_0_1_pre4
 tag    v2.0.2_pre1

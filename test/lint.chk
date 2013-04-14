@@ -2,7 +2,7 @@ quiet on
 read bs.fi
 lint
 read agito.svn
-reposurgeon: mid-branch deleteall on tags/proj-1.0 at <3>.
+reposurgeon: mid-branch deleteall on refs/tags/proj-1.0 at <3>.
 lint
-mid-branch delete: on tags/proj-1.0 at commit@6=<3>
+mid-branch delete: on refs/tags/proj-1.0 at commit@6=<3>
 unknown shortname: fraggle
