@@ -2235,7 +2235,7 @@ class StreamParser:
         line = self.readline()
         self.ccount += len(line)
         if not line.startswith(hdr):
-            self.error('required %s header missing')
+            self.error('required %s header missing' % hdr)
         return StreamParser.sd_body(line)
     def sd_require_spacer(self):
         line = self.readline()
