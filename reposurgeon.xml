@@ -911,11 +911,11 @@ of file operations in the original commit.</para>
         <emphasis>index</emphasis>
 </term>
 <listitem>
-From a specified commit, remove a specified fileop. The selection set
+<para>From a specified commit, remove a specified fileop. The selection set
 must be a singleton and the index a 1-origin numeric index.  Note that
 this command does not attempt to scavenge blobs even if the deleted
 fileop might be the only reference to them. This behavior may change
-in a future release.
+in a future release.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
