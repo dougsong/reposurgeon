@@ -1,24 +1,7 @@
-## Tests of selection-set syntax, tags, history, and expunge
+## Test of index, tip, tags, history, paths, expunge and checkout
 echo 1
 read simple.fi
 index
-resolve =H
-resolve 15
-resolve =TR
-resolve 24..97
-resolve 24..97&=C
-resolve 3,:15
-resolve (master)
-resolve <lightweight-sample>
-resolve (annotated-sample)
-resolve <annotated-sample>
-resolve /regression/
-resolve /Raymond/
-resolve [Makefile]
-resolve ["READ[ME].txt"]
-resolve ['READ[ME].txt']
-resolve <2010-10-27T18:43:32Z>
-resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
 tip :76
 tags
 history
