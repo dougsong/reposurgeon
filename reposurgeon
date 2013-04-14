@@ -1559,9 +1559,15 @@ class Commit(object):
         "Return a map from paths to marks for files existing at this commit."
         if self.filemap or not self.has_parents():
             return self.filemap
-        ancestors = {}
         sys.setrecursionlimit(len(self.repo.events) * 2)
-        for commit in self.parents():
+        parents = iter(self.parents())
+        # Snaphot first parent manifest
+        try:
+            ancestors = next(parents).manifest().snapshot()
+        except StopIteration:
+            ancestors = PathMap()
+        # Merge in modifications from other parents
+        for commit in parents:
             ancestors.update(commit.manifest())
         for fileop in self.fileops:
             if fileop.op == 'M':
