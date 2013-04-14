@@ -25,3 +25,10 @@ esr = Eric Raymond <esr@thyrsus.com>
 EOF
 echo 1
 write
+# Test multiline commands
+resolve \
+<annotated-sample>
+resolve \
+24..97\
+&\
+=C
