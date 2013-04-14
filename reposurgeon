@@ -5949,20 +5949,14 @@ copies at all (it points into sections of the input stream instead).
         if self.peek() != "[":
             return None
         self.pop()
-        start = self.peek()
-        if start == "'":
-            end = "']"
-            self.pop()
-        elif start == '"':
-            end = '"]'
-            self.pop()
-        else:
-            end = "]"
-        if end not in self.line:
+        end = "]"
+        if self.peek() in ("'", '"'):
+            end = self.pop() + end
+        end_index = self.line.find(end)
+        if end_index == -1:
             raise Recoverable("malformed path wildcard")
-        i = self.line.find(end)
-        path = self.line[:i]
-        self.line = self.line[i+len(end):]
+        path = self.line[:end_index]
+        self.line = self.line[end_index+len(end):]
         return {i for (i, event) in enumerate(self.chosen().events)
                    if isinstance(event, Commit) and path in event.paths()}
     def eval_branchset(self):
