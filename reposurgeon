@@ -6237,6 +6237,9 @@ List all known symbolic names of branches and tags. Supports > redirection.
                     scriptline = scriptfp.readline()
                     if not scriptline:
                         break
+                    # Handle multiline commands
+                    while scriptline.endswith("\\\n"):
+                        scriptline = scriptline[:-2] + scriptfp.readline()
                     # Simulate shell here-document processing
                     if '<<' not in scriptline:
                         heredoc = None

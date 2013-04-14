@@ -32740,3 +32740,8 @@ tagger Eric Raymond <esr@thyrsus.com> 1288206780 -0400
 data 66
 We want an anntated tag in the repo for regression-test purposes.
 
+# Test multiline commands
+resolve <annotated-sample>
+[131]
+resolve 24..97&=C
+[24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
