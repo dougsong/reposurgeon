@@ -1209,7 +1209,7 @@ class FileOp(object):
             # Ugh...this isn't right for deleteall, but since we don't expect
             # to see that except at branch tips we'll ignore it for now.
             elif self.op in ("N", "deleteall"):
-                self._paths = set([])
+                self._paths = set()
         return self._paths
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
@@ -1551,7 +1551,7 @@ class Commit(object):
     def paths(self):
         "Return the set of all paths touched by this commit."
         if self._pathset is None:
-            self._pathset = set([])
+            self._pathset = set()
             for fileop in self.fileops:
                 self._pathset |= fileop.paths()
         return self._pathset
@@ -2134,14 +2134,14 @@ class StreamParser:
         # Everything below here is Subversion-specific
         self.branches = {}
         self.branchlink = {}
-        self.branchdeletes = set([])
+        self.branchdeletes = set()
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
         self.permissions = {}
-        self.fileop_branchlinks  = set([])
-        self.directory_branchlinks  = set([])
-        self.active_gitignores = set([])
+        self.fileop_branchlinks  = set()
+        self.directory_branchlinks  = set()
+        self.active_gitignores = set()
         self.mergeinfo = {}
     def error(self, msg):
         "Throw fatal error during parsing."
@@ -3534,7 +3534,7 @@ class StreamParser:
         save_events = self.repo.events
         self.repo.events = []
         self.repo.declare_sequence_mutation()
-        issued = set([])
+        issued = set()
         for event in save_events:
             if isinstance(event, Commit) and event.branch not in issued:
                 reset = Reset(self.repo)
@@ -3943,8 +3943,8 @@ class Repository:
         self._commits = None
         self._mark_to_index = {}
         self._mark_to_object = {}
-        self.preserve_set = set([])
-        self.case_coverage = set([])
+        self.preserve_set = set()
+        self.case_coverage = set()
         self.basedir = os.getcwd()
         self.uuid = None
         self.write_fossils = False
@@ -4132,7 +4132,7 @@ class Repository:
         # as a fossil which should be removed.  Then, the earliest
         # commit referencing that blob gets a fossil property set;
         # later references will be branching artifacts.
-        seen = set([])
+        seen = set()
         for event in self.events:
             if isinstance(event, Blob) and event.cookie:
                 if event.cookie in seen:
@@ -4399,7 +4399,7 @@ class Repository:
         raise Fatal("can't compose op '%s' and '%s'" % (left, right))
     def canonicalize(self, commit):
         "Canonicalize the list of file operations in this commit."
-        coverage = set([])
+        coverage = set()
         # Handling deleteall operations is simple
         lastdeleteall = None
         for (i, a) in enumerate(commit.fileops):
@@ -4767,7 +4767,7 @@ class Repository:
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
-        modified = set([])
+        modified = set()
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
@@ -5240,7 +5240,7 @@ class RepositoryList:
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
         # of that earlier.
-        trackbranches = {"early": set([]), "late": set([])}
+        trackbranches = {"early": set(), "late": set()}
         for commit in self.repo.commits():
             if commit.color is None:
                 complain("%s is uncolored!" % commit.mark)
@@ -5647,7 +5647,7 @@ copies at all (it points into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
-        disjunct = set([])
+        disjunct = set()
         while True:
             conjunct = self.eval_conjunct()
             if conjunct is None:
@@ -5723,7 +5723,7 @@ copies at all (it points into sections of the input stream instead).
                 "P" : lambda e: isinstance(e, Passthrough),
                 "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
                 }
-            visible = set([])
+            visible = set()
             self.pop()
             while self.peek() in typeletters:
                 c = self.pop()
@@ -6466,9 +6466,9 @@ selected with the modifiers 'structure' and 'names'.
         line = self.set_selection_set(line, range(len(self.chosen())))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
-            shortset = set([])
-            deletealls = set([])
-            disconnected = set([])
+            shortset = set()
+            deletealls = set()
+            disconnected = set()
             for i in self.selection:
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
@@ -7518,7 +7518,7 @@ first directory component from every path.
         rest = self.set_selection_set(line, range(len(self.chosen())))
         if not rest.startswith(("sub", "sup")):
             with RepoSurgeon.LineParse(rest, capabilities=["stdout"]) as parse:
-                allpaths = set([])
+                allpaths = set()
                 self.chosen().path_walk(self.selection,
                                       lambda f: allpaths.add(f) or f)
                 parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
