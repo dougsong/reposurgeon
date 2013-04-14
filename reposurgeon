@@ -1817,13 +1817,15 @@ class PathMap(object):
         "Return the number of files in the set."
         return sum(len(v) if isinstance(v, PathMap) else 1
                 for _, v in self._elts_items())
-    def __iter__(self):
+    def iteritems(self):
         for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
-                for path in value:
-                    yield os.path.join(name, path)
+                for path, v in value.iteritems():
+                    yield (os.path.join(name, path), v)
             elif value is not None:
-                yield name
+                yield (name, value)
+    def __iter__(self):
+        return itertools.imap(operator.itemgetter(0), self.iteritems())
     def __str__(self):
         return '<PathMap: {}>'.format(' '.join(self))
     # Return the current value associated with the component in the store
