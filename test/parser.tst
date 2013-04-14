@@ -18,4 +18,10 @@ resolve ["READ[ME].txt"]
 resolve ['READ[ME].txt']
 resolve <2010-10-27T18:43:32Z>
 resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
-
+# Test here-doc syntax
+echo 0
+authors read <<EOF
+esr = Eric Raymond <esr@thyrsus.com>
+EOF
+echo 1
+write
