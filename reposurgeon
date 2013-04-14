@@ -1557,18 +1557,20 @@ class Commit(object):
         return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
+        sys.setrecursionlimit(len(self.repo.events) * 2)
+        return self._manifest()
+    def _manifest(self):
         if self.filemap:
             return self.filemap
-        sys.setrecursionlimit(len(self.repo.events) * 2)
         parents = iter(self.parents())
         # Snaphot first parent manifest
         try:
-            ancestors = next(parents).manifest().snapshot()
+            ancestors = next(parents)._manifest().snapshot()
         except StopIteration:
             ancestors = PathMap()
         # Merge in modifications from other parents
         for commit in parents:
-            ancestors.update(commit.manifest())
+            ancestors.update(commit._manifest())
         for fileop in self.fileops:
             if fileop.op == 'M':
                 ancestors[fileop.path] = fileop.ref
@@ -1591,7 +1593,6 @@ class Commit(object):
         if not directory:
             directory = os.path.join(self.repo.subdir(), self.mark)
         try:
-            sys.setrecursionlimit(len(self.repo.events) * 2)
             os.mkdir(directory)
             for (path, mark) in self.manifest().iteritems():
                 fullpath = os.path.join(directory, path)
