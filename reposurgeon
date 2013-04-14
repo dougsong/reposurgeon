@@ -6868,6 +6868,12 @@ set of modifications actually made is written to the output file.
                     complain("no commit matches fossil %s" \
                                       % message["Fossil-ID"])
                     errors += 1
+            elif "Event-Mark" in message:
+                event = self.chosen.objfind(message["Event-Mark"])
+                if not event:
+                    complain("no commit matches mark %s" \
+                             % message["Event-Mark"])
+                    errors += 1
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit()
                 blank.committer = Attribution()
@@ -7096,6 +7102,45 @@ separation in seconds; the default is 90 seconds.
         if verbose:
             announce("deletion set is %s" % [x+1 for x in eligible])
         self.chosen().delete(eligible, "coalesce")
+
+    def help_from(self):
+        print("""
+From a specified commit, remove a specified fileop. The syntax is:
+
+     from SELECTION remove OP
+
+The selection set must be a singleton and the OP a 1-origin numeric index.
+Note that this command does not attempt to scavenge blobs even if the
+deleted fileop might be the only reference to them. This behavior may
+change in a future release.
+""")
+    def do_from(self, line):
+        "Delete a fileop from a specified commit."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        line = self.set_selection_set(line, [])
+        if len(self.selection) != 1:
+            complain("from selection must be a singleton")
+            return
+        event = self.chosen().events[list(self.selection)[0]]
+        if not isinstance(event, Commit):
+            complain("from selection must be a commit")
+        fields = line.split()
+        if fields[0] == "remove":
+            try:
+                ind = int(fields[1]) - 1
+            except (ValueError, IndexError):
+                complain("ill-formed or missing fileop index")
+                return
+            try:
+                event.fileops.pop(ind)
+            except IndexError:
+                complain("out-of-range fileop index")
+                return
+        else:
+            complain("unknown verb after from")
+            return
 
     def help_renumber(self):
         print("""
