@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 2.33:
-     "from COMMIT remove OP" for removong botched renames etc.
+     "from COMMIT remove OP" for removing botched renames etc.
      Event-Mark can be be used as a commit identifier in mailbox format.
 
 2.32: 2013-04-03
