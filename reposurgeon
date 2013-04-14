@@ -1579,10 +1579,7 @@ class Commit(object):
         return ancestors
     def alldeletes(self, killset={"D", "deleteall"}):
         "Is this an all-deletes commit?"
-        for fileop in self.fileops:
-            if fileop.op not in killset:
-                return False
-        return True
+        return all(fileop.op in killset for fileop in self.fileops)
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
         if not directory:
