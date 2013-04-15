@@ -4454,8 +4454,7 @@ class Repository:
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         # Make sure we do deletions from greatest commit number to least
-        selected = copy.copy(selected)
-        selected.sort(reverse=True)
+        selected = sorted(selected, reverse=True)
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
         dquiet = "quiet" in policy
@@ -4479,11 +4478,12 @@ class Repository:
                             break
         altered = []
         # Here are the deletions
+        to_delete = set()
         for ei in selected:
             event = self.events[ei]
-            if event.__class__ in (Reset, Tag, Passthrough, Blob):
-                self.events.pop(ei)
-            elif isinstance(event, Commit):
+            to_delete.add(event)
+            # Nothing special to do for Reset, Tag, Passthrough, Blob
+            if isinstance(event, Commit):
                 if event.branch and "/tags/" in event.branch:
                     identical = False
                     if tagback:
@@ -4548,19 +4548,17 @@ class Repository:
                     filter_only = False
                     new_target = event.parents()[0]
                 if filter_only:
-                    self.events = [t for t in self.events \
-                                   if not (isinstance(t, (Tag, Reset)) \
-                                           and t.target is event)]
+                    to_delete.update(event.attachments)
                 else:
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
                         t.forget()
                         t.remember(self, target=new_target)
-                # And remove the deleted event
+                # And forget the deleted event
                 event.forget()
-                self.events.pop(ei)
-            else:
-                raise Fatal("unexpected object in event array")
+        # Do the actual deletions
+        self.events = [e for e in self.events if e not in to_delete]
+        self.declare_sequence_mutation()
         # Canonicalize all the commits that got ops pushed to them
         if not obliterate:
             for event in altered:
@@ -4572,21 +4570,22 @@ class Repository:
                     announce("After canonicalization:")
                     event.fileop_dump()
                 # Now apply policy in the mutiple-M case
-                for (path, oplist) in event.cliques().iteritems():
-                    if len(oplist) == 1:
-                        continue
-                    if ("coalesce" not in policy and not obliterate) or debug_enable(DEBUG_DELETE):
-                        complain("commit %s has multiple Ms for %s" % (event.mark, path))
-                    if "coalesce" in policy:
-                        # Remove all but the last M.
-                        while len(oplist) > 1:
-                            event.fileops.pop(oplist.pop(0))
-                        event._pathset = None
-                    if debug_enable(DEBUG_DELETE):
-                        print("Commit %d, after applying policy:" % (ei + 1,))
-                        for op in event.fileops:
-                            print(str(op))
-        self.declare_sequence_mutation()
+                cliques = event.cliques()
+                if ("coalesce" not in policy and not obliterate) \
+                        or debug_enable(DEBUG_DELETE):
+                    for (path, oplist) in cliques.iteritems():
+                        if len(oplist) > 1:
+                            complain("commit %s has multiple Ms for %s"
+                                    % (event.mark, path))
+                if "coalesce" in policy:
+                    # Only keep last M of each clique, leaving other ops alone
+                    event.fileops = \
+                           [op for (i, op) in enumerate(event.fileops)
+                            if (op.op != "M") or (i == cliques[op.path][-1])]
+                    event._pathset = None
+                if debug_enable(DEBUG_DELETE):
+                    announce("Commit %d, after applying policy:" % (ei + 1,))
+                    event.fileop_dump()
     def quiet_delete(self, commit):
         self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
     def __delitem__(self, index):
