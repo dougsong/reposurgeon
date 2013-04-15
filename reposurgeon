@@ -4454,8 +4454,7 @@ class Repository:
     def delete(self, selected, policy):
         "Delete commits, handling multiple Ms on a file with specified policy"
         # Make sure we do deletions from greatest commit number to least
-        selected = copy.copy(selected)
-        selected.sort(reverse=True)
+        selected = sorted(selected, reverse=True)
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
         dquiet = "quiet" in policy
