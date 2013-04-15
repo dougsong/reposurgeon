@@ -6871,7 +6871,7 @@ set of modifications actually made is written to the output file.
                                       % message["Fossil-ID"])
                     errors += 1
             elif "Event-Mark" in message:
-                event = self.chosen.objfind(message["Event-Mark"])
+                event = self.chosen().objfind(message["Event-Mark"])
                 if not event:
                     complain("no commit matches mark %s" \
                              % message["Event-Mark"])
