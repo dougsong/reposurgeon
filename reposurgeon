@@ -5961,7 +5961,10 @@ copies at all (it points into sections of the input stream instead).
         path = self.line[:end_index]
         self.line = self.line[end_index+len(end):]
         if is_regex:
-            search = re.compile(path).search
+            try:
+                search = re.compile(path).search
+            except re.error:
+                raise Recoverable("invalid regular expression")
             return {i for (i, event) in enumerate(self.chosen().events)
                       if isinstance(event, Commit) and
                             any(search(path) for path in event.paths())}
