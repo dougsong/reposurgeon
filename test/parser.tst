@@ -19,6 +19,8 @@ resolve [/^Ma.*le$/]
 resolve [/D.ME.\.txt/]
 resolve ["READ[ME].txt"]
 resolve ['READ[ME].txt']
+resolve [*"Makefile"]
+resolve [*/^Make/]
 resolve <2010-10-27T18:43:32Z>
 resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
 # Test here-doc syntax
