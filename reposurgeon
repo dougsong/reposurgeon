@@ -4562,6 +4562,7 @@ class Repository:
         # Canonicalize all the commits that got ops pushed to them
         if not obliterate:
             for event in altered:
+                if event in to_delete: continue
                 if debug_enable(DEBUG_DELETE):
                     announce("Before canonicalization:")
                     event.fileop_dump()
