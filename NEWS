@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+2.34: 2013-04-15
+     More performance improvents. Larghe deletion are much faster now.
+     Path matches with [] now have a regexp variant
+
 2.33: 2013-04-14
      "from COMMIT remove OP" for removing botched renames etc.
      Event-Mark can be be used as a commit identifier in mailbox format.
