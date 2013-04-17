@@ -1568,9 +1568,6 @@ class Commit(object):
             ancestors = next(parents)._manifest().snapshot()
         except StopIteration:
             ancestors = PathMap()
-        # Merge in modifications from other parents
-        for commit in parents:
-            ancestors.update(commit._manifest())
         for fileop in self.fileops:
             if fileop.op == 'M':
                 ancestors[fileop.path] = fileop.ref
