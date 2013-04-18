@@ -1105,7 +1105,7 @@ class Reset(object):
 class FileOp(object):
     "Represent a primitive operation on a file."
     __slots__ = ("vcs", "op", "committish", "source", "target",
-                 "mode", "path", "ref", "inline", "_paths",
+                 "mode", "path", "ref", "inline",
                  "sourcedelete", "targetdelete")
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     sortkey_sentinel = chr(ord("/") + 1)
@@ -1119,7 +1119,6 @@ class FileOp(object):
         self.path = None
         self.ref = None
         self.inline = None
-        self._paths = None
     def path_remap_in(self):
         "Hack the fileop's basename to map it to git conventions."
         # Ignore file names from non-git VCSes need to get
@@ -1138,7 +1137,6 @@ class FileOp(object):
         return path
     def setOp(self, op):
         self.op = op
-        self._paths = None
     @staticmethod
     def sortkey(fileop):
         "Compute a key suited for sorting FileOps as git fast-export does."
@@ -1172,7 +1170,6 @@ class FileOp(object):
             if not m:
                 raise Fatal("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = m.groups()
-            self._paths = None
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
             self.path_remap_in()
@@ -1197,20 +1194,15 @@ class FileOp(object):
             self.op = "deleteall"
         else:
             raise Fatal("unexpected fileop %s while parsing" % opline)
-        self._paths = None
         return self
     def paths(self):
         "Return the set of all paths touched by this file op."
-        if self._paths is None:
-            if self.op in ("M", "D"):
-                self._paths = {self.path}
-            elif self.op in ("R", "C"):
-                self._paths = {self.source, self.target}
-            # Ugh...this isn't right for deleteall, but since we don't expect
-            # to see that except at branch tips we'll ignore it for now.
-            elif self.op in ("N", "deleteall"):
-                self._paths = set()
-        return self._paths
+        if self.op in ("M", "D"): return {self.path}
+        if self.op in ("R", "C"): return {self.source, self.target}
+        # Ugh...this isn't right for deleteall, but since we don't expect
+        # to see that except at branch tips we'll ignore it for now.
+        if self.op in ("N", "deleteall"): return set()
+        raise Fatal("unknown fileop type")
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
         if self.op == "deleteall" or other.op == "deleteall":
