@@ -4,6 +4,7 @@
 
 INSTALL=install
 prefix?=/usr/local
+mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
@@ -50,11 +51,11 @@ cyreposurgeon: reposurgeon
 install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
-	$(INSTALL) -d "$(target)/share/man/man1"
+	$(INSTALL) -d "$(target)/$(mandir)/man1"
 	$(INSTALL) -m 755 reposurgeon repopuller repodiffer "$(target)/bin"
 	$(INSTALL) -m 644 README NEWS TODO *.html \
 		"$(target)/share/doc/reposurgeon"
-	$(INSTALL) -m 644 *.1 "$(target)/share/man/man1"
+	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
 clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
