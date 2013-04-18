@@ -1554,12 +1554,12 @@ class Commit(object):
     def _manifest(self):
         if self.filemap:
             return self.filemap
-        parents = iter(self.parents())
-        # Snaphot first parent manifest
+        # Get the first parent manifest, or an empty one.
         try:
-            ancestors = next(parents)._manifest().snapshot()
-        except StopIteration:
+            ancestors = self.parents()[0]._manifest().snapshot()
+        except IndexError:
             ancestors = PathMap()
+        # Take own fileops into account.
         for fileop in self.fileops:
             if fileop.op == 'M':
                 ancestors[fileop.path] = fileop.ref
@@ -5979,15 +5979,12 @@ copies at all (it points into sections of the input stream instead).
             match_trees = {}
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue
-                parents = iter(event.parents())
                 try:
-                    parent = next(parents)
-                except StopIteration:
+                    parent = event.parents()[0]
+                except IndexError:
                     tree = PathMap()
                 else:
                     tree = match_trees[parent].snapshot()
-                for parent in parents:
-                    tree.update(match_trees[parent])
                 for fileop in event.fileops:
                     if fileop.op == 'M' and match(fileop.path):
                         tree[fileop.path] = True
@@ -6006,7 +6003,7 @@ copies at all (it points into sections of the input stream instead).
             containing = set()
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue
-                contains = any(e in containing for e in event.parents())
+                contains = event.parents() and event.parents()[0] in containing
                 for fileop in event.fileops:
                     if fileop.op == 'M' and fileop.path == match:
                         contains = True
