@@ -4452,6 +4452,8 @@ class Repository:
         "Delete commits, handling multiple Ms on a file with specified policy"
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
+        # Make sure we do deletions from greatest commit number to least
+        selected = sorted(selected, reverse=True)
         dquiet = "quiet" in policy
         obliterate = "obliterate" in policy
         tagback = "tagback" in policy
