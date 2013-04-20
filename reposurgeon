@@ -5941,7 +5941,7 @@ copies at all (it points into sections of the input stream instead).
         self.pop()
         end = "]"
         flags = ""
-        if self.peek() in ("*",):
+        while self.peek() in ("*", "@"):
             flags += self.pop()
         is_regex = (self.peek() == "/")
         if self.peek() in ("'", '"', "/"):
@@ -5958,23 +5958,33 @@ copies at all (it points into sections of the input stream instead).
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
-                return self.eval_pathset_full(search)
+                return self.eval_pathset_full(search, "@" in flags)
+            if "@" in flags:
+                return {i for (i, event) in enumerate(self.chosen().events)
+                          if isinstance(event, Commit) and
+                                all(search(path) for path in event.paths())}
             return {i for (i, event) in enumerate(self.chosen().events)
                       if isinstance(event, Commit) and
                             any(search(path) for path in event.paths())}
         else:
+            # The "@" flag is ignored here since it would only make sense
+            # for trees with a single file.
             if "*" in flags:
                 return self.eval_pathset_full(path)
             return {i for (i, event) in enumerate(self.chosen().events)
                       if isinstance(event, Commit) and
                             path in event.paths()}
-    def eval_pathset_full(self, match):
+    def eval_pathset_full(self, match_condition, match_all = False):
         result = set()
-        if isinstance(match, collections.Callable):
+        match = match_condition
+        if isinstance(match_condition, collections.Callable):
             # Try to match a regex in the trees. For each commit we remember
             # only the part of the tree that matches the regex. In most cases
             # it is a lot less memory and CPU hungry than running regexes on
-            # the full commit manifests.
+            # the full commit manifests. In the match_all case we instead
+            # select commits that nowhere match the opposite condition.
+            if match_all:
+                def match(p): return not match_condition(p)
             match_trees = {}
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue
@@ -5994,11 +6004,12 @@ copies at all (it points into sections of the input stream instead).
                     elif fileop.op == 'R' and match(fileop.source):
                         del tree[fileop.source]
                 match_trees[event] = tree
-                if tree:
+                if (not tree) == match_all:
                     result.add(i)
         else:
             # Search for an absolute path in the trees. We only need to
             # remember if that path is or not in any given commit tree.
+            # Note: match_all is always false here, no need to check.
             containing = set()
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue

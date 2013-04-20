@@ -352,8 +352,8 @@ It matches against the text of passthrough objects.</para>
 all commits related to a path matching the given expression. The path
 expression itself is either a path litteral optionally surrounded by simple or
 double quotes or a regular expression surrounded by slashes. Immediately after
-the opening bracket but before the path expression you can put a '*' that acts
-as a flag.</para>
+the opening bracket but before the path expression you can put any number of
+the following characters which act as a flags: '*' and '@'.</para>
 
 <para>By default, a path is related to a commit if the latter has a fileop that
 touches that file path - modifies that change it, deletes that remove it,
@@ -366,13 +366,20 @@ exactly one of the paths related to the commit (no prefix or suffix operation
 is done). In particular a path litteral won't match if it corresponds to a
 directory in the chosen repository. Enclosing the path litteral in simple or
 double quotes help prevent the parser from confusing a ']' in the path with the
-end of the selection set or a starting '*' with a flag.</para>
+end of the selection set or one of '*' and '@' at the path beginning with a
+flag. The '@' flag has no effect on matching with path litterals.
+</para>
 
 <para>A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use '^' or '$' if you want the
 expression to only match at the beginning or end of paths, and if you need to
 embed '/]' into your regular expression (e.g. to express "all characters but a
-slash") you can use a python string escape such as \x2f.</para>
+slash") you can use a python string escape such as \x2f. When the '@' flag is
+in use, the path expression selects commits whose every path match the regular
+expression. This is not always a subset of commits selected without the '@'
+flag because it also selects commits with no related paths (e.g. empty commits,
+deletealls and commits with empty trees). If you want to avoid those, you can
+use e.g. '[/regex/] &amp; [@/regex/]'.</para>
 </listitem>
 </varlistentry>
 </variablelist>
