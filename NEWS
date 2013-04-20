@@ -1,7 +1,11 @@
 			reposurgeon project news
 
+2.35: 2013-04:20
+     New "manifest" command.
+     Path-matching now has @ to require all paths in a commit to match.
+
 2.34: 2013-04-15
-     More performance improvents. Larghe deletion are much faster now.
+     More performance improvents. Large deletions are much faster now.
      Path matches with [] now have a regexp variant
 
 2.33: 2013-04-14
