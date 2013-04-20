@@ -5984,7 +5984,7 @@ copies at all (it points into sections of the input stream instead).
             # the full commit manifests. In the match_all case we instead
             # select commits that nowhere match the opposite condition.
             if match_all:
-                def match(p): return not match_condition(p)
+                match = lambda p: not match_condition(p)
             match_trees = {}
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue
