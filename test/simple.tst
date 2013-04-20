@@ -14,6 +14,9 @@ checkout 116 foobar
 !ls foobar
 !rm -fr foobar
 diff 101,103
+manifest 101,103
+manifest 116
+manifest 116 ^reposurgeon
 choose simple-expunges
 paths sub foo
 paths sup
