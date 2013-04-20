@@ -1350,6 +1350,20 @@ forget to re-set it.</para>
 
 <variablelist>
 <varlistentry>
+<term><command>manifest</command>
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>regular expression</emphasis>]
+</term>
+<listitem>
+<para>Takes an optional selection set argument defaulting to all commits, and
+an optional Python regular expression. For each commit in the selection set,
+print the mapping of all paths in that commit tree to the corresponding blob
+marks, mirroring what files would be created in a checkout of the commit. If a
+regular expression is given, only print "path -> mark" lines for paths matching
+it. This command supports &gt; redirection.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>checkout</command>
         [<emphasis>selection-set</emphasis>]
         <emphasis>directory</emphasis>

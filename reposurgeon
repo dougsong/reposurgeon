@@ -7597,6 +7597,51 @@ first directory component from every path.
             except IndexError:
                 raise Recoverable("no / in sup path.")
 
+    def help_manifest(self):
+        print("""
+Print commit trees contents. Takes an optional selection set argument
+defaulting to all commits, and an optional Python regular expression.
+For each commit in the selection set, print the mapping of all paths in
+that commit tree to the corresponding blob marks, mirroring what files
+would be created in a checkout of the commit. If a regular expression
+is given, only print "path -> mark" lines for paths matching it.
+This command supports > redirection.
+""")
+    def do_manifest(self, line):
+        "Print all files (matching the regex) in the selected commits trees."
+        if self.chosen() is None:
+            raise Recoverable("no repo has been chosen")
+        line = self.set_selection_set(line, range(len(self.chosen())))
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            filter_func = None
+            line = parse.line.strip()
+            if line:
+                try:
+                    filter_func = re.compile(line).search
+                except re.error:
+                    raise Recoverable("invalid regular expression")
+            for ei, event in enumerate(self.chosen().events):
+                if not (isinstance(event, Commit) and ei in self.selection):
+                    continue
+                header = "Event %s, " % repr(ei+1)
+                header = header[:-2]
+                header += " " + ((72 - len(header)) * "=") + "\n"
+                parse.stdout.write(header)
+                if event.fossil_id:
+                    parse.stdout.write("# Fossil-ID: %s\n" % event.fossil_id)
+                parse.stdout.write("commit %s\n" % event.branch)
+                if event.mark:
+                    parse.stdout.write("mark %s\n" % event.mark)
+                parse.stdout.write("\n")
+                if filter_func is None:
+                    parse.stdout.write("\n".join("%s -> %s" % path_mark
+                            for path_mark in event.manifest().iteritems()))
+                else:
+                    parse.stdout.write("\n".join("%s -> %s" % path_mark
+                            for path_mark in event.manifest().iteritems()
+                            if filter_func(path_mark[0])))
+                parse.stdout.write("\n")
+
     def help_merge(self):
         print("""
 Create a merge link. Takes a selection set argument, ignoring all but
