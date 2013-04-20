@@ -1642,8 +1642,7 @@ class Commit(object):
                         parts.append("property %s\n" % name)
                 else:
                     parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
-        for op in self.fileops:
-            parts.append(op.dump(vcs) + "\n")
+        parts.extend(op.dump(vcs) + "\n" for op in self.fileops)
         if not "no-nl-after-commit" in self.repo.export_style():
             parts.append("\n")
         return "".join(parts)
