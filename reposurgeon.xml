@@ -1344,6 +1344,7 @@ forget to re-set it.</para>
 <variablelist>
 <varlistentry>
 <term><command>checkout</command>
+        [<emphasis>selection-set</emphasis>]
         <emphasis>directory</emphasis>
 </term>
 <listitem>
@@ -1355,7 +1356,7 @@ the directory.</para>
 </varlistentry>
 <varlistentry>
 <term><command>diff</command>
-          [<emphasis>selection-set</emphasis>]
+          <emphasis>selection-set</emphasis>
 </term>
 <listitem>
 <para>Display the difference between commits. Takes a selection-set
