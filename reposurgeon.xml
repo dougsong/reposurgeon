@@ -350,7 +350,7 @@ It matches against the text of passthrough objects.</para>
 <listitem>
 <para>A "path expression" enclosed in square brackets resolves to the set of
 all commits related to a path matching the given expression. The path
-expression itself is either a path litteral optionally surrounded by simple or
+expression itself is either a path literal optionally surrounded by simple or
 double quotes or a regular expression surrounded by slashes. Immediately after
 the opening bracket but before the path expression you can put any number of
 the following characters which act as a flags: '*' and '@'.</para>
@@ -361,13 +361,13 @@ renames and copies that have it as a source or target. When the '*' flag is in
 use the meaning changes: the paths related to a commit are all paths that would
 be present in a checkout.</para>
 
-<para>A path litteral matches a commit if and only if the path litteral is
+<para>A path literal matches a commit if and only if the path literal is
 exactly one of the paths related to the commit (no prefix or suffix operation
-is done). In particular a path litteral won't match if it corresponds to a
-directory in the chosen repository. Enclosing the path litteral in simple or
+is done). In particular a path literal won't match if it corresponds to a
+directory in the chosen repository. Enclosing the path literal in simple or
 double quotes help prevent the parser from confusing a ']' in the path with the
 end of the selection set or one of '*' and '@' at the path beginning with a
-flag. The '@' flag has no effect on matching with path litterals.
+flag. The '@' flag has no effect on matching with path literals.
 </para>
 
 <para>A regular expression matches a commit if it matches any path related to
