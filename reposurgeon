@@ -3406,8 +3406,8 @@ class StreamParser:
                         early_commit = self.repo.fossil_map["SVN:%s" % early]
                     except KeyError:
                         continue
-                    if early_commit.mark not in late_commit.parent_marks():
-                        late_commit.add_parent(early_commit.mark)
+                    if early_commit not in late_commit.parents():
+                        late_commit.add_parent(early_commit)
             self.repo.timings.append(["mergeinfo", time.time()]) 
             baton.twirl()
             if debug_enable(DEBUG_EXTRACT):
