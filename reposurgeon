@@ -3362,8 +3362,8 @@ class StreamParser:
                     branchroots.append(commit)
                     commit.set_parents([])
                 else:
-                    commit.set_parent_marks([self.branches[commit.branch]])
-                self.branches[commit.branch] = commit.mark
+                    commit.set_parents([self.branches[commit.branch]])
+                self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
             self.repo.timings.append(["parents", time.time()]) 
