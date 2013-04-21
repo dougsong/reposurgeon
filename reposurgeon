@@ -4504,10 +4504,16 @@ class Repository:
                     new_target = event.parents()[0]
                 # Reparent each child
                 for child in list(event.children()):
-                    child.remove_parent(event)
-                    for parent in event.parents():
-                        if parent not in child.parents():
-                            child.add_parent(parent)
+                    parents = iter(event.parents())
+                    try:
+                        first_parent = next(parents)
+                    except StopIteration:
+                        child.remove_parent(event)
+                    else:
+                        child.replace_parent(event, first_parent)
+                        for parent in parents:
+                            if parent not in child.parents():
+                                child.add_parent(parent)
                     if not obliterate and not pushback:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
