@@ -4494,6 +4494,14 @@ class Repository:
                                 identical = event.first_child().branch == event.branch
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
+                # Decide the new target for tags
+                filter_only = True
+                if tagforward and event.has_children():
+                    filter_only = False
+                    new_target = event.first_child()
+                elif tagback and event.parents():
+                    filter_only = False
+                    new_target = event.parents()[0]
                 # Reparent each child
                 for child in list(event.children()):
                     child.remove_parent(event)
@@ -4534,13 +4542,6 @@ class Repository:
                         self.events[earliest:last+1] = map(
                                 self.events.__getitem__, neworder)
                         self.declare_sequence_mutation()
-                filter_only = True
-                if tagforward and event.has_children():
-                    filter_only = False
-                    new_target = event.first_child()
-                elif tagback and event.parents():
-                    filter_only = False
-                    new_target = event.parents()[0]
                 if filter_only:
                     to_delete.update(event.attachments)
                 else:
