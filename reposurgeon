@@ -5999,7 +5999,7 @@ copies at all (it points into sections of the input stream instead).
                 except IndexError:
                     tree = PathMap()
                 else:
-                    tree = match_trees[parent].snapshot()
+                    tree = match_trees[parent.mark].snapshot()
                 for fileop in event.fileops:
                     if fileop.op == 'M' and match(fileop.path):
                         tree[fileop.path] = True
@@ -6009,7 +6009,7 @@ copies at all (it points into sections of the input stream instead).
                         del tree[fileop.path]
                     elif fileop.op == 'R' and match(fileop.source):
                         del tree[fileop.source]
-                match_trees[event] = tree
+                match_trees[event.mark] = tree
                 if (not tree) == match_all:
                     result.add(i)
         else:
@@ -6019,7 +6019,8 @@ copies at all (it points into sections of the input stream instead).
             containing = set()
             for (i, event) in enumerate(self.chosen().events):
                 if not isinstance(event, Commit): continue
-                contains = event.parents() and event.parents()[0] in containing
+                contains = event.has_parents() \
+                        and event.parents()[0].mark in containing
                 for fileop in event.fileops:
                     if fileop.op == 'M' and fileop.path == match:
                         contains = True
@@ -6030,7 +6031,7 @@ copies at all (it points into sections of the input stream instead).
                     elif fileop.op == 'R' and fileop.source == match:
                         contains = False
                 if contains:
-                    containing.add(event)
+                    containing.add(event.mark)
                     result.add(i)
         return result
     def eval_branchset(self):
