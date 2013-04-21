@@ -3331,10 +3331,15 @@ class StreamParser:
             # Instead, determine a branch for each commit...
             if debug_enable(DEBUG_EXTRACT):
                 announce("Branches: %s" % (self.branches,))
+            lastbranch = None
             for commit in self.repo.commits():
-                branch = next((b for b in self.branches
-                              if commit.common.startswith(b)),
-                              None)
+                if lastbranch is not None \
+                        and commit.common.startswith(lastbranch):
+                    branch = lastbranch
+                else:
+                    branch = next((b for b in self.branches
+                                  if commit.common.startswith(b)),
+                                  None)
                 if branch is not None:
                     commit.set_branch(branch)
                     for fileop in commit.fileops:
@@ -3347,6 +3352,7 @@ class StreamParser:
                 else:
                     commit.set_branch("root")
                     self.branches["root"] = None
+                lastbranch = branch
                 baton.twirl()
             self.repo.timings.append(["branches", time.time()]) 
             baton.twirl()
