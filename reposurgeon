@@ -4495,7 +4495,7 @@ class Repository:
                         if not identical:
                             complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Reparent each child
-                for child in event.children():
+                for child in list(event.children()):
                     child.remove_parent(event)
                     for parent in event.parents():
                         if parent not in child.parents():
