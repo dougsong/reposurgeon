@@ -3321,12 +3321,11 @@ class StreamParser:
                 self.gripe("could not tagify root commit.")
         # Now, branch analysis.
         if not self.branches or global_options['svn_nobranch']:
-            lastmark = None
+            last = None
             for commit in self.repo.commits():
                 commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
-                if lastmark:
-                    commit.set_parent_marks([lastmark])
-                lastmark = commit.mark
+                if last is not None: commit.set_parents([last])
+                last = commit
         else:
             # Instead, determine a branch for each commit...
             if debug_enable(DEBUG_EXTRACT):
