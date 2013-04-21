@@ -3332,17 +3332,18 @@ class StreamParser:
             if debug_enable(DEBUG_EXTRACT):
                 announce("Branches: %s" % (self.branches,))
             for commit in self.repo.commits():
-                for branch in self.branches:
-                    if commit.common.startswith(branch):
-                        commit.set_branch(branch)
-                        for fileop in commit.fileops:
-                            if fileop.op in ("M", "D"):
-                                fileop.path = fileop.path[len(branch):]
-                            elif fileop.op in ("R", "C"):
-                                fileop.source = fileop.source[len(branch):]
-                                fileop.target = fileop.target[len(branch):]
-                        commit._pathset = None
-                        break
+                branch = next((b for b in self.branches
+                              if commit.common.startswith(b)),
+                              None)
+                if branch is not None:
+                    commit.set_branch(branch)
+                    for fileop in commit.fileops:
+                        if fileop.op in ("M", "D"):
+                            fileop.path = fileop.path[len(branch):]
+                        elif fileop.op in ("R", "C"):
+                            fileop.source = fileop.source[len(branch):]
+                            fileop.target = fileop.target[len(branch):]
+                    commit._pathset = None
                 else:
                     commit.set_branch("root")
                     self.branches["root"] = None
