@@ -7592,8 +7592,10 @@ first directory component from every path.
         if not rest.startswith(("sub", "sup")):
             with RepoSurgeon.LineParse(rest, capabilities=["stdout"]) as parse:
                 allpaths = set()
-                self.chosen().path_walk(self.selection,
-                                      lambda f: allpaths.add(f) or f)
+                for event in itertools.imap(self.chosen().events.__getitem__,
+                                            self.selection):
+                    if isinstance(event, Commit):
+                        allpaths.update(event.paths())
                 parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
                 return
         fields = rest.split()
