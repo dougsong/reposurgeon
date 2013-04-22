@@ -3415,10 +3415,9 @@ class StreamParser:
             if debug_enable(DEBUG_EXTRACT):
                 announce("after branch analysis")
                 for commit in self.repo.commits():
-                    parents = commit.parents()
-                    if len(parents):
-                        ancestor = parents[0]
-                    else:
+                    try:
+                        ancestor = commit.parents()[0]
+                    except IndexError:
                         ancestor = '-'
                     announce("r%-4s %4s %4s %2d %2d '%s'" % \
                              (commit.fossil_id,
