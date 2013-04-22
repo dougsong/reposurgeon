@@ -1,6 +1,9 @@
 			reposurgeon project news
 
-2.35: 2013-04:20
+2.36: 2013-04-22
+     Optimizations, and fixes for some subtle bugs in the deletion logic.
+
+2.35: 2013-04-20
      New "manifest" command.
      Path-matching now has @ to require all paths in a commit to match.
 
