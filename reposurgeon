@@ -3371,10 +3371,12 @@ class StreamParser:
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
             # last phase.
-            if "root" in self.branches:
-                for commit in self.repo.commits():
-                    if commit.branch == "root":
-                        break
+            try:
+                commit = next(c for c in self.repo.commits()
+                              if c.branch == "root")
+            except StopIteration:
+                pass
+            else:
                 self.branchlink[commit] = self.repo.earliest_commit()
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
