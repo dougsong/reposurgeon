@@ -4822,7 +4822,7 @@ class Repository:
             event2.set_mark("%s.%s" % (event.mark, event.splits))
             self.invalidate_object_map()
             # Fix up parent/child relationships
-            for child in event.children():
+            for child in list(event.children()):
                 child.replace_parent(event, event2)
             event2.set_parents([event])
             # and then finalize the ops
