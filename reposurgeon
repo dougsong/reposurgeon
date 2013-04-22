@@ -4278,9 +4278,9 @@ class Repository:
             # 0, 1, and >1 are the interesting cases
             if count > 1:
                 return count
-            if event.parents():
+            try:
                 event = event.parents()[0]
-            else:
+            except IndexError:
                 break
         return count
     def __compose(self, event, left, right):
