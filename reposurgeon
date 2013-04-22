@@ -3197,7 +3197,7 @@ class StreamParser:
             # expedient of picking the *latest* revision in them!
             for newcommit in newcommits:
                 newcommit.fileops.sort(key=FileOp.sortkey)
-                if commit not in self.branchlink:
+                if commit.mark not in self.branchlink:
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
                               and node.path.startswith(newcommit.common)]
@@ -3269,7 +3269,7 @@ class StreamParser:
                                     announce("r%s: looking at r%s" \
                                              % (newcommit.fossil_id, prev.fossil_id))
                                 if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
-                                    self.branchlink[newcommit] = prev
+                                    self.branchlink[newcommit.mark] = (newcommit, prev)
                                     if debug_enable(DEBUG_TOPOLOGY):
                                         announce("r%s: link %s (%s) back to %s (%s, %s)" % \
                                                  (newcommit.fossil_id,
@@ -3377,16 +3377,16 @@ class StreamParser:
             except StopIteration:
                 pass
             else:
-                self.branchlink[commit] = self.repo.earliest_commit()
+                self.branchlink[commit.mark] = (commit, self.repo.earliest_commit())
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
                 announce("branch roots: [{roots}], links {{{links}}}".format(
                     roots = ", ".join(c.mark for c in branchroots),
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
-                                      for l in self.branchlink.iteritems())))
+                                      for l in self.branchlink.itervalues())))
             self.repo.timings.append(["root", time.time()]) 
             baton.twirl()
-            for (child, parent) in self.branchlink.iteritems():
+            for (child, parent) in self.branchlink.itervalues():
                 if parent not in child.parents():
                     child.add_parent(parent)
             for root in branchroots:
