@@ -1518,7 +1518,7 @@ class Commit(object):
         return bool(self._child_nodes)
     def first_child(self):
         "Get the first child of this commit, or None if not has_children()."
-        return self.children()[0]
+        return self._child_nodes[0]
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
         if not self.has_parents() or self.committer.date < other.committer.date:
