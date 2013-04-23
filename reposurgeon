@@ -6021,6 +6021,8 @@ copies at all (it points into sections of the input stream instead).
                         del tree[fileop.path]
                     elif fileop.op == 'R' and match(fileop.source):
                         del tree[fileop.source]
+                    elif fileop.op == 'deleteall':
+                        tree = PathMap()
                 match_trees[event.mark] = tree
                 if (not tree) == match_all:
                     result.add(i)
@@ -6041,6 +6043,8 @@ copies at all (it points into sections of the input stream instead).
                     elif fileop.op == 'D' and fileop.path == match:
                         contains = False
                     elif fileop.op == 'R' and fileop.source == match:
+                        contains = False
+                    elif fileop.op == 'deleteall':
                         contains = False
                 if contains:
                     containing.add(event.mark)

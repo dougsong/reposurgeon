@@ -5,3 +5,7 @@ commit refs/heads/samplebranch2
 mark :13
 
 README-branch2 -> :9
+resolve [*/^README/]
+[2, 4, 7, 9, 11, 16]
+resolve [*/^README$/]
+[2, 4, 7, 9, 11]
