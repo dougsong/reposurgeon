@@ -1572,6 +1572,8 @@ class Commit(object):
                 ancestors[fileop.target] = ancestors[fileop.source]
                 if fileop.source in ancestors:
                     del ancestors[fileop.source]
+            elif fileop.op == 'deleteall':
+                ancestors = PathMap()
         self.filemap = ancestors
         return ancestors
     def alldeletes(self, killset={"D", "deleteall"}):

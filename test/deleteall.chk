@@ -1,0 +1,7 @@
+read deleteall.fi
+manifest :13
+Event 18 ================================================================
+commit refs/heads/samplebranch2
+mark :13
+
+README-branch2 -> :9
