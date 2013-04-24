@@ -1,0 +1,522 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 6ab4f742-0af7-4eeb-979c-db50bd5f51f5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-04-23T18:51:51.621015Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 134
+Content-length: 134
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T18:52:56.712551Z
+K 7
+svn:log
+V 30
+Create the standard SVN layout
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 142
+Content-length: 142
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T18:59:02.956606Z
+K 7
+svn:log
+V 38
+Create some files on the master branch
+PROPS-END
+
+Node-path: trunk/master-branch4
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 51
+Text-content-md5: 505809d9159fb8d102c36b559117fbc5
+Text-content-sha1: b3dcd6cebb887eb5a753c84552be34f6b3e857bf
+Content-length: 61
+
+PROPS-END
+This file should only be in "master" and "branch4"
+
+
+Node-path: trunk/subdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/subdir/subfile1
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 40
+Text-content-md5: 511501ce1da6239da35c666a6309e3b6
+Text-content-sha1: 984f5a9547d53ceafb63f7c737cc899c041da3be
+Content-length: 50
+
+PROPS-END
+This file should appear in all branches
+
+
+Node-path: trunk/subdir/subfile2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 45
+Text-content-md5: 9ff94a7ebc55add1aa4cc0eb9ce9725e
+Text-content-sha1: a21a9458f4d68075e037ebec8241e5ac9b6e55d3
+Content-length: 55
+
+PROPS-END
+This file should also appear in all branches
+
+
+Revision-number: 3
+Prop-content-length: 207
+Content-length: 207
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:01:59.288808Z
+K 7
+svn:log
+V 102
+Create a branch by copying subdir from trunk
+
+This branch should only contain subfile1 and subfile2.
+
+
+PROPS-END
+
+Node-path: branches/branch1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir
+
+
+Revision-number: 4
+Prop-content-length: 208
+Content-length: 208
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:04:16.215412Z
+K 7
+svn:log
+V 103
+Let's have another commit on branch1
+
+That branch should now have three files:
+file
+subfile1
+subfile2
+
+
+PROPS-END
+
+Node-path: branches/branch1/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 33
+Text-content-md5: e57703c95d965f913b89d81c3be77537
+Text-content-sha1: 96a817ecb249d98086b8b4fb7b24d639bec56ca1
+Content-length: 43
+
+PROPS-END
+This file is specific to branch1
+
+
+Revision-number: 5
+Prop-content-length: 216
+Content-length: 216
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:08:36.003335Z
+K 7
+svn:log
+V 111
+Create a branch "branch2" and copy two files from trunk
+
+The branch should now contain subfile1 and subfile2.
+
+
+PROPS-END
+
+Node-path: branches/branch2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches/branch2/subfile1
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir/subfile1
+Text-copy-source-md5: 511501ce1da6239da35c666a6309e3b6
+Text-copy-source-sha1: 984f5a9547d53ceafb63f7c737cc899c041da3be
+
+
+Node-path: branches/branch2/subfile2
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir/subfile2
+Text-copy-source-md5: 9ff94a7ebc55add1aa4cc0eb9ce9725e
+Text-copy-source-sha1: a21a9458f4d68075e037ebec8241e5ac9b6e55d3
+
+
+Revision-number: 6
+Prop-content-length: 183
+Content-length: 183
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:12:43.402979Z
+K 7
+svn:log
+V 79
+Have another commit on branch2
+
+It should now contain:
+file2
+subfile1
+subfile2
+
+PROPS-END
+
+Node-path: branches/branch2/file2
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 33
+Text-content-md5: 5518e9295251c872988715c6d1726dec
+Text-content-sha1: 92faf191dba215abff0eff44f72ede1874d2e4f8
+Content-length: 43
+
+PROPS-END
+This file is specific to branch2
+
+
+Revision-number: 7
+Prop-content-length: 148
+Content-length: 148
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:20:08.899007Z
+K 7
+svn:log
+V 44
+Create branch3, importing trunk as a subdir
+
+PROPS-END
+
+Node-path: branches/branch3
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches/branch3/trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/branch3/trunk/master-branch4
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/master-branch4
+Text-copy-source-md5: 505809d9159fb8d102c36b559117fbc5
+Text-copy-source-sha1: b3dcd6cebb887eb5a753c84552be34f6b3e857bf
+
+
+Node-path: branches/branch3/trunk/subdir
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir
+
+
+Revision-number: 8
+Prop-content-length: 234
+Content-length: 234
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:22:05.692035Z
+K 7
+svn:log
+V 129
+Remove a file of master and create our own
+
+"branch3" should now contain
+trunk/file3
+trunk/subdir/subfile1
+trunk/subdir/subfile2
+
+PROPS-END
+
+Node-path: branches/branch3/trunk/file3
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 24
+Text-content-md5: 83c7653027e428d85f07a4cfe18ef7cc
+Text-content-sha1: 358f665bae0c8dd36a858251704ebbc4444f9b61
+Content-length: 34
+
+PROPS-END
+This file is in branch3
+
+
+Node-path: branches/branch3/trunk/master-branch4
+Node-action: delete
+
+
+Revision-number: 9
+Prop-content-length: 159
+Content-length: 159
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:24:55.637587Z
+K 7
+svn:log
+V 55
+Create a new branch and copy a subdir of trunk into it
+
+PROPS-END
+
+Node-path: branches/branch3b
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches/branch3b/subdir
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir
+
+
+Revision-number: 10
+Prop-content-length: 218
+Content-length: 218
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:26:14.813944Z
+K 7
+svn:log
+V 113
+Add a file in branch3b, creating a commit
+
+The branch should now contain:
+file3b
+subdir/subfile1
+subdir/subfile2
+
+PROPS-END
+
+Node-path: branches/branch3b/file3b
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 25
+Text-content-md5: ed4a5db710ab5f5ae00448141930f06a
+Text-content-sha1: db7272cbd97fa964f1401b11d1db24aaefcce85e
+Content-length: 35
+
+PROPS-END
+This file is in branch3b
+
+
+Revision-number: 11
+Prop-content-length: 145
+Content-length: 145
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:27:22.607691Z
+K 7
+svn:log
+V 41
+Create branch4 by a normal copy of trunk
+
+PROPS-END
+
+Node-path: branches/branch4
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/branch4/master-branch4
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/master-branch4
+Text-copy-source-md5: 505809d9159fb8d102c36b559117fbc5
+Text-copy-source-sha1: b3dcd6cebb887eb5a753c84552be34f6b3e857bf
+
+
+Node-path: branches/branch4/subdir
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/subdir
+
+
+Revision-number: 12
+Prop-content-length: 212
+Content-length: 212
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2013-04-23T19:28:53.347813Z
+K 7
+svn:log
+V 107
+Add a file to branch4
+
+The branch should now contain:
+file4
+master-branch4
+subdir/subfile1
+subdir/subfile2
+
+PROPS-END
+
+Node-path: branches/branch4/file4
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 24
+Text-content-md5: 95e5f2015b193a85cfe68a50870d12a2
+Text-content-sha1: 3d2559e1579a859a7230b298281996795e9726dd
+Content-length: 34
+
+PROPS-END
+This file is in branch4
+
+
