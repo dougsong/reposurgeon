@@ -3206,7 +3206,9 @@ class StreamParser:
                                      (newcommit.fossil_id, copies))
                     linkback = False
                     # If the copies include one for the directory, we're good.
-                    if any(node.kind == SD_DIR and node.from_path and node.path == newcommit.common for node in copies):
+                    if any(node.kind == SD_DIR and node.from_path
+                                    and node.path == newcommit.common
+                                for node in copies):
                         self.directory_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce("r%s: directory copy with %s" \
