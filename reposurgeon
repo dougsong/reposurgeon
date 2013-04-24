@@ -3378,14 +3378,14 @@ class StreamParser:
                 pass
             else:
                 self.branchlink[commit.mark] = (commit, self.repo.earliest_commit())
+            self.repo.timings.append(["root", time.time()])
+            baton.twirl()
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
                 announce("branch roots: [{roots}], links {{{links}}}".format(
                     roots = ", ".join(c.mark for c in branchroots),
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.itervalues())))
-            self.repo.timings.append(["root", time.time()]) 
-            baton.twirl()
             for (child, parent) in self.branchlink.itervalues():
                 if parent not in child.parents():
                     child.add_parent(parent)
