@@ -2137,6 +2137,8 @@ class StreamParser:
         self.branches = {}
         self.branchlink = {}
         self.branchdeletes = set()
+        self.branchcopies = set()
+        self.generated_deletes = []
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
@@ -2931,12 +2933,13 @@ class StreamParser:
                             expanded_nodes.append(newnode)
                             self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
-                    # If this is a copy between branches, do nothing;
-                    # no fileop should be issued until there is an
-                    # actual file modification on the new branch.
-                    # Exception: If the target branch has been deleted,
-                    # perform a normal copy and interpret this as an
-                    # ad-hoc branch merge.
+                    # If this is a copy between branches, no fileop should be
+                    # issued until there is an actual file modification on the
+                    # new branch. Instead, remember that the branch root
+                    # inherits the tree of the source branch and should not
+                    # start with a deleteall.
+                    # Exception: If the target branch has been deleted, perform
+                    # a normal copy and interpret this as an ad-hoc branch merge.
                     if node.from_path:
                         branchcopy = node.from_path in self.branches \
                                          and node.path in self.branches \
@@ -2951,6 +2954,7 @@ class StreamParser:
                         if not branchcopy:
                             self.branchdeletes.discard(node.path)
                         else:
+                            self.branchcopies.add(node.path)
                             continue
                         for source in node.from_set:
                             lookback = filemaps[node.from_rev][source]
@@ -3391,6 +3395,22 @@ class StreamParser:
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.itervalues())))
             for (child, parent) in self.branchlink.itervalues():
+                if not child.has_parents() \
+                        and not child.branch in self.branchcopies:
+                    # The branch wasn't created by copying another branch and
+                    # is instead populated by fileops. Prepend a deleteall to
+                    # ensure that it starts with a clean tree instead of
+                    # inheriting that of its soon to be added first parent.
+                    # The deleteall is put on the first commit of the branch
+                    # which has fileops or more than one child.
+                    commit = child
+                    while len(commit.children()) == 1 and not commit.fileops:
+                        commit = commit.first_child()
+                    if commit.fileops or commit.has_children():
+                        fileop = FileOp()
+                        fileop.construct("deleteall")
+                        commit.fileops.insert(0, fileop)
+                        self.generated_deletes.append(commit)
                 if parent not in child.parents():
                     child.add_parent(parent)
             for root in branchroots:
@@ -3583,9 +3603,12 @@ class StreamParser:
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
+        ignore_deleteall = set(commit.mark
+                               for commit in self.generated_deletes)
         for commit in self.repo.commits():
             if commit.fileops and commit.fileops[0].op == 'deleteall' \
-                    and commit.has_children():
+                    and commit.has_children() \
+                    and commit.mark not in ignore_deleteall:
                 self.gripe("mid-branch deleteall on %s at <%s>." % \
                         (commit.branch, commit.fossil_id))
         self.repo.timings.append(["linting", time.time()]) 
