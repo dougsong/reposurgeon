@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+2.37: 2013-04-25
+     No more tree pollution on branches deduced from file copies.
+
 2.36: 2013-04-22
      Optimizations, and fixes for some subtle bugs in the deletion logic.
 
