@@ -68,11 +68,11 @@ A branch created for illustrative purposes.
 commit refs/heads/samplebranch2
 mark :12
 committer esr <esr> 1324127616 +0000
-data 75
-This is an example of a deleteall that should have influence on manifest
-fr
-om :10
+data 78
+This is an example of a deleteall that should have influence on the manifest.
+from :2
 deleteall
+
 commit refs/heads/samplebranch2
 mark :13
 committer esr <esr> 1322691357 +0000
