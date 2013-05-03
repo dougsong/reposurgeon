@@ -1098,8 +1098,8 @@ from the highest member (child) to the lowest (parent).</para>
 <varlistentry>
 <term><command>branch</command>
         <emphasis>branchname</emphasis>...
-        <command>{rename|delete}</command>
-        <command>[arg]</command>.
+        {<command>rename</command>|<command>delete</command>}
+        [<emphasis>arg</emphasis>]
 </term>
 <listitem>
 <para>Rename or delete a branch (and any associated resets).  First argument
