@@ -1569,7 +1569,7 @@ class Commit(object):
         # Take own fileops into account.
         for fileop in self.fileops:
             if fileop.op == 'M':
-                ancestors[fileop.path] = fileop.ref
+                ancestors[fileop.path] = (fileop.mode, fileop.ref)
             elif fileop.op == 'D':
                 if fileop.path in ancestors:
                     del ancestors[fileop.path]
@@ -1592,7 +1592,7 @@ class Commit(object):
             directory = os.path.join(self.repo.subdir(), self.mark)
         try:
             os.mkdir(directory)
-            for (path, mark) in self.manifest().iteritems():
+            for (path, (_, mark)) in self.manifest().iteritems():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -7700,12 +7700,14 @@ This command supports > redirection.
                     parse.stdout.write("mark %s\n" % event.mark)
                 parse.stdout.write("\n")
                 if filter_func is None:
-                    parse.stdout.write("\n".join("%s -> %s" % path_mark
-                            for path_mark in event.manifest().iteritems()))
+                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                            for path, (mode, mark)
+                            in event.manifest().iteritems()))
                 else:
-                    parse.stdout.write("\n".join("%s -> %s" % path_mark
-                            for path_mark in event.manifest().iteritems()
-                            if filter_func(path_mark[0])))
+                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                            for path, (mode, mark)
+                            in event.manifest().iteritems()
+                            if filter_func(path)))
                 parse.stdout.write("\n")
 
     def help_merge(self):
