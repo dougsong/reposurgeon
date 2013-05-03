@@ -7735,6 +7735,45 @@ from the highest member (child) to the lowest (parent).
         #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce("%s added as a parent of %s" % (earlier_id, later_id))
 
+    def help_reparent(self):
+        print("""
+Changes the parent list of a commit. Takes a selection set argument and an
+optional policy argument. The selection set must resolve to exactly two
+commits, the latest of which is the commit to modify, and the earliest is the
+new first parent. All other parents links are cleared; if you want you can
+recreate them with the 'merge' command.
+
+By default, the manifest of the reparented commit is computed before modifying
+it, and fileops are prepended so that the manifest stays unchanged even when
+the first parent has been changed. Using the keyword 'rebase' as a third
+argument inhibits this behavior and the tree contents of all descendents can be
+modified as a result.
+""")
+    def do_reparent(self, line):
+        repo = self.chosen()
+        if repo is None:
+            complain("no repo has been chosen.")
+            return
+        rest = self.set_selection_set(line)
+        if not (len(self.selection) == 2 and \
+                all(isinstance(repo[i], Commit) for i in self.selection)):
+            raise Recoverable("reparent requires exactly two selected commits")
+        parent, child = (repo[i] for i in sorted(self.selection))
+        if rest and rest != "rebase":
+            raise Recoverable("unknown policy for reparent")
+        if rest != "rebase":
+            # Recreate the state of the tree
+            f = FileOp()
+            f.construct("deleteall")
+            newops = [f]
+            for (path, (mode, mark)) in child.manifest().iteritems():
+                f = FileOp()
+                f.construct("M", mode, mark, path)
+                newops.append(f)
+            newops.extend(child.fileops)
+            child.fileops = newops
+        child.set_parents([parent])
+
     def help_branch(self):
         print("""
 Rename or delete a branch (and any associated resets).  First argument

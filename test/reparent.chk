@@ -1,0 +1,110 @@
+read simple.fi
+inspect 127
+Event 127 ===============================================================
+commit refs/heads/master
+mark :126
+author Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+data 183
+Switch selection sets from prefix to postfix.
+
+The prefix position what triggering some obscure bug in the Python cmd
+class; the symptom was that "$ verbose" wouldn't parse properly.
+from :123
+M 100755 :124 reposurgeon
+M 100644 :125 reposurgeon.xml
+
+manifest 127..$
+Event 127 ===============================================================
+commit refs/heads/master
+mark :126
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :124
+reposurgeon.xml -> :125
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+Event 129 ===============================================================
+commit refs/heads/master
+mark :128
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :127
+reposurgeon.xml -> :125
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+reparent 127,29
+inspect 127
+Event 127 ===============================================================
+commit refs/heads/master
+mark :126
+author Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+data 183
+Switch selection sets from prefix to postfix.
+
+The prefix position what triggering some obscure bug in the Python cmd
+class; the symptom was that "$ verbose" wouldn't parse properly.
+from :28
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :124 reposurgeon
+M 100644 :125 reposurgeon.xml
+M 100644 :68 test/Makefile
+M 100644 :48 test/simple.dump
+M 100644 :50 theory.txt
+M 100755 :124 reposurgeon
+M 100644 :125 reposurgeon.xml
+
+manifest 127..$
+Event 127 ===============================================================
+commit refs/heads/master
+mark :126
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :124
+reposurgeon.xml -> :125
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+Event 129 ===============================================================
+commit refs/heads/master
+mark :128
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :127
+reposurgeon.xml -> :125
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+reparent 129,3 rebase
+inspect 129
+Event 129 ===============================================================
+commit refs/heads/master
+mark :128
+author Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
+data 55
+Compute the correct default set for the index command.
+from :2
+M 100755 :127 reposurgeon
+
+manifest 129
+Event 129 ===============================================================
+commit refs/heads/master
+mark :128
+
+reposurgeon -> :127
+rs -> :1
