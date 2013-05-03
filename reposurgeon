@@ -1259,7 +1259,7 @@ class Commit(object):
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
         self.properties = collections.OrderedDict()         # commit properties (extension)
-        self.filemap = {}
+        self.filemap = None
         self.color = None
         self.fossil_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
@@ -1295,6 +1295,7 @@ class Commit(object):
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
         c.fileops = []
+        c.filemap = None
         c._pathset = None
         c.color = None
         if repo is not None:
@@ -1486,6 +1487,7 @@ class Commit(object):
         assert all(self._parent_nodes)
         for parent in self._parent_nodes:
             parent._child_nodes.append(self)
+        self.repo.invalidate_manifests()
     def add_parent(self, mark):
         if isinstance(mark, Commit):
             newparent = mark
@@ -1494,20 +1496,24 @@ class Commit(object):
         assert(newparent)
         self._parent_nodes.append(newparent)
         newparent._child_nodes.append(self)
+        self.repo.invalidate_manifests()
     def insert_parent(self, idx, mark):
         newparent = self.repo.objfind(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
         newparent._child_nodes.append(self)
+        self.repo.invalidate_manifests()
     def remove_parent(self, event):
         # remove *all* occurences of event in parents
         self._parent_nodes = [n for n in self._parent_nodes if n is not event]
         # and all occurences of self in events children
         event._child_nodes = [n for n in event._child_nodes if n is not self]
+        self.repo.invalidate_manifests()
     def replace_parent(self, e1, e2):
         self._parent_nodes[self._parent_nodes.index(e1)] = e2
         e1._child_nodes.remove(self)
         e2._child_nodes.append(self)
+        self.repo.invalidate_manifests()
     def has_parents(self):
         return bool(self._parent_nodes)
     def children(self):
@@ -1549,10 +1555,11 @@ class Commit(object):
         return self._pathset
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
+        self.repo._has_manifests = True
         sys.setrecursionlimit(len(self.repo.events) * 2)
         return self._manifest()
     def _manifest(self):
-        if self.filemap:
+        if self.filemap is not None:
             return self.filemap
         # Get the first parent manifest, or an empty one.
         try:
@@ -3988,6 +3995,7 @@ class Repository:
         self.fossil_map = {}    # From anything that doesn't survive rebuild
         self.fossil_count = None
         self.timings = []
+        self._has_manifests = False
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -4039,6 +4047,11 @@ class Repository:
     def invalidate_object_map(self):
         "Force an object-map rebuild on the next lookup."
         self._mark_to_object = {}
+    def invalidate_manifests(self):
+        if self._has_manifests:
+            for c in self.commits():
+                c.filemap = None
+            self._has_manifests = False
     def read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         authormap = {}
