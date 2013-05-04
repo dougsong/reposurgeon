@@ -2658,8 +2658,7 @@ class StreamParser:
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
         copynodes = []
-        for revision in self.revisions:
-            record = self.revisions[revision]
+        for (revision, record) in self.revisions.iteritems():
             for node in record.nodes:
                 if node.from_path is not None:
                     copynodes.append(node)
@@ -2687,7 +2686,7 @@ class StreamParser:
         filemaps = {}
         filemap = PathMap()
         split_commits = []
-        for (revision, record) in self.revisions.items():
+        for (revision, record) in self.revisions.iteritems():
             for node in record.nodes:
                 # Mutate the filemap according to copies
                 if node.from_rev:
@@ -2752,7 +2751,7 @@ class StreamParser:
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 4")
         previous = None
-        for (revision, record) in self.revisions.items():
+        for (revision, record) in self.revisions.iteritems():
             if debug_enable(DEBUG_EXTRACT):
                 announce("Revision %s:" % revision)
             for node in record.nodes:
