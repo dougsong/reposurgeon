@@ -3401,6 +3401,28 @@ class StreamParser:
             self.repo.timings.append(["branchlinks", time.time()]) 
             baton.twirl()
             # Add links due to svn:mergeinfo properties
+            def last_relevant_commit(max_rev, path):
+                # Make path look like a branch
+                if path[0] == "/": path = path[1:]
+                if path[-1] != os.sep: path = path + os.sep
+                # If the revision is split, try from the last split commit
+                try:
+                    max_rev = split_commits[max_rev]
+                except KeyError:
+                    pass
+                # Find the commit object...
+                try:
+                    obj = self.repo.fossil_map["SVN:%s" % max_rev]
+                except KeyError:
+                    return None
+                # ...then iterate backwards from there...
+                past_events = (self.repo.events[i] for i in
+                        xrange(self.repo.index(obj), -1, -1))
+                # ...to find a commit on the right branch.
+                return next((e for e in past_events
+                             if isinstance(e, Commit) and
+                             path.startswith(e.branch)),
+                            None)
             mergeinfo = PathMap()
             mergeinfos = {}
             for (revision, record) in self.revisions.iteritems():
@@ -3449,11 +3471,18 @@ class StreamParser:
                                 else:
                                     if past_merges:
                                         existing_merges.update(past_merges)
-                                # Find the commit corresponding to from_rev
-                                from_commit = self.repo.fossil_map.get(
-                                        "SVN:%s" % from_rev)
+                                # Svn doesn't fit the merge range to commits on
+                                # the source branch; we need to find the latest
+                                # commit before from_rev made on that branch.
+                                from_commit = last_relevant_commit(
+                                                    from_rev, from_path)
                                 if from_commit is not None:
                                     own_merges.add(from_commit.mark)
+                                else:
+                                    self.gripe("cannot resolve mergeinfo "
+                                               "source from revision %s for "
+                                               "path %s." % (from_rev,
+                                                             node.path))
                     mergeinfo[(node.path,)] = own_merges
                     new_merges = own_merges - existing_merges
                     if not new_merges: continue
