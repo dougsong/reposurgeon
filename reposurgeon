@@ -3422,7 +3422,9 @@ class StreamParser:
                     # Because svn:mergeinfo will persist like other properties,
                     # we need to compare with the already present mergeinfo and
                     # only take new entries into account when creating merge
-                    # links.
+                    # links. Also, since merging will also inherit the
+                    # mergeinfo entries of the source path, we also need to
+                    # gather and ignore those.
                     existing_merges = set(mergeinfo[(node.path,)] or [])
                     own_merges = set()
                     try:
@@ -3438,6 +3440,14 @@ class StreamParser:
                             for span in ranges.split(","):
                                 from_rev = span.rsplit("-", 1)[-1]
                                 if not from_rev: continue
+                                # Import mergeinfo from merged branches
+                                try:
+                                    past_merges = mergeinfos[from_rev][(from_path,)]
+                                except KeyError:
+                                    pass
+                                else:
+                                    if past_merges:
+                                        existing_merges.update(past_merges)
                                 # Find the commit corresponding to from_rev
                                 from_commit = self.repo.fossil_map.get(
                                         "SVN:%s" % from_rev)
