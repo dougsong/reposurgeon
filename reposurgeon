@@ -2153,7 +2153,6 @@ class StreamParser:
         self.fileop_branchlinks  = set()
         self.directory_branchlinks  = set()
         self.active_gitignores = set()
-        self.mergeinfo = {}
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2874,35 +2873,6 @@ class StreamParser:
                         if debug_enable(DEBUG_EXTRACT):
                             announce("r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
-                        # svn:mergeinfo gets handled here
-                        if 'svn:mergeinfo' in node.props:
-                            val = node.props['svn:mergeinfo']
-                            # Ignore an invalid empty value set (not
-                            # no effect) by some tools.
-                            if val:
-                                # The general case is multiline; each line
-                                # may describe multiple spans merging
-                                # to this revision.  For each span, we
-                                # link from the last revision.
-                                for line in val.split('\n'):
-                                    if line and ':' in line:
-                                        (_, ranges) = line.split(":")
-                                        for span in ranges.split(","):
-                                            if '-' in span:
-                                                (_, end) = span.split("-")
-                                            else:
-                                                end = span
-                                            # Because mergeinfo properties will
-                                            # persist like other properties,
-                                            # we want to record the earliest
-                                            # instance of a merge to a given
-                                            # path from a given source revision
-                                            # then ignore later ones.
-                                            if (node.path, end) not in self.mergeinfo:
-                                                self.mergeinfo[(node.path, end)] = revision
-                                            if debug_enable(DEBUG_EXTRACT):
-                                                announce("r%s: mergeinfo link from %s\n" \
-                                                        % (revision, end))
                         # svn:ignore gets handled here,
                         if node.path == os.sep:
                             gitignore_path = ".gitignore"
@@ -3430,20 +3400,61 @@ class StreamParser:
             self.repo.timings.append(["branchlinks", time.time()]) 
             baton.twirl()
             # Add links due to svn:mergeinfo properties
-            for ((_, early), late) in self.mergeinfo.iteritems():
-                if early in split_commits:
-                    self.gripe("cannot resolve mergeinfo from split commit %s to %s." % (early, late))
-                elif late in split_commits:
-                    self.gripe("cannot resolve mergeinfo from %s to split commit %s." % (early, late))
-                else:
+            mergeinfo = PathMap()
+            mergeinfos = {}
+            for (revision, record) in self.revisions.iteritems():
+                for node in record.nodes:
+                    if node.kind != SD_DIR: continue
+                    # Mutate the filemap according to current mergeinfo.
+                    # The general case is multiline: each line may describe
+                    # multiple spans merging to this revision; we only consider
+                    # the end revision of each span.
+                    # Because svn:mergeinfo will persist like other properties,
+                    # we need to compare with the already present mergeinfo and
+                    # only take new entries into account when creating merge
+                    # links.
+                    existing_merges = set(mergeinfo[(node.path,)] or [])
+                    own_merges = set()
                     try:
-                        late_commit = self.repo.fossil_map["SVN:%s" % late]
-                        early_commit = self.repo.fossil_map["SVN:%s" % early]
-                    except KeyError:
+                        info = node.props['svn:mergeinfo']
+                    except (AttributeError, TypeError, KeyError):
+                        pass
+                    else:
+                        for line in info.split('\n'):
+                            try:
+                                from_path, ranges = line.split(":", 1)
+                            except ValueError:
+                                continue
+                            for span in ranges.split(","):
+                                from_rev = span.rsplit("-", 1)[-1]
+                                if not from_rev: continue
+                                # Find the commit corresponding to from_rev
+                                from_commit = self.repo.fossil_map.get(
+                                        "SVN:%s" % from_rev)
+                                if from_commit is not None:
+                                    own_merges.add(from_commit.mark)
+                    mergeinfo[(node.path,)] = own_merges
+                    new_merges = own_merges - existing_merges
+                    if not new_merges: continue
+                    # Find the target commit
+                    commit = self.repo.fossil_map.get("SVN:%s" % revision)
+                    if commit is None:
+                        self.gripe("cannot resolve mergeinfo destination "
+                                   "to revision %s for path %s."
+                                   % (revision, node.path))
                         continue
-                    if early_commit not in late_commit.parents():
-                        late_commit.add_parent(early_commit)
-            self.repo.timings.append(["mergeinfo", time.time()]) 
+                    for mark in new_merges:
+                        parent = self.repo.objfind(mark)
+                        if parent not in commit.parents():
+                            commit.add_parent(parent)
+                        if debug_enable(DEBUG_TOPOLOGY):
+                            announce("processed new mergeinfo from r%s "
+                                     "to r%s." % (parent.fossil_id,
+                                                  commit.fossil_id))
+                mergeinfos[revision] = mergeinfo.snapshot()
+                baton.twirl()
+            del mergeinfo, mergeinfos
+            self.repo.timings.append(["mergeinfo", time.time()])
             baton.twirl()
             if debug_enable(DEBUG_EXTRACT):
                 announce("after branch analysis")
