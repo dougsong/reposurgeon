@@ -1731,6 +1731,7 @@ class PathMap(object):
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
     __slots__ = ("shared", "maxid", "snapid", "store")
+    _self_value = object()
     def __init__(self, other = None):
         # The instance may be a child of several other PathMaps if |shared|
         # is True. |snapid| is an integer unique among related PathMaps,
@@ -1840,6 +1841,7 @@ class PathMap(object):
     def _elts_items(self):
         snapid = self.snapid
         for component, snaplist in self.store.iteritems():
+            if component is self._self_value: continue
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
     # Insert obj at the location given by components.
@@ -1872,8 +1874,12 @@ class PathMap(object):
     # Return a list of the components in path in reverse order.
     @staticmethod
     def _split_path(path):
-        components = filter(None, os.path.normpath(path).split(os.sep))
-        return (components.pop() if components else None, components)
+        if isinstance(path, str):
+            components = filter(None, os.path.normpath(path).split(os.sep))
+            return (components.pop() if components else None, components)
+        else:
+            return (PathMap._self_value,
+                    filter(None, os.path.normpath(path[0]).split(os.sep)))
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
