@@ -1760,12 +1760,6 @@ class PathMap(object):
             if isinstance(v, PathMap):
                 v.shared = True
         return r
-    def update(self, other):
-        "Insert all files of other into the PathMap, overwriting if needed."
-        for n, v in other._elts_items():
-            self._elts_set(n, v)
-            if isinstance(v, PathMap):
-                v.shared = True
     def copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(source_path)
