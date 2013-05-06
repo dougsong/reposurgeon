@@ -3486,9 +3486,11 @@ class StreamParser:
                     mergeinfo[(node.path,)] = own_merges
                     new_merges = own_merges - existing_merges
                     if not new_merges: continue
-                    # Find the target commit
-                    commit = self.repo.fossil_map.get("SVN:%s" % revision)
-                    if commit is None:
+                    # Find the correct commit in the split case
+                    commit = last_relevant_commit(revision, node.path)
+                    if commit is None or \
+                            not commit.fossil_id.startswith(revision):
+                        # The reverse lookup went past the target revision
                         self.gripe("cannot resolve mergeinfo destination "
                                    "to revision %s for path %s."
                                    % (revision, node.path))
