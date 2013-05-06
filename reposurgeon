@@ -4026,10 +4026,16 @@ class Repository:
         return dict((commit.branch, commit.mark) for commit in self.commits())
     def index(self, obj):
         "Index of the specified object."
-        for (ind, event) in enumerate(self.events):
-            if event == obj:
-                return ind
-        raise Fatal("internal error: <%s> not matched in repository %s" % (obj.fossil_id, self.name))
+        try:
+            mark = obj.mark
+        except AttributeError:
+            for (ind, event) in enumerate(self.events):
+                if event == obj: return ind
+        else:
+            ind = self.find(mark)
+            if ind is not None: return ind
+        raise Fatal("internal error: <%s> not matched "
+                    "in repository %s" % (obj.fossil_id, self.name))
     def find(self, mark):
         "Find an object index by mark"
         if not self._mark_to_index:
