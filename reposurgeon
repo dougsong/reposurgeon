@@ -3405,6 +3405,16 @@ class StreamParser:
             for (revision, record) in self.revisions.iteritems():
                 for node in record.nodes:
                     if node.kind != SD_DIR: continue
+                    # Mutate the mergeinfo according to copies
+                    if node.from_rev:
+                        assert int(node.from_rev) < int(revision)
+                        mergeinfo.copy_from(
+                                node.path,
+                                mergeinfos.get(node.from_rev) or PathMap(),
+                                node.from_path)
+                        if debug_enable(DEBUG_EXTRACT):
+                            announce("r%s~%s mergeinfo copied to %s" \
+                                % (node.from_rev, node.from_path, node.path))
                     # Mutate the filemap according to current mergeinfo.
                     # The general case is multiline: each line may describe
                     # multiple spans merging to this revision; we only consider
