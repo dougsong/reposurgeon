@@ -2717,6 +2717,7 @@ class StreamParser:
                         announce("r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
+        del filemap
         self.repo.timings.append(["filemaps", time.time()]) 
         baton.twirl()
         # Blows up huge on large repos...
@@ -3306,6 +3307,8 @@ class StreamParser:
             baton.twirl()
             time.sleep(0)
             previous = revision
+        # Filemaps are no longer needed
+        del filemaps
         # Warn about dubious branch links
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
