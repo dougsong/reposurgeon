@@ -2684,7 +2684,6 @@ class StreamParser:
             announce("Pass 2")
         filemaps = {}
         filemap = PathMap()
-        split_commits = []
         for (revision, record) in self.revisions.iteritems():
             for node in record.nodes:
                 # Mutate the filemap according to copies
@@ -2750,6 +2749,7 @@ class StreamParser:
         # it doesn't hit the disk.
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 4")
+        split_commits = {}
         previous = None
         for (revision, record) in self.revisions.iteritems():
             if debug_enable(DEBUG_EXTRACT):
@@ -3136,11 +3136,7 @@ class StreamParser:
             # Create all commits corresponding to the revision
             newcommits = []
             commit.fossil_id = revision
-            # The revision is truly mixed if there is more than one clique
-            # not consisting entirely of deleteall operations.
-            if len(other_ops) > 1:
-                split_commits.append(revision)
-            else:
+            if len(other_ops) <= 1:
                 # In the ordinary case, we can assign all non-deleteall fileops
                 # to the base commit.
                 self.repo.fossil_map["SVN:%s" % commit.fossil_id] = commit
@@ -3167,6 +3163,11 @@ class StreamParser:
                 split.fileops = fileops
                 split._pathset = None
                 newcommits.append(split)
+            # The revision is truly mixed if there is more than one clique
+            # not consisting entirely of deleteall operations.
+            if len(other_ops) > 1:
+                # Store the last used split id
+                split_commits[revision] = split.fossil_id
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
