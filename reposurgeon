@@ -2774,7 +2774,7 @@ class StreamParser:
                                  if isinstance(e, Commit))
                 # ...to find one on the right branch.
                 return next((e for (e, branch) in commit_branch
-                             if path.startswith(branch)),
+                             if branch and path.startswith(branch)),
                             None)
         previous = None
         for (revision, record) in self.revisions.iteritems():
