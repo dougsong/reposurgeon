@@ -2750,6 +2750,28 @@ class StreamParser:
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 4")
         split_commits = {}
+        def last_relevant_commit(max_rev, path):
+                # Make path look like a branch
+                if path[0] == "/": path = path[1:]
+                if path[-1] != os.sep: path = path + os.sep
+                # If the revision is split, try from the last split commit
+                try:
+                    max_rev = split_commits[max_rev]
+                except KeyError:
+                    pass
+                # Find the commit object...
+                try:
+                    obj = self.repo.fossil_map["SVN:%s" % max_rev]
+                except KeyError:
+                    return None
+                # ...then iterate backwards from there...
+                past_events = (self.repo.events[i] for i in
+                        xrange(self.repo.index(obj), -1, -1))
+                # ...to find a commit on the right branch.
+                return next((e for e in past_events
+                             if isinstance(e, Commit) and
+                             path.startswith(e.branch)),
+                            None)
         previous = None
         for (revision, record) in self.revisions.iteritems():
             if debug_enable(DEBUG_EXTRACT):
@@ -3405,28 +3427,6 @@ class StreamParser:
             self.repo.timings.append(["branchlinks", time.time()]) 
             baton.twirl()
             # Add links due to svn:mergeinfo properties
-            def last_relevant_commit(max_rev, path):
-                # Make path look like a branch
-                if path[0] == "/": path = path[1:]
-                if path[-1] != os.sep: path = path + os.sep
-                # If the revision is split, try from the last split commit
-                try:
-                    max_rev = split_commits[max_rev]
-                except KeyError:
-                    pass
-                # Find the commit object...
-                try:
-                    obj = self.repo.fossil_map["SVN:%s" % max_rev]
-                except KeyError:
-                    return None
-                # ...then iterate backwards from there...
-                past_events = (self.repo.events[i] for i in
-                        xrange(self.repo.index(obj), -1, -1))
-                # ...to find a commit on the right branch.
-                return next((e for e in past_events
-                             if isinstance(e, Commit) and
-                             path.startswith(e.branch)),
-                            None)
             mergeinfo = PathMap()
             mergeinfos = {}
             for (revision, record) in self.revisions.iteritems():
