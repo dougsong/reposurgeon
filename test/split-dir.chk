@@ -3,7 +3,6 @@ reposurgeon: verbose 1
 quiet on
 set svn_nobranch
 read split-dir.svn
-reposurgeon: branch links detected by file ops only: 
 * split-dir
 split 4 in bar
 reposurgeon: fileop argument doesn't point at a commit

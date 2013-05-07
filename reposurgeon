@@ -3168,6 +3168,9 @@ class StreamParser:
             if len(other_ops) > 1:
                 # Store the last used split id
                 split_commits[revision] = split.fossil_id
+            # Sort fileops according to git rules
+            for newcommit in newcommits:
+                newcommit.fileops.sort(key=FileOp.sortkey)
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
@@ -3179,9 +3182,10 @@ class StreamParser:
             # than the CVS revision corresponding to the
             # copy). Fortunately, we can resolve such sets by the simple
             # expedient of picking the *latest* revision in them!
-            for newcommit in newcommits:
-                newcommit.fileops.sort(key=FileOp.sortkey)
-                if commit.mark not in self.branchlink:
+            # No code uses the result if svn_nobranch is true.
+            if not global_options["svn_nobranch"]:
+                for newcommit in newcommits:
+                    if commit.mark in self.branchlink: continue
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
                               and node.path.startswith(newcommit.common)]
@@ -3254,7 +3258,7 @@ class StreamParser:
                                 if debug_enable(DEBUG_TOPOLOGY):
                                     announce("r%s: looking at r%s" \
                                              % (newcommit.fossil_id, prev.fossil_id))
-                                if latest.from_path.startswith(prev.common) or global_options["svn_nobranch"]:
+                                if latest.from_path.startswith(prev.common):
                                     self.branchlink[newcommit.mark] = (newcommit, prev)
                                     if debug_enable(DEBUG_TOPOLOGY):
                                         announce("r%s: link %s (%s) back to %s (%s, %s)" % \
