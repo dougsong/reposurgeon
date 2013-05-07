@@ -3266,36 +3266,20 @@ class StreamParser:
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
                                      key=lambda node: int(node.from_rev))
-                        threshold = False
-                        # We do not use the memoized commits() iterator since:
-                        #  - for reverse iteration it first needs to be
-                        #    exhausted and fully cached
-                        #  - this is the only need of it in this phase
-                        #  - the cache is clobbered each revision, that is
-                        #    between any two uses of this iterator
-                        for prev in reversed(self.repo):
-                            if not isinstance(prev, Commit): continue
-                            if prev.fossil_id == latest.from_rev:
-                                if debug_enable(DEBUG_TOPOLOGY):
-                                    announce("r%s: found %s looking for %s" \
-                                             % (newcommit.fossil_id, latest, newcommit.common))
-                                threshold = True
-                            if threshold:
-                                if debug_enable(DEBUG_TOPOLOGY):
-                                    announce("r%s: looking at r%s" \
-                                             % (newcommit.fossil_id, prev.fossil_id))
-                                if latest.from_path.startswith(prev.common):
-                                    self.branchlink[newcommit.mark] = (newcommit, prev)
-                                    if debug_enable(DEBUG_TOPOLOGY):
-                                        announce("r%s: link %s (%s) back to %s (%s, %s)" % \
-                                                 (newcommit.fossil_id,
-                                                  newcommit.mark,
-                                                  newcommit.common,
-                                                  latest.from_rev,
-                                                  prev.mark,
-                                                  prev.common
-                                                  ))
-                                    break
+                        prev = last_relevant_commit(
+                                latest.from_rev, latest.from_path,
+                                operator.attrgetter("common"))
+                        if prev is not None:
+                            self.branchlink[newcommit.mark] = (newcommit, prev)
+                            if debug_enable(DEBUG_TOPOLOGY):
+                                announce("r%s: link %s (%s) back to %s (%s, %s)" % \
+                                         (newcommit.fossil_id,
+                                          newcommit.mark,
+                                          newcommit.common,
+                                          latest.from_rev,
+                                          prev.mark,
+                                          prev.common
+                                          ))
                         else:
                             if debug_enable(DEBUG_TOPOLOGY):
                                 complain("lookback for %s failed" % latest)
