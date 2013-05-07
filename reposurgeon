@@ -2750,7 +2750,8 @@ class StreamParser:
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 4")
         split_commits = {}
-        def last_relevant_commit(max_rev, path):
+        def last_relevant_commit(max_rev, path,
+                                 getbranch = operator.attrgetter("branch")):
                 # Make path look like a branch
                 if path[0] == "/": path = path[1:]
                 if path[-1] != os.sep: path = path + os.sep
@@ -2767,10 +2768,13 @@ class StreamParser:
                 # ...then iterate backwards from there...
                 past_events = (self.repo.events[i] for i in
                         xrange(self.repo.index(obj), -1, -1))
-                # ...to find a commit on the right branch.
-                return next((e for e in past_events
-                             if isinstance(e, Commit) and
-                             path.startswith(e.branch)),
+                # ... finding branches of commits...
+                commit_branch = ((e, getbranch(e))
+                                 for e in past_events
+                                 if isinstance(e, Commit))
+                # ...to find one on the right branch.
+                return next((e for (e, branch) in commit_branch
+                             if path.startswith(branch)),
                             None)
         previous = None
         for (revision, record) in self.revisions.iteritems():
