@@ -98,7 +98,7 @@ mark :12
 committer no-author <no-author> 1109582047 +0000
 data 68
 This commit was manufactured by cvs2svn to create branch 'Testing'.
-from :11
+from :8
 M 100644 :9 data/cmdvartab
 M 100644 :10 data/driver.list
 
@@ -169,7 +169,7 @@ committer adkorte-guest <adkorte-guest> 1139674045 +0000
 data 64
 
 changed ser_send_char to use "unsigned char" instead of "char"
-from :20
+from :8
 M 100644 :21 drivers/serial.c
 
 # Fossil-ID: 12
@@ -299,7 +299,7 @@ This commit was manufactured by cvs2svn to create branch
 
 
 tag Development-root
-from :20
+from :8
 tagger no-author <no-author> 1119553881 +0000
 data 73
 This commit was manufactured by cvs2svn to create branch 'Development'.

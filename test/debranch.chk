@@ -95,7 +95,7 @@ mark :11
 committer esr <esr> 1361656199 +0000
 data 30
 Creation of alternate branch.
-from :10
+from :2
 M 100644 :9 README
 
 blob

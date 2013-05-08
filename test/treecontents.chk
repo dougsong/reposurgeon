@@ -219,7 +219,7 @@ mark :19
 committer frnchfrgg <frnchfrgg> 1366745242 +0000
 data 41
 Create branch4 by a normal copy of trunk
-from :6
+from :2
 M 100644 :3 master-branch4
 M 100644 :4 subdir/subfile1
 M 100644 :5 subdir/subfile2

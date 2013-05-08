@@ -2017,7 +2017,7 @@ mark :329
 committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'Stable'.
-from :328
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
@@ -2029,7 +2029,7 @@ mark :330
 committer no-author <no-author> 1109582047 +0000
 data 68
 This commit was manufactured by cvs2svn to create branch 'Testing'.
-from :328
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
@@ -2041,7 +2041,7 @@ mark :331
 committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'r2.0.1'.
-from :328
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
@@ -2053,7 +2053,7 @@ mark :332
 committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'v2.1.0'.
-from :328
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
@@ -3912,7 +3912,7 @@ mark :635
 committer Arnaud Quette <arnaud.quette@free.fr> 1119560962 +0000
 data 44
 2.1 fork and start of packaging integration
-from :590
+from :307
 M 100644 :591 CHANGES
 M 100755 :592 config.guess
 M 100644 :593 config.sub
@@ -4809,7 +4809,7 @@ committer no-author <no-author> 1122895733 +0000
 data 78
 This commit was manufactured by cvs2svn to create tag
 'alioth_SVN_migration'.
-from :762
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
@@ -5517,7 +5517,7 @@ committer no-author <no-author> 1125542538 +0000
 data 76
 This commit was manufactured by cvs2svn to create branch
 'Tripp_Lite_Omni'.
-from :872
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :821 data/driver.list
@@ -6422,7 +6422,7 @@ mark :1002
 committer no-author <no-author> 1126575581 +0000
 data 73
 This commit was manufactured by cvs2svn to create branch 'regex_branch'.
-from :762
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :991 data/driver.list
@@ -6775,7 +6775,7 @@ committer no-author <no-author> 1126715194 +0000
 data 76
 This commit was manufactured by cvs2svn to create tag
 'regex_branch_base0'.
-from :762
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1013 data/driver.list
@@ -8106,7 +8106,7 @@ committer no-author <no-author> 1127793462 +0000
 data 78
 This commit was manufactured by cvs2svn to create tag
 'CFL_TL_pre_Dev_merge'.
-from :1199
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :821 data/driver.list
@@ -10011,7 +10011,7 @@ mark :1484
 committer no-author <no-author> 1132072688 +0000
 data 70
 This commit was manufactured by cvs2svn to create branch 'reportbuf'.
-from :762
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1482 data/driver.list
@@ -10207,7 +10207,7 @@ committer no-author <no-author> 1132072688 +0000
 data 72
 This commit was manufactured by cvs2svn to create tag
 'reportbuf_base'.
-from :762
+from :307
 M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1482 data/driver.list
@@ -14674,31 +14674,31 @@ This commit was manufactured by cvs2svn to create tag
 
 
 tag v2.0.2_pre1
-from :548
+from :307
 tagger no-author <no-author> 1115199397 +0000
 data 70
 This commit was manufactured by cvs2svn to create tag 'v2.0.2_pre1'.
 
 
 tag v2.0.2_pre2
-from :588
+from :307
 tagger no-author <no-author> 1119442233 +0000
 data 70
 This commit was manufactured by cvs2svn to create tag 'v2.0.2_pre2'.
 
 
 tag Development-root
-from :590
+from :307
 tagger no-author <no-author> 1119553881 +0000
 data 73
 This commit was manufactured by cvs2svn to create branch 'Development'.
 
 
 reset refs/tags/v2.0.1
-from :328
+from :307
 
 reset refs/tags/v2.0.3_pre2
-from :1532
+from :307
 
 reset refs/tags/v2.0.3
 from :307

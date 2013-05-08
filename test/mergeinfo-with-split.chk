@@ -61,7 +61,7 @@ data 52
 release party
 
 [[Split portion of a mixed commit.]]
-from :5
+from :3
 M 100644 :6 VERSION
 
 # Fossil-ID: 3.2
