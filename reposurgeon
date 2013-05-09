@@ -4089,7 +4089,16 @@ class Repository:
         return branches
     def branchmap(self):
         "Return a map of branchnames to terminal marks in this repo."
-        return dict((commit.branch, commit.mark) for commit in self.commits())
+        brmap = {}
+        for e in self.events:
+            if isinstance(e, Reset):
+                if e.committish is None:
+                    brmap.pop(e.ref, None)
+                else:
+                    brmap[e.ref] = e.committish
+            elif isinstance(e, Commit):
+                brmap[e.branch] = e.mark
+        return brmap
     def index(self, obj):
         "Index of the specified object."
         try:
