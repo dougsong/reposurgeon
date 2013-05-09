@@ -4079,8 +4079,14 @@ class Repository:
         "Return the size of this import stream, for statistics display."
         return sum(len(str(e)) for e in self.events)
     def branchset(self):
-        "Return a set of branchnames in this repo."
-        return set(commit.branch for commit in self.commits())
+        "Return a set of all branchnames appearing in this repo."
+        branches = set()
+        for e in self.events:
+            if isinstance(e, Reset) and e.committish is not None:
+                branches.add(e.ref)
+            elif isinstance(e, Commit):
+                branches.add(e.branch)
+        return branches
     def branchmap(self):
         "Return a map of branchnames to terminal marks in this repo."
         return dict((commit.branch, commit.mark) for commit in self.commits())

@@ -12,6 +12,9 @@ branch refs/tags/alioth_SVN_migration
 branch refs/tags/regex_branch_base0
 branch refs/tags/reportbuf_base
 branch refs/tags/reportbuf_base0
+branch refs/tags/v2.0.1
+branch refs/tags/v2.0.3
+branch refs/tags/v2.0.3_pre2
 tag    INITIAL_IMPORT_AQ-root
 tag    INITIAL_IMPORT_V2_0_1_pre4
 tag    v2.0.2_pre1
