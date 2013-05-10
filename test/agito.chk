@@ -32,7 +32,6 @@ int main()
 }
 
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :3
@@ -42,7 +41,6 @@ Initial import.
 M 100644 :1 .gitignore
 M 100644 :2 proj/hello.c
 
-reset refs/tags/proj-1.0
 # Fossil-ID: 3
 commit refs/tags/proj-1.0
 mark :4

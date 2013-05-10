@@ -19,7 +19,6 @@ data 160
 .*.swp
 .DS_store
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :2
@@ -91,7 +90,6 @@ from :8
 M 100644 :9 data/cmdvartab
 M 100644 :10 data/driver.list
 
-reset refs/heads/Testing
 # Fossil-ID: 6
 commit refs/heads/Testing
 mark :12
@@ -161,7 +159,6 @@ mark :21
 data 68
 Revision is 11, file path is branches/Development/drivers/serial.c.
 
-reset refs/heads/Development
 # Fossil-ID: 11
 commit refs/heads/Development
 mark :22
@@ -272,7 +269,6 @@ data 89
 
 Revision is 17, file path is branches/automake/compile.
 
-reset refs/heads/automake
 # Fossil-ID: 17
 commit refs/heads/automake
 mark :32

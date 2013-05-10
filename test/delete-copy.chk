@@ -14,7 +14,6 @@ mark :3
 data 22
 feature development A
 
-reset refs/heads/proj1
 # Fossil-ID: 3
 commit refs/heads/proj1
 mark :4

@@ -23,7 +23,6 @@ blob
 mark :2
 data 0
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :3
@@ -34,7 +33,6 @@ This is a test revision
 M 100644 :1 .gitignore
 M 100644 :2 a
 
-reset refs/heads/test
 # Fossil-ID: 3
 commit refs/heads/test
 mark :4

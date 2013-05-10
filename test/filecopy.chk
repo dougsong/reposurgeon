@@ -18,7 +18,6 @@ data 160
 .*.swp
 .DS_store
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :2
@@ -47,7 +46,6 @@ data 80
 This is a placeholder.  We want a commit between the copies we're 
 going to do.
 
-reset refs/heads/testbranch
 # Fossil-ID: 4
 commit refs/heads/testbranch
 mark :6

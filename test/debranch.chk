@@ -19,7 +19,6 @@ data 160
 .*.swp
 .DS_store
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :2
@@ -88,7 +87,6 @@ Second modification on the main branch.
 from :8
 M 100644 :9 README
 
-reset refs/heads/alternate
 # Fossil-ID: 7
 commit refs/heads/alternate
 mark :11

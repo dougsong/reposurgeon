@@ -23,7 +23,6 @@ mark :2
 data 94
 this svn repository is for testing reposurgeon's way of dealing with svn:mergeinfo properties
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :3
@@ -52,7 +51,6 @@ mark :6
 data 4
 1.0
 
-reset refs/heads/v1.0
 # Fossil-ID: 3.1
 commit refs/heads/v1.0
 mark :7

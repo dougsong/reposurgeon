@@ -1,5 +1,5 @@
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
-Event 1957 ==============================================================
+Event 1943 ==============================================================
 # Fossil-ID: 352
 commit refs/heads/Development
 mark :1943
@@ -41,7 +41,6 @@ data 160
 .*.swp
 .DS_store
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :2
@@ -2010,7 +2009,6 @@ M 100644 :324 include/version
 M 100644 :326 man/mge-shut.8
 M 100644 :327 packaging/RedHat/nut.spec
 
-reset refs/heads/Stable
 # Fossil-ID: 7
 commit refs/heads/Stable
 mark :329
@@ -2022,7 +2020,6 @@ M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-reset refs/heads/Testing
 # Fossil-ID: 8
 commit refs/heads/Testing
 mark :330
@@ -2034,7 +2031,6 @@ M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-reset refs/heads/r2.0.1
 # Fossil-ID: 9
 commit refs/heads/r2.0.1
 mark :331
@@ -2046,7 +2042,6 @@ M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-reset refs/heads/v2.1.0
 # Fossil-ID: 11
 commit refs/heads/v2.1.0
 mark :332
@@ -3905,7 +3900,6 @@ mark :634
 data 77
 Revision is 66, file path is branches/Development/packaging/mandriva/upsmon.
 
-reset refs/heads/Development
 # Fossil-ID: 66
 commit refs/heads/Development
 mark :635
@@ -4801,7 +4795,6 @@ add install-cgi-html to install-cgi rule
 from :754
 M 100644 :761 Makefile
 
-reset refs/tags/alioth_SVN_migration
 # Fossil-ID: 99
 commit refs/tags/alioth_SVN_migration
 mark :763
@@ -5509,7 +5502,6 @@ during 'make clean'.
 from :870
 M 100644 :871 drivers/Makefile.in
 
-reset refs/heads/Tripp_Lite_Omni
 # Fossil-ID: 127
 commit refs/heads/Tripp_Lite_Omni
 mark :873
@@ -6415,7 +6407,6 @@ M 100644 :998 drivers/libhid.h
 M 100644 :999 drivers/libusb.c
 M 100644 :1000 drivers/newhidups.c
 
-reset refs/heads/regex_branch
 # Fossil-ID: 161
 commit refs/heads/regex_branch
 mark :1002
@@ -6767,7 +6758,6 @@ M 100644 :1024 docs/new-names.txt
 M 100644 :1025 drivers/belkin-hid.h
 M 100644 :1026 drivers/newhidups.h
 
-reset refs/tags/regex_branch_base0
 # Fossil-ID: 167
 commit refs/tags/regex_branch_base0
 mark :1028
@@ -8098,7 +8088,6 @@ More Smartpro variables
 from :1197
 M 100644 :1198 drivers/tripplite_usb.c
 
-reset refs/tags/CFL_TL_pre_Dev_merge
 # Fossil-ID: 208
 commit refs/tags/CFL_TL_pre_Dev_merge
 mark :1200
@@ -10004,7 +9993,6 @@ from :1466
 M 100644 :1481 CHANGES
 M 100644 :1482 data/driver.list
 
-reset refs/heads/reportbuf
 # Fossil-ID: 272
 commit refs/heads/reportbuf
 mark :1484
@@ -10199,7 +10187,6 @@ M 100644 :818 scripts/hotplug/README
 M 100644 :1241 scripts/hotplug/libhid.usermap
 M 100644 :272 scripts/hotplug/libhidups.in
 
-reset refs/tags/reportbuf_base
 # Fossil-ID: 273
 commit refs/tags/reportbuf_base
 mark :1485
@@ -11805,7 +11792,6 @@ from :1687
 M 100644 :1688 CHANGES
 M 100644 :1689 drivers/upsdrvctl.c
 
-reset refs/tags/reportbuf_base0
 # Fossil-ID: 326
 commit refs/tags/reportbuf_base0
 mark :1691

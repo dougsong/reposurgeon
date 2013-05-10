@@ -18,7 +18,6 @@ data 160
 .*.swp
 .DS_store
 
-reset refs/heads/master
 # Fossil-ID: 1
 commit refs/heads/master
 mark :2
@@ -46,7 +45,6 @@ mark :5
 data 81
 This is an exiguous file which should be stuffed in a root branch on conversion.
 
-reset refs/heads/root
 # Fossil-ID: 3
 commit refs/heads/root
 mark :6

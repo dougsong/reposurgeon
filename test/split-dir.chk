@@ -9,7 +9,7 @@ reposurgeon: fileop argument doesn't point at a commit
 split :4 in zed
 reposurgeon: couldn't find 'zed' in a fileop path.
 split :4 in f
-Event 5 =================================================================
+Event 4 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4
@@ -20,7 +20,7 @@ from :2
 M 100644 :3 bar/src
 M 100644 :3 baz/src
 
-Event 6 =================================================================
+Event 5 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4.1
@@ -31,7 +31,7 @@ from :4
 M 100644 :3 foo/src
 
 split :4 in bar/
-Event 5 =================================================================
+Event 4 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4
@@ -41,7 +41,7 @@ modify the file in each directory
 from :2
 M 100644 :3 baz/src
 
-Event 6 =================================================================
+Event 5 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4.2
@@ -63,8 +63,6 @@ data 2
 a
 
 Event 2 =================================================================
-reset refs/heads/master
-Event 3 =================================================================
 # Fossil-ID: 2
 commit refs/heads/master
 mark :2
@@ -75,14 +73,14 @@ M 100644 :1 bar/src
 M 100644 :1 baz/src
 M 100644 :1 foo/src
 
-Event 4 =================================================================
+Event 3 =================================================================
 blob
 mark :3
 data 4
 a
 b
 
-Event 5 =================================================================
+Event 4 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4
@@ -92,7 +90,7 @@ modify the file in each directory
 from :2
 M 100644 :3 baz/src
 
-Event 6 =================================================================
+Event 5 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4.2
@@ -102,7 +100,7 @@ modify the file in each directory
 from :4
 M 100644 :3 bar/src
 
-Event 7 =================================================================
+Event 6 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4.1
@@ -112,7 +110,7 @@ modify the file in each directory
 from :4.2
 M 100644 :3 foo/src
 
-Event 8 =================================================================
+Event 7 =================================================================
 # Fossil-ID: 4
 commit refs/heads/master
 mark :5
@@ -124,7 +122,7 @@ M 100644 :3 bar2/src
 M 100644 :3 baz2/src
 M 100644 :3 foo2/src
 
-Event 9 =================================================================
+Event 8 =================================================================
 tag root
 from :2
 tagger brooksd <brooksd> 1353813660 +0000

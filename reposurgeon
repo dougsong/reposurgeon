@@ -3628,21 +3628,6 @@ class StreamParser:
             baton.twirl()
         self.repo.timings.append(["canonicalizing", time.time()]) 
         baton.twirl()
-        # Issue resets when required
-        save_events = self.repo.events
-        self.repo.events = []
-        self.repo.declare_sequence_mutation()
-        issued = set()
-        for event in save_events:
-            if isinstance(event, Commit) and event.branch not in issued:
-                reset = Reset(self.repo)
-                reset.ref = event.branch
-                self.repo.addEvent(reset)
-                issued.add(event.branch)
-            self.repo.addEvent(event)
-            baton.twirl()
-        self.repo.timings.append(["resets", time.time()]) 
-        baton.twirl()
         # Remove spurious parent links caused by random cvs2svn file copies.
         #baton.twirl("debubbling")
         for commit in self.repo.commits():
