@@ -579,7 +579,7 @@ class Baton:
         if self.stream:
             self.stream.write(self.prompt + "...")
             if os.isatty(self.stream.fileno()):
-                self.stream.write(r" \b")
+                self.stream.write(" \b")
             self.stream.flush()
         self.count = 0
         self.time = time.time()
@@ -593,7 +593,7 @@ class Baton:
         if os.isatty(self.stream.fileno()):
             if self.countfmt:
                 update = self.countfmt % self.counter
-                self.stream.write(update + (r"\b" * len(update)))
+                self.stream.write(update + ("\b" * len(update)))
                 self.stream.flush()
             else:
                 self.twirl()
@@ -601,7 +601,7 @@ class Baton:
     def endcounter(self):
         if self.stream:
             w = len(self.countfmt % self.count)
-            self.stream.write((" " * w) + (r"\b" * w))
+            self.stream.write((" " * w) + ("\b" * w))
             self.stream.flush()
         self.countfmt = None
     def twirl(self, ch=None):
