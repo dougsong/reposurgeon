@@ -7330,7 +7330,7 @@ change in a future release.
                 complain("out-of-range fileop index")
                 return
         else:
-            complain("unknown verb after from")
+            complain("unknown verb '%s' after from" % fields[0])
             return
 
     def help_renumber(self):
@@ -7784,7 +7784,7 @@ from the highest member (child) to the lowest (parent).
             return
         repo = self.chosen()
         self.set_selection_set(line)
-        if not len(self.selection):
+        if self.selection is None or not len(self.selection):
             raise Recoverable("merge requires a nonempty selection set.")
         self.selection = [e for e in sorted(self.selection) \
                           if isinstance(repo.events[e], Commit)]
@@ -7884,7 +7884,7 @@ is prepended.
                          (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
                         ["obliterate", "quiet"])
         else:
-            raise Recoverable("unknown verb '%s' in branch command.")
+            raise Recoverable("unknown verb '%s' in branch command." % verb)
 
     def help_tag(self):
         print("""
@@ -7931,7 +7931,7 @@ tag). For a 'delete', no third argument is required.
             repo.events.remove(tag)
             repo.declare_sequence_mutation()
         else:
-            raise Recoverable("unknown verb '%s' in tag command.")
+            raise Recoverable("unknown verb '%s' in tag command." % verb)
 
     def help_reset(self):
         print("""
@@ -7985,7 +7985,7 @@ An argument matches a reset's name if it is either the entire reference
             repo.events.remove(reset)
             repo.declare_sequence_mutation()
         else:
-            raise Recoverable("unknown verb '%s' in reset command.")
+            raise Recoverable("unknown verb '%s' in reset command." % verb)
 
     #
     # Artifact removal
