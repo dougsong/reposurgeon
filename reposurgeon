@@ -579,7 +579,7 @@ class Baton:
         if self.stream:
             self.stream.write(self.prompt + "...")
             if os.isatty(self.stream.fileno()):
-                self.stream.write(" \010")
+                self.stream.write(r" \b")
             self.stream.flush()
         self.count = 0
         self.time = time.time()
@@ -593,7 +593,7 @@ class Baton:
         if os.isatty(self.stream.fileno()):
             if self.countfmt:
                 update = self.countfmt % self.counter
-                self.stream.write(update + ("\010" * len(update)))
+                self.stream.write(update + (r"\b" * len(update)))
                 self.stream.flush()
             else:
                 self.twirl()
@@ -601,7 +601,7 @@ class Baton:
     def endcounter(self):
         if self.stream:
             w = len(self.countfmt % self.count)
-            self.stream.write((" " * w) + ("\010" * w))
+            self.stream.write((" " * w) + (r"\b" * w))
             self.stream.flush()
         self.countfmt = None
     def twirl(self, ch=None):
@@ -615,7 +615,7 @@ class Baton:
                 return
             else:
                 update = "-/|\\"[self.count % 4]
-                self.stream.write(update + ("\010" * len(update)))
+                self.stream.write(update + ("\b" * len(update)))
                 self.stream.flush()
         self.count = self.count + 1
     def __exit__(self, extype, value_unused, traceback_unused):
@@ -2752,30 +2752,30 @@ class StreamParser:
         split_commits = {}
         def last_relevant_commit(max_rev, path,
                                  getbranch = operator.attrgetter("branch")):
-                # Make path look like a branch
-                if path[0] == "/": path = path[1:]
-                if path[-1] != os.sep: path = path + os.sep
-                # If the revision is split, try from the last split commit
-                try:
-                    max_rev = split_commits[max_rev]
-                except KeyError:
-                    pass
-                # Find the commit object...
-                try:
-                    obj = self.repo.fossil_map["SVN:%s" % max_rev]
-                except KeyError:
-                    return None
-                # ...then iterate backwards from there...
-                past_events = (self.repo.events[i] for i in
-                        xrange(self.repo.index(obj), -1, -1))
-                # ... finding branches of commits...
-                commit_branch = ((e, getbranch(e))
-                                 for e in past_events
-                                 if isinstance(e, Commit))
-                # ...to find one on the right branch.
-                return next((e for (e, branch) in commit_branch
-                             if branch and path.startswith(branch)),
-                            None)
+            # Make path look like a branch
+            if path[0] == "/": path = path[1:]
+            if path[-1] != os.sep: path = path + os.sep
+            # If the revision is split, try from the last split commit
+            try:
+                max_rev = split_commits[max_rev]
+            except KeyError:
+                pass
+            # Find the commit object...
+            try:
+                obj = self.repo.fossil_map["SVN:%s" % max_rev]
+            except KeyError:
+                return None
+            # ...then iterate backwards from there...
+            past_events = (self.repo.events[i] for i in
+                    xrange(self.repo.index(obj), -1, -1))
+            # ... finding branches of commits...
+            commit_branch = ((e, getbranch(e))
+                             for e in past_events
+                             if isinstance(e, Commit))
+            # ...to find one on the right branch.
+            return next((e for (e, branch) in commit_branch
+                         if branch and path.startswith(branch)),
+                        None)
         previous = None
         for (revision, record) in self.revisions.iteritems():
             if debug_enable(DEBUG_EXTRACT):
