@@ -2960,48 +2960,6 @@ class StreamParser:
                                     newnode.kind = SD_FILE
                                     newnode.generated = True
                                     expanded_nodes.append(newnode)
-                        # Property settings can be present on either
-                    # SD_ADD or SD_CHANGE actions.
-                    if node.props is not None:
-                        if debug_enable(DEBUG_EXTRACT):
-                            announce("r%s: setting properties %s on %s" \
-                                     % (revision, node.props, node.path))
-                        # svn:ignore gets handled here,
-                        if node.path == os.sep:
-                            gitignore_path = ".gitignore"
-                        else:
-                            gitignore_path = os.path.join(node.path,
-                                                          ".gitignore")
-                        # There are no other directory properties that can
-                        # turn into fileops.
-                        if "svn:ignore" in node.props:
-                            blob = Blob(self.repo)
-                            blob.set_content(node.props["svn:ignore"])
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_ADD
-                            newnode.kind = SD_FILE
-                            newnode.blob = blob
-                            if debug_enable(DEBUG_IGNORES):
-                                announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
-                            # Must append rather than simply performing.
-                            # Otherwise when the property is unset we
-                            # won't have the right thing happen.
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            self.active_gitignores.add(gitignore_path)
-                        elif gitignore_path in self.active_gitignores:
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_DELETE
-                            newnode.kind = SD_FILE
-                            if debug_enable(DEBUG_IGNORES):
-                                announce("r%s: queuing up %s deletion." % (revision, newnode.path))
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            self.active_gitignores.remove(gitignore_path)
                     # Handle directory copies.
                     # If this is a copy between branches, no fileop should be
                     # issued until there is an actual file modification on the
@@ -3048,6 +3006,48 @@ class StreamParser:
                                                 subnode.path))
                                 subnode.generated = True
                                 expanded_nodes.append(subnode)
+                    # Property settings can be present on either
+                    # SD_ADD or SD_CHANGE actions.
+                    if node.props is not None:
+                        if debug_enable(DEBUG_EXTRACT):
+                            announce("r%s: setting properties %s on %s" \
+                                     % (revision, node.props, node.path))
+                        # svn:ignore gets handled here,
+                        if node.path == os.sep:
+                            gitignore_path = ".gitignore"
+                        else:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
+                        # There are no other directory properties that can
+                        # turn into fileops.
+                        if "svn:ignore" in node.props:
+                            blob = Blob(self.repo)
+                            blob.set_content(node.props["svn:ignore"])
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_ADD
+                            newnode.kind = SD_FILE
+                            newnode.blob = blob
+                            if debug_enable(DEBUG_IGNORES):
+                                announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                            # Must append rather than simply performing.
+                            # Otherwise when the property is unset we
+                            # won't have the right thing happen.
+                            newnode.generated = True
+                            expanded_nodes.append(newnode)
+                            self.active_gitignores.add(gitignore_path)
+                        elif gitignore_path in self.active_gitignores:
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_DELETE
+                            newnode.kind = SD_FILE
+                            if debug_enable(DEBUG_IGNORES):
+                                announce("r%s: queuing up %s deletion." % (revision, newnode.path))
+                            newnode.generated = True
+                            expanded_nodes.append(newnode)
+                            self.active_gitignores.remove(gitignore_path)
             # Lift .cvsignore files, which we can assume are fossils
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
