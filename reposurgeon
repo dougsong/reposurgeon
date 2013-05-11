@@ -2928,10 +2928,17 @@ class StreamParser:
                     node.path += os.sep
                     if node.from_path:
                         node.from_path += os.sep
-                    if node.action == SD_ADD:
-                        if node.path == "trunk" + os.sep and not node.props:
-                            node.props = {"svn:ignore":
-                                          StreamParser.SubversionDefaultIgnores}
+                    if node.action in (SD_ADD, SD_CHANGE):
+                        if node.path in self.branches:
+                            if not node.props: node.props = {}
+                            try:
+                                ignore = StreamParser.SubversionDefaultIgnores + \
+                                         "# The contents of the svn:ignore" \
+                                         "property on the branch root.\n" + \
+                                         node.props["svn:ignore"]
+                            except KeyError:
+                                ignore = StreamParser.SubversionDefaultIgnores
+                            node.props["svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)

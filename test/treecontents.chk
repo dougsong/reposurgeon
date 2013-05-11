@@ -72,7 +72,6 @@ Create a branch by copying subdir from trunk
 This branch should only contain subfile1 and subfile2.
 
 from :6
-D .gitignore
 D master-branch4
 D subdir/subfile1
 D subdir/subfile2
@@ -112,7 +111,6 @@ Create a branch "branch2" and copy two files from trunk
 The branch should now contain subfile1 and subfile2.
 
 from :6
-D .gitignore
 D master-branch4
 D subdir/subfile1
 D subdir/subfile2
@@ -148,7 +146,6 @@ committer frnchfrgg <frnchfrgg> 1366744808 +0000
 data 44
 Create branch3, importing trunk as a subdir
 from :6
-D .gitignore
 D master-branch4
 D subdir/subfile1
 D subdir/subfile2
@@ -186,6 +183,7 @@ mark :16
 committer frnchfrgg <frnchfrgg> 1366745095 +0000
 data 55
 Create a new branch and copy a subdir of trunk into it
+M 100644 :1 .gitignore
 M 100644 :4 subdir/subfile1
 M 100644 :5 subdir/subfile2
 
@@ -265,6 +263,7 @@ Event 7 =================================================================
 commit refs/heads/branch1
 mark :7
 
+.gitignore -> :1
 subfile1 -> :4
 subfile2 -> :5
 Event 9 =================================================================
@@ -272,6 +271,7 @@ Event 9 =================================================================
 commit refs/heads/branch1
 mark :9
 
+.gitignore -> :1
 file -> :8
 subfile1 -> :4
 subfile2 -> :5
@@ -280,6 +280,7 @@ Event 10 ================================================================
 commit refs/heads/branch2
 mark :10
 
+.gitignore -> :1
 subfile1 -> :4
 subfile2 -> :5
 Event 12 ================================================================
@@ -287,6 +288,7 @@ Event 12 ================================================================
 commit refs/heads/branch2
 mark :12
 
+.gitignore -> :1
 file2 -> :11
 subfile1 -> :4
 subfile2 -> :5
@@ -295,6 +297,7 @@ Event 13 ================================================================
 commit refs/heads/branch3
 mark :13
 
+.gitignore -> :1
 trunk/.gitignore -> :1
 trunk/master-branch4 -> :3
 trunk/subdir/subfile1 -> :4
@@ -304,6 +307,7 @@ Event 15 ================================================================
 commit refs/heads/branch3
 mark :15
 
+.gitignore -> :1
 trunk/.gitignore -> :1
 trunk/file3 -> :14
 trunk/subdir/subfile1 -> :4
@@ -313,6 +317,7 @@ Event 16 ================================================================
 commit refs/heads/branch3b
 mark :16
 
+.gitignore -> :1
 subdir/subfile1 -> :4
 subdir/subfile2 -> :5
 Event 18 ================================================================
@@ -320,6 +325,7 @@ Event 18 ================================================================
 commit refs/heads/branch3b
 mark :18
 
+.gitignore -> :1
 file3b -> :17
 subdir/subfile1 -> :4
 subdir/subfile2 -> :5
