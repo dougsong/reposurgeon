@@ -11691,6 +11691,7 @@ M 100644 :237 man/upsdrvctl.8
 D scripts/hotplug-ng/README
 D scripts/hotplug-ng/nut-usbups.hotplug.in
 D scripts/hotplug-ng/nut-usbups.rules.in
+M 100644 :1665 scripts/hotplug/.gitignore
 M 100644 :277 server/conf.c
 M 100644 :299 server/sstate.c
 

@@ -2992,10 +2992,40 @@ class StreamParser:
                                         node.from_rev,
                                         node.from_path,
                                         branchcopy))
+                        # Update our .gitignore list so that it includes those
+                        # in the newly created copy, to ensure they correctly
+                        # get deleted during a future directory deletion.
+                        l = len(node.from_path)
+                        for sourcegi, value in list((gi,v) for (gi,v) in
+                                    self.active_gitignores.iteritems()
+                                    if gi.startswith(node.from_path)):
+                            destgi = node.path + sourcegi[l:]
+                            self.active_gitignores[destgi] = value
                         if branchcopy:
                             self.branchcopies.add(node.path)
                         else:
                             self.branchdeletes.discard(node.path)
+                            # Generate copy ops for generated .gitignore files
+                            # to match the copy of svn:ignore props on the
+                            # Subversion side. We use the just updated
+                            # active_gitignores dict for that purpose.
+                            for gipath, ignore in list(
+                                        (gi,v) for (gi,v) in
+                                        self.active_gitignores.iteritems()
+                                        if gi.startswith(node.path)):
+                                blob = Blob(self.repo)
+                                blob.set_content(ignore)
+                                subnode = StreamParser.NodeAction()
+                                subnode.path = gipath
+                                subnode.revision = revision
+                                subnode.action = SD_ADD
+                                subnode.kind = SD_FILE
+                                subnode.blob = blob
+                                subnode.content_hash = \
+                                        hashlib.md5(ignore).hexdigest()
+                                subnode.generated = True
+                                expanded_nodes.append(subnode)
+                            # Now generate copies for all files in the source
                             for source in node.from_set:
                                 lookback = filemaps[node.from_rev][source]
                                 if lookback is None:

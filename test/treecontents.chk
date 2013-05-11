@@ -152,6 +152,7 @@ D .gitignore
 D master-branch4
 D subdir/subfile1
 D subdir/subfile2
+M 100644 :1 trunk/.gitignore
 M 100644 :3 trunk/master-branch4
 M 100644 :4 trunk/subdir/subfile1
 M 100644 :5 trunk/subdir/subfile2
@@ -294,6 +295,7 @@ Event 13 ================================================================
 commit refs/heads/branch3
 mark :13
 
+trunk/.gitignore -> :1
 trunk/master-branch4 -> :3
 trunk/subdir/subfile1 -> :4
 trunk/subdir/subfile2 -> :5
@@ -302,6 +304,7 @@ Event 15 ================================================================
 commit refs/heads/branch3
 mark :15
 
+trunk/.gitignore -> :1
 trunk/file3 -> :14
 trunk/subdir/subfile1 -> :4
 trunk/subdir/subfile2 -> :5
