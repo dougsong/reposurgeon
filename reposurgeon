@@ -2952,14 +2952,20 @@ class StreamParser:
                                     newnode.kind = SD_FILE
                                     newnode.generated = True
                                     expanded_nodes.append(newnode)
-                                for ignorepath in (gi for gi in self.active_gitignores if gi.startswith(node.path)):
-                                    newnode = StreamParser.NodeAction()
-                                    newnode.path = ignorepath
-                                    newnode.revision = revision
-                                    newnode.action = SD_DELETE
-                                    newnode.kind = SD_FILE
-                                    newnode.generated = True
-                                    expanded_nodes.append(newnode)
+                            # Emit delete actions for the .gitignore files we
+                            # have generated. Note that even with a directory
+                            # with no files from SVN, we might have added
+                            # .gitignore files we now must delete.
+                            for ignorepath in list(gi
+                                        for gi in self.active_gitignores
+                                        if gi.startswith(node.path)):
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = ignorepath
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                newnode.generated = True
+                                expanded_nodes.append(newnode)
                     # Handle directory copies.
                     # If this is a copy between branches, no fileop should be
                     # issued until there is an actual file modification on the
