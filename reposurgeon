@@ -3021,33 +3021,32 @@ class StreamParser:
                                         node.from_rev,
                                         node.from_path,
                                         branchcopy))
-                        if not branchcopy:
-                            self.branchdeletes.discard(node.path)
-                        else:
+                        if branchcopy:
                             self.branchcopies.add(node.path)
-                            continue
-                        for source in node.from_set:
-                            lookback = filemaps[node.from_rev][source]
-                            if lookback is None:
-                                raise Fatal("r%s: can't find ancestor %s" \
-                                         % (revision, source))
-                            subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(node.path,
-                                                        source[len(node.from_path+os.sep)-1:])
-                            subnode.revision = revision
-                            subnode.from_path = lookback.path
-                            subnode.from_rev = lookback.revision
-                            subnode.from_hash = lookback.content_hash
-                            subnode.action = SD_ADD
-                            subnode.kind = SD_FILE
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: generated copy r%s~%s -> %s" \
-                                         % (revision,
-                                            subnode.from_rev,
-                                            subnode.from_path,
-                                            subnode.path))
-                            subnode.generated = True
-                            expanded_nodes.append(subnode)
+                        else:
+                            self.branchdeletes.discard(node.path)
+                            for source in node.from_set:
+                                lookback = filemaps[node.from_rev][source]
+                                if lookback is None:
+                                    raise Fatal("r%s: can't find ancestor %s" \
+                                             % (revision, source))
+                                subnode = StreamParser.NodeAction()
+                                subnode.path = os.path.join(node.path,
+                                                            source[len(node.from_path+os.sep)-1:])
+                                subnode.revision = revision
+                                subnode.from_path = lookback.path
+                                subnode.from_rev = lookback.revision
+                                subnode.from_hash = lookback.content_hash
+                                subnode.action = SD_ADD
+                                subnode.kind = SD_FILE
+                                if debug_enable(DEBUG_TOPOLOGY):
+                                    announce("r%s: generated copy r%s~%s -> %s" \
+                                             % (revision,
+                                                subnode.from_rev,
+                                                subnode.from_path,
+                                                subnode.path))
+                                subnode.generated = True
+                                expanded_nodes.append(subnode)
             # Lift .cvsignore files, which we can assume are fossils
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
