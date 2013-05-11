@@ -3032,15 +3032,18 @@ class StreamParser:
                                                           ".gitignore")
                         # There are no other directory properties that can
                         # turn into fileops.
-                        if "svn:ignore" in node.props:
+                        ignore = node.props.get("svn:ignore")
+                        if ignore is not None:
                             blob = Blob(self.repo)
-                            blob.set_content(node.props["svn:ignore"])
+                            blob.set_content(ignore)
                             newnode = StreamParser.NodeAction()
                             newnode.path = gitignore_path
                             newnode.revision = revision
                             newnode.action = SD_ADD
                             newnode.kind = SD_FILE
                             newnode.blob = blob
+                            newnode.content_hash = \
+                                    hashlib.md5(ignore).hexdigest()
                             if debug_enable(DEBUG_IGNORES):
                                 announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                             # Must append rather than simply performing.

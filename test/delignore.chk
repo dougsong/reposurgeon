@@ -63,58 +63,43 @@ mark :7
 data 6
 *.pyc
 
-blob
-mark :8
-data 6
-*.pyc
-
-blob
-mark :9
-data 6
-*.pyc
-
 # Fossil-ID: 4
 commit refs/heads/master
-mark :10
+mark :8
 committer esr <esr> 1352220855 +0000
 data 61
 This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
 from :6
-M 100644 :9 baz/.gitignore
+M 100644 :7 baz/.gitignore
 M 100644 :7 foo/.gitignore
-M 100644 :8 foo/bar/.gitignore
+M 100644 :7 foo/bar/.gitignore
 
 # Fossil-ID: 5
 commit refs/heads/master
-mark :11
+mark :9
 committer esr <esr> 1352220901 +0000
 data 46
 This follows "svn del foo" and "svn del baz".
-from :10
+from :8
 D baz/.gitignore
 D foo/.gitignore
 D foo/bar/.gitignore
 
-blob
-mark :12
-data 6
-*.pyc
-
 # Fossil-ID: 6
 commit refs/heads/master
-mark :13
+mark :10
 committer esr <esr> 1352220744 +0000
 data 67
 Reintroduce foo to then delete it. There should be a M .gitignore.
-from :11
-M 100644 :12 foo/.gitignore
+from :9
+M 100644 :7 foo/.gitignore
 
 # Fossil-ID: 7
 commit refs/heads/master
-mark :14
+mark :11
 committer esr <esr> 1352220901 +0000
 data 50
 Delete foo again; there should be a D .gitignore.
-from :13
+from :10
 D foo/.gitignore
 
