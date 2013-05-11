@@ -3015,20 +3015,8 @@ class StreamParser:
                     elif node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
                         # Try to figure out who the ancestor of
                         # this node is.
-                        if node.from_hash:
-                            ancestor = self.hashmap[node.from_hash]
-                            node.blobmark = ancestor.blobmark
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s~%s -> %s (via hashmap)" % \
-                                         (node.revision, node.path, ancestor))
-                            # FIXME: This check generates spurious warnings
-                            # on the references.svn test load - er, or are
-                            # they real?  Investigate...
-                            #if ancestor != filemaps[node.from_rev][node.from_path]:
-                            #    announce("r%s~%s: hash map ancestry doesn't match filemap ancestry." \
-                            #             % (node.revision, node.path))
-                        elif node.from_path:
-                            # A copy node is somehow missing its hash.
+                        if node.from_path or node.from_hash:
+                            # Try first via from_path
                             ancestor = filemaps[node.from_rev][node.from_path]
                             if debug_enable(DEBUG_TOPOLOGY):
                                 if ancestor:
@@ -3037,6 +3025,12 @@ class StreamParser:
                                 else:
                                     announce("r%s~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
+                            # Fallback on the first blob that had this hash
+                            if node.from_hash and not ancestor:
+                                ancestor = self.hashmap[node.from_hash]
+                                if debug_enable(DEBUG_TOPOLOGY):
+                                    announce("r%s~%s -> %s (via hashmap)" % \
+                                         (node.revision, node.path, ancestor))
                             if not ancestor and not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
                                           % (node.revision, node.path))
