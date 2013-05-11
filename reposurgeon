@@ -2925,7 +2925,7 @@ class StreamParser:
                 elif node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
-                    node.path += os.sep                   
+                    node.path += os.sep
                     if node.from_path:
                         node.from_path += os.sep
                     if node.action == SD_ADD:
@@ -3015,7 +3015,8 @@ class StreamParser:
                                          and node.path in self.branches \
                                          and node.path not in self.branchdeletes
                         if debug_enable(DEBUG_TOPOLOGY):
-                            announce("r%s: directory copy to %s from r%s~%s (branchcopy %s)" \
+                            announce("r%s: directory copy to %s from " \
+                                     "r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
                                         node.from_rev,
@@ -3031,8 +3032,8 @@ class StreamParser:
                                     raise Fatal("r%s: can't find ancestor %s" \
                                              % (revision, source))
                                 subnode = StreamParser.NodeAction()
-                                subnode.path = os.path.join(node.path,
-                                                            source[len(node.from_path+os.sep)-1:])
+                                subnode.path = node.path + \
+                                        source[len(node.from_path):]
                                 subnode.revision = revision
                                 subnode.from_path = lookback.path
                                 subnode.from_rev = lookback.revision
