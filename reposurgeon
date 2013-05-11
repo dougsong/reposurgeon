@@ -2219,7 +2219,7 @@ class StreamParser:
         self.permissions = {}
         self.fileop_branchlinks  = set()
         self.directory_branchlinks  = set()
-        self.active_gitignores = set()
+        self.active_gitignores = {}
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2940,7 +2940,7 @@ class StreamParser:
                             for ignorepath in list(gi
                                         for gi in self.active_gitignores
                                         if gi.startswith(node.path)):
-                                self.active_gitignores.remove(ignorepath)
+                                del self.active_gitignores[ignorepath]
                         else:
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
@@ -2971,7 +2971,7 @@ class StreamParser:
                                 newnode.kind = SD_FILE
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
-                                self.active_gitignores.remove(ignorepath)
+                                del self.active_gitignores[ignorepath]
                     # Handle directory copies.
                     # If this is a copy between branches, no fileop should be
                     # issued until there is an actual file modification on the
@@ -3051,7 +3051,7 @@ class StreamParser:
                             # won't have the right thing happen.
                             newnode.generated = True
                             expanded_nodes.append(newnode)
-                            self.active_gitignores.add(gitignore_path)
+                            self.active_gitignores[gitignore_path] = ignore
                         elif gitignore_path in self.active_gitignores:
                             newnode = StreamParser.NodeAction()
                             newnode.path = gitignore_path
@@ -3062,7 +3062,7 @@ class StreamParser:
                                 announce("r%s: queuing up %s deletion." % (revision, newnode.path))
                             newnode.generated = True
                             expanded_nodes.append(newnode)
-                            self.active_gitignores.remove(gitignore_path)
+                            del self.active_gitignores[gitignore_path]
             # Lift .cvsignore files, which we can assume are fossils
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
