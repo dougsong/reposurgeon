@@ -2936,6 +2936,11 @@ class StreamParser:
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)
                             expanded_nodes.append(node)
+                            # The deleteall will also delete .gitignore files
+                            for ignorepath in list(gi
+                                        for gi in self.active_gitignores
+                                        if gi.startswith(node.path)):
+                                self.active_gitignores.remove(ignorepath)
                         else:
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
