@@ -2966,6 +2966,7 @@ class StreamParser:
                                 newnode.kind = SD_FILE
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
+                                self.active_gitignores.remove(ignorepath)
                     # Handle directory copies.
                     # If this is a copy between branches, no fileop should be
                     # issued until there is an actual file modification on the
