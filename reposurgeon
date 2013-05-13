@@ -7727,6 +7727,7 @@ first directory component from every path.
                 print("\n".join(modified))
             except IndexError:
                 raise Recoverable("no / in sup path.")
+        self.chosen().invalidate_manifests()
 
     def help_manifest(self):
         print("""
