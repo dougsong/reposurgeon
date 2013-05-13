@@ -1585,6 +1585,55 @@ class Commit(object):
                 ancestors = PathMap()
         self.filemap = ancestors
         return ancestors
+    def canonicalize(self):
+        "Replace fileops by a minimal set of D and M with the same result."
+        # If last fileop is a deleteall, only keep that.
+        try:
+            lastop = self.fileops[-1]
+        except IndexError:
+            return
+        else:
+            if lastop.op == "deleteall":
+                self.fileops = [lastop]
+                return
+        # Fetch the tree state before us...
+        try:
+            parent = self.parents()[0]
+        except IndexError:
+            parent = PathMap()
+        else:
+            parent = parent.manifest()
+        # ... and after our file operations have been applied.
+        current = self.manifest()
+        # Get paths touched by non-deleteall operations.
+        paths = self.paths()
+        # Generate needed D fileops.
+        if any(op.op == "deletall" for op in self.fileops):
+            # Any file in the parent tree might disappear.
+            check_delete = parent
+        else:
+            # Only files touched by non-deleteall ops might disappear.
+            check_delete = paths
+        self.fileops = new_ops = []
+        for path in check_delete:
+            if path in parent and path not in current:
+                fileop = FileOp()
+                fileop.construct("D", path)
+                new_ops.append(fileop)
+        # Generate needed M fileops.
+        # Only paths touched by non-deleteall ops can be changed.
+        for path in paths:
+            try:
+                mode, mark = current[path]
+            except TypeError:
+                continue
+            if (mode, mark) != parent[path]:
+                fileop = FileOp()
+                fileop.construct("M", mode, mark, path)
+                new_ops.append(fileop)
+        # Finishing touches:
+        new_ops.sort(key=FileOp.sortkey)
+        self._pathset = None
     def alldeletes(self, killset={"D", "deleteall"}):
         "Is this an all-deletes commit?"
         return all(fileop.op in killset for fileop in self.fileops)
