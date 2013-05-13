@@ -67,7 +67,6 @@ data 38
 trunk development proceeds; feature C
 from :7
 M 100644 :8 trunk/VERSION
-M 100644 :6 trunk/newdir/src1
 M 100644 :9 trunk/newdir/src1
 M 100644 :6 trunk/newdir/src2
 D trunk/subdir/src1

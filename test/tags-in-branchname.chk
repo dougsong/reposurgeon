@@ -49,7 +49,6 @@ data 43
 Commit on "test" to make it a real branch
 
 from :2
-deleteall
 M 100644 :3 branches/test/b
 
 tag stags-root
