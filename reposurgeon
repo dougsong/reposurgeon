@@ -1556,7 +1556,9 @@ class Commit(object):
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         self.repo._has_manifests = True
-        sys.setrecursionlimit(len(self.repo.events) * 2)
+        sys.setrecursionlimit(max(
+                sys.getrecursionlimit(),
+                len(self.repo.events) * 2))
         return self._manifest()
     def _manifest(self):
         if self.filemap is not None:
