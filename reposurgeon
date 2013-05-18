@@ -926,7 +926,7 @@ class Blob(object):
         if self.hasfile():
             oldloc = self.blobfile()
             self.repo = repo
-            newloc = self.blobfile()
+            newloc = self.blobfile(create=True)
             if debug_enable(DEBUG_SHUFFLE):
                 announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
             os.rename(oldloc, newloc)
@@ -936,9 +936,9 @@ class Blob(object):
         c = copy.copy(self)
         c.repo = repo
         c.colors = []
-        if debug_enable(DEBUG_SHUFFLE):
-            announce("blob clone for %s (%s) calls os.link()" % (self.mark, self.paths))
         if self.hasfile():
+            if debug_enable(DEBUG_SHUFFLE):
+                announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.paths, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
     def dump(self, vcs=None):
@@ -3768,6 +3768,8 @@ class SubversionDumper:
     @staticmethod
     def svnize(branch, path=""):
         "Return SVN path corresponding to a specified gitspace branch and path."
+        if global_options['svn_nobranch']:
+            return path
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
