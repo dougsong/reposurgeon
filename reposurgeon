@@ -5580,6 +5580,7 @@ class RepositoryList:
         if verbose:
             announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
         self.repo.delete(deletia, ["obliterate", "quiet"])
+        self.repo.invalidate_manifests()
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
