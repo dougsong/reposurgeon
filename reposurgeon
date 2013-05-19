@@ -3323,6 +3323,7 @@ class StreamParser:
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
         # Now, branch analysis.
+        branchroots = []
         if not self.branches or global_options['svn_nobranch']:
             last = None
             for commit in self.repo.commits():
@@ -3359,7 +3360,6 @@ class StreamParser:
             self.repo.timings.append(["branches", time.time()]) 
             baton.twirl()
             # ...then rebuild parent links so they follow the branches
-            branchroots = []
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
