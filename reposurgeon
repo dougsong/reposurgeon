@@ -3390,6 +3390,10 @@ class StreamParser:
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.itervalues())))
             for (child, parent) in self.branchlink.itervalues():
+                if not parent.repo is self.repo:
+                    # The parent has been deleted since, don't add the link;
+                    # it can only happen if parent was the now tagified root.
+                    continue
                 if not child.has_parents() \
                         and not child.branch in self.branchcopies:
                     # The branch wasn't created by copying another branch and
