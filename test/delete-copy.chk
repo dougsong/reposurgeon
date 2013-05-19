@@ -1,4 +1,4 @@
-reposurgeon: r2: deleting parentless zero-op commit.
+reposurgeon: r2: deleting parentless zero-op commit on proj1/.
 blob
 mark :1
 data 115

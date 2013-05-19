@@ -13,14 +13,13 @@ branch refs/tags/regex_branch_base0
 branch refs/tags/reportbuf_base
 branch refs/tags/reportbuf_base0
 branch refs/tags/v2.0.1
+branch refs/tags/v2.0.2_pre1
+branch refs/tags/v2.0.2_pre2
 branch refs/tags/v2.0.3
 branch refs/tags/v2.0.3_pre2
 tag    INITIAL_IMPORT_AQ-root
-tag    INITIAL_IMPORT_V2_0_1_pre4
-tag    v2.0.2_pre1
-tag    v2.0.2_pre2
-tag    Development-root
 tag    emptycommit-4
+tag    INITIAL_IMPORT_V2_0_1_pre4
 tag    emptycommit-22
 tag    emptycommit-23
 tag    emptycommit-27
@@ -33,6 +32,7 @@ tag    emptycommit-47
 tag    emptycommit-51
 tag    emptycommit-52
 tag    emptycommit-53
+tag    Development-root
 tag    emptycommit-108
 tag    emptycommit-109
 tag    emptycommit-110

@@ -1,4 +1,4 @@
-reposurgeon: r3: deleting parentless zero-op commit.
+reposurgeon: r3: deleting parentless zero-op commit on branches/resources/.
 blob
 mark :1
 data 160

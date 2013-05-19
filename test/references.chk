@@ -14643,44 +14643,13 @@ removed Makefile from Testing branch, because it does not belong in SVN.
 from :2011
 D Makefile
 
-tag INITIAL_IMPORT_AQ-root
-from :307
-tagger no-author <no-author> 1106836394 +0000
-data 79
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
-
-
-tag INITIAL_IMPORT_V2_0_1_pre4
-from :307
-tagger no-author <no-author> 1106836402 +0000
-data 85
-This commit was manufactured by cvs2svn to create tag
-'INITIAL_IMPORT_V2_0_1_pre4'.
-
-
-tag v2.0.2_pre1
-from :307
-tagger no-author <no-author> 1115199397 +0000
-data 70
-This commit was manufactured by cvs2svn to create tag 'v2.0.2_pre1'.
-
-
-tag v2.0.2_pre2
-from :307
-tagger no-author <no-author> 1119442233 +0000
-data 70
-This commit was manufactured by cvs2svn to create tag 'v2.0.2_pre2'.
-
-
-tag Development-root
-from :307
-tagger no-author <no-author> 1119553881 +0000
-data 73
-This commit was manufactured by cvs2svn to create branch 'Development'.
-
-
 reset refs/tags/v2.0.1
+from :307
+
+reset refs/tags/v2.0.2_pre1
+from :307
+
+reset refs/tags/v2.0.2_pre2
 from :307
 
 reset refs/tags/v2.0.3_pre2
@@ -14689,6 +14658,14 @@ from :307
 reset refs/tags/v2.0.3
 from :307
 
+tag INITIAL_IMPORT_AQ-root
+from :307
+tagger no-author <no-author> 1106836394 +0000
+data 79
+This commit was manufactured by cvs2svn to create branch
+'INITIAL_IMPORT_AQ'.
+
+
 tag emptycommit-4
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1106836402 +0000
@@ -14696,6 +14673,14 @@ data 105
 Initial CVS import from nut testing release 2.0.1-pre4
 
 [[Tag from zero-fileop commit at Subversion r4]]
+
+tag INITIAL_IMPORT_V2_0_1_pre4
+from :307
+tagger no-author <no-author> 1106836402 +0000
+data 85
+This commit was manufactured by cvs2svn to create tag
+'INITIAL_IMPORT_V2_0_1_pre4'.
+
 
 tag emptycommit-22
 from :2
@@ -14792,6 +14777,13 @@ data 102
 file solis.8 was initially added on branch v2_1_0.
 
 [[Tag from zero-fileop commit at Subversion r53]]
+
+tag Development-root
+from :307
+tagger no-author <no-author> 1119553881 +0000
+data 73
+This commit was manufactured by cvs2svn to create branch 'Development'.
+
 
 tag emptycommit-108
 from :2
