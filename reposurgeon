@@ -4285,6 +4285,75 @@ class Repository:
                           tagger=commit.committer,
                           comment=pref + legend))
         self.quiet_delete(commit)
+    def tagify_empty(self, commits = None,
+                           tipdeletes = False,
+                           canonicalize = True,
+                           name_func = lambda _: None,
+                           legend_func = lambda _: "",
+                           gripe = complain
+                          ):
+        """Turn into tags commits without (meaningful) fileops.
+            Arguments: * commits:       an iterable of commits in the repo
+                       * tipdeletes:    whether tipdeletes should be tagified
+                       * canonicalize:  whether to canonicalize fileops first
+                       * name_func:     custom function for choosing the tag
+                                        name; if it returns a False value like
+                                        None, a default scheme is used
+                       * legend_func:   custom function for choosing the legend
+                                        of a tag; no fallback is provided. By
+                                        default it always returns ""."""
+        # Default scheme for tag names
+        def default_name(commit):
+            if commit.fileops:
+                branch = commit.branch
+                if branch[-1] == os.sep: branch = branch[:-1]
+                return "tipdelete-" + os.path.basename(branch)
+            if commit.fossil_id:
+                return "emptycommit-" + commit.fossil_id
+            elif commit.mark:
+                return "emptycommit-mark" + commit.mark[1:]
+            else:
+                return "emptycommit-index" + commit.index()
+        # Gather all selected commits in a list before mutating self.events.
+        if commits is None: commits = self.events
+        commits = [c for c in commits if isinstance(c, Commit)]
+        # Use a separate loop because delete() invalidates manifests.
+        if canonicalize:
+            for commit in commits: commit.canonicalize()
+        # Tagify commits without fileops
+        usednames = {e.name for e in self.events if isinstance(e, Tag)}
+        if tipdeletes:
+            is_tipdelete = lambda c: c.alldeletes(killset={"deleteall"}) \
+                                     and not c.has_children()
+        else:
+            is_tipdelete = lambda _: False
+        for commit in commits:
+            if (not commit.fileops) or is_tipdelete(commit):
+                if commit.has_parents():
+                    name = name_func(commit) or default_name(commit)
+                    for i in itertools.count():
+                        suffix = ".{}".format(i) if i else ""
+                        if name + suffix not in usednames: break
+                    usednames.add(name + suffix)
+                    legend = legend_func(commit)
+                    if commit.fileops: commit.fileops = []
+                    self.tagify(commit,
+                                name + suffix,
+                                commit.parents()[0],
+                                legend)
+                else:
+                    msg = []
+                    if commit.fossil_id:
+                        msg.append("r%s:" % commit.fossil_id)
+                    elif commit.mark:
+                        msg.append("'%s':" % commit.mark)
+                    msg.append("deleting parentless")
+                    if commit.fileops:
+                        msg.append("tip delete of %s." % commit.branch)
+                    else:
+                        msg.append("zero-op commit on %s." % commit.branch)
+                    gripe(" ".join(msg))
+                    self.quiet_delete(commit)
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
