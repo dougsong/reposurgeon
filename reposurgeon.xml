@@ -876,6 +876,34 @@ file path matches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>tagify</command> 
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>policy...</emphasis>]
+</term>
+<listitem>
+<para>Search for empty commits and turn them into tags. Takes an optional
+selection set argument and an optional space-separated policy list afterwards.
+For each commit in the selection set, turn it into a tag with the same message
+and author information if it has no fileops.</para>
+
+<para>The name of the tag is 'emptycommit-<emphasis>ident</emphasis>', where
+<emphasis>ident</emphasis> is generated from the fossil_id of the deleted
+commit, or from its mark, or from its index in the repository, with a
+disambiguation suffix if needed.</para>
+
+<para>There are two policies currently recognized: first is 'canonicalize'
+which makes tagify try harder to detect trivial commits by first ensuring that
+all fileops of selected commits will have an actual effect when processed by
+fast-import.</para>
+
+<para>The second policy is 'tipdeletes' which makes tagify also consider branch
+tips with only deleteall fileops to be candidates for tagification. The
+corresponding tags get names of the form
+'tipdelete-<emphasis>branchname</emphasis>' rather than the default
+'emptycommit-<emphasis>ident</emphasis>'.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>coalesce</command> 
         [<emphasis>selection-set</emphasis>]
         [<emphasis>timefuzz</emphasis>]
