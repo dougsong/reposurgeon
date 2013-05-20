@@ -42,10 +42,12 @@ M 100644 :3 README
 
 blob
 mark :5
-data 156
-The pupose of this test repository is to verify that a ..gitignore generated 
+data 254
+The pupose of this test repository is to verify that a .gitignore generated
 from an ignore property set on a directory won't survive directory deletion.
 
+Generated .gitignore files should be deleted even in subdirs or if the toplevel
+directory is empty.
 
 # Fossil-ID: 3
 commit refs/heads/master
@@ -61,21 +63,58 @@ mark :7
 data 6
 *.pyc
 
+blob
+mark :8
+data 6
+*.pyc
+
+blob
+mark :9
+data 6
+*.pyc
+
 # Fossil-ID: 4
 commit refs/heads/master
-mark :8
+mark :10
 committer esr <esr> 1352220855 +0000
-data 48
-This follows "svn propset svn:ignore *.pyc foo"
+data 61
+This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
 from :6
+M 100644 :9 baz/.gitignore
 M 100644 :7 foo/.gitignore
+M 100644 :8 foo/bar/.gitignore
 
 # Fossil-ID: 5
 commit refs/heads/master
-mark :9
+mark :11
 committer esr <esr> 1352220901 +0000
-data 28
-This follows "svn del foo".
-from :8
+data 46
+This follows "svn del foo" and "svn del baz".
+from :10
+D baz/.gitignore
+D foo/.gitignore
+D foo/bar/.gitignore
+
+blob
+mark :12
+data 6
+*.pyc
+
+# Fossil-ID: 6
+commit refs/heads/master
+mark :13
+committer esr <esr> 1352220744 +0000
+data 67
+Reintroduce foo to then delete it. There should be a M .gitignore.
+from :11
+M 100644 :12 foo/.gitignore
+
+# Fossil-ID: 7
+commit refs/heads/master
+mark :14
+committer esr <esr> 1352220901 +0000
+data 50
+Delete foo again; there should be a D .gitignore.
+from :13
 D foo/.gitignore
 
