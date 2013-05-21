@@ -5470,8 +5470,11 @@ class RepositoryList:
                                          (fileop.op,
                                           fileop.source,
                                           fileop.target))
-                                if fileop.op == "R" and fileop.source in matchers:
-                                    matchers.remove(fileop.source)
+                                if fileop.op == "R":
+                                    try:
+                                        matchers.remove("^" + fileop.source + "$")
+                                    except ValueError:
+                                        pass
                                 matchers.append("^" + fileop.target + "$")
                                 expunge = digest(matchers)
                             elif fileop.targetdelete:
