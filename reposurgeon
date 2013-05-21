@@ -983,11 +983,14 @@ class Tag(object):
             if self.repo:
                 self.target = self.repo.objfind(self.committish)
         if self.target:
-            self.target.attachments.add(self)
+            self.target.attachments.append(self)
     def forget(self):
         "Forget this tag's attachment to its commit and repo."
         if self.target:
-            self.target.attachments.discard(self)
+            try:
+                self.target.attachments.remove(self)
+            except ValueError:
+                pass
             self.target = None
         self.repo = None
     def index(self):
@@ -1083,11 +1086,14 @@ class Reset(object):
             if self.repo:
                 self.target = self.repo.objfind(self.committish)
         if self.target:
-            self.target.attachments.add(self)
+            self.target.attachments.append(self)
     def forget(self):
         "Forget this reset's attachment to its commit and repo."
         if self.target:
-            self.target.attachments.discard(self)
+            try:
+                self.target.attachments.remove(self)
+            except ValueError:
+                pass
             self.target = None
         self.repo = None
     def moveto(self, repo):
@@ -1267,7 +1273,7 @@ class Commit(object):
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
         self.deletehook = None	     # Hook used during deletion operations
-        self.attachments = set()
+        self.attachments = []
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self._pathset = None
