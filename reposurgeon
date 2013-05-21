@@ -5494,10 +5494,10 @@ class RepositoryList:
         for event in self.repo:
             event.deletehook = None
         for (ei, deletia) in zip(selection, alterations):
+            if not deletia: continue
             event = self.repo[ei]
             keepers = []
             blobs = []
-            deletia.reverse()
             for i in deletia:
                 fileop = event.fileops[i]
                 if fileop.op == 'D':
@@ -5519,13 +5519,13 @@ class RepositoryList:
                     assert(fileop.sourcedelete or fileop.targetdelete)
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
-                event.fileops.pop(i)
-                event._pathset = None
+            deletia = set(deletia) # To speed up the following
+            event.fileops = [op for (i, op) in enumerate(event.fileops)
+                                if i not in deletia]
+            event._pathset = None
             # If there are any keeper fileops, hang them them and
             # their blobs on deletehooks, cloning the commit() for them.
             if keepers:
-                keepers.reverse()
-                blobs.reverse()
                 newevent = event.clone(expunged)
                 newevent.fileops = keepers
                 newevent._pathset = None
