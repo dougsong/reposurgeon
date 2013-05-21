@@ -331,7 +331,7 @@ author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 data 40
 Sync data structures with design notes.
-from :4
+from :6
 M 100644 :8 theory.txt
 
 blob

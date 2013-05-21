@@ -5555,7 +5555,11 @@ class RepositoryList:
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parents() if e.mark in expunged_marks])
+                # Parents still are Commits in the non-expunged repository
+                # We use set_parent_marks so that the correct parents are
+                # searched in the expunged repository.
+                event.set_parent_marks(m for m in event.parent_marks()
+                                         if m in expunged_marks)
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
