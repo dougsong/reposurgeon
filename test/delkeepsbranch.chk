@@ -1,0 +1,52 @@
+read delkeepsbranch.fi
+inspect
+Event 1 =================================================================
+commit refs/heads/master
+mark :1
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+M 644 inline README
+data 37
+This is a test file in a dummy repo.
+
+
+Event 2 =================================================================
+commit refs/tags/v1
+mark :2
+committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
+data 40
+Test of a tag with a file modification.
+from :1
+M 644 inline README
+data 42
+This is a modification of that test file.
+
+
+Event 3 =================================================================
+commit refs/tags/v2
+mark :3
+committer Eric S. Raymond <esr@thyrsus.com> 1289147740 -0500
+data 46
+Test of another tag with a file modification.
+from :2
+M 644 inline README
+data 48
+This is another modification of that test file.
+
+
+delete :2,:3 obliterate tagback
+reposurgeon: warning: commit :3 to be obliterated has non-head branch attribute refs/tags/v2
+reposurgeon: warning: commit :3 to be obliterated has non-delete fileops.
+inspect
+Event 1 =================================================================
+commit refs/tags/v2
+mark :1
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+M 644 inline README
+data 37
+This is a test file in a dummy repo.
+
+
