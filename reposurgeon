@@ -4586,22 +4586,6 @@ class Repository:
             event.deletehook = True
             # Nothing special to do for Reset, Tag, Passthrough, Blob
             if isinstance(event, Commit):
-                if event.branch and "/tags/" in event.branch:
-                    identical = False
-                    if tagback:
-                        if event.has_parents():
-                            identical = event.parents()[0].branch == event.branch
-                            if not identical:
-                                event.parents()[0].set_branch(event.branch)
-                    elif tagforward:
-                        if event.has_children():
-                            identical = event.first_child().branch == event.branch
-                            if not identical:
-                                event.first_child().setbranch(event.branch)
-                            if event.has_children():
-                                identical = event.first_child().branch == event.branch
-                        if not identical:
-                            complain("tag %s on event %s will be lost" % (event.branch, event.mark))
                 # Decide the new target for tags
                 filter_only = True
                 if tagforward and event.has_children():
@@ -4656,10 +4640,21 @@ class Repository:
                         self.events[earliest:last+1] = map(
                                 self.events.__getitem__, neworder)
                         self.declare_sequence_mutation()
+                # Move tags and attachments
                 if filter_only:
                     for e in event.attachments:
                         e.deletehook = True
                 else:
+                    if event.branch and "/tags/" in event.branch \
+                            and new_target.branch != event.branch:
+                        # By deleting the commit, we would loose the fact that
+                        # it moves its branch (to create a lightweight tag for
+                        # instance): replace it by a Reset which will save this
+                        # very information. The following loop will take care
+                        # of moving the attachment to the new target.
+                        reset = Reset(self, ref = event.branch,
+                                            target = event)
+                        self.events[ei] = reset
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
                         t.forget()
