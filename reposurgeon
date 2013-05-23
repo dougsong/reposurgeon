@@ -631,6 +631,7 @@ class Baton:
 class RepoSurgeonEmail(email.message.Message, object):
     "Specialized email message with a distinguishing starter."
     Divider = 78 * "-"
+    __hash__ = None
     def __init__(self, **kwargs):
         email.message.Message.__init__(self, **kwargs)        
         self.set_unixfrom(RepoSurgeonEmail.Divider)
@@ -656,6 +657,7 @@ class RepoSurgeonEmail(email.message.Message, object):
 class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     __slots__ = ("timestamp", "tz_offset", "orig_tz_string")
+    __hash__ = None
     date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$")
     subsecond_re = re.compile(r"\.[0-9]+Z")
     offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$")
@@ -820,6 +822,7 @@ class DateTests(unittest.TestCase):
 class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
+    __hash__ = None
     def __init__(self, person=None):
         self.name = self.email = self.date = None
         if person:
@@ -864,6 +867,7 @@ class Attribution(object):
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
     __slots__ = ("repo", "mark", "paths", "colors", "cookie", "start", "size", "deletehook")
+    __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
@@ -961,6 +965,7 @@ class Tag(object):
     "Represents an annotated tag."
     __slots__ = ("repo", "name", "color", "committish",
                  "target", "tagger", "comment", "deletehook")
+    __hash__ = None
     def __init__(self, repo=None,
                  name=None, committish=None, target=None, tagger=None, comment=None):
         self.repo = None
@@ -1067,6 +1072,7 @@ class Tag(object):
 class Reset(object):
     "Represents a branch creation."
     __slots__ = ("repo", "ref", "committish", "target", "deletehook", "color")
+    __hash__ = None
     def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
         self.ref = ref
@@ -1113,6 +1119,7 @@ class FileOp(object):
     __slots__ = ("vcs", "op", "committish", "source", "target",
                  "mode", "path", "ref", "inline",
                  "sourcedelete", "targetdelete")
+    __hash__ = None
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     sortkey_sentinel = chr(ord("/") + 1)
     def __init__(self, vcs=None):
@@ -1256,6 +1263,7 @@ class Commit(object):
                  "branch", "fileops", "properties", "filemap", "color",
                  "fossil_id", "common", "splits", "deletehook", "attachments",
                  "_parent_nodes", "_child_nodes", "_pathset")
+    __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None             # Mark name of commit (may be None)
@@ -1669,6 +1677,7 @@ class Commit(object):
 class Passthrough(object):
     "Represents a passthrough line."
     __slots__ = ("text", "deletehook", "color")
+    __hash__ = None
     def __init__(self, line):
         self.text = line
         self.deletehook = None
@@ -1739,6 +1748,7 @@ class PathMap(object):
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
     __slots__ = ("shared", "maxid", "snapid", "store")
+    __hash__ = None
     _self_value = object()
     def __init__(self, other = None):
         # The instance may be a child of several other PathMaps if |shared|
