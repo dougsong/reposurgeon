@@ -58,7 +58,7 @@ install: all
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
 clean:
-	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.*
+	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.* *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
 	rm -f cyreposurgeon.c cyreposurgeon
