@@ -91,5 +91,8 @@ check:
 
 dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopuller.1 repodiffer.1
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon.html repodiffer.html features.html
+reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
+	@md5sum reposurgeon-$(VERS).tar.gz >reposurgeon-$(VERS).md5
+
+release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html features.html
 	shipper -u -m -t; make clean
