@@ -4325,10 +4325,11 @@ class Repository:
                 return "emptycommit-index" + commit.index()
         # Gather all selected commits in a list before mutating self.events.
         if commits is None: commits = self.events
-        commits = [c for c in commits if isinstance(c, Commit)]
+        commits = [(i,c) for (i,c) in enumerate(commits)
+                         if isinstance(c, Commit)]
         # Use a separate loop because delete() invalidates manifests.
         if canonicalize:
-            for commit in commits: commit.canonicalize()
+            for _, commit in commits: commit.canonicalize()
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
@@ -4336,7 +4337,8 @@ class Repository:
                                      and not c.has_children()
         else:
             is_tipdelete = lambda _: False
-        for commit in commits:
+        deletia = []
+        for index, commit in commits:
             if (not commit.fileops) or is_tipdelete(commit):
                 if commit.has_parents():
                     name = name_func(commit) or default_name(commit)
@@ -4349,7 +4351,9 @@ class Repository:
                     self.tagify(commit,
                                 name + suffix,
                                 commit.parents()[0],
-                                legend)
+                                legend,
+                                delete = False)
+                    deletia.append(index)
                 else:
                     msg = []
                     if commit.fossil_id:
@@ -4362,7 +4366,8 @@ class Repository:
                     else:
                         msg.append("zero-op commit on %s." % commit.branch)
                     gripe(" ".join(msg))
-                    self.quiet_delete(commit)
+                    deletia.append(index)
+        self.delete(deletia, ["obliterate", "quiet", "tagback"])
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
