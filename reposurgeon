@@ -5705,16 +5705,27 @@ class RepositoryList:
                     if fileop.op == 'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = (not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events)
-        deletia = [i for i,e in enumerate(deletia) if not e]
-        self.repolist.append(expunged)
-        if not deletia:
-            announce("deletion set is empty.")
-            return
+        # Announce events that will be deleted.
         if verbose:
-            announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
-        self.repo.delete(deletia, ["obliterate", "quiet"])
+            to_delete = [i+1 for i,e in enumerate(self.repo.events)
+                    if (isinstance(e, Blob) and not backreferences[e.mark])
+                    or (isinstance(e, Commit) and not e.fileops)]
+            if not to_delete:
+                announce("deletion set is empty.")
+            else:
+                announce("deleting blobs and empty commits %s" % to_delete)
+            del to_delete
+        # First delete the blobs.
+        self.repo.events = [e for e in self.repo.events
+                              if (not isinstance(e, Blob))
+                              or backreferences[e.mark]]
+        # Then tagify empty commits.
+        self.repo.tagify_empty(canonicalize = False)
+        # And tell we changed the manifests and the event sequence.
         self.repo.invalidate_manifests()
+        self.repo.declare_sequence_mutation()
+        # At last, add the expunged repository to the loaded list.
+        self.repolist.append(expunged)
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
