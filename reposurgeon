@@ -4275,7 +4275,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, target, legend=""):
+    def tagify(self, commit, name, target, legend="", delete=True):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -4293,7 +4293,7 @@ class Repository:
                           target=target,
                           tagger=commit.committer,
                           comment=pref + legend))
-        self.quiet_delete(commit)
+        if delete: self.quiet_delete(commit)
     def tagify_empty(self, commits = None,
                            tipdeletes = False,
                            canonicalize = True,
