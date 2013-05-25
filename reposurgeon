@@ -2219,7 +2219,7 @@ class StreamParser:
         self.permissions = {}
         self.fileop_branchlinks  = set()
         self.directory_branchlinks  = set()
-        self.active_gitignores = set()
+        self.active_gitignores = {}
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -2925,17 +2925,29 @@ class StreamParser:
                 elif node.kind == SD_DIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
-                    node.path += os.sep                   
+                    node.path += os.sep
                     if node.from_path:
                         node.from_path += os.sep
-                    if node.action == SD_ADD:
-                        if node.path == "trunk" + os.sep and not node.props:
-                            node.props = {"svn:ignore":
-                                          StreamParser.SubversionDefaultIgnores}
+                    if node.action in (SD_ADD, SD_CHANGE):
+                        if node.path in self.branches:
+                            if not node.props: node.props = {}
+                            try:
+                                ignore = StreamParser.SubversionDefaultIgnores + \
+                                         "# The contents of the svn:ignore" \
+                                         "property on the branch root.\n" + \
+                                         node.props["svn:ignore"]
+                            except KeyError:
+                                ignore = StreamParser.SubversionDefaultIgnores
+                            node.props["svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)
                             expanded_nodes.append(node)
+                            # The deleteall will also delete .gitignore files
+                            for ignorepath in list(gi
+                                        for gi in self.active_gitignores
+                                        if gi.startswith(node.path)):
+                                del self.active_gitignores[ignorepath]
                         else:
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
@@ -2952,56 +2964,21 @@ class StreamParser:
                                     newnode.kind = SD_FILE
                                     newnode.generated = True
                                     expanded_nodes.append(newnode)
-                                for ignorepath in (gi for gi in self.active_gitignores if gi.startswith(node.path)):
-                                    newnode = StreamParser.NodeAction()
-                                    newnode.path = ignorepath
-                                    newnode.revision = revision
-                                    newnode.action = SD_DELETE
-                                    newnode.kind = SD_FILE
-                                    newnode.generated = True
-                                    expanded_nodes.append(newnode)
-                        # Property settings can be present on either
-                    # SD_ADD or SD_CHANGE actions.
-                    if node.props is not None:
-                        if debug_enable(DEBUG_EXTRACT):
-                            announce("r%s: setting properties %s on %s" \
-                                     % (revision, node.props, node.path))
-                        # svn:ignore gets handled here,
-                        if node.path == os.sep:
-                            gitignore_path = ".gitignore"
-                        else:
-                            gitignore_path = os.path.join(node.path,
-                                                          ".gitignore")
-                        # There are no other directory properties that can
-                        # turn into fileops.
-                        if "svn:ignore" in node.props:
-                            blob = Blob(self.repo)
-                            blob.set_content(node.props["svn:ignore"])
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_ADD
-                            newnode.kind = SD_FILE
-                            newnode.blob = blob
-                            if debug_enable(DEBUG_IGNORES):
-                                announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
-                            # Must append rather than simply performing.
-                            # Otherwise when the property is unset we
-                            # won't have the right thing happen.
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            self.active_gitignores.add(gitignore_path)
-                        elif gitignore_path in self.active_gitignores:
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_DELETE
-                            newnode.kind = SD_FILE
-                            if debug_enable(DEBUG_IGNORES):
-                                announce("r%s: queuing up %s deletion." % (revision, newnode.path))
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            self.active_gitignores.remove(gitignore_path)
+                            # Emit delete actions for the .gitignore files we
+                            # have generated. Note that even with a directory
+                            # with no files from SVN, we might have added
+                            # .gitignore files we now must delete.
+                            for ignorepath in list(gi
+                                        for gi in self.active_gitignores
+                                        if gi.startswith(node.path)):
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = ignorepath
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                newnode.generated = True
+                                expanded_nodes.append(newnode)
+                                del self.active_gitignores[ignorepath]
                     # Handle directory copies.
                     # If this is a copy between branches, no fileop should be
                     # issued until there is an actual file modification on the
@@ -3015,39 +2992,114 @@ class StreamParser:
                                          and node.path in self.branches \
                                          and node.path not in self.branchdeletes
                         if debug_enable(DEBUG_TOPOLOGY):
-                            announce("r%s: directory copy to %s from r%s~%s (branchcopy %s)" \
+                            announce("r%s: directory copy to %s from " \
+                                     "r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
                                         node.from_rev,
                                         node.from_path,
                                         branchcopy))
-                        if not branchcopy:
-                            self.branchdeletes.discard(node.path)
-                        else:
+                        # Update our .gitignore list so that it includes those
+                        # in the newly created copy, to ensure they correctly
+                        # get deleted during a future directory deletion.
+                        l = len(node.from_path)
+                        for sourcegi, value in list((gi,v) for (gi,v) in
+                                    self.active_gitignores.iteritems()
+                                    if gi.startswith(node.from_path)):
+                            destgi = node.path + sourcegi[l:]
+                            self.active_gitignores[destgi] = value
+                        if branchcopy:
                             self.branchcopies.add(node.path)
-                            continue
-                        for source in node.from_set:
-                            lookback = filemaps[node.from_rev][source]
-                            if lookback is None:
-                                raise Fatal("r%s: can't find ancestor %s" \
-                                         % (revision, source))
-                            subnode = StreamParser.NodeAction()
-                            subnode.path = os.path.join(node.path,
-                                                        source[len(node.from_path+os.sep)-1:])
-                            subnode.revision = revision
-                            subnode.from_path = lookback.path
-                            subnode.from_rev = lookback.revision
-                            subnode.from_hash = lookback.content_hash
-                            subnode.action = SD_ADD
-                            subnode.kind = SD_FILE
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: generated copy r%s~%s -> %s" \
-                                         % (revision,
-                                            subnode.from_rev,
-                                            subnode.from_path,
-                                            subnode.path))
-                            subnode.generated = True
-                            expanded_nodes.append(subnode)
+                        else:
+                            self.branchdeletes.discard(node.path)
+                            # Generate copy ops for generated .gitignore files
+                            # to match the copy of svn:ignore props on the
+                            # Subversion side. We use the just updated
+                            # active_gitignores dict for that purpose.
+                            for gipath, ignore in list(
+                                        (gi,v) for (gi,v) in
+                                        self.active_gitignores.iteritems()
+                                        if gi.startswith(node.path)):
+                                blob = Blob(self.repo)
+                                blob.set_content(ignore)
+                                subnode = StreamParser.NodeAction()
+                                subnode.path = gipath
+                                subnode.revision = revision
+                                subnode.action = SD_ADD
+                                subnode.kind = SD_FILE
+                                subnode.blob = blob
+                                subnode.content_hash = \
+                                        hashlib.md5(ignore).hexdigest()
+                                subnode.generated = True
+                                expanded_nodes.append(subnode)
+                            # Now generate copies for all files in the source
+                            for source in node.from_set:
+                                lookback = filemaps[node.from_rev][source]
+                                if lookback is None:
+                                    raise Fatal("r%s: can't find ancestor %s" \
+                                             % (revision, source))
+                                subnode = StreamParser.NodeAction()
+                                subnode.path = node.path + \
+                                        source[len(node.from_path):]
+                                subnode.revision = revision
+                                subnode.from_path = lookback.path
+                                subnode.from_rev = lookback.revision
+                                subnode.from_hash = lookback.content_hash
+                                subnode.action = SD_ADD
+                                subnode.kind = SD_FILE
+                                if debug_enable(DEBUG_TOPOLOGY):
+                                    announce("r%s: generated copy r%s~%s -> %s" \
+                                             % (revision,
+                                                subnode.from_rev,
+                                                subnode.from_path,
+                                                subnode.path))
+                                subnode.generated = True
+                                expanded_nodes.append(subnode)
+                    # Property settings can be present on either
+                    # SD_ADD or SD_CHANGE actions.
+                    if node.props is not None:
+                        if debug_enable(DEBUG_EXTRACT):
+                            announce("r%s: setting properties %s on %s" \
+                                     % (revision, node.props, node.path))
+                        # svn:ignore gets handled here,
+                        if node.path == os.sep:
+                            gitignore_path = ".gitignore"
+                        else:
+                            gitignore_path = os.path.join(node.path,
+                                                          ".gitignore")
+                        # There are no other directory properties that can
+                        # turn into fileops.
+                        ignore = node.props.get("svn:ignore")
+                        if ignore is not None:
+                            blob = Blob(self.repo)
+                            blob.set_content(ignore)
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_ADD
+                            newnode.kind = SD_FILE
+                            newnode.blob = blob
+                            newnode.content_hash = \
+                                    hashlib.md5(ignore).hexdigest()
+                            if debug_enable(DEBUG_IGNORES):
+                                announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                            # Must append rather than simply performing.
+                            # Otherwise when the property is unset we
+                            # won't have the right thing happen.
+                            newnode.generated = True
+                            expanded_nodes.append(newnode)
+                            self.active_gitignores[gitignore_path] = ignore
+                        elif gitignore_path in self.active_gitignores:
+                            newnode = StreamParser.NodeAction()
+                            newnode.path = gitignore_path
+                            newnode.revision = revision
+                            newnode.action = SD_DELETE
+                            newnode.kind = SD_FILE
+                            if debug_enable(DEBUG_IGNORES):
+                                announce("r%s: queuing up %s deletion." % (revision, newnode.path))
+                            newnode.generated = True
+                            expanded_nodes.append(newnode)
+                            del self.active_gitignores[gitignore_path]
             # Lift .cvsignore files, which we can assume are fossils
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore

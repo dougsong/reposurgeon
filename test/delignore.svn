@@ -113,15 +113,16 @@ PROPS-END
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 156
+Text-content-length: 254
 Text-content-md5: 0ae8b7f9ecd74d785fc122a0a01bacc1
 Text-content-sha1: 27c0c4f4c1a47e85aae33653467473d7e2cebb13
-Content-length: 156
+Content-length: 254
 
-The pupose of this test repository is to verify that a ..gitignore generated 
+The pupose of this test repository is to verify that a .gitignore generated
 from an ignore property set on a directory won't survive directory deletion.
 
-
+Generated .gitignore files should be deleted even in subdirs or if the toplevel
+directory is empty.
 
 Node-path: trunk/foo
 Node-kind: dir
@@ -132,9 +133,26 @@ Content-length: 10
 PROPS-END
 
 
+Node-path: trunk/foo/bar
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+Node-path: trunk/baz
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
 Revision-number: 4
-Prop-content-length: 146
-Content-length: 146
+Prop-content-length: 159
+Content-length: 159
 
 K 8
 svn:date
@@ -142,8 +160,93 @@ V 27
 2012-11-06T16:54:15.716101Z
 K 7
 svn:log
-V 48
-This follows "svn propset svn:ignore *.pyc foo"
+V 61
+This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+Node-path: trunk/foo/bar
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+Node-path: trunk/baz
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.pyc
+
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 144
+Content-length: 144
+
+K 7
+svn:log
+V 46
+This follows "svn del foo" and "svn del baz".
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2012-11-06T16:55:01.640609Z
+PROPS-END
+
+Node-path: trunk/foo
+Node-action: delete
+
+Node-path: trunk/baz
+Node-action: delete
+
+
+Revision-number: 6
+Prop-content-length: 165
+Content-length: 165
+
+K 8
+svn:date
+V 27
+2012-11-06T16:52:24.915264Z
+K 7
+svn:log
+V 67
+Reintroduce foo to then delete it. There should be a M .gitignore.
 
 K 10
 svn:author
@@ -165,14 +268,14 @@ V 6
 PROPS-END
 
 
-Revision-number: 5
-Prop-content-length: 126
-Content-length: 126
+Revision-number: 7
+Prop-content-length: 148
+Content-length: 148
 
 K 7
 svn:log
-V 28
-This follows "svn del foo".
+V 50
+Delete foo again; there should be a D .gitignore.
 
 K 10
 svn:author

@@ -51,7 +51,6 @@ data 7
 Merge
 
 from :3
-D .gitignore
 M 100644 :2 b
 
 tag test-root
