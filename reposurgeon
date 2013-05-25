@@ -1622,7 +1622,7 @@ class Commit(object):
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
         # Generate needed D fileops.
-        if any(op.op == "deletall" for op in self.fileops):
+        if any(op.op == "deleteall" for op in self.fileops):
             # Any file in the parent tree might disappear.
             check_delete = parent
         else:

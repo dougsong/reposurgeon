@@ -52,6 +52,7 @@ committer esr <esr> 1322776854 +0000
 data 37
 This is our root-level file content.
 from :2
+D .gitignore
 M 100644 :5 EXIGUOUS
 
 blob
