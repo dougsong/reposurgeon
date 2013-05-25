@@ -1622,7 +1622,7 @@ class Commit(object):
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
         # Generate needed D fileops.
-        if any(op.op == "deletall" for op in self.fileops):
+        if any(op.op == "deleteall" for op in self.fileops):
             # Any file in the parent tree might disappear.
             check_delete = parent
         else:
@@ -4275,7 +4275,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, target, legend=""):
+    def tagify(self, commit, name, target, legend="", delete=True):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -4293,7 +4293,7 @@ class Repository:
                           target=target,
                           tagger=commit.committer,
                           comment=pref + legend))
-        self.quiet_delete(commit)
+        if delete: self.quiet_delete(commit)
     def tagify_empty(self, commits = None,
                            tipdeletes = False,
                            canonicalize = True,
@@ -4325,10 +4325,11 @@ class Repository:
                 return "emptycommit-index" + commit.index()
         # Gather all selected commits in a list before mutating self.events.
         if commits is None: commits = self.events
-        commits = [c for c in commits if isinstance(c, Commit)]
+        commits = [(i,c) for (i,c) in enumerate(commits)
+                         if isinstance(c, Commit)]
         # Use a separate loop because delete() invalidates manifests.
         if canonicalize:
-            for commit in commits: commit.canonicalize()
+            for _, commit in commits: commit.canonicalize()
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
@@ -4336,7 +4337,8 @@ class Repository:
                                      and not c.has_children()
         else:
             is_tipdelete = lambda _: False
-        for commit in commits:
+        deletia = []
+        for index, commit in commits:
             if (not commit.fileops) or is_tipdelete(commit):
                 if commit.has_parents():
                     name = name_func(commit) or default_name(commit)
@@ -4349,7 +4351,9 @@ class Repository:
                     self.tagify(commit,
                                 name + suffix,
                                 commit.parents()[0],
-                                legend)
+                                legend,
+                                delete = False)
+                    deletia.append(index)
                 else:
                     msg = []
                     if commit.fossil_id:
@@ -4362,7 +4366,8 @@ class Repository:
                     else:
                         msg.append("zero-op commit on %s." % commit.branch)
                     gripe(" ".join(msg))
-                    self.quiet_delete(commit)
+                    deletia.append(index)
+        self.delete(deletia, ["obliterate", "quiet", "tagback"])
     def fast_import(self, fp, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, progress)
@@ -5705,16 +5710,27 @@ class RepositoryList:
                     if fileop.op == 'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
-        deletia = (not ((isinstance(e, Commit) and len(e.fileops)==0) or (isinstance(e, Blob) and not backreferences[e.mark])) for e in self.repo.events)
-        deletia = [i for i,e in enumerate(deletia) if not e]
-        self.repolist.append(expunged)
-        if not deletia:
-            announce("deletion set is empty.")
-            return
+        # Announce events that will be deleted.
         if verbose:
-            announce("deleting blobs and empty commits %s" % [x+1 for x in deletia])
-        self.repo.delete(deletia, ["obliterate", "quiet"])
+            to_delete = [i+1 for i,e in enumerate(self.repo.events)
+                    if (isinstance(e, Blob) and not backreferences[e.mark])
+                    or (isinstance(e, Commit) and not e.fileops)]
+            if not to_delete:
+                announce("deletion set is empty.")
+            else:
+                announce("deleting blobs and empty commits %s" % to_delete)
+            del to_delete
+        # First delete the blobs.
+        self.repo.events = [e for e in self.repo.events
+                              if (not isinstance(e, Blob))
+                              or backreferences[e.mark]]
+        # Then tagify empty commits.
+        self.repo.tagify_empty(canonicalize = False)
+        # And tell we changed the manifests and the event sequence.
         self.repo.invalidate_manifests()
+        self.repo.declare_sequence_mutation()
+        # At last, add the expunged repository to the loaded list.
+        self.repolist.append(expunged)
 
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
