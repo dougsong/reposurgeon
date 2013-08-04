@@ -8398,7 +8398,7 @@ map when the repo is written or rebuilt.
                         for ei in idhits:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
-                                summary = event.lister(ei, screenwidth())
+                                summary = event.lister(None, ei, screenwidth())
                                 if summary:
                                     parse.stdout.write(summary + "\n")
 
