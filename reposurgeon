@@ -823,8 +823,9 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
-    def __init__(self, person=None):
+    def __init__(self, operson=None):
         self.name = self.email = self.date = None
+        person = operson
         if person:
             # Deal with a cvs2svn artifact
             person = person.replace("(no author)", "no-author")
@@ -838,7 +839,7 @@ class Attribution(object):
             try:
                 self.date = Date(person.strip().split("|")[2])
             except (ValueError, IndexError):
-                raise Fatal("malformed attribution date in %s" % person)
+                raise Fatal("malformed attribution date in %s" % operson)
     def email_out(self, _modifiers, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
