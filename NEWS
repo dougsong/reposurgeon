@@ -30,7 +30,7 @@
      "from COMMIT remove OP" for removing botched renames etc.
      Event-Mark can be be used as a commit identifier in mailbox format.
      Line continuation with \ works in scripts.
-     There is nopw a regular expression matching syntax for paths.
+     There is now a regular expression matching syntax for paths.
 
 2.32: 2013-04-03
      Fix bug introduced in expunges when blobfile path generation changed.
