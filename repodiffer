@@ -643,7 +643,7 @@ def diff_all(alpha, beta, fossils):
 
 if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
-        sys.stderr.write("git-weave: requires Python 2.7 or later.")
+        sys.stderr.write("repodiffer: requires Python 2.7 or later.")
         sys.exit(1)
     (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:tv:", ["changes-only", "show-equal", "full-hash", "ignore=", "fossil-map=", "single=", "quiet", "tree-diff", "verbose="])
     alpha = None
