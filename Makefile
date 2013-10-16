@@ -89,7 +89,7 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
 	@md5sum reposurgeon-$(VERS).tar.gz >reposurgeon-$(VERS).md5
 
 zip: $(SOURCES)
-	zip reposurgeon-$(VERS).zip $(SOURCES)
+	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
 release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html features.html
 	shipper -u -m -t; make clean
