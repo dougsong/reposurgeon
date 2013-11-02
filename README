@@ -50,9 +50,13 @@ were operating on, or a pointer to where I can pull it from.
 
 If your Subversion repo is large, or contains proprietary content that
 you need to obscure, consider using the svncutter tool from the
-Subversion contrib directory.  The "skeletonize" option will replace
-all content blobs with dummies, preserving the structure of the repo
-and (almost certainly) its ability to trigger your bug.  Skeletonizing
-also makes the dump drastically smaller and faster to process.
+Subversion contrib directory.  It is publicly available at this URL:
+
+https://svn.apache.org/repos/asf/subversion/trunk/contrib/server-side/svncutter/svncutter
+
+The "skeleton" option of svncutter will replace all content blobs with
+dummies, preserving the structure of the repo and (almost certainly)
+its ability to trigger your bug.  Skeletonizing also makes the dump
+drastically smaller and faster to process.
 
 (c) The sequence of reposurgeon commands that tickled the bug.
