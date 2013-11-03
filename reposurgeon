@@ -3592,8 +3592,15 @@ class StreamParser:
                             except ValueError:
                                 continue
                             for span in ranges.split(","):
-                                from_rev = span.rsplit("-", 1)[-1]
-                                if not from_rev: continue
+                                # Ignore single-rev fields, they are cherry-picks.
+                                # TODO: maybe we should even test if min_rev
+                                # corresponds to some from_rev + 1 to ensure no
+                                # commit has been skipped.
+                                try:
+                                    min_rev, from_rev = span.split("-", 1)
+                                except ValueError:
+                                    min_rev = from_rev = None
+                                if (not min_rev) or (not from_rev): continue
                                 # Import mergeinfo from merged branches
                                 try:
                                     past_merges = mergeinfos[from_rev][(from_path,)]
@@ -3604,10 +3611,13 @@ class StreamParser:
                                         existing_merges.update(past_merges)
                                 # Svn doesn't fit the merge range to commits on
                                 # the source branch; we need to find the latest
-                                # commit before from_rev made on that branch.
+                                # commit between min_rev and from_rev made on
+                                # that branch.
                                 from_commit = last_relevant_commit(
                                                     from_rev, from_path)
-                                if from_commit is not None:
+                                if from_commit is not None and \
+                                        int(from_commit.fossil_id.split(".",1)[0]) \
+                                            >= int(min_rev):
                                     own_merges.add(from_commit.mark)
                                 else:
                                     self.gripe("cannot resolve mergeinfo "

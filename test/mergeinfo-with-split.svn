@@ -223,13 +223,13 @@ PROPS-END
 Node-path: trunk
 Node-kind: dir
 Node-action: change
-Prop-content-length: 51
-Content-length: 51
+Prop-content-length: 53
+Content-length: 53
 
 K 13
 svn:mergeinfo
-V 16
-/branches/v1.0:3
+V 18
+/branches/v1.0:2-3
 PROPS-END
 
 
@@ -332,8 +332,8 @@ Content-length: 4
 
 
 Revision-number: 10
-Prop-content-length: 159
-Content-length: 159
+Prop-content-length: 157
+Content-length: 157
 
 K 8
 svn:date
@@ -352,13 +352,13 @@ PROPS-END
 Node-path: trunk
 Node-kind: dir
 Node-action: change
-Prop-content-length: 55
-Content-length: 55
+Prop-content-length: 57
+Content-length: 57
 
 K 13
 svn:mergeinfo
-V 20
-/branches/v1.0:3,7-8
+V 22
+/branches/v1.0:2-3,7-8
 PROPS-END
 
 
