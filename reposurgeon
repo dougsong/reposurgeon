@@ -4786,7 +4786,14 @@ class Repository:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
                             announce(speak + "non-delete fileops.")
-                            break
+                    if pushback and not event.has_parents():
+                        complain("warning: you want to delete commit %s with "
+                                 "pushback policy but it has no parents to push "
+                                 "fileops to." % event.mark)
+                    if not obliterate and not pushback and not event.has_children():
+                        complain("warning: you want to delete commit %s without "
+                                 "pushback nor obliterate but it has no children "
+                                 "to push fileops to." % event.mark)
         altered = []
         # Here are the deletions
         for e in self.events:
@@ -4824,7 +4831,7 @@ class Repository:
                         child._pathset = None
                         altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
-                if pushback:
+                if pushback and event.has_parents():
                     # Append a copy of this event's file ops to each parent's
                     # list and mark the parent as needing resolution.
                     for parent in event.parents():
