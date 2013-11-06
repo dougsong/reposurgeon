@@ -944,14 +944,16 @@ file path matches.</para>
 <term><command>tagify</command>
         [--canonicalize]
         [--tipdeletes]
+        [--tagify-merges]
         [<emphasis>selection-set</emphasis>]
 </term>
 <listitem>
 <para>Search for empty commits and turn them into tags. Takes an optional
 selection set argument defaulting to all commits. For each commit in the
 selection set, turn it into a tag with the same message and author information
-if it has no fileops.
-</para>
+if it has no fileops. By default merge commits are not considered, even if they
+have no fileops (thus no tree differences with their first parent). To change
+that, use the <option>--tagify-merges</option> option.</para>
 
 <para>The name of the tag is 'emptycommit-<emphasis>ident</emphasis>', where
 <emphasis>ident</emphasis> is generated from the fossil_id of the deleted
@@ -967,6 +969,9 @@ with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form
 'tipdelete-<emphasis>branchname</emphasis>' rather than the default
 'emptycommit-<emphasis>ident</emphasis>'.</para>
+
+<para>With the <option>--tagify-merges</option>, tagify also tagifies merge
+commits that have no fileops.
 </listitem>
 </varlistentry>
 <varlistentry>
