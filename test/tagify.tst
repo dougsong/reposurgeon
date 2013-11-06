@@ -9,3 +9,5 @@ write -
 write -
 tagify --canonicalize --tipdeletes
 write -
+tagify --tagify-merges
+write -
