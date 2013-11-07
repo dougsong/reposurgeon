@@ -3979,6 +3979,9 @@ class SubversionDumper:
                 if "svn:executable" in self.pathmap[svnpath].props:
                     self.pathmap[svnpath].props["svn:executable"] = "false"
                     changeprops = self.pathmap[svnpath].props
+        #if mode == "120000":
+        #    changeprops = {"svn:special":"*"}
+        #    content = "link " + content
         # The actual content
         SubversionDumper.dump_node(fp,
                   path=svnpath,
