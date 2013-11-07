@@ -2253,7 +2253,7 @@ class StreamParser:
         try:
             return self.fp.tell()
         except IOError:
-            raise Fatal("EOF while calling tell on %s" % self.fp.name)
+            return None
     def pushback(self, line):
         self.ccount -= len(line)
         self.import_line -= 1
@@ -2419,6 +2419,17 @@ class StreamParser:
                                             node.props = self.sd_read_props(node.path, plen)
                                         if tlen > -1:
                                             start = self.tell()
+                                            # This is a crock. It is
+                                            # justified only by the fact that
+                                            # we get None back from self.tell()
+                                            # only when the parser input is
+                                            # coming from an inferior process
+                                            # rather than a file. In this case
+                                            # the start offset can be any random
+                                            # garbage, because we'll never try
+                                            # to use it for seeking blob
+                                            # content.
+                                            if start is None: start = 0
                                             text = self.sd_read_blob(tlen)
                                             node.blob = Blob(self.repo)
                                             # Ugh - cope with strange
