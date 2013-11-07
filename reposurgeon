@@ -2253,7 +2253,7 @@ class StreamParser:
         try:
             return self.fp.tell()
         except IOError:
-            return None
+            raise Fatal("EOF while calling tell on %s" % self.fp.name)
     def pushback(self, line):
         self.ccount -= len(line)
         self.import_line -= 1
