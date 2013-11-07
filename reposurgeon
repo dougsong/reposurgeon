@@ -3861,10 +3861,10 @@ class SubversionDumper:
             #fp.write("Text-content-md5: %s\n" % hashlib.md5(content).hexdigest())
             fp.write("Text-content-sha1: %s\n" % hashlib.sha1(content.encode()).hexdigest())
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
-        fp.write(nodeprops + "\n")            
+        fp.write(nodeprops)            
         if content:
             fp.write(content)
-        fp.write("\n")
+        fp.write("\n\n")
     @staticmethod
     def svnbranch(branch):
         "The branch directory corresponding to a specified git branch."
