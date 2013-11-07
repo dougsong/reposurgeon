@@ -203,6 +203,25 @@ svndump-regress:
 	@make --quiet clean
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
 
+# Check idempotency of read/dump/read on Subversion repos
+# This can only succeed for linear repos.  At the moment it fails on
+# all repos.
+SVNCHECK=vanilla
+svncheck:
+	@for test in $(SVNCHECK); \
+	do \
+	    if [ ! -f $${test}.tst ] ; \
+	    then \
+		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1; \
+		if echo "  $${test}.svn" >&2; \
+		$(REPOSURGEON) "read $${test}.svn" "prefer svn" "write"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		then diff -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
+	    fi \
+	done
+	@make --quiet clean
+	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$ /tmp/checkstripped$$$$
+
 # Regression-testing of repodiffer; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
 REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
