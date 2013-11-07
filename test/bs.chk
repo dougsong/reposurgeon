@@ -56,7 +56,6 @@ Text-content-sha1: 2eed664c74cfb63c530cda1296e1e65fed748530
 Content-length: 403
 
 PROPS-END
-
 #	Makefile for Battleships
 
 # Flags for use with the Linux ncurses package (recommended)
@@ -79,6 +78,7 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
+
 Node-path: trunk/README
 Node-kind: file
 Node-action: add
@@ -88,7 +88,6 @@ Text-content-sha1: 4a196e3e50ca6aa29f0633071466281f76ce15c9
 Content-length: 1351
 
 PROPS-END
-
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
 sucker. It now has a purely visual interface (you place ships and call for
 shots by moving the cursor around the board using the standard yuhjklbn keys).
@@ -123,6 +122,7 @@ O.K., I feel better now that I've got that off my chest...
 						esr@snark.uu.net
 
 
+
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: add
@@ -132,7 +132,6 @@ Text-content-sha1: bdb8bd633975b0a8395001ef99c51eb756e9768a
 Content-length: 27005
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -1356,6 +1355,7 @@ char *argv[];
 
 /* bs.c ends here */
 
+
 Revision-number: 2
 Prop-content-length: 122
 Content-length: 122
@@ -1384,7 +1384,6 @@ Text-content-sha1: d6818570b7fc03d94f3e23670006f40bbebd0a44
 Content-length: 1826
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Aug 23, 1989"
 .SH NAME
 bs \- battleships game
@@ -1428,6 +1427,7 @@ Originally written by one Bruce Holloway in 1986. Salvo mode added by Chuck A.
 DeGaul (cbosgd!cad). Visual user interface, `closepack' option, code rewrite
 and manual page by Eric S. Raymond <esr@snark.thyrsus.com> August 1989.
 
+
 Revision-number: 3
 Prop-content-length: 117
 Content-length: 117
@@ -1456,7 +1456,6 @@ Text-content-sha1: f18dbed61a47c66723b4d266d966a08898fee859
 Content-length: 439
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Flags for use with the Linux ncurses package (recommended)
@@ -1481,6 +1480,7 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
+
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -1490,7 +1490,6 @@ Text-content-sha1: 8cd4cfcbc8c7be597c9048c31350324df161090d
 Content-length: 1509
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -1530,6 +1529,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 						esr@snark.thyrsus.com
 
 
+
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -1539,7 +1539,6 @@ Text-content-sha1: fb79786830dae27e86f7e7ed622b6c02693d4c6f
 Content-length: 27728
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -2814,6 +2813,7 @@ char *argv[];
 
 /* bs.c ends here */
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -2823,7 +2823,6 @@ Text-content-sha1: 3ebfa0494feaba4ae1053262ce9e2d63f62904f1
 Content-length: 1962
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Nov 15 1993"
 .SH NAME
 bs \- battleships game
@@ -2868,6 +2867,7 @@ Originally written by one Bruce Holloway in 1986. Salvo mode added by Chuck A.
 DeGaul (cbosgd!cad). Visual user interface, `closepack' option, code rewrite
 and manual page by Eric S. Raymond <esr@snark.thyrsus.com> August
 1989.  Keypad support and ANSI/POSIX conformance, November '93.
+
 
 
 Revision-number: 4
@@ -2932,7 +2932,6 @@ Text-content-sha1: fe3330b9e5b15f1714a024a30c5e2ac214aba6fc
 Content-length: 1958
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Nov 15 1993"
 .SH NAME
 bs \- battleships game
@@ -2979,6 +2978,7 @@ and manual page by Eric S. Raymond <esr@snark.thyrsus.com> August
 1989.  Keypad support and ANSI/POSIX conformance, November '93.
 
 
+
 Revision-number: 6
 Prop-content-length: 116
 Content-length: 116
@@ -3007,7 +3007,6 @@ Text-content-sha1: e4abe823ee812e297a8f5ee6ac2d335dd08db76e
 Content-length: 439
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Flags for use with the Linux ncurses package (recommended)
@@ -3032,6 +3031,7 @@ clean:
 shar:
 	shar READ.ME bs.c Makefile bs.6 >bs.shar
 
+
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -3041,7 +3041,6 @@ Text-content-sha1: f89f1db37930e8fbe2c0653b2f8b00de38c5df63
 Content-length: 27808
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -4317,6 +4316,7 @@ char *argv[];
 
 /* bs.c ends here */
 
+
 Revision-number: 7
 Prop-content-length: 122
 Content-length: 122
@@ -4345,7 +4345,6 @@ Text-content-sha1: fcd59c2f3287a3931203cdab74d6bb26b8cefaac
 Content-length: 27818
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -5625,6 +5624,7 @@ char *argv[];
 
 /* bs.c ends here */
 
+
 Revision-number: 8
 Prop-content-length: 130
 Content-length: 130
@@ -5653,7 +5653,6 @@ Text-content-sha1: 5648b3b51b954a25266176e72ca7382f5e26202d
 Content-length: 513
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Flags for use with the Linux ncurses package (recommended)
@@ -5681,6 +5680,7 @@ bs.shar:
 bs.tar.gz:
 	tar -cvf bs.tar READ.ME bs.c Makefile bs.6
 	gzip bs.tar
+
 
 Revision-number: 9
 Prop-content-length: 119
@@ -5710,7 +5710,6 @@ Text-content-sha1: 49c034ad2ba9c3f2869bb75ee2466e7a5681e936
 Content-length: 1553
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -5750,6 +5749,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 						esr@snark.thyrsus.com
 					(WWW: //www.thyrsus.com/~esr/home.html)
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -5759,7 +5759,6 @@ Text-content-sha1: 5d2140b79627ec7781cfe0bd1e0753d7446985f1
 Content-length: 2074
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Nov 15 1993"
 .SH NAME
 bs \- battleships game
@@ -5809,6 +5808,7 @@ also other software and resources by ESR.
 
 
 
+
 Revision-number: 10
 Prop-content-length: 119
 Content-length: 119
@@ -5837,7 +5837,6 @@ Text-content-sha1: 38643aedfe7647510e9ff550af0d50df1afa4fb8
 Content-length: 1555
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -5877,6 +5876,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.thyrsus.com/~esr/home.html)
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -5886,7 +5886,6 @@ Text-content-sha1: bef43379a492df07a15f1b1502b19b7bed514cda
 Content-length: 2057
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Nov 15 1993"
 .SH NAME
 bs \- battleships game
@@ -5936,6 +5935,7 @@ also other software and resources by ESR.
 
 
 
+
 Revision-number: 11
 Prop-content-length: 117
 Content-length: 117
@@ -5964,7 +5964,6 @@ Text-content-sha1: fc0982d33b36662c84b2edb5f2f9c682d48896f2
 Content-length: 27987
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -7250,6 +7249,7 @@ char *argv[];
 
 /* bs.c ends here */
 
+
 Revision-number: 12
 Prop-content-length: 111
 Content-length: 111
@@ -7278,7 +7278,6 @@ Text-content-sha1: 58b0d0ad0e06cfa998bcffa89d12db9e41e565c3
 Content-length: 520
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Flags for use with the Linux ncurses package (recommended)
@@ -7306,6 +7305,7 @@ bs.shar:
 bs.tar.gz:
 	tar -cvf bs.tar READ.ME bs.c Makefile bs.6 bs.lsm
 	gzip bs.tar
+
 
 Revision-number: 13
 Prop-content-length: 131
@@ -7335,7 +7335,6 @@ Text-content-sha1: 8dfedd176caaf136b4445ab7b3299777095ac47a
 Content-length: 1552
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -7375,6 +7374,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.ccil.org/~esr/home.html)
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -7384,7 +7384,6 @@ Text-content-sha1: 0a4acf2f68539722422359bc768b393197556057
 Content-length: 2054
 
 PROPS-END
-
 .TH BATTLESHIPS 6 "Nov 15 1993"
 .SH NAME
 bs \- battleships game
@@ -7434,6 +7433,7 @@ also other software and resources by ESR.
 
 
 
+
 Revision-number: 14
 Prop-content-length: 153
 Content-length: 153
@@ -7462,7 +7462,6 @@ Text-content-sha1: 74bd499fcb0c1a33fb55184e8a8116953e0f3e2a
 Content-length: 28097
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -8725,6 +8724,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Revision-number: 15
 Prop-content-length: 80
 Content-length: 80
@@ -8778,7 +8778,6 @@ Text-content-sha1: 6966e0f3d117ca3ca03bb1bf35411edd5a127a48
 Content-length: 1551
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -8818,6 +8817,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.ccil.org/~esr/home.html)
 
+
 Revision-number: 17
 Prop-content-length: 115
 Content-length: 115
@@ -8846,7 +8846,6 @@ Text-content-sha1: 44ad596e314a15846c61226afa381d2b308791ee
 Content-length: 321
 
 PROPS-END
-
 Description: Battleships against the computer (text mode)
 Name: bs
 Version: 2.1
@@ -8869,6 +8868,7 @@ cp bs.6 /usr/man/man1/bs.6
 %files
 %doc /usr/man/man1/bs.6
 /usr/bin/bs
+
 
 Revision-number: 18
 Prop-content-length: 119
@@ -8898,7 +8898,6 @@ Text-content-sha1: d4d4148e5a82cdc05340592dc0ffe747b7105fc1
 Content-length: 774
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -8937,6 +8936,7 @@ rpm: bs.tar.gz
 	cp bs.spec /usr/src/SPECS/bs-$(V)-1.spec
 	rpm -ba bs-$(V)-1.spec
 
+
 Revision-number: 19
 Prop-content-length: 127
 Content-length: 127
@@ -8965,7 +8965,6 @@ Text-content-sha1: 7d9df91e26f4e791ac11d504ec9ad00db1d51cc7
 Content-length: 781
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -9004,6 +9003,7 @@ rpm: bs.tar.gz
 	cp bs.spec /usr/src/SPECS/bs-$(V)-1.spec
 	rpm -ba bs-$(V)-1.spec
 
+
 Revision-number: 20
 Prop-content-length: 121
 Content-length: 121
@@ -9032,7 +9032,6 @@ Text-content-sha1: c96ebae584a1d7ca36d4d3fc4ff5bc48d8aa7b07
 Content-length: 792
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -9072,6 +9071,7 @@ rpm: bs.tar.gz
 	cp bs.spec /usr/src/SPECS/bs-$(V)-1.spec
 	rpm -ba bs-$(V)-1.spec
 
+
 Revision-number: 21
 Prop-content-length: 114
 Content-length: 114
@@ -9100,7 +9100,6 @@ Text-content-sha1: 88bb06eca9fa1271780a9fdda23f98662cd9b912
 Content-length: 316
 
 PROPS-END
-
 Description: Battleships against the computer (text mode)
 Name: bs
 Version: 2.1
@@ -9123,6 +9122,7 @@ cp bs.6 /usr/man/man1/bs.6
 %files
 /usr/man/man1/bs.6
 /usr/bin/bs
+
 
 Revision-number: 22
 Prop-content-length: 121
@@ -9152,7 +9152,6 @@ Text-content-sha1: b9b74ba3957611cec7b14f093bf76be95cb79591
 Content-length: 316
 
 PROPS-END
-
 Description: Battleships against the computer (text mode)
 Name: bs
 Version: 2.1
@@ -9175,6 +9174,7 @@ cp bs.6 /usr/man/man6/bs.6
 %files
 /usr/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 23
 Prop-content-length: 105
@@ -9204,7 +9204,6 @@ Text-content-sha1: 777e4f99b2870327c7c8a22331bec5d89e133ea0
 Content-length: 799
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -9244,6 +9243,7 @@ rpm: bs.tar.gz
 	cp bs.spec /usr/src/SPECS/bs-$(V)-1.spec
 	rpm -ba bs-$(V)-1.spec
 
+
 Revision-number: 24
 Prop-content-length: 130
 Content-length: 130
@@ -9272,7 +9272,6 @@ Text-content-sha1: 1eef00d6e97822ee2f7ccd9fea8f657536b1416d
 Content-length: 28094
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -10535,6 +10534,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Revision-number: 25
 Prop-content-length: 112
 Content-length: 112
@@ -10563,7 +10563,6 @@ Text-content-sha1: 34f73535e3900feb67a3380dcf54ff80da6d269e
 Content-length: 28483
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11849,6 +11848,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Revision-number: 26
 Prop-content-length: 106
 Content-length: 106
@@ -11877,7 +11877,6 @@ Text-content-sha1: ab12712e6bdd9afaaf755e626f3693961b55b49f
 Content-length: 769
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -11916,6 +11915,7 @@ rpm: bs.tar.gz
 	cp bs.tar.gz /usr/src/SOURCES/bs-$(V).tar.gz
 	cp bs.spec /usr/src/SPECS/bs-$(V)-1.spec
 	rpm -ba bs-$(V)-1.spec
+
 
 Revision-number: 27
 Prop-content-length: 80
@@ -11970,7 +11970,6 @@ Text-content-sha1: 0afdec12553072716b09b92e15be16993c6f9292
 Content-length: 1028
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -12019,6 +12018,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(V)*.src.rpm .
 
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -12028,7 +12028,6 @@ Text-content-sha1: 2ff4db1fa9839c23d844d2644048054d7ad853d2
 Content-length: 520
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.2
@@ -12055,6 +12054,7 @@ cp bs.6 /usr/man/man6/bs.6
 %files
 /usr/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 29
 Prop-content-length: 124
@@ -12084,7 +12084,6 @@ Text-content-sha1: 34f5192364dcebbd63852c7f57a02eebf70f917b
 Content-length: 1028
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -12133,6 +12132,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(V)*.src.rpm .
 
 
+
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -12142,7 +12142,6 @@ Text-content-sha1: 66b2ddf4bc6deb0d7ca1654f35c76d5611bfe6c6
 Content-length: 28810
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -13444,6 +13443,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Revision-number: 30
 Prop-content-length: 129
 Content-length: 129
@@ -13472,7 +13472,6 @@ Text-content-sha1: 1b218d30c482a1882a1fad593a7f74d0e9a9971e
 Content-length: 520
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.3
@@ -13499,6 +13498,7 @@ cp bs.6 /usr/man/man6/bs.6
 %files
 /usr/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 31
 Prop-content-length: 129
@@ -13528,7 +13528,6 @@ Text-content-sha1: d9e2d9262b1cd0cee901af54447d3c64960eea08
 Content-length: 532
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.3
@@ -13555,6 +13554,7 @@ cp bs.6 /usr/share/man/man6/bs.6
 %files
 /usr/share/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 32
 Prop-content-length: 80
@@ -13609,7 +13609,6 @@ Text-content-sha1: aa950ef1c86dbbf6716a9d4631b241f0aff7d80c
 Content-length: 1088
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -13658,6 +13657,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
+
 Revision-number: 34
 Prop-content-length: 117
 Content-length: 117
@@ -13686,7 +13686,6 @@ Text-content-sha1: f8117425f27acab125c976c644e98c07dbc43119
 Content-length: 2843
 
 PROPS-END
-
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <refentry id='bs.6'>
 <refmeta>
@@ -13763,6 +13762,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 35
 Prop-content-length: 121
 Content-length: 121
@@ -13791,7 +13791,6 @@ Text-content-sha1: 601df909042b323428a7dd7b2dc3280849da71bc
 Content-length: 2834
 
 PROPS-END
-
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <refentry id='bs.6'>
 <refmeta>
@@ -13868,6 +13867,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 36
 Prop-content-length: 115
 Content-length: 115
@@ -13896,7 +13896,6 @@ Text-content-sha1: 312dfbd57a46fa720c5a67116f120efa891e8ca7
 Content-length: 1184
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -13949,6 +13948,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -13958,7 +13958,6 @@ Text-content-sha1: 685696cf7aef873fbe36779736c12c5ba75c5250
 Content-length: 479
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.4
@@ -13983,6 +13982,7 @@ make install
 %files
 /usr/share/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 37
 Prop-content-length: 128
@@ -14012,7 +14012,6 @@ Text-content-sha1: 18d3caf55e330b9ce4c827c07fc44cfb3cf3dcd7
 Content-length: 1211
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -14065,6 +14064,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
+
 Revision-number: 38
 Prop-content-length: 106
 Content-length: 106
@@ -14093,7 +14093,6 @@ Text-content-sha1: aa611133744cf0f9a1b2614e8cfda07a696f65c6
 Content-length: 2838
 
 PROPS-END
-
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <refentry id='bs.6'>
 <refmeta>
@@ -14170,6 +14169,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 39
 Prop-content-length: 114
 Content-length: 114
@@ -14198,7 +14198,6 @@ Text-content-sha1: cab30baa56a92cbe75c0faf6ca5abad08f3f838a
 Content-length: 1206
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -14251,6 +14250,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
+
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -14260,7 +14260,6 @@ Text-content-sha1: 18f01463dd4ae020919adc0dafb768b670e0f96b
 Content-length: 1553
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -14300,6 +14299,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.tuxedo.org/~esr/home.html)
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -14309,7 +14309,6 @@ Text-content-sha1: 522d7cc3e12fdb386d9ef0bd5f90b3c74a00a9ac
 Content-length: 2874
 
 PROPS-END
-
 <!DOCTYPE refentry PUBLIC 
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
    "docbook/docbookx.dtd">
@@ -14388,6 +14387,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 40
 Prop-content-length: 112
 Content-length: 112
@@ -14416,7 +14416,6 @@ Text-content-sha1: 8117f8a7ddf2a5042ae8cc56914aa508bd801309
 Content-length: 2918
 
 PROPS-END
-
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
@@ -14496,6 +14495,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 41
 Prop-content-length: 116
 Content-length: 116
@@ -14524,7 +14524,6 @@ Text-content-sha1: 75e10439fcaf94bedf400efe3163469acdd67f90
 Content-length: 1214
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change
@@ -14577,6 +14576,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
 
 
+
 Revision-number: 42
 Prop-content-length: 104
 Content-length: 104
@@ -14605,7 +14605,6 @@ Text-content-sha1: 69497b0516a7295fcca35bcaad7f484a2c03ec2b
 Content-length: 474
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.4
@@ -14630,6 +14629,7 @@ make install
 %files
 /usr/share/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 43
 Prop-content-length: 111
@@ -14659,7 +14659,6 @@ Text-content-sha1: b1512242338142cfc773a99afd6efe018d747bd7
 Content-length: 478
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.4
@@ -14684,6 +14683,7 @@ make install
 %files
 /usr/share/man/man6/bs.6
 /usr/bin/bs
+
 
 Revision-number: 44
 Prop-content-length: 111
@@ -14713,7 +14713,6 @@ Text-content-sha1: 9435d08e426cf523f64edfb3335418ff991538c2
 Content-length: 499
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.4
@@ -14739,6 +14738,7 @@ make install
 /usr/share/man/man6/bs.6
 /usr/bin/bs
 %doc READ.ME COPYING
+
 
 Revision-number: 45
 Prop-content-length: 80
@@ -14793,7 +14793,6 @@ Text-content-sha1: c3197a3ce3c97356f41932ad87fe62471ec3e878
 Content-length: 516
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.4
@@ -14820,6 +14819,7 @@ make install
 /usr/share/man/man6/bs.6
 /usr/bin/bs
 %doc READ.ME COPYING
+
 
 Revision-number: 47
 Prop-content-length: 121
@@ -14849,7 +14849,6 @@ Text-content-sha1: 8120cd9f45d3e97f8cb8bf7edaceef3b071cd700
 Content-length: 1016
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 # Note: When the version changes, you also have to change the RPM spec file
@@ -14896,6 +14895,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
+
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -14905,7 +14905,6 @@ Text-content-sha1: eeaea1d8e24b0b2d60b1f2ca562f7657d01179c4
 Content-length: 1551
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -14945,6 +14944,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.catb.org/~esr/home.html)
 
+
 Node-path: trunk/bs.c
 Node-kind: file
 Node-action: change
@@ -14954,7 +14954,6 @@ Text-content-sha1: ee525d29fec7f1262cf82e4d6ff2f6d73a77309e
 Content-length: 28570
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -16251,6 +16250,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16260,7 +16260,6 @@ Text-content-sha1: 962d45d37eaa6762ce981c804e59e6a26c704fa8
 Content-length: 922
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: %{myversion}
@@ -16301,6 +16300,7 @@ make install
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
+
 Revision-number: 48
 Prop-content-length: 145
 Content-length: 145
@@ -16329,7 +16329,6 @@ Text-content-sha1: 911f079f9ee494fa9ed6c6aac08242c4518b94ac
 Content-length: 902
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=2.5
@@ -16371,6 +16370,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
+
 Revision-number: 49
 Prop-content-length: 122
 Content-length: 122
@@ -16399,7 +16399,6 @@ Text-content-sha1: a31aa70f71156fa8bcf2f69ed45d26bace3aad9e
 Content-length: 895
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=2.5
@@ -16441,6 +16440,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
+
 Revision-number: 50
 Prop-content-length: 112
 Content-length: 112
@@ -16469,7 +16469,6 @@ Text-content-sha1: ec9f702d3cb82937f80e5edbcd7430b6c411d1cd
 Content-length: 920
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: %{myversion}
@@ -16509,6 +16508,7 @@ make install
  * v2.2 code cleanup.
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
+
 
 Revision-number: 51
 Prop-content-length: 80
@@ -16563,7 +16563,6 @@ Text-content-sha1: b377578b37438b88fc97fa877835a3a10f8809f4
 Content-length: 895
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=2.6
@@ -16605,6 +16604,7 @@ rpm: dist
 	cp $(RPMROOT)/SRPMS/bs-$(VERS)*.src.rpm .
 
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16614,7 +16614,6 @@ Text-content-sha1: 2a77c81030f6466ea42b59ca671aa145c9bd52d6
 Content-length: 1027
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: %{myversion}
@@ -16658,6 +16657,7 @@ make install
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
+
 Node-path: trunk/bs.xml
 Node-kind: file
 Node-action: change
@@ -16667,7 +16667,6 @@ Text-content-sha1: ab3cd58f6282b51cc0de5eded5f7967f53c8959d
 Content-length: 2914
 
 PROPS-END
-
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
@@ -16747,6 +16746,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 53
 Prop-content-length: 118
 Content-length: 118
@@ -16775,7 +16775,6 @@ Text-content-sha1: 93714b6a2ce006f93a20790b6349e12e6a660175
 Content-length: 907
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=2.6
@@ -16815,6 +16814,7 @@ rpm: dist
 	rpmbuild --define 'myversion $(VERSION)' -ta bs-$(VERSION).tar.gz
 	cp $(RPMROOT)/RPMS/*/bs-$(VERSION)*.rpm .
 	cp $(RPMROOT)/SRPMS/bs-$(VERSION)*.src.rpm .
+
 
 
 Revision-number: 54
@@ -16870,7 +16870,6 @@ Text-content-sha1: bf2412e0f1fdd54c22658607f142b0f72bfb5500
 Content-length: 815
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
@@ -16908,6 +16907,7 @@ bs-$(VERSION).tar.gz: $(SOURCES) bs.6
 
 dist: bs-$(VERSION).tar.gz
 
+
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
@@ -16917,7 +16917,6 @@ Text-content-sha1: c3bbe78fa9c8760164b75d800ca851398461cb7d
 Content-length: 1542
 
 PROPS-END
-
 				BS 2.0
 
 Battleships is an intrinsically silly game, but I couldn't resist fixing this
@@ -16957,6 +16956,7 @@ November 1993: I've added function key support, and ANSI/POSIXized the code.
 					esr@snark.thyrsus.com
 				(WWW: http://www.catb.org/~esr/)
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -16966,7 +16966,6 @@ Text-content-sha1: 32f1a42b3cbb82b6d49b1e5d71303cfad1f07606
 Content-length: 1484
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.7
@@ -17019,6 +17018,7 @@ cp bs.6 "$RPM_BUILD_ROOT"/usr/share/man/man6/
  * v2.2 code cleanup.
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
+
 
 Revision-number: 56
 Prop-content-length: 80
@@ -17073,7 +17073,6 @@ Text-content-sha1: dfac199a7539a404407098a2541b9482279f690d
 Content-length: 18002
 
 PROPS-END
-
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 
@@ -17415,6 +17414,7 @@ consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Library General
 Public License instead of this License.
 
+
 Revision-number: 58
 Prop-content-length: 120
 Content-length: 120
@@ -17443,7 +17443,6 @@ Text-content-sha1: 63b82e79a1db4c2eff06a4f31b43e63b6979bdba
 Content-length: 28555
 
 PROPS-END
-
 /* 
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -18740,6 +18739,7 @@ int main(int argc, char *argv[])
 
 /* bs.c ends here */
 
+
 Revision-number: 59
 Prop-content-length: 127
 Content-length: 127
@@ -18804,7 +18804,6 @@ Text-content-sha1: b319989d409846a84f84a499924cbfbb319b1ca0
 Content-length: 1633
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.8
@@ -18861,6 +18860,7 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.2 code cleanup.
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
+
 
 Revision-number: 61
 Prop-content-length: 115
@@ -18927,7 +18927,6 @@ Text-content-sha1: 2736172bad9da69f3d55fea631d4c7603b3a6030
 Content-length: 902
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
@@ -18969,6 +18968,7 @@ release: bs-$(VERSION).tar.gz bs.html
 	shipper -u -m -t; make clean
 
 
+
 Revision-number: 63
 Prop-content-length: 130
 Content-length: 130
@@ -18997,7 +18997,6 @@ Text-content-sha1: c6971a0040ff8823137ae1626cc801d806337df9
 Content-length: 3057
 
 PROPS-END
-
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
@@ -19080,6 +19079,7 @@ for updates, also other software and resources by ESR.</para>
 </refentry>
 
 
+
 Revision-number: 64
 Prop-content-length: 130
 Content-length: 130
@@ -19138,7 +19138,6 @@ Text-content-sha1: a69c5345946705001618795284ea60f8f6971a51
 Content-length: 1431
 
 PROPS-END
-
 			BSD LICENSE
 
 Redistribution and use in source and binary forms, with or without
@@ -19168,6 +19167,7 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
@@ -19177,7 +19177,6 @@ Text-content-sha1: dec740119c2357834bfdb9a21b7b6be4421b7a90
 Content-length: 946
 
 PROPS-END
-
 #	Makefile for bs, the Battleships game
 
 VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
@@ -19221,6 +19220,7 @@ release: bs-$(VERSION).tar.gz bs.html
 	shipper -u -m -t; make clean
 
 
+
 Node-path: trunk/bs.spec
 Node-kind: file
 Node-action: change
@@ -19230,7 +19230,6 @@ Text-content-sha1: 15e534be922863879045e0f77cbb63442d41ceab
 Content-length: 1633
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.9
@@ -19288,6 +19287,7 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
 
+
 Revision-number: 66
 Prop-content-length: 140
 Content-length: 140
@@ -19316,7 +19316,6 @@ Text-content-sha1: 538d38a5a50693e2d77d22c322cc75ab4b7d814d
 Content-length: 1658
 
 PROPS-END
-
 Name: bs
 Summary: Battleships against the computer (character-cell graphics)
 Version: 2.9
@@ -19374,4 +19373,5 @@ cp bs.6 "$RPM_BUILD_ROOT"%{_mandir}/man6/
  * v2.2 code cleanup.
  * v2.3 bug fixes by Erik Sigra.
  * v2.4 Update the RPM production.
+
 

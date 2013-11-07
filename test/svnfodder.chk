@@ -56,11 +56,11 @@ Text-content-sha1: 6ecc83367e0544b68a1ffe80de85842aed07a9f2
 Content-length: 130
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 This is a merge commit.
+
 
 
 
@@ -144,8 +144,8 @@ Text-content-sha1: 4ec4c3b8465fc56b0dcb3f7a94e03c9ffff1ad64
 Content-length: 55
 
 PROPS-END
-
 This file will test deep directory creation.
+
 
 Revision-number: 4
 Prop-content-length: 168
@@ -210,8 +210,8 @@ Text-content-sha1: d99de688b584582442c2c16449dbd42eed2f975f
 Content-length: 56
 
 PROPS-END
-
 echo "Hello, world, I want to be executable."
+
 
 Revision-number: 6
 Prop-content-length: 125
@@ -276,8 +276,8 @@ svn:executable
 V 4
 true
 PROPS-END
-
 echo "Hello, world, I want to be executable."
+
 
 Revision-number: 8
 Prop-content-length: 120
@@ -307,11 +307,11 @@ Text-content-sha1: 47cb60aea3a26c01057369729546e719d6302de0
 Content-length: 132
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 This is a spacer commit.
+
 
 
 
@@ -348,8 +348,8 @@ svn:executable
 V 5
 false
 PROPS-END
-
 echo "Hello, world, I want to be executable."
+
 
 Revision-number: 10
 Prop-content-length: 133
@@ -379,12 +379,12 @@ Text-content-sha1: 335a638f92c071f0f18482b3690849d395d18916
 Content-length: 166
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 This is another spacer commit.  This one
 will have a tag.
+
 
 
 
@@ -457,8 +457,8 @@ Text-content-sha1: 7729b10d8875fc9eb353a67f7d79121faa7c92fd
 Content-length: 37
 
 PROPS-END
-
 A third spacer commit.
+
 
 
 
@@ -492,8 +492,8 @@ Text-content-sha1: 5991fd9adf6b031cc8b094f46b8588146fbe931a
 Content-length: 58
 
 PROPS-END
-
 First post-split commit on the main branch.
+
 
 
 
@@ -527,11 +527,11 @@ Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
 Content-length: 153
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 Second post-split commit on the main branch.
+
 
 
 
@@ -599,11 +599,11 @@ Text-content-sha1: 1acc462c9364b61d6f7f69cd572201e986c7377f
 Content-length: 153
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 Second post-split commit on the main branch.
+
 
 
 
@@ -648,11 +648,11 @@ Text-content-sha1: 78a97e5f3adf2e0a53a5371083a7bc2cad86c1ca
 Content-length: 147
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 First commit on the alternate branch.
+
 
 
 
@@ -687,11 +687,11 @@ Text-content-sha1: 6ad7f1b0acd6b38dd6129bd342578e6b858ec21f
 Content-length: 148
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 Second commit on the alternate branch.
+
 
 
 
@@ -758,11 +758,11 @@ Text-content-sha1: a54236b063598ec79940ab80c541875b8b00e640
 Content-length: 133
 
 PROPS-END
-
 This is a test repository intended to exercise all the
 features of the Subversion dump code.
 
 This is a merge commit.
+
 
 
 
