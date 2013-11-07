@@ -1,7 +1,11 @@
 			reposurgeon project news
 
+Repository head:
+     Fixed a fatal bug when reading any symlink from a live Subversion repo.
+     Added svn_no_autoignores option.
+
 2.40: 2013-08-04
-     Improvements in .gitgnore processing.
+     Improvements in .gitignore processing.
 
 2.39: 2013-05-23
      New 'tagify' command for tagifying empty commits.
