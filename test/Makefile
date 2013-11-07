@@ -214,7 +214,7 @@ svncheck:
 	    then \
 		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1; \
 		if echo "  $${test}.svn" >&2; \
-		$(REPOSURGEON) "read $${test}.svn" "prefer svn" "write"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 	    fi \

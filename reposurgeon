@@ -2943,13 +2943,17 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
+                            if global_options["svn_no_autoignores"]:
+                                startwith = ""
+                            else:
+                                startwith = StreamParser.SubversionDefaultIgnores
                             try:
-                                ignore = StreamParser.SubversionDefaultIgnores + \
+                                ignore = startwith + \
                                          "# The contents of the svn:ignore" \
                                          "property on the branch root.\n" + \
                                          node.props["svn:ignore"]
                             except KeyError:
-                                ignore = StreamParser.SubversionDefaultIgnores
+                                ignore = startwith
                             node.props["svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
@@ -2991,14 +2995,15 @@ class StreamParser:
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[ignorepath]
-                    # Handle directory copies.
-                    # If this is a copy between branches, no fileop should be
-                    # issued until there is an actual file modification on the
-                    # new branch. Instead, remember that the branch root
-                    # inherits the tree of the source branch and should not
-                    # start with a deleteall.
-                    # Exception: If the target branch has been deleted, perform
-                    # a normal copy and interpret this as an ad-hoc branch merge.
+                    # Handle directory copies.  If this is a copy
+                    # between branches, no fileop should be issued
+                    # until there is an actual file modification on
+                    # the new branch. Instead, remember that the
+                    # branch root inherits the tree of the source
+                    # branch and should not start with a deleteall.
+                    # Exception: If the target branch has been
+                    # deleted, perform a normal copy and interpret
+                    # this as an ad-hoc branch merge.
                     if node.from_path:
                         branchcopy = node.from_path in self.branches \
                                          and node.path in self.branches \
@@ -5813,6 +5818,9 @@ unusual topology and you intend to do your own branch surgery.
 """),
         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
+"""),
+        ("svn_no_autoignores", """\
+    Do not generate a simulation of Subversion ignores in the root node.
 """),
         ("canonicalize", """\
     If set, mailbox_in and edit will canonicalize comments by replacing CR-LF
