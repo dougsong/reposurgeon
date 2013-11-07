@@ -56,8 +56,9 @@ Subversion repositories has some significant limitations, discussed in
 the section on <link linkend="subversion">Working With
 Subversion</link>.</para>
 
-<para>RCS and CVS are supported for read only, not write.  Both must be
-run from within a repository directory.</para>
+<para>RCS and CVS are supported for read only, not write.  For both,
+<command>reposurgeon</command> must be run from within a repository
+directory.</para>
 
 <!--
 <para>In order to deal with version-control systems that do not have
@@ -662,7 +663,7 @@ and (2) there is an identifying header before each event dump.</para>
 </term>
 <listitem>
 <para>Emit a visualization of the commit graph in the DOT markup language
-used by graphviz tool suite.  This can be fed as input to the main
+used by the graphviz tool suite.  This can be fed as input to the main
 graphviz rendering program
 <citerefentry><refentrytitle>dot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 which will yield a viewable image. </para>
@@ -1628,7 +1629,7 @@ the repository subdirectory..</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>set </command>
+<term><command>set</command>
           [<command>option</command>]
 </term>
 <listitem>
@@ -1645,7 +1646,7 @@ disk space.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>clear </command>
+<term><command>clear</command>
           [<command>option</command>]
 </term>
 <listitem>
@@ -2103,7 +2104,7 @@ future repository-browsing tools.</para>
 explanatory comment - for example, if metadata has been garbled or
 missing and you need to point to that fact. It's helpful for
 repository-browsing tools if there is a uniform syntax for this that
-is highly unlikely to show up in repository comments.  I recommend
+is highly unlikely to show up in repository comments.  We recommend
 enclosing translation notes in [[ ]].  This has the advantage of being
 visually similar to the [ ] traditionally used for editorial comments
 in text.</para>
