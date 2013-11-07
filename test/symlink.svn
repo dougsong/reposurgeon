@@ -1,0 +1,61 @@
+SVN-fs-dump-format-version: 2
+ ## Simplest possible Subversion symlink test
+
+UUID: a145c973-c3bf-4294-8174-408185cd7ebd
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-11-07T15:49:49.964559Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-11-07T15:49:50.256630Z
+K 7
+svn:log
+V 27
+bad local repo symlink test
+PROPS-END
+
+Node-path: file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
+Text-content-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: symlink
+Node-kind: file
+Node-action: add
+Prop-content-length: 33
+Text-content-length: 9
+Text-content-md5: 73f9c467f93002e83dc229a229bbc4cb
+Text-content-sha1: 2454def790b1c6655a886d220c4d0655e58bd822
+Content-length: 42
+
+K 11
+svn:special
+V 1
+*
+PROPS-END
+link file
+

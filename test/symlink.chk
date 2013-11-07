@@ -1,0 +1,17 @@
+blob
+mark :1
+data 0
+
+blob
+mark :2
+data 4
+file
+# Fossil-ID: 1
+commit refs/heads/master
+mark :3
+committer esr <esr> 1383839390 +0000
+data 28
+bad local repo symlink test
+M 100644 :1 file
+M 120000 :2 symlink
+
