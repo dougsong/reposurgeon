@@ -1,0 +1,47 @@
+SVN-fs-dump-format-version: 2
+ ## Flat repo with just one file commit and no directories
+
+UUID: 44ff12fd-cda2-40eb-9521-7db5b08f9757
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-11-08T04:20:01.032867Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 130
+Content-length: 130
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2013-11-08T04:26:50.808711Z
+K 7
+svn:log
+V 32
+Cwm fjord bank glyphs vext quiz
+
+PROPS-END
+
+Node-path: pangram
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 46
+Text-content-md5: ce90a5f32052ebbcd3b20b315556e154
+Text-content-sha1: bae5ed658ab3546aee12f23f36392f35dba1ebdd
+Content-length: 56
+
+PROPS-END
+The quick brown fox jumped over the lazy dog.
+
+

@@ -206,7 +206,7 @@ svndump-regress:
 # Check idempotency of read/dump/read on Subversion repos
 # This can only succeed for linear repos.  At the moment it fails on
 # all repos.
-SVNCHECK=vanilla
+SVNCHECK=pangram
 svncheck:
 	@for test in $(SVNCHECK); \
 	do \
