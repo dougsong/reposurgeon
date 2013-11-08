@@ -5,3 +5,6 @@
 
 * Someday, port fully to Python 3.  At that point, reapply the commit
   "Ensure BZ2File only work on binary data".
+
+* THe Subversion dumper is pretty weak, more a proof of concept than
+  anything useful for production.
