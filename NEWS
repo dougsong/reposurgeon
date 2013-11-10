@@ -2,6 +2,7 @@
 
 Repository head:
      Prevented crash when tagifying a mixed-branch commit.
+     svn_no_autoignores -> svn_noautoignores
 
 2.41: 2013-11-07
      Fixed a fatal bug when reading any symlink from a live Subversion repo.

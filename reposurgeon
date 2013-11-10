@@ -2943,7 +2943,7 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            if global_options["svn_no_autoignores"]:
+                            if global_options["svn_noautoignores"]:
                                 startwith = ""
                             else:
                                 startwith = StreamParser.SubversionDefaultIgnores
@@ -5821,7 +5821,7 @@ unusual topology and you intend to do your own branch surgery.
         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
 """),
-        ("svn_no_autoignores", """\
+        ("svn_noautoignores", """\
     Do not generate a simulation of Subversion ignores in the root node.
 """),
         ("canonicalize", """\
