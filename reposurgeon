@@ -3713,10 +3713,12 @@ class StreamParser:
             # Otherwise, generate one for inspection.
             legend = ["[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.fossil_id]
-            if self.revisions[commit.fossil_id].nodes:
-                legend.append(":\n")
-                legend.extend(str(node)+"\n"
-                        for node in self.revisions[commit.fossil_id].nodes)
+            # This guard can fail on a split commit
+            if commit.fossil_id in self.revisions:
+                if self.revisions[commit.fossil_id].nodes:
+                    legend.append(":\n")
+                    legend.extend(str(node)+"\n"
+                            for node in self.revisions[commit.fossil_id].nodes)
             legend.append("]]\n")
             return "".join(legend)
         self.repo.tagify_empty(tipdeletes = True,
