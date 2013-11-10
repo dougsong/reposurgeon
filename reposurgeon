@@ -5833,11 +5833,13 @@ with LF, stripping leading and trailing whitespace and then appending a LF.
 at write time. This option is mainly useful for debugging conversion edge cases.
 """),
         ("compressblobs", """\
-Use compression for on-disk copies of blobs. Accepts an increase in repository
-read and write time in order to reduce the anount of disk space required while
-editing; this may be useful for large repositories. No effect if the edit
-input was a dump stream; in that case, reposurgeon doesn't make on-disk blob
-copies at all (it points into sections of the input stream instead).
+    Use compression for on-disk copies of blobs. Accepts an increase
+in repository read and write time in order to reduce the anount of
+disk space required while editing; this may be useful for large
+repositories. No effect if the edit input was a dump stream; in that
+case, reposurgeon doesn't make on-disk blob copies at all (it points
+into sections of the input stream instead).
+
 """),
         )
     class LineParse:
@@ -8514,7 +8516,7 @@ options are defined:
             print(opt + ":\n" + expl)
     def do_set(self, line):
         if not line.strip():
-            for opt in dict(RepoSurgeon.OptionFlags):
+            for (opt, _expl) in RepoSurgeon.OptionFlags:
                 print("\t%s = %s" % (opt, global_options.get(opt, False)))
         else:
             for option in line.split():
