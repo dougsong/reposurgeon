@@ -31,7 +31,7 @@ Repository head:
      Path-matching now has @ to require all paths in a commit to match.
 
 2.34: 2013-04-15
-     More performance improvents. Large deletions are much faster now.
+     More performance improvements. Large deletions are much faster now.
      Path matches with [] now have a regexp variant
 
 2.33: 2013-04-14
