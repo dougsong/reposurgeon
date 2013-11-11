@@ -60,7 +60,7 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 
 # Get the Subversion state of the author mapping
 $(PROJECT).map: $(PROJECT).svn
-	reposurgeon "read $(PROJECT).svn" "authors write $(PROJECT).map"
+	reposurgeon "read $(PROJECT).svn" "authors write >$(PROJECT).map"
 
 endif
 
