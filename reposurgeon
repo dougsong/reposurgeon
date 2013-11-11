@@ -4823,16 +4823,26 @@ class Repository:
                     new_target = event.parents()[0]
                 # Reparent each child
                 for child in list(event.children()):
-                    parents = iter(event.parents())
-                    try:
-                        first_parent = next(parents)
-                    except StopIteration:
-                        child.remove_parent(event)
-                    else:
-                        child.replace_parent(event, first_parent)
-                        for parent in parents:
-                            if parent not in child.parents():
-                                child.add_parent(parent)
+                    # Insert event's parents in place of event in child's
+                    # parent list. We keep existing duplicates in case they
+                    # are wanted, but ensure we don't introduce new ones.
+                    old_parents = list(child.parents())
+                    event_pos = old_parents.index(event)
+                    # Start with existing parents before us,
+                    # including existing duplicates
+                    new_parents = old_parents[:event_pos]
+                    # Add our parents, with possible duplicates, but not if
+                    # already present before.
+                    to_add = [p for p in event.parents() if p not in new_parents]
+                    new_parents.extend(to_add)
+                    # Avoid duplicates due to event.parents() insertion.
+                    new_parents.extend(
+                            p
+                            for p in itertools.islice(old_parents,
+                                                      event_pos+1, None)
+                            if p not in to_add)
+                    # Really set the parents to the newly constructed list
+                    child.set_parents(new_parents)
                     if not obliterate and not pushback:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
