@@ -1190,6 +1190,25 @@ from the highest member (child) to the lowest (parent).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>unmerge</command>
+        <emphasis>selection-set</emphasis>
+</term>
+<listitem>
+<para>Create a merge link. Takes a selection set argument, which must resolve
+to a single commit, and removes all its parents except for the first.</para>
+<para>It is equivalent to <command>reparent</command>
+<emphasis>first_parent</emphasis>,<emphasis>commit</emphasis>
+<option>rebase</option>, where <emphasis>commit</emphasis> is the same
+selection set as used with unmerge and <emphasis>first_parent</emphasis> is a
+set resolving <emphasis>commit</emphasis>'s first parent (see the
+<command>reparent</command> command below</para>
+<para>The main interest of the <command>unmerge</command> is that you don't
+have to find and specify the first parent yourself, saving time and avoiding
+errors when nearby surgery would make a manual first parent argument
+stale.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>reparent</command>
         <emphasis>selection-set</emphasis>
         [<command>rebase</command>]

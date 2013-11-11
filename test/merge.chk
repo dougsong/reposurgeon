@@ -1,0 +1,55 @@
+read <sample1.fi
+inspect :31
+Event 32 ================================================================
+commit refs/heads/master
+mark :31
+author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+data 45
+Merge branch 'alternate'
+
+Conflicts:
+	README
+from :25
+merge :29
+M 100644 :30 README
+
+unmerge :31
+inspect :31
+Event 32 ================================================================
+commit refs/heads/master
+mark :31
+author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+data 45
+Merge branch 'alternate'
+
+Conflicts:
+	README
+from :25
+M 100644 :30 README
+
+inspect :29
+Event 30 ================================================================
+commit refs/heads/alternate
+mark :29
+author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+data 39
+Second commit on the alternate branch.
+from :27
+M 100644 :28 README
+
+merge :25,:29
+inspect :29
+Event 30 ================================================================
+commit refs/heads/alternate
+mark :29
+author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+data 39
+Second commit on the alternate branch.
+from :27
+merge :25
+M 100644 :28 README
+

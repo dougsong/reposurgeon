@@ -8311,6 +8311,29 @@ from the highest member (child) to the lowest (parent).
         #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce("%s added as a parent of %s" % (earlier_id, later_id))
 
+    def help_unmerge(self):
+        print("""
+Linearizes a commit. Takes a selection set argument, which must resolve to a
+single commit, and removes all its parents except for the first. It is
+equivalent to reparent {first parent},{commit} rebase, where {commit} is the
+selection set given to unmerge and {first parent} is a set resolving to that
+commit's first parent, but doesn't need you to find the first parent yourself.
+""" )
+    def do_unmerge(self, line):
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        self.set_selection_set(line)
+        try:
+            commit, = self.selection
+        except ValueError:
+            raise Recoverable("unmerge requires a singleton set.")
+        commit = self.repo[commit]
+        if not isinstance(commit, Commit):
+            raise Recoverable("unmerge needs a commit to operate on.")
+        commit.set_parents(commit.parents()[:1])
+
     def help_reparent(self):
         print("""
 Changes the parent list of a commit. Takes a selection set argument and an
