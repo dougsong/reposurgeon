@@ -4850,6 +4850,17 @@ class Repository:
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child._pathset = None
                         altered.append(child)
+                    # If event was the first parent of child yet has no parents
+                    # of its own, then child's first parent has changed.
+                    # Prepend a deleteall to child's fileops to ensure it
+                    # starts with an empty tree (as event does) instead of
+                    # inheriting that of its new first parent.
+                    if event_pos == 0 and not event.parents():
+                        fileop = FileOp()
+                        fileop.construct("deleteall")
+                        child.fileops.insert(0, fileop)
+                        child._pathset = None
+                        altered.append(child)
                 # We might be trying to hand the event's fileops to parents.
                 if pushback and event.has_parents():
                     # Append a copy of this event's file ops to each parent's
