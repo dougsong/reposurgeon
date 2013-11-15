@@ -99,7 +99,9 @@ by hand, and ensure that later products of the conversion pipeline
 are always updated when earlier ones have been modified or removed.</p>
 
 <p>Create an empty file named $(PROJECT).lift.  The Makefile will use
-it. Later, you will put your custom commands in here.</p>
+it. Later, you will put your custom commands in here. Doing this helps
+you not lose older steps as you experiment with newer ones, and it
+documents what you did.</p>
 
 <p>Doing a high-quality repository conversion is not a simple job and
 the odds that you will get it perfectly right the first time are close
@@ -325,12 +327,6 @@ with reposurgeon follow.</p>
 <li>For the record, make a commit noting time and date of the repo lift.</li>
 <li>If your target was git, run  <code>git gc &#45;&#45;aggressive</code>.</li>
 </ol>
-
-<p><code>reposurgeon</code> has a "script" command that allows you to
-bundle up a set of commands with comments.  I recommend writing your
-repository lift as a <code>reposurgeon</code> script; this helps you
-not lose older steps as you experiment with newer ones, and it
-documents what you did.</p>
 
 <p>Most of the work will be in the comment-fixup and reference-lifting
 stages. I find, however, that they normally take only a couple of
@@ -610,6 +606,8 @@ Makefile.</p>
 
 <p>3.7 (2013-04-01) Note that reposurgeon is significantly faster
 under pypy.</p>
+
+<p>3.8 (2013-11-15) Remove an obsolete paragraph.</p>
 
 </div>
 <hr />
