@@ -22,8 +22,12 @@ XBS-Ohloh-URL: https://www.ohloh.net/p/reposurgeon
 
 Homepage: http://www.catb.org/~esr/reposurgeon
 
+XBS-HTML-Template: index.html
+
 XBS-Logo: reposturgeon.png
 
 XBS-Web-Extras: conversion.mk
 
 XBS-Project-Tag-List: version control, svn, git, hg, bzr, cvs, rcs
+
+XBS-VC-Tag-Template: %(version)s

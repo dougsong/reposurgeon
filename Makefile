@@ -58,7 +58,7 @@ install: all
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
 clean:
-	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST SHIPPER.* *.md5
+	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
 	rm -f cyreposurgeon.c cyreposurgeon
@@ -92,4 +92,4 @@ zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
 release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html features.html
-	shipper -u -m -t; make clean
+	shipper version=$(VERS) | sh -e -x
