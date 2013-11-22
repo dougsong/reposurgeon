@@ -263,6 +263,21 @@ letters. These are the type letters:</para>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
+        <entry align='center'>O</entry>
+        <entry align='center'>orphaned (parentless) commits</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>M</entry>
+        <entry align='center'>merge (multi-parent) commits</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
+        <entry align='center'>F</entry>
+        <entry align='center'>fork (multi-child) commits</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
         <entry align='center'>T</entry>
         <entry align='center'>tags</entry>
 	<entry><para>&nbsp;</para></entry>

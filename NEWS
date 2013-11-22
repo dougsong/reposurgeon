@@ -1,8 +1,13 @@
 			reposurgeon project news
 
 Repository head:
+     "set canonicalize" is now effective during import stream reads.
+     Introduced =O, =M, =F selectors for parentless, merge, and fork commits.
+
+2.42: 2013-11-21
      Prevented crash when tagifying a mixed-branch commit.
      svn_no_autoignores -> svn_noautoignores
+     Ignore single-rev mergeinfos in Subversion, they're cherry-picks.
 
 2.41: 2013-11-07
      Fixed a fatal bug when reading any symlink from a live Subversion repo.

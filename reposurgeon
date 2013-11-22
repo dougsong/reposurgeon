@@ -20,7 +20,7 @@ try:
 except ImportError:
     pass
 
-version="2.41"
+version="2.42"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -2600,6 +2600,8 @@ class StreamParser:
                                                     self.repo.fossil_map["CVS:"+line] = commit
                                 elif line.startswith("data"):
                                     commit.comment = self.fi_read_data(line)[0]
+                                    if global_options["canonicalize"]:
+                                        commit.comment = commit.comment.strip().replace("\r\n", "\n") + '\n'
                                 elif line.startswith("from") or line.startswith("merge"):
                                     commit.add_parent(line.split()[1])
                                 # Handling of file ops begins.
@@ -5842,8 +5844,9 @@ unusual topology and you intend to do your own branch surgery.
     Do not generate a simulation of Subversion ignores in the root node.
 """),
         ("canonicalize", """\
-    If set, mailbox_in and edit will canonicalize comments by replacing CR-LF
-with LF, stripping leading and trailing whitespace and then appending a LF.
+    If set, import stream reads and mailbox_in and edit will canonicalize
+comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
+and then appending a LF.
 """),
         ("fossilize", """\
     If set, the Fossil-ID of each commit is appended to its commit comment
@@ -6096,6 +6099,9 @@ into sections of the input stream instead).
                 "R" : lambda e: isinstance(e, Reset),
                 "P" : lambda e: isinstance(e, Passthrough),
                 "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
+                "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
+                "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
+                "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 }
             visible = set()
             self.pop()
@@ -6535,6 +6541,9 @@ More ways to construct event sets:
 =B         all blobs
 =R         all resets
 =P         all passthroughs
+=O         all orphan (parentless) commits
+=M         all merge commits
+=F         all fork (multiple-child) commits 
 
 You can compose sets as follows:
 
