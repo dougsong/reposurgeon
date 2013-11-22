@@ -278,6 +278,12 @@ letters. These are the type letters:</para>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
+        <entry align='center'>L</entry>
+        <entry align='center'>commits with unclean multi-line comments
+	(without a separating enpty line after the first)</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
         <entry align='center'>T</entry>
         <entry align='center'>tags</entry>
 	<entry><para>&nbsp;</para></entry>
@@ -1056,9 +1062,6 @@ taken from the $EDITOR variable in your environment.</para>
 <para>Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called directly on the blob file.</para>
-
-<para>The modifier 'multiline' will trim the selection set to commits that
-are multiline and not in summary/blank-line/details form.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -3,6 +3,7 @@
 Repository head:
      "set canonicalize" is now effective during import stream reads.
      Introduced =O, =M, =F selectors for parentless, merge, and fork commits.
+     The "multiline" modifier on edit is replaced by the =L selector.
 
 2.42: 2013-11-21
      Prevented crash when tagifying a mixed-branch commit.

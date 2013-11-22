@@ -5862,6 +5862,7 @@ into sections of the input stream instead).
 
 """),
         )
+    unclean = re.compile("[^\n]*\n[^\n]")
     class LineParse:
         "Preparse a command line."
         def __init__(self, line, capabilities=None):
@@ -6102,7 +6103,9 @@ into sections of the input stream instead).
                 "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
+                "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
                 }
+
             visible = set()
             self.pop()
             while self.peek() in typeletters:
@@ -6543,7 +6546,8 @@ More ways to construct event sets:
 =P         all passthroughs
 =O         all orphan (parentless) commits
 =M         all merge commits
-=F         all fork (multiple-child) commits 
+=F         all fork (multiple-child) commits
+=L         all commits with unclean multi-line comments
 
 You can compose sets as follows:
 
@@ -7393,9 +7397,6 @@ taken from the $EDITOR variable in your environment.
 Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
-
-The modifier 'multiline' will trim the selection set to commits that
-are multiline and not in summary/blank-line/details form.
 """)
     def do_edit(self, line):
         "Edit metadata interactively."
@@ -7404,15 +7405,6 @@ are multiline and not in summary/blank-line/details form.
             return
         default = [n for n, o2 in enumerate(self.chosen()) if hasattr(o2, "email_out")]
         rest = self.set_selection_set(line, default)
-        if "multiline" in rest:
-            rest = rest.replace("multiline", "")
-            mr = re.compile("[^\n]*\n[^\n]")
-            filtered = []
-            for ei in self.selection:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit) and mr.match(event.comment):
-                    filtered.append(ei)
-            self.selection = filtered
         self.edit(self.selection, rest)
 
     def help_filter(self):
