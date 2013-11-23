@@ -1040,7 +1040,7 @@ output file in a form that can be fed back in.</para>
 <term><command>filter</command>
 </term>
 <listitem>
-<para>Run all blobs, filter comments, and tag comments in the selection
+<para>Run all blobs, commit comments, and tag comments in the selection
 set (defaulting to all) through the filter specified on the command line.
 Each blob and comment is presented to the filter on standard input; the
 content is replaced with whatever the filter emits to standard output.</para>
