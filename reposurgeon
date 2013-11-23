@@ -6087,7 +6087,7 @@ into sections of the input stream instead).
         self.line = self.line.lstrip()
         if self.peek() == '{':
             self.pop()
-            term = self.eval_disjunct()
+            term = self.eval_expression()
             self.line = self.line.lstrip()
             if self.peek() != '}':
                 raise Recoverable("trailing junk on inner expression")

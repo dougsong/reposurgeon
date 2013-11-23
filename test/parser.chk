@@ -12,9 +12,9 @@ resolve 24..97&=C
 resolve 24..97 ?
 [22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99]
 resolve {24..97 ?} & 20..40
-reposurgeon: trailing junk on inner expression
+[22, 24, 26, 29, 31, 33, 35, 37, 39]
 resolve {24..97 ?} & {20..40 ?}
-reposurgeon: trailing junk on inner expression
+[22, 24, 26, 29, 31, 33, 35, 37, 39, 41]
 resolve 3,:15
 [3, 16]
 resolve (master)
