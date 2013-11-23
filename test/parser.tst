@@ -6,6 +6,9 @@ resolve 15
 resolve =TR
 resolve 24..97
 resolve 24..97&=C
+resolve 24..97 ?
+resolve {24..97 ?} & 20..40
+resolve {24..97 ?} & {20..40 ?}
 resolve 3,:15
 resolve (master)
 resolve <lightweight-sample>
