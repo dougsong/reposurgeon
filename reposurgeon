@@ -6105,7 +6105,7 @@ into sections of the input stream instead).
                     if term == None:
                         term = self.eval_branchset(preselection)
                         if term == None:
-                            term = self.eval_pathset()
+                            term = self.eval_pathset(preselection)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
@@ -6338,8 +6338,9 @@ into sections of the input stream instead).
             if debug_enable(DEBUG_LEXER):
                 announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return matchers
-    def eval_pathset(self):
+    def eval_pathset(self, preselection):
         "Resolve a path name to the set of commits that refer to it."
+        chosen = self.chosen()
         if self.peek() != "[":
             return None
         self.pop()
@@ -6363,19 +6364,19 @@ into sections of the input stream instead).
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
                 return self.eval_pathset_full(search, "@" in flags)
-            if "@" in flags:
-                return {i for (i, event) in enumerate(self.chosen().events)
-                          if isinstance(event, Commit) and
-                                all(search(path) for path in event.paths())}
-            return {i for (i, event) in enumerate(self.chosen().events)
+            preselected = ((i, chosen.events[i]) for i in preselection)
+            match_paths = all if "@" in flags else any
+            return {i for (i, event) in preselected
                       if isinstance(event, Commit) and
-                            any(search(path) for path in event.paths())}
+                            match_paths(search(path)
+                                        for path in event.paths())}
         else:
             # The "@" flag is ignored here since it would only make sense
             # for trees with a single file.
             if "*" in flags:
                 return self.eval_pathset_full(path)
-            return {i for (i, event) in enumerate(self.chosen().events)
+            preselected = ((i, chosen.events[i]) for i in preselection)
+            return {i for (i, event) in preselected
                       if isinstance(event, Commit) and
                             path in event.paths()}
     def eval_pathset_full(self, match_condition, match_all = False):
