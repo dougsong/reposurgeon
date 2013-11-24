@@ -5989,7 +5989,9 @@ into sections of the input stream instead).
         if not self.chosen():
             return line
         self.line = line
-        self.selection = list(self.eval_expression())
+        self.selection = list(self.eval_expression(
+                            set(xrange(len(self.chosen().events)))
+                        ))
         if self.line == line:
             self.selection = default
         else:
@@ -6005,7 +6007,7 @@ into sections of the input stream instead).
             c = self.line[0]
             self.line = self.line[1:]
             return c
-    def eval_expression(self):
+    def eval_expression(self, preselection):
         if debug_enable(DEBUG_LEXER):
             announce("eval_expression(%s)" % self.line)
         self.line = self.line.lstrip()
@@ -6027,7 +6029,8 @@ into sections of the input stream instead).
                         add_list.append(self.chosen().find(child.mark))
                 elif isinstance(event, Blob):
                     remove_list.append(ei) # Don't select the blob itself
-                    for (i, event2) in enumerate(self.chosen().events):
+                    for i in preselection:
+                        event2 = self.chosen().events[i]
                         if isinstance(event2, Commit):
                             for fileop in event2.fileops:
                                 if fileop.op == 'M' and fileop.ref==event.mark:
@@ -6087,7 +6090,9 @@ into sections of the input stream instead).
         self.line = self.line.lstrip()
         if self.peek() == '{':
             self.pop()
-            term = self.eval_expression()
+            term = self.eval_expression(
+                        set(xrange(len(self.chosen().events)))
+                    )
             self.line = self.line.lstrip()
             if self.peek() != '}':
                 raise Recoverable("trailing junk on inner expression")
