@@ -6071,7 +6071,7 @@ into sections of the input stream instead).
         self.line = self.line.lstrip()
         conjunct = set(preselection)
         while True:
-            term = self.eval_term()
+            term = self.eval_term(conjunct)
             if term is None:
                 break
             else:
@@ -6084,15 +6084,13 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line)))
         return conjunct
-    def eval_term(self):
+    def eval_term(self, preselection):
         if debug_enable(DEBUG_LEXER):
             announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
         if self.peek() == '{':
             self.pop()
-            term = self.eval_expression(
-                        set(xrange(len(self.chosen().events)))
-                    )
+            term = self.eval_expression(preselection)
             self.line = self.line.lstrip()
             if self.peek() != '}':
                 raise Recoverable("trailing junk on inner expression")
