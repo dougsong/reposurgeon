@@ -6101,7 +6101,7 @@ into sections of the input stream instead).
             if term is None:
                 term = self.eval_polyrange()
                 if term is None:
-                    term = self.eval_textsearch()
+                    term = self.eval_textsearch(preselection)
                     if term == None:
                         term = self.eval_branchset()
                         if term == None:
@@ -6306,7 +6306,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line)))
         return polyrange
-    def eval_textsearch(self):
+    def eval_textsearch(self, preselection):
         "Parse a text search specification."
         if debug_enable(DEBUG_LEXER):
             announce("eval_textsearch(%s)" % self.line)
@@ -6327,7 +6327,8 @@ into sections of the input stream instead).
             searchable_attrs = ("author", "branch", "comment",
                                 "committer", "committish", "text",
                                 "tagger", "name")
-            for (i, e) in enumerate(self.chosen()):
+            for i in preselection:
+                e = self.chosen().events[i]
                 if any(hasattr(e, searchable) and
                        search(str(getattr(e, searchable)))
                        for searchable in searchable_attrs):
