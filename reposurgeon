@@ -6097,7 +6097,7 @@ into sections of the input stream instead).
             else:
                 self.pop()
         else:
-            term = self.eval_visibility()
+            term = self.eval_visibility(preselection)
             if term is None:
                 term = self.eval_polyrange()
                 if term is None:
@@ -6109,7 +6109,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
-    def eval_visibility(self):
+    def eval_visibility(self, preselection):
         "Parse a visibility spec."
         if debug_enable(DEBUG_LEXER):
             announce("eval_visibility(%s)" % self.line)
@@ -6142,13 +6142,11 @@ into sections of the input stream instead).
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             if debug_enable(DEBUG_LEXER):
                 announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
-            selected = []
-            for (i, event) in enumerate(self.chosen()):
-                for predicate in visible:
-                    if predicate(event):
-                        selected.append(i)
-                        break
-            visibility = set(selected)
+            visibility = set()
+            for i in preselection:
+                event = self.chosen().events[i]
+                if any(predicate(event) for predicate in visible):
+                    visibility.add(i)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
