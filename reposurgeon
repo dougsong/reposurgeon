@@ -6103,7 +6103,7 @@ into sections of the input stream instead).
                 if term is None:
                     term = self.eval_textsearch(preselection)
                     if term == None:
-                        term = self.eval_branchset()
+                        term = self.eval_branchset(preselection)
                         if term == None:
                             term = self.eval_pathset()
         if debug_enable(DEBUG_LEXER):
@@ -6436,7 +6436,7 @@ into sections of the input stream instead).
                     containing.add(event.mark)
                     result.add(i)
         return result
-    def eval_branchset(self):
+    def eval_branchset(self, preselection):
         "Resolve a branch name to its set of associated events."
         if self.peek() != "(":
             return None
@@ -6446,7 +6446,8 @@ into sections of the input stream instead).
             for symbol in sorted(self.chosen().branchset(),
                                  key=len, reverse=True): # longest name first
                 if self.line.startswith(os.path.basename(symbol)):
-                    for (i, event) in enumerate(self.chosen()):
+                    for i in preselection:
+                        event = self.chosen().events[i]
                         if isinstance(event, Reset):
                             if event.ref == symbol:
                                 selection.append(i)
