@@ -6011,7 +6011,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("eval_expression(%s)" % self.line)
         self.line = self.line.lstrip()
-        value = self.eval_disjunct()
+        value = self.eval_disjunct(preselection)
         c = self.peek()
         while True:
             c = self.peek()
@@ -6044,18 +6044,18 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
-    def eval_disjunct(self):
+    def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
         if debug_enable(DEBUG_LEXER):
             announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
-        disjunct = set()
+        unselected = set(preselection)
         while True:
             conjunct = self.eval_conjunct()
             if conjunct is None:
                 break
             else:
-                disjunct |= conjunct
+                unselected -= conjunct
             self.line = self.line.lstrip()
             if self.peek() == '|':
                 self.pop()
@@ -6063,7 +6063,7 @@ into sections of the input stream instead).
                 break
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line)))
-        return disjunct
+        return preselection - unselected
     def eval_conjunct(self):
         "Evaluate a conjunctive expression (& has higher precedence)" 
         if debug_enable(DEBUG_LEXER):
