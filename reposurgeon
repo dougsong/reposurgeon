@@ -6099,7 +6099,7 @@ into sections of the input stream instead).
         else:
             term = self.eval_visibility(preselection)
             if term is None:
-                term = self.eval_polyrange()
+                term = self.eval_polyrange(preselection)
                 if term is None:
                     term = self.eval_textsearch(preselection)
                     if term == None:
@@ -6150,8 +6150,10 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
-    def eval_polyrange(self):
+    def eval_polyrange(self, preselection):
         "Parse a polyrange specification (list of intervals)."
+        # preselection is not used since it is perfectly legal to have range
+        # bounds be outside of the reduced set.
         if debug_enable(DEBUG_LEXER):
             announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
