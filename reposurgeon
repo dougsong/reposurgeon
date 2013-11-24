@@ -6363,7 +6363,9 @@ into sections of the input stream instead).
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
-                return self.eval_pathset_full(search, "@" in flags)
+                return self.eval_pathset_full(search,
+                                              preselection,
+                                              "@" in flags)
             preselected = ((i, chosen.events[i]) for i in preselection)
             match_paths = all if "@" in flags else any
             return {i for (i, event) in preselected
@@ -6374,13 +6376,16 @@ into sections of the input stream instead).
             # The "@" flag is ignored here since it would only make sense
             # for trees with a single file.
             if "*" in flags:
-                return self.eval_pathset_full(path)
+                return self.eval_pathset_full(path, preselection)
             preselected = ((i, chosen.events[i]) for i in preselection)
             return {i for (i, event) in preselected
                       if isinstance(event, Commit) and
                             path in event.paths()}
-    def eval_pathset_full(self, match_condition, match_all = False):
+    def eval_pathset_full(self, match_condition,
+                                preselection,
+                                match_all = False):
         result = set()
+        last_event = max(preselection)
         match = match_condition
         if isinstance(match_condition, collections.Callable):
             # Try to match a regex in the trees. For each commit we remember
@@ -6392,6 +6397,7 @@ into sections of the input stream instead).
                 match = lambda p: not match_condition(p)
             match_trees = {}
             for (i, event) in enumerate(self.chosen().events):
+                if i > last_event: break
                 if not isinstance(event, Commit): continue
                 try:
                     parent = event.parents()[0]
@@ -6419,6 +6425,7 @@ into sections of the input stream instead).
             # Note: match_all is always false here, no need to check.
             containing = set()
             for (i, event) in enumerate(self.chosen().events):
+                if i > last_event: break
                 if not isinstance(event, Commit): continue
                 contains = event.has_parents() \
                         and event.parents()[0].mark in containing
