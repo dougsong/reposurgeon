@@ -2615,7 +2615,7 @@ class StreamParser:
                                         try:
                                             self.repo.objfind(fileop.ref).paths.append(fileop.path)
                                         except AttributeError:
-                                            self.error("ref could not be resolved")
+                                            self.error("ref %s could not be resolved" % fileop.ref)
                                     commit.fileops.append(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
