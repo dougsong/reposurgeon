@@ -2203,6 +2203,11 @@ tag will invalidate it.</para>
 property extension commands. Accordingly, <command>reposurgeon</command> 
 omits them when rebuilding a repo with git type.</para>
 
+<para>Limitation: While the Subversion read-side support is in good shape,
+the write-side support is more of a sketch or proof-of-concept than a
+robust implemeentation;  it only works on very simple cases and does
+not round-trip. It may improve in future releases.</para>
+
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 <command>reposurgeon</command>.</para>
