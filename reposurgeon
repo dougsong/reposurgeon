@@ -5989,7 +5989,9 @@ into sections of the input stream instead).
         if not self.chosen():
             return line
         self.line = line
-        self.selection = list(self.eval_expression())
+        self.selection = list(self.eval_expression(
+                            set(xrange(len(self.chosen().events)))
+                        ))
         if self.line == line:
             self.selection = default
         else:
@@ -6005,11 +6007,11 @@ into sections of the input stream instead).
             c = self.line[0]
             self.line = self.line[1:]
             return c
-    def eval_expression(self):
+    def eval_expression(self, preselection):
         if debug_enable(DEBUG_LEXER):
             announce("eval_expression(%s)" % self.line)
         self.line = self.line.lstrip()
-        value = self.eval_disjunct()
+        value = self.eval_disjunct(preselection)
         c = self.peek()
         while True:
             c = self.peek()
@@ -6027,7 +6029,8 @@ into sections of the input stream instead).
                         add_list.append(self.chosen().find(child.mark))
                 elif isinstance(event, Blob):
                     remove_list.append(ei) # Don't select the blob itself
-                    for (i, event2) in enumerate(self.chosen().events):
+                    for i in preselection:
+                        event2 = self.chosen().events[i]
                         if isinstance(event2, Commit):
                             for fileop in event2.fileops:
                                 if fileop.op == 'M' and fileop.ref==event.mark:
@@ -6041,18 +6044,18 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
-    def eval_disjunct(self):
+    def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)" 
         if debug_enable(DEBUG_LEXER):
             announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
-        disjunct = set()
+        unselected = set(preselection)
         while True:
-            conjunct = self.eval_conjunct()
+            conjunct = self.eval_conjunct(unselected)
             if conjunct is None:
                 break
             else:
-                disjunct |= conjunct
+                unselected -= conjunct
             self.line = self.line.lstrip()
             if self.peek() == '|':
                 self.pop()
@@ -6060,15 +6063,15 @@ into sections of the input stream instead).
                 break
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line)))
-        return disjunct
-    def eval_conjunct(self):
+        return preselection - unselected
+    def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)" 
         if debug_enable(DEBUG_LEXER):
             announce("eval_conjunct(%s)" % self.line)
         self.line = self.line.lstrip()
-        conjunct = set(range(0, len(self.chosen())))
+        conjunct = set(preselection)
         while True:
-            term = self.eval_term()
+            term = self.eval_term(conjunct)
             if term is None:
                 break
             else:
@@ -6081,32 +6084,32 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line)))
         return conjunct
-    def eval_term(self):
+    def eval_term(self, preselection):
         if debug_enable(DEBUG_LEXER):
             announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
         if self.peek() == '{':
             self.pop()
-            term = self.eval_disjunct()
+            term = self.eval_expression(preselection)
             self.line = self.line.lstrip()
             if self.peek() != '}':
                 raise Recoverable("trailing junk on inner expression")
             else:
                 self.pop()
         else:
-            term = self.eval_visibility()
+            term = self.eval_visibility(preselection)
             if term is None:
-                term = self.eval_polyrange()
+                term = self.eval_polyrange(preselection)
                 if term is None:
-                    term = self.eval_textsearch()
+                    term = self.eval_textsearch(preselection)
                     if term == None:
-                        term = self.eval_branchset()
+                        term = self.eval_branchset(preselection)
                         if term == None:
-                            term = self.eval_pathset()
+                            term = self.eval_pathset(preselection)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
-    def eval_visibility(self):
+    def eval_visibility(self, preselection):
         "Parse a visibility spec."
         if debug_enable(DEBUG_LEXER):
             announce("eval_visibility(%s)" % self.line)
@@ -6139,18 +6142,18 @@ into sections of the input stream instead).
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             if debug_enable(DEBUG_LEXER):
                 announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
-            selected = []
-            for (i, event) in enumerate(self.chosen()):
-                for predicate in visible:
-                    if predicate(event):
-                        selected.append(i)
-                        break
-            visibility = set(selected)
+            visibility = set()
+            for i in preselection:
+                event = self.chosen().events[i]
+                if any(predicate(event) for predicate in visible):
+                    visibility.add(i)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
-    def eval_polyrange(self):
+    def eval_polyrange(self, preselection):
         "Parse a polyrange specification (list of intervals)."
+        # preselection is not used since it is perfectly legal to have range
+        # bounds be outside of the reduced set.
         if debug_enable(DEBUG_LEXER):
             announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
@@ -6305,7 +6308,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line)))
         return polyrange
-    def eval_textsearch(self):
+    def eval_textsearch(self, preselection):
         "Parse a text search specification."
         if debug_enable(DEBUG_LEXER):
             announce("eval_textsearch(%s)" % self.line)
@@ -6326,7 +6329,8 @@ into sections of the input stream instead).
             searchable_attrs = ("author", "branch", "comment",
                                 "committer", "committish", "text",
                                 "tagger", "name")
-            for (i, e) in enumerate(self.chosen()):
+            for i in preselection:
+                e = self.chosen().events[i]
                 if any(hasattr(e, searchable) and
                        search(str(getattr(e, searchable)))
                        for searchable in searchable_attrs):
@@ -6336,8 +6340,9 @@ into sections of the input stream instead).
             if debug_enable(DEBUG_LEXER):
                 announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return matchers
-    def eval_pathset(self):
+    def eval_pathset(self, preselection):
         "Resolve a path name to the set of commits that refer to it."
+        chosen = self.chosen()
         if self.peek() != "[":
             return None
         self.pop()
@@ -6360,24 +6365,29 @@ into sections of the input stream instead).
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
-                return self.eval_pathset_full(search, "@" in flags)
-            if "@" in flags:
-                return {i for (i, event) in enumerate(self.chosen().events)
-                          if isinstance(event, Commit) and
-                                all(search(path) for path in event.paths())}
-            return {i for (i, event) in enumerate(self.chosen().events)
+                return self.eval_pathset_full(search,
+                                              preselection,
+                                              "@" in flags)
+            preselected = ((i, chosen.events[i]) for i in preselection)
+            match_paths = all if "@" in flags else any
+            return {i for (i, event) in preselected
                       if isinstance(event, Commit) and
-                            any(search(path) for path in event.paths())}
+                            match_paths(search(path)
+                                        for path in event.paths())}
         else:
             # The "@" flag is ignored here since it would only make sense
             # for trees with a single file.
             if "*" in flags:
-                return self.eval_pathset_full(path)
-            return {i for (i, event) in enumerate(self.chosen().events)
+                return self.eval_pathset_full(path, preselection)
+            preselected = ((i, chosen.events[i]) for i in preselection)
+            return {i for (i, event) in preselected
                       if isinstance(event, Commit) and
                             path in event.paths()}
-    def eval_pathset_full(self, match_condition, match_all = False):
+    def eval_pathset_full(self, match_condition,
+                                preselection,
+                                match_all = False):
         result = set()
+        last_event = max(preselection)
         match = match_condition
         if isinstance(match_condition, collections.Callable):
             # Try to match a regex in the trees. For each commit we remember
@@ -6389,6 +6399,7 @@ into sections of the input stream instead).
                 match = lambda p: not match_condition(p)
             match_trees = {}
             for (i, event) in enumerate(self.chosen().events):
+                if i > last_event: break
                 if not isinstance(event, Commit): continue
                 try:
                     parent = event.parents()[0]
@@ -6416,6 +6427,7 @@ into sections of the input stream instead).
             # Note: match_all is always false here, no need to check.
             containing = set()
             for (i, event) in enumerate(self.chosen().events):
+                if i > last_event: break
                 if not isinstance(event, Commit): continue
                 contains = event.has_parents() \
                         and event.parents()[0].mark in containing
@@ -6434,7 +6446,7 @@ into sections of the input stream instead).
                     containing.add(event.mark)
                     result.add(i)
         return result
-    def eval_branchset(self):
+    def eval_branchset(self, preselection):
         "Resolve a branch name to its set of associated events."
         if self.peek() != "(":
             return None
@@ -6444,7 +6456,8 @@ into sections of the input stream instead).
             for symbol in sorted(self.chosen().branchset(),
                                  key=len, reverse=True): # longest name first
                 if self.line.startswith(os.path.basename(symbol)):
-                    for (i, event) in enumerate(self.chosen()):
+                    for i in preselection:
+                        event = self.chosen().events[i]
                         if isinstance(event, Reset):
                             if event.ref == symbol:
                                 selection.append(i)
