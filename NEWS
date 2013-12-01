@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.
      Introduced =O, =M, =F selectors for parentless, merge, and fork commits.
      The "multiline" modifier on edit is replaced by the =L selector.
