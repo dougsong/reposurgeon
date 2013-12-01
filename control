@@ -28,6 +28,6 @@ XBS-Logo: reposturgeon.png
 
 XBS-Web-Extras: conversion.mk
 
-XBS-Project-Tag-List: version control, svn, git, hg, bzr, cvs, rcs
+XBS-Freecode-Tags: version control, svn, git, hg, bzr, cvs, rcs
 
 XBS-VC-Tag-Template: %(version)s
