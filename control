@@ -22,7 +22,7 @@ XBS-Ohloh-URL: https://www.ohloh.net/p/reposurgeon
 
 Homepage: http://www.catb.org/~esr/reposurgeon
 
-XBS-HTML-Template: index.html
+XBS-HTML-Target: index.html
 
 XBS-Logo: reposturgeon.png
 
