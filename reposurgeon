@@ -6062,7 +6062,7 @@ into sections of the input stream instead).
             else:
                 break
         if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_disjunct(), left = %s" % (disjunct, repr(self.line)))
+            announce("%s <- eval_disjunct(), left = %s" % (conjunct, repr(self.line)))
         return preselection - unselected
     def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)" 
@@ -6150,7 +6150,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
-    def eval_polyrange(self, preselection):
+    def eval_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
         # preselection is not used since it is perfectly legal to have range
         # bounds be outside of the reduced set.
