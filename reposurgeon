@@ -6854,8 +6854,8 @@ currently chosen repository. Supports > redirection.
                            rfc3339(repo.readtime)))
                     if repo.sourcedir:
                         parse.stdout.write("  Loaded from %s\n" % repo.sourcedir)
-                    if repo.vcs:
-                        parse.stdout.write(repr(repo.vcs) + "\n")
+                    #if repo.vcs:
+                    #    parse.stdout.write(str(repo.vcs) + "\n")
 
     def help_list(self):
         print("""
