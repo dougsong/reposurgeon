@@ -5010,27 +5010,38 @@ class Repository:
         self._mark_to_index = {}
         if baton:
             baton.endcounter()
-    def uniquify(self, color):
+    def uniquify(self, color, persist=None):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
             # Disambiguate all tags.
             for (objtype, attr) in ((Tag, "name"),):
                 if isinstance(event, objtype):
                     oldname = getattr(event, attr)
-                    newname = color + "-" + oldname
-                    setattr(event, attr, newname)
+                    if persist is None or oldname in persist:
+                        newname = color + "-" + oldname
+                        setattr(event, attr, newname)
+                        if persist is not None:
+                            persist.add(newname)
+                    else:
+                        if persist is not None:
+                            persist.add(oldname)
             # Disambiguate all branches and refs.
-            for (objtype, attr) in ((Commit, "branch"),
-                                 (Reset, "ref")):
+            for (objtype, attr) in ((Commit, "branch"), (Reset, "ref")):
                 if isinstance(event, objtype):
                     oldname = getattr(event, attr)
-                    newname = oldname + "-" + color
-                    if debug_enable(DEBUG_UNITE):
-                        announce("moving %s -> %s in %s.%s"
-                                 % (oldname, newname,
-                                    objtype.__name__,
-                                    attr))
-                    setattr(event, attr, newname)
+                    if persist is None or oldname in persist:
+                        newname = oldname + "-" + color
+                        if debug_enable(DEBUG_UNITE):
+                            announce("moving %s -> %s in %s.%s"
+                                     % (oldname, newname,
+                                        objtype.__name__,
+                                        attr))
+                        setattr(event, attr, newname)
+                        if persist is not None:
+                            persist.add(newname)
+                    else:
+                        if persist is not None:
+                            persist.add(oldname)
             # Disambiguate defining marks.
             for fld in ("mark", "committish"):
                 if hasattr(event, fld):
@@ -5671,6 +5682,7 @@ class RepositoryList:
         for (i, factor) in enumerate(factors):
             if i != len(factors) - 1:
                 factor.uniquify(factor.name)
+        for factor in factors:
             union.absorb(factor)
             self.remove_by_name(factor.name)
         # Renumber all events
