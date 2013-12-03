@@ -2359,7 +2359,7 @@ class StreamParser:
     #
     # The main event
     #
-    def fast_import(self, fp, progress=False):
+    def fast_import(self, fp, options, progress=False):
         "Initialize the repo from a fast-import stream or Subversion dump."
         self.repo.makedir()
         self.repo.timings = [("start", time.time())]
@@ -2504,7 +2504,7 @@ class StreamParser:
                             # End Revision processing
                     # End of Subversion dump parsing
                     self.repo.timings.append(("parsing", time.time()))
-                    self.svn_process(baton)
+                    self.svn_process(options, baton)
                     elapsed = time.time() - baton.time
                     baton.twirl("%d revisions (%d/s)" %
                                  (self.repo.fossil_count,
@@ -2735,7 +2735,7 @@ class StreamParser:
                 return path[len(branch):]
         raise Fatal("couldn't assign %s to a branch in %s" \
                     % (path, self.branches.keys()))
-    def svn_process(self, baton):
+    def svn_process(self, _options, baton):
         "Subversion actions to import-stream commits."
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
@@ -4457,9 +4457,9 @@ class Repository:
                     gripe(" ".join(msg))
                     deletia.append(index)
         self.delete(deletia, ["obliterate", "quiet", "tagback"])
-    def fast_import(self, fp, progress=False):
+    def fast_import(self, fp, options, progress=False):
         "Read a stream file and use it to populate the repo."
-        StreamParser(self).fast_import(fp, progress)
+        StreamParser(self).fast_import(fp, options, progress)
         self.readtime = time.time()
     def parse_dollar_cookies(self):
         "Extract info about fossil references from CVS/SVN header cookies."
@@ -5209,7 +5209,7 @@ class Repository:
     def __setitem__(self, i, v):
         self.events[i] = v
 
-def read_repo(source, preferred):
+def read_repo(source, options, preferred):
     "Read a repository using fast-import."
     if debug_enable(DEBUG_SHUFFLE):
         if preferred:
@@ -5260,12 +5260,12 @@ def read_repo(source, preferred):
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname) as tp:
-                        repo.fast_import(tp, progress=showprogress)
+                        repo.fast_import(tp, options, progress=showprogress)
                 finally:
                     os.remove(tfname)
             else:
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(tp, progress=showprogress)
+                    repo.fast_import(tp, options, progress=showprogress)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap) as fp:
@@ -7172,11 +7172,11 @@ constructed with command-line arguments).
         with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
             if parse.redirected:
                 repo = Repository()
-                repo.fast_import(parse.stdin, progress=(verbose==1 and not quiet))
+                repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
             elif not parse.line or parse.line == '.':
-                repo = read_repo(os.getcwd(), self.preferred)
+                repo = read_repo(os.getcwd(), parse.options, self.preferred)
             elif os.path.isdir(parse.line):
-                repo = read_repo(parse.line, self.preferred)
+                repo = read_repo(parse.line, parse.options, self.preferred)
             else:
                 raise Recoverable("read needs a directory or input redirect")
         self.repolist.append(repo)
