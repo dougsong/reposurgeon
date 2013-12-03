@@ -5681,8 +5681,8 @@ class RepositoryList:
         for root in roots[1:]:
             most_recent = None
             def predicate(event):
-                return root.when() >= event.when() \
-                        or (most_recent and event.when() >= most_recent.when())
+                return root.when() > event.when() \
+                        or (most_recent and event.when() > most_recent.when())
             # Get last commit such that it and all before satisfy predicate()
             # Never raises IndexError since union.earliest_commit() is root[0]
             # which satisfies predicate() thanks to factors sorting.
