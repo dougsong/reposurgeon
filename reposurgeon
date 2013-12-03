@@ -2949,7 +2949,7 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            if global_options["svn_noautoignores"]:
+                            if "no-autoignores" in options:
                                 startwith = ""
                             else:
                                 startwith = StreamParser.SubversionDefaultIgnores
@@ -5853,9 +5853,6 @@ class RepositoryList:
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     OptionFlags = (
-        ("svn_noautoignores", """\
-    Do not generate a simulation of Subversion ignores in the root node.
-"""),
         ("canonicalize", """\
     If set, import stream reads and mailbox_in and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,

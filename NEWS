@@ -5,6 +5,7 @@ Repository head:
      svn_nobranch global option is replaced by the --nobranch read option. 
      svn_use_uuid global option is replaced by the --use-uuid read option. 
      svn_ignore_properties global option is replaced by the --ignore-properties option. 
+     svn_noautoignores global option is replaced by the --no-autoignores read option. 
      'unite' command has been incompatibly improved.
      Backward-incompatible language changes are documented on the manual page.
 

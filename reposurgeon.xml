@@ -1713,6 +1713,11 @@ git-svn.  Otherwise, addresses will be the way git cvs-import does
 it.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>--no-autoignores</term>
+<listitem><para>Do not generate a simulation of Subversion ignores in
+the root node.</para></listitem>
+</varlistentry>
 </variablelist>
 
 <para>Here are the rules used for mapping subdirectories in a 
