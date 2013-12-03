@@ -5894,7 +5894,7 @@ into sections of the input stream instead).
             self.capabilities = capabilities or []
             self.stdin = sys.stdin
             self.stdout = sys.stdout
-            self.redirected - False
+            self.redirected = False
             self.options = set([])
         def __enter__(self):
             # Input redirection
