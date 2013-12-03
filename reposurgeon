@@ -5894,6 +5894,7 @@ into sections of the input stream instead).
             self.capabilities = capabilities or []
             self.stdin = sys.stdin
             self.stdout = sys.stdout
+            self.redirected - False
             self.options = set([])
         def __enter__(self):
             # Input redirection
@@ -5909,6 +5910,7 @@ into sections of the input stream instead).
                         raise Recoverable("can't open %s for read" \
                                           % infile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
+                self.redirected = True
             # Output redirection
             m = re.search(r">\S+", self.line)
             if m:
@@ -5922,6 +5924,7 @@ into sections of the input stream instead).
                         raise Recoverable("can't open %s for write" \
                                           % outfile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
+                self.redirected = True
             while True:
                 m = re.search(r"--\S+", self.line)
                 if not m:
