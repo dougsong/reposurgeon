@@ -5016,19 +5016,21 @@ class Repository:
             # Disambiguate all tags.
             for (objtype, attr) in ((Tag, "name"),):
                 if isinstance(event, objtype):
-                    setattr(event, attr, color + "-" + getattr(event, attr))
+                    oldname = getattr(event, attr)
+                    newname = color + "-" + oldname
+                    setattr(event, attr, newname)
             # Disambiguate all branches and refs.
             for (objtype, attr) in ((Commit, "branch"),
                                  (Reset, "ref")):
                 if isinstance(event, objtype):
-                    old = getattr(event, attr)
-                    new = old + "-" + color
+                    oldname = getattr(event, attr)
+                    newname = oldname + "-" + color
                     if debug_enable(DEBUG_UNITE):
                         announce("moving %s -> %s in %s.%s"
-                                 % (old, new,
+                                 % (oldname, newname,
                                     objtype.__name__,
                                     attr))
-                    setattr(event, attr, new)
+                    setattr(event, attr, newname)
             # Disambiguate defining marks.
             for fld in ("mark", "committish"):
                 if hasattr(event, fld):
