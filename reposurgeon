@@ -5878,7 +5878,7 @@ at write time. This option is mainly useful for debugging conversion edge cases.
 """),
         ("compressblobs", """\
     Use compression for on-disk copies of blobs. Accepts an increase
-in repository read and write time in order to reduce the anount of
+in repository read and write time in order to reduce the amount of
 disk space required while editing; this may be useful for large
 repositories. No effect if the edit input was a dump stream; in that
 case, reposurgeon doesn't make on-disk blob copies at all (it points
