@@ -2735,11 +2735,12 @@ class StreamParser:
                 return path[len(branch):]
         raise Fatal("couldn't assign %s to a branch in %s" \
                     % (path, self.branches.keys()))
-    def svn_process(self, _options, baton):
+    def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
+        nobranch = '--nobranch' in options
         copynodes = []
         for (revision, record) in self.revisions.iteritems():
             for node in record.nodes:
@@ -2747,7 +2748,7 @@ class StreamParser:
                     copynodes.append(node)
                     if debug_enable(DEBUG_EXTRACT):
                         announce("copynode at %s" % node)
-                if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not global_options['svn_nobranch']:
+                if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not nobranch:
                     for trial in global_options['svn_branchify']:
                         if '*' not in trial and trial == node.path:
                             self.branches[node.path+os.sep] = None
@@ -3343,8 +3344,8 @@ class StreamParser:
             # than the CVS revision corresponding to the
             # copy). Fortunately, we can resolve such sets by the simple
             # expedient of picking the *latest* revision in them!
-            # No code uses the result if svn_nobranch is true.
-            if not global_options["svn_nobranch"]:
+            # No code uses the result if branch analysis is turned off.
+            if not nobranch:
                 for newcommit in newcommits:
                     if commit.mark in self.branchlink: continue
                     copies = [node for node in record.nodes \
@@ -3463,7 +3464,7 @@ class StreamParser:
                 self.gripe("could not tagify root commit.")
         # Now, branch analysis.
         branchroots = []
-        if not self.branches or global_options['svn_nobranch']:
+        if not self.branches or nobranch:
             last = None
             for commit in self.repo.commits():
                 commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
@@ -3668,7 +3669,7 @@ class StreamParser:
                               len(commit.properties),
                               commit.branch))
         baton.twirl()
-        # Code controlled by svn_nobranch option ends.
+        # Code controlled by --nobranch option ends.
         # Canonicalize all commits to ensure all ops actually do something.
         for commit in self.repo.commits():
             commit.canonicalize()
@@ -3708,7 +3709,7 @@ class StreamParser:
         #   just might be.
         # * All other commits without fileops get turned into an annotated tag
         #   with name "emptycommit-<revision>".
-        rootmarks = {root.mark for root in branchroots} # empty if svn_nobranch
+        rootmarks = {root.mark for root in branchroots} # empty if nobranch
         rootskip = {"trunk"+os.sep, "root"}
         def tagname(commit):
             # Give branch and tag roots a special name, except for "trunk" and
@@ -3815,8 +3816,9 @@ class StreamParser:
 
 class SubversionDumper:
     "Respository to Subversion stream dump."
-    def __init__(self, repo):
+    def __init__(self, repo, nobranch=False):
         self.repo = repo
+        self.nobranch = nobranch
         self.pathmap = {}
         self.mark_to_revision = {}
         self.branches_created = []
@@ -3898,17 +3900,16 @@ class SubversionDumper:
             return os.path.join("tags", svnbase)
         else:
             return os.path.join("branches", svnbase)
-    @staticmethod
-    def svnize(branch, path=""):
+    def svnize(self, branch, path=""):
         "Return SVN path corresponding to a specified gitspace branch and path."
-        if global_options['svn_nobranch']:
+        if self.nobranch:
             return path
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, branch, path):
         "Emit the dump-stream records required to delete a file."
         if debug_enable(DEBUG_SVNDUMP):
             announce("filedelete%s" % repr((branch, path)))
-        svnpath = SubversionDumper.svnize(branch, path)
+        svnpath = self.svnize(branch, path)
         fp.write("Node-path: %s\n" % svnpath)
         fp.write("Node-action: delete\n\n\n")
         del self.pathmap[svnpath]
@@ -3981,7 +3982,7 @@ class SubversionDumper:
         # Branch and directory creation may be required.
         # This has to be called early so copy can update the filemap.
         self.directory_create(fp, revision, branch, path, parents)
-        svnpath = SubversionDumper.svnize(branch, path)
+        svnpath = self.svnize(branch, path)
         if svnpath in self.pathmap:
             svnop = "change"
             self.pathmap[svnpath].rev = revision
@@ -4014,13 +4015,13 @@ class SubversionDumper:
     def filecopy(self, fp, revision, branch, source, target):
         if debug_enable(DEBUG_SVNDUMP):
             announce("filecopy%s" % repr((revision, branch, source, target)))
-        svnsource = SubversionDumper.svnize(branch, source)
+        svnsource = self.svnize(branch, source)
         try:
             flow = self.pathmap[svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
         self.directory_create(fp, revision, branch, target)
-        svntarget = SubversionDumper.svnize(branch, target)
+        svntarget = self.svnize(branch, target)
         self.pathmap[svntarget] = self.pathmap[svnsource]
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
@@ -4031,7 +4032,7 @@ class SubversionDumper:
     def make_tag(self, fp, revision, branch, name, log, author):
         if debug_enable(DEBUG_SVNDUMP):
             announce("make_tag%s" % repr((revision, branch, name, log, str(author))))
-        svnsource = SubversionDumper.svnize(branch)
+        svnsource = self.svnize(branch)
         svntarget = os.path.join("tags", name)
         SubversionDumper.dump_revprops(fp, revision,
                                        log=log,
@@ -4084,7 +4085,7 @@ class SubversionDumper:
                     for fileop in event.fileops:
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = SubversionDumper.svnize(event.head(), fileop.path)
+                                svnpath = self.svnize(event.head(), fileop.path)
                                 self.pathmap[svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
@@ -4095,8 +4096,8 @@ class SubversionDumper:
                                 self.filedelete(fp, event.head(), fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = SubversionDumper.svnize(event.head(),
-                                                                  os.path.dirname(fileop.path))
+                                svnpath = self.svnize(event.head(),
+                                                      os.path.dirname(fileop.path))
                                 blob = self.repo.objfind(fileop.ref)
                                 if svnpath not in self.pathmap:
                                     self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
@@ -5855,11 +5856,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
         ("svn_use_uuid", """\
     If set, use Subversion UUID when faking up email addresses, a la git-svn.
 Otherwise, fake up addresses the way git cvs-import does it.
-"""),
-        ("svn_nobranch", """\
-    If set, don't perform branch analysis when lifting a Subversion repo. Leave
-it as a linear sequence of commits. This may be useful if the repo has an
-unusual topology and you intend to do your own branch surgery.
 """),
         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
@@ -8555,8 +8551,8 @@ must resolve to exactly two commits.
         print("""
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
-when analyzing a Subversion repo. This list is ignored when the
-svn_nobranch option is set.  It defaults to the 'standard layout'
+when analyzing a Subversion repo. This list is ignored when reading
+with the --nobranch option.  It defaults to the 'standard layout'
 set of directories, plus any unrecognized directories in the
 repository root.
 

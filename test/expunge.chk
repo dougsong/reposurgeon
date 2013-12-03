@@ -1,8 +1,7 @@
 reposurgeon: verbose 1
 reposurgeon: echo 1
 quiet on
-set svn_nobranch
-read <expunge.svn
+read --nobranch <expunge.svn
 * expunge
 expunge 1..$ ^releases/v1.0/
 reposurgeon: at 6, expunging M releases/v1.0/VERSION
