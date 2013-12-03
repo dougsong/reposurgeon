@@ -1,6 +1,6 @@
 ## Tests of selection-set syntax and parser features
 echo 1
-read simple.fi
+read <simple.fi
 resolve =H
 resolve 15
 resolve =TR

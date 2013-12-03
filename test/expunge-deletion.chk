@@ -1,5 +1,5 @@
 quiet on
-read deletion.svn
+read <deletion.svn
 expunge doomed
 choose deletion-expunges
 inspect

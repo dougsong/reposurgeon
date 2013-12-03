@@ -1,7 +1,7 @@
 ## Test of canonicalization-after-commit cases
 !echo This exercises many delete cases in the test repo
 echo 1
-read testrepo.fi
+read <testrepo.fi
 coverage
 delete :7,:8
 coverage       # Expect this to show case 1 covered.

@@ -1,4 +1,4 @@
-read simple.fi
+read <simple.fi
 index
      2 branch      -    refs/tags/lightweight-sample
      3 commit     :2    refs/tags/lightweight-sample
@@ -112,7 +112,7 @@ history
 script simple.tst testing123
 ## Test of index, tip, tags, history, paths, expunge and checkout
 echo 1
-read simple.fi
+read <simple.fi
 index
 tip :76
 tags

@@ -1,4 +1,4 @@
-read bzr.fi
+read <bzr.fi
 divide :1
 choose bzr-early
 write

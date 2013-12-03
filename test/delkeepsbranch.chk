@@ -1,4 +1,4 @@
-read delkeepsbranch.fi
+read <delkeepsbranch.fi
 inspect
 Event 1 =================================================================
 commit refs/heads/master

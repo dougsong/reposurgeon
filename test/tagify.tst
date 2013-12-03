@@ -1,6 +1,6 @@
 ## Test of the tagify command
 echo 1
-read tagify.fi
+read <tagify.fi
 tagify
 write
 tagify 1..:6 tipdeletes

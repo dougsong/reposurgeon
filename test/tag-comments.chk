@@ -1,4 +1,4 @@
-read tag-comments.fi
+read <tag-comments.fi
 tags
 names
 branch refs/heads/master

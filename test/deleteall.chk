@@ -1,4 +1,4 @@
-read deleteall.fi
+read <deleteall.fi
 manifest :13
 Event 16 ================================================================
 commit refs/heads/samplebranch2

@@ -2,7 +2,7 @@
 echo 1
 verbose 1
 quiet on
-read mergeinfo.svn
+read <mergeinfo.svn
 split :19 at 1
 split :19 at 3
 split :19 at 2

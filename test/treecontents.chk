@@ -1,4 +1,4 @@
-read treecontents.svn
+read <treecontents.svn
 reposurgeon: branch links detected by file ops only: branches/branch3/ branches/branch2/
 inspect
 Event 1 =================================================================

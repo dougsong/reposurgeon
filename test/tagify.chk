@@ -1,4 +1,4 @@
-read tagify.fi
+read <tagify.fi
 tagify
 write
 blob

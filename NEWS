@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 Repository head:
+     read and write no longer take file arguments, but require redirects.
      'unite' command has been incompatibly improved.
      Backward-incompatible language changes are documented on the mabual page.
 

@@ -1,5 +1,5 @@
 ## Test authors read, fossil-ID refs, heredocs, comment editing
-read references.svn
+read <references.svn
 authors read <<EOF
 esr-guest = Eric S. Raymond <esr-guest@alioth.debian.org>
 lestat-guest = David Goncalves <david@lestat.st>

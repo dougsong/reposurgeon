@@ -1,6 +1,6 @@
 ## Test of index, tip, tags, history, paths, expunge and checkout
 echo 1
-read simple.fi
+read <simple.fi
 index
 tip :76
 tags

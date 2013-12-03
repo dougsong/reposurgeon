@@ -5893,7 +5893,9 @@ into sections of the input stream instead).
             self.line = line
             self.capabilities = capabilities or []
             self.stdin = sys.stdin
+            self.infile = None
             self.stdout = sys.stdout
+            self.outfile = None
             self.redirected = False
             self.options = set([])
         def __enter__(self):
@@ -5902,13 +5904,13 @@ into sections of the input stream instead).
             if m:
                 if "stdin" not in self.capabilities:
                     raise Recoverable("no support for < redirection")
-                infile = m.group(0)[1:]
-                if infile and infile != '-':
+                self.infile = m.group(0)[1:]
+                if self.infile and self.infile != '-':
                     try:
-                        self.stdin = open(infile, "r")
+                        self.stdin = open(self.infile, "r")
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
-                                          % infile)
+                                          % self.infile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
             # Output redirection
@@ -5916,15 +5918,18 @@ into sections of the input stream instead).
             if m:
                 if "stdout" not in self.capabilities:
                     raise Recoverable("no support for > redirection")
-                outfile = m.group(0)[1:]
-                if outfile and outfile != '-':
+                self.outfile = m.group(0)[1:]
+                if self.outfile and self.outfile != '-':
+                    if os.path.exists(self.outfile) and not os.isfile(self.outfile):
+                        raise Recoverable("not a plain file")
                     try:
-                        self.stdout = open(outfile, "w")
+                        self.stdout = open(self.outfile, "w")
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for write" \
-                                          % outfile)
+                                          % self.outfile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
+            # Options 
             while True:
                 m = re.search(r"--\S+", self.line)
                 if not m:
@@ -5932,6 +5937,12 @@ into sections of the input stream instead).
                 else:
                     self.options.add(m.group(0))
                     self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
+            # Dash redirection
+            if not self.redirected and self.line.strip() == '-':
+                if "stdin" not in self.capabilities and "stdout" not in self.capabilities:
+                    raise Recoverable("no support for - redirection")
+                else:
+                    self.redirected = True
             return self
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             pass
@@ -7147,7 +7158,7 @@ With a directory-name argument, this command attempts to read in the
 contents of a repository in any supported version-control system under
 that directory.
 
-If the argument is the name of a plain file, it will be read in as a
+If input is redirected from a plain file, it will be read in as a
 fast-import stream or Subversion dump, whichever it is.
 
 With an argument of '-', this command reads a fast-import stream or
@@ -7158,25 +7169,22 @@ constructed with command-line arguments).
         "Read in a repository for surgery."
         if line:
             line = os.path.expanduser(line)
-        if not line or line == '.':
-            line = os.getcwd()
-        name = line
-        if os.path.isdir(line):
-            repo = read_repo(line, self.preferred)
-        else:
-            repo = Repository()
-            # Backward-compatibility hack.  Will have to be removed if we
-            # ever define modifiers for this command.
-            if line and not line.startswith("<"):
-                line =  "<" + line
-            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            if parse.redirected:
+                repo = Repository()
                 repo.fast_import(parse.stdin, progress=(verbose==1 and not quiet))
+            elif not parse.line or parse.line == '.':
+                repo = read_repo(os.getcwd(), self.preferred)
+            elif os.path.isdir(parse.line):
+                repo = read_repo(parse.line, self.preferred)
+            else:
+                raise Recoverable("read needs a directory or input redirect")
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
             if self.chosen().vcs:
                 self.preferred = self.chosen().vcs
-            name = self.uniquify(os.path.basename(self.chosen().sourcedir or name or "unnamed"))
+            name = self.uniquify(os.path.basename(self.chosen().sourcedir or parse.infile or "unnamed"))
             self.chosen().rename(name)
         if verbose:
             self.do_choose('')
@@ -7184,9 +7192,9 @@ constructed with command-line arguments).
     def help_write(self):
         print("""
 Dump a fast-import stream representing selected events to standard
-output (if second argument is empty or '-') or a file. Property
+output (if second argument is empty or '-') or via redirect to a file. Property
 extensions will be omitted if the importer for the selected repo cannot
-digest them. Fails if the argument exists and is a directory or
+digest them. Fails if the output target exists and is a directory or
 anything other than a plain file. The default selection is all events.
 """)
     def do_write(self, line):
@@ -7195,11 +7203,9 @@ anything other than a plain file. The default selection is all events.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, range(len(self.chosen())))
-        # Backward-compatibility hack.  Will have to be removed if we
-        # ever define modifiers for this command.
-        if line and not line.startswith(">"):
-            line =  ">" + line
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            if parse.line and not parse.redirected:
+                raise Recoverable("write needs an output redirect")
             self.chosen().fast_export(self.selection, parse.stdout, progress=(verbose==1 and not quiet), target=self.preferred)
 
     def help_inspect(self):
@@ -8616,7 +8622,7 @@ displays the state of all flags. The following flags and options are defined:
         print("""
 With no argument, display the reposurgeon version and supported VCSes.
 With argument, declare the major version (single digit) or full
-version (major.minor) under which the enclosing script was seveloped.
+version (major.minor) under which the enclosing script was developed.
 The program will error out if the major version has changed (which
 means the surgical language is not backwards compatible).
 """)

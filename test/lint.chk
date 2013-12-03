@@ -1,7 +1,7 @@
 quiet on
-read bs.fi
+read <bs.fi
 lint
-read agito.svn
+read <agito.svn
 reposurgeon: mid-branch deleteall on refs/tags/proj-1.0 at <3>.
 lint
 mid-branch delete: on refs/tags/proj-1.0 at commit@4=<3>

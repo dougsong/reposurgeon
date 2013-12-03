@@ -1,4 +1,4 @@
-read simple.fi
+read <simple.fi
 inspect 127
 Event 127 ===============================================================
 commit refs/heads/master

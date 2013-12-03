@@ -1,4 +1,4 @@
-read simple.fi
+read <simple.fi
 resolve =H
 [129]
 resolve 15

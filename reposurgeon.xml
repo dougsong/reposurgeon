@@ -418,21 +418,6 @@ any tags and resets in the set. Each blob reference in the set is
 replaced by all commits that refer to it. The '?' can be repeated
 to extend the neighborhood depth.</para>
 
-<para>Note that
-
-<programlisting>
-write /tmp/foo 
-</programlisting>
-
-will not do what you expect. The command language parser sees
-"/tmp/" as a text search rather than the start of a pathname.  To
-work around this, write
-
-<programlisting>
-write 1..$ /tmp/foo 
-</programlisting>
-</para>
-
 <refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
 
 <para><command>reposurgeon</command> can hold multiple repository
@@ -443,19 +428,19 @@ and manipulate the in-core list and the selection.</para>
 <variablelist>
 <varlistentry>
 <term><command>read</command> 
-        [<emphasis>infile</emphasis>]
+        [<emphasis>directory</emphasis>|<emphasis>-</emphasis>|<emphasis>&lt;infile</emphasis>]
 </term>
 <listitem><para>With a directory-name argument, this command attempts
 to read in the contents of a repository in any supported
 version-control system under that directory; read with no arguments
-does this in the current directory. If the argument is the name of a
+does this in the current directory. If output is redirected to a
 plain file, it will be read in as a fast-import stream or Subversion
 dumpfile. With an argument of <quote>-</quote>, this command reads a
 fast-import stream or Subversion dumpfile from standard input (this
 will be useful in filters constructed with command-line
 arguments).</para>
 
-<para>If the argument is a fast-import stream, any "cvs-revisions" property 
+<para>If the contents is a fast-import stream, any "cvs-revisions" property 
 on a commit is taken to be a newline-separated list of CVS revision cookies 
 pointing to the commit, and used for reference lifting.</para>
 
@@ -481,14 +466,14 @@ extension is removed from the load list name.</para>
 <varlistentry>
 <term><command>write</command>
         [<emphasis>selection-set</emphasis>]
-        [<emphasis>outfile</emphasis>]
+        [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
 <para>Dump selected events as a fast-import stream representing the
-edited repository; the default selection set is all events. The
-optional second argument tells where to dump to; standard output if
-argument is empty or '-' or a named file otherwise.  Fails if the
-argument exists and is a directory or anything other than a plain
+edited repository; the default selection set is all events. Where to
+dump to is standard output if there is no argument or the argument
+is '-', or the target of an output redirect.  Fails if the
+redirect target exists and is a directory or anything other than a plain
 file.</para>
 
 <para>Property extensions will be be omitted from the output if the
@@ -2143,9 +2128,14 @@ summary-plus-continuation form.]]</para>
 
 <refsect1 id='limitations'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
 
+<para>In <command>reposurgeon</command> versions before 2.44, read
+and write optionally took file arguments rather than requiring
+redirects. This was changed in order to allow these commands to
+have modifiers.</para>
+
 <para>In <command>reposurgeon</command> versions before 2.44, the
 earliest factor in a unite command kept its tag and branch names
-unaltered, rather than the latest. The change produces nore natural
+unaltered, rather than the latest. The change produces more natural
 behavior when uniting two repoositories end to end; the master branch
 of the second (later) one keeps its name.</para>
 
