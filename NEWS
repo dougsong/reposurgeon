@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+Repository head:
+     'unite' command has been incompatibly improved.
+     Backward-incompatible language changes are documented on the mabual page.
+
 2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.
      Introduced =O, =M, =F selectors for parentless, merge, and fork commits.

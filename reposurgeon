@@ -5659,14 +5659,14 @@ class RepositoryList:
         self.repo.cleanup()
         self.remove_by_name(self.repo.name)
         return True
-    def unite(self, factors):
+    def unite(self, factors, _options):
         "Unite multiple repos into a union repo."
         factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.earliest_commit() for x in factors]
         union = Repository("+".join(r.name for r in factors))
         os.mkdir(union.subdir())
         for (i, factor) in enumerate(factors):
-            if i != 0:
+            if i != len(factors) - 1:
                 factor.uniquify(factor.name)
             union.absorb(factor)
             self.remove_by_name(factor.name)
@@ -5894,6 +5894,7 @@ into sections of the input stream instead).
             self.capabilities = capabilities or []
             self.stdin = sys.stdin
             self.stdout = sys.stdout
+            self.options = set([])
         def __enter__(self):
             # Input redirection
             m = re.search(r"<\S+", self.line)
@@ -5921,6 +5922,13 @@ into sections of the input stream instead).
                         raise Recoverable("can't open %s for write" \
                                           % outfile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
+            while True:
+                m = re.search(r"--\S+", self.line)
+                if not m:
+                    break
+                else:
+                    self.options.add(m.group(0))
+                    self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
             return self
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             pass
@@ -7864,15 +7872,16 @@ type.
         "Unite repos together."
         self.unchoose()
         factors = []
-        for name in line.split():
-            repo = self.repo_by_name(name)
-            if repo is None:
-                raise Recoverable("no such repo as %s" % name)
-            else:
-                factors.append(repo)
-        if not factors or len(factors) < 2: 
-            raise Recoverable("unite requires repo name arguments")
-        self.unite(factors)
+        with RepoSurgeon.LineParse(line) as parse:
+            for name in parse.line.split():
+                repo = self.repo_by_name(name)
+                if repo is None:
+                    raise Recoverable("no such repo as %s" % name)
+                else:
+                    factors.append(repo)
+            if not factors or len(factors) < 2: 
+                raise Recoverable("unite requires repo name arguments")
+            self.unite(factors, parse.options)
         if verbose:
             self.do_choose('')
 

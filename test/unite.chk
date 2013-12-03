@@ -9,8 +9,8 @@ This is a dummy test repository.
 It has no other purpose in life than to be used for making fast-import
 files with which to test reposurgeon and, possibly, other similsr tools.
 
-reset refs/heads/master
-commit refs/heads/master
+reset refs/heads/master-testrepo
+commit refs/heads/master-testrepo
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
@@ -26,7 +26,7 @@ This is a dummy test repository.
 It has no other purpose in life than to be used for making fast-import
 files with which to test reposurgeon and, possibly, other similar tools.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :4
 author Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288997267 -0400
@@ -51,7 +51,7 @@ mark :6
 data 51
 This file is doomed. Its destiny is to be deleted.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :7
 author Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288997641 -0400
@@ -61,7 +61,7 @@ from :4
 M 100644 :5 README
 M 100644 :6 doomed1
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288997775 -0400
@@ -76,7 +76,7 @@ data 102
 This file is doomed too.  Though, right now, we're only using it to make
 the previous commit non-tip.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :10
 author Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289038389 -0400
@@ -85,7 +85,7 @@ Make the previous commit non-tip.
 from :8
 M 100644 :9 doomed2
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :11
 author Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289040411 -0400
@@ -99,7 +99,7 @@ mark :12
 data 35
 Creation of the third doomed file.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :13
 author Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289040598 -0400
@@ -114,7 +114,7 @@ data 70
 This file needs to have at least one commit other than its creation.
 
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :15
 author Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289081370 -0400
@@ -130,7 +130,7 @@ And let's give it another one for good measure.
 
 
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :17
 author Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289081408 -0400
@@ -139,7 +139,7 @@ Third commit to doomed3, so there will be an ancestry chain.
 from :15
 M 100644 :16 doomed3
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :18
 author Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289081439 -0400
@@ -148,7 +148,7 @@ doomed3, thy end has arrived.
 from :17
 D doomed3
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :19
 author Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289081515 -0400
@@ -164,7 +164,7 @@ The file foo needs a content modification so we can test a rename case.
 
 
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :21
 author Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289083911 -0400
@@ -181,7 +181,7 @@ Let's give it a second content modification.
 
 
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :23
 author Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289090802 -0400
@@ -198,7 +198,7 @@ Let's give it a third content modification.
 
 
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :25
 author Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289090822 -0400
@@ -207,7 +207,7 @@ Third content modification of foo.
 from :23
 M 100644 :24 foo
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :26
 author Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289090867 -0400
@@ -226,7 +226,7 @@ files with which to test reposurgeon and, possibly, other similar tools.
 
 We need a commit to push some deletes forward to.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :28
 author Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1289090971 -0400
@@ -235,7 +235,7 @@ This is a target commit for testing case M+R with ancestry of M.
 from :26
 M 100644 :27 README
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :29
 author Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1289136571 -0500
@@ -248,7 +248,7 @@ from :28
 D bar
 M 100644 :24 renamed1
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :30
 author Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1289257004 -0500
@@ -262,7 +262,7 @@ mark :31
 data 76
 Recreating bar after it was deleted, to test another canonicalization case.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :32
 author Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1289257358 -0500
@@ -281,7 +281,7 @@ files with which to test reposurgeon and, possibly, other similar tools.
 
 Once again, we need a commit to push some deletes forward to.
 
-commit refs/heads/master
+commit refs/heads/master-testrepo
 mark :34
 author Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1289257439 -0500
@@ -290,10 +290,10 @@ Give the deletion push a target.
 from :32
 M 100644 :33 README
 
-reset refs/heads/master
+reset refs/heads/master-testrepo
 from :34
 
-commit refs/heads/master-bzr
+commit refs/heads/master
 mark :35
 committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
 data 14
@@ -305,7 +305,7 @@ data 41
 This is a test file in a dummy bzr repo.
 
 
-commit refs/heads/master-bzr
+commit refs/heads/master
 mark :36
 committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
 data 32
