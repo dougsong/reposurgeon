@@ -63,7 +63,7 @@ mailboxing:
 	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
-	    $(REPOSURGEON) "read \<$${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
+	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
 	    diff -u $${file} /tmp/regress; \
 	done
 	@rm -f /tmp/regress
@@ -98,7 +98,7 @@ coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
-	    $(REPOSURGEON) "read \<$${file}.fi; coalesce; write -" >/tmp/regress; \
+	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" >/tmp/regress; \
 	    diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress

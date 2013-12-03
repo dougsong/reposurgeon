@@ -5942,6 +5942,7 @@ into sections of the input stream instead).
                 if "stdin" not in self.capabilities and "stdout" not in self.capabilities:
                     raise Recoverable("no support for - redirection")
                 else:
+                    self.line = ""
                     self.redirected = True
             return self
         def __exit__(self, extype_unused, value_unused, traceback_unused):
@@ -7178,7 +7179,7 @@ constructed with command-line arguments).
             elif os.path.isdir(parse.line):
                 repo = read_repo(parse.line, parse.options, self.preferred)
             else:
-                raise Recoverable("read needs a directory or input redirect")
+                raise Recoverable("read no longer takes a filename argument - use > redirection instead")
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
@@ -7205,7 +7206,7 @@ anything other than a plain file. The default selection is all events.
         line = self.set_selection_set(line, range(len(self.chosen())))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             if parse.line and not parse.redirected:
-                raise Recoverable("write needs an output redirect")
+                raise Recoverable("write no longer takes a filename argument - use > redirection instead")
             self.chosen().fast_export(self.selection, parse.stdout, progress=(verbose==1 and not quiet), target=self.preferred)
 
     def help_inspect(self):
@@ -8548,8 +8549,9 @@ must resolve to exactly two commits.
         command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
                   (bounds[0].mark, bounds[1].mark, dir1, dir2)
         os.system(command)
+
     #
-    # Setting patch to branchify
+    # Setting paths to branchify
     #
     def help_branchify(self):
         print("""
