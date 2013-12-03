@@ -2894,7 +2894,7 @@ class StreamParser:
                 commit.comment = record.props.pop("svn:log")
                 if not commit.comment.endswith("\n"):
                     commit.comment += "\n"
-            if global_options["svn_use_uuid"]:
+            if '--use-uuid' in options:
                 attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:
                 attribution = "%s <%s> %s" % (au, au, ad)
@@ -5853,11 +5853,7 @@ class RepositoryList:
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     OptionFlags = (
-        ("svn_use_uuid", """\
-    If set, use Subversion UUID when faking up email addresses, a la git-svn.
-Otherwise, fake up addresses the way git cvs-import does it.
-"""),
-        ("svn_ignore_properties", """\
+         ("svn_ignore_properties", """\
     Suppress read-time warnings about discarded property settings.
 """),
         ("svn_noautoignores", """\

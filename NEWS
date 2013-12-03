@@ -2,9 +2,10 @@
 
 Repository head:
      read and write no longer take file arguments, but require redirects.
-     svn_nobranch global option is replaced by --nobranch read option. 
+     svn_nobranch global option is replaced by the --nobranch read option. 
+     svn_use_uuid global option is replaced by the --use-uuid read option. 
      'unite' command has been incompatibly improved.
-     Backward-incompatible language changes are documented on the mabual page.
+     Backward-incompatible language changes are documented on the manual page.
 
 2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.

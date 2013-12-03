@@ -1912,6 +1912,10 @@ report a bug in <command>reposurgeon</command>.</para>
 </varlistentry>
 </variablelist>
 
+<para>If the --use_uuid read option is set, the repository's UUID will
+be used as the hostname when faking up email addresses, a la git-svn.
+Otherwise, addresses will be the way git cvs-import does it.</para>
+
 </refsect2>
 <refsect2><title>WRITING SUBVERSION REPOSITORIES</title>
 
