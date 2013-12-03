@@ -1692,6 +1692,29 @@ editing or conversion purposes.</para>
 
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
+<para>Certain optional modifiers on the read command change
+its behavior whe neading Subversion repositories:</para>
+
+<variablelist>
+<varlistentry>
+<term>--nobranch</term>
+<listitem><para>Suppress branch analysis.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>--ignore-properties</term>
+<listitem><para>Suppress read-time warnings about discarded property
+settings.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>--use-uuid</term>
+<listitem><para>If the --use-uuid read option is set, the repository's
+UUID will be used as the hostname when faking up email addresses, a la
+git-svn.  Otherwise, addresses will be the way git cvs-import does
+it.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
 <para>Here are the rules used for mapping subdirectories in a 
 Subversion repository to branches:</para>
 
@@ -1911,10 +1934,6 @@ report a bug in <command>reposurgeon</command>.</para>
 </listitem>
 </varlistentry>
 </variablelist>
-
-<para>If the --use_uuid read option is set, the repository's UUID will
-be used as the hostname when faking up email addresses, a la git-svn.
-Otherwise, addresses will be the way git cvs-import does it.</para>
 
 </refsect2>
 <refsect2><title>WRITING SUBVERSION REPOSITORIES</title>

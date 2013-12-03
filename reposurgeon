@@ -2921,7 +2921,7 @@ class StreamParser:
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.fossil_map[cvskey] = commit
                         del node.props["cvs2svn:cvs-rev"]
-                    if not global_options["svn_ignore_properties"]:
+                    if not "--ignore-properties" in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.iteritems() \
                                         if prop not in StreamParser.IgnoreProperties)
@@ -5853,9 +5853,6 @@ class RepositoryList:
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     OptionFlags = (
-         ("svn_ignore_properties", """\
-    Suppress read-time warnings about discarded property settings.
-"""),
         ("svn_noautoignores", """\
     Do not generate a simulation of Subversion ignores in the root node.
 """),
