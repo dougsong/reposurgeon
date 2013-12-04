@@ -1534,6 +1534,8 @@ class Commit(object):
     def children(self):
         "Get a list of this commit's children."
         return self._child_nodes
+    def child_marks(self):
+        return [x.mark for x in self._child_nodes]
     def has_children(self):
         "Predicate - does this commit have children?"
         return bool(self._child_nodes)
@@ -7235,17 +7237,49 @@ is an identifying header before each event dump.  Supports > redirection.
 
     def help_strip(self):
         print("""
-Replace the blobs in the selected repository with self-identifying stubs.
-This is useful for producing reduced test cases from large repositories.
+Replace the blobs in the selected repository with self-identifying stubs;
+and/or strip out topologically uninteresting commits.  The modifiers for
+this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
+
+This is intended for producing reduced test cases from large repositories.
 """)
-    def do_strip(self, _line):
+    def do_strip(self, line):
         "Drop content to produce a reduced test case."
-        if self.chosen() is None:
+        repo = self.chosen()
+        if repo is None:
             complain("no repo has been chosen.")
             return
-        for event in self.chosen().events:
-            if isinstance(event, Blob):
-                event.set_content("Blob at %s\n" % event.mark)
+        if not line:
+            striptypes = ["blobs"]
+        else:
+            striptypes = line.split()
+        if "blobs" in striptypes:
+            for event in repo.events:
+                if isinstance(event, Blob):
+                    event.set_content("Blob at %s\n" % event.mark)
+        if "reduce" in striptypes:
+            interesting = set([])
+            for event in repo.events:
+                if isinstance(event, Tag):
+                    interesting.add(event.committish)
+                elif isinstance(event, Reset):
+                    interesting.add(event.ref)
+                elif isinstance(event, Commit):
+                    if len(event.children()) != 1 or len(event.parents()) != 1:
+                        interesting.add(event.mark)
+                else:
+                    for op in event.fileops:
+                        if op.type != 'M' or op.path not in event.parents()[0].paths():
+                            interesting.add(event.mark)
+                            break
+            neighbors = set()
+            for event in repo.events:
+                if isinstance(event, Commit) and event.mark in interesting:
+                    neighbors |= set(event.parent_marks())
+                    neighbors |= set(event.child_marks())
+            interesting |= neighbors
+            repo.delete([i for i in range(len(repo.events)) \
+                         if isinstance(event, Commit) and event.mark not in interesting], ["quiet", "obliterate"])
 
     def help_graph(self):
         print("""
