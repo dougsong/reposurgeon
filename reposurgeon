@@ -5029,7 +5029,7 @@ class Repository:
                             newname = oldname + "-" + color
                     elif not oldname in persist:
                         # record name as belonging to this repo
-                        persist[oldname] = "color"
+                        persist[oldname] = color
                         continue
                     elif persist.get(oldname) == color:
                         # name belongs here, do nothing
