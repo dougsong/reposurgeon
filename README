@@ -34,29 +34,5 @@ There is an extensive regression-test suite in the test/ directory.
 To test the correctness of this software, ensure that pylint
 is installed and then type 'make check'.
 
-reposurgeon is an extremely algorithmically complex program.  It may
-still have bugs when dealing with strange corner cases in older
-repositories.  It is often extremely difficult or impossible to
-reproduce those bugs without a full copy of the history on which they
-occurred.
-
-When you find a bug, please send me
-
-(a) An exact description of how observed behavior differed from expected
-behavior.  If reposurgeon died, include the backtrace.
-
-(b) A git fast-import or Subversion dump file of the repository you
-were operating on, or a pointer to where I can pull it from. 
-
-If your Subversion repo is large, or contains proprietary content that
-you need to obscure, consider using the svncutter tool from the
-Subversion contrib directory.  It is publicly available at this URL:
-
-https://svn.apache.org/repos/asf/subversion/trunk/contrib/server-side/svncutter/svncutter
-
-The "skeleton" option of svncutter will replace all content blobs with
-dummies, preserving the structure of the repo and (almost certainly)
-its ability to trigger your bug.  Skeletonizing also makes the dump
-drastically smaller and faster to process.
-
-(c) The sequence of reposurgeon commands that tickled the bug.
+See report-bugs.asc for advice on how to troubleshoot problems
+with reposurgeon and report bugs.

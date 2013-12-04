@@ -43,6 +43,9 @@ repodiffer.html: repodiffer.xml
 features.html: features.asc
 	asciidoc features.asc
 
+reporting-bugs.html: reporting-bugs.asc
+	asciidoc reporting-bugs.asc
+
 PYVERSION=2.7
 cyreposurgeon: reposurgeon
 	cython --embed reposurgeon -o cyreposurgeon.c
@@ -91,5 +94,5 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
 zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html features.html
+release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html features.html
 	shipper version=$(VERS) | sh -e -x
