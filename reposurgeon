@@ -5015,36 +5015,41 @@ class Repository:
     def uniquify(self, color, persist=None):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:
-            # Disambiguate all tags.
-            for (objtype, attr) in ((Tag, "name"),):
+            for (objtype, attr) in ((Commit, "branch"),
+                                    (Reset, "ref"),
+                                    (Tag, "name"),):
                 if isinstance(event, objtype):
                     oldname = getattr(event, attr)
-                    if persist is None or oldname in persist:
-                        newname = color + "-" + oldname
-                        setattr(event, attr, newname)
-                        if persist is not None:
-                            persist.add(newname)
+                    newname = None
+                    if persist is None:
+                        # we're not trying to preserve names
+                        if objtype == Tag:
+                            newname = color + "-" + oldname
+                        else:
+                            newname = oldname + "-" + color
+                    elif not oldname in persist:
+                        # record name as belonging to this repo
+                        persist[oldname] = "color"
+                        continue
+                    elif persist.get(oldname) == color:
+                        # name belongs here, do nothing
+                        continue
                     else:
-                        if persist is not None:
-                            persist.add(oldname)
-            # Disambiguate all branches and refs.
-            for (objtype, attr) in ((Commit, "branch"), (Reset, "ref")):
-                if isinstance(event, objtype):
-                    oldname = getattr(event, attr)
-                    if persist is None or oldname in persist:
-                        newname = oldname + "-" + color
+                        # collision - oldname belongs to a different repo
+                        if objtype == Tag:
+                            newname = color + "-" + oldname
+                        else:
+                            newname = oldname + "-" + color
+                    if newname:
+                        setattr(event, attr, newname)
                         if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in %s.%s"
                                      % (oldname, newname,
                                         objtype.__name__,
                                         attr))
-                        setattr(event, attr, newname)
                         if persist is not None:
-                            persist.add(newname)
-                    else:
-                        if persist is not None:
-                            persist.add(oldname)
-            # Disambiguate defining marks.
+                            persist[newname] = color
+             # Disambiguate defining marks.
             for fld in ("mark", "committish"):
                 if hasattr(event, fld):
                     old = getattr(event, fld)
@@ -5078,7 +5083,7 @@ class Repository:
                             announce("moving %s -> %s in fileop"
                                      % (fileop.ref, new))
                         fileop.ref = new
-        return
+        return persist
     def absorb(self, other):
         # Only vcstype, sourcedir, and basedir are not copied here
         self.preserve_set |= other.preserve_set
@@ -5681,9 +5686,11 @@ class RepositoryList:
         roots = [x.earliest_commit() for x in factors]
         union = Repository("+".join(r.name for r in factors))
         os.mkdir(union.subdir())
-        for (i, factor) in enumerate(factors):
-            if i != len(factors) - 1:
-                factor.uniquify(factor.name)
+        factors.reverse()
+        persist = {}
+        for factor in factors:
+            persist = factor.uniquify(factor.name, persist)
+        factors.reverse()
         for factor in factors:
             union.absorb(factor)
             self.remove_by_name(factor.name)
@@ -7182,7 +7189,7 @@ constructed with command-line arguments).
             elif os.path.isdir(parse.line):
                 repo = read_repo(parse.line, parse.options, self.preferred)
             else:
-                raise Recoverable("read no longer takes a filename argument - use > redirection instead")
+                raise Recoverable("read no longer takes a filename argument - use < redirection instead")
         self.repolist.append(repo)
         self.choose(repo)
         if self.chosen():
