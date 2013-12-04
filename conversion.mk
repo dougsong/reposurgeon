@@ -29,13 +29,13 @@ default: $(PROJECT)-$(TARGET_VCS)
 
 # Build the repo from the fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
-	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read $(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
+	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
 ifeq ($(SOURCE_VCS),svn)
 
 # Build the fast-import stream from the Subversion stream dump
 $(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT).svn" "authors read <$(PROJECT).authormap" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "read <$(PROJECT).svn" "authors read <$(PROJECT).authormap" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
 
 # Build the Subversion stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
@@ -60,7 +60,7 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 
 # Get the Subversion state of the author mapping
 $(PROJECT).map: $(PROJECT).svn
-	reposurgeon "read $(PROJECT).svn" "authors write >$(PROJECT).map"
+	reposurgeon "read <$(PROJECT).svn" "authors write >$(PROJECT).map"
 
 endif
 
