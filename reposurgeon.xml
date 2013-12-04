@@ -1231,12 +1231,26 @@ removed.</para>
 </varlistentry>
 <varlistentry>
 <term><command>strip</command>
+        <command>[blobs|reduce]</command>.
 </term>
 <listitem>
-<para>Replace each blob in the repository with a small,
-self-identifying stub, leaving all metadata and DAG topology
-intact. This is useful when you are reporting a bug, for reducing
-large repositories to test cases of manageable size.</para>
+<para>Reduce the selected repository to make it a more tractable test
+case. Use this when reporting bugs.</para>
+
+<para>With the modfier 'blobs', replace each blob in the repository
+with a small, self-identifying stub, leaving all metadata and DAG
+topology intact. This is useful when you are reporting a bug, for
+reducing large repositories to test cases of manageable size.</para>
+
+<para>With the modifier 'reduce', perform a topological reduction that
+throws out uninteresting commits.  If a commit has all file
+modifications (no deletions or copies or renames) and has exactly one
+ancestor and one descendant, then it may be boring.  To be fully
+boring, it must also not be referred to by any tag or reset.
+Interesting commits are not boring, or have a non-boring parent or
+non-boring child.</para>
+
+<para>With no modifiers, this command strips blobs.</para>
 </listitem>
 </varlistentry>
 </variablelist>

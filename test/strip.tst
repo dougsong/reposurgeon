@@ -1,6 +1,6 @@
-## Test of reduce command
+## Test of strip command
 echo 1
 read <simple.fi
-strip
+strip blobs
 write
 

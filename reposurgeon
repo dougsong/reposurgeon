@@ -4601,7 +4601,7 @@ class Repository:
     #
     # Delete machinery begins here
     #
-    def __ancestor_count(self, event, path):
+    def ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestors."
         count = 0
         while True:
@@ -4635,14 +4635,14 @@ class Repository:
         # M a + D a -> D a
         # Or, could reduce to nothing if M a was the only modify..
         elif left.op == "M" and right.op in "D":
-            if self.__ancestor_count(event, left.path) == 1:
+            if self.ancestor_count(event, left.path) == 1:
                 return (True, None, None, None, 1)
             else:
                 return (True, right, None, None, 2)
         elif left.op == "M" and right.op == "R":
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
-                if self.__ancestor_count(event, left.path) == 1:
+                if self.ancestor_count(event, left.path) == 1:
                     # M a has no ancestors, preceding R can be dropped
                     left.path = right.target
                     return (True, left, None, None, 3)
@@ -7267,11 +7267,11 @@ This is intended for producing reduced test cases from large repositories.
                 elif isinstance(event, Commit):
                     if len(event.children()) != 1 or len(event.parents()) != 1:
                         interesting.add(event.mark)
-                else:
-                    for op in event.fileops:
-                        if op.type != 'M' or op.path not in event.parents()[0].paths():
-                            interesting.add(event.mark)
-                            break
+                    else:
+                        for op in event.fileops:
+                            if op.op != 'M' or repo.ancestor_count(event.parents()[0], op.path) == 0:
+                                interesting.add(event.mark)
+                                break
             neighbors = set()
             for event in repo.events:
                 if isinstance(event, Commit) and event.mark in interesting:

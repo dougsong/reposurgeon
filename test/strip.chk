@@ -1,5 +1,5 @@
 read <simple.fi
-reduce
+strip blobs
 write
 blob
 mark :1
