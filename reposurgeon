@@ -5696,12 +5696,15 @@ class RepositoryList:
             self.remove_by_name(factor.name)
         # Renumber all events
         union.renumber()
-        # Sort out the root grafts. The way we used to do this involved
-        # sorting the union commits by timestamp, but this fails because
-        # in real-world repos timestamp order may not coincide with mark
-        # order - leading to "mark not defined" errors from the importer at
-        # rebuild time.  This method gives less intuitive results but at
-        # least means we never need to reorder.
+        # Sort out the root grafts. The way we used to do this
+        # involved sorting the union commits by timestamp, but this
+        # fails because in real-world repos timestamp order may not
+        # coincide with mark order - leading to "mark not defined"
+        # errors from the importer at rebuild time. Instead we graft
+        # each root just after the last commit in the dump sequence
+        # with a date prior to it.  This method gives less intuitive
+        # results, but at least means we never need to reorder
+        # commits.
         for root in roots[1:]:
             most_recent = None
             def predicate(event):
@@ -7924,11 +7927,11 @@ Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
 union repo will be selected.
 
-Before merging, the repos will be sorted by date of first commit.  The
-oldest will keep all its branch and tag names unchanged (this rule is
-followed so there will always be a defined default branch).  All others
-will have their branch and tag names suffixed with their load name.
-Marks will be renumbered.
+The root of each repo (other than the oldest repo) will be grafted as
+a child to the last commit in the dump with a preceding commit date.
+Running last to first, duplicate names will be disambiguated using the
+source repository name (thus, recent duplicates will get priority over
+older ones). After all grafts, marks will be renumbered.
 
 The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
