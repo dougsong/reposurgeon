@@ -9,7 +9,8 @@ Repository head:
      'unite' command has been incompatibly improved.
      Backward-incompatible language changes are documented on the manual page.
      New 'strip' command for generating test cases with blobs stripped out
-     New 'reduce' commant for topological reduction of test cases.
+     New 'reduce' command for topological reduction of test cases.
+     The 'lint' command gets a test for the existence of multiple roots.
 
 2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.
