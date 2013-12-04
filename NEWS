@@ -8,6 +8,7 @@ Repository head:
      svn_noautoignores is replaced by the --no-autoignores read option. 
      'unite' command has been incompatibly improved.
      Backward-incompatible language changes are documented on the manual page.
+     New 'strip' command for generating test cases with blobs stripped out
 
 2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.

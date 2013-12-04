@@ -1,0 +1,895 @@
+read <simple.fi
+reduce
+write
+blob
+mark :1
+data 11
+Blob at :1
+
+reset refs/tags/lightweight-sample
+commit refs/tags/lightweight-sample
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
+data 22
+The adventure begins.
+M 100644 :1 rs
+
+blob
+mark :3
+data 11
+Blob at :3
+
+commit refs/tags/lightweight-sample
+mark :4
+author Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
+data 28
+Beginnings of core classes.
+from :2
+M 100755 :3 rs
+
+blob
+mark :5
+data 11
+Blob at :5
+
+commit refs/tags/lightweight-sample
+mark :6
+author Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
+data 27
+Beginning of design notes.
+from :4
+M 100644 :5 theory.txt
+
+blob
+mark :7
+data 11
+Blob at :7
+
+blob
+mark :8
+data 11
+Blob at :8
+
+commit refs/tags/lightweight-sample
+mark :9
+author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
+data 40
+Sync data structures with design notes.
+from :6
+M 100755 :7 rs
+M 100644 :8 theory.txt
+
+blob
+mark :10
+data 12
+Blob at :10
+
+commit refs/tags/lightweight-sample
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
+data 31
+Skeleton of fast-import logic.
+from :9
+M 100755 :10 rs
+
+blob
+mark :12
+data 12
+Blob at :12
+
+commit refs/tags/lightweight-sample
+mark :13
+author Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
+data 47
+Fast-import reading except for commit objects.
+from :11
+M 100755 :12 rs
+
+blob
+mark :14
+data 12
+Blob at :14
+
+commit refs/tags/lightweight-sample
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
+data 30
+First commands are executing.
+from :13
+M 100755 :14 rs
+
+blob
+mark :16
+data 12
+Blob at :16
+
+commit refs/tags/lightweight-sample
+mark :17
+author Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
+data 36
+Options processing for subcommands.
+from :15
+M 100755 :16 rs
+
+blob
+mark :18
+data 12
+Blob at :18
+
+commit refs/tags/lightweight-sample
+mark :19
+author Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
+data 31
+First parse of an entire dump.
+from :17
+M 100755 :18 rs
+
+blob
+mark :20
+data 12
+Blob at :20
+
+commit refs/tags/lightweight-sample
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
+data 26
+Typo fix and name change.
+from :19
+M 100755 :20 rs
+
+blob
+mark :22
+data 12
+Blob at :22
+
+commit refs/tags/lightweight-sample
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
+data 27
+Upate theory of operation.
+from :21
+M 100644 :22 theory.txt
+
+blob
+mark :24
+data 12
+Blob at :24
+
+commit refs/tags/lightweight-sample
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
+data 38
+First successful interpreted command.
+from :23
+M 100755 :24 rs
+
+blob
+mark :26
+data 12
+Blob at :26
+
+blob
+mark :27
+data 12
+Blob at :27
+
+commit refs/tags/lightweight-sample
+mark :28
+author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
+data 22
+Document limitations.
+from :25
+M 100755 :26 rs
+M 100644 :27 theory.txt
+
+blob
+mark :29
+data 12
+Blob at :29
+
+commit refs/tags/lightweight-sample
+mark :30
+author Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
+data 32
+Fix a bug, add instrumentation.
+from :28
+M 100755 :29 rs
+
+blob
+mark :31
+data 12
+Blob at :31
+
+commit refs/tags/lightweight-sample
+mark :32
+author Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
+data 43
+Partial fast-export (everything but blobs.
+from :30
+M 100755 :31 rs
+
+blob
+mark :33
+data 12
+Blob at :33
+
+commit refs/tags/lightweight-sample
+mark :34
+author Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
+data 30
+Blob dumping appears to work.
+from :32
+M 100755 :33 rs
+
+blob
+mark :35
+data 12
+Blob at :35
+
+commit refs/tags/lightweight-sample
+mark :36
+author Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
+data 40
+We interpret command-ine arguments now.
+from :34
+M 100755 :35 rs
+
+blob
+mark :37
+data 12
+Blob at :37
+
+commit refs/tags/lightweight-sample
+mark :38
+author Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
+data 53
+We're pretty close to round-tripping a git dump now.
+from :36
+M 100755 :37 rs
+
+blob
+mark :39
+data 12
+Blob at :39
+
+commit refs/tags/lightweight-sample
+mark :40
+author Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
+data 53
+Checkpoint before tring to write only requred marks.
+from :38
+M 100755 :39 rs
+
+blob
+mark :41
+data 12
+Blob at :41
+
+commit refs/tags/lightweight-sample
+mark :42
+author Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
+data 62
+This round-trips everything except the lightweight tag stuff.
+from :40
+M 100755 :41 rs
+
+blob
+mark :43
+data 12
+Blob at :43
+
+commit refs/tags/lightweight-sample
+mark :44
+author Eric S. Raymond <esr@thyrsus.com> 1288082031 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288082031 -0400
+data 40
+OK, now we have perfect round-tripping.
+from :42
+M 100755 :43 rs
+
+blob
+mark :45
+data 12
+Blob at :45
+
+blob
+mark :46
+data 12
+Blob at :46
+
+blob
+mark :47
+data 12
+Blob at :47
+
+blob
+mark :48
+data 12
+Blob at :48
+
+commit refs/tags/lightweight-sample
+mark :49
+author Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
+data 36
+Add and document a regression test.
+from :44
+M 100644 :45 READ[ME].txt
+M 100755 :46 rs
+M 100644 :47 test/Makefile
+M 100644 :48 test/simple.dump
+
+blob
+mark :50
+data 12
+Blob at :50
+
+commit refs/tags/lightweight-sample
+mark :51
+author Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
+data 53
+git-fast-export captures lightweight tags after all.
+from :49
+M 100644 :50 theory.txt
+
+blob
+mark :52
+data 12
+Blob at :52
+
+commit refs/tags/lightweight-sample
+mark :53
+author Eric S. Raymond <esr@thyrsus.com> 1288087302 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288087302 -0400
+data 34
+Re-enable command interpretation.
+from :51
+M 100755 :52 rs
+
+blob
+mark :54
+data 12
+Blob at :54
+
+commit refs/tags/lightweight-sample
+mark :55
+author Eric S. Raymond <esr@thyrsus.com> 1288087772 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288087772 -0400
+data 13
+repr -> str.
+from :53
+M 100755 :54 rs
+
+blob
+mark :56
+data 12
+Blob at :56
+
+commit refs/tags/lightweight-sample
+mark :57
+author Eric S. Raymond <esr@thyrsus.com> 1288087832 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288087832 -0400
+data 37
+Quiet the regression tests a little.
+from :55
+M 100644 :56 test/Makefile
+
+blob
+mark :58
+data 12
+Blob at :58
+
+commit refs/tags/lightweight-sample
+mark :59
+author Eric S. Raymond <esr@thyrsus.com> 1288088010 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288088010 -0400
+data 28
+Pass through mystery lines.
+from :57
+M 100755 :58 rs
+
+blob
+mark :60
+data 12
+Blob at :60
+
+commit refs/tags/lightweight-sample
+mark :61
+author Eric S. Raymond <esr@thyrsus.com> 1288092270 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288092270 -0400
+data 28
+Add do_shell and some help.
+from :59
+M 100755 :60 rs
+
+blob
+mark :62
+data 12
+Blob at :62
+
+blob
+mark :63
+data 12
+Blob at :63
+
+blob
+mark :64
+data 12
+Blob at :64
+
+blob
+mark :65
+data 12
+Blob at :65
+
+commit refs/tags/lightweight-sample
+mark :66
+author Eric S. Raymond <esr@thyrsus.com> 1288093185 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288093185 -0400
+data 65
+Add doccumentation, a makefile, help commands, and shell escape.
+from :61
+M 100644 :62 .gitignore
+M 100644 :63 Makefile
+M 100644 :64 reposurgeon.xml
+M 100755 :65 rs
+
+blob
+mark :67
+data 12
+Blob at :67
+
+blob
+mark :68
+data 12
+Blob at :68
+
+commit refs/tags/lightweight-sample
+mark :69
+author Eric S. Raymond <esr@thyrsus.com> 1288093585 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288093585 -0400
+data 13
+Name change.
+from :66
+M 100644 :67 Makefile
+R "rs" "reposurgeon"
+M 100644 :68 test/Makefile
+
+blob
+mark :70
+data 12
+Blob at :70
+
+commit refs/tags/lightweight-sample
+mark :71
+author Eric S. Raymond <esr@thyrsus.com> 1288093728 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288093728 -0400
+data 27
+Avoid an aliasing problem.
+from :69
+M 100644 :70 Makefile
+
+blob
+mark :72
+data 12
+Blob at :72
+
+blob
+mark :73
+data 12
+Blob at :73
+
+blob
+mark :74
+data 12
+Blob at :74
+
+commit refs/tags/lightweight-sample
+mark :75
+author Eric S. Raymond <esr@thyrsus.com> 1288093891 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288093891 -0400
+data 26
+Follow up on name change.
+from :71
+M 100644 :72 Makefile
+M 100755 :73 reposurgeon
+M 100644 :74 reposurgeon.xml
+
+blob
+mark :76
+data 12
+Blob at :76
+
+commit refs/tags/lightweight-sample
+mark :77
+author Eric S. Raymond <esr@thyrsus.com> 1288093998 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288093998 -0400
+data 22
+There is no specfile.
+from :75
+M 100644 :76 Makefile
+
+blob
+mark :78
+data 12
+Blob at :78
+
+blob
+mark :79
+data 12
+Blob at :79
+
+commit refs/tags/lightweight-sample
+mark :80
+author Eric S. Raymond <esr@thyrsus.com> 1288100146 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288100146 -0400
+data 22
+Implemented 'prefer'.
+from :77
+M 100755 :78 reposurgeon
+M 100644 :79 reposurgeon.xml
+
+blob
+mark :81
+data 12
+Blob at :81
+
+commit refs/tags/lightweight-sample
+mark :82
+author Eric S. Raymond <esr@thyrsus.com> 1288101062 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288101062 -0400
+data 38
+Fix buggy implementation of "prefer".
+from :80
+M 100755 :81 reposurgeon
+
+blob
+mark :83
+data 12
+Blob at :83
+
+commit refs/tags/annotated-sample
+mark :84
+author Eric S. Raymond <esr@thyrsus.com> 1288101602 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288101602 -0400
+data 47
+Set the write default type more intelligently.
+from :82
+M 100755 :83 reposurgeon
+
+blob
+mark :85
+data 12
+Blob at :85
+
+blob
+mark :86
+data 12
+Blob at :86
+
+commit refs/tags/annotated-sample
+mark :87
+author Eric S. Raymond <esr@thyrsus.com> 1288112612 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288112612 -0400
+data 46
+Try to get the write and rebuild logic right.
+from :84
+M 100755 :85 reposurgeon
+M 100644 :86 reposurgeon.xml
+
+blob
+mark :88
+data 12
+Blob at :88
+
+commit refs/tags/annotated-sample
+mark :89
+author Eric S. Raymond <esr@thyrsus.com> 1288113962 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288113962 -0400
+data 36
+Add twirling-batob progress meters.
+from :87
+M 100755 :88 reposurgeon
+
+blob
+mark :90
+data 12
+Blob at :90
+
+blob
+mark :91
+data 12
+Blob at :91
+
+commit refs/tags/annotated-sample
+mark :92
+author Eric S. Raymond <esr@thyrsus.com> 1288115880 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288115880 -0400
+data 35
+Cut verbosity, improve statistics.
+from :89
+M 100755 :90 reposurgeon
+M 100644 :91 reposurgeon.xml
+
+blob
+mark :93
+data 12
+Blob at :93
+
+blob
+mark :94
+data 12
+Blob at :94
+
+commit refs/tags/annotated-sample
+mark :95
+author Eric S. Raymond <esr@thyrsus.com> 1288117441 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288117441 -0400
+data 26
+Added the 'view' command.
+from :92
+M 100755 :93 reposurgeon
+M 100644 :94 reposurgeon.xml
+
+blob
+mark :96
+data 12
+Blob at :96
+
+blob
+mark :97
+data 12
+Blob at :97
+
+commit refs/tags/annotated-sample
+mark :98
+author Eric S. Raymond <esr@thyrsus.com> 1288160374 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288160374 -0400
+data 53
+Implement and document 'index'; document some plans.
+from :95
+M 100755 :96 reposurgeon
+M 100644 :97 reposurgeon.xml
+
+blob
+mark :99
+data 12
+Blob at :99
+
+commit refs/tags/annotated-sample
+mark :100
+author Eric S. Raymond <esr@thyrsus.com> 1288173615 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288173615 -0400
+data 37
+First try at an expression language.
+from :98
+M 100755 :99 reposurgeon
+
+blob
+mark :101
+data 13
+Blob at :101
+
+commit refs/tags/annotated-sample
+mark :102
+author Eric S. Raymond <esr@thyrsus.com> 1288179718 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288179718 -0400
+data 67
+Numbers, mark lookup, and $ are working.  Span punctuation is not.
+from :100
+M 100755 :101 reposurgeon
+
+blob
+mark :103
+data 13
+Blob at :103
+
+commit refs/tags/annotated-sample
+mark :104
+author Eric S. Raymond <esr@thyrsus.com> 1288181252 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288181252 -0400
+data 28
+Span resolution is working.
+from :102
+M 100755 :103 reposurgeon
+
+blob
+mark :105
+data 13
+Blob at :105
+
+commit refs/tags/annotated-sample
+mark :106
+author Eric S. Raymond <esr@thyrsus.com> 1288193458 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288193458 -0400
+data 40
+New recursive evaluator almost working.
+from :104
+M 100755 :105 reposurgeon
+
+blob
+mark :107
+data 13
+Blob at :107
+
+commit refs/tags/annotated-sample
+mark :108
+author Eric S. Raymond <esr@thyrsus.com> 1288194165 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288194165 -0400
+data 49
+OK, thismakes the binary logical operators work.
+from :106
+M 100755 :107 reposurgeon
+
+blob
+mark :109
+data 13
+Blob at :109
+
+commit refs/tags/annotated-sample
+mark :110
+author Eric S. Raymond <esr@thyrsus.com> 1288194826 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288194826 -0400
+data 29
+No hang on commandless line.
+from :108
+M 100755 :109 reposurgeon
+
+blob
+mark :111
+data 13
+Blob at :111
+
+blob
+mark :112
+data 13
+Blob at :112
+
+commit refs/tags/annotated-sample
+mark :113
+author Eric S. Raymond <esr@thyrsus.com> 1288199857 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288199857 -0400
+data 41
+Document the new selection-set language.
+from :110
+M 100755 :111 reposurgeon
+M 100644 :112 reposurgeon.xml
+
+blob
+mark :114
+data 13
+Blob at :114
+
+commit refs/heads/master
+mark :115
+author Eric S. Raymond <esr@thyrsus.com> 1288200336 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288200336 -0400
+data 21
+Documentation fixes.
+from :113
+M 100644 :114 reposurgeon.xml
+
+blob
+mark :116
+data 13
+Blob at :116
+
+commit refs/heads/master
+mark :117
+author Eric S. Raymond <esr@thyrsus.com> 1288202060 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288202060 -0400
+data 51
+Minor refactoring step, and lower the debug level.
+from :115
+M 100755 :116 reposurgeon
+
+blob
+mark :118
+data 13
+Blob at :118
+
+commit refs/heads/master
+mark :119
+author Eric S. Raymond <esr@thyrsus.com> 1288202462 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288202462 -0400
+data 67
+Fix brown-paper-bag bug that broke the round-trip regression test.
+from :117
+M 100755 :118 reposurgeon
+
+blob
+mark :120
+data 13
+Blob at :120
+
+commit refs/heads/master
+mark :121
+author Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+data 27
+Document a failed attempt.
+from :119
+M 100755 :120 reposurgeon
+
+blob
+mark :122
+data 13
+Blob at :122
+
+commit refs/heads/master
+mark :123
+author Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
+data 37
+Cut down on expensive input editing.
+from :121
+M 100755 :122 reposurgeon
+
+blob
+mark :124
+data 13
+Blob at :124
+
+blob
+mark :125
+data 13
+Blob at :125
+
+commit refs/heads/master
+mark :126
+author Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
+data 183
+Switch selection sets from prefix to postfix.
+
+The prefix position what triggering some obscure bug in the Python cmd
+class; the symptom was that "$ verbose" wouldn't parse properly.
+from :123
+M 100755 :124 reposurgeon
+M 100644 :125 reposurgeon.xml
+
+blob
+mark :127
+data 13
+Blob at :127
+
+commit refs/heads/master
+mark :128
+author Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
+data 55
+Compute the correct default set for the index command.
+from :126
+M 100755 :127 reposurgeon
+
+reset refs/heads/master
+from :128
+
+tag annotated-sample
+from :113
+tagger Eric S. Raymond <esr@thyrsus.com> 1288206780 -0400
+data 66
+We want an anntated tag in the repo for regression-test purposes.
+
+

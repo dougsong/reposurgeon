@@ -7233,6 +7233,20 @@ is an identifying header before each event dump.  Supports > redirection.
                 else:
                     parse.stdout.write(str(event))
 
+    def help_strip(self):
+        print("""
+Replace the blobs in the selected repository with self-identifying stubs.
+This is useful for producing reduced test cases from large repositories.
+""")
+    def do_strip(self, _line):
+        "Drop content to produce a reduced test case."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        for event in self.chosen().events:
+            if isinstance(event, Blob):
+                event.set_content("Blob at %s\n" % event.mark)
+
     def help_graph(self):
         print("""
 Dump a graph representing selected events to standard output in DOT markup
