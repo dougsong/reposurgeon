@@ -708,14 +708,17 @@ unwieldy.</para>
 <varlistentry>
 <term><command>lint</command>
         [<emphasis>selection-set</emphasis>]
-        [structure | names]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Look for metadata configurations that may indicate a problem. Presently
-checks for: (1) Mid-branch deletes, (2) committer and author IDs that
-don't look well-formed as DVCS IDs. These reports can be individually
-selected with the modifiers 'structure' and 'names'.</para>
+<para>Look for DAG and metadata configurations that may indicate a
+problem. Presently checks for: (1) Mid-branch deletes, (2)
+disconnected commits, (3) parentless commits, (4) the existance of
+multiple roots, (5) committer and author IDs that don't look
+well-formed as DVCS IDs.</para>
+
+<para>The modifiers and output format of this command are unstable; they may
+change without notice as more sanity checks are added.</para>
 </listitem>
 </varlistentry>
 </variablelist>

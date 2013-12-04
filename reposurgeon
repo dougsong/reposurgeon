@@ -6964,10 +6964,11 @@ unwieldy.
             sz(total, "")
     def help_lint(self):
         print("""
-Look for metadata configurations that may indicate a problem. Presently
-checks for: (1) Mid-branch deletes, (2) committer and author IDs that
-don't look well-formed as DVCS IDs.  These reports can be individually
-selected with the modifiers 'structure' and 'names'. 
+Look for DAG and metadata configurations that may indicate a
+problem. Presently checks for: (1) Mid-branch deletes, (2)
+disconnected commits, (3) parentless commits, (4) the existance of
+multiple roots, (5) committer and author IDs that don't look
+well-formed as DVCS IDs.
 """)
     def do_lint(self, line):
         "Look for lint in a repo."
@@ -6980,28 +6981,28 @@ selected with the modifiers 'structure' and 'names'.
             shortset = set()
             deletealls = set()
             disconnected = set()
+            roots = set()
             for i in self.selection:
                 event = self.chosen().events[i]
                 if isinstance(event, Commit):
-                    if not line or "structure" in line:
-                        if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
-                            deletealls.add("on %s at %s" % (event.branch, event.id_me()))
-                        if not event.has_parents() and not event.has_children():
-                            disconnected.add(event.id_me())
-                    if unmapped and (not line or "names" in line):
+                    if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
+                        deletealls.add("on %s at %s" % (event.branch, event.id_me()))
+                    if not event.has_parents() and not event.has_children():
+                        disconnected.add(event.id_me())
+                    elif not event.has_parents():
+                        roots.add(event.id_me())
+                    if unmapped:
                         for person in [event.committer] + event.authors:
                             if unmapped.match(person.email):
                                 shortset.add(person.email)
-            if not line or "structure" in line:
-                for item in deletealls:
-                    parse.stdout.write("mid-branch delete: %s\n" % item)
-                for item in disconnected:
-                    parse.stdout.write("disconnected commit: %s\n" % item)
-            if "names" in line:
-                parse.stdout.write("\n".join(list(shortset)) + "\n")
-            elif not line:
-                for item in shortset:
-                    parse.stdout.write("unknown shortname: %s\n" % item)
+            for item in deletealls:
+                parse.stdout.write("mid-branch delete: %s\n" % item)
+            for item in disconnected:
+                parse.stdout.write("disconnected commit: %s\n" % item)
+            if len(roots) > 1:
+                parse.stdout.write("multiple root commits: %s\n" % roots)
+            for item in shortset:
+                parse.stdout.write("unknown shortname: %s\n" % item)
     #
     # Housekeeping
     #
