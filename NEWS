@@ -6,6 +6,7 @@ Repository head:
      svn_use_uuid is replaced by the --use-uuid read option. 
      svn_ignore_properties is replaced by the --ignore-properties option. 
      svn_noautoignores is replaced by the --no-autoignores read option. 
+     fossilize is replaced by the --fossilize write option.
      'unite' command has been incompatibly improved.
      Backward-incompatible language changes are documented on the manual page.
      New 'strip' command for generating test cases with blobs stripped out

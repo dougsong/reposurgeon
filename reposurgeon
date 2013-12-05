@@ -1714,7 +1714,7 @@ class Commit(object):
             parts.append("committer %s\n" % self.committer)
         if self.comment is not None:
             comment = self.comment
-            if global_options["fossilize"] and self.fossil_id:
+            if options and "--fossilize" in options and self.fossil_id:
                 comment += "\nFossil-ID: %s\n" % self.fossil_id
             parts.append("data %d\n%s" % (len(comment), comment))
         if "nl-after-comment" in self.repo.export_style():
@@ -5898,10 +5898,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList):
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
 and then appending a LF.
 """),
-        ("fossilize", """\
-    If set, the Fossil-ID of each commit is appended to its commit comment
-at write time. This option is mainly useful for debugging conversion edge cases.
-"""),
         ("compressblobs", """\
     Use compression for on-disk copies of blobs. Accepts an increase
 in repository read and write time in order to reduce the amount of
@@ -5970,6 +5966,7 @@ into sections of the input stream instead).
                 else:
                     self.line = ""
                     self.redirected = True
+            self.line = self.line.strip()
             return self
         def __exit__(self, extype_unused, value_unused, traceback_unused):
             pass
@@ -7242,7 +7239,7 @@ selected repository type cannot digest them.
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
-            if parse.redirected or not self.line:
+            if parse.redirected or not parse.line:
                 self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             elif os.path.isdir(parse.line):
                 rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
