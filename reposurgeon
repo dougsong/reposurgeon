@@ -5932,7 +5932,7 @@ into sections of the input stream instead).
                     raise Recoverable("no support for > redirection")
                 self.outfile = m.group(0)[1:]
                 if self.outfile and self.outfile != '-':
-                    if os.path.exists(self.outfile) and not os.isfile(self.outfile):
+                    if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable("not a plain file")
                     try:
                         self.stdout = open(self.outfile, "w")
