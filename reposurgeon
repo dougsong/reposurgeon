@@ -514,6 +514,10 @@ def complain(msg):
 def announce(msg):
     sys.stdout.write("reposurgeon: %s\n" % msg)
 
+def pacify_pylint(_unused):
+    "Head off spurious unused-variable warnings."
+    pass
+
 def memoize_iterator(iterator_f, mem_attr = None):
     """From a class method returning an iterator, create
        one which caches the iterator results and replays
@@ -946,7 +950,7 @@ class Blob(object):
                 announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.paths, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
-    def dump(self, vcs=None):
+    def dump(self, vcs=None, options=None):
         if self.hasfile() and not os.path.exists(self.blobfile()):
             return ''
         else:
@@ -954,10 +958,11 @@ class Blob(object):
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
             # Ugh.  This is where we mess with ignore syntax translation
-            if vcs and self.repo.vcs and len(self.paths) == 1 and self.paths[0].endswith(".gitignore"):
-                if vcs.name == "hg" and self.repo.vcs.name != "hg":
-                    if not content.startswith("syntax: glob\n"):
-                        content = "syntax: glob\n" + content
+            if options is None or not '--no-autoignores' in options:
+                if vcs and self.repo.vcs and len(self.paths) == 1 and self.paths[0].endswith(".gitignore"):
+                    if vcs.name == "hg" and self.repo.vcs.name != "hg":
+                        if not content.startswith("syntax: glob\n"):
+                            content = "syntax: glob\n" + content
             return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
     def __str__(self):
         return self.dump()
@@ -1060,8 +1065,10 @@ class Tag(object):
             modified = True
             self.comment = newcomment
         return modified
-    def dump(self, _vcs=None):
+    def dump(self, vcs=None, options=None):
         "Dump this tag in import-stream format."
+        pacify_pylint(vcs)
+        pacify_pylint(options)
         parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
         if self.tagger:
             parts.append("tagger %s\n" % self.tagger)
@@ -1106,8 +1113,10 @@ class Reset(object):
     def moveto(self, repo):
         "Change the repo this reset is associated with."
         self.repo = repo
-    def dump(self, _vcs=None):
+    def dump(self, vcs=None, options=None):
         "Dump this reset in import-stream format."
+        pacify_pylint(vcs)
+        pacify_pylint(options)
         st = "reset %s\n" % self.ref
         if not self.committish:
             return st
@@ -1223,8 +1232,10 @@ class FileOp(object):
             return True
         else:
             return self.paths() & other.paths()
-    def dump(self, vcs=None):
+    def dump(self, vcs=None, options=None):
         "Dump this fileop in import-stream format."
+        pacify_pylint(vcs)
+        pacify_pylint(options)
         if self.op == "M":
             showmode = self.mode
             if isinstance(self.mode, int):
@@ -1685,8 +1696,9 @@ class Commit(object):
         if rank == 0:
             return child.head() # there was only one child
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
-    def dump(self, vcs=None):
+    def dump(self, vcs=None, options=None):
         "Dump this commit in import-stream format."
+        pacify_pylint(options)
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
             vcs = self.repo.vcs
         parts = []
@@ -1742,8 +1754,10 @@ class Passthrough(object):
         return str(msg)
     def email_in(self, msg):
         self.text = msg.get_payload()
-    def dump(self, _vcs=True):
+    def dump(self, vcs=True, options=None):
         "Dump this passthrough in import-stream format."
+        pacify_pylint(vcs)
+        pacify_pylint(options)
         return self.text
     def __str__(self):
         return self.dump()
@@ -2951,7 +2965,7 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            if "no-autoignores" in options:
+                            if "--no-autoignores" in options:
                                 startwith = ""
                             else:
                                 startwith = StreamParser.SubversionDefaultIgnores
@@ -4512,7 +4526,7 @@ class Repository:
         else:
             # Default to git style
             return ("nl-after-commit",)
-    def fast_export(self, selection, fp, _options, target=None, progress=False):
+    def fast_export(self, selection, fp, options, target=None, progress=False):
         "Dump the repo object in Subversion dump or fast-export format."
         if target and target.name == "svn":
             SubversionDumper(self).dump(selection, fp, progress)
@@ -4527,7 +4541,7 @@ class Repository:
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
-                    fp.write(event.dump(target))
+                    fp.write(event.dump(target, options=options))
                 if fossil_latch:
                     fp.write("reset fossil_id\n")
                     endcommit = Commit(self)
