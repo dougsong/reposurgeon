@@ -40,7 +40,7 @@ authors read <<EOF
 esr = Eric Raymond <esr@thyrsus.com>
 EOF
 echo 1
-write
+write -
 # Test multiline commands
 resolve \
 <annotated-sample>

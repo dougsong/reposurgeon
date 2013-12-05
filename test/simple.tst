@@ -20,5 +20,5 @@ manifest 116 ^reposurgeon
 choose simple-expunges
 paths sub foo
 paths sup
-write
+write -
 

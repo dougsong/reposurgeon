@@ -67,7 +67,7 @@ resolve <2010-10-27T12:07:32Z!esr@thyrsus.com>
 [105]
 # Test here-doc syntax
 echo 0
-write
+write -
 blob
 mark :1
 data 53

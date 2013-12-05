@@ -1,6 +1,6 @@
 read <roundup.fi
 strip blobs reduce
-write
+write -
 blob
 mark :1
 data 11

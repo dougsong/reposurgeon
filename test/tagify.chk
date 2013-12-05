@@ -1,6 +1,6 @@
 read <tagify.fi
 tagify
-write
+write -
 blob
 mark :1
 data 23
@@ -70,7 +70,7 @@ Third revision, without fileops.
 
 
 tagify 1..:6 tipdeletes
-write
+write -
 blob
 mark :1
 data 23
@@ -140,7 +140,7 @@ Third revision, without fileops.
 
 
 tagify 1..$ tipdeletes
-write
+write -
 blob
 mark :1
 data 23
@@ -209,7 +209,7 @@ Sixth revision.
 
 
 tagify canonicalize tipdeletes
-write
+write -
 blob
 mark :1
 data 23

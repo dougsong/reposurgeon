@@ -475,13 +475,16 @@ extension is removed from the load list name.</para>
 <listitem>
 <para>Dump selected events as a fast-import stream representing the
 edited repository; the default selection set is all events. Where to
-dump to is standard output if there is no argument or the argument
-is '-', or the target of an output redirect.  Fails if the
-redirect target exists and is a directory or anything other than a plain
-file.</para>
+dump to is standard output if there is no argument or the argument is
+'-', or the target of an output redirect. </para>
+
+<para>Alternatively, if there is no redirect and the argument names a
+directory, the repository is rebuilt into that directory; if that
+target directory is nonempty its contents are backed up to a save
+directory.</para>
 
 <para>Property extensions will be be omitted from the output if the
-importer for the selected repo cannot digest them.</para>
+importer for the selected repository type cannot digest them.</para>
 
 <para>Note: to examine small groups of commits without the progress
 meter, use <command>inspect</command>.</para>
@@ -2187,11 +2190,11 @@ summary-plus-continuation form.]]</para>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
 
-<para>In <command>reposurgeon</command> versions before 2.44, read
-and write optionally took file arguments rather than requiring
-redirects. This was changed in order to allow these commands to
-have modifiers. These modifiers replaced several global options
-that no longer exist.</para>
+<para>In <command>reposurgeon</command> versions before 2.44, read and
+write optionally took file arguments rather than requiring redirects
+(and the write command never wrote into directories). This was changed
+in order to allow these commands to have modifiers. These modifiers
+replaced several global options that no longer exist.</para>
 
 <para>In <command>reposurgeon</command> versions before 2.44, the
 earliest factor in a unite command always kept its tag and branch

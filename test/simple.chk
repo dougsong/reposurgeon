@@ -236,7 +236,7 @@ paths sub foo
 foo/theory.txt
 paths sup
 theory.txt
-write
+write -
 blob
 mark :5
 data 1329

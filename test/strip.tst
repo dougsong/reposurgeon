@@ -2,5 +2,5 @@
 echo 1
 read <simple.fi
 strip blobs
-write
+write -
 

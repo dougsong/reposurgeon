@@ -36,4 +36,4 @@ EOF
 inspect <352>
 references lift
 prefer git
-write
+write -

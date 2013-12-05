@@ -2,10 +2,10 @@
 echo 1
 read <tagify.fi
 tagify
-write
+write -
 tagify 1..:6 tipdeletes
-write
+write -
 tagify 1..$ tipdeletes
-write
+write -
 tagify canonicalize tipdeletes
-write
+write -

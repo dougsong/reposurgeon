@@ -19,11 +19,11 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .SUFFIXES: .svn .chk .fi .map
 
 .svn.chk:
-	$(REPOSURGEON) "read $<" "prefer git" "write" >$@ 2>&1
+	$(REPOSURGEON) "read $<" "prefer git" "write -" >$@ 2>&1
 .svn.fi:
-	$(REPOSURGEON) "read $<" "prefer git" "write" >$@
+	$(REPOSURGEON) "read $<" "prefer git" "write -" >$@
 .svn.map:
-	$(REPOSURGEON) "read $<" "fossils write" >$@
+	$(REPOSURGEON) "read $<" "fossils write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
 	svndump-buildregress repodiffer-buildregress
@@ -63,7 +63,7 @@ mailboxing:
 	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
-	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write" >/tmp/regress; \
+	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" >/tmp/regress; \
 	    diff -u $${file} /tmp/regress; \
 	done
 	@rm -f /tmp/regress
@@ -148,7 +148,7 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
-		$(REPOSURGEON) "read \<$${test}.svn" "prefer git" "write" >/tmp/regress 2>&1; \
+		$(REPOSURGEON) "read \<$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
@@ -172,7 +172,7 @@ fossil-regress:
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "read \<$${test}.svn" "fossils write" >/tmp/regress 2>/dev/null; \
+	    $(REPOSURGEON) "read \<$${test}.svn" "fossils write -" >/tmp/regress 2>/dev/null; \
 	    then diff -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
@@ -184,7 +184,7 @@ svndump-buildregress:
 	@for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
-	    $(REPOSURGEON) "read \<$${f}.fi" "prefer svn" "write" | svn-to-svn -s >$${f}.chk; \
+	    $(REPOSURGEON) "read \<$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk; \
 	done
 	@make --quiet clean
 svndump-regress:
@@ -194,7 +194,7 @@ svndump-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		if echo "  $${test}.fi" >&2; \
-		$(REPOSURGEON) "read \<$${test}.fi" "prefer svn" "write" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "read \<$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 		svn-to-svn -n -q </tmp/prestripped$$$$; \
@@ -214,7 +214,7 @@ svncheck:
 	    then \
 		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1; \
 		if echo "  $${test}.svn" >&2; \
-		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 	    fi \

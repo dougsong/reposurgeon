@@ -3,8 +3,8 @@ echo 1
 read <bzr.fi
 divide :1
 choose bzr-early
-write 
+write -
 choose bzr-late
-write 
+write -
 renumber
-write
+write -

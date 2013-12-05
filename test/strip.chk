@@ -1,6 +1,6 @@
 read <simple.fi
 strip blobs
-write
+write -
 blob
 mark :1
 data 11

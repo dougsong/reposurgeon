@@ -56,7 +56,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/reposurgeon "prefer git-extractor" "read $testrepo" "write"
+    ${BIN}/reposurgeon "prefer git-extractor" "read $testrepo" "write -"
 fi
 
 # Should we clean up the test directory

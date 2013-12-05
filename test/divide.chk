@@ -1,7 +1,7 @@
 read <bzr.fi
 divide :1
 choose bzr-early
-write
+write -
 feature commit-properties
 feature empty-directories
 feature multiple-authors
@@ -17,7 +17,7 @@ This is a test file in a dummy bzr repo.
 
 
 choose bzr-late
-write
+write -
 feature commit-properties
 feature empty-directories
 feature multiple-authors
@@ -34,7 +34,7 @@ This is a modification of that test file.
 
 
 renumber
-write
+write -
 feature commit-properties
 feature empty-directories
 feature multiple-authors

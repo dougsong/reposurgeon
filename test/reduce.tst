@@ -2,5 +2,5 @@
 echo 1
 read <roundup.fi
 strip blobs reduce
-write
+write -
 

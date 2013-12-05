@@ -6,7 +6,7 @@ tag    root
 tag    emptycommit-5
 tag    no-comment
 tag    with-comment
-write
+write -
 blob
 mark :1
 data 23

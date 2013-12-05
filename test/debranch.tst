@@ -2,4 +2,4 @@
 read <debranch.svn
 debranch resources master
 prefer git
-write
+write -
