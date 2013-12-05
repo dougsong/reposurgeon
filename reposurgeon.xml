@@ -479,9 +479,9 @@ dump to is standard output if there is no argument or the argument is
 '-', or the target of an output redirect. </para>
 
 <para>Alternatively, if there is no redirect and the argument names a
-directory, the repository is rebuilt into that directory; if that
-target directory is nonempty its contents are backed up to a save
-directory.</para>
+directory, the repository is rebuilt into that directory, with any
+selection set being ignored; if that target directory is nonempty its
+contents are backed up to a save directory.</para>
 
 <para>Property extensions will be be omitted from the output if the
 importer for the selected repository type cannot digest them.</para>
