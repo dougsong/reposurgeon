@@ -4512,7 +4512,7 @@ class Repository:
         else:
             # Default to git style
             return ("nl-after-commit",)
-    def fast_export(self, selection, fp, target=None, progress=False):
+    def fast_export(self, selection, fp, _options, target=None, progress=False):
         "Dump the repo object in Subversion dump or fast-export format."
         if target and target.name == "svn":
             SubversionDumper(self).dump(selection, fp, progress)
@@ -5379,7 +5379,7 @@ class CriticalRegion:
             complain("critical region ends.")
         return False
 
-def rebuild_repo(repo, target, preferred):
+def rebuild_repo(repo, target, options, preferred):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
         target = repo.sourcedir
@@ -5424,13 +5424,13 @@ def rebuild_repo(repo, target, preferred):
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
                 with open(tfname, "w") as tp:
-                    repo.fast_export(range(len(repo)), tp, progress=verbose>0, target=preferred)
+                    repo.fast_export(range(len(repo)), tp, options, progress=verbose>0, target=preferred)
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
                 os.remove(tfname)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(range(len(repo)), tp,
+                repo.fast_export(range(len(repo)), tp, options,
                                  target=preferred,
                                  progress=verbose>0)
         if repo.write_fossils:
@@ -7229,9 +7229,9 @@ selected repository type cannot digest them.
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
             if parse.redirected or not self.line:
-                self.chosen().fast_export(self.selection, parse.stdout, progress=(verbose==1 and not quiet), target=self.preferred)
+                self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             elif os.path.isdir(parse.line):
-                rebuild_repo(self.chosen(), line, self.preferred)
+                rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
             else:
                 raise Recoverable("write no longer takes a filename argument - use > redirection instead")
 
@@ -7361,7 +7361,8 @@ its contents are backed up to a save directory.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        rebuild_repo(self.chosen(), line, self.preferred)
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
 
     #
     # Editing commands
@@ -8788,4 +8789,9 @@ if __name__ == '__main__':
         sys.exit(1)
     except KeyboardInterrupt:
         print("")
+
+# The following sets edit modes for GNU EMACS
+# Local Variables:
+# mode:python
+# End:
 # end
