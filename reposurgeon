@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # reposurgeon - a repository surgeon.
 #
@@ -7187,6 +7187,8 @@ constructed with command-line arguments).
             if parse.redirected:
                 repo = Repository()
                 repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
+            # This is slightly asymmetrical with the write side, which
+            # interprets an empty argument list as '-'
             elif not parse.line or parse.line == '.':
                 repo = read_repo(os.getcwd(), parse.options, self.preferred)
             elif os.path.isdir(parse.line):
@@ -7206,10 +7208,14 @@ constructed with command-line arguments).
     def help_write(self):
         print("""
 Dump a fast-import stream representing selected events to standard
-output (if second argument is empty or '-') or via redirect to a file. Property
-extensions will be omitted if the importer for the selected repo cannot
-digest them. Fails if the output target exists and is a directory or
-anything other than a plain file. The default selection is all events.
+output (if second argument is empty or '-') or via redirect to a file.
+Alternatively, if there ia no redurect and the argument names a
+directory the repository is rebuilt into that directory; if that
+target directory is nonempty its contents are backed up to a save
+directory
+
+Property extensions will be omitted if the importer for the
+selected repository type cannot digest them.
 """)
     def do_write(self, line):
         "Stream out the results of repo surgery."
@@ -7217,10 +7223,17 @@ anything other than a plain file. The default selection is all events.
             complain("no repo has been chosen.")
             return
         line = self.set_selection_set(line, range(len(self.chosen())))
+        if line:
+            line = os.path.expanduser(line)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            if parse.line and not parse.redirected:
+            # This is slightly asymmetrical with the read side, which
+            # interprets an empty argument list as '.'
+            if parse.redirected or not self.line:
+                self.chosen().fast_export(self.selection, parse.stdout, progress=(verbose==1 and not quiet), target=self.preferred)
+            elif os.path.isdir(parse.line):
+                rebuild_repo(self.chosen(), line, self.preferred)
+            else:
                 raise Recoverable("write no longer takes a filename argument - use > redirection instead")
-            self.chosen().fast_export(self.selection, parse.stdout, progress=(verbose==1 and not quiet), target=self.preferred)
 
     def help_inspect(self):
         print("""
