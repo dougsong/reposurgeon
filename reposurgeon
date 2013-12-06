@@ -5910,7 +5910,7 @@ into sections of the input stream instead).
         )
     unclean = re.compile("[^\n]*\n[^\n]")
     class LineParse:
-        "Preparse a command line."
+        "Parse a command line implementing shell-like syntax."
         def __init__(self, line, capabilities=None):
             self.line = line
             self.capabilities = capabilities or []
@@ -5953,11 +5953,11 @@ into sections of the input stream instead).
                 self.redirected = True
             # Options 
             while True:
-                m = re.search(r"--\S+", self.line)
+                m = re.search(r"\b--\S+", self.line)
                 if not m:
                     break
                 else:
-                    self.options.add(m.group(0))
+                    self.options.add(m.group(0).strip())
                     self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
             # Dash redirection
             if not self.redirected and self.line.strip() == '-':
@@ -7548,7 +7548,7 @@ blob, your editor will be called on the blob file.
 
     def help_filter(self):
         print("""
-Run all blobs, filter comments, and tag comments in the selection
+Run all blobs, commit comments, and tag comments in the selection
 set (defaulting to all) through the filter specified on the command line.
 Each blob and comment is presented to the filter on standard input; the
 content is replaced with whatever the filter emits to standard output.
