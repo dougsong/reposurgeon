@@ -4795,7 +4795,7 @@ class Repository:
             commit._pathset = None
         return coverage
     def delete(self, selected, policy):
-        "Delete commits, handling multiple Ms on a file with specified policy"
+        "Delete a set of events."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
         # Make sure we do deletions from greatest commit number to least
@@ -7611,14 +7611,13 @@ with a space-separated list of all paths that reference the blob.
 
     def help_delete(self):
         print("""
-Delete a selection set of commits (and their associated blobs, if
-any).  The default selection set for this command is empty.  Tags
-pointing at the commits are also removed.
+Delete a selection set of events.  The default selection set for this
+command is empty.  Tags, resets, and passthroughs are deleted with no
+side effects.  Blobs cannot be directly deleted with this command; they
+are only when removal of fileops associated with commits requires this.
 
-Note that applying this command to a commit with a modify operation
-will *not* necessarily remove changes made by that commit from later
-versions.  It will have the effect of retracting the modifications
-only when they are the final ones on the commit's branch.
+When a commit is deleted, what becomes of tags and fileops attached to
+it is controlled by policy flags.
 """)
     def do_delete(self, line):
         "Delete events in the specified selection set."
@@ -7633,6 +7632,7 @@ only when they are the final ones on the commit's branch.
                                  "coalesce",
                                  "obliterate",
                                  "pushback",
+                                 "pushforward",
                                  "tagback",
                                  "tagforward",
                                  "quiet"]:

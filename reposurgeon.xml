@@ -744,7 +744,7 @@ to support.</para>
         [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
-<para>Delete a selection set of commits. The default selection set for
+<para>Delete a selection set of events. The default selection set for
 this command is empty.</para>
 
 <para>No <command>blob</command> event can be deleted directly with
@@ -757,13 +757,13 @@ are.</para>
 
 <para>The interesting use of this command is to delete commits.
 Children of a deleted commit get it removed from their parent set and
-its parents added.</para>
+its parents added to their parent set.</para>
 
 <para>Normally, when a commit is deleted, its file operation list (and
 any associated blob references) gets either prepended to the beginning
 of the operation list of each of the commit's children or appended to
 the operation list of each of the commit's parents. The default is
-to push forward. modifying children; but see the list of policy
+to push forward, modifying children; but see the list of policy
 modifiers below for how to change this.</para>
 
 <para>Normally, any tag pointing to a deleted commit will also be
@@ -802,6 +802,13 @@ warning when this occurs but does not try to resolve it.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>pushforward</command></term>
+<listitem>
+<para>Prepend fileops to children. This is the default; it can be
+specified in a lift script for explicitness about intentions.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>tagforward</command></term>
 <listitem>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
@@ -820,6 +827,12 @@ backward to the first parent than being deleted. </para>
 <listitem>
 <para>Suppresses warning messages about obliteration of commits with
 non-delete fileops.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>complain</command></term>
+<listitem>
+<para>The opposite of quiet. Can be specified for explicitness.</para>
 </listitem>
 </varlistentry>
 </variablelist>
