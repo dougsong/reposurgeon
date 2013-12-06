@@ -334,6 +334,29 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>fossil ID</entry>
         <entry align='center'>commit with that fossil ID</entry>
       </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+<para>Note that if an annotated tag and a branch have the same name foo,
+&lt;foo&gt; will resolve to the tag rather than the branch tip commit.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>dates and action stamps</firstterm></term>
+<listitem><para>A date or action stamp in angle brackets resilves
+to a seection set of all matching commits.</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'>type</entry>
+        <entry align='center'>interpretation</entry>
+      </row>
+    </thead>
+    <tbody>
       <row>
         <entry align='center'>RFC3339 date</entry>
         <entry align='center'>commit with that date</entry>
@@ -345,8 +368,10 @@ to a single object, either a commit or tag.</para>
     </tbody>
   </tgroup>
 </informaltable>
-<para>Note that if an annotated tag and a branch have the same name foo,
-&lt;foo&gt; will resolve to the tag rather than the branch tip commit.</para>
+<para>To refine the match to a single commit, use a 1-origin index
+suffix separated  by '#'. Thus "&lt;2000-02-06T09:35:10Z&gt;" can
+match multiple commits, but "&lt;2000-02-06T09:35:10Z#2&gt;" matches
+only the second in the set.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

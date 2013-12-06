@@ -6009,7 +6009,9 @@ into sections of the input stream instead).
         if self.echo:
             sys.stdout.write(line.rstrip()+"\n")
         if "#" in line:
-            line = line[:line.index("#")].rstrip()
+            pound = line.index("#")
+            if pound == 0 or line[pound-1].isspace():
+                line = line[:pound].rstrip()
         return line
     def do_shell(self, line):
         "Execute a shell command."
@@ -6291,6 +6293,14 @@ into sections of the input stream instead).
                                 matched = True
                                 break
                     # Might be a date or action stamp
+                    ordinal = None
+                    m = re.search("#[0-9]+$", ref)
+                    if m:
+                        try:
+                            ordinal = int(m.group(0)[1:])
+                            ref = ref[:-len(m.group(0))]
+                        except ValueError:
+                            raise Recoverable("ill-formed date")
                     date = None
                     bang = ref.find('!')
                     date_end = len(ref)
@@ -6323,7 +6333,11 @@ into sections of the input stream instead).
                         if len(matches) < 1:
                             raise Recoverable("no events match %s" % ref)
                         elif len(matches) > 1:
-                            raise Recoverable("multiple events match %s" % ref)
+                            if ordinal is not None and ordinal < len(matches):
+                                selection.append(matches[ordinal-1])
+                            else:
+                                selection += matches
+                            matched = True
                         else:
                             selection.append(matches[0])
                             matched = True
@@ -6608,13 +6622,14 @@ First, these ways of constructing singleton sets:
 
 123        event numbered 123 (1-origin)
 :345       event with mark 345
-<456>      commit with fossil-ID 456 (probably an SVN rev)
+<456>      commit with fossil-ID 456 (probably a Subversion revsion)
 <foo>      the tag named 'foo', or failing that the tip commmit of branch foo
 
 You can select commits and tags by date, or by date and committer:
 
-<2011-05-25T07:30:37Z>      specifying the commit date
-<2011-05-25T07:30:37Z!esr>  specifying the commit date and committer
+<2011-05-25T07:30:37Z>        all commits and tags with this date
+<2011-05-25T07:30:37Z!esr>    all with this date and committer
+<2011-05-25T07:30:37Z!esr#2>  event #2 (1-origin) in the above set
 
 More ways to construct event sets:
 
