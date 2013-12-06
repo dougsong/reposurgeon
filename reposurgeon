@@ -5694,7 +5694,7 @@ class RepositoryList:
         self.repo.cleanup()
         self.remove_by_name(self.repo.name)
         return True
-    def unite(self, factors, _options):
+    def unite(self, factors, options):
         "Unite multiple repos into a union repo."
         factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.earliest_commit() for x in factors]
@@ -5734,6 +5734,16 @@ class RepositoryList:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
             root.add_parent(most_recent.mark)
+            # We may not want files from the ancestral stock to persist
+            # in the grafted branch unless they have modify ops in the branch
+            # root.
+            if "--prune" in options:
+                keepers = root.paths()
+                for path in most_recent.manifest():
+                    if not path in keepers:
+                        fileop = FileOp()
+                        fileop.construct("D", path)
+                        root.fileops.append(fileop)
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)

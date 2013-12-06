@@ -1121,6 +1121,7 @@ an offset literal of +0 or -0.</para>
 </varlistentry>
 <varlistentry>
 <term><command>unite</command>
+        [--prune]
         <emphasis>reponame</emphasis>...
 </term>
 <listitem>
