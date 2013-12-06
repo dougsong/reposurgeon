@@ -7671,7 +7671,7 @@ separation in seconds; the default is 90 seconds.
         # artifacts in linear stretches of history that have been
         # lifted from file-oriented VCSes like RCS and CVS.
         icthis, icnext = itertools.tee(
-                ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit)))
+                ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit) and i in self.selection))
         next(icnext, None)
         for (ithis, cthis), (_inext, cnext) in itertools.izip(icthis, icnext):
             if cthis.branch != cnext.branch or cthis.comment != cnext.comment:
