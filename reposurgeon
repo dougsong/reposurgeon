@@ -5953,7 +5953,7 @@ into sections of the input stream instead).
                 self.redirected = True
             # Options 
             while True:
-                m = re.search(r"\b--\S+", self.line)
+                m = re.search(r"--\S+", self.line)
                 if not m:
                     break
                 else:
