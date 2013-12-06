@@ -4,7 +4,7 @@
    "docbook/docbookx.dtd">
 <refentry id='reposurgeon.1'>
 <refmeta>
-<refentrytitle>reposurgeon</refentrytitle>
+<refentrytitle>reposurgon</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='date'>Oct 31 2010</refmiscinfo>
 <refmiscinfo class='productname'>reposurgeon</refmiscinfo>
@@ -935,7 +935,8 @@ corresponding tags get names of the form
 comments close to each other in time (this is a common form of scar
 tissues in repository up-conversions from older file-oriented
 version-control systems).  Merge these cliques by deleting all but the
-last commit, in order.</para>
+last commit, in order; fileops from the deleted commits are pushed
+forward to that last one</para>
 
 <para>The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.</para>
