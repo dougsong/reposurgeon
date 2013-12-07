@@ -5994,6 +5994,7 @@ into sections of the input stream instead).
         self.line = ""
         self.history = []
         self.callstack = []
+        self.definitions = {}
         self.profile_log = None
         for option in dict(RepoSurgeon.OptionFlags):
             global_options[option] = False
@@ -8739,6 +8740,48 @@ displays the state of all flags. The following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
+
+    #
+    # Macros
+    #
+    def help_define(self):
+        print("""
+Define a macro.  The first whitespace-separated token is the name; the
+remainder of the line is the body.  A later 'do' call can invoke this macro.
+""")
+    def do_define(self, line):
+        "Define a macro"
+        name = line.split()[0]
+        body = line[len(name):].strip()
+        self.definitions[name] = body
+    def help_do(self):
+        "Do a macro."
+        print("""
+Expand and perform a macro.  The first whitespace-separated token is the name
+of the macro to be called; remaining tokens replace {0}, {1}... in the macro
+definition. Tokens may contain whitespace if they are string-quoted; string
+quotes are stripped. Macros can call macros.
+""")
+    def do_do(self, line):
+        name = line.split()[0]
+        if name not in self.definitions:
+            raise Recoverable("'%s' is not a defined macro" % name)
+        else:
+            body = self.definitions[name]
+        body = body.format(*shlex.split(line[len(name):]))
+        # Call the base method so RecoverableExceptions
+        # won't be caught; we want them to abort macros.
+        self.onecmd(self.precmd(body))
+    def help_undefine(self):
+        print("""
+Undefine the macro named in this command's first argument.
+""")
+    def do_undefine(self, line):
+        name = line.split()[0]
+        if name not in self.definitions:
+            raise Recoverable("'%s' is not a defined macro" % name)
+        else:
+            del self.definitions[name]
 
     #
     # Version binding 

@@ -20,5 +20,10 @@ manifest 116 ^reposurgeon
 choose simple-expunges
 paths sub foo
 paths sup
+# Test the macro facility
+define fubar list {0}
+do fubar :50
+undefine fubar
+# Stream the repo
 write -
 
