@@ -8279,21 +8279,21 @@ This command supports > redirection.
     def help_tagify(self):
         print("""
 Search for empty commits and turn them into tags. Takes an optional selection
-set argument and an optional space-separated policy list afterwards. For each
-commit in the selection set, turn it into a tag with the same message and
-author information if it has no fileops.
+set argument defaulting to all commits. For each commit in the selection set,
+turn it into a tag with the same message and author information if it has no
+fileops.
 
 The name of the tag is 'emptycommit-<ident>', where <ident> is generated from
 the fossil_id of the deleted commit, or from its mark, or from its index in the
 repository, with a disambiguation suffix if needed.
 
-There are two policies currently recognized: first is 'canonicalize' which
+tagify currently recognizes two options: first is '--canonicalize' which
 makes tagify try harder to detect trivial commits by first ensuring that all
 fileops of selected commits will have an actual effect when processed by
 fast-import.
 
-The second policy is 'tipdeletes' which makes tagify also consider branch tips
-with only deleteall fileops to be candidates for tagification. The
+The second option is '--tipdeletes' which makes tagify also consider branch
+tips with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form 'tipdelete-<branchname>' rather than
 the default 'emptycommit-<ident>'.
 """)
@@ -8304,12 +8304,13 @@ the default 'emptycommit-<ident>'.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = range(len(self.chosen()))
-        policy = set(line.strip().split())
-        if not policy <= {"canonicalize", "tipdeletes"}:
-            raise Recoverable("unknown policy for tagify")
-        repo.tagify_empty(commits = (repo.events[i] for i in self.selection),
-                          canonicalize = "canonicalize" in policy,
-                          tipdeletes = "tipdeletes" in policy)
+        with RepoSurgeon.LineParse(line) as parse:
+            if parse.line:
+                raise Recoverable("too many arguments for tagify.")
+            repo.tagify_empty(
+                    commits = (repo.events[i] for i in self.selection),
+                    canonicalize = "--canonicalize" in parse.options,
+                    tipdeletes = "--tipdeletes" in parse.options)
 
     def help_merge(self):
         print("""

@@ -69,7 +69,7 @@ data 34
 Third revision, without fileops.
 
 
-tagify 1..:6 tipdeletes
+tagify 1..:6 --tipdeletes
 write -
 blob
 mark :1
@@ -139,7 +139,7 @@ data 34
 Third revision, without fileops.
 
 
-tagify 1..$ tipdeletes
+tagify 1..$ --tipdeletes
 write -
 blob
 mark :1
@@ -208,7 +208,7 @@ data 17
 Sixth revision.
 
 
-tagify canonicalize tipdeletes
+tagify --canonicalize --tipdeletes
 write -
 blob
 mark :1

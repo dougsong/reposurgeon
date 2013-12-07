@@ -941,28 +941,29 @@ file path matches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>tagify</command> 
+<term><command>tagify</command>
+        [--canonicalize]
+        [--tipdeletes]
         [<emphasis>selection-set</emphasis>]
-        [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
 <para>Search for empty commits and turn them into tags. Takes an optional
-selection set argument and an optional space-separated policy list afterwards.
-For each commit in the selection set, turn it into a tag with the same message
-and author information if it has no fileops.</para>
+selection set argument defaulting to all commits. For each commit in the
+selection set, turn it into a tag with the same message and author information
+if it has no fileops.
+</para>
 
 <para>The name of the tag is 'emptycommit-<emphasis>ident</emphasis>', where
 <emphasis>ident</emphasis> is generated from the fossil_id of the deleted
 commit, or from its mark, or from its index in the repository, with a
 disambiguation suffix if needed.</para>
 
-<para>There are two policies currently recognized: first is 'canonicalize'
-which makes tagify try harder to detect trivial commits by first ensuring that
-all fileops of selected commits will have an actual effect when processed by
-fast-import.</para>
+<para>With the <option>--canonicalize</option>, tagify tries harder to detect
+trivial commits by first ensuring that all fileops of selected commits will
+have an actual effect when processed by fast-import.</para>
 
-<para>The second policy is 'tipdeletes' which makes tagify also consider branch
-tips with only deleteall fileops to be candidates for tagification. The
+<para>With the <option>--tipdeletes</option>, tagify also considers branch tips
+with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form
 'tipdelete-<emphasis>branchname</emphasis>' rather than the default
 'emptycommit-<emphasis>ident</emphasis>'.</para>
@@ -2363,6 +2364,11 @@ names unaltered. The new rule for resolving name conflicts, giving
 priprity to the latest factor, produces more natural behavior when
 uniting two repoositories end to end; the master branch of the second
 (later) one keeps its name.</para>
+
+<para>In <command>reposurgeon</command> versions before 2.44, the tagify
+command expected policies as trailing arguments to alter its behaviour. The new
+syntax uses similarly named options with leading dashes, that can appear
+anywhere after the tagify command</para>
 
 <para>In versions before 2.9. the syntax of "authors", "fossils",
 "list", and "mailbox_{in|out}" was different. They took plain filename 
