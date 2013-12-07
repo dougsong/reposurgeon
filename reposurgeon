@@ -6019,10 +6019,11 @@ into sections of the input stream instead).
         self.history.append(line.rstrip())
         if self.echo:
             sys.stdout.write(line.rstrip()+"\n")
-        if "#" in line:
-            pound = line.index("#")
-            if pound == 0 or line[pound-1].isspace():
-                line = line[:pound].rstrip()
+        if line.startswith("#"):
+            return ""
+        m = re.compile(r"\s+#")
+        if m:
+            line = m.split(line)[0]
         return line
     def do_shell(self, line):
         "Execute a shell command."

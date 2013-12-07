@@ -1733,16 +1733,21 @@ be expanded.  Additionally, $$ is expanded to the current process ID
 (which may be useful for scripts that use tempfiles).</para>
 
 <para>Within scripts (and only within scripts) <command>reposurgeon</command>
-accepts a slightly extended syntax: First, an anti-slash ending a line signals
+accepts a slightly extended syntax: First, a backslash ending a line signals
 that the command continues on the next line. Any number of consecutive lines
-thus escaped are concatenated, without the ending anti-slashes, prior to
+thus escaped are concatenated, without the ending backslashes, prior to
 evaluation. Second, a command that takes an input filename argument can instead
 take literal following data in the syntax of a shell here-document. That is: if
 the filename is replaced by "&lt;&lt;EOF", all following lines in the script up
 to a terminating line consisting only of "EOF" will be read, placed in a
 temporary file, and that file fed to the command and afterwards deleted. EOF
-may be replaced by any string. Anti-slashes have no special meaning while
-reading an here-document.</para>
+may be replaced by any string. Backslashes have no special meaning while
+reading a here-document.</para>
+
+<para>Scripts may have comments.  Any line beginning with a '#' is
+ignored. If a line has a trailing postion that begins with one or more
+whitespace characters followed by '#', that trailing portion is
+ignored.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
