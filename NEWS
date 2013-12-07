@@ -13,7 +13,7 @@ Repository head:
      New 'reduce' command for topological reduction of test cases.
      The 'lint' command gets a test for the existence of multiple roots.
      Selecting a date or action stamp matching multiple commits now matches all.
-     The surgcal language now has a macro facility.
+     The surgical language now has a macro facility.
 
 2.43: 2013-12-01
      "set canonicalize" is now effective during import stream reads.

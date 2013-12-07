@@ -8757,10 +8757,11 @@ remainder of the line is the body.  A later 'do' call can invoke this macro.
     def help_do(self):
         "Do a macro."
         print("""
-Expand and perform a macro.  The first whitespace-separated token is the name
-of the macro to be called; remaining tokens replace {0}, {1}... in the macro
-definition. Tokens may contain whitespace if they are string-quoted; string
-quotes are stripped. Macros can call macros.
+Expand and perform a macro.  The first whitespace-separated token is
+the name of the macro to be called; remaining tokens replace {0},
+{1}... in the macro definition (the conventions used are those of the
+Python format method). Tokens may contain whitespace if they are
+string-quoted; string quotes are stripped. Macros can call macros.
 """)
     def do_do(self, line):
         name = line.split()[0]
