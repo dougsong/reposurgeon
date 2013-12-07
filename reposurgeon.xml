@@ -1451,7 +1451,7 @@ log message***" that modifies only a ChangeLog entry explaining the
 commit immediately previous to it. The following
 
 <programlisting>
-define empty &lt;{0}&gt; &amp; /empty log message/ pushback
+define empty delete &lt;{0}&gt; &amp; /empty log message/ pushback
 do empty 2012-08-14T21:51:35Z
 do empty 2012-08-08T22:52:14Z
 do empty 2012-08-07T04:48:26Z
