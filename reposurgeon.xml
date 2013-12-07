@@ -966,6 +966,7 @@ corresponding tags get names of the form
 <varlistentry>
 <term><command>coalesce</command> 
         [<emphasis>selection-set</emphasis>]
+        [--debug]
         [<emphasis>timefuzz</emphasis>]
 </term>
 <listitem>
@@ -983,6 +984,8 @@ separation in seconds; the default is 90 seconds.</para>
 commits. Occasionally you may want to restrict it, for example to
 avoid coalescing unrelated cliques of "*** empty log message ***"
 commits from CVS lifts.</para>
+
+<para>With  the --debug option, show messages about mismatches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -7675,6 +7675,8 @@ last commit, in order.
 
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
+
+With  the --debug option, show messages about mismatches.
 """)
     def do_coalesce(self, line):
         "Coalesce events in the specified selection set."
@@ -7682,32 +7684,44 @@ separation in seconds; the default is 90 seconds.
             complain("no repo is loaded")
             return
         line = self.set_selection_set(line, [])
-        if not line:
-            timefuzz = 90
-        else:
-            try:
-                timefuzz = int(line)
-            except ValueError:
-                raise Recoverable("time-fuzz value must be an integer")
-        eligible = []
-        # This is a crude search that ignores the repo graph structure;
-        # properly speaking we should be chasing child links.  Screw
-        # it; this operation only make sense for cleaning up
-        # artifacts in linear stretches of history that have been
-        # lifted from file-oriented VCSes like RCS and CVS.
-        icthis, icnext = itertools.tee(
-                ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit) and i in self.selection))
-        next(icnext, None)
-        for (ithis, cthis), (_inext, cnext) in itertools.izip(icthis, icnext):
-            if cthis.branch != cnext.branch or cthis.comment != cnext.comment:
-                continue
-            #elif cthis.committer.email != cnext.committer.email:
-            #    continue
-            if cthis.committer.date.delta(cnext.committer.date) < timefuzz:
+        with RepoSurgeon.LineParse(line) as parse:
+            if not parse.line:
+                timefuzz = 90
+            else:
+                try:
+                    timefuzz = int(parse.line)
+                except ValueError:
+                    raise Recoverable("time-fuzz value must be an integer")
+            eligible = []
+            # This is a crude search that ignores the repo graph structure;
+            # properly speaking we should be chasing child links.  Screw
+            # it; this operation only make sense for cleaning up
+            # artifacts in linear stretches of history that have been
+            # lifted from file-oriented VCSes like RCS and CVS.
+            icthis, icnext = itertools.tee(
+                    ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit) and i in self.selection))
+            next(icnext, None)
+            for (ithis, cthis), (_inext, cnext) in itertools.izip(icthis, icnext):
+                if cthis.branch != cnext.branch:
+                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                        announce("branch mismatch at %s" % cnext.id_me())
+                    continue
+                elif cthis.comment != cnext.comment:
+                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                        announce("comment mismatch at %s" % cnext.id_me())
+                    continue
+                elif cthis.committer.email != cnext.committer.email:
+                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                        announce("committer email mismatch at %s" % cnext.id_me())
+                    continue
+                if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
+                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                        announce("time fuzz exceeded at %s" % cnext.id_me())
+                    continue
                 eligible.append(ithis)
-        if verbose:
-            announce("deletion set is %s" % [x+1 for x in eligible])
-        self.chosen().delete(eligible, "coalesce")
+            if verbose >= DEBUG_DELETE:
+                announce("deletion set is %s" % [x+1 for x in eligible])
+            self.chosen().delete(eligible, "coalesce")
 
     def help_from(self):
         print("""
