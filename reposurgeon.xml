@@ -205,7 +205,7 @@ branch name, the interpreter next searches fossil IDs of commits.  This
 is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
-</listitem>
+a/listitem>
 </varlistentry>
 <varlistentry>
 <term><firstterm>$</firstterm></term>
@@ -343,8 +343,8 @@ to a single object, either a commit or tag.</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>dates and action stamps</firstterm></term>
-<listitem><para>A date or action stamp in angle brackets resilves
-to a seection set of all matching commits.</para>
+<listitem><para>A date or action stamp in angle brackets resolves
+to a selection set of all matching commits.</para>
 
 <informaltable pgwide='0' frame='all'>
   <tgroup cols='2' align='center'>
@@ -372,6 +372,10 @@ to a seection set of all matching commits.</para>
 suffix separated  by '#'. Thus "&lt;2000-02-06T09:35:10Z&gt;" can
 match multiple commits, but "&lt;2000-02-06T09:35:10Z#2&gt;" matches
 only the second in the set.</para>
+
+<para>As a aspecial case, an entire line that matches the format of a
+date <emphasis>without</emphasis> thge sroounding reference brackets
+is accepted and selects as though it had the brackets</para>
 </listitem>
 </varlistentry>
 <varlistentry>

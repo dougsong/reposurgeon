@@ -267,6 +267,12 @@ vcstypes = [
         notes="Requires cvs-fast-export."),
     ]
 
+class Fatal(Exception):
+    "Unrecoverable error."
+    def __init__(self, msg):
+        Exception.__init__(self)
+        self.msg = msg
+
 # How to write extractor classes:
 #
 # Clone one of the existing ones and mutate.  
@@ -665,7 +671,7 @@ class Date(object):
     date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$")
     subsecond_re = re.compile(r"\.[0-9]+Z")
     offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$")
-    def __init__(self, text):
+    def __init__(self, text, error=Fatal):
         "Recognize date formats that exporters or email programs might emit."
         # First, look for git's preferred format, which is a timestamp
         # in UTC followed by an offset to be used as a hint for what
@@ -704,7 +710,7 @@ class Date(object):
             # "time data 'xxxxxx' does not match format '%Y-%m-%dT%H:%M:%S'" 
             pass
         # Date format not recognized
-        raise Fatal("'%s' is not a valid timestamp" % text)
+        raise error("'%s' is not a valid timestamp" % text)
     @staticmethod
     def secondsFromOffsetString(text):
         m = re.match(Date.offset_re, text)
@@ -1761,12 +1767,6 @@ class Passthrough(object):
         return self.text
     def __str__(self):
         return self.dump()
-
-class Fatal(Exception):
-    "Unrecoverable error."
-    def __init__(self, msg):
-        Exception.__init__(self)
-        self.msg = msg
 
 # Generic extractor code begins here
 
@@ -6052,9 +6052,13 @@ into sections of the input stream instead).
         if not self.chosen():
             return line
         self.line = line
-        self.selection = list(self.eval_expression(
-                            set(xrange(len(self.chosen().events)))
-                        ))
+        all_events = xrange(len(self.chosen().events))
+        try:
+            Date(self.line, error=Recoverable)
+            self.line = "<" + self.line + ">"
+        except Recoverable:
+            pass
+        self.selection = list(self.eval_expression(set(all_events)))
         if self.line == line:
             self.selection = default
         else:
