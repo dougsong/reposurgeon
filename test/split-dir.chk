@@ -19,16 +19,6 @@ from :2
 M 100644 :3 bar/src
 M 100644 :3 baz/src
 
-Event 5 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
-mark :4.1
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :4
-M 100644 :3 foo/src
-
 split :4 in bar/
 Event 4 =================================================================
 # Fossil-ID: 3
@@ -39,16 +29,6 @@ data 34
 modify the file in each directory
 from :2
 M 100644 :3 baz/src
-
-Event 5 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
-mark :4.2
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :4
-M 100644 :3 bar/src
 
 split :4 in baz
 reposurgeon: couldn't find 'baz' in a fileop path.
