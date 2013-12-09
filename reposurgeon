@@ -7977,7 +7977,7 @@ file path matches.
 
     def help_split(self):
         print("""
-Split a specified commit in two, the opposite of coalesce.
+Split a specified commit in two, the opposite of join.
 
     split N at M
     split N by PREFIX
