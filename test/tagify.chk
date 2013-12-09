@@ -421,5 +421,3 @@ from :10
 tagger esr <esr> 1322671521 +0000
 data 49
 A merge commit with no fileops (ours strategy).
-
-
