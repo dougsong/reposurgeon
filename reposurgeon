@@ -4797,7 +4797,7 @@ class Repository:
             commit.fileops = [x for x in commit.fileops if x is not None]
             commit._pathset = None
         return coverage
-    def restructure(self, selected, policy):
+    def combine(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
@@ -4981,10 +4981,10 @@ class Repository:
     def delete(self, selected, policy=None):
         "Delete a set of events."
         policy = policy or []
-        self.restructure(selected, ["--delete", "--quiet"] + policy)
+        self.combine(selected, ["--delete", "--quiet"] + policy)
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.restructure([index], ["--delete", "--quiet", "--tagback"])
+        self.combine([index], ["--delete", "--quiet", "--tagback"])
     #
     # Delete machinery ends here
     #
@@ -7689,9 +7689,9 @@ with a space-separated list of all paths that reference the blob.
         os.remove(outtmp)
         announce("%d items modified." % altered)
 
-    def help_restructure(self):
+    def help_combine(self):
         print("""
-Restructure a selection set of events; this may mean deleting them or
+Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
 outside the selection range, depending on policy flags.
 
@@ -7700,15 +7700,15 @@ directly affected by this command; they move or are deleted only when
 removal of fileops associated with commits requires this.
 
 """)
-    def do_restructure(self, line):
-        "Restructure events in the specified selection set."
+    def do_combine(self, line):
+        "Combine events in the specified selection set."
         if not self.chosen():
             complain("no repo is loaded")
             return
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().restructure(self.selection, parse.options)
+            self.chosen().combine(self.selection, parse.options)
     def help_delete(self):
         print("""
 Delete a selection set of events.  The default selection set for this
@@ -7718,7 +7718,7 @@ are removed only when removal of fileops associated with commits requires this.
 
 When a commit is deleted, what becomes of tags and fileops attached to
 it is controlled by policy flags.  A delete is equivalent to a
-restructure with the --delete flag.
+combine with the --delete flag.
 """)
     def do_delete(self, line):
         "Delete events in the specified selection set."
@@ -7728,7 +7728,7 @@ restructure with the --delete flag.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().restructure(self.selection, set(["--delete"]) | parse.options)
+            self.chosen().combine(self.selection, set(["--delete"]) | parse.options)
 
     def help_coalesce(self):
         print("""
@@ -7787,7 +7787,7 @@ With  the --debug option, show messages about mismatches.
                 eligible.append(ithis)
             if verbose >= DEBUG_DELETE:
                 announce("deletion set is %s" % [x+1 for x in eligible])
-            self.chosen().restructure(eligible, "--coalesce")
+            self.chosen().combine(eligible, "--coalesce")
 
     def help_from(self):
         print("""

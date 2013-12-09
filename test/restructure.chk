@@ -1,4 +1,4 @@
-This exercises many restructure cases in the test repo
+This exercises many combine cases in the test repo
 read <testrepo.fi
 coverage
 commit 3, mark :2:
@@ -44,7 +44,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-restructure :7,:8
+combine :7,:8
 coverage       # Expect this to show case 1 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -85,7 +85,7 @@ commit 31, mark :32:
 commit 33, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1]
-restructure :10,:11
+combine :10,:11
 coverage       # Expect this to show case 3 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -123,7 +123,7 @@ commit 29, mark :32:
 commit 31, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1, 3]
-restructure :17,:18
+combine :17,:18
 coverage       # Expect this to show case 2 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -158,7 +158,7 @@ commit 27, mark :32:
 commit 29, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1, 2, 3]
-restructure :25,:26
+combine :25,:26
 coverage       # Expect this to show case 4 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -191,7 +191,7 @@ commit 25, mark :32:
 commit 27, mark :34:
 0: M 100644 :33 README 
 Case coverage: [1, 2, 3, 4]
-restructure :29,:30
+combine :29,:30
 coverage       # Expect this to show case 6 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
