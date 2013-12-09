@@ -813,53 +813,53 @@ warning when this occurs but does not try to resolve it.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>obliterate</command></term>
+<term><command>--obliterate</command></term>
 <listitem>
 <para>simply discards all file ops associated with deleted commit(s).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>coalesce</command></term>
+<term><command>--coalesce</command></term>
 <listitem>
 <para>Discard all M operations (and associated blobs) except the last.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>pushback</command></term>
+<term><command>--pushback</command></term>
 <listitem>
 <para>Append fileops to parents, rather than prepending to children.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>pushforward</command></term>
+<term><command>--pushforward</command></term>
 <listitem>
 <para>Prepend fileops to children. This is the default; it can be
 specified in a lift script for explicitness about intentions.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>tagforward</command></term>
+<term><command>--tagforward</command></term>
 <listitem>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
 forward to the first child rather than being deleted.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>tagback</command></term>
+<term><command>--tagback</command></term>
 <listitem>
-<para>With the "tagback" modifier, any tag on the deleted commit is pushed
+<para>With the "--tagback" modifier, any tag on the deleted commit is pushed
 backward to the first parent than being deleted. </para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>quiet</command></term>
+<term><command>--quiet</command></term>
 <listitem>
 <para>Suppresses warning messages about obliteration of commits with
 non-delete fileops.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>complain</command></term>
+<term><command>--complain</command></term>
 <listitem>
 <para>The opposite of quiet. Can be specified for explicitness.</para>
 </listitem>

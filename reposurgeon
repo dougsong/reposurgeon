@@ -4473,7 +4473,7 @@ class Repository:
                         msg.append("zero-op commit on %s." % commit.branch)
                     gripe(" ".join(msg))
                     deletia.append(index)
-        self.delete(deletia, ["obliterate", "quiet", "tagback"])
+        self.delete(deletia, ["--obliterate", "--quiet", "--tagback"])
     def fast_import(self, fp, options, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, options, progress)
@@ -4798,13 +4798,23 @@ class Repository:
         "Delete a set of events."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
+            for qualifier in policy:
+                if qualifier not in ["--complain",
+                                 "--coalesce",
+                                 "--obliterate",
+                                 "--pushback",
+                                 "--pushforward",
+                                 "--tagback",
+                                 "--tagforward",
+                                 "--quiet"]:
+                    raise Recoverable("no such deletion modifier as " + qualifier)
         # Make sure we do deletions from greatest commit number to least
         selected = sorted(selected, reverse=True)
-        dquiet = "quiet" in policy
-        obliterate = "obliterate" in policy
-        tagback = "tagback" in policy
-        tagforward = "tagforward" in policy
-        pushback = "pushback" in policy
+        dquiet = "--quiet" in policy
+        obliterate = "--obliterate" in policy
+        tagback = "--tagback" in policy
+        tagforward = "--tagforward" in policy
+        pushback = "--pushback" in policy
         # Sanity checks
         if not dquiet:
             for ei in selected:
@@ -4824,7 +4834,7 @@ class Repository:
                                  "fileops to." % event.mark)
                     if not obliterate and not pushback and not event.has_children():
                         complain("warning: you want to delete commit %s without "
-                                 "pushback nor obliterate but it has no children "
+                                 "pushback or obliterate, but it has no children "
                                  "to push fileops to." % event.mark)
         altered = []
         # Here are the deletions
@@ -4966,10 +4976,10 @@ class Repository:
         for e in self.events:
             del e.deletehook
     def quiet_delete(self, commit):
-        self.delete([commit.index()], ["obliterate", "quiet", "tagback"])
+        self.delete([commit.index()], ["--obliterate", "--quiet", "--tagback"])
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.delete([index], ["obliterate", "quiet", "tagback"])
+        self.delete([index], ["--obliterate", "--quiet", "--tagback"])
     #
     # Delete machinery ends here
     #
@@ -7374,7 +7384,7 @@ This is intended for producing reduced test cases from large repositories.
                     neighbors |= set(event.child_marks())
             interesting |= neighbors
             repo.delete([i for i in range(len(repo.events)) \
-                         if isinstance(event, Commit) and event.mark not in interesting], ["quiet", "obliterate"])
+                         if isinstance(event, Commit) and event.mark not in interesting], ["--quiet", "--obliterate"])
 
     def help_graph(self):
         print("""
@@ -7691,20 +7701,8 @@ it is controlled by policy flags.
             return
         if self.selection is None:
             self.selection = []
-        line = str(line)   # pacify pylint by forcing string type
-        if line:
-            for token in line.split():
-                if token not in ["complain",
-                                 "coalesce",
-                                 "obliterate",
-                                 "pushback",
-                                 "pushforward",
-                                 "tagback",
-                                 "tagforward",
-                                 "quiet"]:
-                    complain("no such deletion modifier as " + token)
-                    return
-        self.chosen().delete(self.selection, self.line)
+        with RepoSurgeon.LineParse(line) as parse:
+            self.chosen().delete(self.selection, parse.options)
 
     def help_coalesce(self):
         print("""
@@ -8416,7 +8414,7 @@ is prepended.
                          (isinstance(repo.events[i], Reset) and repo.events[i].ref == branchname) \
                          or \
                          (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
-                        ["obliterate", "quiet"])
+                        ["--obliterate", "--quiet"])
         else:
             raise Recoverable("unknown verb '%s' in branch command." % verb)
 
