@@ -7689,15 +7689,36 @@ with a space-separated list of all paths that reference the blob.
         os.remove(outtmp)
         announce("%d items modified." % altered)
 
+    def help_restructure(self):
+        print("""
+Restructure a selection set of events; this may mean deleting them or
+pushing their content forward or back onto a target commit just
+outside the selection range, depending on policy flags.
+
+The default selection set for this command is empty.  Blobs cannot be
+directly affected by this command; they move or are deleted only when
+removal of fileops associated with commits requires this.
+
+""")
+    def do_restructure(self, line):
+        "Restructure events in the specified selection set."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        if self.selection is None:
+            self.selection = []
+        with RepoSurgeon.LineParse(line) as parse:
+            self.chosen().restructure(self.selection, parse.options)
     def help_delete(self):
         print("""
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
 side effects.  Blobs cannot be directly deleted with this command; they
-are only when removal of fileops associated with commits requires this.
+are removed only when removal of fileops associated with commits requires this.
 
 When a commit is deleted, what becomes of tags and fileops attached to
-it is controlled by policy flags.
+it is controlled by policy flags.  A delete is equivalent to a
+restructure with the --obliterate flag.
 """)
     def do_delete(self, line):
         "Delete events in the specified selection set."
@@ -7707,7 +7728,7 @@ it is controlled by policy flags.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().restructure(self.selection, parse.options)
+            self.chosen().restructure(self.selection, set(["--obliterate"]) | parse.options)
 
     def help_coalesce(self):
         print("""

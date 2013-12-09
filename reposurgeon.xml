@@ -768,15 +768,15 @@ to support.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>delete</command>
+<term><command>restructure</command>
         [<emphasis>selection-set</emphasis>]
         [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
-<para>Delete a selection set of events. The default selection set for
+<para>Restructure a selection set of events. The default selection set for
 this command is empty.</para>
 
-<para>No <command>blob</command> event can be deleted directly with
+<para>No <command>blob</command> event can be affected directly with
 this command; <command>blob</command> events are tied to associated
 <command>commit</command> events and are discarded only when those
 are.</para>
@@ -866,7 +866,7 @@ non-delete fileops.</para>
 </varlistentry>
 </variablelist>
 
-<para>Under any of these policies except <quote>obliterate</quote>,
+<para>Under any of these policies except <quote>--obliterate</quote>,
 deleting a commit that has children does not back out the changes made
 by that commit, as they will still be present in the blobs attached to
 versions past the end of the deletion set.  All a delete does when the
@@ -879,6 +879,18 @@ converters such as <command>cvs2svn</command>.</para>
 
 <para>Other policies which do more to attempt to back out content
 changes may be added in future versions of this tool.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>delete</command>
+        [<emphasis>selection-set</emphasis>]
+        [<emphasis>policy...</emphasis>]
+</term>
+<listitem>
+<para>Delete a selection set of events. The default selection set for
+this command is empty. On a set of commits, this is equivalent to a
+restructure with the --obliterate flag; it unconditionally deletes
+other event types.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
