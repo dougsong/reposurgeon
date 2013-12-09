@@ -19,11 +19,11 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .SUFFIXES: .svn .chk .fi .map
 
 .svn.chk:
-	$(REPOSURGEON) "read $<" "prefer git" "write -" >$@ 2>&1
+	$(REPOSURGEON) "read <$<" "prefer git" "write -" >$@ 2>&1
 .svn.fi:
-	$(REPOSURGEON) "read $<" "prefer git" "write -" >$@
+	$(REPOSURGEON) "read <$<" "prefer git" "write -" >$@
 .svn.map:
-	$(REPOSURGEON) "read $<" "fossils write -" >$@
+	$(REPOSURGEON) "read <$<" "fossils write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
 	svndump-buildregress repodiffer-buildregress
