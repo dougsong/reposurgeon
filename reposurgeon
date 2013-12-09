@@ -6693,9 +6693,9 @@ of the selection; you can do this repeatedly for effect.
 
     def help_syntax(self):
         print("""
-Commands art disibguished by a command keyword.  Most take a selection set
-immediately before it; see 'help selection' for details.  Some
-commands take additional modifier arguments after the command keyword.
+All commands begin with a command keyword.  Most take a selection set
+immediately following it; see 'help selection' for details.  Some
+commands take additional modifier arguments after the selrction set.
 
 Most report-generation commands support output redirection. When
 arguments for these are parsed, any argument beginning with '>' is
