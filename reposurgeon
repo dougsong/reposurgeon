@@ -877,7 +877,7 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "paths", "colors", "cookie", "start", "size", "deletehook")
+    __slots__ = ("repo", "mark", "paths", "colors", "cookie", "start", "size", "keep")
     __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
@@ -887,7 +887,7 @@ class Blob(object):
         self.cookie = None
         self.start = None
         self.size = 0
-        self.deletehook = None
+        self.keep = None
     def blobfile(self, create=False):
         "File where the content lives."
         stem = repr(id(self))
@@ -976,7 +976,7 @@ class Blob(object):
 class Tag(object):
     "Represents an annotated tag."
     __slots__ = ("repo", "name", "color", "committish",
-                 "target", "tagger", "comment", "deletehook")
+                 "target", "tagger", "comment", "keep")
     __hash__ = None
     def __init__(self, repo=None,
                  name=None, committish=None, target=None, tagger=None, comment=None):
@@ -988,7 +988,7 @@ class Tag(object):
         self.remember(repo, committish=committish, target=target)
         self.tagger = tagger
         self.comment = comment
-        self.deletehook = None
+        self.keep = None
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
@@ -1085,7 +1085,7 @@ class Tag(object):
 
 class Reset(object):
     "Represents a branch creation."
-    __slots__ = ("repo", "ref", "committish", "target", "deletehook", "color")
+    __slots__ = ("repo", "ref", "committish", "target", "keep", "color")
     __hash__ = None
     def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
@@ -1093,7 +1093,7 @@ class Reset(object):
         self.committish = None
         self.target = None
         self.remember(repo, committish=committish, target=target)
-        self.deletehook = None
+        self.keep = None
         self.color = None
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
@@ -1279,7 +1279,7 @@ class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
-                 "fossil_id", "common", "splits", "deletehook", "attachments",
+                 "fossil_id", "common", "splits", "keep", "attachments",
                  "_parent_nodes", "_child_nodes", "_pathset")
     __hash__ = None
     def __init__(self, repo=None):
@@ -1298,7 +1298,7 @@ class Commit(object):
         self.splits = None           # split command increments this
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
-        self.deletehook = None	     # Hook used during deletion operations
+        self.keep = None	     # Hook used during deletion operations
         self.attachments = []
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
@@ -1746,11 +1746,11 @@ class Commit(object):
 
 class Passthrough(object):
     "Represents a passthrough line."
-    __slots__ = ("text", "deletehook", "color")
+    __slots__ = ("text", "keep", "color")
     __hash__ = None
     def __init__(self, line):
         self.text = line
-        self.deletehook = None
+        self.keep = None
         self.color = None
     def email_out(self, _modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
@@ -4795,7 +4795,7 @@ class Repository:
             commit._pathset = None
         return coverage
     def restructure(self, selected, policy):
-        "Delete a set of events, or rearrange ot forward or backwards."
+        "Delete a set of events, or rearrange it forward or backwards."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
             for qualifier in policy:
@@ -4839,10 +4839,10 @@ class Repository:
         altered = []
         # Here are the deletions
         for e in self.events:
-            e.deletehook = False
+            e.keep = False
         for ei in selected:
             event = self.events[ei]
-            event.deletehook = True
+            event.keep = True
             # Nothing special to do for Reset, Tag, Passthrough, Blob
             if isinstance(event, Commit):
                 # Decide the new target for tags
@@ -4923,7 +4923,7 @@ class Repository:
                 # Move tags and attachments
                 if filter_only:
                     for e in event.attachments:
-                        e.deletehook = True
+                        e.keep = True
                 else:
                     if event.branch and "/tags/" in event.branch \
                             and new_target.branch != event.branch:
@@ -4942,12 +4942,12 @@ class Repository:
                 # And forget the deleted event
                 event.forget()
         # Do the actual deletions
-        self.events = [e for e in self.events if not e.deletehook]
+        self.events = [e for e in self.events if not e.keep]
         self.declare_sequence_mutation()
         # Canonicalize all the commits that got ops pushed to them
         if not obliterate:
             for event in altered:
-                if event.deletehook: continue
+                if event.keep: continue
                 if debug_enable(DEBUG_DELETE):
                     announce("Before canonicalization:")
                     event.fileop_dump()
@@ -4974,7 +4974,7 @@ class Repository:
                     event.fileop_dump()
         # Cleanup
         for e in self.events:
-            del e.deletehook
+            del e.keep
     def quiet_delete(self, commit):
         self.restructure([commit.index()], ["--obliterate", "--quiet", "--tagback"])
     def __delitem__(self, index):
@@ -5806,7 +5806,7 @@ class RepositoryList:
         expunged.seekstream = self.repo.seekstream
         expunged.makedir()
         for event in self.repo:
-            event.deletehook = None
+            event.keep = None
         for (ei, deletia) in zip(selection, alterations):
             if not deletia: continue
             event = self.repo[ei]
@@ -5838,25 +5838,25 @@ class RepositoryList:
                                 if i not in deletia]
             event._pathset = None
             # If there are any keeper fileops, hang them them and
-            # their blobs on deletehooks, cloning the commit() for them.
+            # their blobs on keeps, cloning the commit() for them.
             if keepers:
                 newevent = event.clone(expunged)
                 newevent.fileops = keepers
                 newevent._pathset = None
                 for blob in blobs:
-                    blob.deletehook = blob.clone(expunged)
-                event.deletehook = newevent
+                    blob.keep = blob.clone(expunged)
+                event.keep = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
         expunged.declare_sequence_mutation()
         expunged_branches = expunged.branchset()
         for event in self.repo:
-            if event.deletehook:
-                expunged.addEvent(event.deletehook)
-                event.deletehook = None
+            if event.keep:
+                expunged.addEvent(event.keep)
+                event.keep = None
             elif isinstance(event, Reset):
                 if event.target is not None:
-                    if event.target.deletehook:
+                    if event.target.keep:
                         expunged.addEvent(copy.deepcopy(event))
                 elif isinstance(event, Reset) and event.ref in expunged_branches:
                     newreset = copy.copy(event)
@@ -5864,11 +5864,11 @@ class RepositoryList:
                     expunged.addEvent(newreset)
             elif isinstance(event, Tag) and \
                     event.target is not None and \
-                    event.target.deletehook:
+                    event.target.keep:
                 expunged.addEvent(copy.deepcopy(event))
         for event in itertools.chain(self.repo.events, expunged.events):
-            if hasattr(event, "deletehook"):
-                delattr(event, "deletehook")
+            if hasattr(event, "keep"):
+                delattr(event, "keep")
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
