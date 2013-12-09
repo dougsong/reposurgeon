@@ -1702,6 +1702,9 @@ class Commit(object):
         if rank == 0:
             return child.head() # there was only one child
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
+    def delete(self, policy=None):
+        "Delete this commit from its repository."
+        self.repo.delete([self.index()], policy)
     def dump(self, vcs=None, options=None):
         "Dump this commit in import-stream format."
         pacify_pylint(options)
@@ -3702,12 +3705,12 @@ class StreamParser:
                 fulltag = os.path.join("refs", "tags", m.group(1))
                 self.repo.events.append(Reset(self.repo, ref=fulltag,
                                               target=commit.parents()[0]))
-                self.repo.quiet_delete(commit)
+                commit.delete(["--tagback"])
             # Childless generated branch commits carry no informationn,
             # and just get removed.
             m = StreamParser.cvs2svn_branch_re.search(commit.comment)
             if m and not commit.has_children():
-                self.repo.quiet_delete(commit)
+                commit.delete(["--tagback"])
             baton.twirl()
         self.repo.timings.append(["junk", time.time()]) 
         baton.twirl()
@@ -4399,7 +4402,7 @@ class Repository:
                           target=target,
                           tagger=commit.committer,
                           comment=pref + legend))
-        if delete: self.quiet_delete(commit)
+        if delete: commit.delete(["--tagback"])
     def tagify_empty(self, commits = None,
                            tipdeletes = False,
                            canonicalize = True,
@@ -4473,7 +4476,7 @@ class Repository:
                         msg.append("zero-op commit on %s." % commit.branch)
                     gripe(" ".join(msg))
                     deletia.append(index)
-        self.restructure(deletia, ["--obliterate", "--quiet", "--tagback"])
+        self.delete(deletia, ["--tagback"])
     def fast_import(self, fp, options, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, options, progress)
@@ -4975,8 +4978,10 @@ class Repository:
         # Cleanup
         for e in self.events:
             del e.keep
-    def quiet_delete(self, commit):
-        self.restructure([commit.index()], ["--obliterate", "--quiet", "--tagback"])
+    def delete(self, selected, policy=None):
+        "Delete a set of events."
+        policy = policy or []
+        self.restructure(selected, ["--obliterate", "--quiet"] + policy)
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
         self.restructure([index], ["--obliterate", "--quiet", "--tagback"])
@@ -7383,8 +7388,8 @@ This is intended for producing reduced test cases from large repositories.
                     neighbors |= set(event.parent_marks())
                     neighbors |= set(event.child_marks())
             interesting |= neighbors
-            repo.restructure([i for i in range(len(repo.events)) \
-                         if isinstance(event, Commit) and event.mark not in interesting], ["--quiet", "--obliterate"])
+            repo.delete([i for i in range(len(repo.events)) \
+                         if isinstance(event, Commit) and event.mark not in interesting])
 
     def help_graph(self):
         print("""
@@ -8410,11 +8415,10 @@ is prepended.
                     if event.ref == branchname:
                         event.ref = newname
         elif verb == "delete":
-            repo.restructure([i for i in range(len(repo.events)) if
+            repo.delete([i for i in range(len(repo.events)) if
                          (isinstance(repo.events[i], Reset) and repo.events[i].ref == branchname) \
                          or \
-                         (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
-                        ["--obliterate", "--quiet"])
+                         (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)])
         else:
             raise Recoverable("unknown verb '%s' in branch command." % verb)
 
