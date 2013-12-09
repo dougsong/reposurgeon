@@ -4804,7 +4804,7 @@ class Repository:
             for qualifier in policy:
                 if qualifier not in ["--complain",
                                  "--coalesce",
-                                 "--obliterate",
+                                 "--delete",
                                  "--pushback",
                                  "--pushforward",
                                  "--tagback",
@@ -4814,7 +4814,7 @@ class Repository:
         # Make sure we do deletions from greatest commit number to least
         selected = sorted(selected, reverse=True)
         dquiet = "--quiet" in policy
-        obliterate = "--obliterate" in policy
+        obliterate = "--delete" in policy
         tagback = "--tagback" in policy
         tagforward = "--tagforward" in policy
         pushback = "--pushback" in policy
@@ -4826,19 +4826,18 @@ class Repository:
                     raise Recoverable("attempt to directly delete blob %d" % (ei+1))
                 elif  isinstance(event, Commit):
                     if obliterate:
-                        speak = "warning: commit %s to be obliterated has " % event.mark 
+                        speak = "warning: commit %s to be deleted has " % event.mark 
                         if '/' in event.branch and not '/heads/' in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
                             announce(speak + "non-delete fileops.")
-                    if pushback and not event.has_parents():
-                        complain("warning: you want to delete commit %s with "
-                                 "pushback policy but it has no parents to push "
-                                 "fileops to." % event.mark)
-                    if not obliterate and not pushback and not event.has_children():
-                        complain("warning: you want to delete commit %s without "
-                                 "pushback or obliterate, but it has no children "
-                                 "to push fileops to." % event.mark)
+                    if not obliterate:
+                        if pushback and not event.has_parents():
+                            complain("warning: you want to push back commit %s "
+                                     "but it has no parents." % event.mark)
+                        if not pushback and not event.has_children():
+                            complain("warning: you want to push forward commit "
+                                     "%s but it has no children." % event.mark)
         altered = []
         # Here are the deletions
         for e in self.events:
@@ -4981,10 +4980,10 @@ class Repository:
     def delete(self, selected, policy=None):
         "Delete a set of events."
         policy = policy or []
-        self.restructure(selected, ["--obliterate", "--quiet"] + policy)
+        self.restructure(selected, ["--delete", "--quiet"] + policy)
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.restructure([index], ["--obliterate", "--quiet", "--tagback"])
+        self.restructure([index], ["--delete", "--quiet", "--tagback"])
     #
     # Delete machinery ends here
     #
@@ -7718,7 +7717,7 @@ are removed only when removal of fileops associated with commits requires this.
 
 When a commit is deleted, what becomes of tags and fileops attached to
 it is controlled by policy flags.  A delete is equivalent to a
-restructure with the --obliterate flag.
+restructure with the --delete flag.
 """)
     def do_delete(self, line):
         "Delete events in the specified selection set."
@@ -7728,7 +7727,7 @@ restructure with the --obliterate flag.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().restructure(self.selection, set(["--obliterate"]) | parse.options)
+            self.chosen().restructure(self.selection, set(["--delete"]) | parse.options)
 
     def help_coalesce(self):
         print("""

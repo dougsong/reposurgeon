@@ -1,4 +1,4 @@
-## Test expunge that --obliterates a commit
+## Test expunge that deletes a commit
 read <commit-expunge.fi
 expunge packed
 write -

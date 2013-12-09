@@ -1,5 +1,5 @@
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
-reposurgeon: warning: you want to delete commit :1112 without pushback or obliterate, but it has no children to push fileops to.
+reposurgeon: warning: you want to push forward commit :1112 but it has no children.
 branch refs/heads/Development
 branch refs/heads/Stable
 branch refs/heads/Testing
