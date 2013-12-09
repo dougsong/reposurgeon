@@ -1,39 +1,34 @@
 verbose 1
 reposurgeon: verbose 1
 quiet on
+# Expect the split on zed to fail
 read --nobranch <split-dir.svn
 * split-dir
-split :3 in bar
-reposurgeon: fileop argument doesn't point at a commit
-split :4 in zed
+split :2 in bar
+Event 2 =================================================================
+# Fossil-ID: 2
+commit refs/heads/master
+mark :2
+committer brooksd <brooksd> 1353813663 +0000
+data 33
+add a new file in each directory
+M 100644 :1 baz/src
+M 100644 :1 foo/src
+
+split :5 in zed
 reposurgeon: couldn't find 'zed' in a fileop path.
-split :4 in f
-Event 4 =================================================================
-# Fossil-ID: 3
+split :5 in f
+Event 6 =================================================================
+# Fossil-ID: 4
 commit refs/heads/master
-mark :4
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :2
-M 100644 :3 bar/src
-M 100644 :3 baz/src
+mark :5
+committer brooksd <brooksd> 1353813667 +0000
+data 27
+copy the three directories
+from :4
+M 100644 :3 bar2/src
+M 100644 :3 baz2/src
 
-split :4 in bar/
-Event 4 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
-mark :4
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :2
-M 100644 :3 baz/src
-
-split :4 in baz
-reposurgeon: couldn't find 'baz' in a fileop path.
-split :4 in bar
-reposurgeon: couldn't find 'bar' in a fileop path.
 inspect
 Event 1 =================================================================
 blob
@@ -48,57 +43,57 @@ mark :2
 committer brooksd <brooksd> 1353813663 +0000
 data 33
 add a new file in each directory
-M 100644 :1 bar/src
 M 100644 :1 baz/src
 M 100644 :1 foo/src
 
 Event 3 =================================================================
+# Fossil-ID: 2
+commit refs/heads/master
+mark :2.1
+committer brooksd <brooksd> 1353813663 +0000
+data 33
+add a new file in each directory
+from :2
+M 100644 :1 bar/src
+
+Event 4 =================================================================
 blob
 mark :3
 data 4
 a
 b
 
-Event 4 =================================================================
+Event 5 =================================================================
 # Fossil-ID: 3
 commit refs/heads/master
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
 data 34
 modify the file in each directory
-from :2
-M 100644 :3 baz/src
-
-Event 5 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
-mark :4.2
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :4
+from :2.1
 M 100644 :3 bar/src
-
-Event 6 =================================================================
-# Fossil-ID: 3
-commit refs/heads/master
-mark :4.1
-committer brooksd <brooksd> 1353813665 +0000
-data 34
-modify the file in each directory
-from :4.2
+M 100644 :3 baz/src
 M 100644 :3 foo/src
 
-Event 7 =================================================================
+Event 6 =================================================================
 # Fossil-ID: 4
 commit refs/heads/master
 mark :5
 committer brooksd <brooksd> 1353813667 +0000
 data 27
 copy the three directories
-from :4.1
+from :4
 M 100644 :3 bar2/src
 M 100644 :3 baz2/src
+
+Event 7 =================================================================
+# Fossil-ID: 4
+commit refs/heads/master
+mark :5.1
+committer brooksd <brooksd> 1353813667 +0000
+data 27
+copy the three directories
+from :5
 M 100644 :3 foo2/src
 
 Event 8 =================================================================

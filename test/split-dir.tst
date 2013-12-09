@@ -2,11 +2,9 @@
 echo 1
 verbose 1
 quiet on
+# Expect the split on zed to fail
 read --nobranch <split-dir.svn
-split :3 in bar
-split :4 in zed
-split :4 in f
-split :4 in bar/
-split :4 in baz
-split :4 in bar
+split :2 in bar
+split :5 in zed
+split :5 in f
 inspect
