@@ -4405,7 +4405,6 @@ class Repository:
         if delete: commit.delete(["--tagback"])
     def tagify_empty(self, commits = None,
                            tipdeletes = False,
-                           tagify_merges = False,
                            canonicalize = True,
                            name_func = lambda _: None,
                            legend_func = lambda _: "",
@@ -4451,8 +4450,6 @@ class Repository:
         for index, commit in commits:
             if (not commit.fileops) or is_tipdelete(commit):
                 if commit.has_parents():
-                    if len(commit.parents()) > 1 and not tagify_merges:
-                        continue
                     name = name_func(commit) or default_name(commit)
                     for i in itertools.count():
                         suffix = ".{}".format(i) if i else ""
@@ -8284,15 +8281,13 @@ This command supports > redirection.
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
 turn it into a tag with the same message and author information if it has no
-fileops. By default merge commits are not considered, even if they have no
-fileops (thus no tree differences with their first parent). To change that, see
-the '--tagify-merges' option.
+fileops.
 
 The name of the tag is 'emptycommit-<ident>', where <ident> is generated from
 the fossil_id of the deleted commit, or from its mark, or from its index in the
 repository, with a disambiguation suffix if needed.
 
-tagify currently recognizes three options: first is '--canonicalize' which
+tagify currently recognizes two options: first is '--canonicalize' which
 makes tagify try harder to detect trivial commits by first ensuring that all
 fileops of selected commits will have an actual effect when processed by
 fast-import.
@@ -8301,9 +8296,6 @@ The second option is '--tipdeletes' which makes tagify also consider branch
 tips with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form 'tipdelete-<branchname>' rather than
 the default 'emptycommit-<ident>'.
-
-The third option is '--tagify-merges' that makes reposurgeon also tagify merge
-commits that have no fileops.
 """)
     def do_tagify(self, line):
         "Search for empty commits and turn them into tags."
@@ -8318,8 +8310,7 @@ commits that have no fileops.
             repo.tagify_empty(
                     commits = (repo.events[i] for i in self.selection),
                     canonicalize = "--canonicalize" in parse.options,
-                    tipdeletes = "--tipdeletes" in parse.options,
-                    tagify_merges = "--tagify-merges" in parse.options)
+                    tipdeletes = "--tipdeletes" in parse.options)
 
     def help_merge(self):
         print("""
