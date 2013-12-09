@@ -8319,12 +8319,10 @@ equivalent to reparent {first parent},{commit} rebase, where {commit} is the
 selection set given to unmerge and {first parent} is a set resolving to that
 commit's first parent, but doesn't need you to find the first parent yourself.
 """ )
-    def do_unmerge(self, line):
+    def do_unmerge(self, _line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        repo = self.chosen()
-        self.set_selection_set(line)
         try:
             commit, = self.selection
         except ValueError:
