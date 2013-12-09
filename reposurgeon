@@ -4473,7 +4473,7 @@ class Repository:
                         msg.append("zero-op commit on %s." % commit.branch)
                     gripe(" ".join(msg))
                     deletia.append(index)
-        self.delete(deletia, ["--obliterate", "--quiet", "--tagback"])
+        self.restructure(deletia, ["--obliterate", "--quiet", "--tagback"])
     def fast_import(self, fp, options, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, options, progress)
@@ -4794,8 +4794,8 @@ class Repository:
             commit.fileops = [x for x in commit.fileops if x is not None]
             commit._pathset = None
         return coverage
-    def delete(self, selected, policy):
-        "Delete a set of events."
+    def restructure(self, selected, policy):
+        "Delete a set of events, or rearrange ot forward or backwards."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
             for qualifier in policy:
@@ -4976,10 +4976,10 @@ class Repository:
         for e in self.events:
             del e.deletehook
     def quiet_delete(self, commit):
-        self.delete([commit.index()], ["--obliterate", "--quiet", "--tagback"])
+        self.restructure([commit.index()], ["--obliterate", "--quiet", "--tagback"])
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.delete([index], ["--obliterate", "--quiet", "--tagback"])
+        self.restructure([index], ["--obliterate", "--quiet", "--tagback"])
     #
     # Delete machinery ends here
     #
@@ -7383,7 +7383,7 @@ This is intended for producing reduced test cases from large repositories.
                     neighbors |= set(event.parent_marks())
                     neighbors |= set(event.child_marks())
             interesting |= neighbors
-            repo.delete([i for i in range(len(repo.events)) \
+            repo.restructure([i for i in range(len(repo.events)) \
                          if isinstance(event, Commit) and event.mark not in interesting], ["--quiet", "--obliterate"])
 
     def help_graph(self):
@@ -7702,15 +7702,15 @@ it is controlled by policy flags.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().delete(self.selection, parse.options)
+            self.chosen().restructure(self.selection, parse.options)
 
     def help_coalesce(self):
         print("""
-Scan the selection set for runs of commits with identical
-comments close to each other in time (this is a common form of scar
-tissues in repository up-conversions from older file-oriented
-version-control systems).  Merge these cliques by deleting all but the
-last commit, in order.
+Scan the selection set for runs of commits with identical comments
+close to each other in time (this is a common form of scar tissues in
+repository up-conversions from older file-oriented version-control
+systems).  Merge these cliques by pushing their fileops and tags up
+to the last commit, in order.
 
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
@@ -7761,7 +7761,7 @@ With  the --debug option, show messages about mismatches.
                 eligible.append(ithis)
             if verbose >= DEBUG_DELETE:
                 announce("deletion set is %s" % [x+1 for x in eligible])
-            self.chosen().delete(eligible, "coalesce")
+            self.chosen().restructure(eligible, "--coalesce")
 
     def help_from(self):
         print("""
@@ -8410,7 +8410,7 @@ is prepended.
                     if event.ref == branchname:
                         event.ref = newname
         elif verb == "delete":
-            repo.delete([i for i in range(len(repo.events)) if
+            repo.restructure([i for i in range(len(repo.events)) if
                          (isinstance(repo.events[i], Reset) and repo.events[i].ref == branchname) \
                          or \
                          (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)],
