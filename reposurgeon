@@ -4814,10 +4814,11 @@ class Repository:
         # Make sure we do deletions from greatest commit number to least
         selected = sorted(selected, reverse=True)
         dquiet = "--quiet" in policy
-        obliterate = "--delete" in policy
+        delete = "--delete" in policy
         tagback = "--tagback" in policy
-        tagforward = "--tagforward" in policy
+        tagforward = "--tagforward" in policy or (not delete and not tagback)
         pushback = "--pushback" in policy
+        pushforward = "--pushforward" in policy or (not delete and not pushback)
         # Sanity checks
         if not dquiet:
             for ei in selected:
@@ -4825,17 +4826,17 @@ class Repository:
                 if isinstance(event, Blob):
                     raise Recoverable("attempt to directly delete blob %d" % (ei+1))
                 elif  isinstance(event, Commit):
-                    if obliterate:
+                    if delete:
                         speak = "warning: commit %s to be deleted has " % event.mark 
                         if '/' in event.branch and not '/heads/' in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
                             announce(speak + "non-delete fileops.")
-                    if not obliterate:
+                    if not delete:
                         if pushback and not event.has_parents():
                             complain("warning: you want to push back commit %s "
                                      "but it has no parents." % event.mark)
-                        if not pushback and not event.has_children():
+                        if pushforward and not event.has_children():
                             complain("warning: you want to push forward commit "
                                      "%s but it has no children." % event.mark)
         altered = []
@@ -4877,7 +4878,7 @@ class Repository:
                             if p not in to_add)
                     # Really set the parents to the newly constructed list
                     child.set_parents(new_parents)
-                    if not obliterate and not pushback:
+                    if pushforward:
                         # Prepend a copy of this event's file ops to
                         # each child's list and mark the child as
                         # needing resolution.
@@ -4947,7 +4948,7 @@ class Repository:
         self.events = [e for e in self.events if not e.keep]
         self.declare_sequence_mutation()
         # Canonicalize all the commits that got ops pushed to them
-        if not obliterate:
+        if not delete:
             for event in altered:
                 if event.keep: continue
                 if debug_enable(DEBUG_DELETE):
@@ -4959,13 +4960,13 @@ class Repository:
                     event.fileop_dump()
                 # Now apply policy in the mutiple-M case
                 cliques = event.cliques()
-                if ("coalesce" not in policy and not obliterate) \
+                if ("--coalesce" not in policy and not delete) \
                         or debug_enable(DEBUG_DELETE):
                     for (path, oplist) in cliques.iteritems():
                         if len(oplist) > 1:
                             complain("commit %s has multiple Ms for %s"
                                     % (event.mark, path))
-                if "coalesce" in policy:
+                if "--coalesce" in policy:
                     # Only keep last M of each clique, leaving other ops alone
                     event.fileops = \
                            [op for (i, op) in enumerate(event.fileops)
