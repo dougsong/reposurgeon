@@ -4832,11 +4832,13 @@ class Repository:
                             announce(speak + "non-delete fileops.")
                     if not delete:
                         if pushback and not event.has_parents():
-                            complain("warning: you want to push back commit %s "
-                                     "but it has no parents." % event.mark)
+                            complain("warning: "
+                                     "pushback of parentless commit %s" \
+                                     % event.mark)
                         if pushforward and not event.has_children():
-                            complain("warning: you want to push forward commit "
-                                     "%s but it has no children." % event.mark)
+                            complain("warning: "
+                                     "pushforward of childless commit %s" \
+                                     % event.mark)
         altered = []
         # Here are the deletions
         for e in self.events:
