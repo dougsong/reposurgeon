@@ -1,14 +1,9 @@
 			reposurgeon project news
 
 Repository head:
-     read and write no longer take file arguments, but require redirects.
-     svn_nobranch is replaced by the --nobranch read option. 
-     svn_use_uuid is replaced by the --use-uuid read option. 
-     svn_ignore_properties is replaced by the --ignore-properties option. 
-     svn_noautoignores is replaced by the --no-autoignores read option. 
-     fossilize is replaced by the --fossilize write option.
-     'unite' command has been incompatibly improved.
+     Many syntactic features of the language have changed incompatibly.
      Backward-incompatible language changes are documented on the manual page.
+     'unite' command has been incompatibly improved.
      New 'strip' command for generating test cases with blobs stripped out
      New 'reduce' command for topological reduction of test cases.
      The 'lint' command gets a test for the existence of multiple roots.

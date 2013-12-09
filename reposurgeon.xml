@@ -205,7 +205,7 @@ branch name, the interpreter next searches fossil IDs of commits.  This
 is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
-a/listitem>
+</listitem>
 </varlistentry>
 <varlistentry>
 <term><firstterm>$</firstterm></term>
@@ -1486,11 +1486,11 @@ do empty 2012-07-28T18:40:10Z
 is equivalent to the more verbose
 
 <programlisting>
-delete &lt;2012-08-14T21:51:35Z&gt; &amp; /empty log message/ pushback
-delete &lt;2012-08-08T22:52:14Z&gt; &amp; /empty log message/ pushback
-delete &lt;2012-08-07T04:48:26Z&gt; &amp; /empty log message/ pushback
-delete &lt;2012-08-08T07:19:09Z&gt; &amp; /empty log message/ pushback
-delete &lt;2012-07-28T18:40:10Z&gt; &amp; /empty log message/ pushback
+combine &lt;2012-08-14T21:51:35Z&gt; &amp; /empty log message/ pushback
+combine &lt;2012-08-08T22:52:14Z&gt; &amp; /empty log message/ pushback
+combine &lt;2012-08-07T04:48:26Z&gt; &amp; /empty log message/ pushback
+combine &lt;2012-08-08T07:19:09Z&gt; &amp; /empty log message/ pushback
+combine &lt;2012-07-28T18:40:10Z&gt; &amp; /empty log message/ pushback
 </programlisting>
 
 but you are less likely to make difficult-to-notice errors typing the
@@ -2345,6 +2345,11 @@ summary-plus-continuation form.]]</para>
 </refsect1>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
+
+<para>In <command>reposurgeon</command> versions before 2.44, the
+delete command had the semantics of combine;  a;so, the policy flags
+did not require a <quote>--</quote> prefix. The <quote>--delete</quote>
+flag was named <quote>obliterate</quote>.</para>
 
 <para>In <command>reposurgeon</command> versions before 2.44, read and
 write optionally took file arguments rather than requiring redirects
