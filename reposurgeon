@@ -4823,9 +4823,7 @@ class Repository:
         if not dquiet:
             for ei in selected:
                 event = self.events[ei]
-                if isinstance(event, Blob):
-                    raise Recoverable("attempt to directly delete blob %d" % (ei+1))
-                elif  isinstance(event, Commit):
+                if  isinstance(event, Commit):
                     if delete:
                         speak = "warning: commit %s to be deleted has " % event.mark 
                         if '/' in event.branch and not '/heads/' in event.branch:
