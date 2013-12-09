@@ -804,32 +804,32 @@ warning when this occurs but does not try to resolve it.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>--delete</command></term>
+<term><option>--delete</option></term>
 <listitem>
 <para>simply discards all file ops and tags associated with deleted commit(s).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--coalesce</command></term>
+<term><option>--coalesce</option></term>
 <listitem>
 <para>Discard all M operations (and associated blobs) except the last.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--pushback</command></term>
+<term><option>--pushback</option></term>
 <listitem>
 <para>Append fileops to parents, rather than prepending to children.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--pushforward</command></term>
+<term><option>--pushforward</option></term>
 <listitem>
 <para>Prepend fileops to children. This is the default; it can be
 specified in a lift script for explicitness about intentions.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--tagforward</command></term>
+<term><option>--tagforward</option></term>
 <listitem>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
 forward to the first child rather than being deleted. This is the
@@ -837,21 +837,21 @@ default; it can be specified for explicitnesss.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--tagback</command></term>
+<term><option>--tagback</option></term>
 <listitem>
 <para>With the "--tagback" modifier, any tag on the deleted commit is pushed
 backward to the first parent than being deleted. </para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--quiet</command></term>
+<term><option>--quiet</option></term>
 <listitem>
 <para>Suppresses warning messages about obliteration of commits with
 non-delete fileops.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>--complain</command></term>
+<term><option>--complain</option></term>
 <listitem>
 <para>The opposite of quiet. Can be specified for explicitness.</para>
 </listitem>
@@ -1195,7 +1195,7 @@ from the highest member (child) to the lowest (parent).</para>
         <emphasis>selection-set</emphasis>
 </term>
 <listitem>
-<para>Create a merge link. Takes a selection set argument, which must resolve
+<para>Linearize a commit. Takes a selection set argument, which must resolve
 to a single commit, and removes all its parents except for the first.</para>
 <para>It is equivalent to <command>reparent</command>
 <emphasis>first_parent</emphasis>,<emphasis>commit</emphasis>
@@ -1560,12 +1560,12 @@ sign will need editing.</para>
           [<emphasis>path-set</emphasis>]
 </term>
 <listitem>
-<para>Specify the list of directories to be treated as potential branches (to
-become tags if there are no modifications after the creation copies)
-when analyzing a Subversion repo. This list is ignored when the
---nobranch read option is used.  It defaults to the 'standard layout'
-set of directories, plus any unrecognized directories in the
-repository root.</para>
+<para>Specify the list of directories to be treated as potential
+branches (to become tags if there are no modifications after the
+creation copies) when analyzing a Subversion repo. This list is
+ignored when the <option>--nobranch</option> read option is used.  It
+defaults to the 'standard layout' set of directories, plus any
+unrecognized directories in the repository root.</para>
 
 <para>With no arguments, displays the current branchification set.</para>
 
@@ -1923,7 +1923,7 @@ what would have been branch structure becomes directory structure.  In
 this case, we're done; all the other rules apply to non-flat
 repos.</para>
 
-<para>If you give the option <command>--nobranch</command>
+<para>If you give the option <option>--nobranch</option>
 when reading a Subversion repository, branch analysis is skipped and
 the repository is treated as though flat (left as a linear sequence of
 commits on refs/heads/master).  This may be useful if your repository
@@ -2347,7 +2347,7 @@ summary-plus-continuation form.]]</para>
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
 
 <para>In <command>reposurgeon</command> versions before 2.44, the
-delete command had the semantics of combine;  a;so, the policy flags
+delete command had the semantics of combine;  also, the policy flags
 did not require a <quote>--</quote> prefix. The <quote>--delete</quote>
 flag was named <quote>obliterate</quote>.</para>
 
