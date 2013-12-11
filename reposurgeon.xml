@@ -129,41 +129,39 @@ sequence numbers so <command>reposurgeon</command> will know
 which events to modify or delete.</para>
 
 <para>Commands to <command>reposurgeon</command> consist of a
-command keyword, sometimes followed by a selection set, sometimes
+command keyword, sometimes preceded by a selection set, sometimes
 followed by whitespace-separated arguments. It is often possible to
 omit the selection-set argument and have it default to something
-reasonable. When the command descriptions refer to a 'second' 
-argument, it may actually be first after the keyword with the
-selection set omitted.</para>
+reasonable.</para>
 
 <para>Here are some motivating examples.  The commands will be
 explained in more detail after the description of selection
 syntax.</para>
 
 <programlisting>
-edit :15               ;; edit the object associated with mark :15
+:15 edit               ;; edit the object associated with mark :15
 
 edit                   ;; edit all editable objects
 
-list 29..71            ;; list summary index of events 20..71
+29..71 list            ;; list summary index of events 20..71
 
-list 236..$            ;; List events from 236 to the last
+236..$ list            ;; List events from 236 to the last
 
-inspect &lt;2317&gt;         ;; Look for a tag with the name 2317, a tip commit
+&lt;2317&gt; inspect         ;; Look for a tag with the name 2317, a tip commit
                        ;; of a branch named 2317, or a commit with fossil-ID
                        ;; 2317. Inspect what is found. A plain number is
                        ;; probably a fossil-ID inherited from a Subversion
                        ;; revision number.
 
-list /regression/      ;; list all commits and tags with comments or
+/regression/ list      ;; list all commits and tags with comments or
                        ;; committer headers or author headers containing 
                        ;; the string "regression"
 
-delete =T &amp; 1..:97     ;; delete tags from event 1 to mark 97
+1..:97 delete =T &amp;     ;; delete tags from event 1 to mark 97
 
-inspect [Makefile]     ;; Inspect all commits with a file op touching Makefile
+[Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
 
-list (master)          ;; List commits on the 'master' branch
+(master) list          ;; List commits on the 'master' branch
 
 tip :46                ;; Display the branch tip that owns commit :46.
 </programlisting>
@@ -498,7 +496,6 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-        [<emphasis>selection-set</emphasis>]
 	[--fossilize]
         [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
@@ -579,7 +576,7 @@ caveat).</para>
 <listitem>
 <para> Rebuild a repository from the state held by
 <command>reposurgeon</command>.  This command does not take a
-selection-set argument.</para>
+selection set.</para>
 
 <para>The single argument, if present,
 specifies the target directory in which to do the rebuild; if the
@@ -642,7 +639,6 @@ argument.</para>
 <variablelist>
 <varlistentry>
 <term><command>list</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>This is the main command for identifying the events
@@ -655,7 +651,6 @@ leading portion of the comment follows.
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>Display the branch tip names associated with commits
@@ -672,7 +667,6 @@ error.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tags</command>
-        [<emphasis>selection-set</emphasis>...]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
@@ -694,7 +688,6 @@ named repositories, or with no argument the currently chosen repository.
 </varlistentry>
 <varlistentry>
 <term><command>inspect</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
@@ -705,7 +698,6 @@ and (2) there is an identifying header before each event dump.</para>
 </varlistentry>
 <varlistentry>
 <term><command>graph</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
@@ -727,7 +719,6 @@ You can substitute in your own preferred image viewer, of course.</para>
 </varlistentry>
 <varlistentry>
 <term><command>sizes</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
@@ -744,7 +735,6 @@ unwieldy.</para>
 </varlistentry>
 <varlistentry>
 <term><command>lint</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
@@ -872,7 +862,6 @@ converters such as <command>cvs2svn</command>.</para>
 </varlistentry>
 <varlistentry>
 <term><command>delete</command>
-        [<emphasis>selection-set</emphasis>]
         [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
@@ -890,7 +879,7 @@ other event types.</para>
 <listitem>
 <para>Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
-general selection-set argument.  It is only necessary to specify the
+general selection set.  It is only necessary to specify the
 parent commit, unless it has multiple children in which case the child
 commit must follow  (separate it with a comma).</para>
 
@@ -906,7 +895,6 @@ the repo is not divided.</para>
 </varlistentry>
 <varlistentry>
 <term><command>expunge</command> 
-        [<emphasis>selection-set</emphasis>]
         <emphasis>regexp...</emphasis>
 </term>
 <listitem>
@@ -944,7 +932,6 @@ file path matches.</para>
 <term><command>tagify</command>
         [--canonicalize]
         [--tipdeletes]
-        [<emphasis>selection-set</emphasis>]
 </term>
 <listitem>
 <para>Search for empty commits and turn them into tags. Takes an optional
@@ -971,7 +958,6 @@ corresponding tags get names of the form
 </varlistentry>
 <varlistentry>
 <term><command>coalesce</command> 
-        [<emphasis>selection-set</emphasis>]
         [--debug]
         [<emphasis>timefuzz</emphasis>]
 </term>
@@ -996,7 +982,6 @@ commits from CVS lifts.</para>
 </varlistentry>
 <varlistentry>
 <term><command>split</command> 
-        <emphasis>commit-location</emphasis>
         <command>{at|by}</command> 
         <emphasis>item</emphasis>
 </term>
@@ -1021,9 +1006,7 @@ of file operations in the original commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>from</command> 
-        <emphasis>commit-location</emphasis>
-        <command>remove</command> 
+<term><command>remove</command> 
         <emphasis>index</emphasis>
 </term>
 <listitem>
@@ -1045,7 +1028,6 @@ ever cares about mark ordering or gaps in the sequence.</para>
 </varlistentry>
 <varlistentry>
 <term><command>mailbox_out</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
@@ -1099,7 +1081,6 @@ with a space-separated list of all paths that reference the blob.</para>
 </varlistentry>
 <varlistentry>
 <term><command>edit</command>
-        [<emphasis>selection-set</emphasis>]
 </term>
 <listitem>
 <para>Report the selection set of events to a tempfile as mailbox_out does,
@@ -1151,7 +1132,6 @@ type.</para>
 </varlistentry>
 <varlistentry>
 <term><command>graft</command>
-        <emphasis>commit-id</emphasis>
         <emphasis>reponame</emphasis>
 </term>
 <listitem>
@@ -1166,7 +1146,6 @@ list.</para>
 </varlistentry>
 <varlistentry>
 <term><command>paths</command>
-        [<emphasis>selection-set</emphasis>]
 	[<command>{sub|sup}</command>]
 	[<command>dirname</command>]
 	[&gt;<emphasis>outfile</emphasis>]
@@ -1183,7 +1162,6 @@ strip the first directory component from every path.</para>
 </varlistentry>
 <varlistentry>
 <term><command>merge</command>
-        <emphasis>selection-set</emphasis>
 </term>
 <listitem>
 <para>Create a merge link. Takes a selection set argument, ignoring all but
@@ -1193,7 +1171,6 @@ from the highest member (child) to the lowest (parent).</para>
 </varlistentry>
 <varlistentry>
 <term><command>unmerge</command>
-        <emphasis>selection-set</emphasis>
 </term>
 <listitem>
 <para>Linearize a commit. Takes a selection set argument, which must resolve
@@ -1212,7 +1189,6 @@ stale.</para>
 </varlistentry>
 <varlistentry>
 <term><command>reparent</command>
-        <emphasis>selection-set</emphasis>
         [<command>rebase</command>]
 </term>
 <listitem>
@@ -1392,7 +1368,6 @@ fossil-reference map) without having to do the lookup by hand.</para>
 <variablelist>
 <varlistentry>
 <term><command>references</command>
-          [<emphasis>selection-set</emphasis>]
           [<command>lift</command>]
           [&gt;<emphasis>outfile</emphasis>]
 </term>
@@ -1512,7 +1487,6 @@ associated with repository conversions from order systems.</para>
 <variablelist>
 <varlistentry>
 <term><command>authors</command>
-          [<emphasis>selection-set</emphasis>]
           [<command>read</command>|<command>write</command>]
           [&lt;<command>filename</command>]
           [&gt;<command>filename</command>]
@@ -1588,7 +1562,6 @@ forget to re-set it.</para>
 <variablelist>
 <varlistentry>
 <term><command>manifest</command>
-        [<emphasis>selection-set</emphasis>]
         [<emphasis>regular expression</emphasis>]
 </term>
 <listitem>
@@ -1602,7 +1575,6 @@ it. This command supports &gt; redirection.</para>
 </varlistentry>
 <varlistentry>
 <term><command>checkout</command>
-        [<emphasis>selection-set</emphasis>]
         <emphasis>directory</emphasis>
 </term>
 <listitem>
@@ -1614,7 +1586,6 @@ the directory.</para>
 </varlistentry>
 <varlistentry>
 <term><command>diff</command>
-          <emphasis>selection-set</emphasis>
 </term>
 <listitem>
 <para>Display the difference between commits. Takes a selection-set
@@ -1685,7 +1656,6 @@ argument.</para>
 <variablelist>
 <varlistentry>
 <term><command>index</command>
-        [<emphasis>selection-set</emphasis>]
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
@@ -1701,7 +1671,6 @@ except blobs.</para>
 </varlistentry>
 <varlistentry>
 <term><command>resolve</command>
-        [<emphasis>selection-set</emphasis>]
 </term>
 <listitem><para>Does nothing but resolve a selection-set expression
 and echo the resulting event-number set to standard
@@ -2346,6 +2315,14 @@ summary-plus-continuation form.]]</para>
 </refsect1>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
+
+<para>In versions before 2.44, the general command syntax put the
+command verb first, then the selection set (if any) then modifiers
+(VSO).  It has changed to optional selection set first, then command
+verb, then modifiers (SVO). The change made parsing simpler, allowed
+abolishing some noise keywords, and recapitulates a successful design
+pattern in some other Unix tools - notably
+<citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>In <command>reposurgeon</command> versions before 2.44, the
 delete command had the semantics of combine;  also, the policy flags

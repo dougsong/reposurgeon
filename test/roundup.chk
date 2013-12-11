@@ -1,7 +1,7 @@
 read <roundup.fi
-resolve :1?
+:1? resolve
 [3, 41]
-inspect :39,:42
+:39,:42 inspect
 Event 41 ================================================================
 commit refs/tags/release-0-5-0
 mark :39
@@ -49,8 +49,8 @@ from :39
 M 100644 :40 Makefile
 M 100644 :41 dummy_config.py
 
-combine :42 --pushback
-inspect :39
+:42 combine --pushback
+:39 inspect
 Event 43 ================================================================
 commit refs/tags/release-0-5-0
 mark :39

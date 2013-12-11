@@ -3,7 +3,7 @@ reposurgeon: echo 1
 quiet on
 read --nobranch <expunge.svn
 * expunge
-expunge 1..$ ^releases/v1.0/
+1..$ expunge ^releases/v1.0/
 reposurgeon: at 6, expunging M releases/v1.0/VERSION
 reposurgeon: deletion set is empty.
 choose

@@ -35,7 +35,7 @@ data 48
 This is another modification of that test file.
 
 
-delete :2,:3 --tagback
+:2,:3 delete --tagback
 reposurgeon: warning: commit :3 to be deleted has non-head branch attribute refs/tags/v2
 reposurgeon: warning: commit :3 to be deleted has non-delete fileops.
 reposurgeon: warning: commit :2 to be deleted has non-head branch attribute refs/tags/v1

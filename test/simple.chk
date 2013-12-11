@@ -58,7 +58,7 @@ index
    129 commit   :128    refs/heads/master
    130 branch   :128    refs/heads/master
    131 tag      :113    'annotated-sample'
-tip :76
+:76 tip
 tags
      3 refs/tags/lightweight-sample
      5 refs/tags/lightweight-sample
@@ -114,7 +114,7 @@ script simple.tst testing123
 echo 1
 read <simple.fi
 index
-tip :76
+:76 tip
 tags
 history
 verbose 1
@@ -129,7 +129,7 @@ rs
 test/Makefile
 test/simple.dump
 theory.txt
-expunge 1..$ theory.txt
+1..$ expunge theory.txt
 reposurgeon: at 7, expunging M theory.txt
 reposurgeon: at 10, expunging M theory.txt
 reposurgeon: at 24, expunging M theory.txt
@@ -146,7 +146,7 @@ rs
 test/Makefile
 test/simple.dump
 verbose 0
-checkout 116 foobar
+116 checkout foobar
 !ls foobar
 Makefile
 READ[ME].txt
@@ -188,8 +188,8 @@ diff -r --label 'commit :108' --label 'commit :110' -u commit :108 commit :110
                  # First, literal command numbers (1-origin)
                  match = re.match("[0-9]+", self.line)
                  if match:
-diff 101,103
-manifest 101,103
+101,103 diff
+101,103 manifest
 Event 101 ===============================================================
 commit refs/tags/annotated-sample
 mark :108
@@ -212,7 +212,7 @@ reposurgeon -> :109
 reposurgeon.xml -> :97
 test/Makefile -> :68
 test/simple.dump -> :48
-manifest 116
+116 manifest
 Event 116 ===============================================================
 commit refs/heads/master
 mark :123
@@ -224,7 +224,7 @@ reposurgeon -> :122
 reposurgeon.xml -> :114
 test/Makefile -> :68
 test/simple.dump -> :48
-manifest 116 ^reposurgeon
+116 manifest ^reposurgeon
 Event 116 ===============================================================
 commit refs/heads/master
 mark :123
@@ -237,9 +237,9 @@ foo/theory.txt
 paths sup
 theory.txt
 # Test the macro facility
-define fubar list {0}
+define fubar {0} list
 do fubar :50
-list :50
+:50 list
 undefine fubar
 # Stream the repo
 write -

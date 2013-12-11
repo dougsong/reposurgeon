@@ -1,7 +1,7 @@
 ## Test topological-divide and renumber operations
 echo 1
 read <bzr.fi
-divide :1
+:1 divide
 choose bzr-early
 write -
 choose bzr-late

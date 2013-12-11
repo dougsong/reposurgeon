@@ -33,7 +33,7 @@ extraction of logical values from report. Added Kelvin-to-Celsius
 conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
 EOF
-inspect <352>
+<352> inspect
 references lift
 prefer git
 write -

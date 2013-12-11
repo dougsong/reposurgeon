@@ -6042,16 +6042,8 @@ into sections of the input stream instead).
             line = m.split(line)[0]
         # This is the only place in the implementation that knows
         # whether the syntax is VSO or SVO.
-        line = line.strip()
-        m = re.match(r"^[a-z]+\s*", line)
-        if not m:
-            return line	# Must be a comment or !? escape.
-        else:
-            command = m.group(0)
-            line = line[len(command):]
-        if self.chosen() and command.strip() not in ("echo", "verbose"):
+        if self.chosen():
             line = self.set_selection_set(line)
-        line = command + line
         return line
     def do_shell(self, line):
         "Execute a shell command."
@@ -6708,9 +6700,9 @@ of the selection; you can do this repeatedly for effect.
 
     def help_syntax(self):
         print("""
-All commands begin with a command keyword.  Most take a selection set
-immediately following it; see 'help selection' for details.  Some
-commands take additional modifier arguments after the selrction set.
+Commands are distinguished by a command keyword.  Most take a selection set
+immediately before it; see 'help selection' for details.  Some
+commands take additional modifier arguments after the command keyword.
 
 Most report-generation commands support output redirection. When
 arguments for these are parsed, any argument beginning with '>' is
@@ -7788,18 +7780,18 @@ With  the --debug option, show messages about mismatches.
                 announce("deletion set is %s" % [x+1 for x in eligible])
             self.chosen().combine(eligible, ("--coalesce",))
 
-    def help_from(self):
+    def help_remove(self):
         print("""
 From a specified commit, remove a specified fileop. The syntax is:
 
-     from SELECTION remove OP
+     remove OP
 
 The selection set must be a singleton and the OP a 1-origin numeric index.
 Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
 change in a future release.
 """)
-    def do_from(self, line):
+    def do_remove(self, line):
         "Delete a fileop from a specified commit."
         if not self.chosen():
             complain("no repo is loaded")
@@ -7813,19 +7805,15 @@ change in a future release.
         if not isinstance(event, Commit):
             complain("from selection must be a commit")
         fields = line.split()
-        if fields[0] == "remove":
-            try:
-                ind = int(fields[1]) - 1
-            except (ValueError, IndexError):
-                complain("ill-formed or missing fileop index")
-                return
-            try:
-                event.fileops.pop(ind)
-            except IndexError:
-                complain("out-of-range fileop index")
-                return
-        else:
-            complain("unknown verb '%s' after from" % fields[0])
+        try:
+            ind = int(fields[1]) - 1
+        except (ValueError, IndexError):
+            complain("ill-formed or missing fileop index")
+            return
+        try:
+            event.fileops.pop(ind)
+        except IndexError:
+            complain("out-of-range fileop index")
             return
 
     def help_renumber(self):
@@ -8002,10 +7990,10 @@ file path matches.
         print("""
 Split a specified commit in two, the opposite of join.
 
-    split N at M
-    split N by PREFIX
+    split at M
+    split by PREFIX
 
-The first argument is required to be a commit location; the second is
+The selection set is required to be a commit location; the modifier is
 a preposition which indicates which splitting method to use. If the
 preposition is 'at', then the third argument must be an integer
 1-origin index of a file operation within the commit. If it is 'in',

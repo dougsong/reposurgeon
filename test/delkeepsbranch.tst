@@ -2,5 +2,5 @@
 echo 1
 read <delkeepsbranch.fi
 inspect
-delete :2,:3 --tagback
+:2,:3 delete --tagback
 inspect

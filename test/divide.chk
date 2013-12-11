@@ -1,5 +1,5 @@
 read <bzr.fi
-divide :1
+:1 divide
 choose bzr-early
 write -
 feature commit-properties

@@ -1,7 +1,7 @@
 ## Test combine --pushback
 echo 1
 read <roundup.fi
-resolve :1?
-inspect :39,:42
-combine :42 --pushback
-inspect :39
+:1? resolve
+:39,:42 inspect
+:42 combine --pushback
+:39 inspect

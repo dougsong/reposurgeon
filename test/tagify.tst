@@ -3,9 +3,9 @@ echo 1
 read <tagify.fi
 tagify
 write -
-tagify 1..:6 --tipdeletes
+1..:6 tagify --tipdeletes
 write -
-tagify 1..$ --tipdeletes
+1..$ tagify --tipdeletes
 write -
 tagify --canonicalize --tipdeletes
 write -

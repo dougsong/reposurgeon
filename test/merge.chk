@@ -1,5 +1,5 @@
 read <sample1.fi
-inspect :31
+:31 inspect
 Event 32 ================================================================
 commit refs/heads/master
 mark :31
@@ -14,8 +14,8 @@ from :25
 merge :29
 M 100644 :30 README
 
-unmerge :31
-inspect :31
+:31 unmerge
+:31 inspect
 Event 32 ================================================================
 commit refs/heads/master
 mark :31
@@ -29,7 +29,7 @@ Conflicts:
 from :25
 M 100644 :30 README
 
-inspect :29
+:29 inspect
 Event 30 ================================================================
 commit refs/heads/alternate
 mark :29
@@ -40,8 +40,8 @@ Second commit on the alternate branch.
 from :27
 M 100644 :28 README
 
-merge :25,:29
-inspect :29
+:25,:29 merge
+:29 inspect
 Event 30 ================================================================
 commit refs/heads/alternate
 mark :29
