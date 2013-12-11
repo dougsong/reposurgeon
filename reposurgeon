@@ -7751,9 +7751,8 @@ With  the --debug option, show messages about mismatches.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            if not parse.line:
-                timefuzz = 90
-            else:
+            timefuzz = 90
+            if parse.line:
                 try:
                     timefuzz = int(parse.line)
                 except ValueError:
