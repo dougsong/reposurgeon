@@ -4801,8 +4801,8 @@ class Repository:
         "Delete a set of events, or rearrange it forward or backwards."
         if debug_enable(DEBUG_DELETE):
             announce("Deletion list is %s" % [x+1 for x in selected])
-            for qualifier in policy:
-                if qualifier not in ["--complain",
+        for qualifier in policy:
+            if qualifier not in ["--complain",
                                  "--coalesce",
                                  "--delete",
                                  "--pushback",
@@ -4810,7 +4810,7 @@ class Repository:
                                  "--tagback",
                                  "--tagforward",
                                  "--quiet"]:
-                    raise Recoverable("no such deletion modifier as " + qualifier)
+                raise Recoverable("no such deletion modifier as " + qualifier)
         # Make sure we do deletions from greatest commit number to least
         selected = sorted(selected, reverse=True)
         dquiet = "--quiet" in policy
@@ -7786,7 +7786,7 @@ With  the --debug option, show messages about mismatches.
                 eligible.append(ithis)
             if verbose >= DEBUG_DELETE:
                 announce("deletion set is %s" % [x+1 for x in eligible])
-            self.chosen().combine(eligible, "--coalesce")
+            self.chosen().combine(eligible, ("--coalesce",))
 
     def help_from(self):
         print("""
