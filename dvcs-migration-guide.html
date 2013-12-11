@@ -65,15 +65,10 @@ political friction to a minimum.</p>
 
 <p>The technical fact central to the strategy I'm going to describe is
 that as of late 2011 an hg plugin already exists to allow seamless
-access to a git repository - but the reverse is not true.  So we'll
-walk through how to up-convert a git repository and then line up the
-tools to access it in several different ways.</p>
-
-<p>This assumption may become false in the future.  The <a
-href="https://github.com/rfk/git-remote-hg">git-remote-hg</a> project
-seems to be attempting seamless live gatewaying in the other direction
-(that is, using hg repos as git remotes). But as I write it seems to
-be in early development and as yet only poorly documented.</p>
+access to a git repository, and as of 2013 recent versions of git can
+clone from and push to Mercurial repos.  We'll walk through how to
+up-convert a git repository and then line up the tools to access it in
+several different ways.</p>
 
 <p>But tools aren't the end of the story. Your developers will need
 some education in good practice to get the most out of the tools.
@@ -204,7 +199,7 @@ generality. It can even translate Subversion commits that alter
 multiple branches.</p>
 
 <p>Performance tip: <code>reposurgeon</code> should analyze Subversion
-repositories at the rate of over 250 commits a second, but that rate
+repositories at the rate of over 10K commits per minute, but that rate
 falls off somewhat on very large repositories (apparently due to I/O
 costs). You can speed it up significantly by running it under <a
 href="http://pypy.org/compat.html">pypy</a>.
@@ -609,6 +604,7 @@ under pypy.</p>
 
 <p>3.8 (2013-11-15) Remove an obsolete paragraph.</p>
 
+<p>3.9 (2013-12-11) Incorporate the report that git now does hg remotes.</p>
 </div>
 <hr />
 </body>
