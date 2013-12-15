@@ -25,10 +25,11 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 
-<para>repopuller uses svnsync to grab a copy of a Subversion repo.</para>
+<para>repopuller grabs a copy of a Subversion or CVS repo.</para>
 
-<para>Requires a single argument, either a Subversion URL or the name
-of a local mirror directory created by a previous run.</para>
+<para>Requires a single argument, either a Subversion URL or or a CVS
+URL or the name of a local mirror directory created by a previous
+run.</para>
 
 <para>The first form creates a local mirror of the repository in a
 directory named after the last segment of the URL, with the suffix
@@ -36,6 +37,10 @@ directory named after the last segment of the URL, with the suffix
 
 <para>The second form updates the local mirror, doing an incremental
 fetch; just give the mirror directory name.</para>
+
+<para>Subversion URLs are as specified in the Subversion
+documentation.  CVS URLs most specify a host and repository path,
+followed by a '#', followed by a module name.</para>
 </refsect1>
 
 <refsect1 id='author'><title>AUTHOR</title>

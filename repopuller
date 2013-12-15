@@ -1,10 +1,12 @@
 #!/bin/bash
 #
-# repopuller - use svnsync to grab a copy of a Subversion repo
+# repopuller - use svnsync to grab a copy of a Subversion or CVS repo
 #
-# Initially requires a single argument, either an SVN URL, e.g something like
-# svn://svn.hercules-390.org/hercules or svn://svn.debian.org/nut,
-# or the name of a local mirror directory created by a previous run.
+# Initially requires a single argument, either an SVN URL, e.g
+# something like svn://svn.hercules-390.org/hercules or
+# svn://svn.debian.org/nut, or a CVS URL, e.g. something like
+# cvs://rfk.cvs.sourceforge.net/cvsroot/rfk#robotfindskitten, or the
+# name of a local mirror directory created by a previous run.
 #
 # The first run creates a local mirror of the repository in a directory named
 # after the last segment of the URL: that is, the second example
@@ -31,8 +33,17 @@ EOF
 elif [ -d "$operand/locks" ]
 then
     svnsync synchronize file://${PWD}/$operand
+elif [ `expr "$operand" : "cvs://"` = 6 ]
+then
+    local=`echo basename $operand | sed -e /.*#/s///`-mirror
+    mkdir $local
+    cvssync -o $local "$operand"
+    echo "$operand" >$local/.cvssync
+elif [ -d $operand/.cvssync ]
+then
+    cvssync -o $operand `cat $operand/.cvssync`
 else
-    echo "repopuller: $operand does not look like a Subversion repository."
+    echo "repopuller: $operand does not look like a Subversion or CVS repository."
     exit 1
 fi
 
