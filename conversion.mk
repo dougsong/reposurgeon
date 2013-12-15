@@ -19,6 +19,7 @@ TARGET_VCS = git
 EXTRAS = 
 SVN_URL = svn://svn.debian.org/$(PROJECT)
 CVS_HOST = $(PROJECT).cvs.sourceforge.net
+CVS_MODULE = $(PROJECT)
 VERBOSITY = "verbose 1"
 
 # Configuration ends here
@@ -71,13 +72,14 @@ ifeq ($(SOURCE_VCS),cvs)
 #
 
 # Mirror a CVS repo (from a site with a SourceForge-like CVS layout).
-# You may need to modify this.
-$(PROJECT)-checkout:
-	cvs -q "-d:ext:$(CVS_HOST)/$(PROJECT)" co $(PROJECT) $(PROJECT)-checkout
+# Requires cvssync(1) from the cvs-fast-export distribution.  
+# You may need to modify the cvssync command for other sites.
+$(PROJECT)-mirror:
+	cvssync -o $(PROJECT)-mirror "$(CVSHOST)/cvsroot/$(PROJECT)" $(MODULE) 
 
 # Build the fast-import stream from the repository
 $(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT)-checkout" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
+	reposurgeon $(VERBOSITY) "read $(PROJECT)-mirror" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write $(PROJECT).fi"
 
 endif
 
