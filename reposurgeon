@@ -3909,7 +3909,7 @@ class SubversionDumper:
             # not if we try md5.  It's unknown why - possibly svn load
             # is simply ignoring sha1.
             #fp.write("Text-content-md5: %s\n" % hashlib.md5(content).hexdigest())
-            fp.write("Text-content-sha1: %s\n" % hashlib.sha1(content.encode()).hexdigest())
+            fp.write("Text-content-sha1: %s\n" % hashlib.sha1(content).hexdigest())
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
         fp.write(nodeprops)            
         if content:
