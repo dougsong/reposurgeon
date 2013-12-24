@@ -157,13 +157,13 @@ edit                   ;; edit all editable objects
                        ;; committer headers or author headers containing 
                        ;; the string "regression"
 
-1..:97 delete =T &amp;     ;; delete tags from event 1 to mark 97
+1..:97 &amp; =T delete     ;; delete tags from event 1 to mark 97
 
 [Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
 
 (master) list          ;; List commits on the 'master' branch
 
-tip :46                ;; Display the branch tip that owns commit :46.
+:46 tip                ;; Display the branch tip that owns commit :46.
 </programlisting>
 
 <para>The selection-set specification syntax is an expression-oriented 
@@ -836,7 +836,7 @@ backward to the first parent than being deleted. </para>
 <varlistentry>
 <term><option>--quiet</option></term>
 <listitem>
-<para>Suppresses warning messages about obliteration of commits with
+<para>Suppresses warning messages about deletion of commits with
 non-delete fileops.</para>
 </listitem>
 </varlistentry>
