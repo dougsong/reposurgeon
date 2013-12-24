@@ -1,0 +1,85 @@
+SVN-fs-dump-format-version: 2
+ ## No branches, first commit is on root
+
+UUID: 73540b90-235f-47be-8c78-0b4270956806
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-02-15T22:57:45.355690Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 136
+Content-length: 136
+
+K 7
+svn:log
+V 36
+Claire\'s "beginning of a beginning"
+K 10
+svn:author
+V 5
+david
+K 8
+svn:date
+V 27
+2011-02-15T22:59:30.051717Z
+PROPS-END
+
+Node-path: wads.tex
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 38
+Content-length: 48
+
+PROPS-END
+Revision is 1, file path is wads.tex.
+
+
+
+
+Revision-number: 2
+Prop-content-length: 106
+Content-length: 106
+
+K 7
+svn:log
+V 7
+figures
+K 10
+svn:author
+V 5
+klein
+K 8
+svn:date
+V 27
+2011-07-12T01:23:44.456980Z
+PROPS-END
+
+Node-path: figures
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3539,7 +3539,9 @@ class StreamParser:
             except StopIteration:
                 pass
             else:
-                self.branchlink[commit.mark] = (commit, self.repo.earliest_commit())
+                earliest = self.repo.earliest_commit()
+                if commit != earliest:
+                    self.branchlink[commit.mark] = (commit, earliest)
             self.repo.timings.append(["root", time.time()])
             baton.twirl()
             # Add links due to Subversion copy operations
