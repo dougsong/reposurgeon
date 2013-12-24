@@ -21,8 +21,8 @@ choose simple-expunges
 paths sub foo
 paths sup
 # Test the macro facility
-define fubar {0} list
-do fubar :50
+define fubar list
+:50 do fubar
 undefine fubar
 # Stream the repo
 write -

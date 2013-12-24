@@ -1,0 +1,49 @@
+SVN-fs-dump-format-version: 2
+ ## One commit with one byte of binary content.
+
+UUID: 2fe81d11-5c7c-4394-a05f-1bfbb52a6bc5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2013-12-24T17:46:37.999961Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 117
+Content-length: 117
+
+K 8
+svn:date
+V 27
+2013-12-24T17:47:20.567131Z
+K 7
+svn:log
+V 17
+added binary file
+K 10
+svn:author
+V 5
+david
+PROPS-END
+
+Node-path: baz
+Node-kind: file
+Node-action: add
+Prop-content-length: 59
+Text-content-length: 1
+Text-content-md5: 00594fd4f42ba43fc1ca0427a0576295
+Text-content-sha1: 85e53271e14006f0265921d02d4d736cdc580b0b
+Content-length: 60
+
+K 13
+svn:mime-type
+V 24
+application/octet-stream
+PROPS-END
+ÿ
+

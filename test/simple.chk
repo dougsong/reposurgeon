@@ -237,9 +237,8 @@ foo/theory.txt
 paths sup
 theory.txt
 # Test the macro facility
-define fubar {0} list
-do fubar :50
-:50 list
+define fubar list
+:50 do fubar
 undefine fubar
 # Stream the repo
 write -
