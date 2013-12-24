@@ -1875,7 +1875,7 @@ it.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>--no-autoignores</term>
+<term>--noignores</term>
 <listitem><para>Do not generate a simulation of Subversion ignores in
 the root node.</para></listitem>
 </varlistentry>

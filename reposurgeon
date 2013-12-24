@@ -964,7 +964,7 @@ class Blob(object):
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
             # Ugh.  This is where we mess with ignore syntax translation
-            if options is None or not '--no-autoignores' in options:
+            if options is None or not '--noignores' in options:
                 if vcs and self.repo.vcs and len(self.paths) == 1 and self.paths[0].endswith(".gitignore"):
                     if vcs.name == "hg" and self.repo.vcs.name != "hg":
                         if not content.startswith("syntax: glob\n"):
@@ -2968,7 +2968,7 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            if "--no-autoignores" in options:
+                            if "--noignores" in options:
                                 startwith = ""
                             else:
                                 startwith = StreamParser.SubversionDefaultIgnores
