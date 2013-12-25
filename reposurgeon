@@ -888,6 +888,9 @@ class Blob(object):
         self.start = None
         self.size = 0
         self.keep = None
+    def id_me(self):
+        "ID this blob for humans."
+        return "blob@%s" % self.mark 
     def blobfile(self, create=False):
         "File where the content lives."
         stem = repr(id(self))
@@ -1015,7 +1018,7 @@ class Tag(object):
         return self.repo.index(self)
     def id_me(self):
         "ID this tag for humans."
-        return "tag@%d (%s)" % (self.index()+1, self.name)
+        return "tag@%s (%s)" % (self.mark, self.name)
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1308,7 +1311,7 @@ class Commit(object):
         return self.repo.index(self)
     def id_me(self):
         "ID this commit for humans."
-        myid = "commit@%d" % (self.index()+1)
+        myid = "commit@%s" % self.mark
         if self.fossil_id:
             myid += "=<%s>" % self.fossil_id
         return myid
@@ -5020,7 +5023,7 @@ class Repository:
                 return ":" + repr(markmap[m])
             except KeyError:
                 raise Fatal("unknown mark %s in %s cannot be renumbered!" % \
-                            (m, e.__class__.__name__.lower()))
+                            (m, e.id_me()))
         if baton:
             count = len(self.events)
             baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
