@@ -1297,7 +1297,7 @@ removed.</para>
 <para>Reduce the selected repository to make it a more tractable test
 case. Use this when reporting bugs.</para>
 
-<para>With the modfier 'blobs', replace each blob in the repository
+<para>With the modifier 'blobs', replace each blob in the repository
 with a small, self-identifying stub, leaving all metadata and DAG
 topology intact. This is useful when you are reporting a bug, for
 reducing large repositories to test cases of manageable size.</para>
