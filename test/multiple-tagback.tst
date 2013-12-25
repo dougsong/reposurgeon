@@ -1,4 +1,4 @@
-## Test a deletion with --tagback on a commit tagged twice
+## Test a combination with --tagback on a commit tagged twice
 read <multitag.fi
-5 combine --tagback
+:4 combine --tagback
 write -
