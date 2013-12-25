@@ -958,7 +958,7 @@ corresponding tags get names of the form
 'emptycommit-<emphasis>ident</emphasis>'.</para>
 
 <para>With the <option>--tagify-merges</option>, tagify also tagifies merge
-commits that have no fileops.
+commits that have no fileops.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
