@@ -4893,15 +4893,16 @@ class Repository:
                             for p in itertools.islice(old_parents,
                                                       event_pos+1, None)
                             if p not in to_add)
-                    # Really set the parents to the newly constructed list
-                    child.set_parents(new_parents)
-                    if pushforward:
-                        # Prepend a copy of this event's file ops to
-                        # each child's list and mark the child as
-                        # needing resolution.
+                    # Prepend a copy of this event's file ops to
+                    # all children with the event as their first
+                    # parent, and mark each such child as needing
+                    # resolution.
+                    if pushforward and child.parents()[0] == event:
                         child.fileops = copy.copy(event.fileops) + child.fileops
                         child._pathset = None
                         altered.append(child)
+                    # Really set the parents to the newly constructed list
+                    child.set_parents(new_parents)
                     # If event was the first parent of child yet has no parents
                     # of its own, then child's first parent has changed.
                     # Prepend a deleteall to child's fileops to ensure it
@@ -4913,14 +4914,15 @@ class Repository:
                         child.fileops.insert(0, fileop)
                         child._pathset = None
                         altered.append(child)
-                # We might be trying to hand the event's fileops to parents.
+                # We might be trying to hand the event's fileops to its
+                # primary parent.
                 if pushback and event.has_parents():
                     # Append a copy of this event's file ops to each parent's
                     # list and mark the parent as needing resolution.
-                    for parent in event.parents():
-                        parent.fileops += copy.copy(event.fileops)
-                        parent._pathset = None
-                        altered.append(parent)
+                    parent = event.parents()[0]
+                    parent.fileops += copy.copy(event.fileops)
+                    parent._pathset = None
+                    altered.append(parent)
                     # We need to ensure all fileop blobs are defined before the
                     # corresponding fileop, in other words ensure that the blobs
                     # are before the parent with lowest index.
