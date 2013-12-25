@@ -2720,6 +2720,8 @@ class StreamParser:
                     # End of fast-import parsing
                     self.repo.timings.append(("parsing", time.time()))
                 self.import_line = 0
+                if not self.repo.events:
+                    raise Recoverable("ignoring empty repository")
             if self.warnings:
                 for warning in self.warnings:
                     complain(warning)
@@ -3472,7 +3474,7 @@ class StreamParser:
                           msg.strip()[:20]))
         baton.twirl()
         # First, turn the root commit into a tag
-        if not self.repo.earliest_commit().fileops:
+        if self.repo.events and not self.repo.earliest_commit().fileops:
             try:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
