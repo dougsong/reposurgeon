@@ -4940,16 +4940,17 @@ class Repository:
                 # We might be trying to hand the event's fileops to its
                 # primary parent.
                 if pushback and event.has_parents():
-                    # Append a copy of this event's file ops to each parent's
-                    # list and mark the parent as needing resolution.
+                    # Append a copy of this event's file ops to its primary
+                    # parent fileop list and mark the parent as needing
+                    # resolution.
                     parent = event.parents()[0]
                     parent.fileops += copy.copy(event.fileops)
                     parent._pathset = None
                     altered.append(parent)
                     # We need to ensure all fileop blobs are defined before the
                     # corresponding fileop, in other words ensure that the blobs
-                    # are before the parent with lowest index.
-                    earliest = min(self.find(p.mark) for p in event.parents())
+                    # appear before the primary parent in the stream.
+                    earliest = parent.index()
                     swap_indices = set()
                     for fileop in event.fileops:
                         if fileop.op == 'M':
