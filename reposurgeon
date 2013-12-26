@@ -6211,9 +6211,7 @@ into sections of the input stream instead).
                 if term is None:
                     term = self.eval_textsearch(preselection)
                     if term == None:
-                        term = self.eval_branchset(preselection)
-                        if term == None:
-                            term = self.eval_pathset(preselection)
+                        term = self.eval_pathset(preselection)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
@@ -6451,14 +6449,26 @@ into sections of the input stream instead).
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = set()
-            searchable_attrs = ("author", "branch", "comment",
-                                "committer", "committish", "text",
-                                "tagger", "name")
+            searchable_attrs = {"a":"author",		# commit
+                                "b":"branch",		# commit
+                                "c":"comment",		# commit or tag
+                                "C":"committer",	# commit
+                                "r":"committish",	# tag or reset
+                                "p":"text",		# passthrough
+                                "t":"tagger",		# tag
+                                "n":"name"		# tag
+                                }
+            search_in = searchable_attrs.values()
+            if self.line[0].isalpha():
+                search_in = []
+                while self.line[0] in searchable_attrs.keys():
+                    search_in.append(searchable_attrs[self.line[0]])
+                    self.line = self.line[1:]
             for i in preselection:
                 e = self.chosen().events[i]
                 if any(hasattr(e, searchable) and
                        search(str(getattr(e, searchable)))
-                       for searchable in searchable_attrs):
+                       for searchable in search_in):
                     matchers.add(i)
                 # We don't do blobs because it would be too slow
                 # and not very useful.
@@ -6571,36 +6581,6 @@ into sections of the input stream instead).
                     containing.add(event.mark)
                     result.add(i)
         return result
-    def eval_branchset(self, preselection):
-        "Resolve a branch name to its set of associated events."
-        if self.peek() != "(":
-            return None
-        else:
-            self.pop()
-            selection = []
-            for symbol in sorted(self.chosen().branchset(),
-                                 key=len, reverse=True): # longest name first
-                if self.line.startswith(os.path.basename(symbol)):
-                    for i in preselection:
-                        event = self.chosen().events[i]
-                        if isinstance(event, Reset):
-                            if event.ref == symbol:
-                                selection.append(i)
-                        elif isinstance(event, Commit):
-                            if event.branch == symbol:
-                                selection.append(i)
-                        elif isinstance(event, Tag):
-                            assert(event.target is not None)
-                            assert(isinstance(event.target, Commit))
-                            if event.target.branch == symbol:
-                                selection.append(i)
-                    self.line = self.line[len(os.path.basename(symbol)):]
-                    if self.pop() != ')':
-                        raise Recoverable("branch set improperly terminated.")
-                    break
-            else:
-                raise Recoverable("unknown branch name %s" % self.line)
-            return set(selection)
     #
     # Helpers
     #

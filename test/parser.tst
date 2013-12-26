@@ -14,9 +14,9 @@ read <simple.fi
 24..97 & =C | 20..40 & =C resolve
 24..97 & {=C | 20..40} resolve
 3,:15 resolve
-(master) resolve
+/master/b resolve
 <lightweight-sample> resolve
-(annotated-sample) resolve
+/annotated-sample/ resolve
 <annotated-sample> resolve
 /regression/ resolve
 /Raymond/ resolve

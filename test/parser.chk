@@ -25,11 +25,11 @@ read <simple.fi
 [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
 3,:15 resolve
 [3, 16]
-(master) resolve
-[116, 118, 120, 122, 124, 127, 129, 130]
+/master/b resolve
+[116, 118, 120, 122, 124, 127, 129]
 <lightweight-sample> resolve
 [83]
-(annotated-sample) resolve
+/annotated-sample/ resolve
 [85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 131]
 <annotated-sample> resolve
 [131]

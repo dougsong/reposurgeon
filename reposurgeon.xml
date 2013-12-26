@@ -161,8 +161,6 @@ edit                   ;; edit all editable objects
 
 [Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
 
-(master) list          ;; List commits on the 'master' branch
-
 :46 tip                ;; Display the branch tip that owns commit :46.
 </programlisting>
 
@@ -189,10 +187,7 @@ of the semantics of marks.</para></listitem>
 <para>The basename of a branch refers to its tip commit.  The name of
 a tag is equivalent to its mark, and through that to a commit. Tag and
 branch locations are bracketed with &lt; &gt; (angle brackets) to
-distinguish them from command keywords. (But also see the discussion
-of branch sets and &amp; a bit further on; also, in older versions
-of this tool tag and branch locations were prefixed with  '@' rather
-than bracketed. The change fixed a parsing ambiguity)</para>
+distinguish them from command keywords.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -389,9 +384,61 @@ and any associated branch resets.</para>
 surrounded by forward slashes (to embed a forward slash in it, use a
 Python string escape such as \x2f).</para>
 
-<para>A text search matches against the comment fields of commits and
-annotated tags, or against their author/committer headers. 
-It matches against the text of passthrough objects.</para>
+<para>A text search normally matches against the comment fields of commits and
+annotated tags, or against their author/committer headers, or against
+the names of tags; also the text of passthrough objects.</para>
+
+<para>The scope of a text search can be restricted with qualifier
+letters after the trailing slash.  These are as follows:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'>letter</entry>
+        <entry align='center'>interpretation</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>a</entry>
+        <entry align='center'>auther name in commit</entry>
+      </row>
+      <row>
+        <entry align='center'>b</entry>
+        <entry align='center'>branch name</entry>
+      </row>
+      <row>
+        <entry align='center'>c</entry>
+        <entry align='center'>comment text of commit or tag</entry>
+      </row>
+      <row>
+        <entry align='center'>r</entry>
+        <entry align='center'>committish reference in tag or reset</entry>
+      </row>
+     <row>
+        <entry align='center'>p</entry>
+        <entry align='center'>text in passthrough</entry>
+      </row>
+     <row>
+        <entry align='center'>t</entry>
+        <entry align='center'>tagger in tag</entry>
+      </row>
+     <row>
+        <entry align='center'>n</entry>
+        <entry align='center'>name of tag</entry>
+      </row>
+       </tbody>
+  </tgroup>
+</informaltable>
+
+<para>Multiple qualifier letters can add more search scopes.</para>
+
+<para>(The <quote>b</quote> qualifier replaces the branchset syntax 
+in order versions of this tool.)</para>
+
 </listitem>
 </varlistentry>
 <varlistentry>
