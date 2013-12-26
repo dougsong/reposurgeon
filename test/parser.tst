@@ -16,7 +16,7 @@ read <simple.fi
 3,:15 resolve
 /master/b resolve
 <lightweight-sample> resolve
-/annotated-sample/ resolve
+/annotated-sample/b resolve
 <annotated-sample> resolve
 /regression/ resolve
 /Raymond/ resolve
