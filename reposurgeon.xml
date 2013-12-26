@@ -482,8 +482,9 @@ use e.g. '[/regex/] &amp; [@/regex/]'.</para>
 
 <para>Set expressions may be combined with the operators | and &amp;;
 these are, respectively, set union and intersection. The | has lower
-precedence than intersection, but you may use curly brackets '{' and
-'}' to group expressions in case there is ambiguity.</para>
+precedence than intersection, but you may use parenmtheses '(' and
+')' to group expressions in case there is ambiguity (this replaces the
+curly brackets used in older versions of the syntax).</para>
 
 <para>Finally, any set operation may be followed by '?' to add the set
 members' neighbors and referents.  This extends the set to include the

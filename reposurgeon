@@ -6196,11 +6196,11 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
-        if self.peek() == '{':
+        if self.peek() == '(':
             self.pop()
             term = self.eval_expression(preselection)
             self.line = self.line.lstrip()
-            if self.peek() != '}':
+            if self.peek() != ')':
                 raise Recoverable("trailing junk on inner expression")
             else:
                 self.pop()
