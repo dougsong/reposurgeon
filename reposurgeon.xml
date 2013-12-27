@@ -801,7 +801,9 @@ to support.</para>
 </term>
 <listitem>
 <para>Combine or delete commits in a selection set of events. The
-default selection set for this command is empty.</para>
+default selection set for this command is empty. Has no effect on 
+events other than commits unless the --delete policy is selected; 
+see the 'delete' comand for discussion.</para>
 
 <para>Normally, when a commit is combined, its file operation list
 (and any associated blob references) gets either prepended to the
@@ -904,8 +906,9 @@ converters such as <command>cvs2svn</command>.</para>
 <listitem>
 <para>Delete a selection set of events. The default selection set for
 this command is empty. On a set of commits, this is equivalent to a
-combine with the --delete flag; it unconditionally deletes
-other event types.</para>
+combine with the --delete flag.  It unconditionally deletes tags,
+resets, and passthroughs; blobs can be removed only as a side effect
+of deleting every commit that points at them.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -918,7 +921,7 @@ other event types.</para>
 between two specified commits (they must be adjacent). Does not take a
 general selection set.  It is only necessary to specify the
 parent commit, unless it has multiple children in which case the child
-commit must follow  (separate it with a comma).</para>
+commit must follow (separate it with a comma).</para>
 
 <para>If the repo was named 'foo', you will normally end up with two
 repos named 'foo-early' and 'foo-late' (option and feature events at

@@ -4865,9 +4865,14 @@ class Repository:
             e.deletehook = False
         for ei in selected:
             event = self.events[ei]
-            event.deletehook = True
-            # Nothing special to do for Reset, Tag, Passthrough, Blob
-            if isinstance(event, Commit):
+            if isinstance(event, Blob):
+                # Never delete a blob except as a side effect of
+                # deleting a commit.
+                event.deletehook = False
+            elif isinstance(event, (Tag, Reset, Passthrough)):
+                event.deletehook = ("--delete" in policy)
+            elif isinstance(event, Commit):
+                event.deletehook = True
                 # Decide the new target for tags
                 filter_only = True
                 if tagforward and event.has_children():
