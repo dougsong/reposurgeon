@@ -143,7 +143,7 @@ syntax.</para>
 
 edit                   ;; edit all editable objects
 
-29..71 list            ;; list summary index of events 20..71
+29..71 list            ;; list summary index of events 29..71
 
 236..$ list            ;; List events from 236 to the last
 
@@ -273,7 +273,7 @@ letters. These are the type letters:</para>
       <row>
         <entry align='center'>L</entry>
         <entry align='center'>commits with unclean multi-line comments
-	(without a separating enpty line after the first)</entry>
+	(without a separating empty line after the first)</entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
@@ -372,13 +372,6 @@ is accepted and selects as though it had the brackets</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><firstterm>branches</firstterm></term>
-<listitem><para>A branch name (bracketed by parentheses) resolves to
-the set of all commits on that branch, plus any tags pointed at them
-and any associated branch resets.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term><firstterm>text search</firstterm></term>
 <listitem><para>A text search expression is a Python regular expression 
 surrounded by forward slashes (to embed a forward slash in it, use a
@@ -437,7 +430,7 @@ letters after the trailing slash.  These are as follows:</para>
 <para>Multiple qualifier letters can add more search scopes.</para>
 
 <para>(The <quote>b</quote> qualifier replaces the branchset syntax 
-in order versions of this tool.)</para>
+in earlier versions of <command>reposurgeon</command>.)</para>
 
 </listitem>
 </varlistentry>
@@ -503,7 +496,6 @@ and manipulate the in-core list and the selection.</para>
 <variablelist>
 <varlistentry>
 <term><command>read</command> 
-	[--nobranch]
         [<emphasis>directory</emphasis>|<emphasis>-</emphasis>|<emphasis>&lt;infile</emphasis>]
 </term>
 <listitem><para>With a directory-name argument, this command attempts
@@ -515,9 +507,6 @@ dumpfile. With an argument of <quote>-</quote>, this command reads a
 fast-import stream or Subversion dumpfile from standard input (this
 will be useful in filters constructed with command-line
 arguments).</para>
-
-<para>For the interpretation of the --nobranch option, see the section
-on <link linkend="subversion">Working With Subversion</link></para>
 
 <para>If the contents is a fast-import stream, any "cvs-revisions" property 
 on a commit is taken to be a newline-separated list of CVS revision cookies 
@@ -681,7 +670,7 @@ repository.</para>
 
 <para>The output of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
-output filename with <quote>&lt;</quote> and give it as a following
+output filename with <quote>&gt;</quote> and give it as a following
 argument.</para>
 
 <variablelist>
@@ -1932,6 +1921,9 @@ it.</para>
 the root node.</para></listitem>
 </varlistentry>
 </variablelist>
+
+<para>These modifiers can go anywhere in any order on the read command
+line after the read verb. They must be whitespace separated.</para>
 
 <para>Here are the rules used for mapping subdirectories in a 
 Subversion repository to branches:</para>
