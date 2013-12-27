@@ -8751,7 +8751,7 @@ set must resolve to a singleton commit.
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits.
 """)
-    def do_diff(self, _line):
+    def do_diff(self,line):
         "Display a diff between versions."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -8766,9 +8766,12 @@ must resolve to exactly two commits.
             raise Recoverable("a pair of commits is required.")
         dir1 = bounds[0].checkout()
         dir2 = bounds[1].checkout()
-        command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
-                  (bounds[0].mark, bounds[1].mark, dir1, dir2)
-        os.system(command)
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
+                      (bounds[0].mark, bounds[1].mark, dir1, dir2)
+            if parse.stdout != sys.stdout:
+                command += " >" + parse.stdout.name
+            os.system(command)
 
     #
     # Setting paths to branchify

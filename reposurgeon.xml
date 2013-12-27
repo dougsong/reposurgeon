@@ -942,12 +942,6 @@ the repo is not divided.</para>
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths.</para>
 
-<para>Note that if you give a regexp beginning with a '/' and no
-selection set, the result may not be what you expect -
-<application>reposurgeon</application> will attempt to interpret your
-regexp as a text search on events.  To avoid this, hand it the selection
-set '1..$' which means "all events".</para>
-
 <para>All filemodify (M) operations and delete (D) operations
 involving a matched file in the selected set of events are
 disconnected from the repo and put in a removal set.  Renames are
@@ -1089,7 +1083,7 @@ and give it as a following argument.</para>
 <varlistentry>
 <term><command>mailbox_in</command>
         [&lt;<emphasis>infile</emphasis>]
-	[<emphasis>changed</emphasis> &gt;<emphasis>infile</emphasis>]
+	[<emphasis>changed</emphasis> &gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Accept a mailbox file of messages in RFC822 format representing the
@@ -1133,9 +1127,10 @@ call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.</para>
 
-<para>Normally this command ignores blobs because mailbox_out does.
-However, if you specify a selection set consisting of a single
-blob, your editor will be called directly on the blob file.</para>
+<para>Normally this command ignores blobs because
+<command>mailbox_out</command> does.  However, if you specify a
+selection set consisting of a single blob, your editor will be called
+directly on the blob file.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1612,6 +1607,7 @@ forget to re-set it.</para>
 <varlistentry>
 <term><command>manifest</command>
         [<emphasis>regular expression</emphasis>]
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Takes an optional selection set argument defaulting to all commits, and
@@ -1635,10 +1631,12 @@ the directory.</para>
 </varlistentry>
 <varlistentry>
 <term><command>diff</command>
+	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Display the difference between commits. Takes a selection-set
-argument which must resolve to exactly two commits.</para>
+argument which must resolve to exactly two commits. Supports output
+redirection.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -2191,7 +2189,8 @@ branch.</para>
 
 <para>When reading a Subversion repository,
 <application>reposurgeon</application> also automatically breaks apart
-mixed-branch commits.</para>
+mixed-branch commits. These are not re-united if the repository
+is written back out.</para>
 
 <para>When writing to a Subversion repository, all lightweight tags
 become Subversion tag copies with empty log comments, named for the
