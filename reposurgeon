@@ -1128,7 +1128,12 @@ class Reset(object):
         "Dump this reset in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
-        pacify_pylint(realized)
+        if realized is not None:
+            if '^' in self.ref:
+                branch = self.ref.split("^")[0]
+            else:
+                branch = self.ref
+            realized[branch] = True
         st = "reset %s\n" % self.ref
         if not self.committish:
             return st
