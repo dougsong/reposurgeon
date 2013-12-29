@@ -6507,22 +6507,27 @@ into sections of the input stream instead).
         if self.peek() != "[":
             return None
         self.pop()
-        end = "]"
-        flags = ""
-        while self.peek() in ("*", "@"):
-            flags += self.pop()
-        is_regex = (self.peek() == "/")
-        if self.peek() in ("'", '"', "/"):
-            end = self.pop() + end
-        try:
-            end_index = self.line.index(end)
-        except ValueError:
-            raise Recoverable("malformed path wildcard")
-        path = self.line[:end_index]
-        self.line = self.line[end_index+len(end):]
-        if is_regex:
+        depth = 1
+        for (i, c) in enumerate(self.line):
+            if c == '[':
+                depth += 1
+            elif c == ']':
+                depth -= 1
+            if depth == 0:
+                matcher = self.line[:i]
+                self.line = self.line[i+1:]
+                break
+        else:
+            raise Recoverable("malformed path matcher")
+        if matcher.startswith('/'):
+            flags = ''
+            while matcher[-1] in ("*", "@"):
+                flags += matcher[-1]
+                matcher = matcher[:-1]
+            if matcher[-1] != '/':
+                raise Recoverable("regexp matcher missing trailing /")
             try:
-                search = re.compile(path).search
+                search = re.compile(matcher[:-1]).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
@@ -6536,14 +6541,9 @@ into sections of the input stream instead).
                             match_paths(search(path)
                                         for path in event.paths())}
         else:
-            # The "@" flag is ignored here since it would only make sense
-            # for trees with a single file.
-            if "*" in flags:
-                return self.eval_pathset_full(path, preselection)
             preselected = ((i, chosen.events[i]) for i in preselection)
             return {i for (i, event) in preselected
-                      if isinstance(event, Commit) and
-                            path in event.paths()}
+                    if isinstance(event, Commit) and matcher in event.paths()}
     def eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all = False):

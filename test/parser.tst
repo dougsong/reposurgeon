@@ -24,14 +24,12 @@ read <simple.fi
 [/Ma.*le/] resolve
 [/^Ma.*le$/] resolve
 [/D.ME.\.txt/] resolve
-["READ[ME].txt"] resolve
-['READ[ME].txt'] resolve
-[*"Makefile"] resolve
-[*/^Make/] resolve
+[/Makefile/*] resolve
+[/^Make/*] resolve
 [/^test/] resolve
-[@/^test/] resolve
-[@*/^r/] resolve
-[@*/r/] resolve
+[/^test/@] resolve
+[*/^r/@] resolve
+[*/r/@] resolve
 <2010-10-27T18:43:32Z> resolve
 <2010-10-27T12:07:32Z!esr@thyrsus.com> resolve
 # Test here-doc syntax

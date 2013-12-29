@@ -437,38 +437,35 @@ in earlier versions of <command>reposurgeon</command>.)</para>
 <varlistentry>
 <term><firstterm>paths</firstterm></term>
 <listitem>
-<para>A "path expression" enclosed in square brackets resolves to the set of
-all commits related to a path matching the given expression. The path
-expression itself is either a path literal optionally surrounded by simple or
-double quotes or a regular expression surrounded by slashes. Immediately after
-the opening bracket but before the path expression you can put any number of
-the following characters which act as a flags: '*' and '@'.</para>
+<para>A "path expression" enclosed in square brackets resolves to the
+set of all commits related to a path matching the given
+expression. The path expression itself is either a path literal or a
+regular expression surrounded by slashes. Immediately after the
+trailing / of a path regexp you can put any number of the following
+characters which act as flags: '*' and '@'.</para>
 
-<para>By default, a path is related to a commit if the latter has a fileop that
-touches that file path - modifies that change it, deletes that remove it,
-renames and copies that have it as a source or target. When the '*' flag is in
-use the meaning changes: the paths related to a commit are all paths that would
-be present in a checkout.</para>
+<para>By default, a path is related to a commit if the latter has a
+fileop that touches that file path - modifies that change it, deletes
+that remove it, renames and copies that have it as a source or
+target. When the '*' flag is in use the meaning changes: the paths
+related to a commit become all paths that would be present in a
+checkout for that commit.</para>
 
 <para>A path literal matches a commit if and only if the path literal is
 exactly one of the paths related to the commit (no prefix or suffix operation
 is done). In particular a path literal won't match if it corresponds to a
-directory in the chosen repository. Enclosing the path literal in simple or
-double quotes help prevent the parser from confusing a ']' in the path with the
-end of the selection set or one of '*' and '@' at the path beginning with a
-flag. The '@' flag has no effect on matching with path literals.
-</para>
+directory in the chosen repository.</para>
 
 <para>A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use '^' or '$' if you want the
-expression to only match at the beginning or end of paths, and if you need to
+expression to only match at the beginning or end of paths. If you need to
 embed '/]' into your regular expression (e.g. to express "all characters but a
-slash") you can use a python string escape such as \x2f. When the '@' flag is
+slash") you can use a Python string escape such as \x2f. When the '@' flag is
 in use, the path expression selects commits whose every path match the regular
 expression. This is not always a subset of commits selected without the '@'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
-use e.g. '[/regex/] &amp; [@/regex/]'.</para>
+use e.g. '[/regex/] &amp; [/regex/@]'.</para>
 </listitem>
 </varlistentry>
 </variablelist>
