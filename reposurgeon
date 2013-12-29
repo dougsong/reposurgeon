@@ -959,7 +959,8 @@ class Blob(object):
                 announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.paths, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
-    def dump(self, vcs=None, options=None):
+    def dump(self, vcs=None, options=None, realized=None):
+        pacify_pylint(realized)
         if self.hasfile() and not os.path.exists(self.blobfile()):
             return ''
         else:
@@ -1074,10 +1075,11 @@ class Tag(object):
             modified = True
             self.comment = newcomment
         return modified
-    def dump(self, vcs=None, options=None):
+    def dump(self, vcs=None, options=None, realized=None):
         "Dump this tag in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
+        pacify_pylint(realized)
         parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
         if self.tagger:
             parts.append("tagger %s\n" % self.tagger)
@@ -1122,10 +1124,11 @@ class Reset(object):
     def moveto(self, repo):
         "Change the repo this reset is associated with."
         self.repo = repo
-    def dump(self, vcs=None, options=None):
+    def dump(self, vcs=None, options=None, realized=None):
         "Dump this reset in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
+        pacify_pylint(realized)
         st = "reset %s\n" % self.ref
         if not self.committish:
             return st
@@ -1708,15 +1711,20 @@ class Commit(object):
     def delete(self, policy=None):
         "Delete this commit from its repository."
         self.repo.delete([self.index()], policy)
-    def dump(self, vcs=None, options=None):
+    def dump(self, vcs=None, options=None, realized=None):
         "Dump this commit in import-stream format."
         pacify_pylint(options)
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
             vcs = self.repo.vcs
         parts = []
+        if realized is not None and self.has_parents():
+            if self.branch not in realized and self.parents()[0].branch not in realized:
+                parts.append("reset %s^0\n\n" % self.branch)
         if self.fossil_id:
             parts.append("# Fossil-ID: %s\n" % self.fossil_id)
         parts.append("commit %s\n" % self.branch)
+        if realized is not None:
+            realized[self.branch] = True
         if self.mark:
             parts.append("mark %s\n" % self.mark)
         if self.authors:
@@ -1766,10 +1774,11 @@ class Passthrough(object):
         return str(msg)
     def email_in(self, msg):
         self.text = msg.get_payload()
-    def dump(self, vcs=True, options=None):
+    def dump(self, vcs=True, options=None, realized=None):
         "Dump this passthrough in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
+        pacify_pylint(realized)
         return self.text
     def __str__(self):
         return self.dump()
@@ -4557,6 +4566,7 @@ class Repository:
         with Baton("reposurgeon: exporting", enable=progress) as baton:
             try:
                 fossil_latch = False
+                realized = {}
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
@@ -4564,7 +4574,7 @@ class Repository:
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
-                    fp.write(event.dump(target, options=options))
+                    fp.write(event.dump(target, options=options, realized=realized))
                 if fossil_latch:
                     fp.write("reset fossil_id\n")
                     endcommit = Commit(self)

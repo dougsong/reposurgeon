@@ -551,6 +551,17 @@ contents are backed up to a save directory.</para>
 each commit is appended to its commit comment at write time. This
 option is mainly useful for debugging conversion edge cases.</para>
 
+<para>If you specify a partial selection set such that some commits
+are included but their oarents are not, the output will include
+incremental dump cookies for each branch with an origin outside the
+selection set, just before the first reference to that branch in a
+commit.  An incremental dump cookie looks like "refs/heads/foo^0" and
+is a clue to export-stream loaders that the branch should be glued to
+the tip of a pre-existing branch of the same name.</para>
+
+<para>Specifying a write selection set with gaps in it is allowed
+but inclikely to lead to good results if it is loaded by an importer.</para>
+
 <para>Property extensions will be be omitted from the output if the
 importer for the selected repository type cannot digest them.</para>
 
