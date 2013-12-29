@@ -7683,10 +7683,10 @@ blobs and non-blobs throws a recoverable error.
         if self.selection is None:
             complain("no selection")
             return
-        blobs = any(b for b in self.selection \
-                     if isinstance(self.chosen().events[b], Blob))
-        nonblobs = any(n for n in self.selection \
-                        if not isinstance(self.chosen().events[n], Blob))
+        blobs = any(isinstance(self.chosen().events[i], Blob)
+                    for i in self.selection)
+        nonblobs = any(not isinstance(self.chosen().events[i], Blob)
+                       for i in self.selection)
         # Try to prevent user from shooting self in foot
         if blobs and nonblobs:
             complain("cannot filter blobs and nonblobs in same command")
