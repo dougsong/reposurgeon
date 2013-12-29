@@ -7679,54 +7679,56 @@ blobs and non-blobs throws a recoverable error.
         # Try to prevent user from shooting self in foot
         if blobs and nonblobs:
             complain("cannot filter blobs and nonblobs in same command")
-        with RepoSurgeon.LineParse(line) as parse:
-            if '--shell' in parse.options:
-                altered = 0
-                (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-                (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-                assert indesc > -1 and outdesc > -1    # pacify pylint
-                with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
-                    for ei in self.selection:
-                        event = self.chosen().events[ei]            
-                        if isinstance(event, (Commit, Tag)):
-                            filtercmd = parse.line.replace("%PATHS%", "")
+        # Must not use LineParse here as it would try to strip options
+        # in shell commands.
+        if line.startswith('--shell'):
+            line = line[7:].lstrip()
+            altered = 0
+            (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+            (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+            assert indesc > -1 and outdesc > -1    # pacify pylint
+            with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
+                for ei in self.selection:
+                    event = self.chosen().events[ei]            
+                    if isinstance(event, (Commit, Tag)):
+                        filtercmd = line.replace("%PATHS%", "")
+                        with open(intmp, "w") as wfp:
+                            wfp.write(event.comment)
+                        newcomment = capture("%s <%s" % (filtercmd, intmp))
+                        altered += (newcomment != event.comment)
+                        event.comment = newcomment
+                        if isinstance(event, Commit):
+                            for fileop in event.fileops:
+                                if fileop.inline is not None:
+                                    with open(intmp, "w") as wfp:
+                                        wfp.write(fileop.inline)
+                                    # It's unclear whether it would be the right thing
+                                    # to increment altered here.
+                                    filtercmd = line.replace("%PATHS%", event.path)
+                                    fileop.inline = capture("%s <%s" % (filtercmd, intmp))
+                    elif isinstance(event, Blob):
+                        if "%PATHS%" in line:
+                            filtercmd = line.replace("%PATHS%", " ".join(event.paths))
+                        else:
+                            filtercmd = line
+                        if event.hasfile():
+                            do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
+                            same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
+                        else:
                             with open(intmp, "w") as wfp:
-                                wfp.write(event.comment)
-                            newcomment = capture("%s <%s" % (filtercmd, intmp))
-                            altered += (newcomment != event.comment)
-                            event.comment = newcomment
-                            if isinstance(event, Commit):
-                                for fileop in event.fileops:
-                                    if fileop.inline is not None:
-                                        with open(intmp, "w") as wfp:
-                                            wfp.write(fileop.inline)
-                                        # It's unclear whether it would be the right thing
-                                        # to increment altered here.
-                                        filtercmd = parse.line.replace("%PATHS%", event.path)
-                                        fileop.inline = capture("%s <%s" % (filtercmd, intmp))
-                        elif isinstance(event, Blob):
-                            if "%PATHS%" in parse.line:
-                                filtercmd = parse.line.replace("%PATHS%", " ".join(event.paths))
-                            else:
-                                filtercmd = parse.line
-                            if event.hasfile():
-                                do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
-                                same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
-                            else:
-                                with open(intmp, "w") as wfp:
-                                    wfp.write(event.get_content())
-                                do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
-                                same = filecmp.cmp(intmp, outtmp, shallow=False)
-                            if not same:
-                                altered += 1
-                                event.materialize()
-                                shutil.copyfile(outtmp, event.blobfile())
-                        baton.twirl()
-                os.remove(intmp)
-                os.remove(outtmp)
-            else:
-                raise Recoverable("--shell is currently required")
-            announce("%d items modified." % altered)
+                                wfp.write(event.get_content())
+                            do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
+                            same = filecmp.cmp(intmp, outtmp, shallow=False)
+                        if not same:
+                            altered += 1
+                            event.materialize()
+                            shutil.copyfile(outtmp, event.blobfile())
+                    baton.twirl()
+            os.remove(intmp)
+            os.remove(outtmp)
+        else:
+            raise Recoverable("--shell is currently required")
+        announce("%d items modified." % altered)
 
     def help_combine(self):
         print("""
