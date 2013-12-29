@@ -60,54 +60,11 @@ index
    131 tag      :113    'annotated-sample'
 :76 tip
 tags
-     3 refs/tags/lightweight-sample
-     5 refs/tags/lightweight-sample
-     7 refs/tags/lightweight-sample
-    10 refs/tags/lightweight-sample
-    12 refs/tags/lightweight-sample
-    14 refs/tags/lightweight-sample
-    16 refs/tags/lightweight-sample
-    18 refs/tags/lightweight-sample
-    20 refs/tags/lightweight-sample
-    22 refs/tags/lightweight-sample
-    24 refs/tags/lightweight-sample
-    26 refs/tags/lightweight-sample
-    29 refs/tags/lightweight-sample
-    31 refs/tags/lightweight-sample
-    33 refs/tags/lightweight-sample
-    35 refs/tags/lightweight-sample
-    37 refs/tags/lightweight-sample
-    39 refs/tags/lightweight-sample
-    41 refs/tags/lightweight-sample
-    43 refs/tags/lightweight-sample
-    45 refs/tags/lightweight-sample
-    50 refs/tags/lightweight-sample
-    52 refs/tags/lightweight-sample
-    54 refs/tags/lightweight-sample
-    56 refs/tags/lightweight-sample
-    58 refs/tags/lightweight-sample
-    60 refs/tags/lightweight-sample
-    62 refs/tags/lightweight-sample
-    67 refs/tags/lightweight-sample
-    70 refs/tags/lightweight-sample
-    72 refs/tags/lightweight-sample
-    76 refs/tags/lightweight-sample
-    78 refs/tags/lightweight-sample
-    81 refs/tags/lightweight-sample
-    83 refs/tags/lightweight-sample
-    85 refs/tags/annotated-sample
-    88 refs/tags/annotated-sample
-    90 refs/tags/annotated-sample
-    93 refs/tags/annotated-sample
-    96 refs/tags/annotated-sample
-    99 refs/tags/annotated-sample
-   101 refs/tags/annotated-sample
-   103 refs/tags/annotated-sample
-   105 refs/tags/annotated-sample
-   107 refs/tags/annotated-sample
-   109 refs/tags/annotated-sample
-   111 refs/tags/annotated-sample
-   114 refs/tags/annotated-sample
+1	reset	refs/tags/lightweight-sample
+    83	commit	refs/tags/lightweight-sample
+   114	commit	refs/tags/annotated-sample
+129	reset	refs/heads/master
+130	tag	annotated-sample
 history
 script simple.tst testing123
 ## Test of index, tip, tags, history, paths, expunge and checkout

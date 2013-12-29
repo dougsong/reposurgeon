@@ -715,9 +715,9 @@ error.</para>
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
-For each commit in the selection set with a branch member that
-contains "/tags/", list the event and the branch member.  This
-will list the lightweight tags in the selection set.
+Display tags and resets: three fields, an event number and a type and a name.
+Branch tip commits associated with tags are also displayed with the type
+field 'commit'. Supports > redirection.
 </para>
 </listitem>
 </varlistentry>

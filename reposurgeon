@@ -1020,6 +1020,9 @@ class Tag(object):
     def id_me(self):
         "ID this tag for humans."
         return "tag@%s (%s)" % (self.mark, self.name)
+    def tags(self, _modifiers, eventnum, _cols):
+        "Enable do_tags() to report tags."
+        return "%d\ttag\t%s" % (eventnum, self.name)
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -1124,6 +1127,9 @@ class Reset(object):
     def moveto(self, repo):
         "Change the repo this reset is associated with."
         self.repo = repo
+    def tags(self, _modifiers, eventnum, _cols):
+        "Enable do_tags() to report resets."
+        return "%d\treset\t%s" % (eventnum, self.ref)
     def dump(self, vcs=None, options=None, realized=None):
         "Dump this reset in import-stream format."
         pacify_pylint(vcs)
@@ -1372,10 +1378,13 @@ class Commit(object):
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         return (summary + self.head())[:cols]
-    def tags(self, _modifiers, eventnum, cols):
-        "Enable do_list() to report lightweight tags."
-        assert cols > -1    # pacify pylint
-        return self.branch and "/tags/" in self.branch and "%6d %s" % (eventnum+1, self.branch) 
+    def tags(self, _modifiers, eventnum, _cols):
+        "Enable do_tags() to report tag tip commits."
+        if not self.branch or not "/tags/" in self.branch:
+            return
+        if self.has_children() and self.children()[0].branch == self.branch:
+            return
+        return "%6d\tcommit\t%s" % (eventnum+1, self.branch) 
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -6293,7 +6302,7 @@ into sections of the input stream instead).
         polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
         if not self.peek() in polyrange_initials:
             polyrange = None
-        # Avoid having an input redirect mistakn for the start of a literal.
+        # Avoid having an input redirect mistaken for the start of a literal.
         # This might break if a command can ever have both input and output
         # redirects.
         elif self.peek() == "<" and ">" not in self.line:
@@ -7016,11 +7025,12 @@ Supports > redirection.
 
     def help_tags(self):
         print("""
-Display lightweight tags: two fields, an event number and a tag name.
-Supports > redirection.
+Display tags and resets: three fields, an event number and a type and a name.
+Branch tip commits associated with tags are also displayed with the type
+field 'commit'. Supports > redirection.
 """)
     def do_tags(self, line):
-        "Generate a human-friendly listing of lightweight tags."
+        "Generate a human-friendly listing of tags and resets."
         self.report_select(line, "tags", (screenwidth(),))
     def help_sizes(self):
         print("""
