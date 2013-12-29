@@ -7975,6 +7975,9 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             complain("one or possibly two arguments specifying a link are required")
             return
         early = self.chosen()[self.selection[0]]
+        if not isinstance(early, Commit):
+            complain("first element of selection is not a commit")
+            return
         possibles = list(early.children())
         if len(self.selection) == 1:    
             if len(possibles) > 1:
@@ -7987,6 +7990,9 @@ branch 'qux', the branch segments are renamed 'qux-early' and
                 return
         elif len(self.selection) == 2:
             late = self.chosen()[self.selection[1]]
+            if not isinstance(late, Commit):
+                complain("last element of selection is not a commit")
+                return
             if early.mark not in late.parent_marks():
                 complain("not a parent-child pair")
                 return
