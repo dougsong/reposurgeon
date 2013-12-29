@@ -6527,7 +6527,7 @@ into sections of the input stream instead).
             if matcher[-1] != '/':
                 raise Recoverable("regexp matcher missing trailing /")
             try:
-                search = re.compile(matcher[:-1]).search
+                search = re.compile(matcher[1:-1]).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "*" in flags:
