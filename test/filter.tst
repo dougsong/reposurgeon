@@ -1,4 +1,5 @@
 ## Test content filtering
 read <sample1.fi
-filter tr e X
+=B filter --shell tr e X
+=C filter --shell tr e Y
 write -

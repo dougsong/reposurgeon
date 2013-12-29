@@ -7626,67 +7626,86 @@ blob, your editor will be called on the blob file.
 
     def help_filter(self):
         print("""
-Run all blobs, commit comments, and tag comments in the selection
-set (defaulting to all) through the filter specified on the command line.
-Each blob and comment is presented to the filter on standard input; the
-content is replaced with whatever the filter emits to standard output.
+With the --shell option (presently required) run all blobs, commit
+comments, or tag comments in the selection set through the filter
+specified on the command line.
 
-If the command line contains the magic cookie '%PATHS%', it is replaced
-with a space-separated list of all paths that reference the blob.
+Each blob or comment is presented to the filter on standard input;
+the content is replaced with whatever the filter emits to standard
+output.
+
+When filtering blobs, if the command line contains the magic cookie
+'%PATHS%', it is replaced with a space-separated list of all paths
+that reference the blob.
+
+As a safety feature, specifying a selection set that includes both
+blobs and non-blobs throws a recoverable error.
 """)
     def do_filter(self, line):
         if not self.chosen():
             complain("no repo is loaded")
             return
-        if self.selection is None:
-            self.selection = range(len(self.chosen()))
         if not line:
             complain("no filter is specified")
             return
-        altered = 0
-        (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-        (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-        assert indesc > -1 and outdesc > -1    # pacify pylint
-        with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
-            for ei in self.selection:
-                event = self.chosen().events[ei]            
-                if isinstance(event, (Commit, Tag)):
-                    filtercmd = line.replace("%PATHS%", "")
-                    with open(intmp, "w") as wfp:
-                        wfp.write(event.comment)
-                    newcomment = capture("%s <%s" % (filtercmd, intmp))
-                    altered += (newcomment != event.comment)
-                    event.comment = newcomment
-                    if isinstance(event, Commit):
-                        for fileop in event.fileops:
-                            if fileop.inline is not None:
+        if self.selection is None:
+            complain("no selection")
+            return
+        blobs = any([b for b in self.selection \
+                     if isinstance(self.chosen().events[b], Blob)])
+        nonblobs = any([n for n in self.selection \
+                        if not isinstance(self.chosen().events[n], Blob)])
+        # Try to prevent user from shooting self in foot
+        if blobs and nonblobs:
+            complain("cannot filter blobs and nonblobs in same command")
+        with RepoSurgeon.LineParse(line) as parse:
+            if '--shell' in parse.options:
+                altered = 0
+                (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+                (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+                assert indesc > -1 and outdesc > -1    # pacify pylint
+                with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
+                    for ei in self.selection:
+                        event = self.chosen().events[ei]            
+                        if isinstance(event, (Commit, Tag)):
+                            filtercmd = parse.line.replace("%PATHS%", "")
+                            with open(intmp, "w") as wfp:
+                                wfp.write(event.comment)
+                            newcomment = capture("%s <%s" % (filtercmd, intmp))
+                            altered += (newcomment != event.comment)
+                            event.comment = newcomment
+                            if isinstance(event, Commit):
+                                for fileop in event.fileops:
+                                    if fileop.inline is not None:
+                                        with open(intmp, "w") as wfp:
+                                            wfp.write(fileop.inline)
+                                        # It's unclear whether it would be the right thing
+                                        # to increment altered here.
+                                        filtercmd = parse.line.replace("%PATHS%", event.path)
+                                        fileop.inline = capture("%s <%s" % (filtercmd, intmp))
+                        elif isinstance(event, Blob):
+                            if "%PATHS%" in parse.line:
+                                filtercmd = parse.line.replace("%PATHS%", " ".join(event.paths))
+                            else:
+                                filtercmd = parse.line
+                            if event.hasfile():
+                                do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
+                                same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
+                            else:
                                 with open(intmp, "w") as wfp:
-                                    wfp.write(fileop.inline)
-                                # It's unclear whether it would be the right thing
-                                # to increment altered here.
-                                filtercmd = line.replace("%PATHS%", event.path)
-                                fileop.inline = capture("%s <%s" % (filtercmd, intmp))
-                elif isinstance(event, Blob):
-                    if "%PATHS%" in line:
-                        filtercmd = line.replace("%PATHS%", " ".join(event.paths))
-                    else:
-                        filtercmd = line
-                    if event.hasfile():
-                        do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
-                        same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
-                    else:
-                        with open(intmp, "w") as wfp:
-                            wfp.write(event.get_content())
-                        do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
-                        same = filecmp.cmp(intmp, outtmp, shallow=False)
-                    if not same:
-                        altered += 1
-                        event.materialize()
-                        shutil.copyfile(outtmp, event.blobfile())
-                baton.twirl()
-        os.remove(intmp)
-        os.remove(outtmp)
-        announce("%d items modified." % altered)
+                                    wfp.write(event.get_content())
+                                do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
+                                same = filecmp.cmp(intmp, outtmp, shallow=False)
+                            if not same:
+                                altered += 1
+                                event.materialize()
+                                shutil.copyfile(outtmp, event.blobfile())
+                        baton.twirl()
+                os.remove(intmp)
+                os.remove(outtmp)
+            else:
+                raise Recoverable("--shell is currently required")
+            announce("%d items modified." % altered)
 
     def help_combine(self):
         print("""

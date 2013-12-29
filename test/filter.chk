@@ -1,4 +1,5 @@
-reposurgeon: 30 items modified.
+reposurgeon: 11 items modified.
+reposurgeon: 18 items modified.
 blob
 mark :1
 data 120
@@ -15,7 +16,7 @@ mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
 data 56
-A start on a tXst rXpository for thX SubvXrsion dumpXr.
+A start on a tYst rYpository for thY SubvYrsion dumpYr.
 M 100644 :1 README
 
 blob
@@ -29,7 +30,7 @@ mark :4
 author Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
 data 70
-CrXatX a .gitignorX in ordXr to tXst whXthXr this spXcial casX is OK.
+CrYatY a .gitignorY in ordYr to tYst whYthYr this spYcial casY is OK.
 from :2
 M 100644 :3 .gitignore
 
@@ -43,7 +44,7 @@ mark :6
 author Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
 data 30
-TXst dXXp dirXctory crXation.
+TYst dYYp dirYctory crYation.
 from :4
 M 100644 :5 foo/bar/junk
 
@@ -59,7 +60,7 @@ mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
 data 70
-TXst a .gitignorX modification for causing thX right propXrty changX.
+TYst a .gitignorY modification for causing thY right propYrty changY.
 from :6
 M 100644 :7 .gitignore
 
@@ -73,7 +74,7 @@ mark :10
 author Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
 data 37
-A script without its XxXcutablX bit.
+A script without its YxYcutablY bit.
 from :8
 M 100644 :9 hello
 
@@ -82,7 +83,7 @@ mark :11
 author Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
 data 27
-DXlXtX thX dXXp dirXctory.
+DYlYtY thY dYYp dirYctory.
 from :10
 D foo/bar/junk
 
@@ -91,7 +92,7 @@ mark :12
 author Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
 data 37
-Turn on thX script's XxXcutablX bit.
+Turn on thY script's YxYcutablY bit.
 from :11
 M 100755 :9 hello
 
@@ -111,7 +112,7 @@ mark :14
 author Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
 data 22
-Just a spacXr commit.
+Just a spacYr commit.
 from :12
 M 100644 :13 README
 
@@ -120,7 +121,7 @@ mark :15
 author Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
 data 29
-Turn off thX XxXcutablX bit.
+Turn off thY YxYcutablY bit.
 from :14
 M 100644 :9 hello
 
@@ -142,7 +143,7 @@ mark :17
 author Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
 data 35
-SpacXr commit with a tag attachXd.
+SpacYr commit with a tag attachYd.
 from :15
 M 100644 :16 README
 
@@ -160,7 +161,7 @@ mark :19
 author Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
 data 60
-A third spacXr commit. WX'll start a branch aftXr this onX.
+A third spacYr commit. WY'll start a branch aftYr this onY.
 from :17
 M 100644 :18 README
 
@@ -178,7 +179,7 @@ mark :21
 author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
 data 44
-First post-split commit on thX main branch.
+First post-split commit on thY main branch.
 from :19
 M 100644 :20 README
 
@@ -199,7 +200,7 @@ mark :23
 author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
 data 34
-SXcond commit on thX main branch.
+SYcond commit on thY main branch.
 from :21
 M 100644 :22 README
 
@@ -208,7 +209,7 @@ mark :24
 author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
 data 28
-AttXmpt to gXnXratX a copy.
+AttYmpt to gYnYratY a copy.
 from :23
 R "hello" "goodbye"
 
@@ -217,7 +218,7 @@ mark :25
 author Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
 data 31
-AttXmpt to gXnXratX a copy op.
+AttYmpt to gYnYratY a copy op.
 from :24
 M 100644 :22 README2
 
@@ -239,7 +240,7 @@ mark :27
 author Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
 data 38
-First commit on thX altXrnatX branch.
+First commit on thY altYrnatY branch.
 from :19
 M 100644 :26 README
 
@@ -261,7 +262,7 @@ mark :29
 author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
 data 39
-SXcond commit on thX altXrnatX branch.
+SYcond commit on thY altYrnatY branch.
 from :27
 M 100644 :28 README
 
@@ -283,7 +284,7 @@ mark :31
 author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
 data 45
-MXrgX branch 'altXrnatX'
+MYrgY branch 'altYrnatY'
 
 Conflicts:
 	README
@@ -298,5 +299,5 @@ tag annotated
 from :17
 tagger Eric S. Raymond <esr@thyrsus.com> 1354428193 -0500
 data 34
-This is an XxamplX annotatXd tag.
+This is an example annotated tag.
 
