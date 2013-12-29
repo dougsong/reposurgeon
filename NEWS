@@ -3,7 +3,7 @@
 Repository head:
      Many syntactic features of the language have changed incompatibly.
      Backward-incompatible language changes are documented on the manual page.
-     'unite' command has been incompatibly improved.
+     'expunge' and 'unite' commands have been incompatibly improved.
      New 'strip' command for generating test cases with blobs stripped out
      New 'reduce' command for topological reduction of test cases.
      The 'lint' command gets a test for the existence of multiple roots.

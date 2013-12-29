@@ -5807,7 +5807,13 @@ class RepositoryList:
     def expunge(self, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
-            return re.compile("|".join("(?:" + s + ")" for s in toklist))
+            digested = []
+            for s in toklist:
+                if s.startswith('/') and s.endswith('/'):
+                    digested.append("(?:" + s[1:-1] + ")")
+                else:
+                    digested.append("^" + re.escape(s) + "$")
+            return re.compile("|".join(digested))
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -7997,7 +8003,8 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         print("""
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
-paths or Python regular expressions matching paths.
+paths or Python regular expressions matching paths (regexps must
+be marked by being surrounded with //).
 
 All filemodify (M) operations and delete (D) operations involving a
 matched file in the selected set of events are disconnected from the

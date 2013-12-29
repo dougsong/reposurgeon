@@ -946,12 +946,13 @@ the repo is not divided.</para>
 </varlistentry>
 <varlistentry>
 <term><command>expunge</command> 
-        <emphasis>regexp...</emphasis>
+        <emphasis>[path | /regexp/]...</emphasis>
 </term>
 <listitem>
 <para>Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
-paths or Python regular expressions matching paths.</para>
+paths or Python regular expressions matching paths (regexps must
+be marked by being surrounded with //).</para>
 
 <para>All filemodify (M) operations and delete (D) operations
 involving a matched file in the selected set of events are
