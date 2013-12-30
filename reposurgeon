@@ -7718,6 +7718,11 @@ modes will be supported in the future.
                         if fileop.inline is not None:
                             self.selection.append(ei)
             self.selection.sort()
+        def filterhook(filtercmd, is_file, content_or_file):
+            if not is_file:
+                with open(intmp, "w") as wfp:
+                    wfp.write(content_or_file)
+                return capture("%s <%s" % (filtercmd, intmp)) 
         # Must not use LineParse here as it would try to strip options
         # in shell commands.
         if line.startswith('--shell'):
@@ -7732,21 +7737,17 @@ modes will be supported in the future.
                     if isinstance(event, (Commit, Tag)):
                         if nonblobs:
                             filtercmd = line.replace("%PATHS%", "")
-                            with open(intmp, "w") as wfp:
-                                wfp.write(event.comment)
-                            newcomment = capture("%s <%s" % (filtercmd, intmp))
-                            altered += (newcomment != event.comment)
-                            event.comment = newcomment
+                            oldcomment = event.comment
+                            event.comment = filterhook(filtercmd, False, event.comment)
+                            altered += (oldcomment != event.comment)
                         if blobs and isinstance(event, Commit):
                             for fileop in event.fileops:
                                 if fileop.inline is not None:
-                                    with open(intmp, "w") as wfp:
-                                        wfp.write(fileop.inline)
                                     # It's unclear whether it would be
                                     # the right thing to increment
                                     # altered here.
                                     filtercmd = line.replace("%PATHS%", event.path)
-                                    fileop.inline = capture("%s <%s" % (filtercmd, intmp))
+                                    fileop.inline = filterhook(filtercmd, False, fileop.inline)
                     elif isinstance(event, Blob):
                         if "%PATHS%" in line:
                             filtercmd = line.replace("%PATHS%", " ".join(event.paths))
