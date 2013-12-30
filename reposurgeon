@@ -7718,14 +7718,25 @@ modes will be supported in the future.
                         if fileop.inline is not None:
                             self.selection.append(ei)
             self.selection.sort()
-        def filterhook(filtercmd, is_file, content_or_file):
-            # Must not use LineParse here as it would try to strip options
-            # in shell commands.
-            if filtercmd.startswith('--shell'):
-                filtercmd = filtercmd[7:].lstrip()
+        class FilterCommand:
+            def __init__(self, repo, filtercmd):
+                "Initialize the filter from the command line."
+                self.repo = repo
+                # Must not use LineParse here as it would try to strip options
+                # in shell commands.
+                if filtercmd.startswith('--shell'):
+                    self.filtercmd = filtercmd[7:].lstrip()
+                else:
+                    raise Recoverable("--shell is currently required")
+            def do(self, is_file, content_or_file, pathsubst=""):
+                "Perform the filter on string content or a file."
+                if pathsubst:
+                    filtercmd = self.filtercmd.replace("%PATHS%", pathsubst)
+                else:
+                    filtercmd = self.filtercmd
+                (indesc, intmp) = tempfile.mkstemp(prefix=self.repo.subdir())
+                (outdesc, outtmp) = tempfile.mkstemp(prefix=self.repo.subdir())
                 try:
-                    (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-                    (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
                     assert indesc > -1 and outdesc > -1    # pacify pylint
                     if not is_file:
                         with open(intmp, "w") as wfp:
@@ -7740,35 +7751,31 @@ modes will be supported in the future.
                 finally:
                     os.remove(intmp)
                     os.remove(outtmp)
-            else:
-                raise Recoverable("--shell is currently required")
         # Mainline of do_filter() continues:
+        filterhook = FilterCommand(self.chosen(), line)
         with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
             altered = 0
             for ei in self.selection:
                 event = self.chosen().events[ei]            
                 if isinstance(event, (Commit, Tag)):
                     if nonblobs:
-                        filtercmd = line.replace("%PATHS%", "")
                         oldcomment = event.comment
-                        event.comment = filterhook(filtercmd, False, event.comment)
+                        event.comment = filterhook.do(False, event.comment)
                         altered += (oldcomment != event.comment)
                     if blobs and isinstance(event, Commit):
                         for fileop in event.fileops:
                             if fileop.inline is not None:
-                                # It's unclear whether it would be
-                                # the right thing to increment
-                                # altered here.
-                                filtercmd = line.replace("%PATHS%", event.path)
-                                fileop.inline = filterhook(filtercmd, False, fileop.inline)
+                                oldinline = fileop.inline
+                                fileop.inline = filterhook.do(False,
+                                                              fileop.inline,
+                                                              event.path)
+                                altered += int(fileop.inline != oldinline)
                 elif isinstance(event, Blob):
-                    if "%PATHS%" in line:
-                        filtercmd = line.replace("%PATHS%", " ".join(event.paths))
-                    else:
-                        filtercmd = line
                     if not event.hasfile():
                         event.materialize()
-                    altered += filterhook(filtercmd, True, event.blobfile())
+                    altered += filterhook.do(True,
+                                             event.blobfile(),
+                                             " ".join(event.paths))
                 baton.twirl()
         announce("%d items modified." % altered)
 
