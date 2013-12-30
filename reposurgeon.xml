@@ -1119,21 +1119,24 @@ output file in a form that can be fed back in.</para>
         [<emphasis>--shell</emphasis>]
 </term>
 <listitem>
-<para>With --shell, run all blobs, commit comments, and tag comments
-in the selection set through the filter specified on the command line.
-Each blob and comment is presented to the filter on standard input;
-the content is replaced with whatever the filter emits to standard
-output.</para>
+<para>Run blobs, commit comments, or tag comments in the selection set
+through the filter specified on the command line.</para>
 
-<para>At present --shell is required. Other filtering modes will be 
-supported in the future.</para>
+<para>Attempting to specify a selection set including both blobs and
+non-blobs (that is, commits or tags) throws an error. Inline content
+in commits is filtered when the selection set contains (only) blobs
+and the commit is within the range bounded by the earliest and latest
+blob in the specification.</para>
 
-<para>When filtering blobs, the command line contains the magic cookie
+<para>When filtering blobs, if the command line contains the magic cookie
 '%PATHS%' it is replaced with a space-separated list of all paths
 that reference the blob.</para>
 
-<para>As a safety feature, specifying a selection set that includes both
-blobs and non-blobs throws a recoverable error.</para>
+<para>With --shell, the remainder of the line specifies a filter as a
+shell command. Each blob or comment is presented to the filter on
+standard input; the content is replaced with whatever the filter emits
+to standard output. At present --shell is required. Other filtering
+modes will be supported in the future.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

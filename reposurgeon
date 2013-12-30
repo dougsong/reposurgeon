@@ -7673,20 +7673,24 @@ blob, your editor will be called on the blob file.
 
     def help_filter(self):
         print("""
-With the --shell option (presently required) run all blobs, commit
-comments, or tag comments in the selection set through the filter
-specified on the command line.
+Run blobs, commit comments, or tag comments in the selection set
+through the filter specified on the command line.
 
-Each blob or comment is presented to the filter on standard input;
-the content is replaced with whatever the filter emits to standard
-output.
+Attempting to specify a selection set including both blobs and
+non-blobs (that is, commits or tags) throws an error. Inline content
+in commits is filtered when the selection set contains (only) blobs
+and the commit is within the range bounded by the earliest and latest
+blob in the specification.
 
 When filtering blobs, if the command line contains the magic cookie
-'%PATHS%', it is replaced with a space-separated list of all paths
+'%PATHS%' it is replaced with a space-separated list of all paths
 that reference the blob.
 
-As a safety feature, specifying a selection set that includes both
-blobs and non-blobs throws a recoverable error.
+With --shell, the remainder of the line specifies a filter as a
+shell command. Each blob or comment is presented to the filter on
+standard input; the content is replaced with whatever the filter emits
+to standard output. At present --shell is required. Other filtering
+modes will be supported in the future.
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -7705,6 +7709,15 @@ blobs and non-blobs throws a recoverable error.
         # Try to prevent user from shooting self in foot
         if blobs and nonblobs:
             complain("cannot filter blobs and nonblobs in same command")
+        # If user is filtering blobs, filter all inlines within the range.
+        if blobs:
+            for ei in range(self.selection[0], self.selection[-1]):
+                event = self.chosen().events[ei]            
+                if isinstance(event, (Commit, Tag)):
+                    for fileop in event.fileops:
+                        if fileop.inline is not None:
+                            self.selection.append(ei)
+            self.selection.sort()
         # Must not use LineParse here as it would try to strip options
         # in shell commands.
         if line.startswith('--shell'):
@@ -7717,19 +7730,21 @@ blobs and non-blobs throws a recoverable error.
                 for ei in self.selection:
                     event = self.chosen().events[ei]            
                     if isinstance(event, (Commit, Tag)):
-                        filtercmd = line.replace("%PATHS%", "")
-                        with open(intmp, "w") as wfp:
-                            wfp.write(event.comment)
-                        newcomment = capture("%s <%s" % (filtercmd, intmp))
-                        altered += (newcomment != event.comment)
-                        event.comment = newcomment
-                        if isinstance(event, Commit):
+                        if nonblobs:
+                            filtercmd = line.replace("%PATHS%", "")
+                            with open(intmp, "w") as wfp:
+                                wfp.write(event.comment)
+                            newcomment = capture("%s <%s" % (filtercmd, intmp))
+                            altered += (newcomment != event.comment)
+                            event.comment = newcomment
+                        if blobs and isinstance(event, Commit):
                             for fileop in event.fileops:
                                 if fileop.inline is not None:
                                     with open(intmp, "w") as wfp:
                                         wfp.write(fileop.inline)
-                                    # It's unclear whether it would be the right thing
-                                    # to increment altered here.
+                                    # It's unclear whether it would be
+                                    # the right thing to increment
+                                    # altered here.
                                     filtercmd = line.replace("%PATHS%", event.path)
                                     fileop.inline = capture("%s <%s" % (filtercmd, intmp))
                     elif isinstance(event, Blob):
