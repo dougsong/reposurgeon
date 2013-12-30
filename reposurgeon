@@ -7692,9 +7692,9 @@ standard input; the content is replaced with whatever the filter emits
 to standard output.
 
 With --regex, the remainder of the line is expected to be a Python
-regular expression substitution written as /from/to/ with from and
-to being passed as arguments to the standard re.sub() function and
-it applied to modify the content. 
+regular expression substitution written as /from/to/ with 'from' and
+'to' being passed as arguments to the standard re.sub() function and
+that applied to modify the content.
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -7768,7 +7768,13 @@ it applied to modify the content.
                         os.remove(outtmp)
                 elif self.sub:
                     if is_file:
-                        raise Recoverable("regexp substitution on blobs is not yet supported")
+                        with open(content_or_file, "r") as rfp:
+                            content = rfp.read()
+                        modified = self.sub(content)
+                        if content != modified:
+                            with open(content_or_file, "w") as wfp:
+                                wfp.write(modified)
+                        return int(content != modified)
                     else:
                         return self.sub(content_or_file)
                 else:

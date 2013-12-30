@@ -1,13 +1,14 @@
 reposurgeon: 11 items modified.
 reposurgeon: 18 items modified.
+reposurgeon: 8 items modified.
 reposurgeon: 1 items modified.
 blob
 mark :1
-data 120
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 148
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is a mXrgX commit.
+THIS PATHETIC HEAP is a mXrgX commit.
 
 
 
@@ -37,8 +38,8 @@ M 100644 :3 .gitignore
 
 blob
 mark :5
-data 45
-This filX will tXst dXXp dirXctory crXation.
+data 59
+THIS PATHETIC HEAP filX will tXst dXXp dirXctory crXation.
 
 commit refs/tags/annotated
 mark :6
@@ -99,11 +100,11 @@ M 100755 :9 hello
 
 blob
 mark :13
-data 122
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 150
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is a spacXr commit.
+THIS PATHETIC HEAP is a spacXr commit.
 
 
 
@@ -128,11 +129,11 @@ M 100644 :9 hello
 
 blob
 mark :16
-data 156
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 198
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is anothXr spacXr commit.  This onX
+THIS PATHETIC HEAP is anothXr spacXr commit.  THIS PATHETIC HEAP onX
 will havX a tag.
 
 
@@ -186,8 +187,8 @@ M 100644 :20 README
 
 blob
 mark :22
-data 143
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 157
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
 SXcond post-split commit on thX main branch.
@@ -225,8 +226,8 @@ M 100644 :22 README2
 
 blob
 mark :26
-data 137
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 151
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
 First commit on thX altXrnatX branch.
@@ -247,8 +248,8 @@ M 100644 :26 README
 
 blob
 mark :28
-data 138
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 152
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
 SXcond commit on thX altXrnatX branch.
@@ -269,11 +270,11 @@ M 100644 :28 README
 
 blob
 mark :30
-data 123
-This is a tXst rXpository intXndXd to XxXrcisX all thX
+data 151
+THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is a mXrgX commit.
+THIS PATHETIC HEAP is a mXrgX commit.
 
 
 
