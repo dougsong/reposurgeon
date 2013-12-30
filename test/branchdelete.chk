@@ -24,11 +24,6 @@ from :2
 M 100644 :3 README
 
 blob
-mark :5
-data 71
-This is the branch version of README, after we've actually changed it.
-
-blob
 mark :7
 data 61
 This is the trunk version of README, with its typo removed.

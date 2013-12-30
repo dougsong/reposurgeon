@@ -5030,10 +5030,25 @@ class Repository:
         # Cleanup
         for e in self.events:
             del e.deletehook
+        if '--delete' in policy:
+            self.gc_blobs()
     def delete(self, selected, policy=None):
         "Delete a set of events."
         policy = policy or []
         self.combine(selected, ["--delete", "--quiet"] + policy)
+    def gc_blobs(self):
+        "Garbage-collect blobs that no longer have references."
+        backreferences = collections.Counter()
+        for event in self.events:
+            if isinstance(event, Commit):
+                for fileop in event.fileops:
+                    if fileop.op == 'M':
+                        backreferences[fileop.ref] += 1
+        self.events = [e for e in self.events
+                       if (not isinstance(e, Blob))
+                       or backreferences[e.mark]]
+        self.invalidate_manifests()	# Might not be needed
+        self.declare_sequence_mutation()
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
         self.combine([index], ["--delete", "--quiet", "--tagback"])

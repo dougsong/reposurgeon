@@ -9,4 +9,3 @@
 * THe Subversion dumper is pretty weak, more a proof of concept than
   anything useful for production.
 
-* garbage-collect unreferenced blobs after deletion.
