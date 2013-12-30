@@ -7722,7 +7722,13 @@ modes will be supported in the future.
             if not is_file:
                 with open(intmp, "w") as wfp:
                     wfp.write(content_or_file)
-                return capture("%s <%s" % (filtercmd, intmp)) 
+                return capture("%s <%s" % (filtercmd, intmp))
+            else:
+                do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
+                same = filecmp.cmp(content_or_file, outtmp, shallow=False)
+                if not same:
+                    shutil.copyfile(outtmp, content_or_file)
+                return int(not same)
         # Must not use LineParse here as it would try to strip options
         # in shell commands.
         if line.startswith('--shell'):
@@ -7753,18 +7759,9 @@ modes will be supported in the future.
                             filtercmd = line.replace("%PATHS%", " ".join(event.paths))
                         else:
                             filtercmd = line
-                        if event.hasfile():
-                            do_or_die("%s <%s >%s" % (filtercmd, event.blobfile(), outtmp))
-                            same = filecmp.cmp(event.blobfile(), outtmp, shallow=False)
-                        else:
-                            with open(intmp, "w") as wfp:
-                                wfp.write(event.get_content())
-                            do_or_die("%s <%s >%s" % (filtercmd, intmp, outtmp))
-                            same = filecmp.cmp(intmp, outtmp, shallow=False)
-                        if not same:
-                            altered += 1
+                        if not event.hasfile():
                             event.materialize()
-                            shutil.copyfile(outtmp, event.blobfile())
+                        altered += filterhook(filtercmd, True, event.blobfile())
                     baton.twirl()
             os.remove(intmp)
             os.remove(outtmp)
