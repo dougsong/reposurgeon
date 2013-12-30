@@ -1116,7 +1116,7 @@ output file in a form that can be fed back in.</para>
 </varlistentry>
 <varlistentry>
 <term><command>filter</command>
-        [<emphasis>--shell</emphasis>]
+        [<emphasis>--shell</emphasis>|<emphasis>--regex</emphasis>]
 </term>
 <listitem>
 <para>Run blobs, commit comments, or tag comments in the selection set
@@ -1137,6 +1137,11 @@ shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits
 to standard output. At present --shell is required. Other filtering
 modes will be supported in the future.</para>
+
+<para>With --regex, the remainder of the line is expected to be a Python
+regular expression substitution written as /from/to/ with from and
+to being passed as arguments to the standard re.sub() function and
+it applied to modify the content.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

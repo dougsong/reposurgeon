@@ -7689,8 +7689,12 @@ that reference the blob.
 With --shell, the remainder of the line specifies a filter as a
 shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits
-to standard output. At present --shell is required. Other filtering
-modes will be supported in the future.
+to standard output.
+
+With --regex, the remainder of the line is expected to be a Python
+regular expression substitution written as /from/to/ with from and
+to being passed as arguments to the standard re.sub() function and
+it applied to modify the content. 
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -7722,35 +7726,53 @@ modes will be supported in the future.
             def __init__(self, repo, filtercmd):
                 "Initialize the filter from the command line."
                 self.repo = repo
+                self.filtercmd = None
+                self.sub = None
                 # Must not use LineParse here as it would try to strip options
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
                     self.filtercmd = filtercmd[7:].lstrip()
+                elif filtercmd.startswith('--regex'):
+                    parts = filtercmd[7:].lstrip().split("/")
+                    if len(parts) != 4 or parts[0] or parts[-1]:
+                        raise Recoverable("malformed filter specification")
+                    elif "%PATHS%" in filtercmd:
+                        raise Recoverable("%PATHS% is not yet supported in regex filters")
+                    else:
+                        self.sub = lambda s: re.sub(parts[1], parts[2], s)
                 else:
-                    raise Recoverable("--shell is currently required")
+                    raise Recoverable("--shell or --regex is required")
             def do(self, is_file, content_or_file, pathsubst=""):
                 "Perform the filter on string content or a file."
-                if pathsubst:
-                    filtercmd = self.filtercmd.replace("%PATHS%", pathsubst)
-                else:
-                    filtercmd = self.filtercmd
                 (indesc, intmp) = tempfile.mkstemp(prefix=self.repo.subdir())
                 (outdesc, outtmp) = tempfile.mkstemp(prefix=self.repo.subdir())
-                try:
-                    assert indesc > -1 and outdesc > -1    # pacify pylint
-                    if not is_file:
-                        with open(intmp, "w") as wfp:
-                            wfp.write(content_or_file)
-                        return capture("%s <%s" % (filtercmd, intmp))
+                if self.filtercmd:
+                    if pathsubst:
+                        filtercmd = self.filtercmd.replace("%PATHS%", pathsubst)
                     else:
-                        do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
-                        same = filecmp.cmp(content_or_file, outtmp, shallow=False)
-                        if not same:
-                            shutil.copyfile(outtmp, content_or_file)
-                        return int(not same)
-                finally:
-                    os.remove(intmp)
-                    os.remove(outtmp)
+                        filtercmd = self.filtercmd
+                    try:
+                        assert indesc > -1 and outdesc > -1    # pacify pylint
+                        if not is_file:
+                            with open(intmp, "w") as wfp:
+                                wfp.write(content_or_file)
+                            return capture("%s <%s" % (filtercmd, intmp))
+                        else:
+                            do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
+                            same = filecmp.cmp(content_or_file, outtmp, shallow=False)
+                            if not same:
+                                shutil.copyfile(outtmp, content_or_file)
+                            return int(not same)
+                    finally:
+                        os.remove(intmp)
+                        os.remove(outtmp)
+                elif self.sub:
+                    if is_file:
+                        raise Recoverable("regexp substitution on blobs is not yet supported")
+                    else:
+                        return self.sub(content_or_file)
+                else:
+                    raise Recoverable("unknown mode in filter command")
         # Mainline of do_filter() continues:
         filterhook = FilterCommand(self.chosen(), line)
         with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:

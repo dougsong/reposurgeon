@@ -1,5 +1,6 @@
 reposurgeon: 11 items modified.
 reposurgeon: 18 items modified.
+reposurgeon: 1 items modified.
 blob
 mark :1
 data 120
@@ -59,8 +60,8 @@ commit refs/tags/annotated
 mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
-data 70
-TYst a .gitignorY modification for causing thY right propYrty changY.
+data 75
+TYst a .gitignorY modification for FROBNICATING thY right propYrty changY.
 from :6
 M 100644 :7 .gitignore
 
