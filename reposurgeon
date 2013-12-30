@@ -7719,54 +7719,57 @@ modes will be supported in the future.
                             self.selection.append(ei)
             self.selection.sort()
         def filterhook(filtercmd, is_file, content_or_file):
-            if not is_file:
-                with open(intmp, "w") as wfp:
-                    wfp.write(content_or_file)
-                return capture("%s <%s" % (filtercmd, intmp))
+            # Must not use LineParse here as it would try to strip options
+            # in shell commands.
+            if filtercmd.startswith('--shell'):
+                filtercmd = filtercmd[7:].lstrip()
+                try:
+                    (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+                    (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
+                    assert indesc > -1 and outdesc > -1    # pacify pylint
+                    if not is_file:
+                        with open(intmp, "w") as wfp:
+                            wfp.write(content_or_file)
+                        return capture("%s <%s" % (filtercmd, intmp))
+                    else:
+                        do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
+                        same = filecmp.cmp(content_or_file, outtmp, shallow=False)
+                        if not same:
+                            shutil.copyfile(outtmp, content_or_file)
+                        return int(not same)
+                finally:
+                    os.remove(intmp)
+                    os.remove(outtmp)
             else:
-                do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
-                same = filecmp.cmp(content_or_file, outtmp, shallow=False)
-                if not same:
-                    shutil.copyfile(outtmp, content_or_file)
-                return int(not same)
-        # Must not use LineParse here as it would try to strip options
-        # in shell commands.
-        if line.startswith('--shell'):
-            line = line[7:].lstrip()
+                raise Recoverable("--shell is currently required")
+        # Mainline of do_filter() continues:
+        with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
             altered = 0
-            (indesc, intmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-            (outdesc, outtmp) = tempfile.mkstemp(prefix=self.chosen().subdir())
-            assert indesc > -1 and outdesc > -1    # pacify pylint
-            with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
-                for ei in self.selection:
-                    event = self.chosen().events[ei]            
-                    if isinstance(event, (Commit, Tag)):
-                        if nonblobs:
-                            filtercmd = line.replace("%PATHS%", "")
-                            oldcomment = event.comment
-                            event.comment = filterhook(filtercmd, False, event.comment)
-                            altered += (oldcomment != event.comment)
-                        if blobs and isinstance(event, Commit):
-                            for fileop in event.fileops:
-                                if fileop.inline is not None:
-                                    # It's unclear whether it would be
-                                    # the right thing to increment
-                                    # altered here.
-                                    filtercmd = line.replace("%PATHS%", event.path)
-                                    fileop.inline = filterhook(filtercmd, False, fileop.inline)
-                    elif isinstance(event, Blob):
-                        if "%PATHS%" in line:
-                            filtercmd = line.replace("%PATHS%", " ".join(event.paths))
-                        else:
-                            filtercmd = line
-                        if not event.hasfile():
-                            event.materialize()
-                        altered += filterhook(filtercmd, True, event.blobfile())
-                    baton.twirl()
-            os.remove(intmp)
-            os.remove(outtmp)
-        else:
-            raise Recoverable("--shell is currently required")
+            for ei in self.selection:
+                event = self.chosen().events[ei]            
+                if isinstance(event, (Commit, Tag)):
+                    if nonblobs:
+                        filtercmd = line.replace("%PATHS%", "")
+                        oldcomment = event.comment
+                        event.comment = filterhook(filtercmd, False, event.comment)
+                        altered += (oldcomment != event.comment)
+                    if blobs and isinstance(event, Commit):
+                        for fileop in event.fileops:
+                            if fileop.inline is not None:
+                                # It's unclear whether it would be
+                                # the right thing to increment
+                                # altered here.
+                                filtercmd = line.replace("%PATHS%", event.path)
+                                fileop.inline = filterhook(filtercmd, False, fileop.inline)
+                elif isinstance(event, Blob):
+                    if "%PATHS%" in line:
+                        filtercmd = line.replace("%PATHS%", " ".join(event.paths))
+                    else:
+                        filtercmd = line
+                    if not event.hasfile():
+                        event.materialize()
+                    altered += filterhook(filtercmd, True, event.blobfile())
+                baton.twirl()
         announce("%d items modified." % altered)
 
     def help_combine(self):
