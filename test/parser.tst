@@ -21,8 +21,14 @@ read <simple.fi
 /regression/ resolve
 /Raymond/ resolve
 [Makefile] resolve
+=B & [Makefile] resolve
+=C & [Makefile] resolve
 [/Ma.*le/] resolve
+=B & [/Ma.*le/] resolve
+=C & [/Ma.*le/] resolve
 [/^Ma.*le$/] resolve
+=B & [/^Ma.*le$/] resolve
+=C & [/^Ma.*le$/] resolve
 [/D.ME.\.txt/] resolve
 [/Makefile/*] resolve
 [/^Make/*] resolve

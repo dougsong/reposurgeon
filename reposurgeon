@@ -6565,13 +6565,13 @@ into sections of the input stream instead).
             preselected = ((i, chosen.events[i]) for i in preselection)
             match_paths = all if "@" in flags else any
             return {i for (i, event) in preselected
-                      if isinstance(event, Commit) and
+                      if isinstance(event, (Commit, Blob)) and
                             match_paths(search(path)
                                         for path in event.paths())}
         else:
             preselected = ((i, chosen.events[i]) for i in preselection)
             return {i for (i, event) in preselected
-                    if isinstance(event, Commit) and matcher in event.paths()}
+                    if isinstance(event, (Commit, Blob)) and matcher in event.paths()}
     def eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all = False):
@@ -6731,7 +6731,7 @@ More ways to construct event sets:
 
 /foo/      all commits and tags containing the string 'foo' in text or metadata
 (foo)      all commits on branch 'foo'.
-[foo]      all commits touching the file named 'foo'.
+[foo]      all commits and blobs touching the file named 'foo'.
 =C         all commits
 =H         all head (branch tip) commits
 =T         all tags

@@ -160,6 +160,8 @@ edit                   ;; edit all editable objects
 1..:97 &amp; =T delete     ;; delete tags from event 1 to mark 97
 
 [Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
+                       ;; and all blobs referred to in a fileop
+		       ;; touching Makefile.
 
 :46 tip                ;; Display the branch tip that owns commit :46.
 </programlisting>
@@ -438,7 +440,7 @@ in earlier versions of <command>reposurgeon</command>.)</para>
 <term><firstterm>paths</firstterm></term>
 <listitem>
 <para>A "path expression" enclosed in square brackets resolves to the
-set of all commits related to a path matching the given
+set of all commits and blobs related to a path matching the given
 expression. The path expression itself is either a path literal or a
 regular expression surrounded by slashes. Immediately after the
 trailing / of a path regexp you can put any number of the following
@@ -458,14 +460,22 @@ directory in the chosen repository.</para>
 
 <para>A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use '^' or '$' if you want the
-expression to only match at the beginning or end of paths. If you need to
-embed '/]' into your regular expression (e.g. to express "all characters but a
-slash") you can use a Python string escape such as \x2f. When the '@' flag is
+expression to only match at the beginning or end of paths.  When the '@' flag is
 in use, the path expression selects commits whose every path match the regular
 expression. This is not always a subset of commits selected without the '@'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
 use e.g. '[/regex/] &amp; [/regex/@]'.</para>
+
+<para>A path or literal matches a blob if it matches any path that
+appeared in a modification fileop that referred to that blob. To
+select purely matching blobs or matching commits, compose a path
+expression with =B or =C.</para>
+
+<para>If you need to embed '/]' into your regular expression (e.g. to
+express "all characters but a slash") you can use a Python string
+escape such as \x2f.</para>
+
 </listitem>
 </varlistentry>
 </variablelist>
@@ -2392,6 +2402,9 @@ summary-plus-continuation form.]]</para>
 </refsect1>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
+
+<para>In versions before 3.0, path expressions only matched
+commits, not commits and the associated blobs as well.</para>
 
 <para>In versions before 2.44, the general command syntax put the
 command verb first, then the selection set (if any) then modifiers
