@@ -7731,6 +7731,7 @@ that applied to modify the content.
                 self.repo = repo
                 self.filtercmd = None
                 self.sub = None
+                self.regex = None
                 # Must not use LineParse here as it would try to strip options
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
@@ -7742,7 +7743,8 @@ that applied to modify the content.
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
                     else:
-                        self.sub = lambda s: re.sub(parts[1], parts[2], s)
+                        self.regex = re.compile(parts[1])	# optimization
+                        self.sub = lambda s: self.regex.sub(parts[2], s)
                 else:
                     raise Recoverable("--shell or --regex is required")
             def do(self, is_file, content_or_file, pathsubst=""):
