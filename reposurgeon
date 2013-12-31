@@ -877,12 +877,12 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = ("repo", "mark", "paths", "colors", "cookie", "start", "size", "deletehook")
+    __slots__ = ("repo", "mark", "pathlist", "colors", "cookie", "start", "size", "deletehook")
     __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
         self.mark = None
-        self.paths = []      # Set of in-repo paths associated with this blob
+        self.pathlist = []      # Set of in-repo paths associated with this blob
         self.colors = []
         self.cookie = None
         self.start = None
@@ -890,7 +890,10 @@ class Blob(object):
         self.deletehook = None
     def id_me(self):
         "ID this blob for humans."
-        return "blob@%s" % self.mark 
+        return "blob@%s" % self.mark
+    def paths(self):
+        "For uniformity with commits and fileops."
+        return self.pathlist
     def blobfile(self, create=False):
         "File where the content lives."
         stem = repr(id(self))
@@ -956,7 +959,7 @@ class Blob(object):
         c.colors = []
         if self.hasfile():
             if debug_enable(DEBUG_SHUFFLE):
-                announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.paths, self.blobfile(), c.blobfile()))
+                announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.pathlist, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
     def dump(self, vcs=None, options=None, realized=None):
@@ -969,7 +972,7 @@ class Blob(object):
                 vcs = self.repo.vcs
             # Ugh.  This is where we mess with ignore syntax translation
             if options is None or not '--noignores' in options:
-                if vcs and self.repo.vcs and len(self.paths) == 1 and self.paths[0].endswith(".gitignore"):
+                if vcs and self.repo.vcs and len(self.pathlist) == 1 and self.pathlist[0].endswith(".gitignore"):
                     if vcs.name == "hg" and self.repo.vcs.name != "hg":
                         if not content.startswith("syntax: glob\n"):
                             content = "syntax: glob\n" + content
@@ -2097,7 +2100,7 @@ class RepoStreamer:
                             blob = Blob(repo)
                             blob.set_mark(blobmark)
                             shutil.copyfile(path, blob.blobfile(create=True))
-                            blob.paths.append(path)
+                            blob.pathlist.append(path)
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
                             op = FileOp()
@@ -2658,7 +2661,7 @@ class StreamParser:
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     if fileop.ref != 'inline':
                                         try:
-                                            self.repo.objfind(fileop.ref).paths.append(fileop.path)
+                                            self.repo.objfind(fileop.ref).pathlist.append(fileop.path)
                                         except AttributeError:
                                             # Crap out on anything but a
                                             # submodule link.
@@ -3303,7 +3306,7 @@ class StreamParser:
                                              node.blobmark,
                                              node.path)
                             actions.append((node, fileop))
-                            self.repo.objfind(fileop.ref).paths.append(node.path)
+                            self.repo.objfind(fileop.ref).pathlist.append(node.path)
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
                         self.permissions[node.path] = perms
@@ -6933,7 +6936,7 @@ file in the blob.  Supports > redirection.
             for i in self.selection:
                 event = self.chosen().events[i]
                 if isinstance(event, Blob):
-                    parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark,event.path))
+                    parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
                     continue
                 if isinstance(event, Commit):
                     parse.stdout.write("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch)) 
@@ -7803,7 +7806,7 @@ that applied to modify the content.
                         event.materialize()
                     altered += filterhook.do(True,
                                              event.blobfile(),
-                                             " ".join(event.paths))
+                                             " ".join(event.paths()))
                 baton.twirl()
         announce("%d items modified." % altered)
 
