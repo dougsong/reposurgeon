@@ -7697,7 +7697,10 @@ to standard output.
 With --regex, the remainder of the line is expected to be a Python
 regular expression substitution written as /from/to/ with 'from' and
 'to' being passed as arguments to the standard re.sub() function and
-that applied to modify the content.
+that applied to modify the content. Ordinarily only the first such
+substitution is performed; putting 'g' after the slash replaces
+globally, and a numeric literal before the g gives the maximum number
+of substitutions to perform.
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -7738,13 +7741,24 @@ that applied to modify the content.
                     self.filtercmd = filtercmd[7:].lstrip()
                 elif filtercmd.startswith('--regex'):
                     parts = filtercmd[7:].lstrip().split("/")
-                    if len(parts) != 4 or parts[0] or parts[-1]:
+                    subflags = parts[-1]
+                    if len(parts) != 4 or parts[0]:
                         raise Recoverable("malformed filter specification")
+                    elif subflags and not re.match("[0-9]*g?", subflags):
+                        raise Recoverable("unrecognized filter flags")
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
                     else:
                         self.regex = re.compile(parts[1])	# optimization
-                        self.sub = lambda s: self.regex.sub(parts[2], s)
+                        if not subflags:
+                            subcount = 1
+                        elif subflags == "g":
+                            subcount = 0
+                        else:
+                            subcount = int(parts[-1])
+                        self.sub = lambda s: self.regex.sub(parts[2],
+                                                            s,
+                                                            subcount)
                 else:
                     raise Recoverable("--shell or --regex is required")
             def do(self, is_file, content_or_file, pathsubst=""):

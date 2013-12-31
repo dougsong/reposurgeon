@@ -4,11 +4,11 @@ reposurgeon: 8 items modified.
 reposurgeon: 1 items modified.
 blob
 mark :1
-data 148
+data 134
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-THIS PATHETIC HEAP is a mXrgX commit.
+This is a mXrgX commit.
 
 
 
@@ -100,11 +100,11 @@ M 100755 :9 hello
 
 blob
 mark :13
-data 150
+data 136
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-THIS PATHETIC HEAP is a spacXr commit.
+This is a spacXr commit.
 
 
 
@@ -129,11 +129,11 @@ M 100644 :9 hello
 
 blob
 mark :16
-data 198
+data 170
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-THIS PATHETIC HEAP is anothXr spacXr commit.  THIS PATHETIC HEAP onX
+This is anothXr spacXr commit.  This onX
 will havX a tag.
 
 
@@ -270,11 +270,11 @@ M 100644 :28 README
 
 blob
 mark :30
-data 151
+data 137
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-THIS PATHETIC HEAP is a mXrgX commit.
+This is a mXrgX commit.
 
 
 

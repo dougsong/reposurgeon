@@ -9,3 +9,5 @@
 * THe Subversion dumper is pretty weak, more a proof of concept than
   anything useful for production.
 
+* New features: set difference and ancestors-of in selections. 
+  --dedos option on filter.

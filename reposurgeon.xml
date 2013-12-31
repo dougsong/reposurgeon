@@ -1151,7 +1151,10 @@ modes will be supported in the future.</para>
 <para>With --regex, the remainder of the line is expected to be a Python
 regular expression substitution written as /from/to/ with from and
 to being passed as arguments to the standard re.sub() function and
-it applied to modify the content.</para>
+it applied to modify the content. Ordinarily only the first such
+substitution is performed; putting 'g' after the slash replaces
+globally, and a numeric literal before the g gives the maximum number
+of substitutions to perform.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
