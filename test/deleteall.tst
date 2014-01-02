@@ -2,5 +2,5 @@
 echo 1
 read <deleteall.fi
 :13 manifest
-[/^README/*] resolve
-[/^README$/*] resolve
+[/^README/a] resolve
+[/^README$/a] resolve

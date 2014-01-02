@@ -6554,7 +6554,7 @@ into sections of the input stream instead).
             raise Recoverable("malformed path matcher")
         if matcher.startswith('/'):
             flags = ''
-            while matcher[-1] in ("*", "@"):
+            while matcher[-1] in ("a", "c"):
                 flags += matcher[-1]
                 matcher = matcher[:-1]
             if matcher[-1] != '/':
@@ -6563,12 +6563,12 @@ into sections of the input stream instead).
                 search = re.compile(matcher[1:-1]).search
             except re.error:
                 raise Recoverable("invalid regular expression")
-            if "*" in flags:
+            if "a" in flags:
                 return self.eval_pathset_full(search,
                                               preselection,
-                                              "@" in flags)
+                                              "c" in flags)
             preselected = ((i, chosen.events[i]) for i in preselection)
-            match_paths = all if "@" in flags else any
+            match_paths = all if "c" in flags else any
             return {i for (i, event) in preselected
                       if isinstance(event, (Commit, Blob)) and
                             match_paths(search(path)

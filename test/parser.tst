@@ -30,12 +30,12 @@ read <simple.fi
 =B & [/^Ma.*le$/] resolve
 =C & [/^Ma.*le$/] resolve
 [/D.ME.\.txt/] resolve
-[/Makefile/*] resolve
-[/^Make/*] resolve
+[/Makefile/a] resolve
+[/^Make/a] resolve
 [/^test/] resolve
-[/^test/@] resolve
-[/^r/@*] resolve
-[/r/@*] resolve
+[/^test/c] resolve
+[/^r/ca] resolve
+[/r/ca] resolve
 <2010-10-27T18:43:32Z> resolve
 <2010-10-27T12:07:32Z!esr@thyrsus.com> resolve
 # Test here-doc syntax
