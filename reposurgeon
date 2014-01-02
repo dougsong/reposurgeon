@@ -6138,6 +6138,11 @@ into sections of the input stream instead).
             announce("interpreter cleanup called.")
         for repo in self.repolist:
             repo.cleanup()
+    def selected(self, types=None):
+        "Iterate over the selection set."
+        events = self.chosen().events
+        return ((i, events[i]) for i in self.selection 
+                if types is None or isinstance(events[i], types))
     #
     # The selection-language parsing code starts here.
     #
@@ -6646,8 +6651,7 @@ into sections of the input stream instead).
         if self.selection == None:
             self.selection = [n for n,o in enumerate(self.chosen()) if hasattr(o, method)]
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for i in self.selection:
-                event = self.chosen().events[i]
+            for i, event in self.selected():
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
                     if summary:
@@ -6933,8 +6937,7 @@ file in the blob.  Supports > redirection.
         if self.selection is None:
             self.selection = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for i in self.selection:
-                event = self.chosen().events[i]
+            for i, event in self.selected():
                 if isinstance(event, Blob):
                     parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
                     continue
@@ -7069,8 +7072,7 @@ unwieldy.
             self.selection = range(len(self.chosen()))
         sizes = {}
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for i in self.selection:
-                event = self.chosen().events[i]
+            for _, event in self.selected():
                 if isinstance(event, Commit):
                     if event.branch not in sizes:
                         sizes[event.branch] = 0
@@ -7115,19 +7117,17 @@ well-formed as DVCS IDs.
             deletealls = set()
             disconnected = set()
             roots = set()
-            for i in self.selection:
-                event = self.chosen().events[i]
-                if isinstance(event, Commit):
-                    if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
-                        deletealls.add("on %s at %s" % (event.branch, event.id_me()))
-                    if not event.has_parents() and not event.has_children():
-                        disconnected.add(event.id_me())
-                    elif not event.has_parents():
-                        roots.add(event.id_me())
-                    if unmapped:
-                        for person in [event.committer] + event.authors:
-                            if unmapped.match(person.email):
-                                shortset.add(person.email)
+            for _, event in self.selected(Commit):
+                if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
+                    deletealls.add("on %s at %s" % (event.branch, event.id_me()))
+                if not event.has_parents() and not event.has_children():
+                    disconnected.add(event.id_me())
+                elif not event.has_parents():
+                    roots.add(event.id_me())
+                if unmapped:
+                    for person in [event.committer] + event.authors:
+                        if unmapped.match(person.email):
+                            shortset.add(person.email)
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
             for item in disconnected:
@@ -7383,8 +7383,7 @@ is an identifying header before each event dump.  Supports > redirection.
         if self.selection is None:
             self.selection = range(len(self.chosen()))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for ei in self.selection:
-                event = self.chosen().events[ei]
+            for ei, event in self.selected():
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
@@ -7454,8 +7453,7 @@ for graphviz.
             self.selection = range(len(self.chosen()))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
-            for ei in self.selection:
-                event = self.chosen().events[ei]
+            for _, event in self.selected():
                 if isinstance(event, Commit):
                     for parent in event.parent_marks():
                         if self.chosen().find(parent) in self.selection:
@@ -7466,8 +7464,7 @@ for graphviz.
                                        % (event.name, event.committish[1:], ))
                     parse.stdout.write('\t{rank=same; "%s"; "%s"}\n' \
                                        % (event.name, event.committish[1:], ))
-            for ei in self.selection:
-                event = self.chosen().events[ei]
+            for _, event in self.selection:
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split('\n')[0][:42])
                     cid = event.mark
@@ -7802,8 +7799,7 @@ of substitutions to perform.
         filterhook = FilterCommand(self.chosen(), line)
         with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
             altered = 0
-            for ei in self.selection:
-                event = self.chosen().events[ei]            
+            for _, event in self.selected():
                 if isinstance(event, (Commit, Tag)):
                     if nonblobs:
                         oldcomment = event.comment
@@ -7900,8 +7896,7 @@ With  the --debug option, show messages about mismatches.
             # it; this operation only make sense for cleaning up
             # artifacts in linear stretches of history that have been
             # lifted from file-oriented VCSes like RCS and CVS.
-            icthis, icnext = itertools.tee(
-                    ((i, c) for i, c in enumerate(self.chosen()) if isinstance(c, Commit) and i in self.selection))
+            icthis, icnext = itertools.tee(self.selected(Commit))
             next(icnext, None)
             for (ithis, cthis), (_inext, cnext) in itertools.izip(icthis, icnext):
                 if cthis.branch != cnext.branch:
@@ -7946,7 +7941,7 @@ change in a future release.
         if len(self.selection) != 1:
             complain("from selection must be a singleton")
             return
-        event = self.chosen().events[list(self.selection)[0]]
+        event = self.chosen().events[self.selection[0]]
         if not isinstance(event, Commit):
             complain("from selection must be a commit")
         fields = line.split()
@@ -8018,8 +8013,7 @@ an offset literal of +0 or -0.
         if len(args) > 1:
             if not re.match("[+-][0-9][0-9][0-9][0-9]", args[1]):
                 complain("expected timezone literal to be [+-]hhmm")
-        for ei in self.selection:
-            event = self.chosen()[ei]
+        for _, event in self.selected():
             if isinstance(event, Tag):
                 if event.tagger:
                     event.tagger.date.timestamp += offset
@@ -8346,10 +8340,8 @@ first directory component from every path.
         if not line.startswith(("sub", "sup")):
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 allpaths = set()
-                for event in itertools.imap(self.chosen().events.__getitem__,
-                                            self.selection):
-                    if isinstance(event, Commit):
-                        allpaths.update(event.paths())
+                for _, event in self.selected(Commit):
+                    allpaths.update(event.paths())
                 parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
                 return
         fields = line.split()
@@ -8391,9 +8383,7 @@ This command supports > redirection.
                     filter_func = re.compile(line).search
                 except re.error:
                     raise Recoverable("invalid regular expression")
-            for ei, event in enumerate(self.chosen().events):
-                if not (isinstance(event, Commit) and ei in self.selection):
-                    continue
+            for ei, event in self.selected(Commit):
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
@@ -8522,7 +8512,7 @@ modified as a result.
             complain("no repo has been chosen.")
             return
         if not (len(self.selection) == 2 and \
-                all(isinstance(repo[i], Commit) for i in self.selection)):
+                all(isinstance(e, Commit) for _,e in self.selected())):
             raise Recoverable("reparent requires exactly two selected commits")
         parent, child = (repo[i] for i in sorted(self.selection))
         if line and line != "rebase":
@@ -8820,8 +8810,7 @@ map when the repo is written or rebuilt.
                       lambda p: repo.objfind(p)),
                      ):
                 match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
-                for ei in self.selection:
-                    event = repo.events[ei]
+                for _, event in self.selected():
                     if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
                             lambda m: substitute(getter, m),
@@ -8841,8 +8830,7 @@ map when the repo is written or rebuilt.
                 r"[0-9]+\.[0-9]+\.[0-9]+",
                 )
             idhits = []
-            for ei in self.selection:
-                event = repo.events[ei]
+            for ei, event in self.selected():
                 if hasattr(event, "comment"):
                     text = event.comment
                 elif hasattr(event, "text"):
