@@ -8,7 +8,7 @@
 #
 from __future__ import print_function #unicode_literals
 
-import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile, cPickle
+import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
 import time, calendar, unittest, itertools, operator, functools, filecmp
 import email.message, email.parser, email.utils
@@ -1950,7 +1950,7 @@ class PathMap(object):
         needed = min(self.maxid[0], self.snapid + 1) + 1
         if len(snaplist) < needed:
             last = snaplist[-1]
-            snaplist.extend(last for _ in xrange(len(snaplist), needed))
+            snaplist.extend(last for _ in range(len(snaplist), needed))
         snaplist[self.snapid] = value
         return value
     # Iterate through (component, current values) pairs
@@ -2902,7 +2902,7 @@ class StreamParser:
                 return None
             # ...then iterate backwards from there...
             past_events = (self.repo.events[i] for i in
-                    xrange(self.repo.index(obj), -1, -1))
+                    range(self.repo.index(obj), -1, -1))
             # ... finding branches of commits...
             commit_branch = ((e, getbranch(e))
                              for e in past_events
@@ -4974,7 +4974,7 @@ class Repository:
                                 swap_indices, # first take the blobs
                                 # then all others
                                 itertools.ifilterfalse(swap_indices.__contains__,
-                                         xrange(earliest, last+1)) )
+                                         range(earliest, last+1)) )
                         self.events[earliest:last+1] = map(
                                 self.events.__getitem__, neworder)
                         self.declare_sequence_mutation()
@@ -6158,7 +6158,7 @@ into sections of the input stream instead).
             self.line = "<" + self.line + ">"
         except Recoverable:
             pass
-        self.selection = list(self.eval_expression(set(xrange(len(self.chosen().events)))))
+        self.selection = list(self.eval_expression(set(range(len(self.chosen().events)))))
         if self.line == line:
             self.selection = None
         else:
@@ -6472,7 +6472,7 @@ into sections of the input stream instead).
                     spanning = True
                 else:
                     if spanning:
-                        resolved.extend(xrange(last+1, elt+1))
+                        resolved.extend(range(last+1, elt+1))
                         spanning = False
                     else:
                         resolved.append(elt)
@@ -8173,7 +8173,7 @@ file operations in the original commit.
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
-                if splitpoint not in xrange(1, len(event.fileops)):
+                if splitpoint not in range(1, len(event.fileops)):
                     raise Recoverable("fileop index out of range")
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
