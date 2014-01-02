@@ -49,7 +49,7 @@ from :39
 M 100644 :40 Makefile
 M 100644 :41 dummy_config.py
 
-:42 combine --pushback
+:42 squash --pushback
 :39 inspect
 Event 43 ================================================================
 commit refs/tags/release-0-5-0

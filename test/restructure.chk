@@ -44,7 +44,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-combine :7,:8
+squash :7,:8
 coverage       # Expect this to show case 1 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -89,7 +89,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-combine :10,:11
+squash :10,:11
 coverage       # Expect this to show case 3 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -134,7 +134,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-combine :17,:18
+squash :17,:18
 coverage       # Expect this to show case 2 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -179,7 +179,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-combine :25,:26
+squash :25,:26
 coverage       # Expect this to show case 4 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
@@ -224,7 +224,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-combine :29,:30
+squash :29,:30
 coverage       # Expect this to show case 6 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
