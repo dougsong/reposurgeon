@@ -6520,7 +6520,7 @@ into sections of the input stream instead).
             search_in = searchable_attrs.values()
             if self.line[0].isalpha():
                 search_in = []
-                while self.line[0] in searchable_attrs.keys():
+                while self.line[0] in searchable_attrs.iterkeys():
                     search_in.append(searchable_attrs[self.line[0]])
                     self.line = self.line[1:]
             for i in preselection:
