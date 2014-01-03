@@ -350,7 +350,7 @@ class GitExtractor:
             for leaf in files:
                 assert dirs is not None  # Pacify pylint
                 ref = os.path.join(root, leaf)
-                with open(ref) as fp:
+                with open(ref, "rb") as fp:
                     self.refs[ref[5:]] = fp.read().strip()
         self.baton.twirl()
         # Next, grab all tag objects.
@@ -921,7 +921,7 @@ class Blob(object):
             with bz2.BZ2File(self.blobfile(), "r") as rfp:
                 return rfp.read()
         else:
-            with open(self.blobfile(), "r") as rfp:
+            with open(self.blobfile(), "rb") as rfp:
                 return rfp.read()
     def set_mark(self, mark):
         "Set the blob's mark."
@@ -940,7 +940,7 @@ class Blob(object):
                 with bz2.BZ2File(self.blobfile(create=True), "w") as wfp:
                     return wfp.write(text)
             else:
-                with open(self.blobfile(create=True), "w") as wfp:
+                with open(self.blobfile(create=True), "wb") as wfp:
                     wfp.write(text)
     def moveto(self, repo):
         "Change the repo this blob is associated with."
@@ -1709,7 +1709,7 @@ class Commit(object):
                 if blob.hasfile():
                     os.link(blob.blobfile(), fullpath)
                 else:
-                    with open(fullpath, "w") as wfp:
+                    with open(fullpath, "wb") as wfp:
                         wfp.write(blob.get_content())
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
@@ -5379,7 +5379,7 @@ def read_repo(source, options, preferred):
                     assert tfdesc > -1    # pacify pylint
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
-                    with open(tfname) as tp:
+                    with open(tfname, "rb") as tp:
                         repo.fast_import(tp, options, progress=showprogress)
                 finally:
                     os.remove(tfname)
@@ -5388,11 +5388,11 @@ def read_repo(source, options, preferred):
                     repo.fast_import(tp, options, progress=showprogress)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
-                with open(repo.vcs.authormap) as fp:
+                with open(repo.vcs.authormap, "rb") as fp:
                     repo.read_authormap(range(len(repo.events)),fp)
             fossils = os.path.join(vcs.subdirectory, "fossils")
             if os.path.exists(fossils):
-                with open(fossils) as rfp:
+                with open(fossils, "rb") as rfp:
                     repo.read_fossilmap(rfp)
             if vcs.lister:
                 def fileset(exclude):
@@ -5414,7 +5414,7 @@ def read_repo(source, options, preferred):
                     announce("reading cvs-revisions map.")
                     pathrev_to_hash = {}
                     # Pass 1: Get git's path/revision to hash mapping
-                    for line in open(".git/cvs-revisions"):
+                    for line in open(".git/cvs-revisions", "rb"):
                         (path, rev, hashv) = line.split()
                         pathrev_to_hash[(path, rev)] = hashv
                     # Pass 2: get git's hash to (time,person) mapping 
@@ -5522,7 +5522,7 @@ def rebuild_repo(repo, target, options, preferred):
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
-                with open(tfname, "w") as tp:
+                with open(tfname, "wb") as tp:
                     repo.fast_export(range(len(repo)), tp, options, progress=verbose>0, target=preferred)
                 do_or_die(vcs.exporter % parameters, "import")
             finally:
@@ -5535,7 +5535,7 @@ def rebuild_repo(repo, target, options, preferred):
         if repo.write_fossils:
             try:
                 fossilfile = os.path.join(vcs.subdirectory, "fossils")
-                with open(fossilfile, "w") as wfp:
+                with open(fossilfile, "wb") as wfp:
                     repo.write_fossilmap(wfp)
             except IOError:
                 raise Recoverable("fossils file %s could not be written." \
@@ -6030,7 +6030,7 @@ into sections of the input stream instead).
                 self.infile = m.group(0)[1:]
                 if self.infile and self.infile != '-':
                     try:
-                        self.stdin = open(self.infile, "r")
+                        self.stdin = open(self.infile, "rb")
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
                                           % self.infile)
@@ -6046,7 +6046,7 @@ into sections of the input stream instead).
                     if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable("not a plain file")
                     try:
-                        self.stdout = open(self.outfile, "w")
+                        self.stdout = open(self.outfile, "wb")
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for write" \
                                           % self.outfile)
@@ -6699,7 +6699,7 @@ into sections of the input stream instead).
         (tfdesc, tfname) = tempfile.mkstemp()
         assert tfdesc > -1    # pacify pylint
         try:
-            with open(tfname, "w") as tfp:
+            with open(tfname, "wb") as tfp:
                 for i in selection:
                     event = self.chosen()[i]
                     if hasattr(event, "email_out"):
@@ -6864,7 +6864,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
             return
         try:
             self.callstack.append(line.split())
-            with open(self.callstack[-1][0]) as scriptfp:
+            with open(self.callstack[-1][0], "rb") as scriptfp:
                 while True:
                     scriptline = scriptfp.readline()
                     if not scriptline:
@@ -7770,7 +7770,7 @@ of substitutions to perform.
                     try:
                         assert indesc > -1 and outdesc > -1    # pacify pylint
                         if not is_file:
-                            with open(intmp, "w") as wfp:
+                            with open(intmp, "wb") as wfp:
                                 wfp.write(content_or_file)
                             return capture("%s <%s" % (filtercmd, intmp))
                         else:
@@ -7784,11 +7784,11 @@ of substitutions to perform.
                         os.remove(outtmp)
                 elif self.sub:
                     if is_file:
-                        with open(content_or_file, "r") as rfp:
+                        with open(content_or_file, "rb") as rfp:
                             content = rfp.read()
                         modified = self.sub(content)
                         if content != modified:
-                            with open(content_or_file, "w") as wfp:
+                            with open(content_or_file, "wb") as wfp:
                                 wfp.write(modified)
                         return int(content != modified)
                     else:
