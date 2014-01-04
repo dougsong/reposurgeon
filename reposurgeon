@@ -6563,10 +6563,10 @@ into sections of the input stream instead).
                 search = re.compile(matcher[1:-1]).search
             except re.error:
                 raise Recoverable("invalid regular expression")
-            if "a" in flags:
+            if "c" in flags:
                 return self.eval_pathset_full(search,
                                               preselection,
-                                              "c" in flags)
+                                              "a" in flags)
             preselected = ((i, chosen.events[i]) for i in preselection)
             match_paths = all if "a" in flags else any
             return {i for (i, event) in preselected

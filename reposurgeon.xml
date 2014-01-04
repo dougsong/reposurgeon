@@ -449,7 +449,7 @@ characters which act as flags: 'a' and 'c'.</para>
 <para>By default, a path is related to a commit if the latter has a
 fileop that touches that file path - modifies that change it, deletes
 that remove it, renames and copies that have it as a source or
-target. When the 'a' flag is in use the meaning changes: the paths
+target. When the 'c' flag is in use the meaning changes: the paths
 related to a commit become all paths that would be present in a
 checkout for that commit.</para>
 
@@ -460,9 +460,9 @@ directory in the chosen repository.</para>
 
 <para>A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use '^' or '$' if you want the
-expression to only match at the beginning or end of paths.  When the 'c' flag is
+expression to only match at the beginning or end of paths.  When the 'a' flag is
 in use, the path expression selects commits whose every path match the regular
-expression. This is not always a subset of commits selected without the 'c'
+expression. This is not always a subset of commits selected without the 'a'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
 use e.g. '[/regex/] &amp; [/regex/c]'.</para>
