@@ -6163,9 +6163,13 @@ into sections of the input stream instead).
             repo.cleanup()
     def selected(self, types=None):
         "Iterate over the selection set."
-        events = self.chosen().events
-        return ((i, events[i]) for i in self.selection 
-                if types is None or isinstance(events[i], types))
+        events = lambda: itertools.imap(self.chosen().events.__getitem__,
+                                        self.selection)
+        if types is None: return itertools.izip(self.selection, events())
+        isinstances = itertools.imap(isinstance,
+                                     events(), itertools.repeat(types))
+        return itertools.compress(itertools.izip(self.selection, events()),
+                                  isinstances)
     #
     # The selection-language parsing code starts here.
     #
