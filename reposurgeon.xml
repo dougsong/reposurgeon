@@ -2406,10 +2406,7 @@ summary-plus-continuation form.]]</para>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
 
-<para>In versions before 3.0, path expressions only matched
-commits, not commits and the associated blobs as well.</para>
-
-<para>In versions before 2.44, the general command syntax put the
+<para>In versions before 3.0, the general command syntax put the
 command verb first, then the selection set (if any) then modifiers
 (VSO).  It has changed to optional selection set first, then command
 verb, then modifiers (SVO). The change made parsing simpler, allowed
@@ -2417,25 +2414,29 @@ abolishing some noise keywords, and recapitulates a successful design
 pattern in some other Unix tools - notably
 <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
-<para>In <command>reposurgeon</command> versions before 2.44, the
+<para>In versions before 3.0, path expressions only matched
+commits, not commits and the associated blobs as well.The names 
+of the <quote>a</quote> and <quote>c</quote> flags were different.</para>
+
+<para>In <command>reposurgeon</command> versions before 3.0, the
 delete command had the semantics of squash;  also, the policy flags
 did not require a <quote>--</quote> prefix. The <quote>--delete</quote>
 flag was named <quote>obliterate</quote>.</para>
 
-<para>In <command>reposurgeon</command> versions before 2.44, read and
+<para>In <command>reposurgeon</command> versions before 3.0, read and
 write optionally took file arguments rather than requiring redirects
 (and the write command never wrote into directories). This was changed
 in order to allow these commands to have modifiers. These modifiers
 replaced several global options that no longer exist.</para>
 
-<para>In <command>reposurgeon</command> versions before 2.44, the
+<para>In <command>reposurgeon</command> versions before 3.0, the
 earliest factor in a unite command always kept its tag and branch
 names unaltered. The new rule for resolving name conflicts, giving
 priprity to the latest factor, produces more natural behavior when
 uniting two repoositories end to end; the master branch of the second
 (later) one keeps its name.</para>
 
-<para>In <command>reposurgeon</command> versions before 2.44, the tagify
+<para>In <command>reposurgeon</command> versions before 3.0, the tagify
 command expected policies as trailing arguments to alter its behaviour. The new
 syntax uses similarly named options with leading dashes, that can appear
 anywhere after the tagify command</para>
