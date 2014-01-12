@@ -8551,12 +8551,10 @@ commit's first parent, but doesn't need you to find the first parent yourself.
             complain("no repo has been chosen.")
             return
         try:
-            commit, = self.selection
-        except ValueError:
-            raise Recoverable("unmerge requires a singleton set.")
-        commit = self.repo[commit]
-        if not isinstance(commit, Commit):
-            raise Recoverable("unmerge needs a commit to operate on.")
+            if len(self.selection) != 1: raise ValueError()
+            (_, commit), = self.selected(Commit)
+        except (TypeError, ValueError):
+            raise Recoverable("unmerge requires a single commit.")
         commit.set_parents(commit.parents()[:1])
 
     def help_reparent(self):
