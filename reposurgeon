@@ -6691,13 +6691,14 @@ into sections of the input stream instead).
         return (tok, line)
     def edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
+        # Assumes that self.chosen() and selection are not None
         editor = line.strip() or os.getenv("EDITOR")
         if not editor:
             complain("you have not specified an editor and $EDITOR is not set")
             return
         # Special case: user selected a single blob
-        if len(self.selection) == 1:
-            singleton = self.chosen()[self.selection[0]]
+        if len(selection) == 1:
+            singleton = self.chosen()[selection[0]]
             if isinstance(singleton, Blob):
                 def find_successor(event, path):
                     here = []
