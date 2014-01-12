@@ -8524,15 +8524,13 @@ from the highest member (child) to the lowest (parent).
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        repo = self.chosen()
-        if self.selection is None or not len(self.selection):
-            raise Recoverable("merge requires a nonempty selection set.")
-        self.selection = [e for e in sorted(self.selection) \
-                          if isinstance(repo.events[e], Commit)]
-        if not self.selection or len(self.selection) < 2:
-            raise Recoverable("merge requires two commit arguments.")
-        earlier = repo.events[self.selection[0]]
-        later = repo.events[self.selection[-1]]
+        try:
+            commits = sorted(self.selected(Commit))
+            commits[1:-1] = [] # Drop all but first and last
+            (_, earlier), (_, later) = commits
+        except (TypeError, ValueError):
+            raise Recoverable("merge requires a selection set "
+                              "with at least two commits.")
         later.add_parent(earlier)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
