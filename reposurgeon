@@ -5351,6 +5351,18 @@ class Repository:
         return self.events[i]
     def __setitem__(self, i, v):
         self.events[i] = v
+    def iterevents(self, indices=None, types=None):
+        "Iterate over events matching conditions."
+        if indices is None:
+            events = lambda: self.events
+            withindices = enumerate(self.events)
+        else:
+            events = lambda: itertools.imap(self.events.__getitem__, indices)
+            withindices = itertools.izip(indices, events())
+        if types is None: return withindices
+        isinstances = itertools.imap(isinstance,
+                                     events(), itertools.repeat(types))
+        return itertools.compress(withindices, isinstances)
 
 def read_repo(source, options, preferred):
     "Read a repository using fast-import."
@@ -6163,13 +6175,7 @@ into sections of the input stream instead).
             repo.cleanup()
     def selected(self, types=None):
         "Iterate over the selection set."
-        events = lambda: itertools.imap(self.chosen().events.__getitem__,
-                                        self.selection)
-        if types is None: return itertools.izip(self.selection, events())
-        isinstances = itertools.imap(isinstance,
-                                     events(), itertools.repeat(types))
-        return itertools.compress(itertools.izip(self.selection, events()),
-                                  isinstances)
+        return self.chosen().iterevents(indices=self.selection, types=types)
     #
     # The selection-language parsing code starts here.
     #
