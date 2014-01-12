@@ -8822,11 +8822,10 @@ moved, no branch fields are changed.
                 if isinstance(event, Commit) and event.branch == resetname:
                     event.branch = newname
         elif verb == "delete":
-            tip = None
-            for event in repo.events:
-                if isinstance(event, Commit) and event.branch == resetname:
-                    tip = event
-            if tip and len(tip.children()) == 1: 
+            tip = next((c for _,c in repo.iterevents(types=Commit)
+                          if c.branch == resetname),
+                       None)
+            if tip and len(tip.children()) == 1:
                 successor = tip.children()[0].branch
                 for event in repo.iterevents(types=Commit):
                     if event.branch == resetname:
