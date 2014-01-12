@@ -4497,14 +4497,9 @@ class Repository:
                 return "emptycommit-mark" + commit.mark[1:]
             else:
                 return "emptycommit-index" + commit.index()
-        # Default commit set
-        if commits is None: commits = range(len(self.events))
-        def iterevents():
-            return ((i, self.events[i]) for i in commits
-                                        if isinstance(self.events[i], Commit))
         # Use a separate loop because delete() invalidates manifests.
         if canonicalize:
-            for _, commit in iterevents():
+            for _, commit in self.iterevents(commits, types=Commit):
                 commit.canonicalize()
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
@@ -4514,7 +4509,7 @@ class Repository:
         else:
             is_tipdelete = lambda _: False
         deletia = []
-        for index, commit in iterevents():
+        for index, commit in self.iterevents(commits, types=Commit):
             if (not commit.fileops) or is_tipdelete(commit):
                 if commit.has_parents():
                     if len(commit.parents()) > 1 and not tagify_merges:
