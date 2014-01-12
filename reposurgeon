@@ -4475,7 +4475,8 @@ class Repository:
                            gripe = complain
                           ):
         """Turn into tags commits without (meaningful) fileops.
-            Arguments: * commits:       an iterable of commits in the repo
+            Arguments: * commits:       None, or an iterable of event indices
+                                        tagify_empty() ignores non-commits
                        * tipdeletes:    whether tipdeletes should be tagified
                        * canonicalize:  whether to canonicalize fileops first
                        * name_func:     custom function for choosing the tag
@@ -4496,13 +4497,15 @@ class Repository:
                 return "emptycommit-mark" + commit.mark[1:]
             else:
                 return "emptycommit-index" + commit.index()
-        # Gather all selected commits in a list before mutating self.events.
-        if commits is None: commits = self.events
-        commits = [(i,c) for (i,c) in enumerate(commits)
-                         if isinstance(c, Commit)]
+        # Default commit set
+        if commits is None: commits = range(len(self.events))
+        def iterevents():
+            return ((i, self.events[i]) for i in commits
+                                        if isinstance(self.events[i], Commit))
         # Use a separate loop because delete() invalidates manifests.
         if canonicalize:
-            for _, commit in commits: commit.canonicalize()
+            for _, commit in iterevents():
+                commit.canonicalize()
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
@@ -4511,7 +4514,7 @@ class Repository:
         else:
             is_tipdelete = lambda _: False
         deletia = []
-        for index, commit in commits:
+        for index, commit in iterevents():
             if (not commit.fileops) or is_tipdelete(commit):
                 if commit.has_parents():
                     if len(commit.parents()) > 1 and not tagify_merges:
@@ -8501,7 +8504,7 @@ commits that have no fileops.
             if parse.line:
                 raise Recoverable("too many arguments for tagify.")
             repo.tagify_empty(
-                    commits = (repo.events[i] for i in self.selection),
+                    commits = self.selection,
                     canonicalize = "--canonicalize" in parse.options,
                     tipdeletes = "--tipdeletes" in parse.options,
                     tagify_merges = "--tagify-merges" in parse.options)
