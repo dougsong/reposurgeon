@@ -8578,10 +8578,11 @@ modified as a result.
         if repo is None:
             complain("no repo has been chosen.")
             return
-        if not (len(self.selection) == 2 and \
-                all(isinstance(e, Commit) for _,e in self.selected())):
+        try:
+            if len(self.selection) != 2: raise ValueError()
+            (_, parent), (_, child) = sorted(self.selected(Commit))
+        except (TypeError, ValueError):
             raise Recoverable("reparent requires exactly two selected commits")
-        parent, child = (repo[i] for i in sorted(self.selection))
         if line and line != "rebase":
             raise Recoverable("unknown policy for reparent")
         if line != "rebase":
