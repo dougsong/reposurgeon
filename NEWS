@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     The filter command now has a --replace modifier to avoid regex overhead.
+
 3.0: 2014-01-05
      Many syntactic features of the language have changed incompatibly.
      Backward-incompatible language changes are documented on the manual page.

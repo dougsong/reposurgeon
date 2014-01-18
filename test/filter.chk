@@ -2,6 +2,7 @@ reposurgeon: 11 items modified.
 reposurgeon: 18 items modified.
 reposurgeon: 8 items modified.
 reposurgeon: 1 items modified.
+reposurgeon: 2 items modified.
 blob
 mark :1
 data 134
@@ -114,7 +115,7 @@ mark :14
 author Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
 data 22
-Just a spacYr commit.
+Just a spacYr COMMIT.
 from :12
 M 100644 :13 README
 
@@ -163,7 +164,7 @@ mark :19
 author Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
 data 60
-A third spacYr commit. WY'll start a branch aftYr this onY.
+A third spacYr COMMIT. WY'll start a branch aftYr this onY.
 from :17
 M 100644 :18 README
 

@@ -4,4 +4,5 @@ read <sample1.fi
 =C filter --shell tr e Y
 =B filter --regex /This/THIS PATHETIC HEAP/
 =C filter --regex /causing/FROBNICATING/
+=C filter --replace /commit./COMMIT./
 write -

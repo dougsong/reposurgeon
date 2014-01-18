@@ -1126,7 +1126,7 @@ output file in a form that can be fed back in.</para>
 </varlistentry>
 <varlistentry>
 <term><command>filter</command>
-        [<emphasis>--shell</emphasis>|<emphasis>--regex</emphasis>]
+        [<emphasis>--shell</emphasis>|<emphasis>--regex</emphasis>|<emphasis>--replace</emphasis>]
 </term>
 <listitem>
 <para>Run blobs, commit comments, or tag comments in the selection set
@@ -1155,6 +1155,9 @@ it applied to modify the content. Ordinarily only the first such
 substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal before the g gives the maximum number
 of substitutions to perform.</para>
+
+<para>With --replace, the behavior is like --regexp but the expressions are
+not interpreted as regular expressions. (This is slighly faster).</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -7698,6 +7698,9 @@ that applied to modify the content. Ordinarily only the first such
 substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal before the g gives the maximum number
 of substitutions to perform.
+
+With --replace, the behavior is like --regexp but the expressions are
+not interpreted as regular expressions. (This is slighly faster).
 """)
     def do_filter(self, line):
         if not self.chosen():
@@ -7736,26 +7739,36 @@ of substitutions to perform.
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
                     self.filtercmd = filtercmd[7:].lstrip()
-                elif filtercmd.startswith('--regex'):
-                    parts = filtercmd[7:].lstrip().split("/")
+                elif filtercmd.startswith('--regex') or filtercmd.startswith('--replace'):
+                    firstspace = filtercmd.find(' ')
+                    if firstspace == -1:
+                        raise Recoverable("missing filter specification")
+                    parts = filtercmd[firstspace:].lstrip().split("/")
                     subflags = parts[-1]
-                    if len(parts) != 4 or parts[0]:
+                    if len(parts) != 4:
                         raise Recoverable("malformed filter specification")
+                    elif parts[0]:
+                        raise Recoverable("bad prefix '%s' on filter specification" % parts[0])
                     elif subflags and not re.match("[0-9]*g?", subflags):
                         raise Recoverable("unrecognized filter flags")
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
                     else:
-                        self.regex = re.compile(parts[1])	# optimization
                         if not subflags:
                             subcount = 1
                         elif subflags == "g":
                             subcount = 0
                         else:
                             subcount = int(parts[-1])
-                        self.sub = lambda s: self.regex.sub(parts[2],
+                        if filtercmd.startswith('--regex'):
+                            self.regex = re.compile(parts[1])	# optimization
+                            self.sub = lambda s: self.regex.sub(parts[2],
                                                             s,
                                                             subcount)
+                        elif filtercmd.startswith('--replace'):
+                            self.sub = lambda s: s.replace(parts[1], 
+                                                           parts[2],
+                                                           subcount)
                 else:
                     raise Recoverable("--shell or --regex is required")
             def do(self, is_file, content_or_file, pathsubst=""):
