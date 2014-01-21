@@ -7142,19 +7142,18 @@ well-formed as DVCS IDs.
                             shortset.add(person.email)
                 if not event.committer.email:
                     emptyaddr.add(event.id_me())
+                elif "@" not in event.committer.email:
+                    badaddress.add(event.id_me())
                 for author in event.authors:
                     if not author.email:
                         emptyaddr.add(event.id_me())
+                    elif "@" not in author.email:
+                        badaddress.add(event.id_me())
                 if not event.committer.name:
                     emptyname.add(event.id_me())
                 for author in event.authors:
                     if not author.name:
                         emptyname.add(event.id_me())
-                if "@" not in event.committer.email:
-                    badaddress.add(event.id_me())
-                for author in event.authors:
-                    if "@" not in author.email:
-                        badaddress.add(event.id_me())
 
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
