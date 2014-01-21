@@ -840,12 +840,20 @@ class Attribution(object):
             # Deal with a cvs2svn artifact
             person = person.replace("(no author)", "no-author")
             # First, validity-check the email address
-            (self.name, self.email) = email.utils.parseaddr(person)
+            try:
+                (self.name, self.email) = email.utils.parseaddr(person)
+            except ValueError:
+                pass
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
             person = person.replace(" <", "|").replace("> ", "|")
+            tokens = person.strip().split("|")
+            # Recover from nasty malformations
+            if self.name is None:
+                self.name = tokens[0].strip()
+                self.email = tokens[1].strip()
             try:
-                self.date = Date(person.strip().split("|")[2])
+                self.date = Date(tokens[2])
             except (ValueError, IndexError):
                 raise Fatal("malformed attribution date in %s" % operson)
     def email_out(self, _modifiers, msg, hdr):
@@ -7116,6 +7124,8 @@ well-formed as DVCS IDs.
             disconnected = set()
             roots = set()
             emptyaddr = set()
+            emptyname = set()
+            badaddress = set()
             for _, event in self.selected(Commit):
                 if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
                     deletealls.add("on %s at %s" % (event.branch, event.id_me()))
@@ -7132,6 +7142,17 @@ well-formed as DVCS IDs.
                 for author in event.authors:
                     if not author.email:
                         emptyaddr.add(event.id_me())
+                if not event.committer.name:
+                    emptyname.add(event.id_me())
+                for author in event.authors:
+                    if not author.name:
+                        emptyname.add(event.id_me())
+                if "@" not in event.committer.email:
+                    badaddress.add(event.id_me())
+                for author in event.authors:
+                    if "@" not in author.email:
+                        badaddress.add(event.id_me())
+
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
             for item in disconnected:
@@ -7142,6 +7163,10 @@ well-formed as DVCS IDs.
                 parse.stdout.write("unknown shortname: %s\n" % item)
             for item in emptyaddr:
                 parse.stdout.write("empty address: %s\n" % item)
+            for item in emptyname:
+                parse.stdout.write("empty name: %s\n" % item)
+            for item in badaddress:
+                parse.stdout.write("email address missing @: %s\n" % item)
     #
     # Housekeeping
     #
