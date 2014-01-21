@@ -846,6 +846,8 @@ class Attribution(object):
                 pass
             # Attribution format is actually stricter than RFC822;
             # needs to have a following date in the right place.
+            if person.startswith("<"):
+                person = " " + person
             person = person.replace(" <", "|").replace("> ", "|")
             tokens = person.strip().split("|")
             # Recover from nasty malformations
@@ -855,7 +857,8 @@ class Attribution(object):
             try:
                 self.date = Date(tokens[2])
             except (ValueError, IndexError):
-                raise Fatal("malformed attribution date in %s" % operson)
+                raise Fatal("malformed attribution date '%s' in '%s'" \
+                            % (tokens[2], operson))
     def email_out(self, _modifiers, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
