@@ -7127,10 +7127,10 @@ well-formed as DVCS IDs.
                     for person in [event.committer] + event.authors:
                         if unmapped.match(person.email):
                             shortset.add(person.email)
-                if "<>" in event.committer:
+                if not event.committer.email:
                     emptyaddr.add(event.id_me())
                 for author in event.authors:
-                    if "<>" in author:
+                    if not author.email:
                         emptyaddr.add(event.id_me())
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
