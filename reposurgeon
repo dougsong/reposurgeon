@@ -8635,6 +8635,12 @@ For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that is a
 syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.
+
+When a tag is renamed, commit branch fields and any reset matching the
+tag are renamed with it to match. When a tag is deleted, matching
+branch fields are changed to match the branch of the unique descendent
+of the tagged commit, if there is one.  When a tag is moved, no branch
+fields are changed.
 """)
     def do_tag(self, line):
         "Move a tag to point to a specified commit, or rename it, or delete it."
@@ -8664,8 +8670,27 @@ tag). For a 'delete', no third argument is required.
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new tag name must be nonempty.")
+            for event in repo.events:
+                if isinstance(event, Tag) and event != tag and event.name == tag.name:
+                    raise Recoverable("tag name collision, not renaming.")
+            branchname = "refs/tags/" + tagname
+            for event in repo.events:
+                if isinstance(event, Commit) and event.branch == branchname:
+                    event.branch = "refs/tags/" + newname
+                elif isinstance(event, Reset) and event.ref == branchname:
+                    event.ref = "refs/tags/" + newname
             tag.name = newname
         elif verb == "delete":
+            branchname = "refs/heads/" + tagname
+            tip = None
+            for event in repo.events:
+                if isinstance(event, Commit) and event.branch == branchname:
+                    tip = event
+            if tip and len(tip.children()) == 1: 
+                successor = tip.children()[0].branch
+                for event in repo.events:
+                    if isinstance(event, Commit) and event.branch == branchname:
+                        event.branch = successor
             tag.forget()
             repo.events.remove(tag)
             repo.declare_sequence_mutation()
@@ -8685,6 +8710,12 @@ reset). For a 'delete', no third argument is required.
 
 An argument matches a reset's name if it is either the entire reference
 (refs/heads/FOO for some some value of FOO) or the basename (e.g. FOO).
+
+When a reset is renamed, commit branch fields matching the tag are
+renamed with it to match.  When a reset is deleted, matching branch
+fields are changed to match the branch of the unique descendent of the
+tip commit of the associated branch, if there is one.  When a reset is
+moved, no branch fields are changed.
 """)
     def do_reset(self, line):
         "Move a reset to point to a specified commit, or rename it, or delete it."
@@ -8718,8 +8749,23 @@ An argument matches a reset's name if it is either the entire reference
                 newname = "refs/heads/" + newname 
             if not newname:
                 raise Recoverable("new reset name must be nonempty.")
+            for event in repo.events:
+                if isinstance(event, Reset) and event != reset and event.name == reset.ref:
+                    raise Recoverable("reset name collision, not renaming.")
             reset.ref = newname
+            for event in repo.events:
+                if isinstance(event, Commit) and event.branch == resetname:
+                    event.branch = newname
         elif verb == "delete":
+            tip = None
+            for event in repo.events:
+                if isinstance(event, Commit) and event.branch == resetname:
+                    tip = event
+            if tip and len(tip.children()) == 1: 
+                successor = tip.children()[0].branch
+                for event in repo.events:
+                    if isinstance(event, Commit) and event.branch == resetname:
+                        event.branch = successor
             reset.forget()
             repo.events.remove(reset)
             repo.declare_sequence_mutation()

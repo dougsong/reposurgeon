@@ -1321,6 +1321,15 @@ existing tag name; second argument must be one of the verbs 'move',
 a 'rename', the third argument may be any token token that is a
 syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.</para>
+
+<para>When a tag is renamed, commit branch fields and any reset
+matching the tag are renamed with it to match. When a tag is deleted,
+matching branch fields are changed to match the branch of the unique
+descendent of the tagged commit, if there is one.  When a tag is
+moved, no branch fields are changed.</para>
+
+<para>Note: This command only works on actual tag objects, not
+lightweight tags simulated with branches.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1343,9 +1352,11 @@ reset). For a 'delete', no third argument is required.</para>
 reference (refs/heads/FOO for some some value of FOO) or the basename
 (e.g. FOO).</para>
 
-<para>Beware: the rename variant of this command only modifies the
-reset event, not any branch properties that happen to be identical to
-the branch.</para>  
+<para>When a reset is renamed, commit branch fields matching the tag are
+renamed with it to match.  When a reset is deleted, matching branch
+fields are changed to match the branch of the unique descendent of the
+tip commit of the associated branch, if there is one.  When a reset is
+moved, no branch fields are changed.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
