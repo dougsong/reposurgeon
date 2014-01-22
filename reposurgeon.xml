@@ -1348,6 +1348,10 @@ a 'rename', the third argument may be any token token that matches a
 syntactically valid reset name (but not the name of an existing
 reset). For a 'delete', no third argument is required.</para>
 
+<para>For either name, if it does not contain a <quote>/</quote> the
+prefix <quote>heads/</quote> is prepended. If it does not begin with
+<quote>refs/</quote>, <quote>refs/</quote> is prepended.</para>
+
 <para>An argument matches a reset's name if it is either the entire
 reference (refs/heads/FOO or refs/tags/FOO for some some value of FOO)
 or the basename (e.g. FOO), or a suffix of the form heads/FOO or tags/FOO.

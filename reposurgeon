@@ -8586,8 +8586,8 @@ For a 'rename', the third argument may be any token that is a syntactically
 valid branch name (but not the name of an existing branch). For a 'delete',
 no third argument is required.
 
-For either name, if it does not contain a '/' the prefix 'refs/heads'
-is prepended.
+For either name, if it does not contain a '/' the prefix 'heads/'
+is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 """)
     def do_branch(self, line):
         "Rename a branch or delete it."
@@ -8749,10 +8749,12 @@ moved, no branch fields are changed.
             reset.remember(repo, target=repo.events[target])
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
-            if newname.count("/") == 0:
-                newname = "refs/heads/" + newname 
             if not newname:
                 raise Recoverable("new reset name must be nonempty.")
+            if newname.count("/") == 0:
+                newname = "heads/" + newname
+            if not newname.startswith("refs/"):
+                newname = "refs/" + newname
             for event in repo.events:
                 if isinstance(event, Reset) and event != reset and event.name == reset.ref:
                     raise Recoverable("reset name collision, not renaming.")
