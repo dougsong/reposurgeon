@@ -8756,8 +8756,8 @@ moved, no branch fields are changed.
             if not newname.startswith("refs/"):
                 newname = "refs/" + newname
             for event in repo.events:
-                if isinstance(event, Reset) and event != reset and event.name == reset.ref:
-                    raise Recoverable("reset name collision, not renaming.")
+                if isinstance(event, Reset) and event != reset and event.ref == reset.ref:
+                    raise Recoverable("reset referencd collision, not renaming.")
             reset.ref = newname
             for event in repo.events:
                 if isinstance(event, Commit) and event.branch == resetname:
