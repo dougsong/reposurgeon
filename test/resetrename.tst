@@ -1,4 +1,4 @@
 ## Reset renaming test
 read <svnfodder.fi
-reset alternate rename foobar
+reset tags/alternate rename foobar
 write -

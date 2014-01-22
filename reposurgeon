@@ -8708,8 +8708,10 @@ a 'rename', the third argument may be any token that can be interpreted
 as a valid reset name (but not the name of an existing
 reset). For a 'delete', no third argument is required.
 
-An argument matches a reset's name if it is either the entire reference
-(refs/heads/FOO for some some value of FOO) or the basename (e.g. FOO).
+An argument matches a reset's name if it is either the entire
+reference (refs/heads/FOO or refs/tags/FOO for some some value of FOO)
+or the basename (e.g. FOO), or a suffix of the form heads/FOO or tags/FOO.
+An unqualified basename is assumed to refer to a head.
 
 When a reset is renamed, commit branch fields matching the tag are
 renamed with it to match.  When a reset is deleted, matching branch
@@ -8725,7 +8727,9 @@ moved, no branch fields are changed.
         repo = self.chosen()
         (resetname, line) = RepoSurgeon.pop_token(line)
         if resetname.count("/") == 0:
-            resetname = "refs/heads/" + resetname 
+            resetname = "heads/" + resetname
+        if not resetname.startswith("refs/"):
+            resetname = "refs/" + resetname
         for event in repo.events:
             if isinstance(event, Reset) and event.ref == resetname:
                 reset = event
