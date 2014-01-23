@@ -8771,14 +8771,19 @@ moved, no branch fields are changed.
             resetname = "heads/" + resetname
         if not resetname.startswith("refs/"):
             resetname = "refs/" + resetname
+        resets = []
         for event in repo.events:
             if isinstance(event, Reset) and event.ref == resetname:
-                reset = event
+                resets.append(event)
                 break
         else:
             raise Recoverable("no such reset as %s" % resetname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
+            if len(resets) == 1:
+                reset = resets[0]
+            else:
+                raise Recoverable("can't move multiple resets")
             self.set_selection_set(line)
             if len(self.selection) != 1:
                 raise Recoverable("reset move requires a singleton set.")
@@ -8799,7 +8804,8 @@ moved, no branch fields are changed.
             for event in repo.events:
                 if isinstance(event, Reset) and event != reset and event.ref == reset.ref:
                     raise Recoverable("reset reference collision, not renaming.")
-            reset.ref = newname
+            for reset in resets:
+                reset.ref = newname
             for event in repo.events:
                 if isinstance(event, Commit) and event.branch == resetname:
                     event.branch = newname
@@ -8813,8 +8819,9 @@ moved, no branch fields are changed.
                 for event in repo.events:
                     if isinstance(event, Commit) and event.branch == resetname:
                         event.branch = successor
-            reset.forget()
-            repo.events.remove(reset)
+            for reset in resets:
+                reset.forget()
+                repo.events.remove(reset)
             repo.declare_sequence_mutation()
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
