@@ -8680,7 +8680,7 @@ fields are changed and a warning is issued.
         # some ancestor commmits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
         tag = None
-        reset = None
+        resets = []
         commits = []
         fulltagname = Tag.branchname(tagname)
         for event in repo.events:
@@ -8690,7 +8690,7 @@ fields are changed and a warning is issued.
                 reset = event
             elif isinstance(event, Commit) and event.branch == fulltagname:
                 commits.append(event)
-        if not tag and not reset and not commits:
+        if not tag and not resets and not commits:
             raise Recoverable("no such tag as %s" % tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
@@ -8704,8 +8704,11 @@ fields are changed and a warning is issued.
             if tag:
                 tag.forget()
                 tag.remember(repo, target=repo.events[target])
-            if reset:
-                reset.committish = repo.events[target].mark
+            if resets:
+                if len(resets) == 1:
+                    resets[0].committish = repo.events[target].mark
+                else:
+                    complain("cannot move multiple tags.")
             if commits:
                 complain("warning - tag move does not modify branch fields")
         elif verb == "rename":
@@ -8727,7 +8730,7 @@ fields are changed and a warning is issued.
                 tag.forget()
                 repo.events.remove(tag)
                 repo.declare_sequence_mutation()
-            if reset:
+            for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
                 repo.declare_sequence_mutation()
