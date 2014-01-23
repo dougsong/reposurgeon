@@ -8687,7 +8687,7 @@ fields are changed and a warning is issued.
             if isinstance(event, Tag) and event.name == tagname:
                 tag = event
             elif isinstance(event, Reset) and event.ref == fulltagname:
-                reset = event
+                resets.append(event)
             elif isinstance(event, Commit) and event.branch == fulltagname:
                 commits.append(event)
         if not tag and not resets and not commits:
