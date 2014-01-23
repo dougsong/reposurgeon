@@ -8721,7 +8721,7 @@ fields are changed and a warning is issued.
                         raise Recoverable("tag name collision, not renaming.")
                 tag.name = newname
             fullnewname = Tag.branchname(newname)
-            if reset:
+            for reset in resets:
                 reset.ref = fullnewname
             for event in commits:
                 event.branch = fullnewname
