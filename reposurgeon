@@ -8775,7 +8775,7 @@ moved, no branch fields are changed.
         for event in repo.events:
             if isinstance(event, Reset) and event.ref == resetname:
                 resets.append(event)
-        else:
+        if not resets:
             raise Recoverable("no such reset as %s" % resetname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
