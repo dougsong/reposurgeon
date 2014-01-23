@@ -8818,8 +8818,8 @@ moved, no branch fields are changed.
                     raise Recoverable("reset reference collision, not renaming.")
             for reset in resets:
                 reset.ref = newname
-            for event in repo.events:
-                if isinstance(event, Commit) and event.branch == resetname:
+            for event in repo.iterevents(types=Commit):
+                if event.branch == resetname:
                     event.branch = newname
         elif verb == "delete":
             tip = next((c for _,c in repo.iterevents(types=Commit)
