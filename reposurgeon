@@ -1090,6 +1090,15 @@ class Tag(object):
             modified = True
             self.comment = newcomment
         return modified
+    @staticmethod
+    def branchname(tagname):
+        "Return the full branch reference corresponding to a tag."
+        fulltagname = tagname
+        if tagname.count("/") == 0:
+            fulltagname = "tags/" + fulltagname
+        if not fulltagname.startswith("refs/"):
+            fulltagname = "refs/" + fulltagname
+        return fulltagname
     def dump(self, vcs=None, options=None, realized=None):
         "Dump this tag in import-stream format."
         pacify_pylint(vcs)
@@ -8627,9 +8636,10 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 
     def help_tag(self):
         print("""
-Move, rename, or delete a tag.  First argument must be an
-existing tag name; second argument must be one of the verbs 'move',
-'rename', or 'delete'.
+
+Move, rename, or delete a tag.  First argument must be an existing
+name referring to a tag object, lightweight tag, or reset; second
+argument must be one of the verbs 'move', 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that is a
@@ -8640,7 +8650,7 @@ When a tag is renamed, commit branch fields and any reset matching the
 tag are renamed with it to match. When a tag is deleted, matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
-fields are changed.
+fields are changed and a warning is issued.
 """)
     def do_tag(self, line):
         "Move a tag to point to a specified commit, or rename it, or delete it."
@@ -8648,12 +8658,26 @@ fields are changed.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
+        # A tag name can erfere to one of the following things:
+        # (1) A tag object, by name
+        # (2) A reset object having a name in the tags/ namespace
+        # (3) The tip commit of a branch with branch fields 
+        # These things often occur in combination. Notably, git-fast-export
+        # generates for each tag object corresponding branch labels on
+        # some ancestor commmits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
+        tag = None
+        reset = None
+        commits = []
+        fulltagname = Tag.branchname(tagname)
         for event in repo.events:
             if isinstance(event, Tag) and event.name == tagname:
                 tag = event
-                break
-        else:
+            elif isinstance(event, Reset) and event.ref == fulltagname:
+                reset = event
+            elif isinstance(event, Commit) and event.branch == fulltagname:
+                commits.append(event)
+        if not tag and not reset and not commits:
             raise Recoverable("no such tag as %s" % tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
@@ -8664,36 +8688,38 @@ fields are changed.
                 target = self.selection.pop(0)
             if not isinstance(repo.events[target], Commit):
                 raise Recoverable("move target must be a commit.")
-            tag.forget()
-            tag.remember(repo, target=repo.events[target])
+            if tag:
+                tag.forget()
+                tag.remember(repo, target=repo.events[target])
+            if reset:
+                reset.committish = repo.events[target].mark
+            if commits:
+                complain("warning - tag move does not modify branch fields")
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new tag name must be nonempty.")
-            for event in repo.events:
-                if isinstance(event, Tag) and event != tag and event.name == tag.name:
-                    raise Recoverable("tag name collision, not renaming.")
-            branchname = "refs/tags/" + tagname
-            for event in repo.events:
-                if isinstance(event, Commit) and event.branch == branchname:
-                    event.branch = "refs/tags/" + newname
-                elif isinstance(event, Reset) and event.ref == branchname:
-                    event.ref = "refs/tags/" + newname
-            tag.name = newname
-        elif verb == "delete":
-            branchname = "refs/heads/" + tagname
-            tip = None
-            for event in repo.events:
-                if isinstance(event, Commit) and event.branch == branchname:
-                    tip = event
-            if tip and len(tip.children()) == 1: 
-                successor = tip.children()[0].branch
+            if tag:
                 for event in repo.events:
-                    if isinstance(event, Commit) and event.branch == branchname:
-                        event.branch = successor
-            tag.forget()
-            repo.events.remove(tag)
-            repo.declare_sequence_mutation()
+                    if isinstance(event, Tag) and event != tag and event.name == tag.name:
+                        raise Recoverable("tag name collision, not renaming.")
+                tag.name = newname
+            fullnewname = Tag.branchname(newname)
+            if reset:
+                reset.ref = fullnewname
+            for event in commits:
+                event.branch = fullnewname
+        elif verb == "delete":
+            if tag:
+                tag.forget()
+                repo.events.remove(tag)
+                repo.declare_sequence_mutation()
+            if reset:
+                reset.forget()
+            if commits and len(commits[-1].children()) == 1: 
+                successor = commits[-1].children()[0].branch
+                for event in commits:
+                    event.branch = successor
         else:
             raise Recoverable("unknown verb '%s' in tag command." % verb)
 
