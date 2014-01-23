@@ -1,4 +1,4 @@
-## Verify that deletion of early lightweight tags matches git behavior
+## Test for correct side effects of lightweight tag deletion.
 read <lighttag.fi
-reset tags/first-tag delete
+tag first-tag delete
 write -

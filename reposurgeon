@@ -8636,7 +8636,6 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 
     def help_tag(self):
         print("""
-
 Move, rename, or delete a tag.  First argument must be an existing
 name referring to a tag object, lightweight tag, or reset; second
 argument must be one of the verbs 'move', 'rename', or 'delete'.
@@ -8646,8 +8645,22 @@ a 'rename', the third argument may be any token that is a
 syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.
 
-When a tag is renamed, commit branch fields and any reset matching the
-tag are renamed with it to match. When a tag is deleted, matching
+The behavior of this command is complex because features which present
+as tags may be any of three things: (1) True tag objects, (2)
+lightweight tags, actually sequences of commits with a common
+branchname beginning with 'refs/tags' - in this case the tag is
+considered to point to the last commit in the sequence, (3) Reset
+objects.  These may occur in combination; in fact, stream exporters
+form sysyems with annotation tags commonly express each of these as a
+true tag object (1) pointing at the tip commit of a sequence (2) in
+which the basename of the common branch field is identical to the tag
+name.  An exporter that generates lightweight-tagged commit sequences (2)
+may or may not generate resets poinmting at their tip commits.
+
+This command tries to handle all combinations in a natural way by
+doing up to three operations on any true tag, commit sequence, and
+reset matching the source name. In a rename, all are renamed together.
+In a delete, any matching or reset is tag is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
@@ -8716,6 +8729,8 @@ fields are changed and a warning is issued.
                 repo.declare_sequence_mutation()
             if reset:
                 reset.forget()
+                repo.events.remove(reset)
+                repo.declare_sequence_mutation()
             if commits and len(commits[-1].children()) == 1: 
                 successor = commits[-1].children()[0].branch
                 for event in commits:
