@@ -1,10 +1,10 @@
 read <tag-comments.fi
 tags
-1	reset	refs/heads/master
-7	tag	root
-8	tag	emptycommit-5
-9	tag	no-comment
-10	tag	with-comment
+     2	reset	refs/heads/master
+     8	tag	root
+     9	tag	emptycommit-5
+    10	tag	no-comment
+    11	tag	with-comment
 names
 branch refs/heads/master
 tag    root

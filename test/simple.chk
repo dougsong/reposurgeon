@@ -60,11 +60,11 @@ index
    131 tag      :113    'annotated-sample'
 :76 tip
 tags
-1	reset	refs/tags/lightweight-sample
+     2	reset	refs/tags/lightweight-sample
     83	commit	refs/tags/lightweight-sample
    114	commit	refs/tags/annotated-sample
-129	reset	refs/heads/master
-130	tag	annotated-sample
+   130	reset	refs/heads/master
+   131	tag	annotated-sample
 history
 script simple.tst testing123
 ## Test of index, tip, tags, history, paths, expunge and checkout
