@@ -7164,12 +7164,6 @@ branch labels descending from the same commit.
                 for author in event.authors:
                     if not author.name:
                         emptyname.add(event.id_me())
-                if len(event.children()) > 1:
-                    childbranches = set()
-                    for child in event.children():
-                        childbranches.add(child.branch)
-                    if len(childbranches) < len(event.children()):
-                        parse.stdout.write("wrong parent links under %s\n" % event.mark)
 
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
@@ -8742,10 +8736,14 @@ fields are changed and a warning is issued.
                 reset.forget()
                 repo.events.remove(reset)
                 repo.declare_sequence_mutation()
-            if commits and len(commits[-1].children()) == 1: 
-                successor = commits[-1].children()[0].branch
-                for event in commits:
-                    event.branch = successor
+            if commits:
+                successors = {child.branch for child in commits[-1].children()}
+                if len(successors) == 1:
+                    successor = successors.pop()
+                    for event in commits:
+                        event.branch = successor
+                else:
+                    complain("couldn't determine a unique successor ")
         else:
             raise Recoverable("unknown verb '%s' in tag command." % verb)
 
@@ -9008,35 +9006,6 @@ map when the repo is written or rebuilt.
                                 summary = event.lister(None, ei, screenwidth())
                                 if summary:
                                     parse.stdout.write(summary + "\n")
-    def help_fsck(self):
-        print("""
-Fix automatically correctable malformations in a repository.
-""")
-    def do_fsck(self, line):
-        "Fix automatically correctable malformations in a repository."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = range(len(self.chosen()))
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            for _, event in self.selected(Commit):
-                if len(event.children()) > 1:
-                    childbranches = set()
-                    for child in event.children():
-                        childbranches.add(child.branch)
-                    if len(childbranches) == len(event.children()):
-                        continue
-                    parse.stdout.write("wrong parent links under %s\n" 
-                                       % event.mark)
-                    if len(childbranches) > 1:
-                        parse.stdout.write("multiple branches %s in %s child links; manual fixup will be required\n" % (childbranches, event.mark))
-                        continue
-                    if sum(len(child.children()) for child in event.children()) > 1:  
-                        parse.stdout.write("multiple grandchildren under %s; manual fixup will be required\n" % event.mark)
-                        continue
-                    parse.stdout.write("automatic fixup of %s children\n" % event.mark)
 
     #
     # Examining tree states
