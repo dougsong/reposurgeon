@@ -7120,7 +7120,8 @@ Look for DAG and metadata configurations that may indicate a
 problem. Presently checks for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existance of
 multiple roots, (5) committer and author IDs that don't look
-well-formed as DVCS IDs.
+well-formed as DVCS IDs, (6) multiple child links with identical
+branch labels descending from the same commit.
 """)
     def do_lint(self, line):
         "Look for lint in a repo."
@@ -7163,6 +7164,12 @@ well-formed as DVCS IDs.
                 for author in event.authors:
                     if not author.name:
                         emptyname.add(event.id_me())
+                if len(event.children()) > 1:
+                    childbranches = set()
+                    for child in event.children():
+                        childbranches.add(child.branch)
+                    if len(childbranches) < len(event.children()):
+                        parse.stdout.write("wrong parent links under %s\n" % event.mark)
 
             for item in deletealls:
                 parse.stdout.write("mid-branch delete: %s\n" % item)
