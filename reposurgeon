@@ -1403,8 +1403,10 @@ class Commit(object):
         "Enable do_tags() to report tag tip commits."
         if not self.branch or not "/tags/" in self.branch:
             return
-        if self.has_children() and self.children()[0].branch == self.branch:
-            return
+        if self.has_children():
+            successor_branches = {child.branch for child in self.children()}
+            if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
+                return
         return "%6d\tcommit\t%s" % (eventnum+1, self.branch) 
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
