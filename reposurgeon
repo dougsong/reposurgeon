@@ -1404,7 +1404,7 @@ class Commit(object):
         if not self.branch or not "/tags/" in self.branch:
             return
         if self.has_children():
-            successor_branches = {child.branch for child in self.children()}
+            successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
             if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
                 return
         return "%6d\tcommit\t%s" % (eventnum+1, self.branch) 
@@ -8739,13 +8739,13 @@ fields are changed and a warning is issued.
                 repo.events.remove(reset)
                 repo.declare_sequence_mutation()
             if commits:
-                successors = {child.branch for child in commits[-1].children()}
+                successors = {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
                 if len(successors) == 1:
                     successor = successors.pop()
                     for event in commits:
                         event.branch = successor
                 else:
-                    complain("couldn't determine a unique successor ")
+                    complain("couldn't determine a unique successor for %s at %s" % (tagname, commits[-1].id_me()))
         else:
             raise Recoverable("unknown verb '%s' in tag command." % verb)
 
