@@ -815,7 +815,6 @@ to support.</para>
 <variablelist>
 <varlistentry>
 <term><command>squash</command>
-        [<emphasis>selection-set</emphasis>]
         [<emphasis>policy...</emphasis>]
 </term>
 <listitem>
@@ -1343,6 +1342,15 @@ In a delete, any matching or reset is tag is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.</para>
+
+<para>Attempts to delete a lightweight tag may fail with the message
+<quote>cannot determine a unique successor</quote>.  When this
+happens, the tag is on a commit with multiple children that have
+different branch labels. There is a hole in the specification
+of git fast-import streams that leaves it uncertain how branch
+labels can be safely reassigned in this case; rather than do
+sometying risky, <command>reposurgeon</command> throws a recoverable
+error.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1566,22 +1574,22 @@ log message***" that modifies only a ChangeLog entry explaining the
 commit immediately previous to it. The following
 
 <programlisting>
-define empty squash &lt;{0}&gt; &amp; /empty log message/ --pushback
-do empty 2012-08-14T21:51:35Z
-do empty 2012-08-08T22:52:14Z
-do empty 2012-08-07T04:48:26Z
-do empty 2012-08-08T07:19:09Z
-do empty 2012-07-28T18:40:10Z
+define changelog &lt;{0}&gt; &amp; /empty log message/ squash --pushback
+do changelog 2012-08-14T21:51:35Z
+do changelog 2012-08-08T22:52:14Z
+do changelog 2012-08-07T04:48:26Z
+do changelog 2012-08-08T07:19:09Z
+do changelog 2012-07-28T18:40:10Z
 </programlisting>
 
 is equivalent to the more verbose
 
 <programlisting>
-squash &lt;2012-08-14T21:51:35Z&gt; &amp; /empty log message/ --pushback
-squash &lt;2012-08-08T22:52:14Z&gt; &amp; /empty log message/ --pushback
-squash &lt;2012-08-07T04:48:26Z&gt; &amp; /empty log message/ --pushback
-squash &lt;2012-08-08T07:19:09Z&gt; &amp; /empty log message/ --pushback
-squash &lt;2012-07-28T18:40:10Z&gt; &amp; /empty log message/ --pushback
+&lt;2012-08-14T21:51:35Z&gt; &amp; /empty log message/ squash --pushback
+&lt;2012-08-08T22:52:14Z&gt; &amp; /empty log message/ squash --pushback
+&lt;2012-08-07T04:48:26Z&gt; &amp; /empty log message/ squash --pushback
+&lt;2012-08-08T07:19:09Z&gt; &amp; /empty log message/ squash --pushback
+&lt;2012-07-28T18:40:10Z&gt; &amp; /empty log message/ squash --pushback
 </programlisting>
 
 but you are less likely to make difficult-to-notice errors typing the
