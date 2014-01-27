@@ -8783,14 +8783,12 @@ moved, no branch fields are changed.
             return
         repo = self.chosen()
         (resetname, line) = RepoSurgeon.pop_token(line)
-        if resetname.count("/") == 0:
+        if not "/" in resetname:
             resetname = "heads/" + resetname
         if not resetname.startswith("refs/"):
             resetname = "refs/" + resetname
-        resets = []
-        for event in repo.events:
-            if isinstance(event, Reset) and event.ref == resetname:
-                resets.append(event)
+        resets = [e for _,e in repo.iterevents(types=Reset)
+                      if e.ref == resetname]
         if not resets:
             raise Recoverable("no such reset as %s" % resetname)
         (verb, line) = RepoSurgeon.pop_token(line)
