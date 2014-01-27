@@ -7509,8 +7509,7 @@ for graphviz.
                                        % (event.name, event.committish[1:], ))
                     parse.stdout.write('\t{rank=same; "%s"; "%s"}\n' \
                                        % (event.name, event.committish[1:], ))
-            for e in self.selection:
-                event = self.chosen().events[e]
+            for _, event in self.selected():
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split('\n')[0][:42])
                     cid = event.mark
