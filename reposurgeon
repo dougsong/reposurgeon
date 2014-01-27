@@ -8813,7 +8813,9 @@ moved, no branch fields are changed.
                 newname = "heads/" + newname
             if not newname.startswith("refs/"):
                 newname = "refs/" + newname
-            if any(e.ref == newname for _,e in repo.iterevents(types=Reset)):
+            if any(r.ref == newname for _,r in repo.iterevents(types=Reset)) \
+                    or any(c.branch == newname
+                           for _,c in repo.iterevents(types=Commit)):
                 raise Recoverable("reset reference collision, not renaming.")
             for reset in resets:
                 reset.ref = newname
