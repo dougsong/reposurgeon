@@ -8704,18 +8704,17 @@ fields are changed and a warning is issued.
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
             self.set_selection_set(line)
-            if len(self.selection) != 1:
-                raise Recoverable("tag move requires a singleton set.")
-            else:
-                target = self.selection.pop(0)
-            if not isinstance(repo.events[target], Commit):
-                raise Recoverable("move target must be a commit.")
+            try:
+                if len(self.selection) != 1: raise ValueError()
+                target, = self.selected(Commit)
+            except (TypeError, ValueError):
+                raise Recoverable("tag move requires a singleton commit set.")
             if tag:
                 tag.forget()
-                tag.remember(repo, target=repo.events[target])
+                tag.remember(repo, target=target)
             if resets:
                 if len(resets) == 1:
-                    resets[0].committish = repo.events[target].mark
+                    resets[0].committish = target.mark
                 else:
                     complain("cannot move multiple tags.")
             if commits:
@@ -8798,14 +8797,14 @@ moved, no branch fields are changed.
             else:
                 raise Recoverable("can't move multiple resets")
             self.set_selection_set(line)
-            if len(self.selection) != 1:
-                raise Recoverable("reset move requires a singleton set.")
-            else:
-                target = self.selection.pop(0)
-            if not isinstance(repo.events[target], Commit):
-                raise Recoverable("move target must be a commit.")
             reset.forget()
-            reset.remember(repo, target=repo.events[target])
+            try:
+                if len(self.selection) != 1: raise ValueError()
+                target, = self.selected(Commit)
+            except (TypeError, ValueError):
+                raise Recoverable("reset move requires a singleton commit set.")
+            reset.forget()
+            reset.remember(repo, target=target)
         elif verb == "rename":
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
@@ -8814,8 +8813,8 @@ moved, no branch fields are changed.
                 newname = "heads/" + newname
             if not newname.startswith("refs/"):
                 newname = "refs/" + newname
-            for event in repo.events:
-                if isinstance(event, Reset) and event != reset and event.ref == reset.ref:
+            for event in repo.iterevents(types=Reset):
+                if event not in resets and event.ref == resets[0].ref:
                     raise Recoverable("reset reference collision, not renaming.")
             for reset in resets:
                 reset.ref = newname
@@ -8829,8 +8828,8 @@ moved, no branch fields are changed.
                     tip = event
             if tip and len(tip.children()) == 1: 
                 successor = tip.children()[0].branch
-                for event in repo.events:
-                    if isinstance(event, Commit) and event.branch == resetname:
+                for event in repo.iterevents(types=Commit):
+                    if event.branch == resetname:
                         event.branch = successor
             for reset in resets:
                 reset.forget()
