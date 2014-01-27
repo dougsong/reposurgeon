@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.1 2014-01-27
      The filter command now has a --replace modifier to avoid regex overhead.
      Associated branches are renamed when a reset or tag is moved or deleted.
      Bug fix for off-by-one error in tags reporting.
