@@ -4344,6 +4344,9 @@ class Repository:
                 if hasattr(event, "mark"):
                     self._mark_to_object[event.mark] = event
         return self._mark_to_object.get(mark)
+    def all(self):
+        "Return a set that selects the entire repository."
+        return range(len(self.events))
     def invalidate_object_map(self):
         "Force an object-map rebuild on the next lookup."
         self._mark_to_object = {}
@@ -6186,7 +6189,7 @@ into sections of the input stream instead).
             self.line = "<" + self.line + ">"
         except Recoverable:
             pass
-        self.selection = list(self.eval_expression(set(range(len(self.chosen().events)))))
+        self.selection = list(self.eval_expression(set(self.chosen().all())))
         if self.line == line:
             self.selection = None
         else:
@@ -6680,7 +6683,7 @@ into sections of the input stream instead).
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
-                self.selection = range(len(self.chosen()))
+                self.selection = self.chosen().all()
             for i, event in self.selected():
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
@@ -7100,7 +7103,7 @@ unwieldy.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         sizes = {}
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for _, event in self.selected():
@@ -7142,7 +7145,7 @@ branch labels descending from the same commit.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set()
@@ -7412,7 +7415,7 @@ selected repository type cannot digest them.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if line:
             line = os.path.expanduser(line)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
@@ -7440,7 +7443,7 @@ is an identifying header before each event dump.  Supports > redirection.
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
-                self.selection = range(len(self.chosen()))
+                self.selection = self.chosen().all()
             for ei, event in self.selected():
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
@@ -7508,7 +7511,7 @@ for graphviz.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
             for _, event in self.selected():
@@ -7953,7 +7956,7 @@ With  the --debug option, show messages about mismatches.
             complain("no repo is loaded")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line) as parse:
             timefuzz = 90
             if parse.line:
@@ -8057,7 +8060,7 @@ an offset literal of +0 or -0.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if not line:
             complain("a signed time offset argument is required.")
             return
@@ -8200,7 +8203,7 @@ file path matches.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         self.expunge(self.selection, line.split())
 
     def help_split(self):
@@ -8404,7 +8407,7 @@ default selection set is all commits.
             return
         repo = self.chosen()
         if self.selection is None:
-            self.selection = range(len(repo))
+            self.selection = repo.all()
         (sourcepath, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "rename":
@@ -8434,7 +8437,7 @@ first directory component from every path.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if not line.startswith(("sub", "sup")):
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 allpaths = set()
@@ -8472,7 +8475,7 @@ This command supports > redirection.
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             filter_func = None
             line = parse.line.strip()
@@ -8535,7 +8538,7 @@ commits that have no fileops.
         if repo is None:
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line) as parse:
             if parse.line:
                 raise Recoverable("too many arguments for tagify.")
@@ -8907,7 +8910,7 @@ part to the right of an equals sign will need editing.
             complain("no repo has been chosen.")
             return
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if line.startswith("write"):
             line = line[5:].strip()
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
@@ -8975,7 +8978,7 @@ map when the repo is written or rebuilt.
         repo = self.chosen()
         repo.parse_dollar_cookies()
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if "lift" in line:
             hits = 0
             def substitute(getter, matchobj):
@@ -9057,7 +9060,7 @@ set must resolve to a singleton commit.
             return
         repo = self.chosen()
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         if not line:
             raise Recoverable("no target directory specified.")
         if len(self.selection) == 1:
@@ -9080,7 +9083,7 @@ must resolve to exactly two commits.
             return
         repo = self.chosen()
         if self.selection is None:
-            self.selection = range(len(self.chosen()))
+            self.selection = self.chosen().all()
         bounds = tuple(repo.events[i] for i in sorted(self.selection))
         if len(self.selection) != 2 or \
                not isinstance(bounds[0], Commit) or \
