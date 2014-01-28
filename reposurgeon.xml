@@ -1227,6 +1227,17 @@ list.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>path</command>
+	[<emphasis>source</emphasis>]
+	[<command>rename</command>]
+	[<emphasis>target</emphasis>]
+</term>
+<listitem>
+<para>Rename a path in every fileop of every selected commit.  The
+default selection set is all commits.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>paths</command>
 	[<command>{sub|sup}</command>]
 	[<command>dirname</command>]

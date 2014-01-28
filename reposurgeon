@@ -8388,6 +8388,33 @@ source branch are removed.
                 del repo.events[source_reset]
             repo.declare_sequence_mutation()
 
+    def help_path(self):
+        print("""
+Rename a path in every fileop of every selected commit.  The
+default selection set is all commits. 
+""")
+    def do_path(self, line):
+        "Rename paths in the history."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        if self.selection is None:
+            self.selection = range(len(repo))
+        (sourcepath, line) = RepoSurgeon.pop_token(line)
+        (verb, line) = RepoSurgeon.pop_token(line)
+        if verb == "rename":
+            (targetpath, line) = RepoSurgeon.pop_token(line)
+            if not targetpath:
+                raise Recoverable("no target specified in rename")
+            for _,commit in repo.iterevents(types=Commit):
+                for fileop in commit.fileops:
+                    for attr in ("path", "source", "target"):
+                        if hasattr(fileop, attr) and getattr(fileop, attr) == sourcepath:
+                            setattr(fileop, attr, targetpath)
+        else:
+            raise Recoverable("unknown verb '%s' in path command." % verb)
+
     def help_paths(self):
         print("""
 Without a modifier, list all paths touched by fileops in
