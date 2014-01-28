@@ -6676,9 +6676,11 @@ into sections of the input stream instead).
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        if self.selection == None:
-            self.selection = [n for n,o in enumerate(self.chosen()) if hasattr(o, method)]
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            if self.selection is None and parse.line.strip():
+                parse.line = self.set_selection_set(parse.line)
+            elif self.selection is None:
+                self.selection = range(len(self.chosen()))
             for i, event in self.selected():
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
@@ -7434,9 +7436,11 @@ is an identifying header before each event dump.  Supports > redirection.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        if self.selection is None:
-            self.selection = range(len(self.chosen()))
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            if self.selection is None and parse.line.strip():
+                parse.line = self.set_selection_set(parse.line)
+            elif self.selection is None:
+                self.selection = range(len(self.chosen()))
             for ei, event in self.selected():
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]

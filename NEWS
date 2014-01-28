@@ -2,6 +2,7 @@
 
 Repository head:
      New path rename command.
+     List and inspect now take either a leading or following selection.
 
 3.1 2014-01-27
      The filter command now has a --replace modifier to avoid regex overhead.
