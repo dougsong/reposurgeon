@@ -7806,9 +7806,8 @@ not interpreted as regular expressions. (This is slighly faster).
                     firstspace = filtercmd.find(' ')
                     if firstspace == -1:
                         raise Recoverable("missing filter specification")
-                    parts = filtercmd[firstspace:].lstrip().split("/")
-                    #filtercmd = filtercmd[firstspace:].lstrip()
-                    #parts = filtercmd.split(filtercmd[0])
+                    stripped = filtercmd[firstspace:].lstrip()
+                    parts = stripped.split(stripped[0])
                     subflags = parts[-1]
                     if len(parts) != 4:
                         raise Recoverable("malformed filter specification")
