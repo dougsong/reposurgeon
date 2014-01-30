@@ -8398,7 +8398,9 @@ source branch are removed.
     def help_path(self):
         print("""
 Rename a path in every fileop of every selected commit.  The
-default selection set is all commits. 
+default selection set is all commits. The first argument is interpreted as a 
+Python regular expression to match against paths; the second may contain
+back-reference syntax.
 """)
     def do_path(self, line):
         "Rename paths in the history."
@@ -8408,17 +8410,20 @@ default selection set is all commits.
         repo = self.chosen()
         if self.selection is None:
             self.selection = repo.all()
-        (sourcepath, line) = RepoSurgeon.pop_token(line)
+        (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "rename":
-            (targetpath, line) = RepoSurgeon.pop_token(line)
-            if not targetpath:
+            (target_re, line) = RepoSurgeon.pop_token(line)
+            if not target_re:
                 raise Recoverable("no target specified in rename")
             for _,commit in repo.iterevents(types=Commit):
                 for fileop in commit.fileops:
                     for attr in ("path", "source", "target"):
-                        if hasattr(fileop, attr) and getattr(fileop, attr) == sourcepath:
-                            setattr(fileop, attr, targetpath)
+                        if hasattr(fileop, attr):
+                            fn = getattr(fileop, attr)
+                            if fn and re.search(source_re, fn):
+                                newpath = re.sub(source_re, target_re, fn)
+                                setattr(fileop, attr, newpath)
         else:
             raise Recoverable("unknown verb '%s' in path command." % verb)
 

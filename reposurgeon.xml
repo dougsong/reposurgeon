@@ -1234,7 +1234,9 @@ list.</para>
 </term>
 <listitem>
 <para>Rename a path in every fileop of every selected commit.  The
-default selection set is all commits.</para>
+default selection set is all commits. The first argument is interpreted as a 
+Python regular expression to match against paths; the second may contain
+back-reference syntax.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
