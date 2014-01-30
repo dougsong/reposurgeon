@@ -1630,6 +1630,9 @@ class Commit(object):
             for fileop in self.fileops:
                 self._pathset |= fileop.paths()
         return self._pathset
+    def visible(self, _path):
+        "Is the specified path visible (modified, not deleted)in the ancestors?"
+        return False
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         self.repo._has_manifests = True
@@ -8415,20 +8418,24 @@ back-reference syntax.
             self.selection = repo.all()
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
-        if verb == "rename":
-            (target_re, line) = RepoSurgeon.pop_token(line)
-            if not target_re:
-                raise Recoverable("no target specified in rename")
-            for _,commit in repo.iterevents(types=Commit):
-                for fileop in commit.fileops:
-                    for attr in ("path", "source", "target"):
-                        if hasattr(fileop, attr):
-                            oldpath = getattr(fileop, attr)
-                            if oldpath and re.search(source_re, oldpath):
-                                newpath = re.sub(source_re, target_re, oldpath)
-                                setattr(fileop, attr, newpath)
-        else:
-            raise Recoverable("unknown verb '%s' in path command." % verb)
+        with RepoSurgeon.LineParse(line) as parse:
+            if verb == "rename":
+                (target_re, _) = RepoSurgeon.pop_token(parse.line)
+                if not target_re:
+                    raise Recoverable("no target specified in rename")
+                for _,commit in repo.iterevents(types=Commit):
+                    for fileop in commit.fileops:
+                        for attr in ("path", "source", "target"):
+                            if hasattr(fileop, attr):
+                                oldpath = getattr(fileop, attr)
+                                if oldpath and re.search(source_re, oldpath):
+                                    newpath = re.sub(source_re, target_re, oldpath)
+                                    if commit.visible(oldpath):
+                                        complain("rename target %s exists" % oldpath)
+                                    else:
+                                        setattr(fileop, attr, newpath)
+            else:
+                raise Recoverable("unknown verb '%s' in path command." % verb)
 
     def help_paths(self):
         print("""
