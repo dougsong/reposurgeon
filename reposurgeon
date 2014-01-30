@@ -8423,9 +8423,9 @@ back-reference syntax.
                 for fileop in commit.fileops:
                     for attr in ("path", "source", "target"):
                         if hasattr(fileop, attr):
-                            fn = getattr(fileop, attr)
-                            if fn and re.search(source_re, fn):
-                                newpath = re.sub(source_re, target_re, fn)
+                            oldpath = getattr(fileop, attr)
+                            if oldpath and re.search(source_re, oldpath):
+                                newpath = re.sub(source_re, target_re, oldpath)
                                 setattr(fileop, attr, newpath)
         else:
             raise Recoverable("unknown verb '%s' in path command." % verb)
