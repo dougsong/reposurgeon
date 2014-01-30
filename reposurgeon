@@ -7758,7 +7758,9 @@ regular expression substitution written as /from/to/ with 'from' and
 that applied to modify the content. Ordinarily only the first such
 substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal before the g gives the maximum number
-of substitutions to perform.
+of substitutions to perform. Actually, any non-space character will 
+work as a delimiter in place of the /; this makes it easier to use
+/ in patterns.
 
 With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slighly faster).
@@ -7804,7 +7806,8 @@ not interpreted as regular expressions. (This is slighly faster).
                     firstspace = filtercmd.find(' ')
                     if firstspace == -1:
                         raise Recoverable("missing filter specification")
-                    parts = filtercmd[firstspace:].lstrip().split("/")
+                    filtercmd = filtercmd[firstspace:].lstrip()
+                    parts = filtercmd.split(filtercmd[0])
                     subflags = parts[-1]
                     if len(parts) != 4:
                         raise Recoverable("malformed filter specification")
