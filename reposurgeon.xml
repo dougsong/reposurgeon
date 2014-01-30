@@ -1154,7 +1154,7 @@ to being passed as arguments to the standard re.sub() function and
 it applied to modify the content. Ordinarily only the first such
 substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal before the g gives the maximum number
-of substitutions to perform. Actually, any non-space character will 
+of substitutions to perform. Actually, any non-space character will
 work as a delimiter in place of the /; this makes it easier to use
 / in patterns.</para>
 
