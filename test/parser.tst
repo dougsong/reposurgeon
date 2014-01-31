@@ -15,6 +15,7 @@ read <simple.fi
 24..97 & (=C | 20..40) resolve
 3,:15 resolve
 /master/b resolve
+/operating theater/B resolve
 <lightweight-sample> resolve
 /annotated-sample/b resolve
 <annotated-sample> resolve

@@ -417,15 +417,19 @@ letters after the trailing slash.  These are as follows:</para>
         <entry align='center'>p</entry>
         <entry align='center'>text in passthrough</entry>
       </row>
-     <row>
+      <row>
         <entry align='center'>t</entry>
         <entry align='center'>tagger in tag</entry>
       </row>
-     <row>
+      <row>
         <entry align='center'>n</entry>
         <entry align='center'>name of tag</entry>
       </row>
-       </tbody>
+      <row>
+        <entry align='center'>B</entry>
+        <entry align='center'>blob content</entry>
+      </row>
+    </tbody>
   </tgroup>
 </informaltable>
 

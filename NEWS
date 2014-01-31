@@ -3,6 +3,7 @@
 Repository head:
      New path rename command.
      List and inspect now take either a leading or following selection.
+     Text search selections can now have a B suffix to search blobs.
 
 3.1 2014-01-27
      The filter command now has a --replace modifier to avoid regex overhead.
