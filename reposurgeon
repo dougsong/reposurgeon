@@ -6566,7 +6566,7 @@ into sections of the input stream instead).
                                 "n":"name"		# tag
                                 }
             search_in = searchable_attrs.values()
-            if self.line[0].isalpha():
+            if self.line and self.line[0].isalpha():
                 search_in = []
                 while self.line[0] in searchable_attrs.iterkeys():
                     search_in.append(searchable_attrs[self.line[0]])
