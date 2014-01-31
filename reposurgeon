@@ -8038,14 +8038,25 @@ change in a future release.
         event = self.chosen().events[self.selection[0]]
         if not isinstance(event, Commit):
             complain("from selection must be a commit")
-        fields = line.split()
+        (opindex, line) = RepoSurgeon.pop_token(line)
         try:
-            ind = int(fields[1]) - 1
+            ind = int(opindex) - 1
         except (ValueError, IndexError):
             complain("ill-formed or missing fileop index")
             return
+        target = None
+        if line:
+            (verb, line)  = RepoSurgeon.pop_token(line)
+            # This feature is experimental and not documented
+            if verb == 'to':
+                self.set_selection_set(line)
+                if len(self.selection) != 1:
+                    raise Recoverable("remove to requires a singleton selection")
+                target = self.selection[0]
         try:
-            event.fileops.pop(ind)
+            removed = event.fileops.pop(ind)
+            if target:
+                self.chosen().events[target].fileops.append(removed)
         except IndexError:
             complain("out-of-range fileop index")
             return
