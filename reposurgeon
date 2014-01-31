@@ -1630,9 +1630,23 @@ class Commit(object):
             for fileop in self.fileops:
                 self._pathset |= fileop.paths()
         return self._pathset
-    def visible(self, _path):
-        "Is the specified path visible (modified, not deleted)in the ancestors?"
-        return False
+    def visible(self, path):
+        "Is the specified path modified and not deleted in the ancestors?"
+        ancestor = self
+        while True:
+            parents = ancestor.parents()
+            if not parents:
+                break
+            else:
+                ancestor = parents[0]
+                for fileop in ancestor.fileops:
+                    if fileop.op == "D" and fileop.path == path:
+                        break
+                    elif fileop.op == "M" and fileop.path == path:
+                        return ancestor
+                    elif fileop.op in ("R", "C") and fileop.target == path:
+                        return ancestor
+        return None
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
         self.repo._has_manifests = True
@@ -8423,6 +8437,7 @@ back-reference syntax.
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
                 if not target_re:
                     raise Recoverable("no target specified in rename")
+                actions = []
                 for _,commit in repo.iterevents(types=Commit):
                     for fileop in commit.fileops:
                         for attr in ("path", "source", "target"):
@@ -8430,10 +8445,13 @@ back-reference syntax.
                                 oldpath = getattr(fileop, attr)
                                 if oldpath and re.search(source_re, oldpath):
                                     newpath = re.sub(source_re, target_re, oldpath)
-                                    if commit.visible(oldpath):
-                                        complain("rename target %s exists" % oldpath)
+                                    if commit.visible(newpath):
+                                        raise Recoverable("rename target %s exists" % newpath)
                                     else:
-                                        setattr(fileop, attr, newpath)
+                                        actions.append((fileop, attr, newpath))
+                # All checks must pass before any renames
+                for (fileop, attr, newpath) in actions:
+                    setattr(fileop, attr, newpath)
             else:
                 raise Recoverable("unknown verb '%s' in path command." % verb)
 
