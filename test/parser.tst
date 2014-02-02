@@ -39,6 +39,7 @@ read <simple.fi
 [/r/ca] resolve
 <2010-10-27T18:43:32Z> resolve
 <2010-10-27T12:07:32Z!esr@thyrsus.com> resolve
+<2010-10-27> resolve
 # Test here-doc syntax
 echo 0
 authors read <<EOF

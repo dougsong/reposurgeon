@@ -6468,30 +6468,36 @@ into sections of the input stream instead).
                             ref = ref[:-len(m.group(0))]
                         except ValueError:
                             raise Recoverable("ill-formed date")
-                    date = None
                     bang = ref.find('!')
                     date_end = len(ref)
                     if bang >= 0:
                         date_end = min(bang, date_end)
+                    date = ref[:date_end]
+                    datematch = None
                     try:
-                        date = Date(ref[:date_end])
+                        date = Date(date)
+                        datematch = lambda t: t == date
                     except Fatal:
-                        date = None
+                        try:
+                            date = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+                            datematch = lambda t: t.timestamp >= date and t.timestamp < date + 24*60*60
+                        except ValueError:
+                            datematch = None
                     email_id = None
                     if date is not None and bang > -1:
                         email_id = ref[bang+1:]
                     matches = []
-                    if date:
+                    if datematch:
                         for (ei, event) in enumerate(self.chosen().events):
                             if hasattr(event, 'committer'):
-                                if event.committer.date != date:
+                                if not datematch(event.committer.date):
                                     continue
                                 if email_id and event.committer.email != email_id:
                                     continue
                                 else:
                                     matches.append(ei)
                             elif hasattr(event, 'tagger'):
-                                if event.tagger.date != date:
+                                if not datematch(event.tagger.date):
                                     continue
                                 elif email_id and event.tagger.email!=email_id:
                                     continue
@@ -6782,8 +6788,10 @@ First, these ways of constructing singleton sets:
 
 You can select commits and tags by date, or by date and committer:
 
-<2011-05-25T07:30:37Z>        all commits and tags with this date
-<2011-05-25T07:30:37Z!esr>    all with this date and committer
+<2011-05-25>                  all commits and tags with this date
+<2011-05-25!esr>              all with this date and committer
+<2011-05-25T07:30:37Z>        all commits and tags with this date and time
+<2011-05-25T07:30:37Z!esr>    all with this date and time and committer
 <2011-05-25T07:30:37Z!esr#2>  event #2 (1-origin) in the above set
 
 More ways to construct event sets:
