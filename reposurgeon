@@ -6569,7 +6569,7 @@ into sections of the input stream instead).
             check_blobs = False
             if self.line and self.line[0].isalpha():
                 search_in = []
-                while self.line[0] in searchable_attrs.iterkeys() or self.line[0] == 'B':
+                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] == 'B'):
                     if self.line[0] == 'B':
                         check_blobs = True
                     else:
