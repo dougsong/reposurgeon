@@ -1073,10 +1073,16 @@ of file operations in the original commit.</para>
 </term>
 <listitem>
 <para>From a specified commit, remove a specified fileop. The selection set
-must be a singleton and the index a 1-origin numeric index.  Note that
-this command does not attempt to scavenge blobs even if the deleted
-fileop might be the only reference to them. This behavior may change
-in a future release.</para>
+must be a singleton and the index a 1-origin numeric index - or, if
+it does not match a path, a 1-origin numeric index.</para>
+
+<para>If the <quote>to</quote> clause is present, the removed op is
+appended to the commit specified by the following singleton selection
+set.</para>
+
+<para>Note that this command does not attempt to scavenge blobs even
+if the deleted fileop might be the only reference to them. This
+behavior may change in a future release.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -8024,9 +8024,14 @@ With  the --debug option, show messages about mismatches.
         print("""
 From a specified commit, remove a specified fileop. The syntax is:
 
-     remove OP
+     remove OP [to COMMIT]
 
-The selection set must be a singleton and the OP a 1-origin numeric index.
+The selection set must be a singleton and the OP a file path - or, if
+it does not match a path, a 1-origin numeric index.
+
+If the to clause is present, the removed op is appended to the
+commit specified by the following singleton selection set.
+
 Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
 change in a future release.
@@ -8045,11 +8050,19 @@ change in a future release.
         if not isinstance(event, Commit):
             complain("from selection must be a commit")
         (opindex, line) = RepoSurgeon.pop_token(line)
-        try:
-            ind = int(opindex) - 1
-        except (ValueError, IndexError):
-            complain("ill-formed or missing fileop index")
-            return
+        for (ind, op) in enumerate(event.fileops):
+            if hasattr(op, "path") and getattr(op, "path") == opindex:
+                break
+            if hasattr(op, "source") and getattr(op, "source") == opindex:
+                break
+            if hasattr(op, "target") and getattr(op, "target") == opindex:
+                break
+        else:
+            try:
+                ind = int(opindex) - 1
+            except (ValueError, IndexError):
+                complain("invalid or missing fileop specification %s" % opindex)
+                return
         target = None
         if line:
             (verb, line)  = RepoSurgeon.pop_token(line)
@@ -8064,7 +8077,7 @@ change in a future release.
             if target:
                 self.chosen().events[target].fileops.append(removed)
         except IndexError:
-            complain("out-of-range fileop index")
+            complain("out-of-range fileop index %s" % ind)
             return
 
     def help_renumber(self):
