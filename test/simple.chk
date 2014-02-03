@@ -193,11 +193,6 @@ paths sub foo
 foo/theory.txt
 paths sup
 theory.txt
-# Test the macro facility
-define fubar list
-:50 do fubar
-list
-undefine fubar
 # Stream the repo
 write -
 blob

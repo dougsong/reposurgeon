@@ -6,6 +6,7 @@ Repository head:
      Text search selections can now have a B suffix to search blobs.
      Now possible to transplant fileops between commits using remove .. to.
      A date of the form <YYYY-mm-dd> selects all commits and tags that day.
+     Macros can now be multiline.
 
 3.1 2014-01-27
      The filter command now has a --replace modifier to avoid regex overhead.

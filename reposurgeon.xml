@@ -1567,9 +1567,13 @@ form of macroexpansion.</para>
           <emphasis>body</emphasis>
 </term>
 <listitem>
+
 <para>Define a macro.  The first whitespace-separated token is the
-name; the remainder of the line is the body.  A later 'do' call can
-invoke this macro.</para>
+name; the remainder of the line is the body, unless it is
+<quote>{</quote>, which begins a multi-line macro terminated by
+a line beginning with <quote>}</quote>.</para>  
+
+<para>A later <quote>do</quote> call can invoke this macro.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
