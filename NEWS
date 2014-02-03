@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     Set negation in selections with ~.
+
 3.2: 2014-02-03 
      New path rename command.
      List and inspect now take either a leading or following selection.
