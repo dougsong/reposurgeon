@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.2: 2014-02-03 
      New path rename command.
      List and inspect now take either a leading or following selection.
      Text search selections can now have a B suffix to search blobs.
@@ -8,7 +8,7 @@ Repository head:
      A date of the form <YYYY-mm-dd> selects all commits and tags that day.
      Macros can now be multiline.
 
-3.1 2014-01-27
+3.1: 2014-01-27
      The filter command now has a --replace modifier to avoid regex overhead.
      Associated branches are renamed when a reset or tag is moved or deleted.
      Bug fix for off-by-one error in tags reporting.
