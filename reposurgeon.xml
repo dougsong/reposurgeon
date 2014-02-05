@@ -166,6 +166,9 @@ edit                   ;; edit all editable objects
 :46 tip                ;; Display the branch tip that owns commit :46.
 </programlisting>
 
+
+<refsect2 id='selections'><title>SELECTION SYNTAX</title>
+
 <para>The selection-set specification syntax is an expression-oriented 
 minilanguage.  The most basic term in this language is a 
 <firstterm>location</firstterm>. The following sorts of primitive locations
@@ -186,9 +189,10 @@ of the semantics of marks.</para></listitem>
 <varlistentry>
 <term><firstterm>tag and branch names</firstterm></term>
 <listitem>
-<para>The basename of a branch refers to its tip commit.  The name of
-a tag is equivalent to its mark, and through that to a commit. Tag and
-branch locations are bracketed with &lt; &gt; (angle brackets) to
+<para>The basename of a branch (including branches in the refs/tags
+namespace) refers to its tip commit.  The name of a tag is equivalent
+to its mark (that of the tag itself, mot the commit it refers to). Tag
+and branch locations are bracketed with &lt; &gt; (angle brackets) to
 distinguish them from command keywords.</para>
 </listitem>
 </varlistentry>
@@ -376,7 +380,7 @@ suffix separated  by '#'. Thus "&lt;2000-02-06T09:35:10Z&gt;" can
 match multiple commits, but "&lt;2000-02-06T09:35:10Z#2&gt;" matches
 only the second in the set.</para>
 
-<para>As a aspecial case, an entire selection that matches the format of a
+<para>As a special case, an entire selection that matches the format of a
 date <emphasis>without</emphasis> the surrounding reference brackets
 is accepted and selects as though it had the brackets</para>
 </listitem>
@@ -541,6 +545,7 @@ to extend the neighborhood depth.</para>
 <para>Do set negation with prefix ~; it has higher precedence than
 &amp; and | but lower than ?</para>
 
+</refsect2>
 <refsect2 id='import-export'><title>IMPORT AND EXPORT</title>
 
 <para><command>reposurgeon</command> can hold multiple repository
@@ -2515,6 +2520,21 @@ by cvs2svn have been removed, commit references have been mapped into
 a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]</para>
 </blockquote>
+</refsect1>
+
+<refsect1 id='advanced'><title>ADVANCED EXAMPLES</title>
+
+<programlisting>
+define lastchange {
+@max(=B &amp; [/ChangeLog/] &amp; /{0}/B)? list
+}
+</programlisting>
+
+<para>List the last commit that refers to a ChangeLog file containing
+a specified string. (The trick here is that ? extends the singleton
+set consisting of the last eligible ChangeLog blob to its set of
+referring commits, and <command>list</command>only notices the
+commits.)</para>
 </refsect1>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
