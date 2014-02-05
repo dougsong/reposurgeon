@@ -4,6 +4,8 @@ read <simple.fi
 =H resolve
 15 resolve
 =TR resolve
+@min(=TR) resolve
+@max(=TR) resolve
 24..97 resolve
 24..97&=C resolve
 24..97? resolve

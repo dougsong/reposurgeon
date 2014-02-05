@@ -6330,6 +6330,8 @@ into sections of the input stream instead).
                     term = self.eval_textsearch(preselection)
                     if term == None:
                         term = self.eval_pathset(preselection)
+                        if term == None:
+                            term = self.eval_funcall(preselection)
         if debug_enable(DEBUG_LEXER):
             announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
@@ -6709,6 +6711,28 @@ into sections of the input stream instead).
                     containing.add(event.mark)
                     result.add(i)
         return result
+    def eval_funcall(self, preselection):
+        "Parse and evaluate a function call."
+        if self.peek() != "@":
+            return None
+        self.pop()
+        funname = ""
+        while self.peek().isalpha() or self.peek() == '_':
+            funname += self.pop()
+        if not funname or self.peek() != '(':
+            return None
+        arg = self.eval_expression(preselection)
+        try:
+            return getattr(self, funname + "_handler")(arg)
+        except AttributeError:
+            raise Recoverable("no such function as @%s()" % funname)
+    def min_handler(self, arg):
+        "Minimum member of a selection set."
+        return set([min(*arg)])
+    def max_handler(self, arg):
+        "Maximum member of a selection set."
+        return set([max(*arg)])
+
     #
     # Helpers
     #
@@ -6832,7 +6856,7 @@ Sets can be composed with | (union) and & (intersection). | has lower
 precedence than &, but set expressions can be grouped with { }. Postfixing
 a ? to a selection expression widens it to include all immediate neighbors
 of the selection; you can do this repeatedly for effect. Do set negation with
-prefix ~; it has higher precedence than & | but lower than ?
+prefix ~; it has higher precedence than & | but lower than ?.
 """)
 
     def help_syntax(self):

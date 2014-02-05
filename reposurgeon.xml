@@ -490,6 +490,39 @@ escape such as \x2f.</para>
 
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><firstterm>function calls</firstterm></term>
+<listitem>
+<para>The expression language has named special functions.  The sequence for
+a named function is <quote>@</quote>followed by a function name,
+followed by an argument in parentheses. Presently the following
+functions are defined:</para>
+
+<informaltable pgwide='0' frame='all'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='center'>name</entry>
+        <entry align='center'>interpretation</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='center'>min</entry>
+        <entry align='center'>minimum member of a selection set</entry>
+      </row>
+      <row>
+        <entry align='center'>max</entry>
+        <entry align='center'>maximum member of a selection set</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>Set expressions may be combined with the operators | and &amp;;
