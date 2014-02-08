@@ -3,6 +3,7 @@
 Repository head:
      Set negation in selections with ~.
      @min() and @max() in selections.
+     'define' by itself lists macros.
 
 3.2: 2014-02-03 
      New path rename command.

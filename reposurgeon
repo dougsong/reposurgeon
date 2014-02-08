@@ -9284,12 +9284,26 @@ remainder of the line is the body, unless it is '{', which begins a
 multi-line macro terminated by a line beginning with '}'.
 
 A later 'do' call can invoke this macro.
+
+'define' by itself without a name or body produces a macro list.
 """)
     def do_define(self, line):
         "Define a macro"
-        name = line.split()[0]
+        try:
+            name = line.split()[0]
+        except IndexError:
+            name = line.strip()
         body = line[len(name):].strip()
-        if body[0] != '{':
+        if not body:
+            for (name, body) in self.definitions.items():
+                if len(body) == 1:
+                    sys.stdout.write("define %s %s" % (name, body[0]))
+                else:
+                    sys.stdout.write("define %s {\n" % name)
+                    for line in body:
+                        sys.stdout.write(line)
+                    sys.stdout.write("}\n")
+        elif body[0] != '{':
             self.definitions[name] = [body]
         else:
             self.capture = self.definitions[name] = []
