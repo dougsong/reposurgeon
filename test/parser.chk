@@ -1,88 +1,88 @@
 read <simple.fi
-=H resolve
-[129]
-15 resolve
-[15]
-=TR resolve
-[2, 130, 131]
-@min(=TR) resolve
-[2]
-@max(=TR) resolve
-[131]
-24..97 resolve
-[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
-24..97&=C resolve
-[24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
-24..97? resolve
-[22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99]
-(24..97?) & 20..40 resolve
-[22, 24, 26, 29, 31, 33, 35, 37, 39]
-(24..97?) & (20..40 ?) resolve
-[22, 24, 26, 29, 31, 33, 35, 37, 39, 41]
-24..97 | 20..40 resolve
-[20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
-(24..97 | 20..40) & =C resolve
-[20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
-24..97 & =C | 20..40 & =C resolve
-[20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
-24..97 & (=C | 20..40) resolve
-[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
-3,:15 resolve
-[3, 16]
-/master/b resolve
-[116, 118, 120, 122, 124, 127, 129]
-/operating theater/B resolve
-[15, 17, 19, 21, 49]
-<lightweight-sample> resolve
-[83]
-/annotated-sample/b resolve
-[85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114]
-<annotated-sample> resolve
-[131]
-/regression/ resolve
-[50, 58, 120, 131]
-/Raymond/ resolve
-[3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
-[Makefile] resolve
-[64, 67, 68, 70, 71, 72, 73, 76, 77, 78]
-~[Makefile] resolve
-[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 69, 74, 75, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131]
-=B & [Makefile] resolve
-[64, 68, 71, 73, 77]
-=C & [Makefile] resolve
-[67, 70, 72, 76, 78]
-[/Ma.*le/] resolve
-[48, 50, 57, 58, 64, 67, 68, 69, 70, 71, 72, 73, 76, 77, 78]
-=B & [/Ma.*le/] resolve
-[48, 57, 64, 68, 69, 71, 73, 77]
-=C & [/Ma.*le/] resolve
-[50, 58, 67, 70, 72, 76, 78]
-[/^Ma.*le$/] resolve
-[64, 67, 68, 70, 71, 72, 73, 76, 77, 78]
-=B & [/^Ma.*le$/] resolve
-[64, 68, 71, 73, 77]
-=C & [/^Ma.*le$/] resolve
-[67, 70, 72, 76, 78]
-[/D.ME.\.txt/] resolve
-[46, 50]
-[/Makefile/a] resolve
-[48, 57, 58, 64, 68, 69, 71, 72, 73, 77, 78]
-[/^Make/a] resolve
-[64, 68, 71, 72, 73, 77, 78]
-[/^test/] resolve
-[48, 49, 50, 57, 58, 69, 70]
-[/^test/c] resolve
-[50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129]
-[/^r/ca] resolve
-[3, 5]
-[/r/ca] resolve
-[3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45]
-<2010-10-27T18:43:32Z> resolve
-[127]
-<2010-10-27T12:07:32Z!esr@thyrsus.com> resolve
-[105]
-<2010-10-27> resolve
-[99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
+=H resolve Special set resolution
+Special set resolution: [129]
+15 resolve Event number resolution
+Event number resolution: [15]
+=TR resolve Special cimbination
+Special cimbination: [2, 130, 131]
+@min(=TR) resolve Min operator
+Min operator: [2]
+@max(=TR) resolve Max operator
+Max operator: [131]
+24..97 resolve Range
+Range: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
+24..97&=C resolve Range and conjunction
+Range and conjunction: [24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
+24..97? resolve Neighborhood extension
+Neighborhood extension: [22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99]
+(24..97?) & 20..40 resolve Conjunct
+Conjunct: [22, 24, 26, 29, 31, 33, 35, 37, 39]
+(24..97?) & (20..40?) resolve Conjunct with grouping
+Conjunct with grouping: [22, 24, 26, 29, 31, 33, 35, 37, 39, 41]
+24..97 | 20..40 resolve Disjunct
+Disjunct: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
+(24..97 | 20..40) & =C resolve Commit selection
+Commit selection: [20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
+24..97 & =C | 20..40 & =C resolve Disjunct and conjunct
+Disjunct and conjunct: [20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
+24..97 & (=C | 20..40) resolve Parenthesis grouping
+Parenthesis grouping: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
+3,:15 resolve Comma syntax selecting doubleton
+Comma syntax selecting doubleton: [3, 16]
+/master/b resolve Branch
+Branch: [116, 118, 120, 122, 124, 127, 129]
+/operating theater/B resolve Blobs
+Blobs: [15, 17, 19, 21, 49]
+<lightweight-sample> resolve Branch tip
+Branch tip: [83]
+/annotated-sample/b resolve Tag
+Tag: [85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114]
+<annotated-sample> resolve Tag location
+Tag location: [131]
+/regression/ resolve Text search
+Text search: [50, 58, 120, 131]
+/Raymond/ resolve Commit comment search
+Commit comment search: [3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
+[Makefile] resolve Path search
+Path search: [64, 67, 68, 70, 71, 72, 73, 76, 77, 78]
+~[Makefile] resolve Negated path search
+Negated path search: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 69, 74, 75, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131]
+=B & [Makefile] resolve Blob path search
+Blob path search: [64, 68, 71, 73, 77]
+=C & [Makefile] resolve Commit path search
+Commit path search: [67, 70, 72, 76, 78]
+[/Ma.*le/] resolve Regexp commit search
+Regexp commit search: [48, 50, 57, 58, 64, 67, 68, 69, 70, 71, 72, 73, 76, 77, 78]
+=B & [/Ma.*le/] resolve Regexp patch search for blobs
+Regexp patch search for blobs: [48, 57, 64, 68, 69, 71, 73, 77]
+=C & [/Ma.*le/] resolve Regexp patch search for commits
+Regexp patch search for commits: [50, 58, 67, 70, 72, 76, 78]
+[/^Ma.*le$/] resolve Anchored regexp commit search
+Anchored regexp commit search: [64, 67, 68, 70, 71, 72, 73, 76, 77, 78]
+=B & [/^Ma.*le$/] resolve Anchored regexp patch search for blobs
+Anchored regexp patch search for blobs: [64, 68, 71, 73, 77]
+=C & [/^Ma.*le$/] resolve Anchored regexp patch search for commits
+Anchored regexp patch search for commits: [67, 70, 72, 76, 78]
+[/D.ME.\.txt/] resolve Regexp escape
+Regexp escape: [46, 50]
+[/Makefile/a] resolve Author match
+Author match: [48, 57, 58, 64, 68, 69, 71, 72, 73, 77, 78]
+[/^Make/a] resolve Anchored author match
+Anchored author match: [64, 68, 71, 72, 73, 77, 78]
+[/^test/] resolve Text search
+Text search: [48, 49, 50, 57, 58, 69, 70]
+[/^test/c] resolve Comment search
+Comment search: [50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129]
+[/^r/ca] resolve Commit and author search
+Commit and author search: [3, 5]
+[/r/ca] resolve Commit and author search
+Commit and author search: [3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45]
+<2010-10-27T18:43:32Z> resolve Date resolution
+Date resolution: [127]
+<2010-10-27T12:07:32Z!esr@thyrsus.com> resolve Action stamp resolution
+Action stamp resolution: [105]
+<2010-10-27> resolve Partial-date resolution
+Partial-date resolution: [99, 101, 103, 105, 107, 109, 111, 114, 116, 118, 120, 122, 124, 127, 129, 131]
 # Test here-doc syntax
 echo 0
 write -

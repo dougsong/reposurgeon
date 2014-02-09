@@ -1878,10 +1878,14 @@ except blobs.</para>
 </varlistentry>
 <varlistentry>
 <term><command>resolve</command>
+	[<emphasis>label-text...</emphasis>]
 </term>
 <listitem><para>Does nothing but resolve a selection-set expression
 and echo the resulting event-number set to standard
-output. Implemented mainly for regression testing, but may be useful
+output. The remainder of the line after the command is used
+as a label for the output.</para>
+
+<para>Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
@@ -1911,6 +1915,7 @@ failures in regression testing are suppressed.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>print</command>
+        <emphasis>output-text...</emphasis>
 </term>
 <listitem><para>Does nothing but ship its argument line to stabdard
 output. Useful in regression tests.</para></listitem>
