@@ -1636,6 +1636,9 @@ class Commit(object):
             for fileop in self.fileops:
                 self._pathset |= fileop.paths()
         return self._pathset
+    def invalidate_pathset_cache(self):
+        "Force a rebuild on the next call to paths()."
+        self._pathset = None
     def visible(self, path):
         "Is the specified path modified and not deleted in the ancestors?"
         ancestor = self
@@ -3397,7 +3400,7 @@ class StreamParser:
                 self.repo.fossil_map["SVN:%s" % commit.fossil_id] = commit
                 try:
                     commit.common, commit.fileops = next(oplist)
-                    commit._pathset = None
+                    commit.invalidate_pathset_cache()
                 except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.set_mark(self.__newmark())
@@ -3416,7 +3419,7 @@ class StreamParser:
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.__newmark())
                 split.fileops = fileops
-                split._pathset = None
+                split.invalidate_pathset_cache()
                 newcommits.append(split)
             # The revision is truly mixed if there is more than one clique
             # not consisting entirely of deleteall operations.
@@ -3584,7 +3587,7 @@ class StreamParser:
                         elif fileop.op in ("R", "C"):
                             fileop.source = fileop.source[len(branch):]
                             fileop.target = fileop.target[len(branch):]
-                    commit._pathset = None
+                    commit.invalidate_pathset_cache()
                 else:
                     commit.set_branch("root")
                     self.branches["root"] = None
@@ -4860,7 +4863,7 @@ class Repository:
             if debug_enable(DEBUG_DELETE):
                 announce("removing all before rightmost deleteall")
             commit.fileops = commit.fileops[lastdeleteall:]
-            commit._pathset = None
+            commit.invalidate_pathset_cache()
         # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
@@ -4886,7 +4889,7 @@ class Repository:
             if not mutated:
                 break
             commit.fileops = [x for x in commit.fileops if x is not None]
-            commit._pathset = None
+            commit.invalidate_pathset_cache()
         return coverage
     def squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
@@ -4978,7 +4981,7 @@ class Repository:
                     # resolution.
                     if pushforward and child.parents()[0] == event:
                         child.fileops = copy.copy(event.fileops) + child.fileops
-                        child._pathset = None
+                        child.invalidate_pathset_cache()
                         altered.append(child)
                     # Really set the parents to the newly constructed list
                     child.set_parents(new_parents)
@@ -4991,7 +4994,7 @@ class Repository:
                         fileop = FileOp()
                         fileop.construct("deleteall")
                         child.fileops.insert(0, fileop)
-                        child._pathset = None
+                        child.invalidate_pathset_cache()
                         altered.append(child)
                 # We might be trying to hand the event's fileops to its
                 # primary parent.
@@ -5001,7 +5004,7 @@ class Repository:
                     # resolution.
                     parent = event.parents()[0]
                     parent.fileops += copy.copy(event.fileops)
-                    parent._pathset = None
+                    parent.invalidate_pathset_cache()
                     altered.append(parent)
                     # We need to ensure all fileop blobs are defined before the
                     # corresponding fileop, in other words ensure that the blobs
@@ -5070,7 +5073,7 @@ class Repository:
                     event.fileops = \
                            [op for (i, op) in enumerate(event.fileops)
                             if (op.op != "M") or (i == cliques[op.path][-1])]
-                    event._pathset = None
+                    event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
                     announce("Commit %d, after applying policy:" % (ei + 1,))
                     event.fileop_dump()
@@ -5303,7 +5306,7 @@ class Repository:
                 del commit.fileops[d].path
                 commit.fileops[d].op = 'R'
                 commit.fileops.pop(m)
-                commit._pathset = None
+                commit.invalidate_pathset_cache()
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
@@ -5326,7 +5329,7 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
-                event._pathset = None
+                event.invalidate_pathset_cache()
         return sorted(modified)
     def split_commit(self, where, splitfunc):
         event = self.events[where]
@@ -5350,9 +5353,9 @@ class Repository:
             event2.set_parents([event])
             # and then finalize the ops
             event2.fileops = fileops2
-            event2._pathset = None
+            event2.invalidate_pathset_cache()
             event.fileops = fileops
-            event._pathset = None
+            event.invalidate_pathset_cache()
             return True
         return False
     def split_commit_by_index(self, where, splitpoint):
@@ -5973,13 +5976,13 @@ class RepositoryList:
             deletia = set(deletia) # To speed up the following
             event.fileops = [op for (i, op) in enumerate(event.fileops)
                                 if i not in deletia]
-            event._pathset = None
+            event.invalidate_pathset_cache()
             # If there are any keeper fileops, hang them them and
             # their blobs on keeps, cloning the commit() for them.
             if keepers:
                 newevent = event.clone(expunged)
                 newevent.fileops = keepers
-                newevent._pathset = None
+                newevent.invalidate_pathset_cache()
                 for blob in blobs:
                     blob.deletehook = blob.clone(expunged)
                 event.deletehook = newevent
@@ -8118,6 +8121,7 @@ change in a future release.
         event = self.chosen().events[self.selection[0]]
         if not isinstance(event, Commit):
             complain("remove selection must be a commit")
+        event.invalidate_pathset_cache()
         (opindex, line) = RepoSurgeon.pop_token(line)
         if opindex == "deletes":
             event.fileops = [e for e in event.fileops if e.op != "D"] 
