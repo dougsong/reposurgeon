@@ -1615,6 +1615,9 @@ name; the remainder of the line is the body, unless it is
 a line beginning with <quote>}</quote>.</para>  
 
 <para>A later <quote>do</quote> call can invoke this macro.</para>
+
+<para>The command <quote>define</quote> by itself without a name or
+body produces a macro list.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
