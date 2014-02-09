@@ -6312,8 +6312,8 @@ into sections of the input stream instead).
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
-            all = set(self.chosen().all())
-            return all - set(self.eval_expression(all))
+            allevents = set(self.chosen().all())
+            return allevents - set(self.eval_expression(allevents))
         elif self.peek() == '(':
             self.pop()
             term = self.eval_expression(preselection)
@@ -6721,17 +6721,17 @@ into sections of the input stream instead).
             funname += self.pop()
         if not funname or self.peek() != '(':
             return None
-        arg = self.eval_expression(preselection)
+        subarg = self.eval_expression(preselection)
         try:
-            return getattr(self, funname + "_handler")(arg)
+            return getattr(self, funname + "_handler")(subarg)
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
-    def min_handler(self, arg):
+    def min_handler(self, subarg):
         "Minimum member of a selection set."
-        return set([min(*arg)])
-    def max_handler(self, arg):
+        return set([min(*subarg)])
+    def max_handler(self, subarg):
         "Maximum member of a selection set."
-        return set([max(*arg)])
+        return set([max(*subarg)])
 
     #
     # Helpers
