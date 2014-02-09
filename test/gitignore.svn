@@ -1,0 +1,331 @@
+SVN-fs-dump-format-version: 2
+ ## Subversion repo containing an explicit .gitignore
+
+UUID: 50dc036c-2126-4e89-9de0-484cfb39803f
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2014-02-05T12:31:48.384987Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 127
+Content-length: 127
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:32:54.160563Z
+K 7
+svn:log
+V 26
+Create standard SVN layout
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 142
+Content-length: 142
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:33:46.851811Z
+K 7
+svn:log
+V 41
+README explaining the purpose of the repo
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 246
+Text-content-md5: 263cc72c97d9b6c54f07b1691e5c6585
+Text-content-sha1: 9cb68ec9d6118871ff96401742e2ceb32271e4e8
+Content-length: 256
+
+PROPS-END
+This repository is designed to demonstrate an oversight in the way
+reposurgeon handles ignores and the case of pre-existing .gitignore
+files in a Subversion repository. This is not an uncommon case with
+git-svn users operating with a repository.
+
+
+Revision-number: 3
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:34:37.640572Z
+K 7
+svn:log
+V 13
+Ignore *.html
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 38
+Content-length: 38
+
+K 10
+svn:ignore
+V 7
+*.html
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 269
+Content-length: 269
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:36:32.401158Z
+K 7
+svn:log
+V 167
+Add a custom .gitignore file
+
+This simulates the case of a git-svn user wishing to ignore *.txt
+files, without adding them to Subversion's native svn:ignore property.
+
+PROPS-END
+
+Node-path: trunk/.gitignore
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 6
+Text-content-md5: 4bce7f94e93134af39b4610fab3b05ff
+Text-content-sha1: 187fac12cb4884e09f5827a88e7b897b916f978f
+Content-length: 16
+
+PROPS-END
+*.txt
+
+
+Revision-number: 5
+Prop-content-length: 227
+Content-length: 227
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:37:46.537950Z
+K 7
+svn:log
+V 125
+Branch trunk to cool-feature
+
+This causes reposurgeon to replace the custom .gitignore with only the
+contents of svn:ignore.
+
+PROPS-END
+
+Node-path: branches/cool-feature
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: trunk
+
+
+Revision-number: 6
+Prop-content-length: 144
+Content-length: 144
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:39:53.976454Z
+K 7
+svn:log
+V 43
+Explain what the expected result should be.
+PROPS-END
+
+Node-path: branches/cool-feature/README
+Node-kind: file
+Node-action: change
+Text-content-length: 611
+Text-content-md5: 94ac21851fdc1b3062d1be8da66634d2
+Text-content-sha1: f30203383e9357ca8ced3d821ffee7d4d96c3e9e
+Content-length: 611
+
+This repository is designed to demonstrate an oversight in the way
+reposurgeon handles ignores and the case of pre-existing .gitignore
+files in a Subversion repository. This is not an uncommon case with
+git-svn users operating with a repository.
+
+What should happen is that reposurgeon should do its best to merge the
+contents of the .gitignore -- possibly .hgignore or any other kind of
+ignore that conflicts with the target VCS -- with those of the
+svn:ignore: in fact, this should be general enough to handle the case
+of from-any-VCS to-any-target-VCS, but Subversion->Git is being used
+as the example here.
+
+
+Revision-number: 7
+Prop-content-length: 134
+Content-length: 134
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:40:41.513811Z
+K 7
+svn:log
+V 33
+Merge cool-feature back to trunk
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 89
+Content-length: 89
+
+K 10
+svn:ignore
+V 7
+*.html
+
+K 13
+svn:mergeinfo
+V 26
+/branches/cool-feature:5-6
+PROPS-END
+
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 611
+Text-content-md5: 94ac21851fdc1b3062d1be8da66634d2
+Text-content-sha1: f30203383e9357ca8ced3d821ffee7d4d96c3e9e
+Content-length: 611
+
+This repository is designed to demonstrate an oversight in the way
+reposurgeon handles ignores and the case of pre-existing .gitignore
+files in a Subversion repository. This is not an uncommon case with
+git-svn users operating with a repository.
+
+What should happen is that reposurgeon should do its best to merge the
+contents of the .gitignore -- possibly .hgignore or any other kind of
+ignore that conflicts with the target VCS -- with those of the
+svn:ignore: in fact, this should be general enough to handle the case
+of from-any-VCS to-any-target-VCS, but Subversion->Git is being used
+as the example here.
+
+
+Revision-number: 8
+Prop-content-length: 135
+Content-length: 135
+
+K 10
+svn:author
+V 6
+chungy
+K 8
+svn:date
+V 27
+2014-02-05T12:41:49.867123Z
+K 7
+svn:log
+V 34
+Explain the final expected result.
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 825
+Text-content-md5: ce72a0fb7e5ca89377ea43e1ca202e02
+Text-content-sha1: df1de35e92842e35515ac11c655506da20d80cb0
+Content-length: 825
+
+This repository is designed to demonstrate an oversight in the way
+reposurgeon handles ignores and the case of pre-existing .gitignore
+files in a Subversion repository. This is not an uncommon case with
+git-svn users operating with a repository.
+
+What should happen is that reposurgeon should do its best to merge the
+contents of the .gitignore -- possibly .hgignore or any other kind of
+ignore that conflicts with the target VCS -- with those of the
+svn:ignore: in fact, this should be general enough to handle the case
+of from-any-VCS to-any-target-VCS, but Subversion->Git is being used
+as the example here.
+
+The expected results as of this commit, is that the .gitignore should
+include the default svn:ignore properties, *.html, and *.txt. *.html
+coming from svn:ignore and *.txt coming from the stored-in-svn
+.gitignore
+
+

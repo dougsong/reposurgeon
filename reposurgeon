@@ -6938,7 +6938,7 @@ Print a literal string.
 """)
     def do_print(self, line):
         "Print a literal string."
-        announce(line)
+        print(line)
 
     def help_resolve(self):
         print("""
