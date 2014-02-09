@@ -1393,12 +1393,18 @@ class Commit(object):
         if self.fossil_id:
             fossil = "<%s>" % self.fossil_id
             summary += "%6s " % fossil
-        return (summary + topline)[:cols]
+        report = (summary + topline)
+        if cols:
+            report = report[:cols]
+        return report
     def tip(self, _modifiers, eventnum, cols):
         "Enable do_tip() to report deduced branch tips."
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
-        return (summary + self.head())[:cols]
+        report = (summary + self.head())
+        if cols:
+            report = report[:cols]
+        return report
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tag tip commits."
         if not self.branch or not "/tags/" in self.branch:
@@ -8113,7 +8119,7 @@ change in a future release.
         if not isinstance(event, Commit):
             complain("remove selection must be a commit")
         (opindex, line) = RepoSurgeon.pop_token(line)
-        if opindex = "deletes":
+        if opindex == "deletes":
             event.fileops = [e for e in event.fileops if e.op != "D"] 
             return
         for (ind, op) in enumerate(event.fileops):
