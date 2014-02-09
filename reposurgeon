@@ -8087,11 +8087,13 @@ From a specified commit, remove a specified fileop. The syntax is:
 
      remove OP [to COMMIT]
 
-The selection set must be a singleton and the OP a file path - or, if
-it does not match a path, a 1-origin numeric index.
+The selection set must be a singleton and the OP one of (a) the keyword
+'deletes', (b) a file path, or (c) a 1-origin numeric index.  The 'deletes'
+keyword selects all D fileops in the commit; the others select one each.
 
 If the to clause is present, the removed op is appended to the
-commit specified by the following singleton selection set.
+commit specified by the following singleton selection set.  This option
+cannot be combined with 'deletes'.
 
 Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
@@ -8105,12 +8107,15 @@ change in a future release.
         if self.selection is None:
             self.selection = []
         if len(self.selection) != 1:
-            complain("from selection must be a singleton")
+            complain("remove selection must be a singleton")
             return
         event = self.chosen().events[self.selection[0]]
         if not isinstance(event, Commit):
-            complain("from selection must be a commit")
+            complain("remove selection must be a commit")
         (opindex, line) = RepoSurgeon.pop_token(line)
+        if opindex = "deletes":
+            event.fileops = [e for e in event.fileops if e.op != "D"] 
+            return
         for (ind, op) in enumerate(event.fileops):
             if hasattr(op, "path") and getattr(op, "path") == opindex:
                 break
@@ -8127,7 +8132,6 @@ change in a future release.
         target = None
         if line:
             (verb, line)  = RepoSurgeon.pop_token(line)
-            # This feature is experimental and not documented
             if verb == 'to':
                 self.set_selection_set(line)
                 if len(self.selection) != 1:
@@ -8137,6 +8141,7 @@ change in a future release.
             removed = event.fileops.pop(ind)
             if target:
                 self.chosen().events[target].fileops.append(removed)
+            # FIXME: Scavenge blobs left with no references
         except IndexError:
             complain("out-of-range fileop index %s" % ind)
             return
@@ -9019,8 +9024,8 @@ if the local ID is the entire address, this is also considered a match
 
 With the 'read' modifier, or no modifier, apply author mapping data
 (from standard input or a <-redirected input file).  May be useful if
-you are editing a repo or dump created by cvs2git or by git-svn
-invoked without -A.
+you are editing a repo or dump created by cvs2git or by
+cvs-fast-export or git-svn invoked without -A.
 
 With the 'write' modifier, write a mapping file that could be
 interpreted by 'authors read', with entries for each unique committer,
