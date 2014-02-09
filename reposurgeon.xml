@@ -1910,6 +1910,12 @@ on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term><command>print</command>
+</term>
+<listitem><para>Does nothing but ship its argument line to stabdard
+output. Useful in regression tests.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><command>echo</command>
         [<emphasis>number</emphasis>]
 </term>

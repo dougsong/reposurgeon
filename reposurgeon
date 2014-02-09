@@ -6919,6 +6919,10 @@ failures in regression testing are suppressed.
         if not line:
             announce("quiet %s" % ("on" if quiet else "off"))
 
+    def help_echo(self):
+        print("""
+Set or clear echoing of commands before processing.
+""")
     def do_echo(self, line):
         "Set or clear echoing commands before processing."
         try:
@@ -6927,6 +6931,14 @@ failures in regression testing are suppressed.
             announce("echo value must be an integer")
         if verbose:
             announce("echo %d" % self.echo)
+
+    def help_print(self):
+        print("""
+Print a literal string.
+""")
+    def do_print(self, line):
+        "Print a literal string."
+        announce(line)
 
     def help_resolve(self):
         print("""
@@ -9297,7 +9309,7 @@ A later 'do' call can invoke this macro.
         if not body:
             for (name, body) in self.definitions.items():
                 if len(body) == 1:
-                    sys.stdout.write("define %s %s" % (name, body[0]))
+                    sys.stdout.write("define %s %s\n" % (name, body[0]))
                 else:
                     sys.stdout.write("define %s {\n" % name)
                     for line in body:

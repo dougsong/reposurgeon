@@ -1,4 +1,23 @@
+read <simple.fi
+print Test that we can define and see macro definitions
+reposurgeon: Test that we can define and see macro definitions
+define fubar list
+define
+define fubar list
+print Test that invoking the macro produces output
+reposurgeon: Test that invoking the macro produces output
+:49 do fubar
+list
     50 2010-10-26T09:02:25Z    :49 Add and document a regression test.
+print Test that undefining the only macro removes it from the internal list
+reposurgeon: Test that undefining the only macro removes it from the internal list
+undefine fubar
+define
+print Test multiline macroexpansion
+reposurgeon: Test multiline macroexpansion
+define fubaz {
+do fubaz :49
+inspect :49
 Event 50 ================================================================
 commit refs/tags/lightweight-sample
 mark :49
@@ -11,4 +30,8 @@ M 100644 :45 READ[ME].txt
 M 100755 :46 rs
 M 100644 :47 test/Makefile
 M 100644 :48 test/simple.dump
+
+undefine fubaz
+print Tests complete
+reposurgeon: Tests complete
 
