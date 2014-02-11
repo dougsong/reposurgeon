@@ -6185,7 +6185,11 @@ into sections of the input stream instead).
         # This is the only place in the implementation that knows
         # whether the syntax is VSO or SVO.
         if self.chosen():
-            line = self.set_selection_set(line)
+            try:
+                line = self.set_selection_set(line)
+            except Recoverable as e:
+                complain(e.msg)
+                line = ""
         return line
     def do_shell(self, line):
         "Execute a shell command."
