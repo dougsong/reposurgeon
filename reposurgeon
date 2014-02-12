@@ -4300,6 +4300,7 @@ class Repository:
         self.fossil_map = {}    # From anything that doesn't survive rebuild
         self.fossil_count = None
         self.timings = []
+        self.assignments = {}
         self._has_manifests = False
     def cleanup(self):
         "Release blob files associated with this repo."
@@ -4373,6 +4374,91 @@ class Repository:
     def all(self):
         "Return a set that selects the entire repository."
         return range(len(self.events))
+    def named(self, ref):
+        "Resolved named reference in the context of this repository."
+        selection = set([])
+        # First, search tags
+        for (i, event) in enumerate(self.events):
+            if isinstance(event, Tag) and event.name == ref:
+                return set([i])
+        # Next, search branches
+        for symbol in sorted(self.branchset(),
+                             key=len, reverse=True): # longest name first
+            if ref == os.path.basename(symbol):
+                loc = None
+                # Find the last commit with this branchname
+                for (i, event) in enumerate(self.events):
+                    if isinstance(event, Commit):
+                        if event.branch == symbol:
+                            loc = i
+                if loc is None:
+                    raise Recoverable("branch name %s points to hyperspace" % symbol)
+                else:
+                    return set([loc])
+        # Next, fossil-ID references
+        for (i, event) in enumerate(self.events):
+            if hasattr(event, "fossil_id") and event.fossil_id == ref:
+                return set([i])
+        # Next, assignments
+        lookup = self.assignments.get(ref)
+        if lookup:
+            return lookup
+        # Might be a date or action stamp
+        ordinal = None
+        m = re.search("#[0-9]+$", ref)
+        if m:
+            try:
+                ordinal = int(m.group(0)[1:])
+                ref = ref[:-len(m.group(0))]
+            except ValueError:
+                raise Recoverable("ill-formed date")
+        bang = ref.find('!')
+        date_end = len(ref)
+        if bang >= 0:
+            date_end = min(bang, date_end)
+        date = ref[:date_end]
+        datematch = None
+        try:
+            date = Date(date)
+            datematch = lambda t: t == date
+        except Fatal:
+            try:
+                date = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+                datematch = lambda t: t.timestamp >= date and t.timestamp < date + 24*60*60
+            except ValueError:
+                datematch = None
+        email_id = None
+        if date is not None and bang > -1:
+            email_id = ref[bang+1:]
+        matches = []
+        if datematch:
+            for (ei, event) in enumerate(self.events):
+                if hasattr(event, 'committer'):
+                    if not datematch(event.committer.date):
+                        continue
+                    if email_id and event.committer.email != email_id:
+                        continue
+                    else:
+                        matches.append(ei)
+                elif hasattr(event, 'tagger'):
+                    if not datematch(event.tagger.date):
+                        continue
+                    elif email_id and event.tagger.email!=email_id:
+                        continue
+                    else:
+                        matches.append(ei)
+            if len(matches) < 1:
+                raise Recoverable("no events match %s" % ref)
+            elif len(matches) > 1:
+                if ordinal is not None and ordinal < len(matches):
+                    selection.add(matches[ordinal-1])
+                else:
+                    selection |= set(matches)
+            else:
+                selection.add(matches[0])
+            if selection:
+                return selection
+        return None
     def invalidate_object_map(self):
         "Force an object-map rebuild on the next lookup."
         self._mark_to_object = {}
@@ -4692,6 +4778,7 @@ class Repository:
         "Mark the repo event sequence sequence modified."
         self._commits = None
         self._mark_to_index = {}
+        self.assignments = {}
     def earliest_commit(self):
         "Return the earliest commit."
         return next(self.commits())
@@ -6455,92 +6542,10 @@ into sections of the input stream instead).
                         raise Recoverable("reference improperly terminated. '%s'" % self.line)
                     ref = self.line[:closer]
                     self.line = self.line[closer+1:]
-                    matched = False
-                    # First, search tags
-                    for (i, event) in enumerate(self.chosen()):
-                        if isinstance(event, Tag) and event.name == ref:
-                            matched = True
-                            selection.append(i)
-                            break
-                    # Next, search branches
-                    if not matched:
-                        for symbol in sorted(self.chosen().branchset(),
-                                             key=len, reverse=True): # longest name first
-                            if ref == os.path.basename(symbol):
-                                loc = None
-                                # Find the last commit with this branchname
-                                for (i, event) in enumerate(self.chosen()):
-                                    if isinstance(event, Commit):
-                                        if event.branch == symbol:
-                                            loc = i
-                                if loc is None:
-                                    raise Recoverable("branch name %s points to hyperspace" % symbol)
-                                else:
-                                    matched = True
-                                    selection.append(loc)
-                    # Next, fossil-ID references
-                    if not matched:
-                        for (i, event) in enumerate(self.chosen()):
-                            if hasattr(event, "fossil_id") and event.fossil_id == ref:
-                                selection.append(i)
-                                matched = True
-                                break
-                    # Might be a date or action stamp
-                    ordinal = None
-                    m = re.search("#[0-9]+$", ref)
-                    if m:
-                        try:
-                            ordinal = int(m.group(0)[1:])
-                            ref = ref[:-len(m.group(0))]
-                        except ValueError:
-                            raise Recoverable("ill-formed date")
-                    bang = ref.find('!')
-                    date_end = len(ref)
-                    if bang >= 0:
-                        date_end = min(bang, date_end)
-                    date = ref[:date_end]
-                    datematch = None
-                    try:
-                        date = Date(date)
-                        datematch = lambda t: t == date
-                    except Fatal:
-                        try:
-                            date = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                            datematch = lambda t: t.timestamp >= date and t.timestamp < date + 24*60*60
-                        except ValueError:
-                            datematch = None
-                    email_id = None
-                    if date is not None and bang > -1:
-                        email_id = ref[bang+1:]
-                    matches = []
-                    if datematch:
-                        for (ei, event) in enumerate(self.chosen().events):
-                            if hasattr(event, 'committer'):
-                                if not datematch(event.committer.date):
-                                    continue
-                                if email_id and event.committer.email != email_id:
-                                    continue
-                                else:
-                                    matches.append(ei)
-                            elif hasattr(event, 'tagger'):
-                                if not datematch(event.tagger.date):
-                                    continue
-                                elif email_id and event.tagger.email!=email_id:
-                                    continue
-                                else:
-                                    matches.append(ei)
-                        if len(matches) < 1:
-                            raise Recoverable("no events match %s" % ref)
-                        elif len(matches) > 1:
-                            if ordinal is not None and ordinal < len(matches):
-                                selection.append(matches[ordinal-1])
-                            else:
-                                selection += matches
-                            matched = True
-                        else:
-                            selection.append(matches[0])
-                            matched = True
-                    if not matched:
+                    lookup = self.chosen().named(ref)
+                    if lookup:
+                        selection = lookup
+                    else:
                         raise Recoverable("couldn't match a name at <%s>" % ref)
             if debug_enable(DEBUG_LEXER):
                 announce("location list is %s with %s left" % (selection, repr(self.line)))
@@ -6985,6 +6990,31 @@ for exploring the selection-set language.
             print([x+1 for x in self.selection])
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
+
+    def help_assign(self):
+        print("""
+Compute a leading selection set and assign it to a symbolic name.
+It is an error to assign to a name that is already assigned, or to
+any existing branch name.  All assignments are cleared on any sequence
+mutation.
+
+Use this to optimize out location and selection computations
+that would otherwise be performed repeatedly, e.g. in macro calls.
+""")
+    def do_assign(self, line):
+        repo = self.chosen()
+        if not repo:
+            complain("no repo has been chosen.")
+            return
+        if self.selection is None:
+            raise Recoverable("No selection")
+        name = line.strip()
+        if name in repo.assignments:
+            raise Recoverable("%s has already been set" % name)
+        elif repo.named(name):
+            raise Recoverable("%s conflicts with a branch, tag, fossil, or date" % name)
+        else:
+            repo.assignments[name] = self.selection
 
     def help_names(self):
         print("""
