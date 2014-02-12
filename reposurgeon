@@ -6741,10 +6741,16 @@ into sections of the input stream instead).
             raise Recoverable("no such function as @%s()" % funname)
     def min_handler(self, subarg):
         "Minimum member of a selection set."
-        return set([min(*subarg)])
+        try:
+            return set([min(*subarg)])
+        except TypeError:
+            raise Recoverable("cannot take minimum of empty set")
     def max_handler(self, subarg):
         "Maximum member of a selection set."
-        return set([max(*subarg)])
+        try:
+            return set([max(*subarg)])
+        except TypeError:
+            raise Recoverable("cannot take maximum of empty set")
 
     #
     # Helpers
