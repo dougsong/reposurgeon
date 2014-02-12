@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 Repository head:
-     @amp() function useful for logic-gating an conjunctive expressions.
+     @amp() function useful for logic-gating in conjunctive expressions.
 
 3.3: 2014-02-11 
      Set negation in selections with ~.
