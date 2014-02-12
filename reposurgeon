@@ -8114,32 +8114,30 @@ With  the --debug option, show messages about mismatches.
                     timefuzz = int(parse.line)
                 except ValueError:
                     raise Recoverable("time-fuzz value must be an integer")
-            eligible = []
-            # This is a crude search that ignores the repo graph structure;
-            # properly speaking we should be chasing child links.  Screw
-            # it; this operation only make sense for cleaning up
-            # artifacts in linear stretches of history that have been
-            # lifted from file-oriented VCSes like RCS and CVS.
-            icthis, icnext = itertools.tee(self.selected(Commit))
-            next(icnext, None)
-            for (ithis, cthis), (_inext, cnext) in itertools.izip(icthis, icnext):
+            def coalesce_match(cthis, cnext):
                 if cthis.branch != cnext.branch:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
                         announce("branch mismatch at %s" % cnext.id_me())
-                    continue
+                    return False
                 elif cthis.comment != cnext.comment:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
                         announce("comment mismatch at %s" % cnext.id_me())
-                    continue
+                    return False
                 elif cthis.committer.email != cnext.committer.email:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
                         announce("committer email mismatch at %s" % cnext.id_me())
-                    continue
+                    return False
                 if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
                         announce("time fuzz exceeded at %s" % cnext.id_me())
-                    continue
-                eligible.append(ithis)
+                    return False
+                return True
+            eligible = []
+            icthis, icnext = itertools.tee(self.selected(Commit))
+            next(icnext, None)
+            for (ithis, cthis), (_inext,cnext) in itertools.izip(icthis,icnext):
+                if coalesce_match(cthis, cnext):
+                    eligible.append(ithis)
             if verbose >= DEBUG_DELETE:
                 announce("deletion set is %s" % [x+1 for x in eligible])
             self.chosen().squash(eligible, ("--coalesce",))
