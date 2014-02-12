@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.3: 2014-02-11 
      Set negation in selections with ~.
      @min() and @max() in selections.
      'define' by itself lists macros.
