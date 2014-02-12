@@ -3,8 +3,8 @@ read <simple.fi
 Special set resolution: [129]
 15 resolve Event number resolution
 Event number resolution: [15]
-=TR resolve Special cimbination
-Special cimbination: [2, 130, 131]
+=TR resolve Special combination
+Special combination: [2, 130, 131]
 @min(=TR) resolve min operator
 min operator: [2]
 @max(=TR) resolve max operator

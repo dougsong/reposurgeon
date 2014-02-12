@@ -3,7 +3,7 @@ echo 1
 read <simple.fi
 =H resolve Special set resolution
 15 resolve Event number resolution
-=TR resolve Special cimbination
+=TR resolve Special combination
 @min(=TR) resolve min operator
 @max(=TR) resolve max operator
 24..97 resolve Range
