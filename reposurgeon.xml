@@ -2237,6 +2237,21 @@ are the less obvious messages it may emit:</para>
 
 <variablelist>
 <varlistentry>
+<term>user-generated .gitignore</term>
+<listitem>
+<para>This message means means <command>reposurgeon</command> has
+found a <filename>.gitignore</filename> file in the Subversion
+repository it is analyzing. This probably happened because somebody
+was using <command>git-svn</command> as a live gateway, and created
+ignores which may or may not be congruent with those in the geberated
+<filename>.gitignore</filename> files that the Subversion ignore
+properties will be translated into.  You'll need to make a policy
+decision about which set of ignores to use in the conversion, and
+possibly to delete either the generated
+<filename>.gitignore</filename> files or the user-created ones.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term>can't connect nonempty branch XXXX to origin</term>
 <listitem>
 <para>This is a serious error. <command>reposurgeon</command> has been

@@ -1,3 +1,27 @@
+reposurgeon: r318~branches/Development/.gitignore: user-created gitignore.
+reposurgeon: r318~branches/Development/clients/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/common/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/conf/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/data/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/data/html/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/drivers/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/include/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/lib/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/man/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/scripts/hotplug/.gitignore: user-created gitignore.
+reposurgeon: r319~branches/Development/server/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/clients/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/common/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/conf/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/data/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/data/html/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/drivers/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/include/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/lib/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/man/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/scripts/hotplug/.gitignore: user-created gitignore.
+reposurgeon: r327~branches/reportbuf/server/.gitignore: user-created gitignore.
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1920 ==============================================================
 # Fossil-ID: 352

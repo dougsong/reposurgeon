@@ -3356,6 +3356,14 @@ class StreamParser:
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
                         self.permissions[node.path] = perms
+                        # If it is a non-generated .gitignore, odds are
+                        # somebody was getting jiggy with git-svn
+                        # behind Subversion's back. Warn about this.
+                        if new_content \
+                           and not node.generated \
+                           and node.path.endswith(".gitignore"):
+                            self.gripe("r%s~%s: user-created gitignore." \
+                                       % (node.revision, node.path))
                 # These are directory actions.
                 elif node.action in (SD_DELETE, SD_REPLACE):
                     if debug_enable(DEBUG_EXTRACT):
