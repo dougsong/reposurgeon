@@ -8102,7 +8102,8 @@ With  the --debug option, show messages about mismatches.
 """)
     def do_coalesce(self, line):
         "Coalesce events in the specified selection set."
-        if not self.chosen():
+        repo = self.chosen()
+        if not repo:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -8115,11 +8116,7 @@ With  the --debug option, show messages about mismatches.
                 except ValueError:
                     raise Recoverable("time-fuzz value must be an integer")
             def coalesce_match(cthis, cnext):
-                if cthis.branch != cnext.branch:
-                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce("branch mismatch at %s" % cnext.id_me())
-                    return False
-                elif cthis.comment != cnext.comment:
+                if cthis.comment != cnext.comment:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
                         announce("comment mismatch at %s" % cnext.id_me())
                     return False
@@ -8132,16 +8129,30 @@ With  the --debug option, show messages about mismatches.
                         announce("time fuzz exceeded at %s" % cnext.id_me())
                     return False
                 return True
-            eligible = []
-            icthis, icnext = itertools.tee(self.selected(Commit))
-            next(icnext, None)
-            for (ithis, cthis), (_inext,cnext) in itertools.izip(icthis,icnext):
-                if coalesce_match(cthis, cnext):
-                    eligible.append(ithis)
-            if verbose >= DEBUG_DELETE:
-                announce("deletion set is %s" % [x+1 for x in eligible])
-            self.chosen().squash(eligible, ("--coalesce",))
-
+            eligible = {}
+            squashes = []
+            for (_i, commit) in self.selected(Commit):
+                if commit.branch not in eligible:
+                    # No active commit span for this branch - start one
+                    # with the mark of this commit
+                    eligible[commit.branch] = [commit.mark]
+                elif coalesce_match(
+                    repo.objfind(eligible[commit.branch][-1]),
+                    commit):
+                    # This commit matches the one at the end of its branch span.
+                    # Append its mark to the span.
+                    eligible[commit.branch].append(commit.mark)
+                else:
+                    # This commit doesn't match the one at the end of its span.
+                    # Coalesce the span and start a new one with this commit.
+                    if len(eligible[commit.branch]) > 1:
+                        squashes.append(eligible[commit.branch])
+                    eligible[commit.branch] = [commit.mark]
+            for endspan in eligible.values():
+                if len(endspan) > 1:
+                    squashes.append(endspan)
+            for span in squashes:
+                repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
     def help_remove(self):
         print("""
 From a specified commit, remove a specified fileop. The syntax is:
