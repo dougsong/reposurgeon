@@ -4,8 +4,8 @@ read <simple.fi
 =H resolve Special set resolution
 15 resolve Event number resolution
 =TR resolve Special cimbination
-@min(=TR) resolve Min operator
-@max(=TR) resolve Max operator
+@min(=TR) resolve min operator
+@max(=TR) resolve max operator
 24..97 resolve Range
 24..97&=C resolve Range and conjunction
 24..97? resolve Neighborhood extension
@@ -43,6 +43,8 @@ read <simple.fi
 <2010-10-27T18:43:32Z> resolve Date resolution
 <2010-10-27T12:07:32Z!esr@thyrsus.com> resolve Action stamp resolution
 <2010-10-27> resolve Partial-date resolution
+@amp(1) resolve resolve amplified nonempty set
+@amp(/mytzlpyk/) resolve amplified empty set
 # Test here-doc syntax
 echo 0
 authors read <<EOF

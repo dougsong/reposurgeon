@@ -521,6 +521,11 @@ functions are defined:</para>
         <entry align='center'>max</entry>
         <entry align='center'>maximum member of a selection set</entry>
       </row>
+      <row>
+        <entry align='center'>amp</entry>
+        <entry align='center'>nonempty selection set becomes all
+	objects, empty set is returned empty</entry>
+      </row>
     </tbody>
   </tgroup>
 </informaltable>

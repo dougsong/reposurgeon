@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     @amp() function useful for logic-gating an conjunctive expressions.
+
 3.3: 2014-02-11 
      Set negation in selections with ~.
      @min() and @max() in selections.

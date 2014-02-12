@@ -6751,6 +6751,12 @@ into sections of the input stream instead).
             return set([max(*subarg)])
         except TypeError:
             raise Recoverable("cannot take maximum of empty set")
+    def amp_handler(self, subarg):
+        "Amplify - map empty set to emply, nonempty set to all."
+        if subarg:
+            return set(self.chosen().all())
+        else:
+            return subarg
 
     #
     # Helpers
