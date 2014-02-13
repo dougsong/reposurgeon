@@ -9405,7 +9405,7 @@ displays the state of all flags. The following flags and options are defined:
                     global_options[option] = False
 
     #
-    # Macros
+    # Macros and custom extensions
     #
     def help_define(self):
         print("""
@@ -9480,6 +9480,38 @@ Undefine the macro named in this command's first argument.
             raise Recoverable("'%s' is not a defined macro" % name)
         else:
             del self.definitions[name]
+
+    def help_exec(self):
+        print("""
+Execute custom code.  Use this to set up custom extension functions for
+later calls. The code has full access to all internal data
+structures. Functions defined are accessible to later 'eval' calls.
+""")
+    def do_exec(self, line):
+        "Execute custom python code."
+        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            try:
+                # The additional args are required to make the function
+                # visible to a later eval.
+                execfile(parse.stdin.name, locals(), globals())
+            except SyntaxError:
+                raise Recoverable("invalid syntax in extension function")
+
+    def help_eval(self):
+        print("""
+Call a named function with the current selection set as argument.
+The function should have been defined by a previous exec.
+""")
+    def do_eval(self, line):
+        "Call a function from custom python code."
+        if self.selection is None:
+            print("no selection")
+        else:
+            funcname = line.strip()
+            try:
+                eval("%s(%s)" % (funcname, repr(self.selection)))
+            except NameError:
+                raise Recoverable("%s is not a known function" % funcname)
 
     #
     # Version binding 

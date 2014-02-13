@@ -4,6 +4,7 @@ Repository head:
      @amp() function useful for logic-gating in conjunctive expressions.
      New 'assign' command allows precomputation of expensive selections.
      There's an 'unassign' as well.
+     exec/eval facility for custom Python extensions.
 
 3.3: 2014-02-11 
      Set negation in selections with ~.

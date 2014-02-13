@@ -1601,7 +1601,7 @@ passthroughs when the repo is written to a stream file.</para>
 
 </refsect2>
 
-<refsect2 id="macros"><title>MACROS</title>
+<refsect2 id="macros"><title>MACROS AND EXTENSIONS</title>
 
 <para>Occasionally you will need to issue a large number of complex surgical
 commands of very similar form, and it's convenient to be able to
@@ -1688,6 +1688,36 @@ first version.</para>
 possibility of typing a wrong date that doesn't refer to a commit with
 an empty comment. This was a real-world example from the CVS-to-git
 conversion of groff.)</para>
+
+<para>When even a macro is not enough, you can write and call  custom
+Python extensions.</para>
+
+<variablelist>
+<varlistentry>
+<term><command>exec</command>
+          <emphasis>name</emphasis>
+</term>
+<listitem>
+<para>Execute custom code.  Use this to set up custom extension functions for
+later eval calls. The code has full access to all internal data
+structures. Functions defined are accessible to later
+<command>eval</command> calls.</para>
+
+<para>This can be called in a script with the extension code in a
+here-doc.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>eval</command>
+          <emphasis>function-name</emphasis>
+</term>
+<listitem>
+<para>Call a named function with the current selection set as argument.
+The function should have been defined by a previous <command>exec</command>.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsect2>
 
