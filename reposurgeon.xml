@@ -1712,8 +1712,11 @@ here-doc.</para>
           <emphasis>function-name</emphasis>
 </term>
 <listitem>
-<para>Call a named function with the current selection set as argument.
-The function should have been defined by a previous <command>exec</command>.
+<para>Evaluate a line of code in the current interpreter context.
+Typically this will be a call to a function defined by a previous
+exec. The variables <varname>_repository</varname> and
+<varname>_selection</varname> will have the obvious values.  Note that
+<varname>_selection</varname> will be a list of integers, not objects.
 </para>
 </listitem>
 </varlistentry>

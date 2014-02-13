@@ -2,8 +2,10 @@
 exec <<EOF
 print("I am a custom extension.")
 
-def length(selection):
+def report(repository,selection):
+    print("Repository name: %s" % repository.name)
     print("Selection length: %d" % len(selection))
 EOF
 read <testrepo.fi
-=C eval length
+=C eval report(_repository,_selection)
+
