@@ -1911,6 +1911,16 @@ that would otherwise be performed repeatedly, e.g. in macro calls.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>unassign</command>
+	[<emphasis>name</emphasis>]
+</term>
+<listitem>
+<para>Unassign a symbolic name.  Throws an error if the name is not
+assigned.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>names</command>
 	[&gt;<emphasis>outfile</emphasis>]
 </term>
