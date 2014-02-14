@@ -411,7 +411,7 @@ letters after the trailing slash.  These are as follows:</para>
     <tbody>
       <row>
         <entry align='center'>a</entry>
-        <entry align='center'>auther name in commit</entry>
+        <entry align='center'>author name in commit</entry>
       </row>
       <row>
         <entry align='center'>b</entry>
@@ -536,7 +536,7 @@ functions are defined:</para>
 
 <para>Set expressions may be combined with the operators | and &amp;;
 these are, respectively, set union and intersection. The | has lower
-precedence than intersection, but you may use parenmtheses '(' and
+precedence than intersection, but you may use parentheses '(' and
 ')' to group expressions in case there is ambiguity (this replaces the
 curly brackets used in older versions of the syntax).</para>
 
@@ -617,7 +617,7 @@ each commit is appended to its commit comment at write time. This
 option is mainly useful for debugging conversion edge cases.</para>
 
 <para>If you specify a partial selection set such that some commits
-are included but their oarents are not, the output will include
+are included but their parents are not, the output will include
 incremental dump cookies for each branch with an origin outside the
 selection set, just before the first reference to that branch in a
 commit.  An incremental dump cookie looks like "refs/heads/foo^0" and
@@ -625,7 +625,7 @@ is a clue to export-stream loaders that the branch should be glued to
 the tip of a pre-existing branch of the same name.</para>
 
 <para>Specifying a write selection set with gaps in it is allowed
-but inclikely to lead to good results if it is loaded by an importer.</para>
+but unlikely to lead to good results if it is loaded by an importer.</para>
 
 <para>Property extensions will be be omitted from the output if the
 importer for the selected repository type cannot digest them.</para>
@@ -902,7 +902,7 @@ deletion, and renaming and simplifies the operation sequence as much
 as it can without losing any information.</para>
 
 <para>After canonicalization, a file op list may still end up containing
-multiple M operations in the on the same file. Normally the tool utters a
+multiple M operations on the same file. Normally the tool utters a
 warning when this occurs but does not try to resolve it.</para>
 
 <para>The following modifiers change these policies:</para>
@@ -1116,7 +1116,7 @@ used by Free Software Foundation projects.</para>
 a preposition which indicates which splitting method to use. If the
 preposition is 'at', then the third argument must be an integer
 1-origin index of a file operation within the commit. If it is 'by',
-then the third argument must be a pathname to be prefix-matched.
+then the third argument must be a pathname to be prefix-matched,
 pathname match is done first).</para>
 
 <para>The commit is copied and inserted into a new position in the
@@ -1172,7 +1172,7 @@ the set other than commits, annotated tags, and passthroughs are
 ignored (that is, presently, blobs and resets).</para>
 
 <para>The output from this command can optionally be redirected
-to a named output file. Prefix the filename with <quote>&lt;</quote>
+to a named output file. Prefix the filename with <quote>&gt;</quote>
 and give it as a following argument.</para>
 </listitem>
 </varlistentry>
@@ -1915,7 +1915,7 @@ circumstances.</para>
 
 <para>The output of most of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
-output filename with <quote>&lt;</quote> and give it as a following
+output filename with <quote>&gt;</quote> and give it as a following
 argument.</para>
 
 <variablelist>
@@ -2149,7 +2149,7 @@ editing or conversion purposes.</para>
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
 <para>Certain optional modifiers on the read command change
-its behavior whe neading Subversion repositories:</para>
+its behavior when reading Subversion repositories:</para>
 
 <variablelist>
 <varlistentry>
@@ -2659,7 +2659,7 @@ pattern in some other Unix tools - notably
 <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>In versions before 3.0, path expressions only matched
-commits, not commits and the associated blobs as well.The names 
+commits, not commits and the associated blobs as well. The names 
 of the <quote>a</quote> and <quote>c</quote> flags were different.</para>
 
 <para>In <command>reposurgeon</command> versions before 3.0, the
@@ -2676,7 +2676,7 @@ replaced several global options that no longer exist.</para>
 <para>In <command>reposurgeon</command> versions before 3.0, the
 earliest factor in a unite command always kept its tag and branch
 names unaltered. The new rule for resolving name conflicts, giving
-priprity to the latest factor, produces more natural behavior when
+priority to the latest factor, produces more natural behavior when
 uniting two repoositories end to end; the master branch of the second
 (later) one keeps its name.</para>
 
@@ -2754,7 +2754,7 @@ omits them when rebuilding a repo with git type.</para>
 
 <para>Limitation: While the Subversion read-side support is in good shape,
 the write-side support is more of a sketch or proof-of-concept than a
-robust implemeentation;  it only works on very simple cases and does
+robust implementation;  it only works on very simple cases and does
 not round-trip. It may improve in future releases.</para>
 
 <para>Guarantee: As version-control systems add support for the
@@ -2953,7 +2953,7 @@ modify it in place.</para>
 
 <procedure>
 <step><para>First, we build the repo in a freshly-created staging
-directory.  if your target directory is named
+directory.  If your target directory is named
 <filename>/path/to/foo</filename>, the staging directory will be a
 peer named <filename>/path/to/foo-stageNNNN</filename>, where NNNN is
 a cookie derived from <command>reposurgeon</command>'s process
