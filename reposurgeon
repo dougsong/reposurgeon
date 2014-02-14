@@ -662,7 +662,10 @@ class RepoSurgeonEmail(email.message.Message, object):
             msg += line
         return msg
     def __str__(self):
-        return super(RepoSurgeonEmail, self).as_string(unixfrom=True).replace("\n--", "\n.--")
+        out = super(RepoSurgeonEmail, self).as_string(unixfrom=True)
+        out = out.replace("\n--", "\n.--")
+        out = out.replace("\n>From", "\nFrom")
+        return out
 
 class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
