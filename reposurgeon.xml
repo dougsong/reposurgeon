@@ -4,7 +4,7 @@
    "docbook/docbookx.dtd">
 <refentry id='reposurgeon.1'>
 <refmeta>
-<refentrytitle>reposurgon</refentrytitle>
+<refentrytitle>reposurgeon</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='date'>Oct 31 2010</refmiscinfo>
 <refmiscinfo class='productname'>reposurgeon</refmiscinfo>
