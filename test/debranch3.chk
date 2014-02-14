@@ -1,0 +1,17 @@
+:17 paths
+f1
+:15 paths
+f2
+:13 paths
+alternate/f2
+:11 paths
+alternate/f1
+:9 paths
+alternate/f1
+alternate/f2
+:6 paths
+f2
+:4 paths
+f2
+:2 paths
+f1
