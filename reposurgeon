@@ -2404,7 +2404,7 @@ class StreamParser:
     @staticmethod
     def sd_body(line):
         # Parse the body from a Subversion header line
-        return line.split(":")[1].strip()
+        return line.split(":", 1)[1].strip()
     def sd_require_header(self, hdr):
         # Consume a required header line
         line = self.readline()
