@@ -73,6 +73,11 @@ and headers so it's in the same format as the rest of the mailbox."
   (while (re-search-forward (concat svn-log-delimiter "r\\([0-9]+\\).*") nil t)
     (replace-match (concat reposurgeon-mail-delimiter "Fossil-ID: \\1") nil nil)))
 
+(defun bzr-reference-lift ()
+  "Interactively lift probable Bazaar revision numbers into ref cookies en masse."
+  (interactive)
+  (query-replace-regexp "\\brevision \\([0-9][0-9.]+\\)\\b" "[[BZR:\\1]]"))
+
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
 (when (not reposurgeon-mode-map)
