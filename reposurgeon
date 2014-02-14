@@ -8598,12 +8598,17 @@ source branch are removed.
             scommits = repo.ancestors(stip) + [stip]
             pref = os.path.basename(source)
             for ci in scommits:
+                found = False
                 for fileop in repo.events[ci].fileops:
                     if fileop.op in ("D", "M"):
                         fileop.path = os.path.join(pref, fileop.path)
+                        found = True
                     elif fileop.op in ("R", "C"):
                         fileop.source = os.path.join(pref, fileop.source)
                         fileop.target = os.path.join(pref, fileop.target)
+                        found = True
+                if found:
+                    repo.events[ci].invalidate_pathset_cache()
             ttip = repo.find(branches[target])
             tcommits = repo.ancestors(ttip) + [ttip]
             merged = sorted(set(scommits + tcommits))
