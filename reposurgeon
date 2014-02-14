@@ -8628,7 +8628,8 @@ back-reference syntax.
 
 Ordinarily, if the target path already exists in the fileops, or is visible
 in the ancestry of the commit, this command throws an error.  With the
---relax option, the rename is instead silently skipped.
+--force option, the ancestry check is skipped. With --relax, the rename is
+silently skipped and the old path fileop is deleted instead.
 """)
     def do_path(self, line):
         "Rename paths in the history."
@@ -8643,6 +8644,7 @@ in the ancestry of the commit, this command throws an error.  With the
         with RepoSurgeon.LineParse(line) as parse:
             if verb == "rename":
                 relax = '--relax' in parse.options
+                force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
                 if not target_re:
                     raise Recoverable("no target specified in rename")
@@ -8655,14 +8657,19 @@ in the ancestry of the commit, this command throws an error.  With the
                                 oldpath = getattr(fileop, attr)
                                 if oldpath and re.search(source_re, oldpath):
                                     newpath = re.sub(source_re, target_re, oldpath)
-                                    if not newpath in commit.paths() and not commit.visible(newpath):
+                                    if not force and commit.visible(newpath):
+                                        raise Recoverable("rename at %s failed, %s visible in ancestry" % (commit.id_me(), newpath))
+                                    elif newpath in commit.paths():
+                                        if relax:
+                                            drop.append(fileop)
+                                        else:
+                                            raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
+                                    else:    
                                         actions.append((fileop, attr, newpath))
-                                    elif relax:
-                                        drop.append(fileop)
-                                    else:
-                                        raise Recoverable("rename target %s exists" % newpath)
-                    while drop:
-                        commit.fileops.remove(drop.pop())
+                    for fileop in drop:
+                        commit.fileops.remove(fileop)
+                    if drop:
+                        commit.invalidate_pathset_cache()
                 # All checks must pass before any renames
                 for (fileop, attr, newpath) in actions:
                     setattr(fileop, attr, newpath)

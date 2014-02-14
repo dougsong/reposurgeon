@@ -1309,8 +1309,9 @@ back-reference syntax.</para>
 
 <para>Ordinarily, if the target path already exists in the fileops, or
 is visible in the ancestry of the commit, this command throws an
-error.  With the <option>--relax</option> option, the rename is
-instead silently skipped.</para>
+error.  With the <option>--force</option> option, the ancestry check
+is skipped. With <option>--relax</option>, the rename is silently
+skipped and the old path fileop is deleted instead.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
