@@ -5,6 +5,7 @@ Repository head:
      New 'assign' command allows precomputation of expensive selections.
      There's an 'unassign' as well.
      exec/eval facility for custom Python extensions.
+     path rename has a --relax option to silently skip colliding renames.
 
 3.3: 2014-02-11 
      Set negation in selections with ~.
