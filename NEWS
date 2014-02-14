@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.3: 2014-02-14
      @amp() function useful for logic-gating in conjunctive expressions.
      New 'assign' command allows precomputation of expensive selections.
      There's an 'unassign' as well.
@@ -8,13 +8,13 @@ Repository head:
      path rename has a --relax and --force options to deal with oath collisions
      New --changelog option of coalesce can recognize FSF-style ChangeLog files.
 
-3.3: 2014-02-11 
+3.3: 2014-02-11
      Set negation in selections with ~.
      @min() and @max() in selections.
      'define' by itself lists macros.
      New 'deletes' option in the remove command.
 
-3.2: 2014-02-03 
+3.2: 2014-02-03
      New path rename command.
      List and inspect now take either a leading or following selection.
      Text search selections can now have a B suffix to search blobs.
