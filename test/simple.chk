@@ -92,7 +92,6 @@ reposurgeon: at 10, expunging M theory.txt
 reposurgeon: at 24, expunging M theory.txt
 reposurgeon: at 29, expunging M theory.txt
 reposurgeon: at 52, expunging M theory.txt
-reposurgeon: deleting blobs and empty commits [6, 7, 9, 23, 24, 28, 51, 52]
 paths
 .gitignore
 Makefile
