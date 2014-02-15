@@ -6127,7 +6127,7 @@ class RepositoryList:
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
         # Announce events that will be deleted.
-        if verbose:
+        if debug_enable(DEBUG_DELETE):
             to_delete = [i+1 for i,e in enumerate(self.repo.events)
                     if (isinstance(e, Blob) and not backreferences[e.mark])
                     or (isinstance(e, Commit) and not e.fileops)]
