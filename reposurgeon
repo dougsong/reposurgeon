@@ -6555,8 +6555,8 @@ into sections of the input stream instead).
                     self.line = self.line[closer+1:]
                     lookup = self.chosen().named(ref)
                     if lookup:
-                        # FIXME: a bit problematic when lookup is not singleton
-                        selection += sorted(list(lookup))
+                        # Choose to include *all* commits matching the date
+                        selection.append(max(list(lookup)))
                     else:
                         raise Recoverable("couldn't match a name at <%s>" % ref)
             if debug_enable(DEBUG_LEXER):
