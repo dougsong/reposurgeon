@@ -362,7 +362,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'>commit or tag with that timestamp and creator</entry>
+        <entry align='center'>commit or tag with that timestamp and 
+	committer/creator</entry>
       </row>
       <row>
         <entry align='center'>yyyy-mm-dd part of RFC3339 timestamp</entry>
@@ -370,7 +371,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'>commit or tag with that timestamp and creator</entry>
+        <entry align='center'>commit or tag with that timestamp and 
+	committer/creator</entry>
       </row>
     </tbody>
   </tgroup>

@@ -1441,13 +1441,7 @@ class Commit(object):
         return str(msg)
     def action_stamp(self):
         "Control how a commit stamp is made."
-        # Prefer the primary author to the committer because it
-        # doesn't get messed with when passing around and applying
-        # patch sets.
-        if self.authors:
-            return self.authors[0].action_stamp()
-        else:
-            return self.committer.action_stamp()
+        return self.committer.action_stamp()
     def email_in(self, msg):
         "Update this commit from a parsed email message."
         modified = False
