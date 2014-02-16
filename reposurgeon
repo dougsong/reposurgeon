@@ -4380,7 +4380,7 @@ class Repository:
         "Return a set that selects the entire repository."
         return range(len(self.events))
     def named(self, ref):
-        "Resolved named reference in the context of this repository."
+        "Resolve named reference in the context of this repository."
         selection = set([])
         # First, search tags
         for (i, event) in enumerate(self.events):
@@ -6314,8 +6314,8 @@ into sections of the input stream instead).
             return line
         self.line = line
         try:
-            Date(self.line, error=Recoverable)
-            self.line = "<" + self.line + ">"
+            if self.chosen().named(self.line):
+                self.line = "<" + self.line + ">"
         except Recoverable:
             pass
         self.selection = list(self.eval_expression(set(self.chosen().all())))

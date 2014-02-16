@@ -1,4 +1,6 @@
 			reposurgeon project news
+Repository head:
+     Single fossil or tag names now select as if surrounded by <>.
 
 3.3: 2014-02-14
      @amp() function useful for logic-gating in conjunctive expressions.
