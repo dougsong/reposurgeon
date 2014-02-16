@@ -164,7 +164,7 @@ class VCS:
 vcstypes = [
     VCS(name="git",
         subdirectory=".git",
-        exporter="git fast-export -M -C --signed-tags=verbatim --tag-of-filtered-object=drop --all",
+        exporter="git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags=set(),
         properties=False,
         initializer="git init --quiet",
