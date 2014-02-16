@@ -47,10 +47,6 @@ $(PROJECT).svn: $(PROJECT)-mirror
 $(PROJECT)-mirror:
 	repopuller $(SVN_URL)
 
-# Force rebuild of the fast-import stream from the local mirror on the next make
-local-clobber: clean
-	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
-
 # Force full rebuild from the remote repo on the next make.
 remote-clobber: local-clobber
 	rm -fr $(PROJECT).svn $(PROJECT)-mirror $(PROJECT)-checkout
@@ -65,6 +61,10 @@ $(PROJECT).map: $(PROJECT).svn
 
 endif
 
+# Force rebuild of the fast-import stream from the local mirror on the next make
+local-clobber: clean
+	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
+
 ifeq ($(SOURCE_VCS),cvs)
 
 #
@@ -74,11 +74,20 @@ ifeq ($(SOURCE_VCS),cvs)
 # Mirror a CVS repo. Requires cvssync(1) from the cvs-fast-export
 # distribution. You will need cvs-fast-export installed as well.
 $(PROJECT)-mirror:
-	cvssync -o $(PROJECT)-mirror "$(CVS_HOST):/cvsroot/$(PROJECT)" $(CVS_MODULE) 
+	cvssync -c -o $(PROJECT)-mirror "$(CVS_HOST):/cvsroot/$(PROJECT)" $(CVS_MODULE) 
 
 # Build the fast-import stream from the CVS repository mirror
 $(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
 	reposurgeon $(VERBOSITY) "read $(PROJECT)-mirror" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
+
+# Force full rebuild from the remote repo on the next make.
+remote-clobber: local-clobber
+	rm -fr $(PROJECT)-mirror $(PROJECT)-checkout
+
+# Make a local checkout of the CVS mirror for inspection
+$(PROJECT)-checkout: $(PROJECT)-mirror
+	cvs co -Q -d:local:${PWD}/$(PROJECT)-mirror $(CVS_MODULE)
+	mv $(CVS_MODULE) (PROJECT)-checkout
 
 endif
 
