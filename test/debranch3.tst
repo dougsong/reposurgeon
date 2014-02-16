@@ -1,4 +1,23 @@
 ## Test path modification of debranch
+#
+# Here's the topology of debranch3.fi:
+#
+#         :2
+#         |
+#         :4
+#         |
+#         :6
+#         |
+#         +-----------+
+#         |           |
+#         :9          :15
+#         |           |
+#         :11         :17
+#         |           |
+#         :13      [master]
+#         |
+#     [alternate]
+#
 read <debranch3.fi
 debranch alternate master
 echo 1

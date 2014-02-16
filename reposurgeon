@@ -8598,7 +8598,9 @@ source branch are removed.
             tcommits = repo.ancestors(ttip) + [ttip]
             tcommits.sort()
             # Don't touch commits up to the branch join.
+            last_parent = []
             while scommits and tcommits and scommits[0] == tcommits[0]:
+                last_parent = [repo.events[scommits[0]].mark]
                 scommits.pop(0)
                 tcommits.pop(0)
             pref = os.path.basename(source)
@@ -8615,7 +8617,6 @@ source branch are removed.
                 if found:
                     repo.events[ci].invalidate_pathset_cache()
             merged = sorted(set(scommits + tcommits))
-            last_parent = []
             source_reset = None
             for i in merged:
                 event = repo.events[i]

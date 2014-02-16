@@ -1,8 +1,9 @@
 			reposurgeon project news
 Repository head:
      Single fossil or tag names now select as if surrounded by <>.
+     Fixed more bugs in debranch.
 
-3.3: 2014-02-14
+3.4: 2014-02-14
      @amp() function useful for logic-gating in conjunctive expressions.
      New 'assign' command allows precomputation of expensive selections.
      There's an 'unassign' as well.
