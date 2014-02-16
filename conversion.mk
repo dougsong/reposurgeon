@@ -2,7 +2,7 @@
 #
 # Steps to using this:
 # 0. Copy this into a scratch directory as Makefile
-# 1. Make sure git, svn, rsync, reposurgeon and repopuller are on your $PATH.
+# 1. Make sure git, reposurgeon, and repopuller are on your $PATH.
 # 2. Set PROJECT to the name of your project
 # 3. Set SOURCE_VCS to svn or cvs
 # 4. Set TARGET_VCS to git, hg, or bzr
@@ -28,7 +28,7 @@ VERBOSITY = "verbose 1"
 
 default: $(PROJECT)-$(TARGET_VCS)
 
-# Build the repo from the fast-import stream
+# Build the converted repo from the fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
