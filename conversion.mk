@@ -71,13 +71,12 @@ ifeq ($(SOURCE_VCS),cvs)
 # The following productions are CVS-specific
 #
 
-# Mirror a CVS repo (from a site with a SourceForge-like CVS layout).
-# Requires cvssync(1) from the cvs-fast-export distribution.  
-# You may need to modify the cvssync command for other sites.
+# Mirror a CVS repo. Requires cvssync(1) from the cvs-fast-export
+# distribution. You will need cvs-fast-export installed as well.
 $(PROJECT)-mirror:
 	cvssync -o $(PROJECT)-mirror "$(CVS_HOST):/cvsroot/$(PROJECT)" $(CVS_MODULE) 
 
-# Build the fast-import stream from the repository
+# Build the fast-import stream from the CVS repository mirror
 $(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
 	reposurgeon $(VERBOSITY) "read $(PROJECT)-mirror" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
 
