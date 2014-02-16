@@ -75,7 +75,7 @@ ifeq ($(SOURCE_VCS),cvs)
 # Requires cvssync(1) from the cvs-fast-export distribution.  
 # You may need to modify the cvssync command for other sites.
 $(PROJECT)-mirror:
-	cvssync -o $(PROJECT)-mirror "$(CVSHOST)/cvsroot/$(PROJECT)" $(MODULE) 
+	cvssync -o $(PROJECT)-mirror "$(CVS_HOST)/cvsroot/$(PROJECT)" $(MODULE) 
 
 # Build the fast-import stream from the repository
 $(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
