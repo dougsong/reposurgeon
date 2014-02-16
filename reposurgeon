@@ -8593,6 +8593,14 @@ source branch are removed.
             # Now that the arguments are in proper form, implement
             stip = repo.find(branches[source])
             scommits = repo.ancestors(stip) + [stip]
+            scommits.sort()
+            ttip = repo.find(branches[target])
+            tcommits = repo.ancestors(ttip) + [ttip]
+            tcommits.sort()
+            # Don't touch commits up to the branch join.
+            while scommits and tcommits and scommits[0] == tcommits[0]:
+                scommits.pop(0)
+                tcommits.pop(0)
             pref = os.path.basename(source)
             for ci in scommits:
                 found = False
@@ -8606,8 +8614,6 @@ source branch are removed.
                         found = True
                 if found:
                     repo.events[ci].invalidate_pathset_cache()
-            ttip = repo.find(branches[target])
-            tcommits = repo.ancestors(ttip) + [ttip]
             merged = sorted(set(scommits + tcommits))
             last_parent = []
             source_reset = None
