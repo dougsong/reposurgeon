@@ -15,3 +15,37 @@ f2
 f2
 :2 paths
 f1
+:9 inspect
+Event 10 ================================================================
+commit refs/heads/master
+mark :9
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+data 18
+Changes on branch
+from :6
+M 100644 :7 alternate/f1
+M 100644 :8 alternate/f2
+
+:15 inspect
+Event 16 ================================================================
+commit refs/heads/master
+mark :15
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+data 17
+Change on master
+from :13
+M 100644 :14 f2
+
+:6 inspect
+Event 7 =================================================================
+commit refs/heads/master
+mark :6
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+data 10
+Modify f2
+from :4
+M 100644 :5 f2
+

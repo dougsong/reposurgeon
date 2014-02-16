@@ -10,3 +10,6 @@ echo 1
 :6 paths
 :4 paths
 :2 paths
+:9 inspect
+:15 inspect
+:6 inspect
