@@ -5331,7 +5331,6 @@ class Repository:
         while isinstance(other[0], Passthrough):
             lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
             self.events.insert(lenfront, other.events.pop(0))
-        other.renumber(len(self.events))
         # Merge in the non-feature events and blobs
         self.events += other.events
         self.declare_sequence_mutation()
