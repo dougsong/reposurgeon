@@ -182,8 +182,8 @@ On most Subversion repositories, and in particular anything with a
 standard trunk/tags/branches layout, it will do the right thing. (It
 will also cope with adventitious branches in the root directory of the
 repo, such as many projects use for website content.)  In unusual
-cases you may want to use the "svn_nobranch" option; find out more
-about this and other options via the "set" command.</p>
+cases you may want to use the "--nobranch" option; find out more
+about this from the manual page.</p>
 
 <p>When you're done, run <code>make repodiffer</code>.  This is a
 sanity check that redoes your repo conversion with
@@ -431,7 +431,7 @@ later is converting the declarations that tell the version-control
 system to ignore derived files. <code>reposurgeon</code> does this for
 you if you're using it for CVS- or Subversion-to-git conversion, both
 expressing Subversion svn:ignore properties as .gitignore files 
-and lifying .cvsignore files to .gitignore files; see the
+and lifting .cvsignore files to .gitignore files; see the
 LIMITATIONS AND GUARANTEES section on its manpage if other DVCSes are
 involved.</p>
 
