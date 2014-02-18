@@ -185,14 +185,6 @@ repo, such as many projects use for website content.)  In unusual
 cases you may want to use the "--nobranch" option; find out more
 about this from the manual page.</p>
 
-<p>When you're done, run <code>make repodiffer</code>.  This is a
-sanity check that redoes your repo conversion with
-<code>git-svn</code>, then compares the file contents of each pair of
-revisions it can match by committer and timestamp.  They should have
-no file-content differences; if they do, there is a bug in either
-<code>reposurgeon</code> or <code>git-svn</code> (I have seen both 
-cases).
-
 <p>To my knowledge, <code>reposurgeon</code> is the only conversion
 tool that handles multibranch Subversion repositories in full
 generality. It can even translate Subversion commits that alter
@@ -220,7 +212,36 @@ the RCS master files that store the content.</p>
 href="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools#Interaction_with_other_Revision_Control_Systems">Git
 wiki page on conversion tools</a>.
 
-<h1 id="cleanup">Step Three: Cleanup</h1>
+<h1 id="sanity">Step Three: Sanity Checking</h1>
+
+<p>Before polishing your your conversion and putting it into
+production, you should check it for basic correctness.</p>
+
+<p>Use diff(1) with the -r option to compare a head checkout of the
+unconverted repository with a checkout of the converted
+repository. The only differences you should see are those due to
+keyword expansion and ignore-file lifting.  If this is not true, you
+have found a serious bug in either reposurgeon or the front end
+it used. Consult http://www.catb.org/~esr/reposurgeon/reporting-bugs.html
+for information on how to usefully report bugs.</p>
+
+<p>If you are convering from Subversion, <code>make repodiffer</code>.
+This is a sanity check that redoes your repo conversion with
+<code>git-svn</code>, then compares the file contents of each pair of
+revisions it can match by committer and timestamp.  They should have
+no file-content differences; if they do, there is a bug in either
+<code>reposurgeon</code> or <code>git-svn</code> (I have seen both
+cases).</p>
+
+<p>If you are convering from CVS, use reposurgeon's graph command to
+examine looking (in particular) for misplaced tags or branch
+joins. Often these can be manually repaired with little effort. These
+flaws do 'not' necessarily imply bugs in cvs-fast-export or
+reposugeon; they may simply indicate previously undetected
+malformations in the history. However, reporting them may help improve
+cvs-fast-export.</p>
+
+<h1 id="cleanup">Step Four: Cleanup</h1>
 
 <p>You should now have a git repository, but it is likely to have a
 lot of cruft and conversion artifacts in it.  Here are some common
@@ -483,7 +504,7 @@ push</code> to push the new history up to the public repo.</p></li>
 them that they will need to re-clone it.</p></li>
 </ol>
 
-<h1 id="client-tools">Step Four: Client Tools</h1>
+<h1 id="client-tools">Step Five: Client Tools</h1>
 
 <p>Developers who are already git fans and know how to use a git
 client will, of course, have no partiticular trouble using a git
@@ -507,7 +528,7 @@ as commit IDs).  The problem is that hg doesn't copy any of this local
 state when it clones a repo, so clones of hg-git repos lose their
 git branches and tags.</p>
 
-<h1 id="practice">Step Four: Good Practice</h1>
+<h1 id="practice">Step Six: Good Practice</h1>
 
 <p>Since the object of this exercise is to support both git and hg
 fans, both groups need to use the repo in a way that doesn't assume
@@ -599,14 +620,16 @@ Makefile.</p>
 
 <p>3.6 (2013-01-22) Update for reposurgeon 2.15 and cvs-fast-export.</p>
 
-<p>3.7 (2013-04-01) Note that reposurgeon is significantly faster
-under pypy.</p>
+<p>3.7 (2013-04-01) Note that reposurgeon is significantly faster under pypy.</p>
 
 <p>3.8 (2013-11-15) Remove an obsolete paragraph.</p>
 
 <p>3.9 (2013-12-11) Incorporate the report that git now does hg remotes.</p>
 
 <p>3.10 (2014-02-16) Minor changes for 3.0 syntax.</p>
+
+<p>3.11 (2014-02-18) More about post-conversion sanity checking.</p>
+
 </div>
 <hr />
 </body>
