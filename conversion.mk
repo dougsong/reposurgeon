@@ -27,7 +27,7 @@ VERBOSITY = "verbose 1"
 
 # Configuration ends here
 
-.PHONY: local-clobber remote-clobber gitk gc compare clean dist map
+.PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap
 
 default: $(PROJECT)-$(TARGET_VCS)
 
