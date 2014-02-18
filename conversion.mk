@@ -7,11 +7,14 @@
 # 3. Set SOURCE_VCS to svn or cvs
 # 4. Set TARGET_VCS to git, hg, or bzr
 # 5. For svn, set SVN_URL to point at the remote repository you want to convert.
-# 6. For cvs, set CVS_HOST to the repository hostname
+# 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module. 
 # 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
-# 8. Create a $(PROJECT).authormap file mapping local usernames to DVCS IDs.
-# 9. (Optional) Set EXTRAS to name extra metadata such as a comments mailbox.
-# 10. Invoke make on this file.
+# 8. Run 'make stubmap' to create a stub author map.
+# 9. Run 'make' to build a converted repository
+#
+# For a production-quality conversion you will need to edit the map
+# file and the lift script.  During the process you can set EXTRAS to
+# name extra metadata such as a comments mailbox.
 
 PROJECT = foo
 SOURCE_VCS = svn
@@ -24,21 +27,35 @@ VERBOSITY = "verbose 1"
 
 # Configuration ends here
 
-.PHONY: local-clobber remote-clobber gitk gc compare clean dist
+.PHONY: local-clobber remote-clobber gitk gc compare clean dist map
 
 default: $(PROJECT)-$(TARGET_VCS)
 
-# Build the converted repo from the fast-import stream
+# Build the converted repo from the second-stage fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
+# Build the second-stage fast-import stream from the first-stage stream dump
+$(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).lift $(PROJECT).map $(EXTRAS)
+	reposurgeon $(VERBOSITY) "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
+
+# Force rebuild of first-stage stream from the local mirror on the next make
+local-clobber: clean
+	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
+
+# Force full rebuild from the remote repo on the next make.
+remote-clobber: local-clobber
+	rm -fr $(PROJECT).$(SOURCE_VCS) $(PROJECT)-mirror $(PROJECT)-checkout
+
+# Get the (empty) state of the author mapping from the first-stage stream
+stubmap: $(PROJECT).$(SOURCE_VCS)
+	reposurgeon "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
+
+# Source-VCS-specific productions to build the first-stage stream dump
+
 ifeq ($(SOURCE_VCS),svn)
 
-# Build the fast-import stream from the Subversion stream dump
-$(PROJECT).fi: $(PROJECT).svn $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read <$(PROJECT).svn" "authors read <$(PROJECT).authormap" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
-
-# Build the Subversion stream dump from the local mirror
+# Build the first-stage (Subversion) stream dump from the local mirror
 $(PROJECT).svn: $(PROJECT)-mirror
 	repopuller $(PROJECT)-mirror
 	svnadmin dump $(PROJECT)-mirror/ >$(PROJECT).svn
@@ -47,42 +64,22 @@ $(PROJECT).svn: $(PROJECT)-mirror
 $(PROJECT)-mirror:
 	repopuller $(SVN_URL)
 
-# Force full rebuild from the remote repo on the next make.
-remote-clobber: local-clobber
-	rm -fr $(PROJECT).svn $(PROJECT)-mirror $(PROJECT)-checkout
-
 # Make a local checkout of the Subversion mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
 	svn co file://${PWD}/$(PROJECT)-mirror $(PROJECT)-checkout
 
-# Get the Subversion state of the author mapping
-$(PROJECT).map: $(PROJECT).svn
-	reposurgeon "read <$(PROJECT).svn" "authors write >$(PROJECT).map"
-
 endif
 
-# Force rebuild of the fast-import stream from the local mirror on the next make
-local-clobber: clean
-	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
-
 ifeq ($(SOURCE_VCS),cvs)
-
-#
-# The following productions are CVS-specific
-#
 
 # Mirror a CVS repo. Requires cvssync(1) from the cvs-fast-export
 # distribution. You will need cvs-fast-export installed as well.
 $(PROJECT)-mirror:
 	cvssync -c -o $(PROJECT)-mirror "$(CVS_HOST):/cvsroot/$(PROJECT)" $(CVS_MODULE) 
 
-# Build the fast-import stream from the CVS repository mirror
-$(PROJECT).fi: $(PROJECT).lift $(PROJECT).authormap $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read $(PROJECT)-mirror" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
-
-# Force full rebuild from the remote repo on the next make.
-remote-clobber: local-clobber
-	rm -fr $(PROJECT)-mirror $(PROJECT)-checkout
+# Build the first-stage CVS stream dump from the local mirror
+$(PROJECT).cvs: $(PROJECT)-mirror
+	find $(PROJECT)-mirror -name '*,v' | cvs-fast-export -k --reposurgeon >$(PROJECT).cvs
 
 # Make a local checkout of the CVS mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
