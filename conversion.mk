@@ -87,7 +87,7 @@ $(PROJECT).cvs: $(PROJECT)-mirror
 
 # Make a local checkout of the CVS mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
-	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co $(CVS_MODULE)
+	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -kk $(CVS_MODULE)
 	mv $(CVS_MODULE) $(PROJECT)-checkout
 
 endif
