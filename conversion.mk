@@ -51,6 +51,10 @@ remote-clobber: local-clobber
 stubmap: $(PROJECT).$(SOURCE_VCS)
 	reposurgeon "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
+# Compare the head revisions of the unconverted and converted repositories
+diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+	diff -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+
 # Source-VCS-specific productions to build the first-stage stream dump
 
 ifeq ($(SOURCE_VCS),svn)
@@ -83,8 +87,8 @@ $(PROJECT).cvs: $(PROJECT)-mirror
 
 # Make a local checkout of the CVS mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
-	cvs co -Q -d:local:${PWD}/$(PROJECT)-mirror $(CVS_MODULE)
-	mv $(CVS_MODULE) (PROJECT)-checkout
+	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co $(CVS_MODULE)
+	mv $(CVS_MODULE) $(PROJECT)-checkout
 
 endif
 
