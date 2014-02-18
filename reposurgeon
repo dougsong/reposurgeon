@@ -9526,6 +9526,8 @@ structures. Functions defined are accessible to later 'eval' calls.
                 execfile(parse.stdin.name, locals(), globals())
             except SyntaxError:
                 raise Recoverable("invalid syntax in extension function")
+            except IOError:
+                raise Recoverable("I/O error, can't find or open input source")
 
     def help_eval(self):
         print("""
