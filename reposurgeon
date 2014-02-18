@@ -1742,7 +1742,8 @@ class Commit(object):
         if not directory:
             directory = os.path.join(self.repo.subdir(), self.mark)
         try:
-            os.mkdir(directory)
+            if not os.path.exists(directory):
+                os.mkdir(directory)
             for (path, (_, mark)) in self.manifest().iteritems():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
