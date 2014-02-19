@@ -10,7 +10,8 @@
 # 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module. 
 # 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
 # 8. Run 'make stubmap' to create a stub author map.
-# 9. Run 'make' to build a converted repository
+# 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool
+# 10. Run 'make' to build a converted repository
 #
 # For a production-quality conversion you will need to edit the map
 # file and the lift script.  During the process you can set EXTRAS to
@@ -28,6 +29,7 @@ SVN_URL = svn://svn.debian.org/$(PROJECT)
 CVS_HOST = $(PROJECT).cvs.sourceforge.net
 CVS_MODULE = $(PROJECT)
 VERBOSITY = "verbose 1"
+REPOSURGEON = reposurgeon
 
 # Configuration ends here
 
@@ -37,11 +39,11 @@ default: $(PROJECT)-$(TARGET_VCS)
 
 # Build the converted repo from the second-stage fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
-	rm -fr $(PROJECT)-$(TARGET_VCS); reposurgeon "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
+	rm -fr $(PROJECT)-$(TARGET_VCS); $(REPOSURGEON) "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
 # Build the second-stage fast-import stream from the first-stage stream dump
 $(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).lift $(PROJECT).map $(EXTRAS)
-	reposurgeon $(VERBOSITY) "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
+	$(REPOSURGEON) $(VERBOSITY) "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
@@ -53,7 +55,7 @@ remote-clobber: local-clobber
 
 # Get the (empty) state of the author mapping from the first-stage stream
 stubmap: $(PROJECT).$(SOURCE_VCS)
-	reposurgeon "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
+	$(REPOSURGEON) "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
 # Compare the head revisions of the unconverted and converted repositories
 EXCLUDE = -x CVS -x .$(SOURCE_VCS) -x .$(TARGET_VCS)
