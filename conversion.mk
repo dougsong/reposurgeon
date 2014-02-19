@@ -54,7 +54,8 @@ stubmap: $(PROJECT).$(SOURCE_VCS)
 	reposurgeon "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
 # Compare the head revisions of the unconverted and converted repositories
-EXCLUDE = -x CVS -x .cvsignore -x .git -x .gitignore
+EXCLUDE = -x CVS -x .$(SOURCE_VCS) -x .$(TARGET_VCS)
+EXCLUDE += -x .$(SOURCE_VCS)ignore -x .$(TARGET_VCS)ignore
 diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 	diff $(EXCLUDE) -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 
