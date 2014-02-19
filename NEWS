@@ -1,6 +1,7 @@
 			reposurgeon project news
 
-Repository head:
+
+3.6: 2014-02-19
      Major rewrite of the generic conversion makefile.
      Fixed a bug in the graft and unite commands, thanks to Ralf Schlatterbeck.
 
