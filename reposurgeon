@@ -6667,8 +6667,11 @@ into sections of the input stream instead).
             preselected = ((i, chosen.events[i]) for i in preselection
                            if isinstance(chosen.events[i], (Commit, Blob)))
             match_paths = all if "a" in flags else any
-            return {i for (i, event) in preselected
-                      if match_paths(search(path) for path in event.paths())}
+            hits = set([])
+            for (i, event) in preselected:
+                if match_paths(search(path) for path in event.paths()):
+                    hits.add(i)
+            return hits
         else:
             preselected = ((i, chosen.events[i]) for i in preselection)
             return {i for (i, event) in preselected
