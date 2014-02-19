@@ -1,4 +1,9 @@
 			reposurgeon project news
+
+Repository head:
+     Major rewrite of the generic conversion makefile.
+     Fixed a bug in the graft and unite commands, thanks to Ralf Schlatterbeck.
+
 3.5: 2014-02-16
      Single fossil or tag names now select as if surrounded by <>.
      Fixed more bugs in debranch.
