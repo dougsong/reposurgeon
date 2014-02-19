@@ -14,8 +14,6 @@ LDFLAGS?=
 PYVERSION=2.7
 pyinclude?=$(shell pkg-config --cflags python || echo "-I/usr/include/python$(PYVERSION)")
 pylib?=$(shell pkg-config --libs python || echo "-l$python$(PYVERSION)")
-pycompile=${CC} ${CFLAGS} $(pyinclude) -c
-pylink=${CC} ${CFLAGS} ${LDFLAGS} $(pylib)
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
@@ -58,8 +56,8 @@ reporting-bugs.html: reporting-bugs.asc
 
 cyreposurgeon: reposurgeon
 	cython --embed reposurgeon -o cyreposurgeon.c
-	$(pycompile) cyreposurgeon.c -o cyreposurgeon.o
-	$(pylink) cyreposurgeon.o -o cyreposurgeon
+	${CC} ${CFLAGS} $(pyinclude) -c cyreposurgeon.c -o cyreposurgeon.o
+	${CC} ${CFLAGS} ${LDFLAGS} cyreposurgeon.o $(pylib) -o cyreposurgeon
 
 install: all
 	$(INSTALL) -d "$(target)/bin"
