@@ -15,6 +15,8 @@
 # For a production-quality conversion you will need to edit the map
 # file and the lift script.  During the process you can set EXTRAS to
 # name extra metadata such as a comments mailbox.
+#
+# After the conversion, you can perform a sanity check with 'make diff'.
 
 PROJECT = foo
 SOURCE_VCS = svn
@@ -52,8 +54,9 @@ stubmap: $(PROJECT).$(SOURCE_VCS)
 	reposurgeon "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
 # Compare the head revisions of the unconverted and converted repositories
+EXCLUDE = -x CVS -x .cvsignore -x .git -x .gitignore
 diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
-	diff -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+	diff $(EXCLUDE) -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 
 # Source-VCS-specific productions to build the first-stage stream dump
 
