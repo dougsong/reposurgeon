@@ -17,6 +17,8 @@
 # name extra metadata such as a comments mailbox.
 #
 # After the conversion, you can perform a sanity check with 'make diff'.
+# Note that CVS-checkout directories not matched in a conversion may be
+# historical relics containing only CVSROOT directories.
 
 PROJECT = foo
 SOURCE_VCS = svn
