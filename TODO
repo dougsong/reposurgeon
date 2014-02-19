@@ -6,8 +6,7 @@
 * Someday, port fully to Python 3.  At that point, reapply the commit
   "Ensure BZ2File only work on binary data".
 
-* THe Subversion dumper is pretty weak, more a proof of concept than
+* The Subversion dumper is pretty weak, more a proof of concept than
   anything useful for production.
 
-* New features: set difference and ancestors-of in selections. 
-  --dedos option on filter.
+* New features: ancestors-of in selections.
