@@ -6664,12 +6664,11 @@ into sections of the input stream instead).
                 return self.eval_pathset_full(search,
                                               preselection,
                                               "a" in flags)
-            preselected = ((i, chosen.events[i]) for i in preselection)
+            preselected = ((i, chosen.events[i]) for i in preselection
+                           if isinstance(chosen.events[i], (Commit, Blob)))
             match_paths = all if "a" in flags else any
             return {i for (i, event) in preselected
-                      if isinstance(event, (Commit, Blob)) and
-                            match_paths(search(path)
-                                        for path in event.paths())}
+                      if match_paths(search(path) for path in event.paths())}
         else:
             preselected = ((i, chosen.events[i]) for i in preselection)
             return {i for (i, event) in preselected
