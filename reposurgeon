@@ -6749,6 +6749,8 @@ into sections of the input stream instead).
             funname += self.pop()
         if not funname or self.peek() != '(':
             return None
+        # Because the starting "(" is still there, eval_expression()
+        # will eat the ending ")" itself through eval_term().
         subarg = self.eval_expression(preselection)
         try:
             return getattr(self, funname + "_handler")(subarg)
@@ -6757,13 +6759,13 @@ into sections of the input stream instead).
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
-            return set([min(*subarg)])
+            return set([min(subarg)])
         except TypeError:
             raise Recoverable("cannot take minimum of empty set")
     def max_handler(self, subarg):
         "Maximum member of a selection set."
         try:
-            return set([max(*subarg)])
+            return set([max(subarg)])
         except TypeError:
             raise Recoverable("cannot take maximum of empty set")
     def amp_handler(self, subarg):
