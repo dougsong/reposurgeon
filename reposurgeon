@@ -9012,8 +9012,7 @@ fields are changed and a warning is issued.
             self.set_selection_set(line)
             try:
                 if len(self.selection) != 1: raise ValueError()
-                target, = self.selected(Commit)
-                target = target[1]
+                (target, _), = self.selected(Commit)
             except (TypeError, ValueError):
                 raise Recoverable("tag move requires a singleton commit set.")
             if tag:
