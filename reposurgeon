@@ -6668,7 +6668,7 @@ into sections of the input stream instead).
             hits = set([])
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
-                if all_or_any(itertools.imap(search, event.paths()):
+                if all_or_any(itertools.imap(search, event.paths())):
                     hits.add(i)
             return hits
         else:
@@ -8987,7 +8987,7 @@ fields are changed and a warning is issued.
             self.set_selection_set(line)
             try:
                 if len(self.selection) != 1: raise ValueError()
-                (target, _), = self.selected(Commit)
+                (_, target), = self.selected(Commit)
             except (TypeError, ValueError):
                 raise Recoverable("tag move requires a singleton commit set.")
             if tag:
