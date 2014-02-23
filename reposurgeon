@@ -6664,11 +6664,11 @@ into sections of the input stream instead).
                 return self.eval_pathset_full(search,
                                               preselection,
                                               "a" in flags)
-            match_paths = all if "a" in flags else any
+            all_or_any = all if "a" in flags else any
             hits = set([])
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
-                if match_paths(search(path) for path in event.paths()):
+                if all_or_any(itertools.imap(search, event.paths()):
                     hits.add(i)
             return hits
         else:
