@@ -6677,66 +6677,41 @@ into sections of the input stream instead).
                       if matcher in event.paths()}
     def eval_pathset_full(self, match_condition,
                                 preselection,
-                                match_all = False):
+                                match_all):
         result = set()
         last_event = max(preselection)
         match = match_condition
-        if isinstance(match_condition, collections.Callable):
-            # Try to match a regex in the trees. For each commit we remember
-            # only the part of the tree that matches the regex. In most cases
-            # it is a lot less memory and CPU hungry than running regexes on
-            # the full commit manifests. In the match_all case we instead
-            # select commits that nowhere match the opposite condition.
-            if match_all:
-                match = lambda p: not match_condition(p)
-            match_trees = {}
-            for (i, event) in enumerate(self.chosen().events):
-                if i > last_event: break
-                if not isinstance(event, Commit): continue
-                try:
-                    parent = event.parents()[0]
-                except IndexError:
+        # Try to match a regex in the trees. For each commit we remember
+        # only the part of the tree that matches the regex. In most cases
+        # it is a lot less memory and CPU hungry than running regexes on
+        # the full commit manifests. In the match_all case we instead
+        # select commits that nowhere match the opposite condition.
+        if match_all:
+            match = lambda p: not match_condition(p)
+        match_trees = {}
+        for (i, event) in enumerate(self.chosen().events):
+            if i > last_event: break
+            if not isinstance(event, Commit): continue
+            try:
+                parent = event.parents()[0]
+            except IndexError:
+                tree = PathMap()
+            else:
+                tree = match_trees[parent.mark].snapshot()
+            for fileop in event.fileops:
+                if fileop.op == 'M' and match(fileop.path):
+                    tree[fileop.path] = True
+                elif fileop.op in ('C', 'R') and match(fileop.target):
+                    tree[fileop.target] = True
+                elif fileop.op == 'D' and match(fileop.path):
+                    del tree[fileop.path]
+                elif fileop.op == 'R' and match(fileop.source):
+                    del tree[fileop.source]
+                elif fileop.op == 'deleteall':
                     tree = PathMap()
-                else:
-                    tree = match_trees[parent.mark].snapshot()
-                for fileop in event.fileops:
-                    if fileop.op == 'M' and match(fileop.path):
-                        tree[fileop.path] = True
-                    elif fileop.op in ('C', 'R') and match(fileop.target):
-                        tree[fileop.target] = True
-                    elif fileop.op == 'D' and match(fileop.path):
-                        del tree[fileop.path]
-                    elif fileop.op == 'R' and match(fileop.source):
-                        del tree[fileop.source]
-                    elif fileop.op == 'deleteall':
-                        tree = PathMap()
-                match_trees[event.mark] = tree
-                if (not tree) == match_all:
-                    result.add(i)
-        else:
-            # Search for an absolute path in the trees. We only need to
-            # remember if that path is or not in any given commit tree.
-            # Note: match_all is always false here, no need to check.
-            containing = set()
-            for (i, event) in enumerate(self.chosen().events):
-                if i > last_event: break
-                if not isinstance(event, Commit): continue
-                contains = event.has_parents() \
-                        and event.parents()[0].mark in containing
-                for fileop in event.fileops:
-                    if fileop.op == 'M' and fileop.path == match:
-                        contains = True
-                    elif fileop.op in ('C', 'R') and fileop.target == match:
-                        contains = True
-                    elif fileop.op == 'D' and fileop.path == match:
-                        contains = False
-                    elif fileop.op == 'R' and fileop.source == match:
-                        contains = False
-                    elif fileop.op == 'deleteall':
-                        contains = False
-                if contains:
-                    containing.add(event.mark)
-                    result.add(i)
+            match_trees[event.mark] = tree
+            if (not tree) == match_all:
+                result.add(i)
         return result
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
