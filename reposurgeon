@@ -6678,17 +6678,17 @@ into sections of the input stream instead).
     def eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all):
-        result = set()
-        last_event = max(preselection)
-        match = match_condition
         # Try to match a regex in the trees. For each commit we remember
         # only the part of the tree that matches the regex. In most cases
         # it is a lot less memory and CPU hungry than running regexes on
         # the full commit manifests. In the match_all case we instead
         # select commits that nowhere match the opposite condition.
+        match = match_condition
         if match_all:
             match = lambda p: not match_condition(p)
         match_trees = {}
+        result = set()
+        last_event = max(preselection)
         for (i, event) in enumerate(self.chosen().events):
             if i > last_event: break
             if not isinstance(event, Commit): continue
