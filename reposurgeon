@@ -7070,13 +7070,13 @@ into sections of the input stream instead).
         "Minimum member of a selection set."
         try:
             return set([min(subarg)])
-        except TypeError:
+        except ValueError:
             raise Recoverable("cannot take minimum of empty set")
     def max_handler(self, subarg):
         "Maximum member of a selection set."
         try:
             return set([max(subarg)])
-        except TypeError:
+        except ValueError:
             raise Recoverable("cannot take maximum of empty set")
     def amp_handler(self, subarg):
         "Amplify - map empty set to empty, nonempty set to all."
