@@ -6689,9 +6689,8 @@ into sections of the input stream instead).
         match_trees = {}
         result = set()
         last_event = max(preselection)
-        for (i, event) in enumerate(self.chosen().events):
+        for (i, event) in self.chosen().iterevents(types=Commit):
             if i > last_event: break
-            if not isinstance(event, Commit): continue
             try:
                 parent = event.parents()[0]
             except IndexError:
