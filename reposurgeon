@@ -2460,7 +2460,11 @@ class StreamParser:
             # Optimization: if we're reading from a plain file,
             # no need to clone all the blobs. 
             if os.path.isfile(self.fp.name):
-                self.repo.seekstream = fp
+                # We can't just pass the input file object here, it
+                # leads to bad results when fast_import is called
+                # within a with clause.  Alas, this is a potential
+                # resource leek
+                self.repo.seekstream = open(self.fp.name)
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = self.repo.fossil_count = 0
                 self.linebuffers = []
@@ -5479,6 +5483,9 @@ class Repository:
         isinstances = itertools.imap(isinstance,
                                      events(), itertools.repeat(types))
         return itertools.compress(withindices, isinstances)
+    def __del__(self):
+        if self.seekstream:
+            self.seekstream.close()
 
 def read_repo(source, options, preferred):
     "Read a repository using fast-import."
@@ -6172,6 +6179,7 @@ into sections of the input stream instead).
             self.outfile = None
             self.redirected = False
             self.options = set([])
+            self.closem = []
         def __enter__(self):
             # Input redirection
             m = re.search(r"<\S+", self.line)
@@ -6182,6 +6190,7 @@ into sections of the input stream instead).
                 if self.infile and self.infile != '-':
                     try:
                         self.stdin = open(self.infile, "rb")
+                        self.closem.append(self.stdin)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
                                           % self.infile)
@@ -6198,6 +6207,7 @@ into sections of the input stream instead).
                         raise Recoverable("not a plain file")
                     try:
                         self.stdout = open(self.outfile, "wb")
+                        self.closem.append(self.stdout)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for write" \
                                           % self.outfile)
@@ -6221,7 +6231,8 @@ into sections of the input stream instead).
             self.line = self.line.strip()
             return self
         def __exit__(self, extype_unused, value_unused, traceback_unused):
-            pass
+            for fp in self.closem:
+                fp.close()
         def tokens(self):
             "Return the argument token list after the parse for redirects."
             return self.line.split()

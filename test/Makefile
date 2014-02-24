@@ -46,14 +46,14 @@ roundtrip:
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$; \
-	    diff -u $${file} /tmp/rs$$$$; \
+	    [ -s /tmp/r$$$$ ] && diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
-	    diff -u $${file} /tmp/rs$$$$; \
+	    [ -s /tmp/rs$$$$ ] && diff -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 
@@ -64,7 +64,7 @@ mailboxing:
 	@for file in *.fi; do \
 	    echo "  $${file}";\
 	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" >/tmp/regress; \
-	    diff -u $${file} /tmp/regress; \
+	    [ -s /tmp/regress ] && diff -u $${file} /tmp/regress; \
 	done
 	@rm -f /tmp/regress
 
@@ -99,7 +99,7 @@ coalesce:
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" >/tmp/regress; \
-	    diff -u $${file}.chk /tmp/regress; \
+	    [ -s /tmp/regress ] && diff -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress
 
