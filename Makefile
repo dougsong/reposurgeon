@@ -72,7 +72,7 @@ clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
-	rm -f cyreposurgeon.c cyreposurgeon
+	rm -f cyreposurgeon.c cyreposurgeon.o cyreposurgeon
 
 reposurgeon-$(VERS).tar.gz: $(SOURCES)
 	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
