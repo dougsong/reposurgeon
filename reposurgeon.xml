@@ -1049,9 +1049,9 @@ file path matches.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tagify</command>
-        [--canonicalize]
-        [--tipdeletes]
-        [--tagify-merges]
+        [<command>--canonicalize</command>]
+        [<command>--tipdeletes</command>]
+        [<command>--tagify-merges</command>]
 </term>
 <listitem>
 <para>Search for empty commits and turn them into tags. Takes an optional
@@ -1207,6 +1207,20 @@ committer ID and timestamp pair.</para>
 <para>If output is redirected and the modifier <quote>changed</quote>
 appears, a minimal set of modifications actually made is written to the
 output file in a form that can be fed back in.</para> 
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>append</command>
+        [<command>--rstrip</command>]
+	[&gt;<emphasis>text</emphasis>]
+</term>
+<listitem>
+<para>Append text to the comments of commits and tags in the specified
+selection set. The text is the first token of the command and may
+be a quoted string.</para>
+
+<para>If the option --rstrip is given, the comment is right-stripped before
+the new text is appended.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

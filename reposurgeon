@@ -8044,6 +8044,32 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                 baton.twirl()
         announce("%d items modified." % altered)
 
+    def help_append(self):
+        print("""
+Append text to the comments of commits and tags in the specified
+selection set. The text is the first token of the command and may
+be a quoted string.
+
+If the option --rstrip is given, the comment is right-stripped before
+the new text is appended.
+""")
+    def do_append(self, line):
+        "Append a line to comments in the specified selection set."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        if self.selection is None:
+            raise Recoverable("no selection")
+        with RepoSurgeon.LineParse(line) as parse:
+            fields = shlex.split(parse.line)
+            if not fields:
+                raise Recoverable("missing append line")
+            line = fields[0] + '\n'
+            for _, event in self.selected((Tag, Commit)):
+                if '--rstrip' in parse.options:
+                    event.comment = event.comment.rstrip()
+                event.comment += line
+
     def help_squash(self):
         print("""
 Combine a selection set of events; this may mean deleting them or
@@ -8053,7 +8079,6 @@ outside the selection range, depending on policy flags.
 The default selection set for this command is empty.  Blobs cannot be
 directly affected by this command; they move or are deleted only when
 removal of fileops associated with commits requires this.
-
 """)
     def do_squash(self, line):
         "Squash events in the specified selection set."

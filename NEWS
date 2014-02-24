@@ -1,7 +1,8 @@
 			reposurgeon project news
 
 Repository head:
-     New --dedos option for filter command, to change \r\n line endings to \n. 
+     New --dedos option for filter command, to change \r\n line endings to \n.
+     New append command for annotating comments.
 
 3.6: 2014-02-19
      Major rewrite of the generic conversion makefile.
