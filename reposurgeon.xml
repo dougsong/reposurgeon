@@ -1217,7 +1217,8 @@ output file in a form that can be fed back in.</para>
 <listitem>
 <para>Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
-be a quoted string.</para>
+be a quoted string. C-style escape sequences in the string are
+interpreted using Python's string_decode codec.</para>
 
 <para>If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.</para>

@@ -8048,7 +8048,8 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         print("""
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
-be a quoted string.
+be a quoted string. C-style escape sequences in the string are
+interpreted using Python's string_decode codec.
 
 If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.
@@ -8064,7 +8065,7 @@ the new text is appended.
             fields = shlex.split(parse.line)
             if not fields:
                 raise Recoverable("missing append line")
-            line = fields[0] + '\n'
+            line = fields[0].decode("string_escape")
             for _, event in self.selected((Tag, Commit)):
                 if '--rstrip' in parse.options:
                     event.comment = event.comment.rstrip()
