@@ -1141,15 +1141,15 @@ of file operations in the original commit.</para>
 </varlistentry>
 <varlistentry>
 <term><command>remove</command> 
-        [<emphasis>index</emphasis> | <command>deletes</command>] 
+        [<emphasis>index</emphasis> | <emphasis>path</emphasis> | <command>deletes</command>] 
         [<command>to</command> <emphasis>commit</emphasis>]
 </term>
 <listitem>
-<para>From a specified commit, remove a specified fileop.  The
-selection set must be a singleton and the OP one of (a) the keyword
-<quote>deletes</quote>, (b) a file path, or (c) a 1-origin numeric
-index. The <quote>deletes</quote> keyword selects all D fileops in the
-commit; the others select one each.</para>
+<para>From a specified commit, remove a specified fileop.  The op must
+be one of (a) the keyword <quote>deletes</quote>, (b) a file path, or
+(c) a 1-origin numeric index. The <quote>deletes</quote> keyword
+selects all D fileops in the commit; the others select one
+each.</para>
 
 <para>If the <quote>to</quote> clause is present, the removed op is
 appended to the commit specified by the following singleton selection
