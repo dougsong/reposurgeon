@@ -8236,9 +8236,6 @@ change in a future release.
             return
         if self.selection is None:
             self.selection = []
-        if len(self.selection) != 1:
-            complain("remove selection must be a singleton")
-            return
         (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
