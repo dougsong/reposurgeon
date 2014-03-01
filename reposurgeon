@@ -3995,6 +3995,15 @@ class StreamParser:
             announce("after tagification")
         # Now pretty up the branch names
         for commit in self.repo.commits():
+            matched = False
+            for regex, replace in global_options["svn_branchify_mapping"]:
+                result, substitutions = re.subn(regex,replace,commit.branch)
+                if substitutions == 1:
+                    matched = True
+                    commit.set_branch(os.path.join("refs",result))
+                    break
+            if matched:
+                continue
             if commit.branch == "root":
                 commit.set_branch(os.path.join("refs", "heads", "root"))
             elif commit.branch.startswith("tags" + os.sep):
@@ -6416,6 +6425,7 @@ into sections of the input stream instead).
         for option in dict(RepoSurgeon.OptionFlags):
             global_options[option] = False
         global_options['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
+        global_options['svn_branchify_mapping'] = []
     #
     # Housekeeping hooks.
     #
@@ -9711,6 +9721,56 @@ to re-set it.
         if line.strip():
             global_options['svn_branchify'] = line.strip().split()
         announce("branchify " + " ".join(global_options['svn_branchify']))
+    #
+    # Setting branch name rewriting
+    #
+    def help_branchify_map(self):
+        print("""
+Specify the list of regular expressions used for mapping the svn branches that
+are detected by branchify. If non of the expressions match the default behaviour
+applies. Which maps a branch to the name of the last directory, except for trunk
+and '*' which are mapped to master and root.
+
+With no arguments the current regex replacement pairs are shown. Passing 'reset'
+will clear the reset mapping.
+
+Syntax: branchify_map @regex1@branch1@ @regex2@branch2@ ...
+Will match each branch name against regex1 and if it matches rewrite its branch
+name to branch1. If not it will try regex2 and so forth until it either found a
+matching regex or there are no regexs left. The regular expressions should be in
+pythons' format (see http://docs.python.org/2/library/re.html). The branch name
+can use backreferences (see the sub function in the python documentation).
+Furthermore the separator charachter may be replaced by any character not used
+in the regular expression.
+
+Note that the regular expressions are appended to 'refs/' without either the
+needed 'heads/' or 'tags/'. This allows for choosing the right kind of branch
+type.
+
+Note that the branchify_map set is a property of the reposurgeon interpreter,
+not of any individual repository, and will persist across Subversion
+dumpfile reads. This may lead to unexpected results if you forget
+to re-set it.
+""")
+    def do_branchify_map(self, line):
+        if self.selection is not None:
+            raise Recoverable("branchifyMap does not take a selection set")
+        if line.strip() is "reset":
+            global_options['svn_branchify_mapping'] = [];
+        if line.strip():
+            def split_regex(regex):
+                separator = regex[0]
+                if separator is not regex[-1]:
+                    raise Recoverable("Regex '%s' did not end with separator character" % regex)
+                match, _, replace = regex[1:-1].partition(separator)
+                if not replace or not match:
+                    raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
+                return match ,replace
+            global_options['svn_branchify_mapping'] = \
+                    map(split_regex, line.strip().split())
+        announce("branchify_map, regex -> branch name")
+        for match, replace in global_options['svn_branchify_mapping']:
+            announce( "\t" + match + " -> " + replace)
 
     #
     # Setting options
