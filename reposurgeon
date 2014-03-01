@@ -3993,11 +3993,16 @@ class StreamParser:
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce("after tagification")
+        #Pre compile the regex mappings for the next step
+        def compile_regex (mapping):
+            regex, replace = mapping
+            return re.compile(regex), replace
+        compiled_mapping = map(compile_regex, global_options["svn_branchify_mapping"])
         # Now pretty up the branch names
         for commit in self.repo.commits():
             matched = False
-            for regex, replace in global_options["svn_branchify_mapping"]:
-                result, substitutions = re.subn(regex,replace,commit.branch)
+            for regex, replace in compiled_mapping:
+                result, substitutions = regex.subn(replace,commit.branch)
                 if substitutions == 1:
                     matched = True
                     commit.set_branch(os.path.join("refs",result))
