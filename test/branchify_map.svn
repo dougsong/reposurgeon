@@ -1,0 +1,94 @@
+SVN-fs-dump-format-version: 2
+
+UUID: b5d452fa-748b-405f-b36e-1935885bc1be
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2014-03-01T16:32:47.888431Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 4
+lars
+K 8
+svn:date
+V 27
+2014-03-01T16:34:47.872346Z
+K 7
+svn:log
+V 14
+Initial commit
+PROPS-END
+
+Node-path: ProjA
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: ProjA/trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: ProjA/trunk/a.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 9
+Text-content-md5: 94838393de07294892388f31e303de77
+Text-content-sha1: a7e515978b3377c804edd8a67106be4d8a475478
+Content-length: 19
+
+PROPS-END
+Hello A!
+
+
+Node-path: ProjB
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: ProjB/trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: ProjB/trunk/b.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 9
+Text-content-md5: 1f6cdef2599a14db2255f1988432ae7e
+Text-content-sha1: 1c8da3b5b70c849a1dcd26af4b2afecb56bbd2a4
+Content-length: 19
+
+PROPS-END
+Hello B!
+
+
