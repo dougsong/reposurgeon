@@ -1356,9 +1356,6 @@ class Commit(object):
     def when(self):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
-    def moveto(self, repo):
-        "Change the repo this commit is associated with."
-        self.repo = repo
     def set_branch(self, branch):
         "Set the repo's branch field, optimizing for fast comparisons."
         self.branch = intern(branch)
@@ -1546,7 +1543,17 @@ class Commit(object):
     def forget(self):
         "De-link this commit from its parents."
         self.set_parents([])
+        for fileop in self.fileops:
+            if fileop.op == 'N':
+                self.repo.inlines -=1
         self.repo = None
+    def moveto(self, repo):
+        "Change the repo this commit is associated with."
+        for fileop in self.fileops:
+            if fileop.op == 'N':
+                self.repo.inlines -=1
+                repo.inlines += 1
+        self.repo = repo
     # Hide the parent list behind an interface, so that we can memoize
     # the computation, which is very expensive and frequently
     # performed.
