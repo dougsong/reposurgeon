@@ -10,3 +10,7 @@
   anything useful for production.
 
 * New features: ancestors-of in selections.
+
+* The inlines counter is not decremented wwhen a commit or fileop
+  with deletes is removed.  This could lead to unecessary work on a
+  subsequent filter command.

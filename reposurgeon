@@ -2730,6 +2730,7 @@ class StreamParser:
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     self.fi_parse_fileop(fileop)
+                                    self.repo.inlines += 1
                                 # Handling of file ops ends.
                                 elif line.isspace():
                                     # This handles slightly broken
@@ -4312,6 +4313,7 @@ class Repository:
         self.timings = []
         self.assignments = {}
         self._has_manifests = False
+        self.inlines = 0
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
@@ -7940,7 +7942,9 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         if blobs and nonblobs:
             complain("cannot filter blobs and nonblobs in same command")
         # If user is filtering blobs, filter all inlines within the range.
-        if blobs:
+        # This is an expensive step because of the sort; avoid doing it
+        # when possible.
+        if blobs and self.chosen().inlines > 0:
             for ei in range(self.selection[0], self.selection[-1]):
                 event = self.chosen().events[ei]            
                 if isinstance(event, (Commit, Tag)):
