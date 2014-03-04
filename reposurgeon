@@ -1785,9 +1785,12 @@ class Commit(object):
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
             vcs = self.repo.vcs
         parts = []
+        incremental = False
         if realized is not None and self.has_parents():
             if self.branch not in realized and self.parents()[0].branch not in realized:
-                parts.append("reset %s^0\n\n" % self.branch)
+                incremental = True
+        if incremental:
+            parts.append("reset %s^0\n\n" % self.branch)
         if self.fossil_id:
             parts.append("# Fossil-ID: %s\n" % self.fossil_id)
         parts.append("commit %s\n" % self.branch)
@@ -1808,7 +1811,7 @@ class Commit(object):
         if "nl-after-comment" in self.repo.export_style():
             parts.append("\n")
         parents = self.parents()
-        if parents:
+        if parents and not incremental:
             parts.append("from %s\n" % parents[0].mark)
         for ancestor in parents[1:]:
             parts.append("merge %s\n" % ancestor.mark)
