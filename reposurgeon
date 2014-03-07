@@ -974,8 +974,9 @@ class Blob(object):
                 announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.pathlist, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
-    def dump(self, vcs=None, options=None, realized=None):
+    def dump(self, vcs=None, options=None, realized=None, internals=None):
         pacify_pylint(realized)
+        pacify_pylint(internals)
         if self.hasfile() and not os.path.exists(self.blobfile()):
             return ''
         else:
@@ -1102,11 +1103,12 @@ class Tag(object):
         if not fulltagname.startswith("refs/"):
             fulltagname = "refs/" + fulltagname
         return fulltagname
-    def dump(self, vcs=None, options=None, realized=None):
+    def dump(self, vcs=None, options=None, realized=None, internals=None):
         "Dump this tag in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
         pacify_pylint(realized)
+        pacify_pylint(internals)
         parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
         if self.tagger:
             parts.append("tagger %s\n" % self.tagger)
@@ -1154,10 +1156,11 @@ class Reset(object):
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report resets."
         return "%6d\treset\t%s" % (eventnum+1, self.ref)
-    def dump(self, vcs=None, options=None, realized=None):
+    def dump(self, vcs=None, options=None, realized=None, internals=None):
         "Dump this reset in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
+        pacify_pylint(internals)
         if realized is not None:
             if '^' in self.ref:
                 branch = self.ref.split("^")[0]
@@ -1779,7 +1782,7 @@ class Commit(object):
     def delete(self, policy=None):
         "Delete this commit from its repository."
         self.repo.delete([self.index()], policy)
-    def dump(self, vcs=None, options=None, realized=None):
+    def dump(self, vcs=None, options=None, realized=None, internals=None):
         "Dump this commit in import-stream format."
         pacify_pylint(options)
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
@@ -1814,7 +1817,14 @@ class Commit(object):
         if parents and not incremental:
             parts.append("from %s\n" % parents[0].mark)
         for ancestor in parents[1:]:
-            parts.append("merge %s\n" % ancestor.mark)
+            if internals is None or ancestor.mark in internals:
+                nugget = ancestor.mark
+            else:
+                # Mark will be meaningless out of context;
+                # write something that might be, so reposurgeon
+                # can try to do something useful with it.
+                nugget = ancestor.action_stamp()
+            parts.append("merge %s\n" % nugget)
         if vcs and vcs.properties:
             for (name, value) in self.properties.iteritems():
                 if value in (True, False):
@@ -1845,11 +1855,12 @@ class Passthrough(object):
         return str(msg)
     def email_in(self, msg):
         self.text = msg.get_payload()
-    def dump(self, vcs=True, options=None, realized=None):
+    def dump(self, vcs=True, options=None, realized=None, internals=None):
         "Dump this passthrough in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
         pacify_pylint(realized)
+        pacify_pylint(internals)
         return self.text
     def __str__(self):
         return self.dump()
@@ -4739,6 +4750,7 @@ class Repository:
             try:
                 fossil_latch = False
                 realized = {}
+                selection_marks = [self.events[i].mark for i in selection if hasattr(self.events[i], "mark")]
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
@@ -4746,7 +4758,7 @@ class Repository:
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
-                    fp.write(event.dump(target, options=options, realized=realized))
+                    fp.write(event.dump(target, options=options, realized=realized, internals=selection_marks))
                 if fossil_latch:
                     fp.write("reset fossil_id\n")
                     endcommit = Commit(self)
