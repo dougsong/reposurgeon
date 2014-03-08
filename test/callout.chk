@@ -1,0 +1,28 @@
+commit refs/heads/alternate
+mark :9
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+data 18
+Changes on branch
+from 2014-02-14T21:48:26Z!rsc@runtux.com
+M 100644 :7 f1
+M 100644 :8 f2
+
+commit refs/heads/alternate
+mark :11
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+data 25
+Another change on branch
+from :9
+M 100644 :10 f1
+
+commit refs/heads/alternate
+mark :13
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+data 28
+Another change on alternate
+from :11
+M 100644 :12 f2
+

@@ -1593,7 +1593,7 @@ class Commit(object):
         self.repo.invalidate_manifests()
     def callout(self):
         "Generate a callout for this commit."
-        return self.date.rfc3339() + "!" + self.email
+        return self.action_stamp()
     @staticmethod
     def is_callout(mark):
         "Is the specified mark field a callout?"
