@@ -30,13 +30,13 @@ Parenthesis grouping: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 3
 3,:15 resolve Comma syntax selecting doubleton
 Comma syntax selecting doubleton: [3, 16]
 /master/b resolve Branch
-Branch: [116, 118, 120, 122, 124, 127, 129]
+Branch: [115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129]
 /operating theater/B resolve Blobs
 Blobs: [15, 17, 19, 21, 49]
 <lightweight-sample> resolve Branch tip
 Branch tip: [83]
 /annotated-sample/b resolve Tag
-Tag: [85, 88, 90, 93, 96, 99, 101, 103, 105, 107, 109, 111, 114]
+Tag: [84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 131]
 <annotated-sample> resolve Tag location
 Tag location: [131]
 /regression/ resolve Text search

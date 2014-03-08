@@ -1,3 +1,16 @@
+blob
+mark :7
+data 9
+test
+123
+
+blob
+mark :8
+data 18
+test2
+testing
+234
+
 commit refs/heads/alternate
 mark :9
 author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
@@ -8,6 +21,11 @@ from 2014-02-14T21:48:26Z!rsc@runtux.com
 M 100644 :7 f1
 M 100644 :8 f2
 
+blob
+mark :10
+data 4
+123
+
 commit refs/heads/alternate
 mark :11
 author Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
@@ -16,6 +34,14 @@ data 25
 Another change on branch
 from :9
 M 100644 :10 f1
+
+blob
+mark :12
+data 22
+test2
+testing
+234
+ttt
 
 commit refs/heads/alternate
 mark :13

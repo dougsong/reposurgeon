@@ -1794,6 +1794,12 @@ class Commit(object):
         if rank == 0:
             return child.head() # there was only one child
         raise Recoverable("can't deduce a branch head for %s" % self.mark)
+    def references(self, mark):
+        "Does this commit reference a specified blob mark?"
+        for fileop in self.fileops:
+            if fileop.op == 'M' and fileop.ref == mark:
+                return True
+        return False
     def delete(self, policy=None):
         "Delete this commit from its repository."
         self.repo.delete([self.index()], policy)
@@ -6689,6 +6695,7 @@ into sections of the input stream instead).
                                 }
             search_in = searchable_attrs.values()
             check_blobs = False
+            check_branch = False
             if self.line and self.line[0].isalpha():
                 search_in = []
                 while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] == 'B'):
@@ -6696,9 +6703,22 @@ into sections of the input stream instead).
                         check_blobs = True
                     else:
                         search_in.append(searchable_attrs[self.line[0]])
+                        if self.line[0] == 'b':
+                            check_branch = True
                     self.line = self.line[1:]
             for i in preselection:
                 e = self.chosen().events[i]
+                if check_branch:
+                    if isinstance(e, Tag):
+                        e = e.target
+                    elif isinstance(e, Blob):
+                        events = self.chosen().events
+                        for ci in range(i, len(events)):
+                            possible = events[ci]
+                            if isinstance(possible, Commit) and possible.references(e.mark):
+                                # FIXME: Won't find multiple references
+                                e = possible
+                                break
                 if any(hasattr(e, searchable) and
                        search(str(getattr(e, searchable)))
                        for searchable in search_in):
@@ -6928,6 +6948,8 @@ More ways to construct event sets:
            suffix letters: a=author, b=branch, c=comment in commit or tag,
                            C=committer, r=committish, p=text, t=tagger, n=name,
                            B=blob content in blobs.
+           A 'b' search also finds blobs and tags attached to commits on
+           matching branches.
 [foo]      all commits and blobs touching the file named 'foo'.
 =C         all commits
 =H         all head (branch tip) commits
