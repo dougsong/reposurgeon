@@ -1319,6 +1319,12 @@ class FileOp(object):
     def __str__(self):
         return self.dump(self.vcs)
 
+class Callout(object):
+    "Stub object for callout marks in incomplete repository segments."
+    __slots__ = ("mark")
+    def __init__(self, mark):
+        self.mark = mark
+
 class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
@@ -1343,7 +1349,7 @@ class Commit(object):
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
         self.deletehook = None	     # Hook used during deletion operations
-        self.attachments = []
+        self.attachments = []	     # Tags pointing at this commit
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self._pathset = None
@@ -1585,6 +1591,15 @@ class Commit(object):
         self._parent_nodes.append(newparent)
         newparent._child_nodes.append(self)
         self.repo.invalidate_manifests()
+    def callout(self):
+        "Generate a callout for this commit."
+        return self.date.rfc3339() + "!" + self.email
+    @staticmethod
+    def is_callout(mark):
+        "Is the specified mark field a callout?"
+        return "!" in mark
+    def add_callout(self, mark):
+        self._parent_nodes.append(Callout(mark))
     def insert_parent(self, idx, mark):
         newparent = self.repo.objfind(mark)
         assert(newparent)
@@ -1821,19 +1836,13 @@ class Commit(object):
             if internals is None or ancestor.mark in internals:
                 nugget = ancestor.mark
             else:
-                # Mark will be meaningless out of context;
-                # write something that might be, so reposurgeon
-                # can try to do something useful with it.
-                nugget = ancestor.action_stamp()
+                nugget = ancestor.callout()
             parts.append("from %s\n" % nugget)
         for ancestor in parents[1:]:
             if internals is None or ancestor.mark in internals:
                 nugget = ancestor.mark
             else:
-                # Mark will be meaningless out of context;
-                # write something that might be, so reposurgeon
-                # can try to do something useful with it.
-                nugget = ancestor.action_stamp()
+                nugget = ancestor.callout()
             parts.append("merge %s\n" % nugget)
         if vcs and vcs.properties:
             for (name, value) in self.properties.iteritems():
@@ -2730,7 +2739,11 @@ class StreamParser:
                                     if global_options["canonicalize"]:
                                         commit.comment = commit.comment.strip().replace("\r\n", "\n") + '\n'
                                 elif line.startswith("from") or line.startswith("merge"):
-                                    commit.add_parent(line.split()[1])
+                                    mark = line.split()[1]
+                                    if Commit.is_callout(mark):
+                                        commit.add_callout(mark)
+                                    else:
+                                        commit.add_parent(mark)
                                 # Handling of file ops begins.
                                 elif line[0] in ("C", "D", "R"):
                                     commit.fileops.append(FileOp(self.repo.vcs).parse(line))
@@ -5381,15 +5394,32 @@ class Repository:
         #del other
     def graft(self, graft_repo, graft_point):
         "Graft a repo on to this one at a specified point."
-        where = self.events[graft_point]
-        if not isinstance(where, Commit):
-            raise Recoverable("%s in %s is not a commit." % \
-                              (where.mark, self.name))
+        if graft_point is not None:
+            where = self.events[graft_point]
+            if not isinstance(where, Commit):
+                raise Recoverable("%s in %s is not a commit." % \
+                                  (where.mark, self.name))
         # Errors aren't recoverable after this
         graft_repo.uniquify(graft_repo.name)
-        graftroot = graft_repo.earliest_commit()
+        for commit in graft_repo.commits():
+            for (idx, parent) in enumerate(commit.parents()):
+                if Commit.is_callout(parent.mark):
+                    attach = self.chosen().named(parent.mark)
+                    if len(attach) == 0:
+                        raise Recoverable("no match for %s in %s" \
+                                          % (parent.mark, graft_repo.name))
+                    elif len(attach) >= 2:
+                        raise Recoverable("%s is ambiguous in %s" \
+                                          % (parent.mark, graft_repo.name))
+                    else:
+                        commit.remove_parent(parent)
+                        commit.insert_parent(idx,
+                                             self.chosen().events[attach[0]])
+        if graft_point:
+            graftroot = graft_repo.earliest_commit()
         self.absorb(graft_repo)
-        graftroot.add_parent(where.mark)
+        if graft_point:
+            graftroot.add_parent(where.mark)
         self.renumber()
     def __last_modification(self, commit, path):
         "Locate the last modification of the specified path before this commit."
@@ -8575,31 +8605,39 @@ type.
 
     def help_graft(self):
         print("""
-For when unite doesn't give you enough control.  The selection set
-must be of size 1, identifying a single commit in the currently
-selected repo.  A following argument must be a repository name.
+For when unite doesn't give you enough control. This command may have
+either of two forms, selected by the size of the selection set.  The
+first argument is always required to be the name of a loaded repo.
+
+If the selection set is empty, the from mark in the earliest commit of
+the named repo must be a callout matching a commit in the cuttrrently
+chosen repo.  If the selection set is of size 1, it must identify a
+single commit in the currently chosen repo.
+
 Labels and branches in the named repo are prefixed with its name; then
 it is grafted to the selected one. Its root becomes a child of the
-specified commit.  Finally the named repo is removed from the load
-list.
+specified commit. Any other callouts in the named repo are also
+resolved in the context of the currently chosen one. Finally, the
+named repo is removed from the load list.
 """)
     def do_graft(self, line):
         "Graft a named repo onto the selected one."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        if self.selection is None:
-            self.selection = []
-        if len(self.selection) == 1:
-            graft_point = self.selection[0]
-        else:
-            raise Recoverable("a singleton selection set is required.")
         if not self.repolist:
             raise Recoverable("no repositories are loaded.")
         if line in self.reponames():
             graft_repo = self.repo_by_name(line)
         else:
             raise Recoverable("no such repo as %s" % line)
+        ancestors = graft_repo.earliest_commit().parents()
+        if ancestors and Commit.is_callout(ancestors[0].mark):
+            graft_point = None
+        elif self.selection is not None and len(self.selection) == 1:
+            graft_point = self.selection[0]
+        else:
+            raise Recoverable("a singleton selection set is required.")
         # OK, we've got the two repos and the graft point.  Do it.
         self.chosen().graft(graft_repo, graft_point)
         self.remove_by_name(graft_repo.name)
