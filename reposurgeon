@@ -1788,10 +1788,12 @@ class Commit(object):
         if vcs is None and self.repo.vcs and self.repo.vcs.importer:
             vcs = self.repo.vcs
         parts = []
+        options = options or []
         incremental = False
-        if realized is not None and self.has_parents():
-            if self.branch not in realized and self.parents()[0].branch not in realized:
-                incremental = True
+        if '--noincremental' not in options:
+            if realized is not None and self.has_parents():
+                if self.branch not in realized and self.parents()[0].branch not in realized:
+                    incremental = True
         if incremental:
             parts.append("reset %s^0\n\n" % self.branch)
         if self.fossil_id:
@@ -1815,7 +1817,15 @@ class Commit(object):
             parts.append("\n")
         parents = self.parents()
         if parents and not incremental:
-            parts.append("from %s\n" % parents[0].mark)
+            ancestor = parents[0]
+            if internals is None or ancestor.mark in internals:
+                nugget = ancestor.mark
+            else:
+                # Mark will be meaningless out of context;
+                # write something that might be, so reposurgeon
+                # can try to do something useful with it.
+                nugget = ancestor.action_stamp()
+            parts.append("from %s\n" % nugget)
         for ancestor in parents[1:]:
             if internals is None or ancestor.mark in internals:
                 nugget = ancestor.mark
