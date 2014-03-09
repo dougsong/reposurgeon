@@ -89,7 +89,7 @@ test2
 testing
 234
 
-commit refs/heads/alternate-callout.chk
+commit refs/heads/alternate
 mark :13
 author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
 committer Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
@@ -104,7 +104,7 @@ mark :14
 data 4
 123
 
-commit refs/heads/alternate-callout.chk
+commit refs/heads/alternate
 mark :15
 author Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
 committer Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
@@ -121,7 +121,7 @@ testing
 234
 ttt
 
-commit refs/heads/alternate-callout.chk
+commit refs/heads/alternate
 mark :17
 author Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
 committer Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100

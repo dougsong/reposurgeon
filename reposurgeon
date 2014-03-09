@@ -5394,13 +5394,16 @@ class Repository:
         #del other
     def graft(self, graft_repo, graft_point):
         "Graft a repo on to this one at a specified point."
-        if graft_point is not None:
+        if graft_point is None:
+            persist = {}
+        else:
+            persist = None
             where = self.events[graft_point]
             if not isinstance(where, Commit):
                 raise Recoverable("%s in %s is not a commit." % \
                                   (where.mark, self.name))
         # Errors aren't recoverable after this
-        graft_repo.uniquify(graft_repo.name)
+        graft_repo.uniquify(graft_repo.name, persist)
         if graft_point is not None:
             graftroot = graft_repo.earliest_commit()
         self.absorb(graft_repo)
