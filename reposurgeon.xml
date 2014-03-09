@@ -638,9 +638,9 @@ the tip of a pre-existing branch of the same name.  The
 <para>Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
 dump.  When this happens, the write code replaces the merge mark with
-the action stamp of the parent commit.  Importers will fail when
-reading this; it is intended as a placeholder to be patched or
-removed before any attempt to use the partial dump.</para>
+a callout, the action stamp of the parent commit.  Importers will fail when
+reading this; it is intended to be used by the
+<command>graft</command> command.</para>
 
 <para>Specifying a write selection set with gaps in it is allowed
 but unlikely to lead to good results if it is loaded by an importer.</para>
@@ -1332,13 +1332,21 @@ type.</para>
         <emphasis>reponame</emphasis>
 </term>
 <listitem>
-<para>For when unite doesn't give you enough control.  The selection set
-must be of size 1, identifying a single commit in the currently
-selected repo.  A following argument must be a repository name.
-Labels and branches in the named repo are prefixed with its name; then
+<para>
+For when unite doesn't give you enough control. This command may have
+either of two forms, selected by the size of the selection set.  The
+first argument is always required to be the name of a loaded repo.</para>
+
+<para>If the selection set is empty, the from mark in the earliest commit of
+the named repo must be a callout matching a commit in the cuttrrently
+chosen repo.  If the selection set is of size 1, it must identify a
+single commit in the currently chosen repo.</para>
+
+<para>Labels and branches in the named repo are prefixed with its name; then
 it is grafted to the selected one. Its root becomes a child of the
-specified commit.  Finally the named repo is removed from the load
-list.</para>
+specified commit. Any other callouts in the named repo are also
+resolved in the context of the currently chosen one. Finally, the
+named repo is removed from the load list.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

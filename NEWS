@@ -4,6 +4,7 @@ Repository head:
      New --dedos option for filter command, to change \r\n line endings to \n.
      New append command for annotating comments.
      The 'b' search code has been changed to appropriately match non-commits.
+     New form of 'graft' allows greater controll over graft points.
 
 3.6: 2014-02-19
      Major rewrite of the generic conversion makefile.
