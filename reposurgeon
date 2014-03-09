@@ -1321,9 +1321,11 @@ class FileOp(object):
 
 class Callout(object):
     "Stub object for callout marks in incomplete repository segments."
-    __slots__ = ("mark")
+    __slots__ = ("mark", "branch", "_child_nodes")
     def __init__(self, mark):
         self.mark = mark
+        self.branch = None
+        self._child_nodes = []
 
 class Commit(object):
     "Generic commit object."
@@ -5405,12 +5407,17 @@ class Repository:
             if not isinstance(where, Commit):
                 raise Recoverable("%s in %s is not a commit." % \
                                   (where.mark, self.name))
-        # Errors aren't recoverable after this
-        graft_repo.uniquify(graft_repo.name)
+            # Errors aren't recoverable after this
+            graft_repo.uniquify(graft_repo.name)
+            graftroot = graft_repo.earliest_commit()
+        self.absorb(graft_repo)
+        if graft_point:
+            graftroot.add_parent(where.mark)
+        # Resolve all callouts
         for commit in graft_repo.commits():
             for (idx, parent) in enumerate(commit.parents()):
                 if Commit.is_callout(parent.mark):
-                    attach = self.chosen().named(parent.mark)
+                    attach = self.named(parent.mark)
                     if len(attach) == 0:
                         raise Recoverable("no match for %s in %s" \
                                           % (parent.mark, graft_repo.name))
@@ -5419,13 +5426,8 @@ class Repository:
                                           % (parent.mark, graft_repo.name))
                     else:
                         commit.remove_parent(parent)
-                        commit.insert_parent(idx,
-                                             self.chosen().events[attach[0]])
-        if graft_point:
-            graftroot = graft_repo.earliest_commit()
-        self.absorb(graft_repo)
-        if graft_point:
-            graftroot.add_parent(where.mark)
+                        newparent = self.events[list(attach)[0]]
+                        commit.insert_parent(idx, newparent.mark)
         self.renumber()
     def __last_modification(self, commit, path):
         "Locate the last modification of the specified path before this commit."
