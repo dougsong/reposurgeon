@@ -1,0 +1,132 @@
+reposurgeon: warning: commit :13 to be deleted has non-delete fileops.
+reposurgeon: warning: commit :11 to be deleted has non-delete fileops.
+reposurgeon: warning: commit :9 to be deleted has non-delete fileops.
+blob
+mark :1
+data 5
+test
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414427 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414427 +0100
+data 10
+Create f1
+M 100644 :1 f1
+
+blob
+mark :3
+data 6
+test2
+
+commit refs/heads/master
+mark :4
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414457 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414457 +0100
+data 7
+Add f2
+from :2
+M 100644 :3 f2
+
+blob
+mark :5
+data 14
+test2
+testing
+
+commit refs/heads/master
+mark :6
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+data 10
+Modify f2
+from :4
+M 100644 :5 f2
+
+blob
+mark :7
+data 8
+testing
+
+commit refs/heads/master
+mark :8
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+data 17
+Change on master
+from :6
+M 100644 :7 f2
+
+blob
+mark :9
+data 7
+test
+t
+
+commit refs/heads/master
+mark :10
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414742 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414742 +0100
+data 25
+Another change on master
+from :8
+M 100644 :9 f1
+
+reset refs/heads/master
+from :10
+
+blob
+mark :11
+data 9
+test
+123
+
+blob
+mark :12
+data 18
+test2
+testing
+234
+
+commit refs/heads/alternate
+mark :13
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+data 18
+Changes on branch
+from :6
+M 100644 :11 f1
+M 100644 :12 f2
+
+blob
+mark :14
+data 4
+123
+
+commit refs/heads/alternate
+mark :15
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+data 25
+Another change on branch
+from :13
+M 100644 :14 f1
+
+blob
+mark :16
+data 22
+test2
+testing
+234
+ttt
+
+commit refs/heads/alternate
+mark :17
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+data 28
+Another change on alternate
+from :15
+M 100644 :16 f2
+
