@@ -5366,14 +5366,6 @@ class Repository:
             self.invalidate_object_map()
             # Now marks in fileops
             if isinstance(event, Commit):
-                parent_marks = event.parent_marks()
-                for (j, old) in enumerate(parent_marks):
-                    if '-' not in old:
-                        new = old + "-" + color
-                        if debug_enable(DEBUG_UNITE):
-                            announce("moving %s -> %s in parents" % (old, new))
-                        parent_marks[j] = new
-                event.set_parent_marks(parent_marks)
                 for fileop in event.fileops:
                     if fileop.op == "M" and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
@@ -5407,8 +5399,9 @@ class Repository:
             if not isinstance(where, Commit):
                 raise Recoverable("%s in %s is not a commit." % \
                                   (where.mark, self.name))
-            # Errors aren't recoverable after this
-            graft_repo.uniquify(graft_repo.name)
+        # Errors aren't recoverable after this
+        graft_repo.uniquify(graft_repo.name)
+        if graft_point is not None:
             graftroot = graft_repo.earliest_commit()
         self.absorb(graft_repo)
         if graft_point:

@@ -5,5 +5,5 @@ read <debranch3.fi
 read <callout.chk
 choose debranch3
 graft callout.chk
-# The result should be identical to the original debranch3.fi
+# The result should be topologically equivalent to the original debranch3.fi
 write -
