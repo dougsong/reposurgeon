@@ -283,6 +283,12 @@ letters. These are the type letters:</para>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
+        <entry align='center'>I</entry>
+        <entry align='center'>commits containing non-ASCII characters
+	in metadata</entry>
+	<entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
         <entry align='center'>T</entry>
         <entry align='center'>tags</entry>
 	<entry><para>&nbsp;</para></entry>

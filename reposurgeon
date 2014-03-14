@@ -1802,6 +1802,16 @@ class Commit(object):
             if fileop.op == 'M' and fileop.ref == mark:
                 return True
         return False
+    def nonascii(self):
+        "Does this commit have non-ASCII bytes in it (thus i18n issues)?"
+        try:
+            self.committer.name.encode("ascii", "strict")
+            for author in self.authors:
+                author.name.encode("ascii", "strict")
+            self.comment.encode("ascii", "strict")
+            return False
+        except UnicodeError:
+            return True
     def delete(self, policy=None):
         "Delete this commit from its repository."
         self.repo.delete([self.index()], policy)
@@ -6540,6 +6550,7 @@ into sections of the input stream instead).
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
+                "I" : lambda e: isinstance(e, Commit) and e.nonascii(),
                 }
 
             visible = set()
@@ -6959,6 +6970,7 @@ More ways to construct event sets:
 =M         all merge commits
 =F         all fork (multiple-child) commits
 =L         all commits with unclean multi-line comments
+=I         all commits containing non-ASCII characters in metadata
 
 You can compose sets as follows:
 
