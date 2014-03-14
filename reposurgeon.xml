@@ -284,8 +284,8 @@ letters. These are the type letters:</para>
       </row>
       <row>
         <entry align='center'>I</entry>
-        <entry align='center'>commits containing non-ASCII characters
-	in metadata</entry>
+        <entry align='center'>commits for which metadata cannot be
+	decoded to Unicode</entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>

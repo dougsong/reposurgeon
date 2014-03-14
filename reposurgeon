@@ -1802,13 +1802,13 @@ class Commit(object):
             if fileop.op == 'M' and fileop.ref == mark:
                 return True
         return False
-    def nonascii(self):
-        "Does this commit have non-ASCII bytes in it (thus i18n issues)?"
+    def undecodable(self, codec="utf-8"):
+        "Does this commit have undecodable i18n sequences in it?"
         try:
-            self.committer.name.encode("ascii", "strict")
+            self.committer.name.decode(codec, "strict")
             for author in self.authors:
-                author.name.encode("ascii", "strict")
-            self.comment.encode("ascii", "strict")
+                author.name.decode(codec, "strict")
+            self.comment.decode(codec, "strict")
             return False
         except UnicodeError:
             return True
@@ -6550,7 +6550,7 @@ into sections of the input stream instead).
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
-                "I" : lambda e: isinstance(e, Commit) and e.nonascii(),
+                "I" : lambda e: isinstance(e, Commit) and e.undecodable(),
                 }
 
             visible = set()
@@ -6970,7 +6970,7 @@ More ways to construct event sets:
 =M         all merge commits
 =F         all fork (multiple-child) commits
 =L         all commits with unclean multi-line comments
-=I         all commits containing non-ASCII characters in metadata
+=I         all commits not decodable to UTF-8
 
 You can compose sets as follows:
 
@@ -7985,8 +7985,9 @@ blob, your editor will be called on the blob file.
 
     def help_filter(self):
         print("""
-Run blobs, commit comments, or tag comments in the selection set
-through the filter specified on the command line.
+Run blobs, commit comments and committer/author names, or tag comments
+and tag committer names in the selection set through the filter
+specified on the command line.
 
 Attempting to specify a selection set including both blobs and
 non-blobs (that is, commits or tags) throws an error. Inline content
@@ -8136,11 +8137,31 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
             altered = 0
             for _, event in self.selected():
-                if isinstance(event, (Commit, Tag)):
+                if isinstance(event, Tag):
+                    changed = False
+                    oldcomment = event.comment
+                    event.comment = filterhook.do(False, event.comment)
+                    changed = changed or (oldcomment != event.comment)
+                    oldtagger = event.tagger.name
+                    event.tagger.name = filterhook.do(False, event.tagger.name)
+                    changed = changed or (oldtagger != event.tagger.name)
+                    if changed:
+                        altered += 1
+                elif isinstance(event, Commit):
                     if nonblobs:
+                        changed = False
                         oldcomment = event.comment
                         event.comment = filterhook.do(False, event.comment)
-                        altered += (oldcomment != event.comment)
+                        changed = changed or (oldcomment != event.comment)
+                        oldcommitter = event.committer.name
+                        event.committer.name = filterhook.do(False, event.committer.name)
+                        changed = changed or (oldcommitter != event.committer.name)
+                        for i in range(len(event.authors)):
+                            oldauthor = event.authors[i].name
+                            event.authors[i].name = filterhook.do(False, event.authors[i].name)
+                            changed = changed or (oldauthor != event.authors[i].name)
+                        if changed:
+                            altered += 1
                     if blobs and isinstance(event, Commit):
                         for fileop in event.fileops:
                             if fileop.inline is not None:
