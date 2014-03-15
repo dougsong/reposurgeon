@@ -6693,8 +6693,7 @@ into sections of the input stream instead).
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = set()
-            searchable_attrs = {"a":"author",		# commit
-                                "b":"branch",		# commit
+            searchable_attrs = {"b":"branch",		# commit
                                 "c":"comment",		# commit or tag
                                 "C":"committer",	# commit
                                 "r":"committish",	# tag or reset
@@ -6703,12 +6702,15 @@ into sections of the input stream instead).
                                 "n":"name"		# tag
                                 }
             search_in = searchable_attrs.values()
+            check_authors = False
             check_blobs = False
             check_branch = False
             if self.line and self.line[0].isalpha():
                 search_in = []
-                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] == 'B'):
-                    if self.line[0] == 'B':
+                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] in ('a', 'B')):
+                    if self.line[0] == 'a':
+                        check_authors = True
+                    elif self.line[0] == 'B':
                         check_blobs = True
                     else:
                         search_in.append(searchable_attrs[self.line[0]])
@@ -6732,6 +6734,11 @@ into sections of the input stream instead).
                        search(str(getattr(e, searchable)))
                        for searchable in search_in):
                     matchers.add(i)
+                elif check_authors and isinstance(e, Commit):
+                    for ai in range(len(e.authors)):
+                        if search(e.authors[ai].name):
+                            matchers.add(i)
+                            break
                 elif check_blobs and isinstance(e, Blob) and search(e.get_content()):
                     matchers.add(i)
             if debug_enable(DEBUG_LEXER):
