@@ -285,7 +285,7 @@ letters. These are the type letters:</para>
       <row>
         <entry align='center'>I</entry>
         <entry align='center'>commits for which metadata cannot be
-	decoded to Unicode</entry>
+	decoded to UTF-8</entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
