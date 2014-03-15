@@ -5,7 +5,9 @@ Repository head:
      New append command for annotating comments.
      The 'b' search code has been changed to appropriately match non-commits.
      New form of 'graft' allows greater control over graft points.
-     New =I selector to find commit metadata with potential i18n issues.
+     New =I selector to find non-UTF-8 commit metadata.
+     Import stream comments led with # are preserved as passthroughs.
+     Buggy text search of authors fields has been fixed.
 
 3.6: 2014-02-19
      Major rewrite of the generic conversion makefile.

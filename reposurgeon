@@ -2409,10 +2409,19 @@ class StreamParser:
         self.import_line -= 1
         self.linebuffers.append(line)
     # Helpers for import-stream files
+    def fi_readline(self):
+        "Read a line, stashing comments as we go."
+        while True:
+            line = self.readline()
+            if line and line.startswith("#"):
+                self.repo.addEvent(Passthrough(line))
+                continue
+            else:
+                return line
     def fi_read_data(self, line=None):
         "Read a fast-import data section."
         if not line:
-            line = self.readline()
+            line = self.fi_readline()
         if line.startswith("data <<"):
             delim = line[7:]
             data = ""
@@ -2667,14 +2676,14 @@ class StreamParser:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
                     while True:
-                        line = self.readline()
+                        line = self.fi_readline()
                         if not line:
                             break
                         elif not line.strip():
                             continue
                         elif line.startswith("blob"):
                             blob = Blob(self.repo)
-                            line = self.readline()
+                            line = self.fi_readline()
                             if line.startswith("mark"):
                                 blob.set_mark(line[5:].strip())
                                 (blobcontent, blobstart) = self.fi_read_data()
@@ -2712,7 +2721,7 @@ class StreamParser:
                             commit = Commit(self.repo)
                             commit.set_branch(line.split()[1])
                             while True:
-                                line = self.readline()
+                                line = self.fi_readline()
                                 if not line:
                                     break
                                 elif line.startswith("mark"):
@@ -2824,7 +2833,7 @@ class StreamParser:
                         elif line.startswith("reset"):
                             reset = Reset(self.repo)
                             reset.ref = line[6:].strip()
-                            line = self.readline()
+                            line = self.fi_readline()
                             if line.startswith("from"):
                                 reset.remember(self.repo, committish=line[5:].strip())
                             else:
@@ -2834,12 +2843,12 @@ class StreamParser:
                         elif line.startswith("tag"):
                             tagger = None
                             tagname = line[4:].strip()
-                            line = self.readline()
+                            line = self.fi_readline()
                             if line.startswith("from"):
                                 referent = line[5:].strip()
                             else:
                                 self.error("missing from after tag")
-                            line = self.readline()
+                            line = self.fi_readline()
                             if line.startswith("tagger"):
                                 try:
                                     tagger = Attribution(line[7:])
