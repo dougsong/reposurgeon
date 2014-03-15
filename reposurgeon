@@ -6926,7 +6926,7 @@ into sections of the input stream instead).
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
                             break
-                os.system(editor + " " + singleton.materialize())
+                subprocess.call([editor, singleton.materialize()])
                 return
             # Fall through
         (tfdesc, tfname) = tempfile.mkstemp()
@@ -6939,7 +6939,7 @@ into sections of the input stream instead).
                         tfp.write(event.email_out([], i))
         except IOError:
             raise Recoverable("write of editor tempfile failed")
-        if os.system(editor + " " + tfname):
+        if subprocess.call([editor, tfname]):
             raise Recoverable("%s returned a failure status" % editor)
         else:
             self.do_mailbox_in("<" + tfname)
