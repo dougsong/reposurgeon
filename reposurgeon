@@ -6948,6 +6948,70 @@ into sections of the input stream instead).
         os.remove(tfname)
         os.close(tfdesc)
 
+    def transform_metadata(self, prompt, hook):
+        blobs = any(isinstance(self.chosen().events[i], Blob)
+                    for i in self.selection)
+        nonblobs = any(not isinstance(self.chosen().events[i], Blob)
+                       for i in self.selection)
+        # Try to prevent user from shooting self in foot
+        if blobs and nonblobs:
+            complain("cannot transform blobs and nonblobs in same command")
+        # If user is transforming blobs, transform all inlines within the range.
+        # This is an expensive step because of the sort; avoid doing it
+        # when possible.
+        if blobs and self.chosen().inlines > 0:
+            for ei in range(self.selection[0], self.selection[-1]):
+                event = self.chosen().events[ei]            
+                if isinstance(event, (Commit, Tag)):
+                    for fileop in event.fileops:
+                        if fileop.inline is not None:
+                            self.selection.append(ei)
+            self.selection.sort()
+        with Baton(prompt=prompt, enable=(verbose == 1)) as baton:
+            altered = 0
+            for _, event in self.selected():
+                if isinstance(event, Tag):
+                    changed = False
+                    oldcomment = event.comment
+                    event.comment = hook(False, event.comment)
+                    changed = changed or (oldcomment != event.comment)
+                    oldtagger = event.tagger.name
+                    event.tagger.name = hook(False, event.tagger.name)
+                    changed = changed or (oldtagger != event.tagger.name)
+                    if changed:
+                        altered += 1
+                elif isinstance(event, Commit):
+                    if nonblobs:
+                        changed = False
+                        oldcomment = event.comment
+                        event.comment = hook(False, event.comment)
+                        changed = changed or (oldcomment != event.comment)
+                        oldcommitter = event.committer.name
+                        event.committer.name = hook(False, event.committer.name)
+                        changed = changed or (oldcommitter != event.committer.name)
+                        for i in range(len(event.authors)):
+                            oldauthor = event.authors[i].name
+                            event.authors[i].name = hook(False, event.authors[i].name)
+                            changed = changed or (oldauthor != event.authors[i].name)
+                        if changed:
+                            altered += 1
+                    if blobs and isinstance(event, Commit):
+                        for fileop in event.fileops:
+                            if fileop.inline is not None:
+                                oldinline = fileop.inline
+                                fileop.inline = hook(False,
+                                                              fileop.inline,
+                                                              event.path)
+                                altered += int(fileop.inline != oldinline)
+                elif isinstance(event, Blob):
+                    if not event.hasfile():
+                        event.materialize()
+                    altered += hook(True,
+                                    event.blobfile(),
+                                    " ".join(event.paths()))
+                baton.twirl()
+        announce("%d items modified." % altered)
+
     def help_selection(self):
         print("""
 A quick example-centered reference for selection-set syntax.
@@ -8045,24 +8109,6 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         if self.selection is None:
             complain("no selection")
             return
-        blobs = any(isinstance(self.chosen().events[i], Blob)
-                    for i in self.selection)
-        nonblobs = any(not isinstance(self.chosen().events[i], Blob)
-                       for i in self.selection)
-        # Try to prevent user from shooting self in foot
-        if blobs and nonblobs:
-            complain("cannot filter blobs and nonblobs in same command")
-        # If user is filtering blobs, filter all inlines within the range.
-        # This is an expensive step because of the sort; avoid doing it
-        # when possible.
-        if blobs and self.chosen().inlines > 0:
-            for ei in range(self.selection[0], self.selection[-1]):
-                event = self.chosen().events[ei]            
-                if isinstance(event, (Commit, Tag)):
-                    for fileop in event.fileops:
-                        if fileop.inline is not None:
-                            self.selection.append(ei)
-            self.selection.sort()
         class FilterCommand:
             def __init__(self, repo, filtercmd):
                 "Initialize the filter from the command line."
@@ -8150,50 +8196,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                     raise Recoverable("unknown mode in filter command")
         # Mainline of do_filter() continues:
         filterhook = FilterCommand(self.chosen(), line)
-        with Baton(prompt="Filtering", enable=(verbose == 1)) as baton:
-            altered = 0
-            for _, event in self.selected():
-                if isinstance(event, Tag):
-                    changed = False
-                    oldcomment = event.comment
-                    event.comment = filterhook.do(False, event.comment)
-                    changed = changed or (oldcomment != event.comment)
-                    oldtagger = event.tagger.name
-                    event.tagger.name = filterhook.do(False, event.tagger.name)
-                    changed = changed or (oldtagger != event.tagger.name)
-                    if changed:
-                        altered += 1
-                elif isinstance(event, Commit):
-                    if nonblobs:
-                        changed = False
-                        oldcomment = event.comment
-                        event.comment = filterhook.do(False, event.comment)
-                        changed = changed or (oldcomment != event.comment)
-                        oldcommitter = event.committer.name
-                        event.committer.name = filterhook.do(False, event.committer.name)
-                        changed = changed or (oldcommitter != event.committer.name)
-                        for i in range(len(event.authors)):
-                            oldauthor = event.authors[i].name
-                            event.authors[i].name = filterhook.do(False, event.authors[i].name)
-                            changed = changed or (oldauthor != event.authors[i].name)
-                        if changed:
-                            altered += 1
-                    if blobs and isinstance(event, Commit):
-                        for fileop in event.fileops:
-                            if fileop.inline is not None:
-                                oldinline = fileop.inline
-                                fileop.inline = filterhook.do(False,
-                                                              fileop.inline,
-                                                              event.path)
-                                altered += int(fileop.inline != oldinline)
-                elif isinstance(event, Blob):
-                    if not event.hasfile():
-                        event.materialize()
-                    altered += filterhook.do(True,
-                                             event.blobfile(),
-                                             " ".join(event.paths()))
-                baton.twirl()
-        announce("%d items modified." % altered)
+        self.transform_metadata(prompt="Filtering", hook=filterhook.do)
 
     def help_append(self):
         print("""
