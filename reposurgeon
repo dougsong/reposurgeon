@@ -9,7 +9,7 @@
 from __future__ import print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
-import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2
+import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2, codecs
 import time, calendar, unittest, itertools, operator, functools, filecmp
 import email.message, email.parser, email.utils
 
@@ -6949,13 +6949,14 @@ into sections of the input stream instead).
         os.close(tfdesc)
 
     def transform_metadata(self, prompt, hook):
+        "Filter commit metadata (and possibly blobs) through a specified hook."
         blobs = any(isinstance(self.chosen().events[i], Blob)
                     for i in self.selection)
         nonblobs = any(not isinstance(self.chosen().events[i], Blob)
                        for i in self.selection)
         # Try to prevent user from shooting self in foot
         if blobs and nonblobs:
-            complain("cannot transform blobs and nonblobs in same command")
+            raise Recoverable("cannot transform blobs and nonblobs in same command")
         # If user is transforming blobs, transform all inlines within the range.
         # This is an expensive step because of the sort; avoid doing it
         # when possible.
@@ -6971,15 +6972,16 @@ into sections of the input stream instead).
             altered = 0
             for _, event in self.selected():
                 if isinstance(event, Tag):
-                    changed = False
-                    oldcomment = event.comment
-                    event.comment = hook(event.comment)
-                    changed = changed or (oldcomment != event.comment)
-                    oldtagger = event.tagger.name
-                    event.tagger.name = hook(event.tagger.name)
-                    changed = changed or (oldtagger != event.tagger.name)
-                    if changed:
-                        altered += 1
+                    if nonblobs:
+                        changed = False
+                        oldcomment = event.comment
+                        event.comment = hook(event.comment)
+                        changed = changed or (oldcomment != event.comment)
+                        oldtagger = event.tagger.name
+                        event.tagger.name = hook(event.tagger.name)
+                        changed = changed or (oldtagger != event.tagger.name)
+                        if changed:
+                            altered += 1
                 elif isinstance(event, Commit):
                     if nonblobs:
                         changed = False
@@ -8179,6 +8181,38 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         # Mainline of do_filter() continues:
         filterhook = FilterCommand(self.chosen(), line)
         self.transform_metadata(prompt="Filtering", hook=filterhook.do)
+
+    def help_transcode(self):
+        print("""
+Transcode blobs, commit comments and committer/author names, or tag
+comments and tag committer names in the selection set to UTF-8 from
+the character encoding specified on the command line.
+
+Attempting to specify a selection set including both blobs and
+non-blobs (that is, commits or tags) throws an error. Inline content
+in commits is filtered when the selection set contains (only) blobs
+and the commit is within the range bounded by the earliest and latest
+blob in the specification.
+
+The encoding argument must name one of the codecs known to the Python
+standard codecs library. In particular, 'latin-1' is a valid codec name.
+
+Errors in this command are fatal, because an error may leave
+repository objects in a damaged state.
+""")
+    def do_transcode(self, line):
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        elif self.selection is None:
+            self.selection = self.chosen().all()
+        (codec, line) = RepoSurgeon.pop_token(line)
+        def transcode(txt, _paths=None):
+            return codecs.encode(codecs.decode(txt, codec), "utf-8")
+        try:
+            self.transform_metadata(prompt="Transcoding", hook=transcode)
+        except UnicodeError:
+            raise Fatal("UnicodeError during transcoding")
 
     def help_append(self):
         print("""
