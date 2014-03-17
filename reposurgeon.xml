@@ -1282,6 +1282,36 @@ replaced with \n.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>transcode</command>
+        <emphasis>codec</emphasis>
+</term>
+<listitem>
+<para>Transcode blobs, commit comments and committer/author names, or tag
+comments and tag committer names in the selection set to UTF-8 from
+the character encoding specified on the command line.</para>
+
+<para>Attempting to specify a selection set including both blobs and
+non-blobs (that is, commits or tags) throws an error. Inline content
+in commits is filtered when the selection set contains (only) blobs
+and the commit is within the range bounded by the earliest and latest
+blob in the specification.</para>
+
+<para>The encoding argument must name one of the codecs known to the Python
+standard codecs library. In particular, 'latin-1' is a valid codec name.</para>
+
+<para>Errors in this command are fatal, because an error may leave
+repository objects in a damaged state.</para>
+
+<para>The theory behind the design of this command is that the
+repository might contain a mixture of encodings used to enter commit
+metadata by different people at different times. After using =I to
+identify metadata containing non-Unicode high bytes in text, a human
+must use context to identify which particular encodings were used in
+particular event spans and compose appropriate transcode commands
+to fix them up.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>edit</command>
 </term>
 <listitem>
