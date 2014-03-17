@@ -1,6 +1,9 @@
 			reposurgeon project news
 
-Repository head:
+Repoository head:
+     New transcode command for moving metadata to UTF-8.
+
+3.7: 2014-03-15
      New --dedos option for filter command, to change \r\n line endings to \n.
      New append command for annotating comments.
      The 'b' search code has been changed to appropriately match non-commits.

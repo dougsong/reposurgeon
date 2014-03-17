@@ -6973,10 +6973,10 @@ into sections of the input stream instead).
                 if isinstance(event, Tag):
                     changed = False
                     oldcomment = event.comment
-                    event.comment = hook(False, event.comment)
+                    event.comment = hook(event.comment)
                     changed = changed or (oldcomment != event.comment)
                     oldtagger = event.tagger.name
-                    event.tagger.name = hook(False, event.tagger.name)
+                    event.tagger.name = hook(event.tagger.name)
                     changed = changed or (oldtagger != event.tagger.name)
                     if changed:
                         altered += 1
@@ -6984,14 +6984,14 @@ into sections of the input stream instead).
                     if nonblobs:
                         changed = False
                         oldcomment = event.comment
-                        event.comment = hook(False, event.comment)
+                        event.comment = hook(event.comment)
                         changed = changed or (oldcomment != event.comment)
                         oldcommitter = event.committer.name
-                        event.committer.name = hook(False, event.committer.name)
+                        event.committer.name = hook(event.committer.name)
                         changed = changed or (oldcommitter != event.committer.name)
                         for i in range(len(event.authors)):
                             oldauthor = event.authors[i].name
-                            event.authors[i].name = hook(False, event.authors[i].name)
+                            event.authors[i].name = hook(event.authors[i].name)
                             changed = changed or (oldauthor != event.authors[i].name)
                         if changed:
                             altered += 1
@@ -6999,16 +6999,14 @@ into sections of the input stream instead).
                         for fileop in event.fileops:
                             if fileop.inline is not None:
                                 oldinline = fileop.inline
-                                fileop.inline = hook(False,
-                                                              fileop.inline,
-                                                              event.path)
+                                fileop.inline = hook(fileop.inline, event.path)
                                 altered += int(fileop.inline != oldinline)
                 elif isinstance(event, Blob):
-                    if not event.hasfile():
-                        event.materialize()
-                    altered += hook(True,
-                                    event.blobfile(),
-                                    " ".join(event.paths()))
+                    content = event.get_content()
+                    modified = hook(content, " ".join(event.paths()))
+                    if content != modified:
+                        event.set_content(modified)
+                    altered += (content != modified)
                 baton.twirl()
         announce("%d items modified." % altered)
 
@@ -8155,7 +8153,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                             self.sub = lambda s: s.replace("\r\n", "\n")
                 else:
                     raise Recoverable("--shell or --regex or --dedos required")
-            def do(self, is_file, content_or_file, pathsubst=""):
+            def do(self, content, pathsubst=""):
                 "Perform the filter on string content or a file."
                 if self.filtercmd:
                     if pathsubst:
@@ -8166,32 +8164,16 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                     (outdesc, outtmp) = tempfile.mkstemp(prefix=self.repo.subdir())
                     try:
                         assert indesc > -1 and outdesc > -1    # pacify pylint
-                        if not is_file:
-                            with open(intmp, "wb") as wfp:
-                                wfp.write(content_or_file)
-                            return capture("%s <%s" % (filtercmd, intmp))
-                        else:
-                            do_or_die("%s <%s >%s" % (filtercmd, content_or_file, outtmp))
-                            same = filecmp.cmp(content_or_file, outtmp, shallow=False)
-                            if not same:
-                                shutil.copyfile(outtmp, content_or_file)
-                            return int(not same)
+                        with open(intmp, "wb") as wfp:
+                            wfp.write(content)
+                        return capture("%s <%s" % (filtercmd, intmp))
                     finally:
                         os.remove(intmp)
                         os.close(indesc)
                         os.remove(outtmp)
                         os.close(outdesc)
                 elif self.sub:
-                    if is_file:
-                        with open(content_or_file, "rb") as rfp:
-                            content = rfp.read()
-                        modified = self.sub(content)
-                        if content != modified:
-                            with open(content_or_file, "wb") as wfp:
-                                wfp.write(modified)
-                        return int(content != modified)
-                    else:
-                        return self.sub(content_or_file)
+                    return self.sub(content)
                 else:
                     raise Recoverable("unknown mode in filter command")
         # Mainline of do_filter() continues:
