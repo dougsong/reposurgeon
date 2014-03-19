@@ -1496,10 +1496,11 @@ is prepended.</para>
 existing tag name; second argument must be one of the verbs 'move',
 'rename', or 'delete'.</para>
 
-<para>For a 'move', a third argument must be a singleton selection set. For
-a 'rename', the third argument may be any token token that is a
-syntactically valid tag name (but not the name of an existing
-tag). For a 'delete', no third argument is required.</para>
+<para>For a <quote>move</quote>, a third argument must be a singleton
+selection set. For a <quote>rename</quote>, the third argument may be
+any token that is a syntactically valid tag name (but not the name of
+an existing tag). For a <quote>delete</quote>, no third argument is
+required.</para>
 
 <para>The behavior of this command is complex because features which
 present as tags may be any of three things: (1) True tag objects, (2)
