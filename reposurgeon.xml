@@ -42,7 +42,7 @@ be removed from repositories for legal or policy reasons.</para>
 normally does not do its own repository reading and writing.  Instead, it
 relies on being able to parse and emit the command streams created by
 git-fast-export and read by git-fast-import.  This means that it can
-be used on any version-control system that that has both fast-export
+be used on any version-control system that has both fast-export
 and fast-import utilities. The git-import stream format also implicitly
 defines a common language of primitive operations for
 <command>reposurgeon</command> to speak.</para>
@@ -191,7 +191,7 @@ of the semantics of marks.</para></listitem>
 <listitem>
 <para>The basename of a branch (including branches in the refs/tags
 namespace) refers to its tip commit.  The name of a tag is equivalent
-to its mark (that of the tag itself, mot the commit it refers to). Tag
+to its mark (that of the tag itself, not the commit it refers to). Tag
 and branch locations are bracketed with &lt; &gt; (angle brackets) to
 distinguish them from command keywords.</para>
 </listitem>
@@ -301,7 +301,7 @@ letters. These are the type letters:</para>
       <row>
         <entry align='center'>P</entry>
         <entry align='center'>Passthrough</entry>
-	<entry><para>All event types types simply passed through,
+	<entry><para>All event types simply passed through,
 	including comments, <command>progress</command> commands, 
         and <command>checkpoint</command> commands.</para></entry>
       </row>
@@ -504,7 +504,7 @@ appeared in a modification fileop that referred to that blob. To
 select purely matching blobs or matching commits, compose a path
 expression with =B or =C.</para>
 
-<para>If you need to embed '/]' into your regular expression (e.g. to
+<para>If you need to embed '[^/]' into your regular expression (e.g. to
 express "all characters but a slash") you can use a Python string
 escape such as \x2f.</para>
 
@@ -514,7 +514,7 @@ escape such as \x2f.</para>
 <term><firstterm>function calls</firstterm></term>
 <listitem>
 <para>The expression language has named special functions.  The sequence for
-a named function is <quote>@</quote>followed by a function name,
+a named function is <quote>@</quote> followed by a function name,
 followed by an argument in parentheses. Presently the following
 functions are defined:</para>
 
@@ -594,7 +594,7 @@ on a commit is taken to be a newline-separated list of CVS revision cookies
 pointing to the commit, and used for reference lifting.</para>
 
 <para>If the read location is a git repository and contains a 
-<filename>.git/cvsauthors</filename> file (such as is left in in place
+<filename>.git/cvsauthors</filename> file (such as is left in place
 by <command>git cvsimport -A</command>) that file will be read in as
 if it had been given to the <command>authors read</command> command.</para>
 
@@ -628,7 +628,7 @@ directory, the repository is rebuilt into that directory, with any
 selection set being ignored; if that target directory is nonempty its
 contents are backed up to a save directory.</para>
 
-<para>with the <option>--fossilize</option> option, the Fossil-ID of
+<para>With the <option>--fossilize</option> option, the Fossil-ID of
 each commit is appended to its commit comment at write time. This
 option is mainly useful for debugging conversion edge cases.</para>
 
@@ -880,7 +880,7 @@ unwieldy.</para>
 <listitem>
 <para>Look for DAG and metadata configurations that may indicate a
 problem. Presently checks for: (1) Mid-branch deletes, (2)
-disconnected commits, (3) parentless commits, (4) the existance of
+disconnected commits, (3) parentless commits, (4) the existence of
 multiple roots, (5) committer and author IDs that don't look
 well-formed as DVCS IDs, (6) multiple child links with identical
 branch labels descending from the same commit.</para>
@@ -906,7 +906,7 @@ to support.</para>
 <para>Combine or delete commits in a selection set of events. The
 default selection set for this command is empty. Has no effect on 
 events other than commits unless the --delete policy is selected; 
-see the 'delete' comand for discussion.</para>
+see the 'delete' command for discussion.</para>
 
 <para>Normally, when a commit is squashed, its file operation list
 (and any associated blob references) gets either prepended to the
@@ -924,7 +924,7 @@ change this.</para>
 
 <para>Following all operation moves, every one of the altered file
 operation lists is reduced to a shortest normalized form. The
-normalized from detects various combinations of modification,
+normalized form detects various combinations of modification,
 deletion, and renaming and simplifies the operation sequence as much
 as it can without losing any information.</para>
 
@@ -938,7 +938,7 @@ warning when this occurs but does not try to resolve it.</para>
 <varlistentry>
 <term><option>--delete</option></term>
 <listitem>
-<para>simply discards all file ops and tags associated with deleted commit(s).</para>
+<para>Simply discards all file ops and tags associated with deleted commit(s).</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -965,14 +965,14 @@ specified in a lift script for explicitness about intentions.</para>
 <listitem>
 <para>With the "tagforward" modifier, any tag on the deleted commit is pushed
 forward to the first child rather than being deleted. This is the
-default; it can be specified for explicitnesss.</para>
+default; it can be specified for explicitness.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><option>--tagback</option></term>
 <listitem>
 <para>With the "--tagback" modifier, any tag on the deleted commit is pushed
-backward to the first parent than being deleted. </para>
+backward to the first parent rather than being deleted. </para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1124,7 +1124,7 @@ commits from CVS lifts.</para>
 
 <para>With the --changelog option, any commit with a comment
 containing the string 'empty log message' (such as is generated by
-CVS) and containing exactly one file operation modifing a path ending
+CVS) and containing exactly one file operation modifying a path ending
 in <filename>ChangeLog</filename> is treated specially.  Such
 ChangeLog commits are considered to match any commit before them by
 content, and will coalesce with it if the committer matches and the
@@ -1278,7 +1278,7 @@ work as a delimiter in place of the /; this makes it easier to use
 / in patterns.</para>
 
 <para>With --replace, the behavior is like --regexp but the expressions are
-not interpreted as regular expressions. (This is slighly faster).</para>
+not interpreted as regular expressions. (This is slightly faster).</para>
 
 <para>With --dedos, DOS/Windows-style \r\n line terminators are
 replaced with \n.</para>
@@ -1512,28 +1512,28 @@ lightweight tags, actually sequences of commits with a common
 branchname beginning with <quote>refs/tags</quote> - in this case the
 tag is considered to point to the last commit in the sequence, (3)
 Reset objects.  These may occur in combination; in fact, stream
-exporters form sysyems with annotation tags commonly express each of
+exporters from systems with annotation tags commonly express each of
 these as a true tag object (1) pointing at the tip commit of a
 sequence (2) in which the basename of the common branch field is
 identical to the tag name.  An exporter that generates
 lightweight-tagged commit sequences (2) may or may not generate resets
-poinmting at their tip commits.</para>
+pointing at their tip commits.</para>
 
 <para>This command tries to handle all combinations in a natural way by
 doing up to three operations on any true tag, commit sequence, and
 reset matching the source name. In a rename, all are renamed together.
-In a delete, any matching or reset is tag is deleted; then matching
+In a delete, any matching or reset tag is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.</para>
 
 <para>Attempts to delete a lightweight tag may fail with the message
-<quote>cannot determine a unique successor</quote>.  When this
+<quote>couldn't determine a unique successor</quote>.  When this
 happens, the tag is on a commit with multiple children that have
 different branch labels. There is a hole in the specification
 of git fast-import streams that leaves it uncertain how branch
 labels can be safely reassigned in this case; rather than do
-sometying risky, <command>reposurgeon</command> throws a recoverable
+something risky, <command>reposurgeon</command> throws a recoverable
 error.</para>
 </listitem>
 </varlistentry>
@@ -1713,7 +1713,7 @@ passthroughs when the repo is written to a stream file.</para>
 commands of very similar form, and it's convenient to be able to
 package that form so you don't need to do a lot of error-prone typing.
 For those occasions, <command>reposurgeon</command> supports a simple
-form of macroexpansion.</para>
+form of macro expansion.</para>
 
 <variablelist>
 <varlistentry>
@@ -1790,7 +1790,7 @@ is equivalent to the more verbose
 but you are less likely to make difficult-to-notice errors typing the
 first version.</para>
 
-<para>(Also note how the text regexp acts as a failsafe agaist the
+<para>(Also note how the text regexp acts as a failsafe against the
 possibility of typing a wrong date that doesn't refer to a commit with
 an empty comment. This was a real-world example from the CVS-to-git
 conversion of groff.)</para>
@@ -2088,7 +2088,7 @@ failures in regression testing are suppressed.</para></listitem>
 <term><command>print</command>
         <emphasis>output-text...</emphasis>
 </term>
-<listitem><para>Does nothing but ship its argument line to stabdard
+<listitem><para>Does nothing but ship its argument line to standard
 output. Useful in regression tests.</para></listitem>
 </varlistentry>
 <varlistentry>
@@ -2128,7 +2128,7 @@ may be replaced by any string. Backslashes have no special meaning while
 reading a here-document.</para>
 
 <para>Scripts may have comments.  Any line beginning with a '#' is
-ignored. If a line has a trailing postion that begins with one or more
+ignored. If a line has a trailing position that begins with one or more
 whitespace characters followed by '#', that trailing portion is
 ignored.</para>
 </listitem>
@@ -2392,7 +2392,7 @@ are the less obvious messages it may emit:</para>
 found a <filename>.gitignore</filename> file in the Subversion
 repository it is analyzing. This probably happened because somebody
 was using <command>git-svn</command> as a live gateway, and created
-ignores which may or may not be congruent with those in the geberated
+ignores which may or may not be congruent with those in the generated
 <filename>.gitignore</filename> files that the Subversion ignore
 properties will be translated into.  You'll need to make a policy
 decision about which set of ignores to use in the conversion, and
@@ -2565,7 +2565,7 @@ shape that has been analyzed by <application>reposurgeon</application>
 won't be written out with the same shape.</para>
 
 <para>When writing a Subversion repository, branch merges are
-translated into svn:merginfo properties in the simplest possible way -
+translated into svn:mergeinfo properties in the simplest possible way -
 as an svn:mergeinfo property of the translated merge commit listing 
 the merge source revisions.</para>
 
@@ -2766,7 +2766,7 @@ replaced several global options that no longer exist.</para>
 earliest factor in a unite command always kept its tag and branch
 names unaltered. The new rule for resolving name conflicts, giving
 priority to the latest factor, produces more natural behavior when
-uniting two repoositories end to end; the master branch of the second
+uniting two repositories end to end; the master branch of the second
 (later) one keeps its name.</para>
 
 <para>In <command>reposurgeon</command> versions before 3.0, the tagify

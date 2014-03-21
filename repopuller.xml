@@ -27,7 +27,7 @@
 
 <para>repopuller grabs a copy of a Subversion or CVS repo.</para>
 
-<para>Requires a single argument, either a Subversion URL or or a CVS
+<para>Requires a single argument, either a Subversion URL or a CVS
 URL or the name of a local mirror directory created by a previous
 run.</para>
 
