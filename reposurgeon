@@ -8142,15 +8142,16 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                             subcount = 0
                         else:
                             subcount = int(parts[-1])
+                        # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
                             self.regex = re.compile(parts[1])	# optimization
                             self.sub = lambda s: self.regex.sub(parts[2],
                                                             s,
-                                                            subcount)
+                                                            len(s) if subcount == 0 else subcount)
                         elif filtercmd.startswith('--replace'):
                             self.sub = lambda s: s.replace(parts[1], 
                                                            parts[2],
-                                                           subcount)
+                                                           len(s) if subcount == 0 else subcount)
                         elif filtercmd.startswith('--dedos'):
                             self.sub = lambda s: s.replace("\r\n", "\n")
                 else:
