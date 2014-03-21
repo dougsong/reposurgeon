@@ -278,14 +278,14 @@ letters. These are the type letters:</para>
       </row>
       <row>
         <entry align='center'>L</entry>
-        <entry align='center'>commits with unclean multi-line comments
-	(without a separating empty line after the first)</entry>
+        <entry align='center'><para>commits with unclean multi-line comments
+	(without a separating empty line after the first)</para></entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>I</entry>
-        <entry align='center'>commits for which metadata cannot be
-	decoded to UTF-8</entry>
+        <entry align='center'><para>commits for which metadata cannot be
+	decoded to UTF-8</para></entry>
 	<entry><para>&nbsp;</para></entry>
       </row>
       <row>
@@ -372,8 +372,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'>commits or tags with that timestamp and 
-	committer/creator</entry>
+        <entry align='center'><para>commits or tags with that timestamp and 
+	committer/creator</para></entry>
       </row>
       <row>
         <entry align='center'>yyyy-mm-dd part of RFC3339 timestamp</entry>
@@ -381,8 +381,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'>commit or tag with that timestamp and 
-	committer/creator</entry>
+        <entry align='center'><para>commit or tag with that timestamp and 
+	committer/creator</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -429,9 +429,9 @@ letters after the trailing slash.  These are as follows:</para>
       </row>
       <row>
         <entry align='center'>b</entry>
-        <entry align='center'>branch name in commit; also matches
+        <entry align='center'><para>branch name in commit; also matches
 	blobs referenced by commits on matching branches, and tags 
-	which point to commmits on patching branches.</entry>
+	which point to commmits on patching branches.</para></entry>
       </row>
       <row>
         <entry align='center'>c</entry>
@@ -539,8 +539,8 @@ functions are defined:</para>
       </row>
       <row>
         <entry align='center'>amp</entry>
-        <entry align='center'>nonempty selection set becomes all
-	objects, empty set is returned empty</entry>
+        <entry align='center'><para>nonempty selection set becomes all
+	objects, empty set is returned empty</para></entry>
       </row>
     </tbody>
   </tgroup>
