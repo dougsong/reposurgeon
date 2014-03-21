@@ -1493,8 +1493,9 @@ is prepended.</para>
 </term>
 <listitem>
 <para>Move, rename, or delete a tag.  First argument must be an
-existing tag name; second argument must be one of the verbs 'move',
-'rename', or 'delete'.</para>
+existing tag name; second argument must be one of the verbs
+<quote>move</quote>, <quote>rename</quote>, or
+<quote>delete</quote>.</para>
 
 <para>For a <quote>move</quote>, a third argument must be a singleton
 selection set. For a <quote>rename</quote>, the third argument may be
@@ -1541,13 +1542,15 @@ error.</para>
 </term>
 <listitem>
 <para>Move, rename, or delete a reset.  First argument must match an
-existing reset name; second argument must be one of the verbs 'move',
-'rename', or 'delete'.</para>
+existing reset name; second argument must be one of the verbs
+<quote>move</quote>, <quote>rename</quote>, or
+<quote>delete</quote>.</para>
 
-<para>For a 'move', a third argument must be a singleton selection set. For
-a 'rename', the third argument may be any token token that matches a
-syntactically valid reset name (but not the name of an existing
-reset). For a 'delete', no third argument is required.</para>
+<para>For a <quote>move</quote>, a third argument must be a singleton
+selection set. For a <quote>rename</quote>, the third argument may be
+any token token that matches a syntactically valid reset name (but not
+the name of an existing reset). For a <quote>delete</quote>, no third
+argument is required.</para>
 
 <para>For either name, if it does not contain a <quote>/</quote> the
 prefix <quote>heads/</quote> is prepended. If it does not begin with
@@ -1573,9 +1576,11 @@ moved, no branch fields are changed.</para>
 <listitem>
 <para>Takes one or two arguments which must be the names of source and
 target branches; if the second (target) argument is omitted it
-defaults to 'refs/heads/master'.  Any trailing segment of a branch
-name is accepted as a synonym for it; thus 'master' is the same as
-'refs/heads/master'. Does not take a selection set.</para>
+defaults to <filename>refs/heads/master</filename>.  Any trailing
+segment of a branch name is accepted as a synonym for it; thus
+<filename>master</filename> is the same as
+<filename>refs/heads/master</filename>. Does not take a selection
+set.</para>
 
 <para>The history of the source branch is merged into the history of
 the target branch, becoming the history of a subdirectory with the
