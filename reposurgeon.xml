@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC 
+<!DOCTYPE refentry PUBLIC
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
    "docbook/docbookx.dtd">
 <refentry id='reposurgeon.1'>
@@ -154,14 +154,14 @@ edit                   ;; edit all editable objects
                        ;; revision number.
 
 /regression/ list      ;; list all commits and tags with comments or
-                       ;; committer headers or author headers containing 
+                       ;; committer headers or author headers containing
                        ;; the string "regression"
 
 1..:97 &amp; =T delete     ;; delete tags from event 1 to mark 97
 
 [Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
                        ;; and all blobs referred to in a fileop
-		       ;; touching Makefile.
+                       ;; touching Makefile.
 
 :46 tip                ;; Display the branch tip that owns commit :46.
 </programlisting>
@@ -169,8 +169,8 @@ edit                   ;; edit all editable objects
 
 <refsect2 id='selections'><title>SELECTION SYNTAX</title>
 
-<para>The selection-set specification syntax is an expression-oriented 
-minilanguage.  The most basic term in this language is a 
+<para>The selection-set specification syntax is an expression-oriented
+minilanguage.  The most basic term in this language is a
 <firstterm>location</firstterm>. The following sorts of primitive locations
 are supported:</para>
 
@@ -199,8 +199,8 @@ distinguish them from command keywords.</para>
 <varlistentry>
 <term><firstterm>fossil IDs</firstterm></term>
 <listitem>
-<para>If the contents of name brackets (&lt; &gt;) does not match a tag or 
-branch name, the interpreter next searches fossil IDs of commits.  This 
+<para>If the contents of name brackets (&lt; &gt;) does not match a tag or
+branch name, the interpreter next searches fossil IDs of commits.  This
 is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
@@ -223,7 +223,7 @@ right-hand location (inclusive).</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><firstterm>lists</firstterm></term>
-<listitem><para>Comma-separated lists of locations and ranges are 
+<listitem><para>Comma-separated lists of locations and ranges are
 accepted, with the obvious meaning.</para></listitem>
 </varlistentry>
 </variablelist>
@@ -247,62 +247,62 @@ letters. These are the type letters:</para>
       <row>
         <entry align='center'>B</entry>
         <entry align='center'>blobs</entry>
-	<entry><para>Most default selection sets exclude blobs; they
-	have to be manipulated through the commits they are attached
-	to.</para></entry>
+        <entry><para>Most default selection sets exclude blobs; they
+        have to be manipulated through the commits they are attached
+        to.</para></entry>
       </row>
       <row>
         <entry align='center'>C</entry>
         <entry align='center'>commits</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>H</entry>
         <entry align='center'>head (branch tip) commits</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>O</entry>
         <entry align='center'>orphaned (parentless) commits</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>M</entry>
         <entry align='center'>merge (multi-parent) commits</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>F</entry>
         <entry align='center'>fork (multi-child) commits</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>L</entry>
         <entry align='center'><para>commits with unclean multi-line comments
-	(without a separating empty line after the first)</para></entry>
-	<entry><para>&nbsp;</para></entry>
+        (without a separating empty line after the first)</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>I</entry>
         <entry align='center'><para>commits for which metadata cannot be
-	decoded to UTF-8</para></entry>
-	<entry><para>&nbsp;</para></entry>
+        decoded to UTF-8</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>T</entry>
         <entry align='center'>tags</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>R</entry>
         <entry align='center'>resets</entry>
-	<entry><para>&nbsp;</para></entry>
+        <entry><para>&nbsp;</para></entry>
       </row>
       <row>
         <entry align='center'>P</entry>
         <entry align='center'>Passthrough</entry>
-	<entry><para>All event types simply passed through,
-	including comments, <command>progress</command> commands, 
+        <entry><para>All event types simply passed through,
+        including comments, <command>progress</command> commands,
         and <command>checkpoint</command> commands.</para></entry>
       </row>
     </tbody>
@@ -372,8 +372,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'><para>commits or tags with that timestamp and 
-	committer/creator</para></entry>
+        <entry align='center'><para>commits or tags with that timestamp and
+        committer/creator</para></entry>
       </row>
       <row>
         <entry align='center'>yyyy-mm-dd part of RFC3339 timestamp</entry>
@@ -381,8 +381,8 @@ to a selection set of all matching commits.</para>
       </row>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
-        <entry align='center'><para>commit or tag with that timestamp and 
-	committer/creator</para></entry>
+        <entry align='center'><para>commit or tag with that timestamp and
+        committer/creator</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -401,7 +401,7 @@ brackets</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>text search</firstterm></term>
-<listitem><para>A text search expression is a Python regular expression 
+<listitem><para>A text search expression is a Python regular expression
 surrounded by forward slashes (to embed a forward slash in it, use a
 Python string escape such as \x2f).</para>
 
@@ -430,8 +430,8 @@ letters after the trailing slash.  These are as follows:</para>
       <row>
         <entry align='center'>b</entry>
         <entry align='center'><para>branch name in commit; also matches
-	blobs referenced by commits on matching branches, and tags 
-	which point to commmits on patching branches.</para></entry>
+        blobs referenced by commits on matching branches, and tags
+        which point to commmits on patching branches.</para></entry>
       </row>
       <row>
         <entry align='center'>c</entry>
@@ -463,7 +463,7 @@ letters after the trailing slash.  These are as follows:</para>
 
 <para>Multiple qualifier letters can add more search scopes.</para>
 
-<para>(The <quote>b</quote> qualifier replaces the branchset syntax 
+<para>(The <quote>b</quote> qualifier replaces the branchset syntax
 in earlier versions of <command>reposurgeon</command>.)</para>
 
 </listitem>
@@ -540,7 +540,7 @@ functions are defined:</para>
       <row>
         <entry align='center'>amp</entry>
         <entry align='center'><para>nonempty selection set becomes all
-	objects, empty set is returned empty</para></entry>
+        objects, empty set is returned empty</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -576,7 +576,7 @@ and manipulate the in-core list and the selection.</para>
 
 <variablelist>
 <varlistentry>
-<term><command>read</command> 
+<term><command>read</command>
         [<emphasis>directory</emphasis>|<emphasis>-</emphasis>|<emphasis>&lt;infile</emphasis>]
 </term>
 <listitem><para>With a directory-name argument, this command attempts
@@ -589,11 +589,11 @@ fast-import stream or Subversion dumpfile from standard input (this
 will be useful in filters constructed with command-line
 arguments).</para>
 
-<para>If the contents is a fast-import stream, any "cvs-revisions" property 
-on a commit is taken to be a newline-separated list of CVS revision cookies 
+<para>If the contents is a fast-import stream, any "cvs-revisions" property
+on a commit is taken to be a newline-separated list of CVS revision cookies
 pointing to the commit, and used for reference lifting.</para>
 
-<para>If the read location is a git repository and contains a 
+<para>If the read location is a git repository and contains a
 <filename>.git/cvsauthors</filename> file (such as is left in place
 by <command>git cvsimport -A</command>) that file will be read in as
 if it had been given to the <command>authors read</command> command.</para>
@@ -614,7 +614,7 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-	[--fossilize] [--noincremental]
+        [--fossilize] [--noincremental]
         [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
@@ -729,19 +729,19 @@ depends on the repository type, and can be displayed with the
 <command>stats</command> command.</para>
 
 <para>If <command>reposurgeon</command> has a nonempty fossil map,
-it will be written to a file named <filename>fossils</filename> 
-in the repository subdirectory as though by a 
-<filename>fossil write</filename> command. (This will normally 
+it will be written to a file named <filename>fossils</filename>
+in the repository subdirectory as though by a
+<filename>fossil write</filename> command. (This will normally
 be the case for Subversion and CVS conversions.)</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>preserve</command> 
+<term><command>preserve</command>
     [<emphasis>file...</emphasis>]
 </term>
 <listitem>
-<para>Add (presumably untracked) files or directories to the repo's 
-list of paths to be restored from the backup directory after a 
+<para>Add (presumably untracked) files or directories to the repo's
+list of paths to be restored from the backup directory after a
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current preserve list is displayed afterwards.</para>
 
@@ -779,7 +779,7 @@ argument.</para>
 <variablelist>
 <varlistentry>
 <term><command>list</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>This is the main command for identifying the events
 you want to modify.  It lists commits in the selection set by event
@@ -791,7 +791,7 @@ leading portion of the comment follows.
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>Display the branch tip names associated with commits
 in the selection set.  These will not necessarily be the same as their
@@ -807,7 +807,7 @@ error.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tags</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 Display tags and resets: three fields, an event number and a type and a name.
@@ -819,7 +819,7 @@ field 'commit'. Supports > redirection.
 <varlistentry>
 <term><command>stats</command>
         [<emphasis>repo-name</emphasis>...]
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 Report size statistics and import/export method information about
@@ -828,7 +828,7 @@ named repositories, or with no argument the currently chosen repository.
 </varlistentry>
 <varlistentry>
 <term><command>inspect</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>
 Dump a fast-import stream representing selected events to standard
@@ -838,7 +838,7 @@ and (2) there is an identifying header before each event dump.</para>
 </varlistentry>
 <varlistentry>
 <term><command>graph</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Emit a visualization of the commit graph in the DOT markup language
@@ -859,7 +859,7 @@ You can substitute in your own preferred image viewer, of course.</para>
 </varlistentry>
 <varlistentry>
 <term><command>sizes</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Print a report on data volume per branch; takes a selection set,
@@ -875,7 +875,7 @@ unwieldy.</para>
 </varlistentry>
 <varlistentry>
 <term><command>lint</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Look for DAG and metadata configurations that may indicate a
@@ -904,8 +904,8 @@ to support.</para>
 </term>
 <listitem>
 <para>Combine or delete commits in a selection set of events. The
-default selection set for this command is empty. Has no effect on 
-events other than commits unless the --delete policy is selected; 
+default selection set for this command is empty. Has no effect on
+events other than commits unless the --delete policy is selected;
 see the 'delete' command for discussion.</para>
 
 <para>Normally, when a commit is squashed, its file operation list
@@ -1037,7 +1037,7 @@ the repo is not divided.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>expunge</command> 
+<term><command>expunge</command>
         <emphasis>[path | /regexp/]...</emphasis>
 </term>
 <listitem>
@@ -1100,7 +1100,7 @@ commits that have no fileops.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>coalesce</command> 
+<term><command>coalesce</command>
         [<command>--debug</command>}|<command>--coalesce</command>]
         [<emphasis>timefuzz</emphasis>]
 </term>
@@ -1134,8 +1134,8 @@ used by Free Software Foundation projects.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>split</command> 
-        <command>{at|by}</command> 
+<term><command>split</command>
+        <command>{at|by}</command>
         <emphasis>item</emphasis>
 </term>
 <listitem>
@@ -1159,8 +1159,8 @@ of file operations in the original commit.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>remove</command> 
-        [<emphasis>index</emphasis> | <emphasis>path</emphasis> | <command>deletes</command>] 
+<term><command>remove</command>
+        [<emphasis>index</emphasis> | <emphasis>path</emphasis> | <command>deletes</command>]
         [<command>to</command> <emphasis>commit</emphasis>]
 </term>
 <listitem>
@@ -1190,7 +1190,7 @@ ever cares about mark ordering or gaps in the sequence.</para>
 </varlistentry>
 <varlistentry>
 <term><command>mailbox_out</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Emit a mailbox file of messages in RFC822 format representing
@@ -1206,7 +1206,7 @@ and give it as a following argument.</para>
 <varlistentry>
 <term><command>mailbox_in</command>
         [&lt;<emphasis>infile</emphasis>]
-	[<emphasis>changed</emphasis> &gt;<emphasis>outfile</emphasis>]
+        [<emphasis>changed</emphasis> &gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Accept a mailbox file of messages in RFC822 format representing the
@@ -1225,13 +1225,13 @@ committer ID and timestamp pair.</para>
 
 <para>If output is redirected and the modifier <quote>changed</quote>
 appears, a minimal set of modifications actually made is written to the
-output file in a form that can be fed back in.</para> 
+output file in a form that can be fed back in.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term><command>append</command>
         [<command>--rstrip</command>]
-	[&gt;<emphasis>text</emphasis>]
+        [&gt;<emphasis>text</emphasis>]
 </term>
 <listitem>
 <para>Append text to the comments of commits and tags in the specified
@@ -1331,7 +1331,7 @@ directly on the blob file.</para>
 </varlistentry>
 <varlistentry>
 <term><command>timeoffset</command>
-        offset 
+        offset
         [<emphasis>timezone</emphasis>]
 </term>
 <listitem>
@@ -1390,14 +1390,14 @@ named repo is removed from the load list.</para>
 </varlistentry>
 <varlistentry>
 <term><command>path</command>
-	[<emphasis>source</emphasis>]
-	<command>rename</command>
-	[<command>--force</command>}|<command>--relax</command>]
-	[<emphasis>target</emphasis>]
+        [<emphasis>source</emphasis>]
+        <command>rename</command>
+        [<command>--force</command>}|<command>--relax</command>]
+        [<emphasis>target</emphasis>]
 </term>
 <listitem>
 <para>Rename a path in every fileop of every selected commit.  The
-default selection set is all commits. The first argument is interpreted as a 
+default selection set is all commits. The first argument is interpreted as a
 Python regular expression to match against paths; the second may contain
 back-reference syntax.</para>
 
@@ -1410,9 +1410,9 @@ skipped and the old path fileop is deleted instead.</para>
 </varlistentry>
 <varlistentry>
 <term><command>paths</command>
-	[<command>{sub|sup}</command>]
-	[<command>dirname</command>]
-	[&gt;<emphasis>outfile</emphasis>]
+        [<command>{sub|sup}</command>]
+        [<command>dirname</command>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Takes a selection set. Without a modifier, list all paths
@@ -1649,11 +1649,11 @@ followed by a author email address.  It attempts to refers to a commit
 without being VCS-specific.  Thus, instead of "commit 304a53c2" or
 "r2355", "2011-10-25T15:11:09Z!fred@foonly.com".</para>
 
-<para>There is a rare case in which an action stamp 
+<para>There is a rare case in which an action stamp
 will not refer uniquely to one commit. It is theoretically possible
 that the same author might check in revisions on different branches
 within the one-second resolution of the timestamps in a fast-import stream.
-There is nothing to be done about this; tools using action stamps need to be 
+There is nothing to be done about this; tools using action stamps need to be
 aware of the possibility and throw a warning when it occurs.</para>
 
 <para>In order to support reference lifting,
@@ -1726,7 +1726,7 @@ form of macro expansion.</para>
 <para>Define a macro.  The first whitespace-separated token is the
 name; the remainder of the line is the body, unless it is
 <quote>{</quote>, which begins a multi-line macro terminated by
-a line beginning with <quote>}</quote>.</para>  
+a line beginning with <quote>}</quote>.</para>
 
 <para>A later <quote>do</quote> call can invoke this macro.</para>
 
@@ -1844,7 +1844,7 @@ associated with repository conversions from order systems.</para>
 </term>
 <listitem>
 <para>Apply or dump author-map information for the specified selection
-set, defaulting to all events.</para> 
+set, defaulting to all events.</para>
 
 <para>Lifts from CVS and Subversion may have only usernames local to
 the repository host in committer and author IDs. DVCSes want email
@@ -1914,7 +1914,7 @@ forget to re-set it.</para>
 <varlistentry>
 <term><command>manifest</command>
         [<emphasis>regular expression</emphasis>]
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Takes an optional selection set argument defaulting to all commits, and
@@ -1938,7 +1938,7 @@ the directory.</para>
 </varlistentry>
 <varlistentry>
 <term><command>diff</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Display the difference between commits. Takes a selection-set
@@ -1951,7 +1951,7 @@ redirection.</para>
 
 <refsect2 id='housekeeping'><title>HOUSEKEEPING</title>
 
-<para>These are backed up by the following housekeeping commands, none of 
+<para>These are backed up by the following housekeeping commands, none of
 which take a selection set:</para>
 
 <variablelist>
@@ -1967,7 +1967,7 @@ also invokes this.
 <term><command>shell</command>
 </term>
 <listitem><para>Execute the shell command given in the remainder of the line.
-'!' also invokes this.  
+'!' also invokes this.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -2010,7 +2010,7 @@ argument.</para>
 <variablelist>
 <varlistentry>
 <term><command>index</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Display four columns of info on objects in the selection set:
@@ -2025,7 +2025,7 @@ except blobs.</para>
 </varlistentry>
 <varlistentry>
 <term><command>resolve</command>
-	[<emphasis>label-text...</emphasis>]
+        [<emphasis>label-text...</emphasis>]
 </term>
 <listitem><para>Does nothing but resolve a selection-set expression
 and echo the resulting event-number set to standard
@@ -2037,7 +2037,7 @@ for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>assign</command>
-	[<emphasis>name</emphasis>]
+        [<emphasis>name</emphasis>]
 </term>
 <listitem>
 <para>Compute a leading selection set and assign it to a symbolic name.
@@ -2051,7 +2051,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.</para>
 </varlistentry>
 <varlistentry>
 <term><command>unassign</command>
-	[<emphasis>name</emphasis>]
+        [<emphasis>name</emphasis>]
 </term>
 <listitem>
 <para>Unassign a symbolic name.  Throws an error if the name is not
@@ -2061,14 +2061,14 @@ assigned.
 </varlistentry>
 <varlistentry>
 <term><command>names</command>
-	[&gt;<emphasis>outfile</emphasis>]
+        [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>List the names of all known branches and tags.  Tells
 you what things are legal within angle brackets and
 parentheses.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>verbose</command> 
+<term><command>verbose</command>
         [<emphasis>n</emphasis>]
 </term>
 <listitem><para>'verbose 1' enables the progress meter and messages,
@@ -2076,7 +2076,7 @@ parentheses.</para></listitem>
 but intended for developers only.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term><command>quiet</command> 
+<term><command>quiet</command>
         [<emphasis>on | off</emphasis>]
 </term>
 <listitem><para>Without an argument, this command requests a report of the quiet
@@ -2095,7 +2095,7 @@ output. Useful in regression tests.</para></listitem>
 <term><command>echo</command>
         [<emphasis>number</emphasis>]
 </term>
-<listitem><para>'echo 1' causes each 
+<listitem><para>'echo 1' causes each
 <command>reposurgeon</command> command to be echoed to standard
 output just before its output.  This can be useful in constructing regression
 tests that are easily checked by eyeball.</para></listitem>
@@ -2145,9 +2145,9 @@ script was developed.  The program will error out if the major version
 has changed (which means the surgical language is not backwards
 compatible).</para>
 
-<para>It is good practice to start your lift script with a version 
-requirement, especially if you are going to archive it for later 
-reference.</para>  
+<para>It is good practice to start your lift script with a version
+requirement, especially if you are going to archive it for later
+reference.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -2206,7 +2206,7 @@ disk space.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>profile</command> 
+<term><command>profile</command>
 </term>
 <listitem>
 <para>Enable profiling. Must be one of the initial command-line arguments, and
@@ -2268,13 +2268,13 @@ the root node.</para></listitem>
 <para>These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace separated.</para>
 
-<para>Here are the rules used for mapping subdirectories in a 
+<para>Here are the rules used for mapping subdirectories in a
 Subversion repository to branches:</para>
 
 <orderedlist>
-<listitem><para>At any given time there is a set of eligible 
-paths and path wildcards which declare potential branches. 
-See the documentation of the <command>branchify</command> 
+<listitem><para>At any given time there is a set of eligible
+paths and path wildcards which declare potential branches.
+See the documentation of the <command>branchify</command>
 for how to alter this set, which initially consists of
 {trunk, tags/*, branches/*, and '*'}.</para></listitem>
 
@@ -2323,8 +2323,8 @@ apparent misfeature has been accepted so that
 human-generated metadata that might have value; it is left up to the
 user to manually remove unwanted tags.</para>
 
-<para>Subversion branch deletions are turned into deletealls, clearing the 
-fileset of the import-stream branch.  When a branch 
+<para>Subversion branch deletions are turned into deletealls, clearing the
+fileset of the import-stream branch.  When a branch
 finishes with a deleteall at its tip, the deleteall is transformed
 into a tag. This rule cleans up after aborted branch renames.</para>
 
@@ -2338,7 +2338,7 @@ touches three branches, the three generated commits will have IDs
 
 <para>The svn:executable and svn:special properties are translated
 into permission settings in the input stream; svn:executable becomes
-100755 and svn:special becomes 120000 (indicating a symlink; the blob 
+100755 and svn:special becomes 120000 (indicating a symlink; the blob
 contents will be the path to which the symlink should resolve).</para>
 
 <para>Any cvs2svn:rev properties generated by
@@ -2354,7 +2354,7 @@ stepped on.</para>
 on a revision A with a merge source range ending in revision B produces
 a merge link such that B becomes a parent of A.</para>
 
-<para>All other Subversion properties are discarded. (This may change in a 
+<para>All other Subversion properties are discarded. (This may change in a
 future release.) The property for which this is most likely to cause
 semantic problems is svn:eol-style. However, since property-change-only
 commits get turned into annotated tags, the translated tags will retain
@@ -2433,8 +2433,8 @@ error can be ignored.</para>
 <varlistentry>
 <term>branch links detected by file ops only</term>
 <listitem>
-<para>Branch links are normally deduced by examining Subversion directory 
-copy operations. A common user error (making a branch with a non-Subversion 
+<para>Branch links are normally deduced by examining Subversion directory
+copy operations. A common user error (making a branch with a non-Subversion
 directory copy and then doing an svn add on the contends) can defeat this.
 While <command>reposurgeon</command> should detect and cope with most such
 copies correctly, you should examine the commit graph to check that the
@@ -2445,7 +2445,7 @@ branch is rooted at the correct place.</para>
 <term>could not tagify root commit</term>
 <listitem>
 <para>The earliest commit in your Subversion repository has file operations,
-rather than being a pure directory creation. This probably means your 
+rather than being a pure directory creation. This probably means your
 Subversion dump file is malformed, or you may have attempted to lift
 from an incremental dump. Proceed with caution.</para>
 </listitem>
@@ -2453,7 +2453,7 @@ from an incremental dump. Proceed with caution.</para>
 <varlistentry>
 <term>deleting parentless tip delete</term>
 <listitem>
-<para>This message may be triggered by a Subversion branch move followed by 
+<para>This message may be triggered by a Subversion branch move followed by
 a re-creation under the source name. Check near the indicated revision to make
 sure the renamed branch is connected to master.</para>
 </listitem>
@@ -2555,24 +2555,24 @@ tag basename.  The committer name and timestamp are copied from the
 commit the tag points to. The distinction between heads and tags is
 lost.</para>
 
-<para>Because of the preceding two points, it is not guaranteed that 
+<para>Because of the preceding two points, it is not guaranteed that
 even revision numbers will be stable when a Subversion repository
 is read in and then written out!</para>
 
 <para>Subversion repositories are always written with a standard
-(trunk/tags/branches) layout. Thus, a repository with a nonstandard 
+(trunk/tags/branches) layout. Thus, a repository with a nonstandard
 shape that has been analyzed by <application>reposurgeon</application>
 won't be written out with the same shape.</para>
 
 <para>When writing a Subversion repository, branch merges are
 translated into svn:mergeinfo properties in the simplest possible way -
-as an svn:mergeinfo property of the translated merge commit listing 
+as an svn:mergeinfo property of the translated merge commit listing
 the merge source revisions.</para>
 
 <para>Subversion has a concept of "flows"; that is, named segments of
-history corresponding to files or directories that are created when the 
+history corresponding to files or directories that are created when the
 path is added, cloned when the path is copied, and deleted when the
-path is deleted. This information is not preserved in import streams or 
+path is deleted. This information is not preserved in import streams or
 the internal representation that <application>reposurgeon</application>
 uses.  Thus, after editing, the flow boundaries of a Subversion history
 may be arbitrarily changed. </para>
@@ -2604,10 +2604,10 @@ glob or regexp syntax or negation.</para>
     <colspec colname='c5'/>
     <colspec colname='c6'/>
     <colspec colname='c7'/>
-    <spanspec spanname="all" namest="c2" nameend="c7" align="center"/> 
+    <spanspec spanname="all" namest="c2" nameend="c7" align="center"/>
     <thead>
       <row>
-	<entry></entry>
+        <entry></entry>
         <entry align='center'>from CVS</entry>
         <entry align='center'>from svn</entry>
         <entry align='center'>from git</entry>
@@ -2618,58 +2618,58 @@ glob or regexp syntax or negation.</para>
     </thead>
     <tbody>
       <row>
-	<entry><para><emphasis role="strong">to CVS</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to CVS</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all except !-prefixed but nonempty</para></entry>
-	<!-- hg  --><entry><para>all</para></entry>
-	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
-	<!--darcs--><entry><para>plain</para></entry>
+        <!-- git --><entry><para>all except !-prefixed but nonempty</para></entry>
+        <!-- hg  --><entry><para>all</para></entry>
+        <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
-	<entry><para><emphasis role="strong">to svn</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to svn</emphasis></para></entry>
         <!-- CVS --><entry>all except !<para></para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all except !-prefixed</para></entry>
-	<!-- hg  --><entry><para>all</para></entry>
-	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
-	<!--darcs--><entry><para>plain</para></entry>
+        <!-- git --><entry><para>all except !-prefixed</para></entry>
+        <!-- hg  --><entry><para>all</para></entry>
+        <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
-	<entry><para><emphasis role="strong">to git</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to git</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all</para></entry>
-	<!-- hg  --><entry><para>all except !-prefixed</para></entry>
-	<!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
-	<!--darcs--><entry><para>plain</para></entry>
+        <!-- git --><entry><para>all</para></entry>
+        <!-- hg  --><entry><para>all except !-prefixed</para></entry>
+        <!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
-	<entry><para><emphasis role="strong">to hg</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to hg</emphasis></para></entry>
         <!-- CVS --><entry><para>all except !</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all except !-prefixed</para></entry>
-	<!-- hg  --><entry><para>all</para></entry>
-	<!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
-	<!--darcs--><entry><para>plain</para></entry>
+        <!-- git --><entry><para>all except !-prefixed</para></entry>
+        <!-- hg  --><entry><para>all</para></entry>
+        <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
-	<entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
         <!-- CVS --><entry><para>all</para></entry>
         <!-- svn --><entry><para>all</para></entry>
-	<!-- git --><entry><para>all</para></entry>
-	<!-- hg  --><entry><para>all</para></entry>
-	<!-- bzr --><entry><para>all</para></entry>
-	<!--darcs--><entry><para>plain</para></entry>
+        <!-- git --><entry><para>all</para></entry>
+        <!-- hg  --><entry><para>all</para></entry>
+        <!-- bzr --><entry><para>all</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
       </row>
       <row>
-	<entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
         <!-- CVS --><entry><para>plain</para></entry>
         <!-- svn --><entry><para>plain</para></entry>
-	<!-- git --><entry><para>plain</para></entry>
-	<!-- hg  --><entry><para>plain</para></entry>
-	<!-- bzr --><entry><para>plain</para></entry>
-	<!--darcs--><entry><para>all</para></entry>
+        <!-- git --><entry><para>plain</para></entry>
+        <!-- hg  --><entry><para>plain</para></entry>
+        <!-- bzr --><entry><para>plain</para></entry>
+        <!--darcs--><entry><para>all</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -2748,7 +2748,7 @@ pattern in some other Unix tools - notably
 <citerefentry><refentrytitle>sed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>In versions before 3.0, path expressions only matched
-commits, not commits and the associated blobs as well. The names 
+commits, not commits and the associated blobs as well. The names
 of the <quote>a</quote> and <quote>c</quote> flags were different.</para>
 
 <para>In <command>reposurgeon</command> versions before 3.0, the
@@ -2775,7 +2775,7 @@ syntax uses similarly named options with leading dashes, that can appear
 anywhere after the tagify command</para>
 
 <para>In versions before 2.9. the syntax of "authors", "fossils",
-"list", and "mailbox_{in|out}" was different. They took plain filename 
+"list", and "mailbox_{in|out}" was different. They took plain filename
 arguments rather that using redirect &lt; and &gt;.</para>
 </refsect1>
 
@@ -2816,7 +2816,7 @@ potential passthroughs is known to include the
 preserve all repository state they are not explicitly told to modify
 or warn you when they cannot do so.</para>
 
-<para>Guarantee: <command>reposurgeon</command> handles the bzr 
+<para>Guarantee: <command>reposurgeon</command> handles the bzr
 commit-properties extension, correctly passing through property
 items including those with embedded newlines. (Such properties
 are also editable in the mailbox format.)</para>
@@ -2834,11 +2834,11 @@ will produce a subdirectory structure that differs from what you
 expect.  Look for your content under the subdirectory 'trunk'.</para>
 
 <para>Limitation: under git, signed tags are imported verbatim. However, any
-operation that modifies any commit upstream of the target of the 
+operation that modifies any commit upstream of the target of the
 tag will invalidate it.</para>
 
 <para>Limitation: Stock git (at least as of version 1.7.3.2) will choke on
-property extension commands. Accordingly, <command>reposurgeon</command> 
+property extension commands. Accordingly, <command>reposurgeon</command>
 omits them when rebuilding a repo with git type.</para>
 
 <para>Limitation: While the Subversion read-side support is in good shape,
@@ -2853,7 +2853,7 @@ fast-import format, their repositories will become editable by
 
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
 
-<para><command>reposurgeon</command> relies on importers and exporters 
+<para><command>reposurgeon</command> relies on importers and exporters
 associated with the VCSes it supports.</para>
 
 <variablelist>
@@ -2868,7 +2868,7 @@ associated with the VCSes it supports.</para>
 <varlistentry>
 <term>hg</term>
 <listitem>
-<para>Requires core hg, the hg-fastimport plugin, and the third-party 
+<para>Requires core hg, the hg-fastimport plugin, and the third-party
 hg-fast-export.py script.</para>
 </listitem>
 </varlistentry>
@@ -2906,7 +2906,7 @@ handles RCS collections as well). The caveat for CVS applies.</para>
 <refsect1 id='canonicalization'><title>CANONICALIZATION RULES</title>
 
 <para>It is expected that <command>reposurgeon</command> will
-be extended with more deletion policies. Policy authors may 
+be extended with more deletion policies. Policy authors may
 need to know more about how a commit's file operation sequence
 is reduced to normal form after operations from deleted commits
 are prepended to it.</para>
@@ -2935,89 +2935,89 @@ describes all possible cases and all but one of the reductions.</para>
     <tbody>
       <row>
         <entry align='center'>M + D &rarr; D</entry>
-	<entry align='left'><para>If a file is modified
-	then deleted, the result is as though it had been
-	deleted. If the M was the only modify for the file, it's 
-	removed too.</para></entry>
+        <entry align='left'><para>If a file is modified
+        then deleted, the result is as though it had been
+        deleted. If the M was the only modify for the file, it's
+        removed too.</para></entry>
       </row>
       <row>
         <entry align='center'>M a + R a b &rarr; R a b + M b</entry>
-        <entry align='left'><para>The purpose of this transformation is 
-	to push renames toward the beginning of the list,
-	where they may become adjacent to another R or C they can 
-	be composed with. If the M is the only modify operation for
-	this file, the rename is dropped.</para></entry>
+        <entry align='left'><para>The purpose of this transformation is
+        to push renames toward the beginning of the list,
+        where they may become adjacent to another R or C they can
+        be composed with. If the M is the only modify operation for
+        this file, the rename is dropped.</para></entry>
       </row>
       <row>
         <entry align='center'>M a + C a b</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>M b + R a b &rarr; nothing</entry>
-	<entry align='left'><para>Should be impossible, and may
-	indicate repository corruption.</para></entry>
+        <entry align='left'><para>Should be impossible, and may
+        indicate repository corruption.</para></entry>
       </row>
       <row>
         <entry align='center'>M b + C a b &rarr; nothing</entry>
-	<entry align='left'><para>The copy undoes the
-	modification.</para></entry>
+        <entry align='left'><para>The copy undoes the
+        modification.</para></entry>
       </row>
       <row>
         <entry align='center'>D + M &rarr; M</entry>
-	<entry align='left'><para>If a file is deleted and modified,
-	the result is as though the deletion had not taken place
-	(because M operations store entire files, not
-	deltas).</para></entry>
+        <entry align='left'><para>If a file is deleted and modified,
+        the result is as though the deletion had not taken place
+        (because M operations store entire files, not
+        deltas).</para></entry>
       </row>
       <row>
         <entry align='center'>D + {D|R|C}</entry>
-	<entry align='left'><para>These cases should be impossible
-	and would suggest the repository has been corrupted.</para></entry>
+        <entry align='left'><para>These cases should be impossible
+        and would suggest the repository has been corrupted.</para></entry>
       </row>
       <row>
         <entry align='center'>R a b + D a</entry>
-	<entry align='left'><para>Should never happen, and is 
-	another case that would suggest repository corruption.</para></entry>
+        <entry align='left'><para>Should never happen, and is
+        another case that would suggest repository corruption.</para></entry>
       </row>
       <row>
         <entry align='center'>R a b + D b &rarr; D a</entry>
-	<entry align='left'><para>The delete removes the just-renamed file.</para></entry>
+        <entry align='left'><para>The delete removes the just-renamed file.</para></entry>
       </row>
       <row>
         <entry align='center'>{R|C} + M</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>R a b + R b c &rarr; R a c</entry>
-	<entry align='left'><para>The b terms have to match for these
-	operations to have made sense when they lived in separate
-	commits; if they don't, it indicates repository
-	corruption.</para></entry>
+        <entry align='left'><para>The b terms have to match for these
+        operations to have made sense when they lived in separate
+        commits; if they don't, it indicates repository
+        corruption.</para></entry>
       </row>
       <row>
         <entry align='center'>R a b + C b c</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + D a &rarr; R a b</entry>
-	<entry align='left'><para>Copy followed by delete of the source is a rename.</para></entry>
+        <entry align='left'><para>Copy followed by delete of the source is a rename.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + D b &rarr; nothing</entry>
-	<entry align='left'><para>This delete undoes the copy.</para></entry>
+        <entry align='left'><para>This delete undoes the copy.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + R a c</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='left'><para>No reduction.</para></entry>
       </row>
       <row>
         <entry align='center'>C a b + R b c &rarr; C a c</entry>
-	<entry align='left'><para>Copy followed by a rename of the
-	target reduces to single copy</para></entry>
+        <entry align='left'><para>Copy followed by a rename of the
+        target reduces to single copy</para></entry>
       </row>
       <row>
         <entry align='center'>C + C</entry>
-	<entry align='left'><para>No reduction.</para></entry>
+        <entry align='left'><para>No reduction.</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -3027,9 +3027,9 @@ describes all possible cases and all but one of the reductions.</para>
 
 <refsect1 id='recovery'><title>CRASH RECOVERY</title>
 
-<para>This section will become relevant only if 
+<para>This section will become relevant only if
 <command>reposurgeon</command> or something underneath it in the
-software and hardware stack crashes while in the middle of writing out 
+software and hardware stack crashes while in the middle of writing out
 a repository, in particular if the target directory of the rebuild is
 your current directory.</para>
 
@@ -3051,7 +3051,7 @@ ID.</para></step>
 <step>
 <para>We then make an empty backup directory.  This directory will
 be named <filename>/path/to/foo.~N~</filename>, where N is incremented
-so as not to conflict with any existing backup directories.  
+so as not to conflict with any existing backup directories.
 <command>reposurgeon</command> never, under any circumstances,
 ever deletes a backup directory.</para>
 
