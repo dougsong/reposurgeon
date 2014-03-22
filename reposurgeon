@@ -4796,6 +4796,16 @@ class Repository:
         if target and target.name == "svn":
             SubversionDumper(self).dump(selection, fp, progress)
             return
+        if selection != self.all():
+            implied = set(selection)
+            for ei in selection:
+                event = self.events[ei]
+                if isinstance(event, Commit):
+                    for fileop in event.fileops:
+                        if fileop.op == 'M':
+                            implied.add(self.find(fileop.ref))
+            selection = list(implied)
+            selection.sort()
         with Baton("reposurgeon: exporting", enable=progress) as baton:
             try:
                 fossil_latch = False
