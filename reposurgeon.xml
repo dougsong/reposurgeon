@@ -641,6 +641,9 @@ is a clue to export-stream loaders that the branch should be glued to
 the tip of a pre-existing branch of the same name.  The
 <option>--fossilize</option> option suppresses this behavior.</para>
 
+<para>When you specify a partial selection set, including a commit
+object forces the inclusion of every blob to which it refers.</para>
+
 <para>Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
 dump.  When this happens, the write code replaces the merge mark with
