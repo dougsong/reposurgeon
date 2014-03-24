@@ -91,6 +91,7 @@ class VCS:
                  preserve,
                  authormap,
                  ignorename,
+                 dfltignores,
                  project,
                  notes):
         self.name = name
@@ -105,6 +106,7 @@ class VCS:
         self.preserve = preserve
         self.authormap = authormap
         self.ignorename = ignorename
+        self.dfltignores = dfltignores
         self.project = project
         self.notes = notes
     def __str__(self):
@@ -120,6 +122,7 @@ class VCS:
                "     Preserve: {{{preserve}}}\n" \
                "    Authormap: {self.authormap}\n" \
                "   Ignorename: {self.ignorename}\n" \
+               "      Ignores: {self.dfltignores}\n" \
                "      Project: {self.project}\n" \
                "        Notes: {self.notes}\n".format(
                        self = self,
@@ -174,6 +177,7 @@ vcstypes = [
         preserve={'.git/config', '.git/hooks'},
         authormap=".git/cvs-authors",
         ignorename=".gitignore",
+        dfltignores="",	# Has none
         project="http://git-scm.com/",
         notes="The authormap is not required, but will be used if present."),
     # 
@@ -190,6 +194,18 @@ vcstypes = [
         authormap=None,
         project="http://bazaar.canonical.com/en/",
         ignorename=".bzrignore",
+        dfltignores="""
+*.a
+*.o
+*.py[co]
+*.so
+*.sw[nop]
+*~
+.#*
+[#]*#
+__pycache__
+bzr-orphans
+""",
         notes="Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
     VCS(name="hg",
@@ -205,6 +221,7 @@ vcstypes = [
         preserve={".hg/hgrc"},
         authormap=None,
         ignorename=".hgignore",
+        dfltignores="",
         project="http://mercurial.selenic.com/",
         notes="The hg export-import methods are not part of stock Mercurial."),
     # Styleflags may need tweaking for round-tripping 
@@ -220,6 +237,7 @@ vcstypes = [
         preserve=set(),
         authormap=None,
         ignorename="_darcs/prefs/boring",
+        dfltignores="",	# Has none
         project="http://darcs.net/",
         notes="Assumes no boringfile preference has been set."),
     # Export is experimental and doesn't round-trip
@@ -235,6 +253,7 @@ vcstypes = [
         preserve={"hooks"},
         authormap=None,
         ignorename=None,
+        dfltignores="",	# Embedded in the properties parser
         project="http://subversion.apache.org/",
         notes="Run from the repository, not a checkout directory."),
     VCS(name="cvs",
@@ -249,6 +268,40 @@ vcstypes = [
         preserve=set(),
         authormap=None,
         ignorename=None,
+        dfltignores="""\
+RCS
+SCCS
+CVS
+CVS.adm
+RCSLOG
+cvslog.*
+tags
+TAGS
+.make.state
+.nse_depinfo
+*~
+#*
+.#*
+,*
+_$*
+*$
+*.old
+*.bak
+*.BAK
+*.orig
+*.rej
+.del-*
+*.a
+*.olb
+*.o
+*.obj
+*.so
+*.exe
+*.Z
+*.elc
+*.ln
+core
+""",
         project="http://www.catb.org/~esr/cvs-fast-export",
         notes="Requires cvs-fast-export."),
     VCS(name="rcs",
@@ -263,6 +316,7 @@ vcstypes = [
         preserve=set(),
         authormap=None,
         ignorename=None,
+        dfltignores="",	# Has none
         project="http://www.catb.org/~esr/cvs-fast-export",
         notes="Requires cvs-fast-export."),
     ]
@@ -1094,6 +1148,15 @@ class Tag(object):
             modified = True
             self.comment = newcomment
         return modified
+    def undecodable(self, codec="utf-8"):
+        "Does this tag have undecodable i18n sequences in it?"
+        try:
+            self.name.decode(codec, "strict")
+            self.tagger.name.decode(codec, "strict")
+            self.comment.decode(codec, "strict")
+            return False
+        except UnicodeError:
+            return True
     @staticmethod
     def branchname(tagname):
         "Return the full branch reference corresponding to a tag."
@@ -6569,7 +6632,7 @@ into sections of the input stream instead).
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
-                "I" : lambda e: isinstance(e, Commit) and e.undecodable(),
+                "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
                 }
 
             visible = set()
@@ -8709,7 +8772,7 @@ either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
 
 If the selection set is empty, the from mark in the earliest commit of
-the named repo must be a callout matching a commit in the cuttrrently
+the named repo must be a callout matching a commit in the currently
 chosen repo.  If the selection set is of size 1, it must identify a
 single commit in the currently chosen repo.
 
