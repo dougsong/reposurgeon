@@ -9802,7 +9802,7 @@ Note that '_selection' will be a list of integers, not objects.
             _repository = self.chosen()
             try:
                 eval(line)
-            except (NameError, SyntaxError), e:
+            except (NameError, SyntaxError) as e:
                 raise Recoverable(str(e))
 
     #
