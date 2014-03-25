@@ -1245,17 +1245,17 @@ the new text is appended.</para>
 </varlistentry>
 <varlistentry>
 <term><command>filter</command>
-        [<emphasis>--shell</emphasis>|<emphasis>--regex</emphasis>|<emphasis>--replace</emphasis>]
+        [<emphasis>--shell</emphasis>|<emphasis>--regex</emphasis>|<emphasis>--replace</emphasis>|<emphasis>--dedos</emphasis>]
 </term>
 <listitem>
 <para>Run blobs, commit comments, or tag comments in the selection set
 through the filter specified on the command line.</para>
 
-<para>Attempting to specify a selection set including both blobs and
-non-blobs (that is, commits or tags) throws an error. Inline content
-in commits is filtered when the selection set contains (only) blobs
-and the commit is within the range bounded by the earliest and latest
-blob in the specification.</para>
+<para>In any mode other than --dedos, attempting to specify a
+selection set including both blobs and non-blobs (that is, commits or
+tags) throws an error. Inline content in commits is filtered when the
+selection set contains (only) blobs and the commit is within the range
+bounded by the earliest and latest blob in the specification.</para>
 
 <para>When filtering blobs, if the command line contains the magic cookie
 '%PATHS%' it is replaced with a space-separated list of all paths
