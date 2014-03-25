@@ -825,7 +825,7 @@ class DateTests(unittest.TestCase):
     def test_conversion(self):
         def do_test(init, formats):
             date = Date(init)
-            for (func, result) in formats.iteritems():
+            for (func, result) in formats.items():
                 self.assertEqual(getattr(date, func)(), result)
         data = [['2010-10-27T18:43:32Z',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
@@ -5949,11 +5949,11 @@ class popen_or_die:
         except (OSError, IOError) as oe:
             raise Fatal("execution of %s%s failed: %s" \
                                  % (self.command, self.legend, oe))
-    def __exit__(self, extype, value, traceback):
+    def __exit__(self, extype, value, traceback_unused):
         if extype:
             if verbose:
                 complain("fatal exception in popen_or_die.")
-            raise extype, value, traceback
+            raise extype(value)
         if self.fp.close() is not None:
             raise Fatal("%s%s returned error." % (self.command, self.legend))
         return False
