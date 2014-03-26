@@ -1999,7 +1999,7 @@ def capture(command):
     if debug_enable(DEBUG_COMMANDS):
         announce("%s: capturing %s" % (rfc3339(time.time()), command))
     try:
-        content = subprocess.check_output(command, shell=True).decode()
+        content = subprocess.check_output(command, shell=True)
     except (subprocess.CalledProcessError, OSError) as oe:
         raise Fatal("execution of '%s' failed: %s" % (command, oe))
     if debug_enable(DEBUG_COMMANDS):
