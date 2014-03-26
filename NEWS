@@ -2,7 +2,7 @@
 
 Repoository head:
      New transcode command for moving metadata to UTF-8.
-     New @dsc() finction for selecting all descendants if a selection set.
+     New @dsc() function for selecting all descendants if a selection set.
 
 3.7: 2014-03-15
      New --dedos option for filter command, to change \r\n line endings to \n.
