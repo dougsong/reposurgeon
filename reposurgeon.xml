@@ -621,7 +621,7 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-        [--fossilize] [--noincremental]
+        [--fossilize] [--noincremental] [--callout]
         [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
@@ -646,17 +646,19 @@ selection set, just before the first reference to that branch in a
 commit.  An incremental dump cookie looks like "refs/heads/foo^0" and
 is a clue to export-stream loaders that the branch should be glued to
 the tip of a pre-existing branch of the same name.  The
-<option>--fossilize</option> option suppresses this behavior.</para>
+<option>--noincremental</option> option suppresses this behavior.</para>
 
 <para>When you specify a partial selection set, including a commit
 object forces the inclusion of every blob to which it refers.</para>
 
 <para>Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
-dump.  When this happens, the write code replaces the merge mark with
-a callout, the action stamp of the parent commit.  Importers will fail when
-reading this; it is intended to be used by the
-<command>graft</command> command.</para>
+dump.  When this happens and <option>--callout</option> optioonm was
+specified, the write code replaces the merge mark with a callout, the
+action stamp of the parent commit; otherwise the parent mark is
+omitted.  Importers will fail when reading a stream dump with callouts;
+it is intended to be used by the <command>graft</command>
+command.</para>
 
 <para>Specifying a write selection set with gaps in it is allowed
 but unlikely to lead to good results if it is loaded by an importer.</para>

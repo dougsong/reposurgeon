@@ -1915,10 +1915,9 @@ class Commit(object):
         if parents and not incremental:
             ancestor = parents[0]
             if internals is None or ancestor.mark in internals:
-                nugget = ancestor.mark
-            else:
-                nugget = ancestor.callout()
-            parts.append("from %s\n" % nugget)
+                parts.append("from %s\n" % ancestor.mark)
+            elif '--callout' in options:
+                parts.append("from %s\n" % ancestor.callout())
         for ancestor in parents[1:]:
             if internals is None or ancestor.mark in internals:
                 nugget = ancestor.mark
