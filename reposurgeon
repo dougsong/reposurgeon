@@ -6937,11 +6937,26 @@ into sections of the input stream instead).
         except TypeError:
             raise Recoverable("cannot take maximum of empty set")
     def amp_handler(self, subarg):
-        "Amplify - map empty set to emply, nonempty set to all."
+        "Amplify - map empty set to empty, nonempty set to all."
         if subarg:
             return set(self.chosen().all())
         else:
             return subarg
+    def dsc_handler(self, subarg):
+        "All descendants of a selection set, recursively."
+        descendants = []
+        edge = [self.chosen().events[i] for i in subarg]
+        while True:
+            descendants += edge
+            beyond = []
+            for event in edge:
+                if isinstance(event, Commit):
+                    beyond += event.children()
+            if beyond:
+                edge = beyond
+            else:
+                break
+        return set([self.chosen().find(event.mark) for event in descendants])
 
     #
     # Helpers
@@ -7124,6 +7139,11 @@ More ways to construct event sets:
 =F         all fork (multiple-child) commits
 =L         all commits with unclean multi-line comments
 =I         all commits not decodable to UTF-8
+
+@min()     create singleton set of the least element in the argument
+@max()     create singleton set of the greatest element in the argument
+@amp()     all events if the argument set is nonempty, null set otherwise
+@dsc()     all (recursive) descendant commits of the argument set 
 
 You can compose sets as follows:
 

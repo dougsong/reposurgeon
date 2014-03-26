@@ -1,0 +1,24 @@
+     2 branch      -    refs/tags/annotated
+     3 commit     :2    refs/tags/annotated
+     5 commit     :4    refs/tags/annotated
+     7 commit     :6    refs/tags/annotated
+     9 commit     :8    refs/tags/annotated
+    11 commit    :10    refs/tags/annotated
+    12 commit    :11    refs/tags/annotated
+    13 commit    :12    refs/tags/annotated
+    15 commit    :14    refs/tags/annotated
+    16 commit    :15    refs/tags/annotated
+    18 commit    :17    refs/tags/annotated
+    20 commit    :19    refs/heads/master
+    22 commit    :21    refs/heads/master
+    24 commit    :23    refs/heads/master
+    25 commit    :24    refs/heads/master
+    26 commit    :25    refs/heads/master
+    28 commit    :27    refs/heads/alternate
+    30 commit    :29    refs/heads/alternate
+    32 commit    :31    refs/heads/master
+    33 branch    :31    refs/heads/master
+    34 tag       :17    'annotated'
+expect all commmits following :19: [20, 22, 24, 25, 26, 28, 30, 32]
+expect both commits on alternate branch and the last merge: [28, 30, 32]
+expect all master-branch commits :23 and after: [24, 25, 26, 32]
