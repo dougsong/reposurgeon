@@ -7151,7 +7151,7 @@ You can compose sets as follows:
 :123..<foo>    the range of events from mark 123 to the reference 'foo'
 
 Sets can be composed with | (union) and & (intersection). | has lower
-precedence than &, but set expressions can be grouped with { }. Postfixing
+precedence than &, but set expressions can be grouped with ( ). Postfixing
 a ? to a selection expression widens it to include all immediate neighbors
 of the selection; you can do this repeatedly for effect. Do set negation with
 prefix ~; it has higher precedence than & | but lower than ?.
