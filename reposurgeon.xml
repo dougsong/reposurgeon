@@ -164,6 +164,8 @@ edit                   ;; edit all editable objects
                        ;; touching Makefile.
 
 :46 tip                ;; Display the branch tip that owns commit :46.
+
+@dsc(:55) list         ;; Display all commits with ancestry tracing to :55 
 </programlisting>
 
 
@@ -544,8 +546,8 @@ functions are defined:</para>
       </row>
       <row>
         <entry align='center'>dsc</entry>
-        <entry align='center'><para>all commits descended from a
-	specified set</para></entry>
+        <entry align='center'><para>all commits descended from the
+	argument set</para></entry>
       </row>
     </tbody>
   </tgroup>
