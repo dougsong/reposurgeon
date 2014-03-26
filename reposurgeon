@@ -7035,7 +7035,7 @@ into sections of the input stream instead).
         os.remove(tfname)
         os.close(tfdesc)
 
-    def transform_metadata(self, prompt, hook, safety):
+    def data_traverse(self, prompt, hook, safety):
         "Filter commit metadata (and possibly blobs) through a specified hook."
         blobs = any(isinstance(self.chosen().events[i], Blob)
                     for i in self.selection)
@@ -8273,7 +8273,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                     raise Recoverable("unknown mode in filter command")
         # Mainline of do_filter() continues:
         filterhook = FilterCommand(self.chosen(), line)
-        self.transform_metadata(prompt="Filtering",
+        self.data_traverse(prompt="Filtering",
                                 hook=filterhook.do,
                                 safety=not line.startswith('--dedos'))
 
@@ -8305,7 +8305,7 @@ repository objects in a damaged state.
         def transcode(txt, _paths=None):
             return codecs.encode(codecs.decode(txt, codec), "utf-8")
         try:
-            self.transform_metadata(prompt="Transcoding",
+            self.data_traverse(prompt="Transcoding",
                                     hook=transcode,
                                     safety=True)
         except UnicodeError:
