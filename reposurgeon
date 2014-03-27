@@ -269,12 +269,6 @@ bzr-orphans
         authormap=None,
         ignorename=None,
         dfltignores="""\
-RCS
-SCCS
-CVS
-CVS.adm
-RCSLOG
-cvslog.*
 tags
 TAGS
 .make.state
