@@ -6811,7 +6811,7 @@ into sections of the input stream instead).
                     matchers.add(i)
                 elif check_authors and isinstance(e, Commit):
                     for ai in range(len(e.authors)):
-                        if search(e.authors[ai].name):
+                        if search(str(e.authors[ai])):
                             matchers.add(i)
                             break
                 elif check_blobs and isinstance(e, Blob) and search(e.get_content()):
