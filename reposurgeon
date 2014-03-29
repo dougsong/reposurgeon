@@ -7054,29 +7054,34 @@ into sections of the input stream instead).
             for _, event in self.selected():
                 if isinstance(event, Tag):
                     if nonblobs:
-                        changed = False
                         oldcomment = event.comment
                         event.comment = hook(event.comment)
-                        changed = changed or (oldcomment != event.comment)
-                        oldtagger = event.tagger.name
-                        event.tagger.name = hook(event.tagger.name)
-                        changed = changed or (oldtagger != event.tagger.name)
-                        if changed:
+                        anychanged = (oldcomment != event.comment)
+                        oldtagger = str(event.tagger)
+                        newtagger = hook(oldtagger)
+                        if oldtagger != newtagger:
+                            event.tagger = Attribution(newtagger)
+                            anychanged = True
+                        if anychanged:
                             altered += 1
                 elif isinstance(event, Commit):
                     if nonblobs:
-                        changed = False
                         oldcomment = event.comment
                         event.comment = hook(event.comment)
-                        changed = changed or (oldcomment != event.comment)
-                        oldcommitter = event.committer.name
-                        event.committer.name = hook(event.committer.name)
-                        changed = changed or (oldcommitter != event.committer.name)
-                        for i in range(len(event.authors)):
-                            oldauthor = event.authors[i].name
-                            event.authors[i].name = hook(event.authors[i].name)
-                            changed = changed or (oldauthor != event.authors[i].name)
+                        anychanged = (oldcomment != event.comment)
+                        oldcommitter = str(event.committer)
+                        newcommitter = hook(oldcommitter)
+                        changed = (oldcommitter != newcommitter)
                         if changed:
+                            event.committer = Attribution(newcommitter)
+                            anychanged = True
+                        for i in range(len(event.authors)):
+                            oldauthor = str(event.authors[i])
+                            newauthor = hook(oldauthor)
+                            if oldauthor != newauthor:
+                                event.authors[i] = Attribution(newauthor)
+                                anychanged = True
+                        if anychanged:
                             altered += 1
                     if blobs and isinstance(event, Commit):
                         for fileop in event.fileops:
