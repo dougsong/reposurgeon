@@ -1912,9 +1912,9 @@ class Commit(object):
         if "nl-after-comment" in self.repo.export_style():
             parts.append("\n")
         parents = self.parents()
-        if parents and not incremental:
+        if parents:
             ancestor = parents[0]
-            if internals is None or ancestor.mark in internals:
+            if (not internals and not incremental) or ancestor.mark in internals:
                 parts.append("from %s\n" % ancestor.mark)
             elif '--callout' in options:
                 parts.append("from %s\n" % ancestor.callout())
