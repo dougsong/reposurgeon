@@ -259,6 +259,12 @@ letters. These are the type letters:</para>
         <entry><para>&nbsp;</para></entry>
       </row>
       <row>
+        <entry align='center'>D</entry>
+        <entry align='center'>all-delete commits</entry>
+        <entry><para>These are artifacts produced by some oolder
+	repository-conversion tools.</para></entry>
+      </row>
+      <row>
         <entry align='center'>H</entry>
         <entry align='center'>head (branch tip) commits</entry>
         <entry><para>&nbsp;</para></entry>
@@ -797,6 +803,13 @@ event numbers, the second a timestamp in local time. If the repository
 has fossil IDs, they will be displayed in the third column. The
 leading portion of the comment follows.
 </para></listitem>
+</varlistentry>
+<varlistentry>
+<term><command>stamp</command>
+        [&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem><para>Alternative form of listing that displays full action
+stamps, usable as references in selections.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>

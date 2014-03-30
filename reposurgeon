@@ -1473,6 +1473,12 @@ class Commit(object):
         if cols:
             report = report[:cols]
         return report
+    def stamp(self, _modifiers, _eventnum, cols):
+        "Enable do_stamp() to report action stamps."
+        report = "<" + self.action_stamp() + "> " + self.comment.split("\n")[0]
+        if cols:
+            report = report[:cols]
+        return report
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tag tip commits."
         if not self.branch or not "/tags/" in self.branch:
@@ -6626,6 +6632,7 @@ into sections of the input stream instead).
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
                 "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
+                "D" : lambda e: hasattr(e, 'alldeletes') and e.alldeletes(),
                 }
 
             visible = set()
@@ -7137,6 +7144,7 @@ More ways to construct event sets:
 =F         all fork (multiple-child) commits
 =L         all commits with unclean multi-line comments
 =I         all commits not decodable to UTF-8
+=D         all commits in which every fileop is a D or deleteall
 
 @min()     create singleton set of the least element in the argument
 @max()     create singleton set of the greatest element in the argument
@@ -7509,6 +7517,14 @@ field 'commit'. Supports > redirection.
     def do_tags(self, line):
         "Generate a human-friendly listing of tags and resets."
         self.report_select(line, "tags", (screenwidth(),))
+
+    def help_stamp(self):
+        print("""
+Display full action stamps correponding to commits in a select.
+""")
+    def do_stamp(self,line):
+        self.report_select(line, "stamp", (screenwidth(),))
+
     def help_sizes(self):
         print("""
 Print a report on data volume per branch; takes a selection set,
