@@ -4866,6 +4866,8 @@ class Repository:
                     for fileop in event.fileops:
                         if fileop.op == 'M':
                             implied.add(self.find(fileop.ref))
+                    for tag in event.attachments:
+                        implied.add(self.find(tag.mark))
             selection = list(implied)
             selection.sort()
         with Baton("reposurgeon: exporting", enable=progress) as baton:

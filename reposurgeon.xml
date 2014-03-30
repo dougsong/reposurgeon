@@ -655,7 +655,8 @@ the tip of a pre-existing branch of the same name.  The
 <option>--noincremental</option> option suppresses this behavior.</para>
 
 <para>When you specify a partial selection set, including a commit
-object forces the inclusion of every blob to which it refers.</para>
+object forces the inclusion of every blob to which it refers and
+every tag that refers to it.</para>
 
 <para>Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
