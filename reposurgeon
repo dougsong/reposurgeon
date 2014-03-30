@@ -6921,9 +6921,10 @@ into sections of the input stream instead).
         # will eat the ending ")" itself through eval_term().
         subarg = self.eval_expression(preselection)
         try:
-            return getattr(self, funname + "_handler")(subarg)
+            func = getattr(self, funname + "_handler")
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
+        return func(subarg)
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
@@ -6944,19 +6945,19 @@ into sections of the input stream instead).
             return subarg
     def dsc_handler(self, subarg):
         "All descendants of a selection set, recursively."
-        descendants = []
-        edge = [self.chosen().events[i] for i in subarg]
+        descendants = set([])
         while True:
-            descendants += edge
-            beyond = []
-            for event in edge:
+            descendants |= subarg
+            beyond = set([])
+            for ei in subarg:
+                event = self.chosen().events[ei]
                 if isinstance(event, Commit):
-                    beyond += event.children()
+                    beyond |= set(self.chosen().find(c.mark) for c in event.children())
             if beyond:
-                edge = beyond
+                subarg = beyond
             else:
                 break
-        return set([self.chosen().find(event.mark) for event in descendants])
+        return descendants
 
     #
     # Helpers
