@@ -1919,7 +1919,7 @@ class Commit(object):
             elif '--callout' in options:
                 parts.append("from %s\n" % ancestor.callout())
         for ancestor in parents[1:]:
-            if internals is None or ancestor.mark in internals:
+            if not internals or ancestor.mark in internals:
                 nugget = ancestor.mark
             else:
                 nugget = ancestor.callout()
@@ -5725,8 +5725,7 @@ def read_repo(source, options, preferred):
                     return set(allfiles)
                 with popen_or_die(vcs.lister) as fp:
                     repofiles = set(fp.read().split())
-                allfiles = fileset(exclude=[vcs.subdirectory]\
-                                   + glob.glob(".rs*"))
+                allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
                 repo.preserve_set = allfiles - repofiles
             # kluge: git-specific hook
             if repo.vcs.name == "git":
