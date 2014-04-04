@@ -8811,14 +8811,14 @@ For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
 
-If the selection set is empty, the from mark in the earliest commit of
-the named repo must be a callout matching a commit in the currently
-chosen repo.  If the selection set is of size 1, it must identify a
-single commit in the currently chosen repo.
+If the selection set is of size 1, it must identify a single commit in
+the currently chosen repo; in this case the name repo's root will
+become a child of the specified commit. If the selection set is
+empty, the named repo must contain one or more callouts matching a
+commits in the currently chosen repo.
 
 Labels and branches in the named repo are prefixed with its name; then
-it is grafted to the selected one. Its root becomes a child of the
-specified commit. Any other callouts in the named repo are also
+it is grafted to the selected one. Any other callouts in the named repo are also
 resolved in the context of the currently chosen one. Finally, the
 named repo is removed from the load list.
 """)
@@ -8833,13 +8833,18 @@ named repo is removed from the load list.
             graft_repo = self.repo_by_name(line)
         else:
             raise Recoverable("no such repo as %s" % line)
-        ancestors = graft_repo.earliest_commit().parents()
-        if ancestors and Commit.is_callout(ancestors[0].mark):
-            graft_point = None
-        elif self.selection is not None and len(self.selection) == 1:
+        require_graft_point = True
+        if self.selection is not None and len(self.selection) == 1:
             graft_point = self.selection[0]
         else:
-            raise Recoverable("a singleton selection set is required.")
+            for commit in graft_repo.commits():
+                for parent in commit.parents():
+                    if Commit.is_callout(parent.mark):
+                        require_graft_point = False
+            if not require_graft_point:
+                graft_point = None
+            else:
+                raise Recoverable("a singleton selection set is required.")
         # OK, we've got the two repos and the graft point.  Do it.
         self.chosen().graft(graft_repo, graft_point)
         self.remove_by_name(graft_repo.name)

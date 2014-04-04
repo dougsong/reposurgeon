@@ -1394,19 +1394,18 @@ type.</para>
         <emphasis>reponame</emphasis>
 </term>
 <listitem>
-<para>
-For when unite doesn't give you enough control. This command may have
+<para>For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.</para>
 
-<para>If the selection set is empty, the from mark in the earliest commit of
-the named repo must be a callout matching a commit in the cuttrrently
-chosen repo.  If the selection set is of size 1, it must identify a
-single commit in the currently chosen repo.</para>
+<para>If the selection set is of size 1, it must identify a single commit in
+the currently chosen repo; in this case the name repo's root will
+become a child of the specified commit. If the selection set is
+empty, the named repo must contain one or more callouts matching a
+commits in the currently chosen repo.</para>
 
 <para>Labels and branches in the named repo are prefixed with its name; then
-it is grafted to the selected one. Its root becomes a child of the
-specified commit. Any other callouts in the named repo are also
+it is grafted to the selected one. Any other callouts in the named repo are also
 resolved in the context of the currently chosen one. Finally, the
 named repo is removed from the load list.</para>
 </listitem>
