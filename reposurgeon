@@ -9,8 +9,9 @@
 from __future__ import print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
-import re, signal, shutil, copy, shlex, collections, uuid, cgi, bz2, codecs
-import time, calendar, unittest, itertools, operator, functools, filecmp
+import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
+import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
+import functools, filecmp
 import email.message, email.parser, email.utils
 
 # This import only works on Unixes.  The intention is to enable
@@ -8253,7 +8254,10 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                             subcount = int(parts[-1])
                         # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
-                            self.regex = re.compile(parts[1])	# optimization
+                            try:
+                                self.regex = re.compile(parts[1])
+                            except sre_constants.error as e:
+                                raise Recoverable("filter compilation error - %s" % e)
                             self.sub = lambda s: self.regex.sub(parts[2],
                                                             s,
                                                             len(s) if subcount == 0 else subcount)
