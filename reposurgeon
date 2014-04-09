@@ -9739,18 +9739,21 @@ and '*' which are mapped to master and root.
 With no arguments the current regex replacement pairs are shown. Passing 'reset'
 will clear the reset mapping.
 
-Syntax: branchify_map @regex1@branch1@ @regex2@branch2@ ...
+Syntax: branchify_map /regex1/branch1/ /regex2/branch2/ ...
+
 Will match each branch name against regex1 and if it matches rewrite its branch
 name to branch1. If not it will try regex2 and so forth until it either found a
 matching regex or there are no regexs left. The regular expressions should be in
-pythons' format (see http://docs.python.org/2/library/re.html). The branch name
+python's format (see http://docs.python.org/2/library/re.html). The branch name
 can use backreferences (see the sub function in the python documentation).
-Furthermore the separator charachter may be replaced by any character not used
-in the regular expression.
 
 Note that the regular expressions are appended to 'refs/' without either the
 needed 'heads/' or 'tags/'. This allows for choosing the right kind of branch
 type.
+
+While the syntax template above uses slashes, any first character will
+be used as a delimeter (and you will need to use a different one in the
+common case that the paths contain slashes).
 
 Note that the branchify_map set is a property of the reposurgeon interpreter,
 not of any individual repository, and will persist across Subversion
@@ -9761,7 +9764,7 @@ to re-set it.
         if self.selection is not None:
             raise Recoverable("branchifyMap does not take a selection set")
         if line.strip() is "reset":
-            global_options['svn_branchify_mapping'] = [];
+            global_options['svn_branchify_mapping'] = []
         if line.strip():
             def split_regex(regex):
                 separator = regex[0]
