@@ -400,11 +400,6 @@ suffix separated  by '#'. Thus "&lt;2000-02-06T09:35:10Z&gt;" can
 match multiple commits, but "&lt;2000-02-06T09:35:10Z#2&gt;" matches
 only the second in the set.</para>
 
-<para>As a special case, an entire selection that matches the format
-of anything that can be a reference (such as a data or action stamp or
-fossil or tag name) <emphasis>without</emphasis> the surrounding
-reference brackets is accepted and selects as though it had the
-brackets</para>
 </listitem>
 </varlistentry>
 <varlistentry>
