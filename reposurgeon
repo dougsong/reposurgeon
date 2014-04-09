@@ -7482,6 +7482,20 @@ currently chosen repository. Supports > redirection.
                     #if repo.vcs:
                     #    parse.stdout.write(str(repo.vcs) + "\n")
 
+    def help_count(self):
+        print("""
+Report a count of items in the selection set. Default set is everything
+in the currently-selected repo.
+""")
+    def do_count(self, line):
+        if not self.chosen():
+            complain("no repo has been chosen.")
+            return
+        elif self.selection == None:
+            self.selection = self.chosen().all() 
+        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            parse.stdout.write("%d\n" % len(self.selection))
+
     def help_list(self):
         print("""
 Display commits in a human-friendly format; the first column is raw

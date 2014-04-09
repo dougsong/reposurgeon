@@ -850,6 +850,15 @@ named repositories, or with no argument the currently chosen repository.
 </para></listitem>
 </varlistentry>
 <varlistentry>
+<term><command>count</command>
+        [&gt;<emphasis>outfile</emphasis>]
+</term>
+<listitem><para>
+Report a count of items in the selection set. Default set is everything
+in the currently-selected repo.
+</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><command>inspect</command>
         [&gt;<emphasis>outfile</emphasis>]
 </term>
