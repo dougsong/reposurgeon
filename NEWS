@@ -2,8 +2,8 @@
 
 Repository head:
      The filter command can operate on email addresses as well as names.
-     New 'stamp' command to reports action stamps of commits.
-     New 'count' comment genates selection-set counts.
+     New 'stamp' command to report action stamps of commits.
+     New 'count' comment reports selection-set counts.
 
 3.8: 2014-03-28
      New transcode command for moving metadata to UTF-8.

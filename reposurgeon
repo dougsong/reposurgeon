@@ -7538,6 +7538,7 @@ field 'commit'. Supports > redirection.
     def help_stamp(self):
         print("""
 Display full action stamps correponding to commits in a select.
+The stamp is followed by the first line of the commit message.
 """)
     def do_stamp(self,line):
         self.report_select(line, "stamp", (screenwidth(),))
