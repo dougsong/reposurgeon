@@ -885,32 +885,27 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
+    attribution_re = re.compile(r"([^<]*)\s+<([^>]*)>\s+(.*)")
     def __init__(self, operson=None):
         self.name = self.email = self.date = None
         person = operson
         if person:
             # Deal with a cvs2svn artifact
             person = person.replace("(no author)", "no-author")
-            # First, validity-check the email address
+            # Get the attribution fields
+            m = Attribution.attribution_re.match(person)
+            if m:
+                self.name = m.group(1)
+                self.email = m.group(2)
+                self.date = m.group(3)
+            else:
+                raise Fatal("malformed attribution '%s'" % operson)
+            # Parse the date
             try:
-                (self.name, self.email) = email.utils.parseaddr(person)
-            except ValueError:
-                pass
-            # Attribution format is actually stricter than RFC822;
-            # needs to have a following date in the right place.
-            if person.startswith("<"):
-                person = " " + person
-            person = person.replace(" <", "|").replace("> ", "|")
-            tokens = person.strip().split("|")
-            # Recover from nasty malformations
-            if self.name is None:
-                self.name = tokens[0].strip()
-                self.email = tokens[1].strip()
-            try:
-                self.date = Date(tokens[2])
+                self.date = Date(self.date.strip())
             except (ValueError, IndexError):
                 raise Fatal("malformed attribution date '%s' in '%s'" \
-                            % (tokens[2], operson))
+                            % (self.date, operson))
     def email_out(self, _modifiers, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
