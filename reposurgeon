@@ -12,7 +12,7 @@ import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
 import functools, filecmp
-import email.message, email.parser, email.utils
+import email.message, email.parser
 
 # This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd. 
@@ -885,7 +885,7 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
-    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s+.*)")
+    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s*.*)")
     @staticmethod
     def parseaddr(line):
         m = Attribution.attribution_re.match(line)
@@ -1105,7 +1105,10 @@ class Tag(object):
             self.name = newname
             modified = True
         if "Tagger" in msg:
-            (newname, newemail) = email.utils.parseaddr(msg["Tagger"])
+            try:
+                (newname, newemail, _extra) = Attribution.parseaddr(msg["Tagger"])
+            except ValueError:
+                raise Fatal("malformed Tagger field")
             if not newname or not newemail:
                 raise Fatal("can't recognize address in Tagger: %s" % msg['Tagger'])
             else:
@@ -1519,8 +1522,11 @@ class Commit(object):
                 modified = True
             self.set_parent_marks(msg["Parents"].split())
         if "Committer" in msg:
-            (newname, newemail) = email.utils.parseaddr(msg["Committer"])
+            try:
+                (newname, newemail, _extra) = Attribution.parseaddr(msg["Committer"])
 
+            except ValueError:
+                raise Fatal("malformed Committer field")
             if not newemail:
                 raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
             else:
@@ -1555,7 +1561,10 @@ class Commit(object):
             # Possibly a feature if one thinks order is significant, but
             # I just did it this way because it was easier.
             for (i, hdr) in enumerate(authorkeys):
-                (newname, newemail) = email.utils.parseaddr(msg[hdr])
+                try:
+                    (newname, newemail, _extra) = Attribution.parseaddr(msg[hdr])
+                except ValueError:
+                    raise Fatal("malformed Author field")
                 if not newemail:
                     raise Fatal("can't recognize address in %s: %s" % (hdr, msg[hdr]))
                 else:
@@ -4631,14 +4640,14 @@ class Repository:
                 if line.startswith('#'):
                     continue
                 (local, netwide) = line.strip().split('=')
-                (address, timezone) =  netwide.split(">")
-                address += ">"
-                timezone = timezone.strip()
-                if timezone:
-                    timezone = Date.tzresolve(timezone)
-                (name, mail) = email.utils.parseaddr(address.strip())
+                try:
+                    (name, mail, timezone) = Attribution.parseaddr(netwide.strip())
+                except ValueError:
+                    raise Fatal("malformed author-map line")
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
+                if timezone:
+                    timezone = Date.tzresolve(timezone) or None
                 authormap[local.strip().lower()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
