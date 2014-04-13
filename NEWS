@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.9: 2014-04-12
      The attribution-parsing code handles odd characters in names better now. 
      The filter command can operate on email addresses as well as names.
      New 'stamp' command to report action stamps of commits.
