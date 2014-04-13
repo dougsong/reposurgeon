@@ -885,7 +885,7 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
-    attribution_re = re.compile(r"([^<]*)\s*<([^>]*)>\s+(.*)")
+    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>\s+(.*)")
     def __init__(self, operson=None):
         self.name = self.email = self.date = None
         person = operson
@@ -895,14 +895,14 @@ class Attribution(object):
             # Get the attribution fields
             m = Attribution.attribution_re.match(person)
             if m:
-                self.name = m.group(1)
+                self.name = m.group(1).strip()
                 self.email = m.group(2)
-                self.date = m.group(3)
+                self.date = m.group(3).strip()
             else:
                 raise Fatal("malformed attribution '%s'" % operson)
             # Parse the date
             try:
-                self.date = Date(self.date.strip())
+                self.date = Date(self.date)
             except (ValueError, IndexError):
                 raise Fatal("malformed attribution date '%s' in '%s'" \
                             % (self.date, operson))
