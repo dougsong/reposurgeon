@@ -885,22 +885,20 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
-    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>\s+(.*)")
+    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s+.*)")
+    @staticmethod
+    def parseaddr(line):
+        m = Attribution.attribution_re.match(line)
+        if m:
+            return (m.group(1).strip(), m.group(2), m.group(3).strip())
+        else:
+            raise Fatal("malformed attribution '%s'" % line)        
     def __init__(self, operson=None):
         self.name = self.email = self.date = None
-        person = operson
-        if person:
+        if operson:
             # Deal with a cvs2svn artifact
-            person = person.replace("(no author)", "no-author")
-            # Get the attribution fields
-            m = Attribution.attribution_re.match(person)
-            if m:
-                self.name = m.group(1).strip()
-                self.email = m.group(2)
-                self.date = m.group(3).strip()
-            else:
-                raise Fatal("malformed attribution '%s'" % operson)
-            # Parse the date
+            person = operson.replace("(no author)", "no-author")
+            (self.name, self.email, self.date) = Attribution.parseaddr(person)
             try:
                 self.date = Date(self.date)
             except (ValueError, IndexError):
