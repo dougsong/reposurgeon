@@ -911,12 +911,12 @@ class Attribution(object):
     def remap(self, authors):
         "Remap the attribution name."
         for (local, (name, mail, timezone)) in authors.iteritems():
-            if self.email.lower().startswith(local + "@") or self.email.lower() == local:
+            if self.email.lower().startswith(local + "@") or self.email.lower() == local or (not self.email and self.name.lower() == local):
                 self.name = name
                 self.email = mail
                 if timezone:
                     self.date.orig_tz_string = timezone
-                break
+                break            
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
     def __eq__(self, other):
