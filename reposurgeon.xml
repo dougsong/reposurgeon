@@ -409,7 +409,7 @@ surrounded by forward slashes (to embed a forward slash in it, use a
 Python string escape such as \x2f).</para>
 
 <para>A text search normally matches against the comment fields of commits and
-annotated tags, or against their author/committer headers, or against
+annotated tags, or against their author/committer names, or against
 the names of tags; also the text of passthrough objects.</para>
 
 <para>The scope of a text search can be changed with qualifier

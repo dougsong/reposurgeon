@@ -6803,6 +6803,15 @@ into sections of the input stream instead).
                                 "n":"name"		# tag
                                 }
             search_in = searchable_attrs.values()
+            extractor_lambdas = {
+                "branch": lambda x: x.branch,
+                "comment": lambda x: x.comment,
+                "committer": lambda x: x.committer.who(),
+                "committish": lambda x: x.committish,
+                "text": lambda x: x.text,
+                "tagger": lambda x: x.tagger.who(),
+                "name": lambda x: x.name,
+                }
             check_authors = False
             check_blobs = False
             check_branch = False
@@ -6831,16 +6840,17 @@ into sections of the input stream instead).
                                 # FIXME: Won't find multiple references
                                 e = possible
                                 break
-                if any(hasattr(e, searchable) and
-                       search(str(getattr(e, searchable)))
-                       for searchable in search_in):
-                    matchers.add(i)
-                elif check_authors and isinstance(e, Commit):
+                for searchable in search_in:
+                    if hasattr(e, searchable):
+                        key = extractor_lambdas[searchable](e)
+                        if key is not None and search(key):
+                            matchers.add(i)
+                if check_authors and isinstance(e, Commit):
                     for ai in range(len(e.authors)):
                         if search(str(e.authors[ai])):
                             matchers.add(i)
                             break
-                elif check_blobs and isinstance(e, Blob) and search(e.get_content()):
+                if check_blobs and isinstance(e, Blob) and search(e.get_content()):
                     matchers.add(i)
             if debug_enable(DEBUG_LEXER):
                 announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
