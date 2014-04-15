@@ -7084,9 +7084,10 @@ into sections of the input stream instead).
                         oldcomment = event.comment
                         event.comment = hook(event.comment)
                         anychanged = (oldcomment != event.comment)
-                        oldtagger = str(event.tagger)
+                        oldtagger = event.tagger.who()
                         newtagger = hook(oldtagger)
                         if oldtagger != newtagger:
+                            newtagger += " " + str(event.tagger.date)
                             event.tagger = Attribution(newtagger)
                             anychanged = True
                         if anychanged:
@@ -7096,16 +7097,18 @@ into sections of the input stream instead).
                         oldcomment = event.comment
                         event.comment = hook(event.comment)
                         anychanged = (oldcomment != event.comment)
-                        oldcommitter = str(event.committer)
+                        oldcommitter = event.committer.who()
                         newcommitter = hook(oldcommitter)
                         changed = (oldcommitter != newcommitter)
                         if changed:
+                            newcommitter += " " + str(event.committer.date)
                             event.committer = Attribution(newcommitter)
                             anychanged = True
                         for i in range(len(event.authors)):
-                            oldauthor = str(event.authors[i])
+                            oldauthor = event.authors[i].who()
                             newauthor = hook(oldauthor)
                             if oldauthor != newauthor:
+                                newauthor += " " + str(event.authors[i].date)
                                 event.authors[i] = Attribution(newauthor)
                                 anychanged = True
                         if anychanged:
