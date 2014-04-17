@@ -6822,10 +6822,12 @@ into sections of the input stream instead).
                         check_authors = True
                     elif self.line[0] == 'B':
                         check_blobs = True
-                    else:
+                    elif self.line[0] in searchable_attrs.keys():
                         search_in.append(searchable_attrs[self.line[0]])
                         if self.line[0] == 'b':
                             check_branch = True
+                    else:
+                        raise Recoverable("unknown textsearch flag")
                     self.line = self.line[1:]
             for i in preselection:
                 e = self.chosen().events[i]
@@ -7066,7 +7068,7 @@ into sections of the input stream instead).
         os.remove(tfname)
         os.close(tfdesc)
 
-    def data_traverse(self, prompt, hook, safety):
+    def data_traverse(self, prompt, hook, attributes, safety):
         "Filter commit metadata (and possibly blobs) through a specified hook."
         blobs = any(isinstance(self.chosen().events[i], Blob)
                     for i in self.selection)
@@ -7104,25 +7106,30 @@ into sections of the input stream instead).
                             altered += 1
                 elif isinstance(event, Commit):
                     if nonblobs:
-                        oldcomment = event.comment
-                        event.comment = hook(event.comment)
-                        anychanged = (oldcomment != event.comment)
-                        oldcommitter = event.committer.who()
-                        newcommitter = hook(oldcommitter)
-                        changed = (oldcommitter != newcommitter)
-                        if changed:
-                            newcommitter += " " + str(event.committer.date)
-                            event.committer = Attribution(newcommitter)
-                            anychanged = True
-                        for i in range(len(event.authors)):
-                            oldauthor = event.authors[i].who()
-                            newauthor = hook(oldauthor)
-                            if oldauthor != newauthor:
-                                newauthor += " " + str(event.authors[i].date)
-                                event.authors[i] = Attribution(newauthor)
+                        anychanged = False
+                        if "c" in attributes:
+                            oldcomment = event.comment
+                            event.comment = hook(event.comment)
+                            if oldcomment != event.comment:
                                 anychanged = True
-                        if anychanged:
-                            altered += 1
+                        if "C" in attributes:
+                            oldcommitter = event.committer.who()
+                            newcommitter = hook(oldcommitter)
+                            changed = (oldcommitter != newcommitter)
+                            if changed:
+                                newcommitter += " " + str(event.committer.date)
+                                event.committer = Attribution(newcommitter)
+                                anychanged = True
+                        if "a" in attributes:
+                            for i in range(len(event.authors)):
+                                oldauthor = event.authors[i].who()
+                                newauthor = hook(oldauthor)
+                                if oldauthor != newauthor:
+                                    newauthor += " "+str(event.authors[i].date)
+                                    event.authors[i] = Attribution(newauthor)
+                                    anychanged = True
+                            if anychanged:
+                                altered += 1
                     if blobs and isinstance(event, Commit):
                         for fileop in event.fileops:
                             if fileop.inline is not None:
@@ -8242,12 +8249,14 @@ to standard output.
 With --regex, the remainder of the line is expected to be a Python
 regular expression substitution written as /from/to/ with 'from' and
 'to' being passed as arguments to the standard re.sub() function and
-that applied to modify the content. Ordinarily only the first such
-substitution is performed; putting 'g' after the slash replaces
-globally, and a numeric literal before the g gives the maximum number
-of substitutions to perform. Actually, any non-space character will
-work as a delimiter in place of the /; this makes it easier to use
-/ in patterns.
+that applied to modify the content. Actually, any non-space character
+will work as a delimiter in place of the /; this makes it easier to
+use / in patterns. Ordinarily only the first such substitution is
+performed; putting 'g' after the slash replaces globally, and a
+numeric literal gives the maximum number of substitutions to
+perform. Other flags available restrict substiution scope - 'c' for
+comment text only, 'C' for committer name only, 'a' for author names
+only.
 
 With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slighly faster).
@@ -8271,6 +8280,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                 self.filtercmd = None
                 self.sub = None
                 self.regex = None
+                self.attributes = set([])
                 # Must not use LineParse here as it would try to strip options
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
@@ -8291,12 +8301,20 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
                     else:
-                        if not subflags:
-                            subcount = 1
-                        elif subflags == "g":
-                            subcount = 0
-                        else:
-                            subcount = int(parts[-1])
+                        subcount = 1
+                        while subflags:
+                            flag = subflags[0]
+                            subflags = subflags[:-1]
+                            if flag == "g":
+                                subcount = 0
+                            elif flag in {"c", "a", "C"}:
+                                self.attributes.add(flag)
+                            elif flag.isdigit():
+                                subcount = int(subflags)
+                            else:
+                                raise Recoverable("unknown filter flag")
+                        if not self.attributes:
+                            self.attributes = {"c", "a", "C"}
                         # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
                             try:
@@ -8340,8 +8358,9 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         # Mainline of do_filter() continues:
         filterhook = FilterCommand(self.chosen(), line)
         self.data_traverse(prompt="Filtering",
-                                hook=filterhook.do,
-                                safety=not line.startswith('--dedos'))
+                           hook=filterhook.do,
+                           attributes=filterhook.attributes,
+                           safety=not line.startswith('--dedos'))
 
     def help_transcode(self):
         print("""
@@ -8372,8 +8391,9 @@ repository objects in a damaged state.
             return codecs.encode(codecs.decode(txt, codec), "utf-8")
         try:
             self.data_traverse(prompt="Transcoding",
-                                    hook=transcode,
-                                    safety=True)
+                               hook=transcode,
+                               attributes={"c", "a", "C"},
+                               safety=True)
         except UnicodeError:
             raise Fatal("UnicodeError during transcoding")
 
