@@ -8329,6 +8329,8 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                                                            parts[2],
                                                            len(s) if subcount == 0 else subcount)
                 elif filtercmd.startswith('--dedos'):
+                    if not self.attributes:
+                        self.attributes = {"c", "a", "C"}
                     self.sub = lambda s: s.replace("\r\n", "\n")
                 else:
                     raise Recoverable("--shell or --regex or --dedos required")
