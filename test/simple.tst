@@ -20,6 +20,7 @@ verbose 0
 choose simple-expunges
 paths sub foo
 paths sup
+:28 setfield comment "The quick brown fox jumped over the lazy dog.\n"
 # Stream the repo
 write -
 

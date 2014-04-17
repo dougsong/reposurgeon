@@ -192,6 +192,7 @@ paths sub foo
 foo/theory.txt
 paths sup
 theory.txt
+:28 setfield comment "The quick brown fox jumped over the lazy dog.\n"
 # Stream the repo
 write -
 blob
@@ -387,8 +388,8 @@ commit refs/tags/lightweight-sample
 mark :28
 author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
-data 22
-Document limitations.
+data 46
+The quick brown fox jumped over the lazy dog.
 M 100644 :27 theory.txt
 
 blob

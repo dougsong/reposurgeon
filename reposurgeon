@@ -8400,6 +8400,34 @@ repository objects in a damaged state.
         except UnicodeError:
             raise Fatal("UnicodeError during transcoding")
 
+    def help_setfield(self):
+        print("""
+In the selected objects (defaulting to none) set every instance of a
+named field to a string value.  The string may be quoted to include
+whitespace, and use backslash eacapes interpreted by the Python
+string-escape codec, such as \n and \t.
+
+Attempts to set nonexistent attributes are ignored. Valid values for
+the attribute are internal Python field names; in particular, for
+commits, 'comment' and 'branch. are legal.  Consult the source code
+for other interesting values.
+""")
+    def do_setfield(self, line):
+        "Set an object field from a string."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        if self.selection is None:
+            raise Recoverable("no selection")
+        fields = shlex.split(line)
+        if not fields or len(fields) != 2:
+            raise Recoverable("missing or malformed setfield line")
+        field = fields[0]
+        value = fields[1].decode("string_escape")
+        for _, event in self.selected():
+            if hasattr(event, field):
+                setattr(event, field, value)
+
     def help_append(self):
         print("""
 Append text to the comments of commits and tags in the specified

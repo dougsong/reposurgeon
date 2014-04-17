@@ -1,6 +1,7 @@
 			reposurgeon project news
 Repository head:
      Finer control over filtering with caC flags.
+     New setfield command for tweaking object attributes from lift scripts.
 
 3.9: 2014-04-12
      The attribution-parsing code handles odd characters in names better now. 

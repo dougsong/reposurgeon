@@ -1256,6 +1256,24 @@ output file in a form that can be fed back in.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>setfield</command>
+        <emphasis>attribute</emphasis>
+        <emphasis>value</emphasis>
+</term>
+<listitem>
+<para>In the selected objects (defaulting to none) set every instance
+of a named field to a string value.  The string may be quoted to
+include whitespace, and use backslash eacapes interpreted by the
+Python string-escape codec, such as \n and \t. </para>
+
+<para>Attempts to set nonexistent attributes are ignored. Valid values
+for the attribute are internal Python field names; in particular, for 
+commits, <quote>comment</quote> and <quote>branch</quote> are legal.
+Consult the source code for other interesting values.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>append</command>
         [<command>--rstrip</command>]
         [&gt;<emphasis>text</emphasis>]
