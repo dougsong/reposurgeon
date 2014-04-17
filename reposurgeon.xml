@@ -1242,13 +1242,13 @@ no selection set.  If there is an argument it will be taken as the
 name of a mailbox file to read from; no argument, or one of '-'; reads
 from standard input.</para>
 
-<para>Users should be aware that modifying an Event-Number field will change
-which event the update from that message is applied to.  This is
-unlikely to have good results.</para>
+<para>Users should be aware that modifying an Event-Number or
+Event-Mark field will change which event the update from that message
+is applied to.  This is unlikely to have good results.</para>
 
-<para>If the Event-Number field is absent, the mailbox_in logic will
-attempt to match the commit or tag first by Fossil-ID, then by a unique
-committer ID and timestamp pair.</para>
+<para>If the Event-Number and Event-Mark fields are absent, the
+mailbox_in logic will attempt to match the commit or tag first by
+Fossil-ID, then by a unique committer ID and timestamp pair.</para>
 
 <para>If output is redirected and the modifier <quote>changed</quote>
 appears, a minimal set of modifications actually made is written to the
