@@ -7128,8 +7128,8 @@ into sections of the input stream instead).
                                     newauthor += " "+str(event.authors[i].date)
                                     event.authors[i] = Attribution(newauthor)
                                     anychanged = True
-                            if anychanged:
-                                altered += 1
+                        if anychanged:
+                            altered += 1
                     if blobs and isinstance(event, Commit):
                         for fileop in event.fileops:
                             if fileop.inline is not None:
