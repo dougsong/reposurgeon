@@ -1376,6 +1376,7 @@ class FileOp(object):
 class Callout(object):
     "Stub object for callout marks in incomplete repository segments."
     __slots__ = ("mark", "branch", "_child_nodes")
+    __hash__ = None
     def __init__(self, mark):
         self.mark = mark
         self.branch = None
