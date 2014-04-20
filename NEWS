@@ -1,5 +1,5 @@
 			reposurgeon project news
-Repository head:
+3.10: 2014-04-19
      Finer control over filtering with caC flags.
      New setfield command for tweaking object attributes from lift scripts.
 
