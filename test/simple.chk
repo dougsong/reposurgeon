@@ -110,7 +110,7 @@ reposurgeon
 reposurgeon.xml
 test
 !rm -fr foobar
-diff -r --label 'commit :108' --label 'commit :110' -u commit :108 commit :110
+diff -r --label 'commit :108' --label 'commit :110' -u "commit :108" "commit :110"
 --- commit :108
 +++ commit :110
 @@ -575,13 +575,13 @@
