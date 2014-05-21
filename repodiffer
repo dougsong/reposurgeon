@@ -132,7 +132,7 @@ class Baton:
 class Commit(object):
     __slots__ = ("repo", "text", "commit", "tree", "author", "committer",
                  "comment", "authordate", "commitdate", "matched",
-                 "parents", "mark") 
+                 "parents", "mark")
     def __init__(self, repo, text):
         self.repo = repo
         self.text = text
@@ -397,13 +397,12 @@ class Repository:
         for commit in self.signature:
             if commit.commit.startswith(name) or commit.mark == name:
                 return commit
-        else:
-            return None
+        return None
     def sort(self):
         "Sort by Committer-Date in case commits were generated in topo order."
         self.signature.sort(key=lambda c: c.timestamp())
     def tagnames(self):
-        return set(self.tags.keys()) 
+        return set(self.tags.keys())
     def __str__(self):
         return "<%s: %s>" % (self.path, self.signature)
     def __del__(self):
@@ -682,7 +681,7 @@ if __name__ == '__main__':
         sys.stderr.write("repodiffer: input and output directory or import-stream arguments are required.\n")
         sys.exit(1)
     else:
-        (alpha, beta) = arguments[:2] 
+        (alpha, beta) = arguments[:2]
     if not os.path.exists(alpha):
         sys.stderr.write("repodiffer: %s must exist.\n" % alpha)
         sys.exit(1)
@@ -705,4 +704,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
+# The following sets edit modes for GNU EMACS
+# Local Variables:
+# mode:python
+# End:
 # end

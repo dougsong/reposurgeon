@@ -1830,8 +1830,10 @@ class Commit(object):
         # Finishing touches:
         new_ops.sort(key=FileOp.sortkey)
         self._pathset = None
-    def alldeletes(self, killset={"D", "deleteall"}):
+    def alldeletes(self, killset=None):
         "Is this an all-deletes commit?"
+        if killset is None:
+            killset = {"D", "deleteall"}
         return all(fileop.op in killset for fileop in self.fileops)
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
@@ -5543,6 +5545,7 @@ class Repository:
         ancestors = commit.parents()
         while ancestors:
             backto = []
+            # pylint: disable=useless-else-on-loop
             for ancestor in ancestors:
                 # This is potential trouble if the file was renamed
                 # down one side of a merge bubble but not the other.
@@ -5561,6 +5564,7 @@ class Repository:
         "Make rename sequences from matched delete-modify pairs."
         # TODO: Actually use this somewhere...
         rename_count = 0
+        # pylint: disable=unpacking-non-sequence
         for commit in self.commits():
             renames = []
             for (d, op) in enumerate(commit.fileops):
