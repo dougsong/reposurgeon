@@ -1657,7 +1657,8 @@ class Commit(object):
             newparent = mark
         else:
             newparent = self.repo.objfind(mark)
-        assert(newparent)
+        if not newparent:
+            raise Fatal("ill-formed stream: cannot resolve %s" % mark)
         self._parent_nodes.append(newparent)
         newparent._child_nodes.append(self)
         self.repo.invalidate_manifests()
