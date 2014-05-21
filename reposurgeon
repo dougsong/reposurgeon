@@ -15,7 +15,7 @@ import functools, filecmp
 import email.message, email.parser
 
 # This import only works on Unixes.  The intention is to enable
-# Ctrl-P, Ctrl-N, and friends in Cmd. 
+# Ctrl-P, Ctrl-N, and friends in Cmd.
 try:
     import readline
 except ImportError:
@@ -181,7 +181,7 @@ vcstypes = [
         dfltignores="",	# Has none
         project="http://git-scm.com/",
         notes="The authormap is not required, but will be used if present."),
-    # 
+    #
     VCS(name="bzr",
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
@@ -225,7 +225,7 @@ bzr-orphans
         dfltignores="",
         project="http://mercurial.selenic.com/",
         notes="The hg export-import methods are not part of stock Mercurial."),
-    # Styleflags may need tweaking for round-tripping 
+    # Styleflags may need tweaking for round-tripping
     VCS(name="darcs",
         subdirectory="_darcs",
         exporter="darcs fastconvert export",
@@ -324,7 +324,7 @@ class Fatal(Exception):
 
 # How to write extractor classes:
 #
-# Clone one of the existing ones and mutate.  
+# Clone one of the existing ones and mutate.
 #
 # Significant fact: None of the get_* methods for extracting information about
 # a revision is called until after checkout has been called on that revision.
@@ -524,7 +524,7 @@ DEBUG_FILEMAP   = 3    # Debug building of filemaps
 DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_IGNORES   = 3    # Debug ignore generation
 DEBUG_SVNPARSE  = 4    # Lower-level Subversion parsing details
-DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in} 
+DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in}
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
 DEBUG_UNITE     = 5    # Debug mark assignments in merging
@@ -692,7 +692,7 @@ class RepoSurgeonEmail(email.message.Message, object):
     Divider = 78 * "-"
     __hash__ = None
     def __init__(self, **kwargs):
-        email.message.Message.__init__(self, **kwargs)        
+        email.message.Message.__init__(self, **kwargs)
         self.set_unixfrom(RepoSurgeonEmail.Divider)
     @staticmethod
     def readmsg(fp):
@@ -759,7 +759,7 @@ class Date(object):
             return
         except ValueError:
             # time.strptime() throws this
-            # "time data 'xxxxxx' does not match format '%Y-%m-%dT%H:%M:%S'" 
+            # "time data 'xxxxxx' does not match format '%Y-%m-%dT%H:%M:%S'"
             pass
         # Date format not recognized
         raise error("'%s' is not a valid timestamp" % text)
@@ -892,7 +892,7 @@ class Attribution(object):
         if m:
             return (m.group(1).strip(), m.group(2), m.group(3).strip())
         else:
-            raise Fatal("malformed attribution '%s'" % line)        
+            raise Fatal("malformed attribution '%s'" % line)
     def __init__(self, operson=None):
         self.name = self.email = self.date = None
         if operson:
@@ -916,7 +916,7 @@ class Attribution(object):
                 self.email = mail
                 if timezone:
                     self.date.orig_tz_string = timezone
-                break            
+                break
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
     def __eq__(self, other):
@@ -951,7 +951,7 @@ class Blob(object):
     def blobfile(self, create=False):
         "File where the content lives."
         stem = repr(id(self))
-        parts = ("blobs", stem[:3], stem[3:6], stem[6:]) 
+        parts = ("blobs", stem[:3], stem[3:6], stem[6:])
         if create:
             for d in range(len(parts)-1):
                 partial = os.path.join(self.repo.subdir(), *parts[:d+1])
@@ -1485,7 +1485,7 @@ class Commit(object):
             successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
             if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
                 return
-        return "%6d\tcommit\t%s" % (eventnum+1, self.branch) 
+        return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
@@ -2289,7 +2289,7 @@ class RepoStreamer:
                     repo.addEvent(reset)
                 commit.fileops.sort(key=FileOp.sortkey)
                 commit.fossil_id = revision
-                commit.properties.update(self.extractor.get_properties(revision)) 
+                commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(self.__newmark())
                 self.commit_map[revision] = commit
                 if debug_enable(DEBUG_EXTRACT):
@@ -2593,7 +2593,7 @@ class StreamParser:
         try:
             self.fp = fp
             # Optimization: if we're reading from a plain file,
-            # no need to clone all the blobs. 
+            # no need to clone all the blobs.
             if os.path.isfile(self.fp.name):
                 # We can't just pass the input file object here, it
                 # leads to bad results when fast_import is called
@@ -2700,7 +2700,7 @@ class StreamParser:
                                 elif line.startswith("Node-action: "):
                                     node.action = StreamParser.sd_body(line)
                                     node.action = StreamParser.NodeAction.ActionValues.index(node.action)
-                                    
+
                                     if node.action is None:
                                         self.error("unknown action %s" \
                                                    % node.action)
@@ -2961,7 +2961,7 @@ class StreamParser:
                 return 0o100755
             elif "svn:special" in node.props:
                 # Map to git symlink, which behaves the same way.
-                # Blob contents is the path the link should resolve to. 
+                # Blob contents is the path the link should resolve to.
                 return 0o120000
         return 0o100644
     def branchpath(self, path):
@@ -3039,7 +3039,7 @@ class StreamParser:
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
         del filemap
-        self.repo.timings.append(["filemaps", time.time()]) 
+        self.repo.timings.append(["filemaps", time.time()])
         baton.twirl()
         # Blows up huge on large repos...
         #if debug_enable(DEBUG_FILEMAP):
@@ -3064,7 +3064,7 @@ class StreamParser:
                     any(filemaps[copynode.revision].ls_R(node.path)):
                 self.gripe("inconsistently empty from set for %s" % copynode)
             baton.twirl()
-        self.repo.timings.append(["copysets", time.time()]) 
+        self.repo.timings.append(["copysets", time.time()])
         baton.twirl()
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -3141,7 +3141,7 @@ class StreamParser:
             # Zero revision is never interesting - no operations, no
             # comment, no author, it's just a start marker for a
             # non-incremental dump.
-            if revision == "0": 
+            if revision == "0":
                 continue
             expanded_nodes = []
             has_properties = set()
@@ -3671,7 +3671,7 @@ class StreamParser:
                             if debug_enable(DEBUG_TOPOLOGY):
                                 complain("lookback for %s failed" % latest)
                             raise Fatal("couldn't find a branch root for the copy of %s at r%s." % (latest.path, latest.revision))
-            # We're done, add all the new commits 
+            # We're done, add all the new commits
             self.repo.events += newcommits
             self.repo.declare_sequence_mutation()
             # Report progress, and give up our scheduler slot
@@ -3685,7 +3685,7 @@ class StreamParser:
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
             self.gripe("branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
-        self.repo.timings.append(["commits", time.time()]) 
+        self.repo.timings.append(["commits", time.time()])
         if debug_enable(DEBUG_EXTRACT):
             announce("at post-parsing time:")
             for commit in self.repo.commits():
@@ -3743,7 +3743,7 @@ class StreamParser:
                     self.branches["root"] = None
                 lastbranch = branch
                 baton.twirl()
-            self.repo.timings.append(["branches", time.time()]) 
+            self.repo.timings.append(["branches", time.time()])
             baton.twirl()
             # ...then rebuild parent links so they follow the branches
             for commit in self.repo.commits():
@@ -3755,7 +3755,7 @@ class StreamParser:
                 self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
-            self.repo.timings.append(["parents", time.time()]) 
+            self.repo.timings.append(["parents", time.time()])
             baton.twirl()
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
@@ -3805,7 +3805,7 @@ class StreamParser:
                         and root.branch != ("trunk" + os.sep):
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (root.fossil_id, root.branch))
-            self.repo.timings.append(["branchlinks", time.time()]) 
+            self.repo.timings.append(["branchlinks", time.time()])
             baton.twirl()
             # Add links due to svn:mergeinfo properties
             mergeinfo = PathMap()
@@ -3943,7 +3943,7 @@ class StreamParser:
             if m and not commit.has_children():
                 commit.delete(["--tagback"])
             baton.twirl()
-        self.repo.timings.append(["junk", time.time()]) 
+        self.repo.timings.append(["junk", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce("after cvs2svn artifact removal")
@@ -4028,7 +4028,7 @@ class StreamParser:
                 commit.set_branch(os.path.join("refs", "heads",
                                               os.path.basename(commit.branch[:-1])))
             baton.twirl()
-        ##self.repo.timings.append(["polishing", time.time()]) 
+        ##self.repo.timings.append(["polishing", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce("after branch name mapping")
@@ -4045,7 +4045,7 @@ class StreamParser:
                         commit.fileops[i].op = None
             commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
             baton.twirl()
-        self.repo.timings.append(["canonicalizing", time.time()]) 
+        self.repo.timings.append(["canonicalizing", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce("after delete/copy canonicalization")
@@ -4066,11 +4066,11 @@ class StreamParser:
                         commit.remove_parent(a)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
-        self.repo.timings.append(["debubbling", time.time()]) 
+        self.repo.timings.append(["debubbling", time.time()])
         baton.twirl()
         self.repo.renumber(baton=baton)
         baton.twirl()
-        self.repo.timings.append(["renumbering", time.time()]) 
+        self.repo.timings.append(["renumbering", time.time()])
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
@@ -4082,8 +4082,8 @@ class StreamParser:
                     and commit.mark not in ignore_deleteall:
                 self.gripe("mid-branch deleteall on %s at <%s>." % \
                         (commit.branch, commit.fossil_id))
-        self.repo.timings.append(["linting", time.time()]) 
-        # Treat this in-core state is though it was read from an SVN repo 
+        self.repo.timings.append(["linting", time.time()])
+        # Treat this in-core state is though it was read from an SVN repo
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
 
 class SubversionDumper:
@@ -4152,7 +4152,7 @@ class SubversionDumper:
             #fp.write("Text-content-md5: %s\n" % hashlib.md5(content).hexdigest())
             fp.write("Text-content-sha1: %s\n" % hashlib.sha1(content).hexdigest())
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
-        fp.write(nodeprops)            
+        fp.write(nodeprops)
         if content:
             fp.write(content)
         fp.write("\n\n")
@@ -4332,7 +4332,7 @@ class SubversionDumper:
                 fp.write("UUID: %s\n\n" % (self.repo.uuid or uuid.uuid4()))
                 SubversionDumper.dump_revprops(fp,
                                                revision=0,
-                                               date=Date(rfc3339(time.time()))) 
+                                               date=Date(rfc3339(time.time())))
                 baton.twirl()
                 revision = 0
                 for i in selection:
@@ -4427,7 +4427,7 @@ class SubversionDumper:
                         # Preserve lightweight tags, too.  Ugh, O(n**2).
                         if event.has_children():
                             for child in event.children():
-                                if child.branch == event.branch: 
+                                if child.branch == event.branch:
                                     break
                             else:
                                 revision += 1
@@ -4476,7 +4476,7 @@ class Repository:
         if not name:
             return os.path.join(self.basedir, ".rs" + repr(os.getpid()))
         else:
-            return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name) 
+            return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name)
     def makedir(self):
         try:
             if debug_enable(DEBUG_SHUFFLE):
@@ -5038,7 +5038,7 @@ class Repository:
         #
         # First op D or deleteall
         #
-        # Delete followed by modify undoes delete, since M carries whole files. 
+        # Delete followed by modify undoes delete, since M carries whole files.
         elif pair == ("D", "M"):
             return (True, None, right, None, 6)
         # But we have to leave deletealls in place, since they affect right ops
@@ -5067,7 +5067,7 @@ class Repository:
                 return (True, None, right, None, 9)
             else:
                 # On rename followed by delete of source discard the delete
-                # but user should be warned. 
+                # but user should be warned.
                 return (False, left, None,
                         "delete of %s after renaming to %s?" % (right.path, left.source), -4)
         # Rename followed by deleteall shouldn't be possible
@@ -5184,7 +5184,7 @@ class Repository:
                 event = self.events[ei]
                 if  isinstance(event, Commit):
                     if delete:
-                        speak = "warning: commit %s to be deleted has " % event.mark 
+                        speak = "warning: commit %s to be deleted has " % event.mark
                         if '/' in event.branch and not '/heads/' in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
@@ -5401,7 +5401,7 @@ class Repository:
             for fld in ("mark", "committish"):
                 try:
                     old = getattr(event, fld)
-                    if old is not None:    
+                    if old is not None:
                         new = remark(old, event)
                         if debug_enable(DEBUG_UNITE):
                             announce("renumbering %s -> %s in %s.%s" % (old, new,
@@ -5756,7 +5756,7 @@ def read_repo(source, options, preferred):
                     for line in open(".git/cvs-revisions", "rb"):
                         (path, rev, hashv) = line.split()
                         pathrev_to_hash[(path, rev)] = hashv
-                    # Pass 2: get git's hash to (time,person) mapping 
+                    # Pass 2: get git's hash to (time,person) mapping
                     hash_to_action = {}
                     stamp_set = set({})
                     with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
@@ -5771,7 +5771,7 @@ def read_repo(source, options, preferred):
                             else:
                                 hash_to_action[hashv] = stamp
                                 stamp_set.add(stamp)
-                        # Pass 3: build a (time,person) to commit mapping 
+                        # Pass 3: build a (time,person) to commit mapping
                         action_to_mark = {}
                         for commit in repo.commits():
                             action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
@@ -5850,7 +5850,7 @@ def rebuild_repo(repo, target, options, preferred):
         except OSError:
             raise Recoverable("staging directory creation failed")
 
-    # Try the rebuild in the empty staging directory 
+    # Try the rebuild in the empty staging directory
     here = os.getcwd()
     try:
         os.chdir(staging)
@@ -6019,7 +6019,7 @@ class RepositoryList:
         "Remove a repo by name."
         if self.repo and self.repo.name == name:
             self.unchoose()
-        self.repolist.pop(self.reponames().index(name))        
+        self.repolist.pop(self.reponames().index(name))
     def cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
         self.cut_index = late.parent_marks().index(early.mark)
@@ -6068,9 +6068,9 @@ class RepositoryList:
                     if isinstance(c, Commit):
                         if c is t.target:
                             t.color = c.color
-        # Front events go with early segment, they'll be copied to late one. 
+        # Front events go with early segment, they'll be copied to late one.
         for event in self.repo.front_events():
-            event.color = "early"        
+            event.color = "early"
         assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo)
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
@@ -6113,7 +6113,7 @@ class RepositoryList:
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
         late.declare_sequence_mutation()
-        # Add the split results to the repo list. 
+        # Add the split results to the repo list.
         self.repolist.append(early)
         self.repolist.append(late)
         self.repo.cleanup()
@@ -6395,7 +6395,7 @@ into sections of the input stream instead).
                                           % self.outfile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
-            # Options 
+            # Options
             while True:
                 m = re.search(r"--\S+", self.line)
                 if not m:
@@ -6566,7 +6566,7 @@ into sections of the input stream instead).
             announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
     def eval_disjunct(self, preselection):
-        "Evaluate a disjunctive expression (| has lowest precedence)" 
+        "Evaluate a disjunctive expression (| has lowest precedence)"
         if debug_enable(DEBUG_LEXER):
             announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
@@ -6586,7 +6586,7 @@ into sections of the input stream instead).
             announce("%s <- eval_disjunct(), left = %s" % (conjunct, repr(self.line)))
         return preselection - unselected
     def eval_conjunct(self, preselection):
-        "Evaluate a conjunctive expression (& has higher precedence)" 
+        "Evaluate a conjunctive expression (& has higher precedence)"
         if debug_enable(DEBUG_LEXER):
             announce("eval_conjunct(%s)" % self.line)
         self.line = self.line.lstrip()
@@ -7042,7 +7042,7 @@ into sections of the input stream instead).
                             if fileop.op == "M" and fileop.path == path:
                                 here.append(child.mark)
                         here += find_successor(child, path)
-                    return here 
+                    return here
                 for event in self.chosen().commits():
                     for fileop in event.fileops:
                         if fileop.op == 'M' and fileop.ref == singleton.mark:
@@ -7085,7 +7085,7 @@ into sections of the input stream instead).
         # when possible.
         if blobs and self.chosen().inlines > 0:
             for ei in range(self.selection[0], self.selection[-1]):
-                event = self.chosen().events[ei]            
+                event = self.chosen().events[ei]
                 if isinstance(event, (Commit, Tag)):
                     for fileop in event.fileops:
                         if fileop.inline is not None:
@@ -7192,7 +7192,7 @@ More ways to construct event sets:
 @min()     create singleton set of the least element in the argument
 @max()     create singleton set of the greatest element in the argument
 @amp()     all events if the argument set is nonempty, null set otherwise
-@dsc()     all (recursive) descendant commits of the argument set 
+@dsc()     all (recursive) descendant commits of the argument set
 
 You can compose sets as follows:
 
@@ -7223,7 +7223,7 @@ parsed, any argument beginning with '<' is extracted and interpreted
 as the name of a file from which command output should be taken.  Any
 remaining arguments are available to the command logic.
 """)
-            
+
     ##
     ## Command implementation begins here
     ##
@@ -7449,16 +7449,16 @@ file in the blob.  Supports > redirection.
                     parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
                     continue
                 if isinstance(event, Commit):
-                    parse.stdout.write("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch)) 
+                    parse.stdout.write("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch))
                     continue
                 if isinstance(event, Tag):
-                    parse.stdout.write("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),)) 
+                    parse.stdout.write("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),))
                     continue
                 if isinstance(event, Reset):
-                    parse.stdout.write("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref)) 
+                    parse.stdout.write("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref))
                     continue
                 else:
-                    parse.stdout.write("?      -      %s\n" % (event,)) 
+                    parse.stdout.write("?      -      %s\n" % (event,))
     def help_profile(self):
         print("""
 Enable profiling. Must be one of the initial command-line arguments, and
@@ -7532,7 +7532,7 @@ in the currently-selected repo.
             complain("no repo has been chosen.")
             return
         elif self.selection == None:
-            self.selection = self.chosen().all() 
+            self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("%d\n" % len(self.selection))
 
@@ -7855,7 +7855,7 @@ current preserve list is displayed afterwards.
         print("""
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
- 
+
 With a directory-name argument, this command attempts to read in the
 contents of a repository in any supported version-control system under
 that directory.
@@ -8328,7 +8328,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                                                             s,
                                                             len(s) if subcount == 0 else subcount)
                         elif filtercmd.startswith('--replace'):
-                            self.sub = lambda s: s.replace(parts[1], 
+                            self.sub = lambda s: s.replace(parts[1],
                                                            parts[2],
                                                            len(s) if subcount == 0 else subcount)
                 elif filtercmd.startswith('--dedos'):
@@ -8610,7 +8610,7 @@ change in a future release.
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             if opindex == "deletes":
-                event.fileops = [e for e in event.fileops if e.op != "D"] 
+                event.fileops = [e for e in event.fileops if e.op != "D"]
                 return
             for (ind, op) in enumerate(event.fileops):
                 if hasattr(op, "path") and getattr(op, "path") == opindex:
@@ -8744,7 +8744,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             complain("first element of selection is not a commit")
             return
         possibles = list(early.children())
-        if len(self.selection) == 1:    
+        if len(self.selection) == 1:
             if len(possibles) > 1:
                 complain("commit has multiple children, one must be specified")
                 return
@@ -8901,7 +8901,7 @@ type.
                     raise Recoverable("no such repo as %s" % name)
                 else:
                     factors.append(repo)
-            if not factors or len(factors) < 2: 
+            if not factors or len(factors) < 2:
                 raise Recoverable("unite requires repo name arguments")
             self.unite(factors, parse.options)
         if verbose:
@@ -9035,7 +9035,7 @@ source branch are removed.
     def help_path(self):
         print("""
 Rename a path in every fileop of every selected commit.  The
-default selection set is all commits. The first argument is interpreted as a 
+default selection set is all commits. The first argument is interpreted as a
 Python regular expression to match against paths; the second may contain
 back-reference syntax.
 
@@ -9077,7 +9077,7 @@ silently skipped and the old path fileop is deleted instead.
                                             drop.append(fileop)
                                         else:
                                             raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
-                                    else:    
+                                    else:
                                         actions.append((fileop, attr, newpath))
                     for fileop in drop:
                         commit.fileops.remove(fileop)
@@ -9384,7 +9384,7 @@ fields are changed and a warning is issued.
         # A tag name can erfere to one of the following things:
         # (1) A tag object, by name
         # (2) A reset object having a name in the tags/ namespace
-        # (3) The tip commit of a branch with branch fields 
+        # (3) The tip commit of a branch with branch fields
         # These things often occur in combination. Notably, git-fast-export
         # generates for each tag object corresponding branch labels on
         # some ancestor commmits - the rule for where this stops is unclear.
@@ -9545,7 +9545,7 @@ moved, no branch fields are changed.
     def help_authors(self):
         print("""
 Apply or dump author-map information for the specified selection
-set, defaulting to all events. 
+set, defaulting to all events.
 
 Lifts from CVS and Subversion may have only usernames local to
 the repository host in committer and author IDs. DVCSes want email
@@ -9558,7 +9558,7 @@ When an authors file is applied, email addresses in committer and author
 metdata for which the local ID matches between &lt; and @ are replaced
 according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
-(this handles what git-cvsimport and cvs2git do) 
+(this handles what git-cvsimport and cvs2git do)
 
 With the 'read' modifier, or no modifier, apply author mapping data
 (from standard input or a <-redirected input file).  May be useful if
@@ -10005,7 +10005,7 @@ Note that '_selection' will be a list of integers, not objects.
                 raise Recoverable(str(e))
 
     #
-    # Version binding 
+    # Version binding
     #
     def help_version(self):
         print("""
