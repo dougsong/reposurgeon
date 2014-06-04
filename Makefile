@@ -83,13 +83,14 @@ reposurgeon-$(VERS).tar.gz: $(SOURCES)
 version:
 	@echo $(VERS)
 
-# Include W1401 in both sets when I get my pylint updated
-COMMON_PYLINT = --rcfile=/dev/null --reports=n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" --dummy-variables-rgx='^_'
-PYLINTOPTS1 = $(COMMON_PYLINT) --disable=C0103,C0111,C0301,C0302,C0322,C0324,C0325,C0321,C0323,C1001,R0201,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0108,W0141,W0142,W0212,W0233,W0603,W0511,W0611,E1101,E1103,I0011
-PYLINTOPTS2 = $(COMMON_PYLINT) --disable=C0103,C0111,C0301,C0326,C1001,W0603,W0621,E1101,E1103,R0902,R0903,R0912,R0914,R0915
+COMMON_PYLINT = --rcfile=/dev/null --reports=n \
+	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
+	--dummy-variables-rgx='^_'
+PYLINTOPTS1 = "C0103,C0111,C0301,C0302,C0322,C0324,C0325,C0321,C0323,C1001,R0201,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0108,W0141,W0142,W0212,W0233,W0603,W0511,W0611,E1101,E1103,I0011"
+PYLINTOPTS2 = "C0103,C0111,C0301,C0326,C1001,W0603,W0621,E1101,E1103,R0902,R0903,R0912,R0914,R0915"
 pylint:
-	@pylint $(PYLINTOPTS1) reposurgeon
-	@pylint $(PYLINTOPTS2) repodiffer
+	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
+	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS2) repodiffer
 
 check:
 	cd test; $(MAKE) --quiet
