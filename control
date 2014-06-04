@@ -31,3 +31,5 @@ XBS-Web-Extras: conversion.mk
 XBS-Freecode-Tags: version control, svn, git, hg, bzr, cvs, rcs
 
 XBS-VC-Tag-Template: %(version)s
+
+XBS-Validate: make check
