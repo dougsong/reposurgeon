@@ -12,8 +12,6 @@ Description: A tool for editing version-control repository history
  production of very high-quality conversions from Subversion to any 
  supported DVCS.
 
-XBS-Destinations: freecode
-
 XBS-Gitorious-URL: https://gitorious.org/reposurgeon/
 
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
@@ -27,8 +25,6 @@ XBS-HTML-Target: index.html
 XBS-Logo: reposturgeon.png
 
 XBS-Web-Extras: conversion.mk
-
-XBS-Freecode-Tags: version control, svn, git, hg, bzr, cvs, rcs
 
 XBS-VC-Tag-Template: %(version)s
 
