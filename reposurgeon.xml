@@ -113,11 +113,14 @@ linkend='limitations'/>.</para>
 interactive command interpreter or in batch mode to execute commands
 given as arguments on the <command>reposurgeon</command> invocation
 line. The only differences between these modes are (1) the interactive
-one begins by turning on the 'verbose 1' option, and (2) in batch mode
-all errors (including normally recoverable errors in selection-set
-syntax) are fatal. Also, in interactive mode, Ctrl-P and Ctrl-N will
-be available to scroll through your command history and tab completion
-of command keywords is available.</para>
+one begins by turning on the 'verbose 1' option, (2) in batch mode all
+errors (including normally recoverable errors in selection-set syntax)
+are fatal, and (3) each command-line argument beginning with
+<quote>--</quote> has that stripped off (which, in particular means
+that --help and --version will work as expected). Also, in interactive
+mode, Ctrl-P and Ctrl-N will be available to scroll through your
+command history and tab completion of command keywords is
+available.</para>
 
 <para>A git-fast-import stream consists of a sequence of commands
 which must be executed in the specified sequence to build the repo; to

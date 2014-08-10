@@ -10097,6 +10097,11 @@ if __name__ == '__main__':
                         else:
                             cProfile.run('interactive()')
                     else:
+                        # A minor concession to people used to GNU conventions.
+                        # Makes "reposurgeon --help" and "reposurgeon --version"
+                        # work as expected.
+                        if arg.startswith("--"):
+                            arg = arg[2:]
                         # Call the base method so RecoverableExceptions
                         # won't be caught; we want them to abort scripting.
                         cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
