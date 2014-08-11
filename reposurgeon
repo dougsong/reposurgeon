@@ -6436,6 +6436,7 @@ into sections of the input stream instead).
         self.definitions = {}
         self.profile_log = None
         self.capture = None
+        self.start_time = time.time()
         for option in dict(RepoSurgeon.OptionFlags):
             global_options[option] = False
         global_options['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
@@ -10036,6 +10037,20 @@ means the surgical language is not backwards compatible).
                 raise Fatal("major version mismatch, aborting.")
             elif verbose > 0:
                 announce("version check passed.")
+
+    #
+    # Exiting (in case EOT has been rebound)
+    #
+    def help_exit():
+        print("""
+Exit the program cleanly, emitting a goodbye message.
+
+Typing EOT (usually Ctrl-D) will exit quietly.
+""")
+    def do_exit(self, _line):
+        announce("exiting, elapsed time %d sec." % (time.time() - self.start_time))
+        sys.exit(0)
+
     #
     # Running unit tests (undocumented)
     #
