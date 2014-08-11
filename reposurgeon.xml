@@ -137,12 +137,12 @@ manual page; the rest of this paragraph is a quick start for the
 impatient. Most events in a stream are <emphasis
 role="bold">commits</emphasis> describing revision states of the
 repository; these group together under a single change comment one or
-more <emphasis role="bold">fileops</emphasis>, which usually point to
-<emphasis role="bold">blobs</emphasis> that are revision states of
-individual files. A fileop may also be a delete operation indicating
-that a specified previously-existing file was deleted as part of the
-version commit; there are a couple of other special fileop types of
-lesser importance.</para>
+more <emphasis role="bold">fileops</emphasis> (file operations), which
+usually point to <emphasis role="bold">blobs</emphasis> that are
+revision states of individual files. A fileop may also be a delete
+operation indicating that a specified previously-existing file was
+deleted as part of the version commit; there are a couple of other
+special fileop types of lesser importance.</para>
 
 <para>Commands to <command>reposurgeon</command> consist of a
 command keyword, sometimes preceded by a selection set, sometimes
