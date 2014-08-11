@@ -961,6 +961,14 @@ its parents added to their parent set.</para>
 <para>The default is to squash forward, modifying children; but see the
 list of policy modifiers below for how to change this.</para>
 
+<warning>
+<para>It is easy to get the bounds of a squash command wrong, with
+confusing and destructive results. Beware thinking you can squash on a
+selection set to merge all commits except the last one into the last
+one; what you will actually do is to merge all of them to the first
+commit <emphasis>after</emphasis> the selected set.</para>
+</warning>
+
 <para>Normally, any tag pointing to a combined commit will also be
 pushed forward.  But see the list of policy modifiers below for how to
 change this.</para>
