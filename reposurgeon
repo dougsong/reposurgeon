@@ -10041,7 +10041,7 @@ means the surgical language is not backwards compatible).
     #
     # Exiting (in case EOT has been rebound)
     #
-    def help_exit():
+    def help_exit(self):
         print("""
 Exit the program cleanly, emitting a goodbye message.
 
