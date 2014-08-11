@@ -7,7 +7,9 @@
 # 3. Set SOURCE_VCS to svn or cvs
 # 4. Set TARGET_VCS to git, hg, or bzr
 # 5. For svn, set SVN_URL to point at the remote repository you want to convert.
-# 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module. 
+# 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module.
+#    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
+#    include the path to the CVS modules directory after the hosyname. 
 # 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
 # 8. Run 'make stubmap' to create a stub author map.
 # 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool
@@ -26,7 +28,8 @@ SOURCE_VCS = svn
 TARGET_VCS = git
 EXTRAS = 
 SVN_URL = svn://svn.debian.org/$(PROJECT)
-CVS_HOST = $(PROJECT).cvs.sourceforge.net
+CVS_HOST = cvs.sourceforge.net
+#CVS_HOST = cvs.savannah.gnu.org
 CVS_MODULE = $(PROJECT)
 VERBOSITY = "verbose 1"
 REPOSURGEON = reposurgeon
@@ -85,9 +88,10 @@ endif
 ifeq ($(SOURCE_VCS),cvs)
 
 # Mirror a CVS repo. Requires cvssync(1) from the cvs-fast-export
-# distribution. You will need cvs-fast-export installed as well.
+# distribution, version 1.13 or later. You will need to have cvs-fast-export
+# installed as well.
 $(PROJECT)-mirror:
-	cvssync -c -o $(PROJECT)-mirror "$(CVS_HOST):/cvsroot/$(PROJECT)" $(CVS_MODULE) 
+	cvssync -c -o $(PROJECT)-mirror "cvs://$(CVS_HOST)/$(PROJECT)#$(CVS_MODULE)"
 
 # Build the first-stage CVS stream dump from the local mirror
 $(PROJECT).cvs: $(PROJECT)-mirror
