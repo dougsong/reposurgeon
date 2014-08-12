@@ -182,6 +182,9 @@ edit                   ;; edit all editable objects
 :46 tip                ;; Display the branch tip that owns commit :46.
 
 @dsc(:55) list         ;; Display all commits with ancestry tracing to :55 
+
+@min([.gitignore]) remove .gitignore delete
+                       ;; Remove the first .gitignore fileop in the repo.
 </programlisting>
 
 
