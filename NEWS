@@ -1,4 +1,9 @@
 			reposurgeon project news
+
+Repository head:
+     When converting SVN, ignore explicit .gitignores created by git-svn.
+     (Better than letting them collide with translated svn:ignore properties.)
+
 3.10: 2014-04-19
      Finer control over filtering with caC flags.
      New setfield command for tweaking object attributes from lift scripts.

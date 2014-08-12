@@ -1,4 +1,4 @@
-reposurgeon: r4~trunk/.gitignore: user-created gitignore.
+reposurgeon: r4~trunk/.gitignore: user-created .gitignore ignored.
 blob
 mark :1
 data 160
@@ -75,37 +75,20 @@ Ignore *.html
 from :4
 M 100644 :5 .gitignore
 
-blob
-mark :7
-data 6
-*.txt
-
-# Fossil-ID: 4
-commit refs/heads/master
-mark :8
-committer chungy <chungy> 1391603792 +0000
-data 167
-Add a custom .gitignore file
-
-This simulates the case of a git-svn user wishing to ignore *.txt
-files, without adding them to Subversion's native svn:ignore property.
-from :6
-M 100644 :7 .gitignore
-
 # Fossil-ID: 5
 commit refs/heads/cool-feature
-mark :9
+mark :7
 committer chungy <chungy> 1391603866 +0000
 data 125
 Branch trunk to cool-feature
 
 This causes reposurgeon to replace the custom .gitignore with only the
 contents of svn:ignore.
-from :8
+from :6
 M 100644 :1 .gitignore
 
 blob
-mark :10
+mark :8
 data 611
 This repository is designed to demonstrate an oversight in the way
 reposurgeon handles ignores and the case of pre-existing .gitignore
@@ -121,26 +104,25 @@ as the example here.
 
 # Fossil-ID: 6
 commit refs/heads/cool-feature
-mark :11
+mark :9
 committer chungy <chungy> 1391603993 +0000
 data 44
 Explain what the expected result should be.
-from :9
-M 100644 :10 README
+from :7
+M 100644 :8 README
 
 # Fossil-ID: 7
 commit refs/heads/master
-mark :12
+mark :10
 committer chungy <chungy> 1391604041 +0000
 data 33
 Merge cool-feature back to trunk
-from :8
-merge :11
-M 100644 :5 .gitignore
-M 100644 :10 README
+from :6
+merge :9
+M 100644 :8 README
 
 blob
-mark :13
+mark :11
 data 825
 This repository is designed to demonstrate an oversight in the way
 reposurgeon handles ignores and the case of pre-existing .gitignore
@@ -161,10 +143,23 @@ coming from svn:ignore and *.txt coming from the stored-in-svn
 
 # Fossil-ID: 8
 commit refs/heads/master
-mark :14
+mark :12
 committer chungy <chungy> 1391604109 +0000
 data 35
 Explain the final expected result.
-from :12
-M 100644 :13 README
+from :10
+M 100644 :11 README
+
+tag emptycommit-4
+from :6
+tagger chungy <chungy> 1391603792 +0000
+data 264
+Add a custom .gitignore file
+
+This simulates the case of a git-svn user wishing to ignore *.txt
+files, without adding them to Subversion's native svn:ignore property.
+
+[[Tag from zero-fileop commit at Subversion r4:
+<NodeAction: r4 add file 'trunk/.gitignore'>
+]]
 

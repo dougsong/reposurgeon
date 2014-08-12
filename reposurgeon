@@ -3469,6 +3469,19 @@ class StreamParser:
                             perms = oldperms = 0o100644
                         if node.props is not None:
                             perms = self.node_permissions(node)
+                        new_content = (node.blob is not None)
+                        # Ignore and complain about explicit .gitignores
+                        # created, e.g, by git-svn.  In an ideal world we
+                        # would merge these with svn:ignore properties. but
+                        # this would be hairy and bug-prone. So we give
+                        # the user a heads-up and expect these to be
+                        # merged by hand.
+                        if new_content \
+                           and not node.generated \
+                           and node.path.endswith(".gitignore"):
+                            self.gripe("r%s~%s: user-created .gitignore ignored." \
+                                       % (node.revision, node.path))
+                            continue
                         # This ugly nasty guard is critically important.
                         # We need to generate a modify if:
                         # 1. There is new content.
@@ -3481,7 +3494,6 @@ class StreamParser:
                         # 4. The permissions for this path have changed;
                         # we need to generate a modify with an old mark
                         # but new permissions.
-                        new_content = (node.blob is not None)
                         generated_file_copy = node.generated
                         subversion_file_copy = (node.from_hash is not None)
                         permissions_changed = (perms != oldperms)
@@ -3500,14 +3512,6 @@ class StreamParser:
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
                         self.permissions[node.path] = perms
-                        # If it is a non-generated .gitignore, odds are
-                        # somebody was getting jiggy with git-svn
-                        # behind Subversion's back. Warn about this.
-                        if new_content \
-                           and not node.generated \
-                           and node.path.endswith(".gitignore"):
-                            self.gripe("r%s~%s: user-created gitignore." \
-                                       % (node.revision, node.path))
                 # These are directory actions.
                 elif node.action in (SD_DELETE, SD_REPLACE):
                     if debug_enable(DEBUG_EXTRACT):

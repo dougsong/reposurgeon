@@ -2464,10 +2464,11 @@ contents will be the path to which the symlink should resolve).</para>
 <application>cvs2svn</application> are incorporated into the internal map
 used for reference-lifting, then discarded.</para>
 
-<para>Per-directory svn:ignore properties become .gitignore files; if
-you're somehow managed to have an actual .gitignore file in a
-Subversion directory with an svn:ignore property, the file will get
-stepped on.</para>
+<para>Per-directory svn:ignore properties become .gitignore files.
+Actual .gitignore files in a Subversion directory are presumed to have
+been created by git-svn users separately from native Subversion ignore
+properties and discarded with a warning. It is up to the user to merge
+the content of such files into the target repository by hand.</para>
 
 <para>svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
 on a revision A with a merge source range ending in revision B produces
