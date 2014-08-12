@@ -4887,7 +4887,8 @@ class Repository:
                 if isinstance(event, Commit):
                     for fileop in event.fileops:
                         if fileop.op == 'M':
-                            implied.add(self.find(fileop.ref))
+                            if fileop.ref != "inline":
+                                implied.add(self.find(fileop.ref))
                     for tag in event.attachments:
                         implied.add(self.find(tag.committish))
             selection = list(implied)
