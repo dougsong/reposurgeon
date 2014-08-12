@@ -246,10 +246,10 @@ no file-content differences; if they do, there is a bug in either
 cases).</p>
 
 <p>If you are convering from CVS, use reposurgeon's graph command to
-examine looking (in particular) for misplaced tags or branch
-joins. Often these can be manually repaired with little effort. These
-flaws do 'not' necessarily imply bugs in cvs-fast-export or
-reposugeon; they may simply indicate previously undetected
+examine the conversion, looking (in particular) for misplaced tags or
+branch joins. Often these can be manually repaired with little
+effort. These flaws do 'not' necessarily imply bugs in cvs-fast-export
+or reposugeon; they may simply indicate previously undetected
 malformations in the history. However, reporting them may help improve
 cvs-fast-export.</p>
 
@@ -454,6 +454,15 @@ and lifting .cvsignore files to .gitignore files; see the
 LIMITATIONS AND GUARANTEES section on its manpage if other DVCSes are
 involved.</p>
 
+<p>Under versions of reposurgeon before 3.11 (August 2014) explicit
+.gitignore files in Subversion repositories were preserved and could
+interfere with .gitignore files generated from svn:ignore properties
+during the conversion.  Under 3.11 and later the assumption is that
+these were created by git-svn users ad hoc and should be discarded;
+it is up to the human doing the conversion to look through them
+and rescue any ignore patterns that should be merged into the
+converted repository.</p>
+
 <h2 id="recovery">Recovering from errors</h2>
 
 <p>Occasionally you'll discover problems with a conversion after you've
@@ -627,6 +636,8 @@ Makefile.</p>
 <p>3.10 (2014-02-16) Minor changes for 3.0 syntax.</p>
 
 <p>3.11 (2014-02-18) More about post-conversion sanity checking.</p>
+
+<p>3.12 (2014-08-12) Merging SVN .gitignore files.</p>
 
 </div>
 <hr />
