@@ -3334,6 +3334,16 @@ class StreamParser:
                         # turn into fileops.
                         ignore = node.props.get("svn:ignore")
                         if ignore is not None:
+                            # svn:ignore properties are nonrecursive
+                            # to lower directories, but .gitignore
+                            # patterns are recursive.  Thus we need to
+                            # anchor the translated pattern with
+                            # leading / in order to render the
+                            # Subversion behavior accurately.
+                            ignore = re.sub("\n(?!#)", "\n/", "\n" + ignore)
+                            ignore = ignore[1:]
+                            if ignore.endswith("/"):
+                                ignore = ignore[:-1]
                             blob = Blob(self.repo)
                             blob.set_content(ignore)
                             newnode = StreamParser.NodeAction()

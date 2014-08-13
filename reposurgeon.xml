@@ -2800,7 +2800,6 @@ hg's glob syntax rather than its default regular-expression syntax.
 When writing to an hg repository from any other kind,
 <command>reposurgeon</command> prepends to the output .hgignore a
 "syntax: glob" line.</para>
-
 </refsect1>
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>

@@ -14,8 +14,8 @@ M 100644 :1 README
 
 blob
 mark :3
-data 6
-*.pyc
+data 7
+/*.pyc
 
 # Fossil-ID: 2
 commit refs/heads/master
