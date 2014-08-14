@@ -238,7 +238,104 @@ bzr-orphans
         preserve=set(),
         authormap=None,
         ignorename="_darcs/prefs/boring",
-        dfltignores="",	# Has none
+        dfltignores="""
+# haskell (ghc) interfaces
+*.hi
+*.hi-boot
+*.o-boot
+# object files
+*.o
+*.o.cmd
+# profiling haskell
+*.p_hi
+*.p_o
+# haskell program coverage resp. profiling info
+*.tix
+*.prof
+# fortran module files
+*.mod
+# linux kernel
+*.ko.cmd
+*.mod.c
+*.tmp_versions
+# *.ko files aren't boring by default because they might
+# be Korean translations rather than kernel modules
+# *.ko
+# python, emacs, java byte code
+*.py[co]
+*.elc
+*.class
+# objects and libraries; lo and la are libtool things
+*.obj
+*.a
+*.exe
+*.so
+*.lo
+*.la
+# compiled zsh configuration files
+*.zwc
+# Common LISP output files for CLISP and CMUCL
+*.fas
+*.fasl
+*.sparcf
+*.x86f
+### build and packaging systems
+# cabal intermediates
+*.installed-pkg-config
+*.setup-config
+# standard cabal build dir, might not be boring for everybody
+# dist
+# autotools
+autom4te.cache
+config.log
+config.status
+# microsoft web expression, visual studio metadata directories
+*.\\_vti_cnf
+*.\\_vti_pvt
+# gentoo tools
+*.revdep-rebuild.*
+# generated dependencies
+.depend
+### verion control
+# darcs
+_darcs
+.darcsrepo
+*.darcs-temp-mail
+-darcs-backup[[:digit:]]+
+# gnu arch
++
+,
+vssver.scc
+*.swp
+MT
+{arch}
+*.arch-ids
+# bitkeeper
+BitKeeper
+ChangeSet
+### miscellaneous
+# backup files
+*~
+*.bak
+*.BAK
+# patch originals and rejects
+*.orig
+*.rej
+# X server
+..serverauth.*
+# image spam
+\\#
+Thumbs.db
+# vi, emacs tags
+tags
+TAGS
+# core dumps
+core
+# partial broken files (KIO copy operations)
+*.part
+# mac os finder
+.DS_Store
+""",
         project="http://darcs.net/",
         notes="Assumes no boringfile preference has been set."),
     # Export is experimental and doesn't round-trip
