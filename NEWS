@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 Repository head:
-     Explicit svn:ignore patterns aren't rexursive to lower directories; cope.
+     Explicit svn:ignore patterns aren't recursive to lower directories; cope.
 
 3.11: 2014-08-12
      When converting SVN, ignore explicit .gitignores created by git-svn.
