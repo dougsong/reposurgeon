@@ -111,6 +111,7 @@ class VCS:
         self.project = project
         self.notes = notes
     def __str__(self):
+        realignores = [line for line in self.dfltignores.split('\n') if not line.startswith("# ")] 
         return "         Name: {self.name}\n" \
                " Subdirectory: {self.subdirectory}\n" \
                "     Exporter: {self.exporter}\n" \
@@ -123,12 +124,14 @@ class VCS:
                "     Preserve: {{{preserve}}}\n" \
                "    Authormap: {self.authormap}\n" \
                "   Ignorename: {self.ignorename}\n" \
-               "      Ignores: {self.dfltignores}\n" \
+               "      Ignores: {{{ignores}}}\n" \
                "      Project: {self.project}\n" \
-               "        Notes: {self.notes}\n".format(
+               "        Notes: {{{notes}}}\n".format(
                        self = self,
                        styleflags = ", ".join(self.styleflags),
-                       preserve = ", ".join(self.preserve))
+                       preserve = ", ".join(self.preserve),
+                       ignores = " ".join(realignores).strip(),
+                       notes = self.notes.strip())
 
 # Most knowledge about specific version-control systems lives in the
 # following class list. Exception; there's a git-specific hook in the
