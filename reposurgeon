@@ -111,7 +111,7 @@ class VCS:
         self.project = project
         self.notes = notes
     def __str__(self):
-        realignores = [line for line in self.dfltignores.split('\n') if not line.startswith("# ")] 
+        realignores = [line for line in self.dfltignores.split('\n') if not line.startswith("# ")]
         return "         Name: {self.name}\n" \
                " Subdirectory: {self.subdirectory}\n" \
                "     Exporter: {self.exporter}\n" \
