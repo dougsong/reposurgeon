@@ -1365,22 +1365,6 @@ class FileOp(object):
         self.path = None
         self.ref = None
         self.inline = None
-    def path_remap_in(self):
-        "Hack the fileop's basename to map it to git conventions."
-        # Ignore file names from non-git VCSes need to get
-        # mapped to .gitignore, because we have to
-        # have some way to recognize what they are
-        # in order to remap the name properly on
-        # export.
-        if self.vcs is not None:
-            if os.path.basename(self.path) == self.vcs.ignorename:
-                self.path = os.path.join(os.path.dirname(self.path), ".gitignore")
-    def path_remap_out(self, path, vcs):
-        "Hack the fileop's basename to map it to a target VCS's conventions."
-        if vcs is not None and vcs.ignorename is not None:
-            if os.path.basename(path) == ".gitignore":
-                return os.path.join(os.path.dirname(path), vcs.ignorename)
-        return path
     def setOp(self, op):
         self.op = op
     @staticmethod
@@ -1396,12 +1380,10 @@ class FileOp(object):
     def construct(self, *opargs):
         if opargs[0] == "M":
             (self.op, self.mode, self.ref, self.path) = opargs
-            self.path_remap_in()
             if isinstance(self.mode, int):
                 self.mode = "%06o" % self.mode
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
-            self.path_remap_in()
         elif opargs[0] == "N":
             (self.op, self.ref, self.committish) = opargs
         elif opargs[0] in ("R", "C"):
@@ -1418,7 +1400,6 @@ class FileOp(object):
             (self.op, self.mode, self.ref, self.path) = m.groups()
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
-            self.path_remap_in()
         elif opline[0] == "N":
             try:
                 opline = opline.replace("'", r"\'")
@@ -1429,7 +1410,6 @@ class FileOp(object):
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
-            self.path_remap_in()
         elif opline[0] in ("R", "C"):
             try:
                 opline = opline.replace("'", r"\'")
@@ -1467,7 +1447,7 @@ class FileOp(object):
             if len(self.path.split()) > 1:
                 parts.extend(('"', self.path, '"'))
             else:
-                parts.append(self.path_remap_out(self.path, vcs))
+                parts.append(self.path)
             if self.ref == 'inline':
                 parts.append("\ndata %d\n%s" % (len(self.inline), self.inline))
         elif self.op == "N":
@@ -1479,11 +1459,9 @@ class FileOp(object):
             if len(self.path.split()) > 1:
                 parts.extend(('"', self.path, '"'))
             else:
-                parts.append(self.path_remap_out(self.path, vcs))
+                parts.append(self.path)
         elif self.op in ("R", "C"):
-            parts = ['%s "%s" "%s"' %  (self.op,
-                                    self.path_remap_out(self.source, vcs),
-                                    self.path_remap_out(self.target, vcs))]
+            parts = ['%s "%s" "%s"' %  (self.op, self.source, self.target)]
         elif self.op == "deleteall":
             parts = [self.op]
         else:
