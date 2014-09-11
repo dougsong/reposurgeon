@@ -141,11 +141,12 @@ class VCS:
 #
 # * Name of its characteristic subdirectory.
 # * Command to export from the VCS to the interchange format
-# * Export-style flags.
+# * Import/export style flags.
 #     "no-nl-after-commit" = no extra NL after each commit
 #     "nl-after-comment" = inserts an extra NL after each comment
 #     "export-progress" = exporter generates its own progress messages,
 #                         no need for baton prompt.
+#     "import-defaults" = Import sets default ignores
 # * Flag specifying whether it handles per-commit properties on import
 # * Command to initialize a new repo
 # * Command to import from the interchange format
@@ -172,7 +173,7 @@ vcstypes = [
     VCS(name="git",
         subdirectory=".git",
         exporter="git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-        styleflags=set(),
+        styleflags={},
         properties=False,
         initializer="git init --quiet",
         importer="git fast-import --quiet",
@@ -217,8 +218,7 @@ bzr-orphans
     VCS(name="hg",
         subdirectory=".hg",
         exporter="hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags={"nl-after-comment",
-                        "export-progress"},
+        styleflags={"import-defaults", "nl-after-comment", "export-progress"},
         properties=False,
         initializer="hg init",
         lister="hg locate",
@@ -349,7 +349,7 @@ core
     VCS(name="svn",
         subdirectory="locks",
         exporter="svnadmin dump .",
-        styleflags={"export-progress"},
+        styleflags={"import-defaults", "export-progress"},
         properties=False,
         initializer="svn create .",
         importer="svnadmin load .",
@@ -382,7 +382,7 @@ core
     VCS(name="cvs",
         subdirectory="Attic",
         exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
-        styleflags={"export-progress"},
+        styleflags={"import-defaults", "export-progress"},
         properties=False,
         initializer=None,
         importer=None,
@@ -6541,6 +6541,7 @@ into sections of the input stream instead).
         self.echo = 0
         self.prompt = "reposurgeon% "
         self.preferred = None
+        self.ignorename = None
         self.selection = []
         self.line = ""
         self.history = []
@@ -9655,6 +9656,96 @@ moved, no branch fields are changed.
             repo.declare_sequence_mutation()
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
+
+    def help_ignores(self):
+        print("""Rename ignore-pattern file.
+This command fails if no repository has been selected or no preferred write
+type has been set for the repository
+
+If the --rename option is present, this command attempts to rename all
+ignore-pattern files to whatever is appropriate for the preferred type
+- e.g. .gitignore for git, .hgignore for hg, etc.  This option does not
+cause any translation of the ignore files it renames.
+
+If the --translate option is present, syntax translation of each ignore
+file is attempted. At present, the only transformation the code knows
+is to prepend a 'syntax: glob' header if the preferred type is hg.
+
+If the --defaults option is present, the command attempts to prepend
+these default patterns to all ignore files. If no ignore file is
+created by the first commit, it will be modified to create one
+containing the defaults.  This command will error out on prefer types
+that have no default ignore patterns (git and hg, in particular).  It
+will also error out when it knows the import tool has already set
+default patterns.
+""")
+    def do_ignores(self, line):
+        "Manipulate ignore patterns in the repo."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        if self.preferred:
+            self.ignorename = self.preferred.ignorename
+        else:
+            raise Recoverable("preferred repository type has not been set")
+        def isignore(blob):
+            return len(blob.pathlist) == 1 \
+                       and blob.pathlist[0].endswith(self.ignorename)
+        if '-defaults' in line:
+            if "import-defaults" in self.preferred.styleflags:
+                raise Recoverable("importer already set default ignores")
+            elif not self.preferred.dfltignores:
+                raise Recoverable("no default ignores in %s" % self.preferred.name)
+            else:
+                # Create an early ignore file if required.
+                changecount = 0
+                earliest = repo.earliest.commit()
+                if not [fileop for fileop in earliest.fileops if fileop.op == "M" and fileop.path.endwith(self.ignorename)]:
+                    blob = Blob()
+                    blob.set_content(self.preferred.dfltignores)
+                    blob.mark = "insert"
+                    repo.events.insert(repo.index(earliest), blob)
+                    repo.declare_sequence_mutation()
+                    newop = FileOp()
+                    newop.construct("M", 0o100664, "insert", self.ignorename)
+                    earliest.fileops.append(newop)
+                    repo.renumber()
+                    announce("initial %s created." % self.ignorename)
+                # Modify existing ignore files
+                for blob in repo.iterevents(indices=None, types=(Blob,)):
+                    if isignore(blob):
+                        blob.set_content(self.preferred.dfltignores \
+                                     + blob.content())
+                        changecount += 1
+            announce("%d %s blobs modified." % (self.ignorename, changecount))
+        if '--rename' in line:
+            changecount = 0
+            for event in repo.iterevents(indices=None, types=(Commit,)):
+                for fileop in event.fileops():
+                    if hasattr(fileop, "path") and fileop.path.endwith(self.ignorename):
+                        fileop.path = self.preferred.ignorename
+                        changecount += 1
+                    if hasattr(fileop, "source") and fileop.source.endwith(self.ignorename):
+                        fileop.source = self.preferred.ignorename
+                        changecount += 1
+                    if hasattr(fileop, "target") and fileop.target.endwith(self.ignorename):
+                        fileop.target = self.preferred.ignorename
+                        changecount += 1
+            announce("%d ignore files renamed (%s -> %s)."
+                     % (changecount,
+                        self.ignorename,
+                        self.preferred.ignorename))
+            self.ignorename = self.preferred.ignorename
+        if '--translate' in line:
+            changecount = 0
+            for blob in repo.iterevents(indices=None, types=(Blob,)):
+                if isignore(blob):
+                    if self.preferred.name == "hg":
+                        if not blob.content().startswith("syntax: glob\n"):
+                            blob.set_content("syntax: glob\n" + blob.content())
+                            changecount += 1
+            announce("%d %s blobs modified." % (self.ignorename, changecount))
 
     #
     # Artifact removal
