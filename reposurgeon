@@ -9636,7 +9636,7 @@ moved, no branch fields are changed.
             raise Recoverable("unknown verb '%s' in reset command." % verb)
 
     def help_ignores(self):
-        print("""Rename ignore-pattern file.
+        print("""Intelligent hamdling of ignore-pattern files.
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository
 

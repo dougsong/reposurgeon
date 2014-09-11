@@ -2,6 +2,7 @@
 
 Repository head:
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
+     A new 'ignores' command has obtions for translation of ignore files.
      The --noignores option has been retired.
 
 3.11: 2014-08-12
