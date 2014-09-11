@@ -2,6 +2,7 @@
 
 Repository head:
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
+     The --noignores option has been retired.
 
 3.11: 2014-08-12
      When converting SVN, ignore explicit .gitignores created by git-svn.

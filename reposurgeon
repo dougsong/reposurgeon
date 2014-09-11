@@ -1141,6 +1141,7 @@ class Blob(object):
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
     def dump(self, vcs=None, options=None, realized=None, internals=None):
+        pacify_pylint(options)
         pacify_pylint(realized)
         pacify_pylint(internals)
         if self.hasfile() and not os.path.exists(self.blobfile()):
@@ -1149,12 +1150,6 @@ class Blob(object):
             content = self.get_content()
             if vcs is None and self.repo.vcs and self.repo.vcs.importer:
                 vcs = self.repo.vcs
-            # Ugh.  This is where we mess with ignore syntax translation
-            if options is None or not '--noignores' in options:
-                if vcs and self.repo.vcs and len(self.pathlist) == 1 and self.pathlist[0].endswith(".gitignore"):
-                    if vcs.name == "hg" and self.repo.vcs.name != "hg":
-                        if not content.startswith("syntax: glob\n"):
-                            content = "syntax: glob\n" + content
             return "blob\nmark %s\ndata %d\n%s\n" % (self.mark, len(content), content)
     def __str__(self):
         return self.dump()
@@ -3294,10 +3289,7 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            if "--noignores" in options:
-                                startwith = ""
-                            else:
-                                startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
+                            startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
                             try:
                                 ignore = startwith + \
                                          "# The contents of the svn:ignore" \

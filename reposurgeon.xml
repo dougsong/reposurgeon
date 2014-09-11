@@ -2377,11 +2377,6 @@ git-svn.  Otherwise, addresses will be the way git cvs-import does
 it.</para>
 </listitem>
 </varlistentry>
-<varlistentry>
-<term>--noignores</term>
-<listitem><para>Do not generate a simulation of Subversion ignores in
-the root node.</para></listitem>
-</varlistentry>
 </variablelist>
 
 <para>These modifiers can go anywhere in any order on the read command
