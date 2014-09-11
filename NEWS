@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.12: 2014-09-11
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
      A new 'ignores' command has obtions for translation of ignore files.
      The --noignores option has been retired.
