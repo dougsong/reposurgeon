@@ -1691,25 +1691,25 @@ non-boring child.</para>
 </varlistentry>
 <varlistentry>
 <term><command>ignores</command>
-        <command>[--rename]</command>.
-        <command>[--translate]</command>.
-        <command>[--defaults]</command>.
+        <command>[rename]</command>.
+        <command>[translate]</command>.
+        <command>[defaults]</command>.
 </term>
 <listitem>
-<para>Intelligent hamdling of ignore-pattern files.
+<para>Intelligent handling of ignore-pattern files.
 This command fails if no repository has been selected or no preferred write
-type has been set for the repository</para>
+type has been set for the repository.  It does not take a selection set.</para>
 
-<para>If the --rename option is present, this command attempts to rename all
+<para>If the rename modifier is present, this command attempts to rename all
 ignore-pattern files to whatever is appropriate for the preferred type
 - e.g. .gitignore for git, .hgignore for hg, etc.  This option does not
 cause any translation of the ignore files it renames.</para>
 
-<para>If the --translate option is present, syntax translation of each ignore
+<para>If the translate modifier is present, syntax translation of each ignore
 file is attempted. At present, the only transformation the code knows
 is to prepend a 'syntax: glob' header if the preferred type is hg.</para>
 
-<para>If the --defaults option is present, the command attempts to prepend
+<para>If the defaults modifier is present, the command attempts to prepend
 these default patterns to all ignore files. If no ignore file is
 created by the first commit, it will be modified to create one
 containing the defaults.  This command will error out on prefer types

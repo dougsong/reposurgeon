@@ -1,8 +1,8 @@
 ## test ignore (defaults generation, rename, translation).
 read <min.fi
 prefer bzr
-ignores --defaults
+ignores defaults
 prefer hg
-ignores --rename --translate
+ignores rename translate
 write -
 
