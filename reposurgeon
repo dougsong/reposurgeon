@@ -9700,25 +9700,25 @@ default patterns.
             else:
                 # Create an early ignore file if required.
                 changecount = 0
-                earliest = repo.earliest.commit()
-                if not [fileop for fileop in earliest.fileops if fileop.op == "M" and fileop.path.endwith(self.ignorename)]:
-                    blob = Blob()
+                earliest = repo.earliest_commit()
+                if not [fileop for fileop in earliest.fileops if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
+                    blob = Blob(repo)
                     blob.set_content(self.preferred.dfltignores)
-                    blob.mark = "insert"
+                    blob.mark = ":insert"
                     repo.events.insert(repo.index(earliest), blob)
                     repo.declare_sequence_mutation()
                     newop = FileOp()
-                    newop.construct("M", 0o100664, "insert", self.ignorename)
+                    newop.construct("M", 0o100664, ":insert", self.ignorename)
                     earliest.fileops.append(newop)
                     repo.renumber()
                     announce("initial %s created." % self.ignorename)
                 # Modify existing ignore files
-                for blob in repo.iterevents(indices=None, types=(Blob,)):
+                for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
                     if isignore(blob):
                         blob.set_content(self.preferred.dfltignores \
                                      + blob.content())
                         changecount += 1
-            announce("%d %s blobs modified." % (self.ignorename, changecount))
+            announce("%d %s blobs modified." % (changecount, self.ignorename))
         if '--rename' in line:
             changecount = 0
             for event in repo.iterevents(indices=None, types=(Commit,)):
@@ -9739,7 +9739,7 @@ default patterns.
             self.ignorename = self.preferred.ignorename
         if '--translate' in line:
             changecount = 0
-            for blob in repo.iterevents(indices=None, types=(Blob,)):
+            for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
                 if isignore(blob):
                     if self.preferred.name == "hg":
                         if not blob.content().startswith("syntax: glob\n"):
