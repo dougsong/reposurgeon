@@ -1,4 +1,4 @@
-## test ignore (defaults generationm rename, translation).
+## test ignore (defaults generation, rename, translation).
 read <min.fi
 prefer bzr
 ignores --defaults

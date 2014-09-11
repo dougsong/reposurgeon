@@ -9676,6 +9676,7 @@ default patterns.
             elif not self.preferred.dfltignores:
                 raise Recoverable("no default ignores in %s" % self.preferred.name)
             else:
+                changecount = 0
                 # Modify existing ignore files
                 for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
                     if isignore(blob):
@@ -9684,7 +9685,6 @@ default patterns.
                         changecount += 1
                 # Create an early ignore file if required.
                 # Don't move this before the modification pass!
-                changecount = 0
                 earliest = repo.earliest_commit()
                 if not [fileop for fileop in earliest.fileops if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
                     blob = Blob(repo)
