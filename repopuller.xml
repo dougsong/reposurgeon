@@ -39,7 +39,7 @@ directory named after the last segment of the URL, with the suffix
 fetch; just give the mirror directory name.</para>
 
 <para>Subversion URLs are as specified in the Subversion
-documentation.  CVS URLs most specify a host and repository path,
+documentation.  CVS URLs must specify a host and repository path,
 followed by a '#', followed by a module name.</para>
 </refsect1>
 
