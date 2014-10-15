@@ -11,7 +11,7 @@ from __future__ import print_function #unicode_literals
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
-import functools, filecmp
+import functools, filecmp, datetime
 import email.message, email.parser
 
 # This import only works on Unixes.  The intention is to enable
@@ -908,7 +908,7 @@ class Date(object):
     def delta(self, other):
         return other.timestamp - self.timestamp
     @staticmethod
-    def tzresolve(tz):
+    def tzresolve(tz, tm):
         "Hacky way to beat the Unix timezone database into resolving TZ names."
         if tz[0] in "+-":
             return tz
@@ -916,18 +916,17 @@ class Date(object):
         try:
             os.putenv("TZ", tz)
             time.tzset()
-            now = int(time.time())
-            localtm = time.localtime(int(now))
-            gmtime = time.gmtime(int(now))
-            seconds = int(localtm.tm_hour * 3600 + localtm.tm_min * 60) - (gmtime.tm_hour * 3600 + gmtime.tm_min * 60)
+            localdate = datetime.datetime.fromtimestamp(tm)
+            gmdate = datetime.datetime.utcfromtimestamp(tm)
         finally:
             os.putenv("TZ", oldtz or "")
             time.tzset()
-        if str(seconds).startswith("-"):
+        if localdate < gmdate:
             sgn = "-"
-            seconds = -seconds
+            seconds = (gmdate - localdate).seconds
         else:
             sgn = "+"
+            seconds = (localdate - gmdate).seconds
         return sgn + ("%02d" % (seconds / 3600)) + str("%02d" % abs(seconds % 3600))
     def __str__(self):
         "Format as a git timestamp."
@@ -969,9 +968,9 @@ class DateTests(unittest.TestCase):
         self.assertEqual(d2, d2)
         self.assertEqual(d2, d3)
         self.assertEqual(d3, d3)
-        self.assertEqual(Date.tzresolve("EST"), "-0500")
-        self.assertEqual(Date.tzresolve("-0500"), "-0500")
-        self.assertIn(Date.tzresolve("Europe/Warsaw"), ("+0100", "+0200"))
+        self.assertEqual(Date.tzresolve("EST", int(time.time())), "-0500")
+        self.assertEqual(Date.tzresolve("-0500", int(time.time())), "-0500")
+        self.assertIn(Date.tzresolve("Europe/Warsaw", int(time.time())), ("+0100", "+0200"))
     def test_inequality(self):
         d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
         d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
@@ -1038,7 +1037,7 @@ class Attribution(object):
                 self.name = name
                 self.email = mail
                 if timezone:
-                    self.date.orig_tz_string = timezone
+                    self.date.orig_tz_string = Date.tzresolve(timezone, self.date.timestamp)
                 break
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
@@ -4739,8 +4738,6 @@ class Repository:
                     raise Fatal("malformed author-map line")
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
-                if timezone:
-                    timezone = Date.tzresolve(timezone) or None
                 authormap[local.strip().lower()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
