@@ -917,10 +917,9 @@ class Date(object):
             os.putenv("TZ", tz)
             time.tzset()
             now = int(time.time())
-            tm = time.localtime(int(now))
-            os.putenv("TZ", "UTC")
-            time.tzset()
-            seconds = int(time.mktime(tm)) - now
+            localtm = time.localtime(int(now))
+            gmtime = time.gmtime(int(now))
+            seconds = int(localtm.tm_hour * 3600 + localtm.tm_min * 60) - (gmtime.tm_hour * 3600 + gmtime.tm_min * 60)
         finally:
             os.putenv("TZ", oldtz or "")
             time.tzset()
