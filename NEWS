@@ -1,4 +1,6 @@
 			reposurgeon project news
+Repository head:
+    Fixes for tinezine handking.
 
 3.12: 2014-09-11
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
