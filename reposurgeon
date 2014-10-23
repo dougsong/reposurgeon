@@ -5976,18 +5976,18 @@ def rebuild_repo(repo, target, options, preferred):
             announce("rebuild is complete.")
 
         os.chdir(here)
-        # Rebuild succeeded - make an empty backup directory
-        backupcount = 1
-        while True:
-            savedir = target + (".~%d~" % backupcount)
-            if os.path.exists(savedir):
-                backupcount += 1
-            else:
-                break
-        assert(os.path.abspath(savedir))
-        os.mkdir(savedir)
-
         if staging != target:
+            # Rebuild succeeded - make an empty backup directory
+            backupcount = 1
+            while True:
+                savedir = target + (".~%d~" % backupcount)
+                if os.path.exists(savedir):
+                    backupcount += 1
+                else:
+                    break
+            assert(os.path.abspath(savedir))
+            os.mkdir(savedir)
+
             # This is a critical region.  Ignore all signals until we're done.
             with CriticalRegion():
                 # Move the unmodified repo contents in target to the
