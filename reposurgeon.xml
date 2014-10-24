@@ -57,8 +57,8 @@ the section on <link linkend="subversion">Working With
 Subversion</link>.</para>
 
 <para>Fossil repository files can be read in using the
-<option>--fossil</option> option of the <command>read</command>
-command and written out with the <option>--fossil</option> option of
+<option>--format=fossil</option> option of the <command>read</command>
+command and written out with the <option>--format=fossil</option> option of
 the <command>write</command>. Ignore patterns are not translated
 in either direction.</para>
 
@@ -610,7 +610,7 @@ and manipulate the in-core list and the selection.</para>
 <variablelist>
 <varlistentry>
 <term><command>read</command>
-        [--fossil]
+        [--format=fossil]
         [<emphasis>directory</emphasis>|<emphasis>-</emphasis>|<emphasis>&lt;infile</emphasis>]
 </term>
 <listitem><para>With a directory-name argument, this command attempts
@@ -637,7 +637,7 @@ subdirectory has a file named <filename>fossils</filename>, that file
 will be read as though passed to a <filename>fossil read</filename>
 command.</para>
 
-<para>If the read location is a file and the <option>--fossil</option>
+<para>If the read location is a file and the <option>--format=fossil</option>
 is used, the file is interpreted as a Fossil repository.</para>
 
 <para>The just-read-in repo is added to the list of loaded
@@ -651,7 +651,7 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-        [--fossilize] [--fossil] [--noincremental] [--callout]
+        [--fossilize] [--format=fossil] [--noincremental] [--callout]
         [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
@@ -665,8 +665,9 @@ directory, the repository is rebuilt into that directory, with any
 selection set being ignored; if that target directory is nonempty its
 contents are backed up to a save directory.</para>
 
-<para>If the write location is a file and the <option>--fossil</option>
-is used, the file is written in Fossil repository format.</para>
+<para>If the write location is a file and the
+<option>--format=fossil</option> is used, the file is written in
+Fossil repository format.</para>
 
 <para>With the <option>--fossilize</option> option, the Fossil-ID of
 each commit is appended to its commit comment at write time. This

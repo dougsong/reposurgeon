@@ -450,7 +450,7 @@ core
 # and produces a named alien file.
 #
 file_filters = {
-    "--fossil" : ("fossil export --git %s", "fossil import --git %s"),
+    "fossil" : ("fossil export --git %s", "fossil import --git %s"),
     }
 
 # No user-serviceable parts below this line
@@ -7826,8 +7826,8 @@ to the type of that repository.
             for vcs in vcstypes:
                 print(vcs)
             for option in file_filters:
-                print("The read and write commands have a %s option that supports %s files."
-                      % (option, option[2:].capitalize()))
+                print("read and write have a --format=%s option that supports %s files."
+                      % (option, option.capitalize()))
             if any(ext.visible for ext in extractors):
                 print("Other systems supported for read only: %s\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
@@ -7976,6 +7976,9 @@ fast-import stream or Subversion dump, whichever it is.
 With an argument of '-', this command reads a fast-import stream or
 Subversion dump from standard input (this will be useful in filters
 constructed with command-line arguments).
+
+The --fossil option can be used to read in binary repository dump files.
+For a list of supported types, invoke the 'prefer' command.
 """)
     def do_read(self, line):
         "Read in a repository for surgery."
@@ -7984,11 +7987,16 @@ constructed with command-line arguments).
         with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
             if parse.redirected:
                 repo = Repository()
-                for (option, (infilter, _)) in file_filters.items():
-                    if option in parse.options:
-                        srcname = parse.stdin.name
-                        parse.stdin.close()
-                        parse.stdin = os.popen(infilter % srcname, "r")
+                for option in parse.options:
+                    if option.startswith("--format="):
+                        vcs = option.split("=")[1]
+                        try:
+                            infilter = file_filters[vcs][0]
+                            srcname = parse.stdin.name
+                            parse.stdin.close()
+                            parse.stdin = os.popen(infilter % srcname, "r")
+                        except KeyError:
+                            raise RecoverableError("unrecognized --format")
                         break
                 repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
             # This is slightly asymmetrical with the write side, which
@@ -8020,6 +8028,9 @@ nonempty its contents are backed up to a save directory.
 
 Property extensions will be omitted if the importer for the
 selected repository type cannot digest them.
+
+The --fossil option can be used to write out binary repository dump files.
+For a list of supported types, invoke the 'prefer' command.
 """)
     def do_write(self, line):
         "Stream out the results of repo surgery."
@@ -8034,11 +8045,16 @@ selected repository type cannot digest them.
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
             if parse.redirected or not parse.line:
-                for (option, (_, outfilter)) in file_filters.items():
-                    if option in parse.options:
-                        dstname = parse.stdout.name
-                        parse.stdout.close()
-                        parse.stdout = os.popen(outfilter % dstname, "w")
+                for option in parse.options:
+                    if option.startswith("--format="):
+                        vcs = option.split("=")[1]
+                        try:
+                            outfilter = file_filters[vcs][1]
+                            dstname = parse.stdout.name
+                            parse.stdout.close()
+                            parse.stdout = os.popen(outfilter % dstname, "w")
+                        except KeyError:
+                            raise RecoverableError("unrecognized --format")
                         break
                 self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             elif os.path.isdir(parse.line):
