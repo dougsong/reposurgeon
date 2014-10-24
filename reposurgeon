@@ -7996,7 +7996,7 @@ For a list of supported types, invoke the 'prefer' command.
                             parse.stdin.close()
                             parse.stdin = os.popen(infilter % srcname, "r")
                         except KeyError:
-                            raise RecoverableError("unrecognized --format")
+                            raise Recoverable("unrecognized --format")
                         break
                 repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
             # This is slightly asymmetrical with the write side, which
@@ -8054,7 +8054,7 @@ For a list of supported types, invoke the 'prefer' command.
                             parse.stdout.close()
                             parse.stdout = os.popen(outfilter % dstname, "w")
                         except KeyError:
-                            raise RecoverableError("unrecognized --format")
+                            raise Recoverable("unrecognized --format")
                         break
                 self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             elif os.path.isdir(parse.line):
