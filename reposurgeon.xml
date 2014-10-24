@@ -652,7 +652,7 @@ extension is removed from the load list name.</para>
 <varlistentry>
 <term><command>write</command>
         [--fossilize] [--format=fossil] [--noincremental] [--callout]
-        [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
+        [<emphasis>&gt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
 <para>Dump selected events as a fast-import stream representing the
