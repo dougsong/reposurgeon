@@ -440,6 +440,21 @@ core
         notes="Requires cvs-fast-export."),
     ]
 
+# Import and export filter methods for VCSes that use magic files rather
+# than magic directories. So far there is only one of these
+#
+# Each entry maps a read/write option to an (importer, exporter) oair.
+# The input filter must be an *exporter from* that takes an alien file
+# and emits a fast-import stream on standard output.  The exporter
+# must be an *importer to* that takes an import stream on standard input
+# and produces a named alien file.
+#
+file_filters = {
+    "--fossil" : ("fossil export --git %s", "fossil import --git %s"),
+    }
+
+# No user-serviceable parts below this line
+
 class Fatal(Exception):
     "Unrecoverable error."
     def __init__(self, msg):
@@ -7966,6 +7981,12 @@ constructed with command-line arguments).
         with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
             if parse.redirected:
                 repo = Repository()
+                for (option, (infilter, _)) in file_filters.items():
+                    if option in parse.options:
+                        srcname = parse.stdin.name
+                        parse.stdin.close()
+                        parse.stdin = os.popen(infilter % srcname, "r")
+                        break
                 repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
             # This is slightly asymmetrical with the write side, which
             # interprets an empty argument list as '-'
@@ -8010,6 +8031,12 @@ selected repository type cannot digest them.
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
             if parse.redirected or not parse.line:
+                for (option, (_, outfilter)) in file_filters.items():
+                    if option in parse.options:
+                        dstname = parse.stdout.name
+                        parse.stdout.close()
+                        parse.stdout = os.popen(outfilter % dstname, "w")
+                        break
                 self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             elif os.path.isdir(parse.line):
                 rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
