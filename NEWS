@@ -1,7 +1,7 @@
 			reposurgeon project news
 3.13: 2014-10-24
-    Read/write support for the Fossil system.
-    Fixes for timezone handling.
+     Read/write support for the Fossil system.
+     Fixes for timezone handling.
 
 3.12: 2014-09-11
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
