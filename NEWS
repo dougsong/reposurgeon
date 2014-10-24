@@ -1,5 +1,5 @@
 			reposurgeon project news
-Repository head:
+3.13: 2014-10-24
     Read/write support for the Fossil system.
     Fixes for timezone handling.
 
