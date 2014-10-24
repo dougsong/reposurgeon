@@ -56,6 +56,12 @@ Subversion repositories has some significant limitations, discussed in
 the section on <link linkend="subversion">Working With
 Subversion</link>.</para>
 
+<para>Fossil repository files can be read in using the
+<option>--fossil</option> option of the <command>read</command>
+command and written out with the <option>--fossil</option> option of
+the <command>write</command>. Ignore patterns are not translated
+in either direction.</para>
+
 <para>RCS and CVS are supported for read only, not write.  For both,
 <command>reposurgeon</command> must be run from within a repository
 directory.</para>
@@ -604,6 +610,7 @@ and manipulate the in-core list and the selection.</para>
 <variablelist>
 <varlistentry>
 <term><command>read</command>
+        [--fossil]
         [<emphasis>directory</emphasis>|<emphasis>-</emphasis>|<emphasis>&lt;infile</emphasis>]
 </term>
 <listitem><para>With a directory-name argument, this command attempts
@@ -630,6 +637,9 @@ subdirectory has a file named <filename>fossils</filename>, that file
 will be read as though passed to a <filename>fossil read</filename>
 command.</para>
 
+<para>If the read location is a file and the <option>--fossil</option>
+is used, the file is interpreted as a Fossil repository.</para>
+
 <para>The just-read-in repo is added to the list of loaded
 repositories and becomes the current one, selected for surgery. If it
 was read from a plain file and the file name ends with one of the
@@ -641,7 +651,7 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-        [--fossilize] [--noincremental] [--callout]
+        [--fossilize] [--fossil] [--noincremental] [--callout]
         [<emphasis>&lt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
@@ -654,6 +664,9 @@ dump to is standard output if there is no argument or the argument is
 directory, the repository is rebuilt into that directory, with any
 selection set being ignored; if that target directory is nonempty its
 contents are backed up to a save directory.</para>
+
+<para>If the write location is a file and the <option>--fossil</option>
+is used, the file is written in Fossil repository format.</para>
 
 <para>With the <option>--fossilize</option> option, the Fossil-ID of
 each commit is appended to its commit comment at write time. This

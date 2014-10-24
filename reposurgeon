@@ -7825,6 +7825,9 @@ to the type of that repository.
         if not line:
             for vcs in vcstypes:
                 print(vcs)
+            for option in file_filters:
+                print("The read and write commands have a %s option that supports %s files."
+                      % (option, option[2:].capitalize()))
             if any(ext.visible for ext in extractors):
                 print("Other systems supported for read only: %s\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
