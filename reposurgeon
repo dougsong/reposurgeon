@@ -7086,18 +7086,19 @@ into sections of the input stream instead).
             return subarg
     def dsc_handler(self, subarg):
         "All descendants of a selection set, recursively."
-        descendants = set([])
-        while True:
-            descendants |= subarg
-            beyond = set([])
-            for ei in subarg:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit):
-                    beyond |= set(self.chosen().find(c.mark) for c in event.children())
-            if beyond:
-                subarg = beyond
-            else:
-                break
+        repo = self.chosen()
+        descendants = set(subarg)
+        # Populate a queue with selected commits
+        queue = collections.deque(itertools.imap(
+                            operator.itemgetter(1),
+                            repo.iterevents(subarg, types=Commit)))
+        # Breadth-first traversal of all descendants
+        while queue:
+            for commit in queue.popleft().children():
+                ind = repo.index(commit)
+                if ind not in descendants:
+                    descendants.add(ind)
+                    queue.append(commit)
         return descendants
 
     #
