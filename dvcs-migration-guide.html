@@ -81,6 +81,17 @@ something older or weirder, see the short section on <a
 href="#other">other VCSes</a> for some hints, but you're mostly on
 your own.</p>
 
+<h1 id="consulting">Commercial Note</h1>
+
+<p>If you are an organization that pays programmers and has a
+requirement to do a repository conversion, the author can be <a
+href="mailto:esr@thyrsus.com">engaged</a> to perform or assist with
+the transition.  You are likely to find this is more efficient than
+paying someone in-house for the time required to learn the tools and
+procedures. I have been very open about my methods here, but
+nothing substitues for experience when you need it done quickly
+and right.</p>
+
 <h1 id="preparation">Step Zero: Preparation</h1>
 
 <p>Create a scratch directory for your conversion work.
@@ -219,6 +230,10 @@ documented and makes no attempt to group commits into changesets.</p>
 href="http://www.catb.org/~esr/cvs-fast-export">cvs-fast-export</a>,
 which despite its name does not actually require CVS metadata other than
 the RCS master files that store the content.</p>
+
+<p>Fossil: reposurgeon will read a Fossil repository file. It uses the
+native Fossil exporter, which is pretty good but doesn't export ignore
+patterns, wiki events, or tickets.</p>
 
 <p>For other systems, see the <a
 href="https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools#Interaction_with_other_Revision_Control_Systems">Git
