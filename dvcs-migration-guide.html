@@ -57,7 +57,8 @@ choose one of the major contenders can find themselves mired in
 contention and politics.  The most common such controversy is whether
 to use git or hg (aka Mercurial).  With a little planning it's
 possible to have it both ways, allowing developers to use either git
-or hg to work with the same repository.</p>
+or hg to work with the same repository.  It is even possible 
+to support a CVS emulation from the same repository.</p>
 
 <p>This page is a guide to up-converting your repository, finding the
 tools you need, and adopting practices that will reduce process and
@@ -535,6 +536,11 @@ as commit IDs).  The problem is that hg doesn't copy any of this local
 state when it clones a repo, so clones of hg-git repos lose their
 git branches and tags.</p>
 
+<p>If you have developers attached to the CVS interface, it is
+possible (and in fact relatively easy) to set up a gateway 
+interface that lets them continue using their CVS client tools.
+Consult the documentation for <a href="https://www.kernel.org/pub/software/scm/git/docs/git-cvsserver.html">git-cvsserver</a>.</p>
+
 <h1 id="practice">Step Six: Good Practice</h1>
 
 <p>Since the object of this exercise is to support both git and hg
@@ -639,6 +645,7 @@ Makefile.</p>
 
 <p>3.12 (2014-08-12) Merging SVN .gitignore files.</p>
 
+<p>2.13 (2014-10-26) Note that git-cvsserver exists.</p>
 </div>
 <hr />
 </body>
