@@ -7086,20 +7086,23 @@ into sections of the input stream instead).
             return subarg
     def dsc_handler(self, subarg):
         "All descendants of a selection set, recursively."
+        return self._accumulate_commits(subarg,
+                                        operator.methodcaller("children"))
+    def _accumulate_commits(self, subarg, operation):
         repo = self.chosen()
-        descendants = set(subarg)
-        # Populate a queue with selected commits
+        result = set(subarg)
+        # Populate the queue with selected commits
         queue = collections.deque(itertools.imap(
                             operator.itemgetter(1),
                             repo.iterevents(subarg, types=Commit)))
-        # Breadth-first traversal of all descendants
+        # Breadth-first traversal of the graph
         while queue:
-            for commit in queue.popleft().children():
+            for commit in operation(queue.popleft()):
                 ind = repo.index(commit)
-                if ind not in descendants:
-                    descendants.add(ind)
+                if ind not in result:
+                    result.add(ind)
                     queue.append(commit)
-        return descendants
+        return result
 
     #
     # Helpers
