@@ -5055,6 +5055,19 @@ class Repository:
     def commits(self):
         "Iterate through the repository commit objects."
         return (e for e in self.events if isinstance(e, Commit))
+    def filter_assignments(self, f):
+        "Filter assignments, warning if any of them goes empty."
+        for (name, values) in self.assignments.items():
+            newassigns = []
+            dc = 0
+            for (i, e) in enumerate(self.events):
+                if f(e):
+                    dc += 1
+                elif i in values:
+                    newassigns.append(i - dc)
+            if values and not newassigns:
+                announce("sequence modification left %s empty" % name)
+            self.assignments[name] = newassigns
     def declare_sequence_mutation(self, warning=None):
         "Mark the repo event sequence sequence modified."
         self._commits = None
@@ -5417,15 +5430,7 @@ class Repository:
                 # And forget the deleted event
                 event.forget()
         # Preserve assignments
-        for (name, values) in self.assignments.items():
-            newassigns = []
-            dc = 0
-            for (i, e) in enumerate(self.events):
-                if e.deletehook:
-                    dc += 1
-                elif i in values:
-                    newassigns.append(i - dc)
-            self.assignments[name] = newassigns
+        self.filter_assignments(lambda e: e.deletehook)
         # Do the actual deletions
         self.events = [e for e in self.events if not e.deletehook]
         self.declare_sequence_mutation()
@@ -5476,16 +5481,7 @@ class Repository:
                         backreferences[fileop.ref] += 1
         def eligible(e):
             return isinstance(e, Blob) and not backreferences[e.mark]
-        # Preserve assignments
-        for (name, values) in self.assignments.items():
-            newassigns = []
-            dc = 0
-            for (i, e) in enumerate(self.events):
-                if eligible(e):
-                    dc += 1
-                elif i in values:
-                    newassigns.append(i - dc)
-            self.assignments[name] = newassigns
+        self.filter_assignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
         self.invalidate_manifests()	# Might not be needed
         self.declare_sequence_mutation()
