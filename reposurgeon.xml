@@ -2205,8 +2205,9 @@ for exploring the selection-set language.</para></listitem>
 <listitem>
 <para>Compute a leading selection set and assign it to a symbolic name.
 It is an error to assign to a name that is already assigned, or to
-any existing branch name.  All assignments are cleared on any sequence
-mutation.</para>
+any existing branch name.  Assignments may be cleared by sequence
+mutations (though not ordinary deletions); you will see a warning
+whe n this occurs.</para>
 
 <para>Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.</para>

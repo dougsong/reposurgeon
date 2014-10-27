@@ -8,8 +8,14 @@ read <testrepo.fi
 reposurgeon: couldn't match a name at <quozzle>
 1 assign fubar
 reposurgeon: fubar has already been set
-print Check that sequence mutation invalidates assignments
-Check that sequence mutation invalidates assignments
+print Check that sequence mutation does not invalidate assignments
+Check that sequence mutation does not invalidate assignments
+<2010-11-05T22:47:47Z> delete
+reposurgeon: warning: commit :4 to be deleted has non-delete fileops.
+<fubar> list
+    13 2010-11-06T10:49:58Z    :13 Create the third doomed file.
+print Check that deleting the assigned commit does
+Check that deleting the assigned commit does
 <2010-11-06T10:49:58Z> delete
 reposurgeon: warning: commit :13 to be deleted has non-delete fileops.
 <fubar> list
@@ -18,7 +24,7 @@ print Test unassign
 Test unassign
 :32 assign glarp
 <glarp> list
-    31 2010-11-08T23:02:38Z    :32 Recreating bar.
+    30 2010-11-08T23:02:38Z    :32 Recreating bar.
 unassign glarp
 <glarp> list
 reposurgeon: couldn't match a name at <glarp>

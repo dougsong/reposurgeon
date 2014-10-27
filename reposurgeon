@@ -5055,11 +5055,13 @@ class Repository:
     def commits(self):
         "Iterate through the repository commit objects."
         return (e for e in self.events if isinstance(e, Commit))
-    def declare_sequence_mutation(self):
+    def declare_sequence_mutation(self, warning=None):
         "Mark the repo event sequence sequence modified."
         self._commits = None
         self._mark_to_index = {}
-        self.assignments = {}
+        if self.assignments and warning:
+            self.assignments = {}
+            announce("assignments invalidated by " + warning)
     def earliest_commit(self):
         "Return the earliest commit."
         return next(self.commits())
@@ -5392,7 +5394,7 @@ class Repository:
                                          range(earliest, last+1)) )
                         self.events[earliest:last+1] = map(
                                 self.events.__getitem__, neworder)
-                        self.declare_sequence_mutation()
+                        self.declare_sequence_mutation("squash pushback")
                 # Move tags and attachments
                 if filter_only:
                     for e in event.attachments:
@@ -5414,6 +5416,16 @@ class Repository:
                         t.remember(self, target=new_target)
                 # And forget the deleted event
                 event.forget()
+        # Preserve assignments
+        for (name, values) in self.assignments.items():
+            newassigns = []
+            dc = 0
+            for (i, e) in enumerate(self.events):
+                if e.deletehook:
+                    dc += 1
+                elif i in values:
+                    newassigns.append(i - dc)
+            self.assignments[name] = newassigns
         # Do the actual deletions
         self.events = [e for e in self.events if not e.deletehook]
         self.declare_sequence_mutation()
@@ -5462,9 +5474,19 @@ class Repository:
                 for fileop in event.fileops:
                     if fileop.op == 'M':
                         backreferences[fileop.ref] += 1
-        self.events = [e for e in self.events
-                       if (not isinstance(e, Blob))
-                       or backreferences[e.mark]]
+        def eligible(e):
+            return isinstance(e, Blob) and not backreferences[e.mark]
+        # Preserve assignments
+        for (name, values) in self.assignments.items():
+            newassigns = []
+            dc = 0
+            for (i, e) in enumerate(self.events):
+                if eligible(e):
+                    dc += 1
+                elif i in values:
+                    newassigns.append(i - dc)
+            self.assignments[name] = newassigns
+        self.events = [e for e in self.events if not eligible(e)]
         self.invalidate_manifests()	# Might not be needed
         self.declare_sequence_mutation()
     def __delitem__(self, index):
@@ -5600,7 +5622,7 @@ class Repository:
             self.events.insert(lenfront, other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
-        self.declare_sequence_mutation()
+        self.declare_sequence_mutation("absorb")
         # Transplant in fileops, blobs, and other impedimenta
         for event in other:
             if hasattr(event, "moveto"):
@@ -5719,7 +5741,7 @@ class Repository:
         (fileops, fileops2) = splitfunc(event.fileops)
         if fileops and fileops2:
             self.events.insert(where+1, event.clone())
-            self.declare_sequence_mutation()
+            self.declare_sequence_mutation("commit split")
             event2 = self.events[where+1]
             # need a new mark
             assert(event.mark == event2.mark)
@@ -6217,7 +6239,7 @@ class RepositoryList:
                     raise Fatal("coloring algorithm failed on %s" % event)
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
-        late.declare_sequence_mutation()
+        late.declare_sequence_mutation("cut operation")
         # Add the split results to the repo list.
         self.repolist.append(early)
         self.repolist.append(late)
@@ -6374,7 +6396,7 @@ class RepositoryList:
                 event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
-        expunged.declare_sequence_mutation()
+        expunged.declare_sequence_mutation("expunge operation")
         expunged_branches = expunged.branchset()
         for event in self.repo:
             if event.deletehook:
@@ -6432,7 +6454,7 @@ class RepositoryList:
         self.repo.tagify_empty(canonicalize = False)
         # And tell we changed the manifests and the event sequence.
         self.repo.invalidate_manifests()
-        self.repo.declare_sequence_mutation()
+        self.repo.declare_sequence_mutation("expunge cleanup")
         # At last, add the expunged repository to the loaded list.
         self.repolist.append(expunged)
 
@@ -7438,8 +7460,9 @@ for exploring the selection-set language.
         print("""
 Compute a leading selection set and assign it to a symbolic name.
 It is an error to assign to a name that is already assigned, or to
-any existing branch name.  All assignments are cleared on any sequence
-mutation.
+any existing branch name.  Assignments may be cleared by some sequence
+mutations (though not by ordinary deletion); you will see a warning
+when this occurs.
 
 Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.
@@ -9187,7 +9210,7 @@ source branch are removed.
                     source_reset = i
             if source_reset is not None:
                 del repo.events[source_reset]
-            repo.declare_sequence_mutation()
+            repo.declare_sequence_mutation("debranch operation")
 
     def help_path(self):
         print("""
@@ -9595,11 +9618,11 @@ fields are changed and a warning is issued.
             if tag:
                 tag.forget()
                 repo.events.remove(tag)
-                repo.declare_sequence_mutation()
+                repo.declare_sequence_mutation("tag deletion")
             for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
-                repo.declare_sequence_mutation()
+                repo.declare_sequence_mutation("reset deletion")
             if commits:
                 successors = {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
                 if len(successors) == 1:
@@ -9692,7 +9715,7 @@ moved, no branch fields are changed.
             for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
-            repo.declare_sequence_mutation()
+            repo.declare_sequence_mutation("reset delete")
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
 
@@ -9753,7 +9776,7 @@ default patterns.
                     blob.set_content(self.preferred.dfltignores)
                     blob.mark = ":insert"
                     repo.events.insert(repo.index(earliest), blob)
-                    repo.declare_sequence_mutation()
+                    repo.declare_sequence_mutation("ignore creation")
                     newop = FileOp()
                     newop.construct("M", 0o100664, ":insert", self.ignorename)
                     earliest.fileops.append(newop)
