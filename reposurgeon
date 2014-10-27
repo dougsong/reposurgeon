@@ -7088,6 +7088,10 @@ into sections of the input stream instead).
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("children"))
+    def anc_handler(self, subarg):
+        "All descendants of a selection set, recursively."
+        return self._accumulate_commits(subarg,
+                                        operator.methodcaller("parents"))
     def _accumulate_commits(self, subarg, operation):
         repo = self.chosen()
         result = set(subarg)

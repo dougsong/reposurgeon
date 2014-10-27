@@ -573,7 +573,12 @@ functions are defined:</para>
       <row>
         <entry align='center'>dsc</entry>
         <entry align='center'><para>all commits descended from the
-	argument set</para></entry>
+	argument set (argument set included)</para></entry>
+      </row>
+      <row>
+        <entry align='center'>anc</entry>
+        <entry align='center'><para>all commits whom the argument set is
+	descended from (argument set included)</para></entry>
       </row>
     </tbody>
   </tgroup>
