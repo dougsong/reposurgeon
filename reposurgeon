@@ -7084,6 +7084,11 @@ into sections of the input stream instead).
             return set(self.chosen().all())
         else:
             return subarg
+    def chn_handler(self, subarg):
+        "All children of commits in the selection set."
+        return self._accumulate_commits(subarg,
+                                        operator.methodcaller("children"),
+                                        recurse=False)
     def dsc_handler(self, subarg):
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
@@ -7092,9 +7097,10 @@ into sections of the input stream instead).
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"))
-    def _accumulate_commits(self, subarg, operation):
+    def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
-        result = set(subarg)
+        result = set()
+        if recurse: result |= subarg
         # Populate the queue with selected commits
         queue = collections.deque(itertools.imap(
                             operator.itemgetter(1),
@@ -7105,7 +7111,7 @@ into sections of the input stream instead).
                 ind = repo.index(commit)
                 if ind not in result:
                     result.add(ind)
-                    queue.append(commit)
+                    if recurse: queue.append(commit)
         return result
 
     #
