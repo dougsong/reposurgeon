@@ -7100,18 +7100,23 @@ into sections of the input stream instead).
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = set()
-        if recurse: result |= subarg
+        subiter = repo.iterevents(subarg, types=Commit)
+        if not recurse:
+            for _, commit in subiter:
+                result.update(itertools.imap(repo.index, operation(commit)))
+            return result
+        result |= subarg
         # Populate the queue with selected commits
         queue = collections.deque(itertools.imap(
                             operator.itemgetter(1),
-                            repo.iterevents(subarg, types=Commit)))
+                            subiter))
         # Breadth-first traversal of the graph
         while queue:
             for commit in operation(queue.popleft()):
                 ind = repo.index(commit)
                 if ind not in result:
                     result.add(ind)
-                    if recurse: queue.append(commit)
+                    queue.append(commit)
         return result
 
     #
