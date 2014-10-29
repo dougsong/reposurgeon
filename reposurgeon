@@ -7142,21 +7142,21 @@ into sections of the input stream instead).
                                         operator.methodcaller("parents"),
                                         recurse=False)
     def anc_handler(self, subarg):
-        "All descendants of a selection set, recursively."
+        "All ancestors of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"))
     def pre_handler(self, subarg):
-        "Predecessor function"
+        "Predecessors function; all events previous to argument set."
         if not subarg or min(subarg) == 0:
             return set()
         else:
-            return set([min(subarg)-1])
+            return set(range(0, min(subarg)))
     def suc_handler(self, subarg):
-        "Successor function"
+        "Successors function; all events following argument set."
         if not subarg or max(subarg) >= len(self.chosen().events) - 1:
             return set()
         else:
-            return set([max(subarg)+1])
+            return set(range(max(subarg)+1, len(self.chosen().events)))
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = set()
@@ -7377,8 +7377,8 @@ More ways to construct event sets:
 
 @min()     create singleton set of the least element in the argument
 @max()     create singleton set of the greatest element in the argument
-@amp()     all events if the argument set is nonempty, null set otherwise
-@dsc()     all (recursive) descendant commits of the argument set
+
+Other special functions are available: do 'help functions; for more. 
 
 You can compose sets as follows:
 
@@ -7410,6 +7410,11 @@ as the name of a file from which command output should be taken.  Any
 remaining arguments are available to the command logic.
 """)
 
+    def help_functions(self):
+        print("The following special selection functions are available:")
+        for attr in sorted(RepoSurgeon.__dict__.keys()):
+            if attr.endswith("_handler"):
+                print("@%s()\t%s" % (attr[:-8], getattr(RepoSurgeon, attr).__doc__))
     ##
     ## Command implementation begins here
     ##
