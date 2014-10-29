@@ -1,7 +1,8 @@
 			reposurgeon project news
 
-Repository head:
+3.14: 2014-10-29
      Assignments are preserved across squashes (including deletions).
+     Name lookups are, after the first one, significantly faster.
 
 3.13: 2014-10-24
      Read/write support for the Fossil system.
