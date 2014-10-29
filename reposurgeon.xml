@@ -571,6 +571,11 @@ functions are defined:</para>
         objects, empty set is returned empty</para></entry>
       </row>
       <row>
+        <entry align='center'>par</entry>
+        <entry align='center'><para>all parents of commits in the
+	argument set</para></entry>
+      </row>
+      <row>
         <entry align='center'>chn</entry>
         <entry align='center'><para>all children of commits in the
 	argument set</para></entry>

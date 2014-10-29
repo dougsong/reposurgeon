@@ -7136,6 +7136,11 @@ into sections of the input stream instead).
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("children"))
+    def par_handler(self, subarg):
+        "All parents of a selection set."
+        return self._accumulate_commits(subarg,
+                                        operator.methodcaller("parents"),
+                                        recurse=False)
     def anc_handler(self, subarg):
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
