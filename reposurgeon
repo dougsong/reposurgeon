@@ -4559,6 +4559,7 @@ class Repository:
         self._commits = None
         self._mark_to_index = {}
         self._mark_to_object = {}
+        self._namecache = {}
         self.preserve_set = set()
         self.case_coverage = set()
         self.basedir = os.getcwd()
@@ -4643,14 +4644,39 @@ class Repository:
     def all(self):
         "Return a set that selects the entire repository."
         return range(len(self.events))
+    def __build_namecache(self):
+        "Avoid repeated O(n**2) lookups."
+        self._namecache = {}
+        for (i, event) in enumerate(self.events):
+            if isinstance(event, Tag):
+                self._namecache[event.name] = [i]
+            if hasattr(event, "fossil_id") and event.fossil_id:
+                self._namecache[event.fossil_id] = [i]
+            if hasattr(event, "committer"):
+                key = event.committer.action_stamp()
+                if key not in self._namecache:
+                    self._namecache[key] = [i]
+                elif i not in self._namecache[key]:
+                    self._namecache[key].append(i)
+            if hasattr(event, "author"):
+                key = event.author.action_stamp()
+                if key not in self._namecache:
+                    self._namecache[key] = [i]
+                elif i not in self._namecache[key]:
+                    self._namecache[key].append(i)
     def named(self, ref):
         "Resolve named reference in the context of this repository."
         selection = set([])
-        # First, search tags
-        for (i, event) in enumerate(self.events):
-            if isinstance(event, Tag) and event.name == ref:
-                return set([i])
-        # Next, search branches
+        # For matches that require iterating across the entire event
+        # sequence, building an entire name lookup table is not much
+        # more expensive in time than doing a single lookup. Avoid
+        # lots of O(n**2) searches by building a lookup cache, at the
+        # expense of increased working set for the hash table.
+        if not self._namecache:
+            self.__build_namecache()
+        if ref in self._namecache:
+            return self._namecache[ref]
+        # No hit in the cache? Then search branches.
         for symbol in sorted(self.branchset(),
                              key=len, reverse=True): # longest name first
             if ref == os.path.basename(symbol):
@@ -4664,15 +4690,12 @@ class Repository:
                     raise Recoverable("branch name %s points to hyperspace" % symbol)
                 else:
                     return set([loc])
-        # Next, fossil-ID references
-        for (i, event) in enumerate(self.events):
-            if hasattr(event, "fossil_id") and event.fossil_id == ref:
-                return set([i])
         # Next, assignments
         lookup = self.assignments.get(ref)
         if lookup:
             return lookup
-        # Might be a date or action stamp
+        # Might be a date or action stamp (though action stamps should
+        # be in the name cache already)
         ordinal = None
         m = re.search("#[0-9]+$", ref)
         if m:
@@ -5072,6 +5095,8 @@ class Repository:
         "Mark the repo event sequence sequence modified."
         self._commits = None
         self._mark_to_index = {}
+        if warning:
+            self._namecache = {}
         if self.assignments and warning:
             self.assignments = {}
             announce("assignments invalidated by " + warning)
