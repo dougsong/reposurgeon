@@ -590,6 +590,18 @@ functions are defined:</para>
         <entry align='center'><para>all commits whom the argument set is
 	descended from (argument set included)</para></entry>
       </row>
+      <row>
+        <entry align='center'>pre</entry>
+        <entry align='center'><para>the highest-numbered event
+	immediately preceding the argument set; empty if the argument
+	set includes the first event.</para></entry>
+      </row>
+      <row>
+        <entry align='center'>suc</entry>
+        <entry align='center'><para>the lowest-numbered event
+	immediately following the argument set; empty if the argument
+	set includes the last event.</para></entry>
+      </row>
     </tbody>
   </tgroup>
 </informaltable>

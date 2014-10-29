@@ -7145,6 +7145,18 @@ into sections of the input stream instead).
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"))
+    def pre_handler(self, subarg):
+        "Predecessor function"
+        if not subarg or min(subarg) == 0:
+            return set()
+        else:
+            return set([min(subarg)-1])
+    def suc_handler(self, subarg):
+        "Successor function"
+        if not subarg or max(subarg) >= len(self.chosen().events) - 1:
+            return set()
+        else:
+            return set([max(subarg)+1])
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = set()

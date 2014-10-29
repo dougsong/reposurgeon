@@ -45,6 +45,8 @@ read <simple.fi
 <2010-10-27> resolve Partial-date resolution
 @amp(1) resolve resolve amplified nonempty set
 @amp(/mytzlpyk/) resolve amplified empty set
+@suc(<2010-10-27T17:25:36Z>) resolve successor function call 
+@pre(<2010-10-27T17:25:36Z>) resolve predecessor function call 
 # Test here-doc syntax
 echo 0
 authors read <<EOF
