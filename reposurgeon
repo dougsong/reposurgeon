@@ -7717,7 +7717,7 @@ currently chosen repository. Supports > redirection.
     def help_count(self):
         print("""
 Report a count of items in the selection set. Default set is everything
-in the currently-selected repo.
+in the currently-selected repo. Supports > redirection.
 """)
     def do_count(self, line):
         if not self.chosen():
@@ -7771,6 +7771,7 @@ field 'commit'. Supports > redirection.
         print("""
 Display full action stamps correponding to commits in a select.
 The stamp is followed by the first line of the commit message.
+Supports > redirection.
 """)
     def do_stamp(self,line):
         self.report_select(line, "stamp", (screenwidth(),))
@@ -7783,7 +7784,7 @@ blobs, commit and tag comments, and other metadata strings (a blob is
 counted each time a commit points at it).  Not an exact measure of
 storage size: intended mainly as a way to get information on how to
 efficiently partition a repository that has become large enough to be
-unwieldy.
+unwieldy. Supports > redirection.
 """)
     def do_sizes(self, line):
         "Report branch relative sizes."
@@ -7826,6 +7827,8 @@ disconnected commits, (3) parentless commits, (4) the existance of
 multiple roots, (5) committer and author IDs that don't look
 well-formed as DVCS IDs, (6) multiple child links with identical
 branch labels descending from the same commit.
+
+Supports > redirection.
 """)
     def do_lint(self, line):
         "Look for lint in a repo."
@@ -8062,7 +8065,7 @@ With an argument of '-', this command reads a fast-import stream or
 Subversion dump from standard input (this will be useful in filters
 constructed with command-line arguments).
 
-The --fossil option can be used to read in binary repository dump files.
+The --format option can be used to read in binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
 """)
     def do_read(self, line):
@@ -8105,7 +8108,7 @@ For a list of supported types, invoke the 'prefer' command.
     def help_write(self):
         print("""
 Dump a fast-import stream representing selected events to standard
-output (if second argument is empty or '-') or via redirect to a file.
+output (if second argument is empty or '-') or via > redirect to a file.
 Alternatively, if there ia no redirect and the argument names a
 directory the repository is rebuilt into that directory, with any
 selection set argument being ignored; if that target directory is
@@ -8149,9 +8152,10 @@ For a list of supported types, invoke the 'prefer' command.
 
     def help_inspect(self):
         print("""
-Dump a fast-import stream representing selected events to standard output.
-Just like a write, except (1) the progress meter is disabled, and (2) there
-is an identifying header before each event dump.  Supports > redirection.
+Dump a fast-import stream representing selected events to standard
+output or via > redirect to a file.  Just like a write, except (1) the
+progress meter is disabled, and (2) there is an identifying header
+before each event dump.
 """)
     def do_inspect(self, line):
         "Dump raw events."
@@ -8222,7 +8226,7 @@ This is intended for producing reduced test cases from large repositories.
     def help_graph(self):
         print("""
 Dump a graph representing selected events to standard output in DOT markup
-for graphviz.
+for graphviz. Supports > redirection.
 """)
     def do_graph(self, line):
         "Dump a commit graph."
@@ -8276,7 +8280,7 @@ its contents are backed up to a save directory.
             return
         if self.selection is not None:
             raise Recoverable("rebuild does not take a selection set")
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(line) as parse:
             rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
 
     #
@@ -8308,7 +8312,8 @@ attempt to match the commit or tag first by Fossil-ID, then by a unique
 committer ID and timestamp pair.
 
 If output is redirected and the modifier 'changed' appears, a minimal
-set of modifications actually made is written to the output file.
+set of modifications actually made is written to the output file (>
+redirection is supported).
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
@@ -10141,7 +10146,7 @@ set must resolve to a singleton commit.
     def help_diff(self):
         print("""
 Display the difference between commits. Takes a selection-set argument which
-must resolve to exactly two commits.
+must resolve to exactly two commits. Supports > redirection.
 """)
     def do_diff(self,line):
         "Display a diff between versions."
@@ -10369,9 +10374,11 @@ Undefine the macro named in this command's first argument.
 
     def help_exec(self):
         print("""
-Execute custom code.  Use this to set up custom extension functions for
-later calls. The code has full access to all internal data
-structures. Functions defined are accessible to later 'eval' calls.
+Execute custom code from standard input (normally a file via < redirection).
+
+Use this to set up custom extension functions for later calls. The
+code has full access to all internal data structures. Functions
+defined are accessible to later 'eval' calls.
 """)
     def do_exec(self, line):
         "Execute custom python code."

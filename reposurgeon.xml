@@ -865,7 +865,8 @@ leading portion of the comment follows.
         [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem><para>Alternative form of listing that displays full action
-stamps, usable as references in selections.</para></listitem>
+stamps, usable as references in selections. Supports &gt;
+redirection.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><command>tip</command>
@@ -910,7 +911,7 @@ named repositories, or with no argument the currently chosen repository.
 </term>
 <listitem><para>
 Report a count of items in the selection set. Default set is everything
-in the currently-selected repo.
+in the currently-selected repo. Supports &gt; redirection.
 </para></listitem>
 </varlistentry>
 <varlistentry>
@@ -932,7 +933,7 @@ and (2) there is an identifying header before each event dump.</para>
 used by the graphviz tool suite.  This can be fed as input to the main
 graphviz rendering program
 <citerefentry><refentrytitle>dot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-which will yield a viewable image. </para>
+which will yield a viewable image. Supports &gt; redirection.</para>
 
 <para>You may find a script like this useful:
 
@@ -958,6 +959,8 @@ counted each time a commit points at it). </para>
 intended mainly as a way to get information on how to efficiently
 partition a repository that has become large enough to be
 unwieldy.</para>
+
+<para>Supports &gt; redirection.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -1969,7 +1972,8 @@ Python extensions.</para>
           <emphasis>name</emphasis>
 </term>
 <listitem>
-<para>Execute custom code.  Use this to set up custom extension functions for
+<para>Execute custom code from standard input (normally a file via
+&lt; redirection).  Use this to set up custom extension functions for
 later eval calls. The code has full access to all internal data
 structures. Functions defined are accessible to later
 <command>eval</command> calls.</para>
