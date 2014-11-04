@@ -1383,7 +1383,7 @@ class FileOp(object):
     @staticmethod
     def sortkey(fileop):
         "Compute a key suited for sorting FileOps as git fast-export does."
-        # As it says, b'Handle files below a directory first, in case they are
+        # As it says, 'Handle files below a directory first, in case they are
         # all deleted and the directory changes to a file or symlink.'
         # First sort the renames last, then sort lexicographically
         # We append a sentinel to make sure "a/b/c" < "a/b" < "a".
@@ -1391,17 +1391,17 @@ class FileOp(object):
                 (fileop.path or fileop.source or "") + \
                         fileop.sortkey_sentinel)
     def construct(self, *opargs):
-        if opargs[0] == "M":
+        if opargs[0] == b"M":
             (self.op, self.mode, self.ref, self.path) = opargs
             if isinstance(self.mode, int):
                 self.mode = "%06o" % self.mode
-        elif opargs[0] == "D":
+        elif opargs[0] == b"D":
             (self.op, self.path) = opargs
-        elif opargs[0] == "N":
+        elif opargs[0] == b"N":
             (self.op, self.ref, self.committish) = opargs
         elif opargs[0] in (b"R", b"C"):
             (self.op, self.source, self.target) = opargs
-        elif opargs[0] == "deleteall":
+        elif opargs[0] == b"deleteall":
             self.setOp(b"deleteall")
         else:
             raise Fatal(b"unexpected fileop %s" % opargs[0])
@@ -1413,13 +1413,13 @@ class FileOp(object):
             (self.op, self.mode, self.ref, self.path) = m.groups()
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
-        elif opline[0] == "N":
+        elif opline[0] == b"N":
             try:
                 opline = opline.replace(b"'", r"\'")
                 (self.op, self.ref, self.committish) = shlex.split(opline)
             except ValueError:
                 raise Fatal(b"ill-formed fileop %s" % repr(opline))
-        elif opline[0] == "D":
+        elif opline[0] == b"D":
             (self.op, self.path) = (b"D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
@@ -1452,7 +1452,7 @@ class FileOp(object):
         "Dump this fileop in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
-        if self.op == "M":
+        if self.op == b"M":
             showmode = self.mode
             if isinstance(self.mode, int):
                 showmode = "%06o" % self.mode
@@ -1463,12 +1463,12 @@ class FileOp(object):
                 parts.append(self.path)
             if self.ref == 'inline':
                 parts.append(b"\ndata %d\n%s" % (len(self.inline), self.inline))
-        elif self.op == "N":
+        elif self.op == b"N":
             parts = [" ".join((self.op, self.ref, self.committish)), b"\n"]
             if self.ref == 'inline':
                 parts.append(b"data %d\n%s" % (len(self.inline), self.inline))
-        elif self.op == "D":
-            parts = ["D "]
+        elif self.op == b"D":
+            parts = [b"D "]
             if len(self.path.split()) > 1:
                 parts.extend((b'"', self.path, b'"'))
             else:
@@ -1557,8 +1557,8 @@ class Commit(object):
         if not self.fossil_id:
             return None
         # Special case for Subversion
-        if self.repo and self.repo.vcs and self.repo.vcs.name == "svn":
-            return "r" + self.fossil_id
+        if self.repo and self.repo.vcs and self.repo.vcs.name == b"svn":
+            return b"r" + self.fossil_id
         else:
             return self.fossil_id
     def lister(self, _modifiers, eventnum, cols):
@@ -1583,33 +1583,33 @@ class Commit(object):
         return report
     def stamp(self, _modifiers, _eventnum, cols):
         "Enable do_stamp() to report action stamps."
-        report = "<" + self.action_stamp() + "> " + self.comment.split(b"\n")[0]
+        report = b"<" + self.action_stamp() + b"> " + self.comment.split(b"\n")[0]
         if cols:
             report = report[:cols]
         return report
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tag tip commits."
-        if not self.branch or not "/tags/" in self.branch:
+        if not self.branch or not b"/tags/" in self.branch:
             return
         if self.has_children():
             successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
             if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
                 return
-        return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
+        return b"%6d\tcommit\t%s" % (eventnum+1, self.branch)
     def email_out(self, modifiers, eventnum):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
-        msg["Event-Number"] = str(eventnum+1)
-        msg["Event-Mark:"] = self.mark
-        msg["Branch"] = self.branch
-        msg["Parents"] = " ".join(self.parent_marks())
+        msg[b"Event-Number"] = str(eventnum+1)
+        msg[b"Event-Mark:"] = self.mark
+        msg[b"Branch"] = self.branch
+        msg[b"Parents"] = b" ".join(self.parent_marks())
         if self.authors:
             self.authors[0].email_out(modifiers, msg, b"Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, b"Author" + repr(2+i))
         self.committer.email_out(modifiers, msg, b"Committer")
         if self.fossil_id:
-            msg["Fossil-ID"] = self.fossil_id
+            msg[b"Fossil-ID"] = self.fossil_id
         for (name, value) in self.properties.iteritems():
             hdr = "-".join(s.capitalize() for s in name.split(b"-"))
             value = value.replace(b"\n", r"\n")
@@ -1625,22 +1625,22 @@ class Commit(object):
     def email_in(self, msg):
         "Update this commit from a parsed email message."
         modified = False
-        if "Branch" in msg:
-            if self.branch != msg["Branch"]:
+        if b"Branch" in msg:
+            if self.branch != msg[b"Branch"]:
                 modified = True
-            self.set_branch(msg["Branch"])
-        if "Parents" in msg:
-            if self.parent_marks() != msg["Parents"].split():
+            self.set_branch(msg[b"Branch"])
+        if b"Parents" in msg:
+            if self.parent_marks() != msg[b"Parents"].split():
                 modified = True
-            self.set_parent_marks(msg["Parents"].split())
-        if "Committer" in msg:
+            self.set_parent_marks(msg[b"Parents"].split())
+        if b"Committer" in msg:
             try:
-                (newname, newemail, _extra) = Attribution.parseaddr(msg["Committer"])
+                (newname, newemail, _extra) = Attribution.parseaddr(msg[b"Committer"])
 
             except ValueError:
                 raise Fatal(b"malformed Committer field")
             if not newemail:
-                raise Fatal(b"can't recognize address in Committer: %s" % msg["Committer"])
+                raise Fatal(b"can't recognize address in Committer: %s" % msg[b"Committer"])
             else:
                 if self.committer.name != newname or self.committer.email != newemail:
                     (self.committer.name, self.committer.email) = (newname, newemail)
@@ -1649,7 +1649,7 @@ class Commit(object):
                         announce(b"in %s, Committer is modified" % self.id_me())
                     modified = True
         if "Committer-Date" in msg:
-            date = Date(msg["Committer-Date"])
+            date = Date(msg[b"Committer-Date"])
             if self.committer.date is None or date != self.committer.date:
                 # Yes, display this unconditionally
                 if self.repo:
@@ -1659,7 +1659,7 @@ class Commit(object):
                              self.committer.date.delta(date)))
                 self.committer.date = date
                 modified = True
-        if "Author" in msg:
+        if b"Author" in msg:
             author_re = re.compile(b"Author[0-9]*$")
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
@@ -1684,29 +1684,29 @@ class Commit(object):
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
                         if debug_enable(DEBUG_EMAILIN):
                             announce(b"in commit %s, Author #%d is modified" \
-                                  % (msg["Event-Number"], i+1))
+                                  % (msg[b"Event-Number"], i+1))
                         modified = True
-                if hdr + "-Date" in msg:
-                    date = Date(msg[hdr + "-Date"])
+                if hdr + b"-Date" in msg:
+                    date = Date(msg[hdr + b"-Date"])
                     if date != self.authors[i].date:
                         # Yes, display this unconditionally
                         if self.repo:
                             announce(b"in event %s, %s-Date #%d is modified" \
-                                     % (msg["Event-Number"], hdr, i+1))
+                                     % (msg[b"Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
-        if "Fossil-ID" in msg:
-            if msg["Fossil-ID"] != self.fossil_id:
+        if b"Fossil-ID" in msg:
+            if msg[b"Fossil-ID"] != self.fossil_id:
                 modified = True
-                msg["Fossil-ID"] = self.fossil_id
+                msg[b"Fossil-ID"] = self.fossil_id
         newprops = collections.OrderedDict()
         for prophdr in msg.keys():
             if not prophdr.startswith(b"Property-"): continue
             propkey = prophdr[9:].lower()
             propval = msg[prophdr]
-            if propval == "True":
+            if propval == b"True":
                 propval = True
-            elif propval == "False":
+            elif propval == b"False":
                 propval = False
             else:
                 propval = propval.replace(r"\n", b"\n")
@@ -1715,7 +1715,7 @@ class Commit(object):
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload()
-        if global_options["canonicalize"]:
+        if global_options[b"canonicalize"]:
             newcomment = newcomment.strip() + b'\n'
         if newcomment != self.comment:
             if debug_enable(DEBUG_EMAILIN):
@@ -1733,13 +1733,13 @@ class Commit(object):
         "De-link this commit from its parents."
         self.set_parents([])
         for fileop in self.fileops:
-            if fileop.op == 'N':
+            if fileop.op == b'N':
                 self.repo.inlines -=1
         self.repo = None
     def moveto(self, repo):
         "Change the repo this commit is associated with."
         for fileop in self.fileops:
-            if fileop.op == 'N':
+            if fileop.op == b'N':
                 self.repo.inlines -=1
                 repo.inlines += 1
         self.repo = repo
@@ -1778,7 +1778,7 @@ class Commit(object):
     @staticmethod
     def is_callout(mark):
         "Is the specified mark field a callout?"
-        return "!" in mark
+        return b"!" in mark
     def add_callout(self, mark):
         self._parent_nodes.append(Callout(mark))
     def insert_parent(self, idx, mark):
@@ -1824,7 +1824,7 @@ class Commit(object):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = collections.defaultdict(list)
         for (i, fileop) in enumerate(self.fileops):
-            if fileop.op == "M": cliques[fileop.path].append(i)
+            if fileop.op == b"M": cliques[fileop.path].append(i)
         return cliques
     def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
@@ -1852,9 +1852,9 @@ class Commit(object):
             else:
                 ancestor = parents[0]
                 for fileop in ancestor.fileops:
-                    if fileop.op == "D" and fileop.path == path:
+                    if fileop.op == b"D" and fileop.path == path:
                         break
-                    elif fileop.op == "M" and fileop.path == path:
+                    elif fileop.op == b"M" and fileop.path == path:
                         return ancestor
                     elif fileop.op in (b"R", b"C") and fileop.target == path:
                         return ancestor
@@ -1876,18 +1876,18 @@ class Commit(object):
             ancestors = PathMap()
         # Take own fileops into account.
         for fileop in self.fileops:
-            if fileop.op == 'M':
+            if fileop.op == b'M':
                 ancestors[fileop.path] = (fileop.mode, fileop.ref)
-            elif fileop.op == 'D':
+            elif fileop.op == b'D':
                 if fileop.path in ancestors:
                     del ancestors[fileop.path]
-            elif fileop.op == 'C':
+            elif fileop.op == b'C':
                 ancestors[fileop.target] = ancestors[fileop.source]
-            elif fileop.op == 'R':
+            elif fileop.op == b'R':
                 ancestors[fileop.target] = ancestors[fileop.source]
                 if fileop.source in ancestors:
                     del ancestors[fileop.source]
-            elif fileop.op == 'deleteall':
+            elif fileop.op == b'deleteall':
                 ancestors = PathMap()
         self.filemap = ancestors
         return ancestors
@@ -1899,7 +1899,7 @@ class Commit(object):
         except IndexError:
             return
         else:
-            if lastop.op == "deleteall":
+            if lastop.op == b"deleteall":
                 self.fileops = [lastop]
                 return
         # Fetch the tree state before us...
@@ -1914,7 +1914,7 @@ class Commit(object):
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
         # Generate needed D fileops.
-        if any(op.op == "deleteall" for op in self.fileops):
+        if any(op.op == b"deleteall" for op in self.fileops):
             # Any file in the parent tree might disappear.
             check_delete = parent
         else:
@@ -7042,8 +7042,8 @@ into sections of the input stream instead).
             if "c" in flags:
                 return self.eval_pathset_full(search,
                                               preselection,
-                                              "a" in flags)
-            all_or_any = all if "a" in flags else any
+                                              b"a" in flags)
+            all_or_any = all if b"a" in flags else any
             hits = set([])
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
