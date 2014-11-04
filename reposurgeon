@@ -1055,16 +1055,16 @@ class Attribution(object):
                     self.date.orig_tz_string = Date.tzresolve(timezone, self.date.timestamp)
                 break
     def action_stamp(self):
-        return self.date.rfc3339() + "!" + self.email
+        return self.date.rfc3339() + b"!" + self.email
     def __eq__(self, other):
         "Compare attributions after canonicalization."
         return (self.name == other.name
                 and self.email == other.email
                 and self.date == other.date)
     def who(self):
-        return self.name + " <" + self.email + ">"
+        return self.name + b" <" + self.email + b">"
     def __str__(self):
-        return self.name + " <" + self.email + "> " + str(self.date)
+        return self.name + b" <" + self.email + b"> " + str(self.date)
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
@@ -1081,7 +1081,7 @@ class Blob(object):
         self.deletehook = None
     def id_me(self):
         "ID this blob for humans."
-        return "blob@%s" % self.mark
+        return b"blob@%s" % self.mark
     def paths(self):
         "For uniformity with commits and fileops."
         return self.pathlist
@@ -7251,7 +7251,7 @@ into sections of the input stream instead).
         if os.system(editor + " " + tfname):
             raise Recoverable("%s returned a failure status" % editor)
         else:
-            self.do_mailbox_in("<" + tfname)
+            self.do_mailbox_in(b"<" + tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
@@ -7296,12 +7296,12 @@ into sections of the input stream instead).
                 elif isinstance(event, Commit):
                     if nonblobs:
                         anychanged = False
-                        if "c" in attributes:
+                        if b"c" in attributes:
                             oldcomment = event.comment
                             event.comment = hook(event.comment)
                             if oldcomment != event.comment:
                                 anychanged = True
-                        if "C" in attributes:
+                        if b"C" in attributes:
                             oldcommitter = event.committer.who()
                             newcommitter = hook(oldcommitter)
                             changed = (oldcommitter != newcommitter)
@@ -7309,7 +7309,7 @@ into sections of the input stream instead).
                                 newcommitter += " " + str(event.committer.date)
                                 event.committer = Attribution(newcommitter)
                                 anychanged = True
-                        if "a" in attributes:
+                        if b"a" in attributes:
                             for i in range(len(event.authors)):
                                 oldauthor = event.authors[i].who()
                                 newauthor = hook(oldauthor)
