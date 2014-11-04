@@ -111,26 +111,26 @@ class VCS:
         self.project = project
         self.notes = notes
     def __str__(self):
-        realignores = [line for line in self.dfltignores.split('\n') if not line.startswith("# ")]
-        return "         Name: {self.name}\n" \
-               " Subdirectory: {self.subdirectory}\n" \
-               "     Exporter: {self.exporter}\n" \
-               " Export-Style: {{{styleflags}}}\n" \
-               "   Properties: {self.properties!r}\n" \
-               "  Initializer: {self.initializer}\n" \
-               "       Lister: {self.lister}\n" \
-               "     Importer: {self.importer}\n" \
-               "     Checkout: {self.checkout}\n" \
-               "     Preserve: {{{preserve}}}\n" \
-               "    Authormap: {self.authormap}\n" \
-               "   Ignorename: {self.ignorename}\n" \
-               "      Ignores: {{{ignores}}}\n" \
-               "      Project: {self.project}\n" \
-               "        Notes: {{{notes}}}\n".format(
+        realignores = [line for line in self.dfltignores.split(b'\n') if not line.startswith(b"# ")]
+        return b"         Name: {self.name}\n" \
+               b" Subdirectory: {self.subdirectory}\n" \
+               b"     Exporter: {self.exporter}\n" \
+               b" Export-Style: {{{styleflags}}}\n" \
+               b"   Properties: {self.properties!r}\n" \
+               b"  Initializer: {self.initializer}\n" \
+               b"       Lister: {self.lister}\n" \
+               b"     Importer: {self.importer}\n" \
+               b"     Checkout: {self.checkout}\n" \
+               b"     Preserve: {{{preserve}}}\n" \
+               b"    Authormap: {self.authormap}\n" \
+               b"   Ignorename: {self.ignorename}\n" \
+               b"      Ignores: {{{ignores}}}\n" \
+               b"      Project: {self.project}\n" \
+               b"        Notes: {{{notes}}}\n".format(
                        self = self,
-                       styleflags = ", ".join(self.styleflags),
-                       preserve = ", ".join(self.preserve),
-                       ignores = " ".join(realignores).strip(),
+                       styleflags = b", ".join(self.styleflags),
+                       preserve = b", ".join(self.preserve),
+                       ignores = b" ".join(realignores).strip(),
                        notes = self.notes.strip())
 
 # Most knowledge about specific version-control systems lives in the
@@ -450,7 +450,7 @@ core
 # and produces a named alien file.
 #
 file_filters = {
-    "fossil" : ("fossil export --git %s", "fossil import --git %s"),
+    "fossil" : (b"fossil export --git %s", "fossil import --git %s"),
     }
 
 # No user-serviceable parts below this line
@@ -563,7 +563,7 @@ class GitExtractor:
                         elif comment is None and not line:
                             comment = ""
                         elif isinstance(comment, str):
-                            comment += line + "\n"
+                            comment += line + b"\n"
                             if objecthash != taghash:
                                 # committish isn't a mark; we'll fix that later
                                 self.tags.append(Tag(None,
@@ -674,7 +674,7 @@ global_options = {}
 
 def screenwidth():
     "Return the current width of the terminal window."
-    with popen_or_die('stty size', 'r') as tp:
+    with popen_or_die('stty size', "rb") as tp:
         return int(tp.read().split()[1])
 
 def debug_enable(level):
@@ -1109,7 +1109,7 @@ class Blob(object):
             self.repo.seekstream.seek(self.start)
             return self.repo.seekstream.read(self.size)
         elif global_options["compressblobs"]:
-            with bz2.BZ2File(self.blobfile(), "r") as rfp:
+            with bz2.BZ2File(self.blobfile(), "rb") as rfp:
                 return rfp.read()
         else:
             with open(self.blobfile(), "rb") as rfp:
@@ -1128,7 +1128,7 @@ class Blob(object):
         self.size = len(text)
         if self.hasfile():
             if global_options["compressblobs"]:
-                with bz2.BZ2File(self.blobfile(create=True), "w") as wfp:
+                with bz2.BZ2File(self.blobfile(create=True), "wb") as wfp:
                     return wfp.write(text)
             else:
                 with open(self.blobfile(create=True), "wb") as wfp:
@@ -1221,7 +1221,7 @@ class Tag(object):
         if self.tagger:
             self.tagger.email_out(modifiers, msg, "Tagger")
         msg.set_payload(self.comment)
-        if self.comment and not self.comment.endswith("\n"):
+        if self.comment and not self.comment.endswith(b"\n"):
             complain("in tag %s, comment was not LF-terminated." % self.name)
         return str(msg)
     def email_in(self, msg):
@@ -1263,7 +1263,7 @@ class Tag(object):
                     modified = True
         newcomment = msg.get_payload()
         if global_options["canonicalize"]:
-            newcomment = newcomment.strip().replace("\r\n", "\n") + '\n'
+            newcomment = newcomment.strip().replace("\r\n", b"\n") + b'\n'
         if newcomment != self.comment:
             if debug_enable(DEBUG_EMAILIN):
                 announce("in tag %d, comment is modified %s -> %s" \
@@ -1464,7 +1464,7 @@ class FileOp(object):
             if self.ref == 'inline':
                 parts.append("\ndata %d\n%s" % (len(self.inline), self.inline))
         elif self.op == "N":
-            parts = [" ".join((self.op, self.ref, self.committish)), "\n"]
+            parts = [" ".join((self.op, self.ref, self.committish)), b"\n"]
             if self.ref == 'inline':
                 parts.append("data %d\n%s" % (len(self.inline), self.inline))
         elif self.op == "D":
@@ -1563,7 +1563,7 @@ class Commit(object):
             return self.fossil_id
     def lister(self, _modifiers, eventnum, cols):
         "Enable do_list() to report commits."
-        topline = self.comment.split("\n")[0]
+        topline = self.comment.split(b"\n")[0]
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
         if self.fossil_id:
@@ -1583,7 +1583,7 @@ class Commit(object):
         return report
     def stamp(self, _modifiers, _eventnum, cols):
         "Enable do_stamp() to report action stamps."
-        report = "<" + self.action_stamp() + "> " + self.comment.split("\n")[0]
+        report = "<" + self.action_stamp() + "> " + self.comment.split(b"\n")[0]
         if cols:
             report = report[:cols]
         return report
@@ -1612,11 +1612,11 @@ class Commit(object):
             msg["Fossil-ID"] = self.fossil_id
         for (name, value) in self.properties.iteritems():
             hdr = "-".join(s.capitalize() for s in name.split("-"))
-            value = value.replace("\n", r"\n")
+            value = value.replace(b"\n", r"\n")
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
         msg.set_payload(self.comment)
-        if not self.comment.endswith("\n"):
+        if not self.comment.endswith(b"\n"):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
         return str(msg)
     def action_stamp(self):
@@ -1709,14 +1709,14 @@ class Commit(object):
             elif propval == "False":
                 propval = False
             else:
-                propval = propval.replace(r"\n", "\n")
+                propval = propval.replace(r"\n", b"\n")
                 propval = propval.replace(r"\t", "\t")
             newprops[propkey] = propval
         modified |= (newprops != self.properties)
         self.properties = newprops
         newcomment = msg.get_payload()
         if global_options["canonicalize"]:
-            newcomment = newcomment.strip() + '\n'
+            newcomment = newcomment.strip() + b'\n'
         if newcomment != self.comment:
             if debug_enable(DEBUG_EMAILIN):
                 announce("in %s, comment is modified %s -> %s" \
@@ -2028,7 +2028,7 @@ class Commit(object):
                 comment += "\nFossil-ID: %s\n" % self.fossil_id
             parts.append("data %d\n%s" % (len(comment), comment))
         if "nl-after-comment" in self.repo.export_style():
-            parts.append("\n")
+            parts.append(b"\n")
         parents = self.parents()
         if parents:
             ancestor = parents[0]
@@ -2049,9 +2049,9 @@ class Commit(object):
                         parts.append("property %s\n" % name)
                 else:
                     parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
-        parts.extend(op.dump(vcs) + "\n" for op in self.fileops)
+        parts.extend(op.dump(vcs) + b"\n" for op in self.fileops)
         if not "no-nl-after-commit" in self.repo.export_style():
-            parts.append("\n")
+            parts.append(b"\n")
         return "".join(parts)
     def __str__(self):
         return self.dump()
@@ -2612,7 +2612,7 @@ class StreamParser:
         else:
             self.error("malformed data header %s" % repr(line))
         line = self.readline()
-        if line != '\n':
+        if line != b'\n':
             self.pushback(line) # Data commands optionally end with LF
         return (data, start)
     def fi_parse_fileop(self, fileop):
@@ -2642,9 +2642,9 @@ class StreamParser:
     def sd_read_blob(self, length):
         # Read a Subversion file-content blob.
         content = self.fp.read(length)
-        if self.fp.read(1) != '\n':
+        if self.fp.read(1) != b'\n':
             self.error("EOL not seen where expected, Content-Length incorrect")
-        self.import_line += content.count('\n') + 1
+        self.import_line += content.count(b'\n') + 1
         self.ccount += len(content) + 1
         return content
     def sd_read_props(self, target, checklength):
@@ -2909,23 +2909,23 @@ class StreamParser:
                                         value = " ".join(fields[3:])
                                         if len(value) < length:
                                             value += fp.read(length-len(value))
-                                            if fp.read(1) != '\n':
+                                            if fp.read(1) != b'\n':
                                                 self.error("trailing junk on property value")
                                         elif len(value) == length + 1:
-                                            value = value[:-1] # Trim '\n'
+                                            value = value[:-1] # Trim b'\n'
                                         else:
                                             value += self.fp.read(length - len(value))
-                                            assert self.fp.read(1) == '\n'
+                                            assert self.fp.read(1) == b'\n'
                                         commit.properties[name] = value
                                         # Generated by cvsps
                                         if name == "cvs-revisions":
-                                            for line in value.split('\n'):
+                                            for line in value.split(b'\n'):
                                                 if line:
                                                     self.repo.fossil_map["CVS:"+line] = commit
                                 elif line.startswith("data"):
                                     commit.comment = self.fi_read_data(line)[0]
                                     if global_options["canonicalize"]:
-                                        commit.comment = commit.comment.strip().replace("\r\n", "\n") + '\n'
+                                        commit.comment = commit.comment.strip().replace("\r\n", b"\n") + b'\n'
                                 elif line.startswith("from") or line.startswith("merge"):
                                     mark = line.split()[1]
                                     if Commit.is_callout(mark):
@@ -3223,8 +3223,8 @@ class StreamParser:
                 au = "no-author"
             if "svn:log" in record.props:
                 commit.comment = record.props.pop("svn:log")
-                if not commit.comment.endswith("\n"):
-                    commit.comment += "\n"
+                if not commit.comment.endswith(b"\n"):
+                    commit.comment += b"\n"
             if '--use-uuid' in options:
                 attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:
@@ -3428,7 +3428,7 @@ class StreamParser:
                             # anchor the translated pattern with
                             # leading / in order to render the
                             # Subversion behavior accurately.
-                            ignore = re.sub("\n(?!#)", "\n/", "\n" + ignore)
+                            ignore = re.sub("\n(?!#)", "\n/", b"\n" + ignore)
                             ignore = ignore[1:]
                             if ignore.endswith("/"):
                                 ignore = ignore[:-1]
@@ -3944,7 +3944,7 @@ class StreamParser:
                     except (AttributeError, TypeError, KeyError):
                         pass
                     else:
-                        for line in info.split('\n'):
+                        for line in info.split(b'\n'):
                             try:
                                 from_path, ranges = line.split(":", 1)
                             except ValueError:
@@ -4089,7 +4089,7 @@ class StreamParser:
             if commit.fossil_id in self.revisions:
                 if self.revisions[commit.fossil_id].nodes:
                     legend.append(":\n")
-                    legend.extend(str(node)+"\n"
+                    legend.extend(str(node)+b"\n"
                             for node in self.revisions[commit.fossil_id].nodes)
             legend.append("]]\n")
             return "".join(legend)
@@ -4229,7 +4229,7 @@ class SubversionDumper:
             ancestral = ".".join(itertools.imap(str, sorted(parents)))
             parts.append(SubversionDumper.svnprops({"svn:mergeinfo": ancestral}))
         parts.append("PROPS-END\n")
-        parts.append("\n")
+        parts.append(b"\n")
         revprops = "".join(parts)
         fp.write("Prop-content-length: %d\n" % (len(revprops)-1))
         fp.write("Content-length: %d\n\n" % (len(revprops)-1))
@@ -4864,7 +4864,7 @@ class Repository:
         if not commit.comment:
             pref = ""
         else:
-            pref = commit.comment + "\n"
+            pref = commit.comment + b"\n"
         self.addEvent(Tag(commit.repo,
                           name=name,
                           target=target,
@@ -5907,7 +5907,7 @@ def read_repo(source, options, preferred):
                     # Pass 2: get git's hash to (time,person) mapping
                     hash_to_action = {}
                     stamp_set = set({})
-                    with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
+                    with popen_or_die("git log --all --format='%H %ct %ce'", "rb") as fp:
                         for line in fp:
                             (hashv, ctime, cperson) = line.split()
                             stamp = (int(ctime), cperson)
@@ -6016,7 +6016,7 @@ def rebuild_repo(repo, target, options, preferred):
                 os.remove(tfname)
                 os.close(tfdesc)
         else:
-            with popen_or_die(vcs.importer % parameters, "import", mode=b"w") as tp:
+            with popen_or_die(vcs.importer % parameters, "import", mode=b"wb") as tp:
                 repo.fast_export(range(len(repo)), tp, options,
                                  target=preferred,
                                  progress=verbose>0)
@@ -6097,8 +6097,8 @@ def do_or_die(dcmd, legend=b""):
 
 class popen_or_die:
     "Read or write from a subordinate process."
-    def __init__(self, command, legend=b"", mode=b"r"):
-        assert mode in ("r", "w")
+    def __init__(self, command, legend=b"", mode=b"rb"):
+        assert mode in ("rb", "wb")
         self.command = command
         self.legend = legend
         self.mode = mode
@@ -6519,7 +6519,7 @@ into sections of the input stream instead).
                 self.infile = m.group(0)[1:]
                 if self.infile and self.infile != '-':
                     try:
-                        self.stdin = open(self.infile, "rb")
+                        self.stdin = open(self.infile, "r")
                         self.closem.append(self.stdin)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
@@ -6611,7 +6611,7 @@ into sections of the input stream instead).
             return ""
         self.history.append(line.rstrip())
         if self.echo:
-            sys.stdout.write(line.rstrip()+"\n")
+            sys.stdout.write(line.rstrip()+b"\n")
         self.selection = None
         if line.startswith("#"):
             return ""
@@ -7196,7 +7196,7 @@ into sections of the input stream instead).
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
                     if summary:
-                        parse.stdout.write(summary + "\n")
+                        parse.stdout.write(summary + b"\n")
     @staticmethod
     def pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
@@ -7563,7 +7563,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
             return
         try:
             self.callstack.append(line.split())
-            with open(self.callstack[-1][0], "rb") as scriptfp:
+            with open(self.callstack[-1][0], "r") as scriptfp:
                 while True:
                     scriptline = scriptfp.readline()
                     if not scriptline:
@@ -7576,7 +7576,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                         heredoc = None
                     else:
                         (scriptline, terminator) = scriptline.split("<<")
-                        heredoc = tempfile.NamedTemporaryFile(mode=b"w",
+                        heredoc = tempfile.NamedTemporaryFile(mode=b"wb",
                                                               delete=False)
                         while True:
                             nextline = scriptfp.readline()
@@ -7712,7 +7712,7 @@ currently chosen repository. Supports > redirection.
                     if repo.sourcedir:
                         parse.stdout.write("  Loaded from %s\n" % repo.sourcedir)
                     #if repo.vcs:
-                    #    parse.stdout.write(str(repo.vcs) + "\n")
+                    #    parse.stdout.write(str(repo.vcs) + b"\n")
 
     def help_count(self):
         print("""
@@ -8140,7 +8140,7 @@ For a list of supported types, invoke the 'prefer' command.
                             outfilter = file_filters[vcs][1]
                             dstname = parse.stdout.name
                             parse.stdout.close()
-                            parse.stdout = os.popen(outfilter % dstname, "w")
+                            parse.stdout = os.popen(outfilter % dstname, "wb")
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
@@ -8170,7 +8170,7 @@ before each event dump.
             for ei, event in self.selected():
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
-                header += " " + ((72 - len(header)) * "=") + "\n"
+                header += " " + ((72 - len(header)) * "=") + b"\n"
                 parse.stdout.write(header)
                 if isinstance(event, Commit):
                     parse.stdout.write(event.dump())
@@ -8250,7 +8250,7 @@ for graphviz. Supports > redirection.
                                        % (event.name, event.committish[1:], ))
             for _, event in self.selected():
                 if isinstance(event, Commit):
-                    summary = cgi.escape(event.comment.split('\n')[0][:42])
+                    summary = cgi.escape(event.comment.split(b'\n')[0][:42])
                     cid = event.mark
                     if event.fossil_id:
                         cid = event.showfossil() + " &rarr; " + cid
@@ -8260,7 +8260,7 @@ for graphviz. Supports > redirection.
                         parse.stdout.write('\t"%s" [shape=oval,width=2];\n' % event.branch)
                         parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
                 if isinstance(event, Tag):
-                    summary = cgi.escape(event.comment.split('\n')[0][:32])
+                    summary = cgi.escape(event.comment.split(b'\n')[0][:32])
                     parse.stdout.write('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.name, event.name, summary))
             parse.stdout.write("}\n")
@@ -8433,7 +8433,7 @@ redirection is supported).
         if parse.stdout != sys.stdout:
             if "changed" in parse.line:
                 for update in changers:
-                    parse.stdout.write(RepoSurgeonEmail.Divider + "\n" + update.as_string(unixfrom=False))
+                    parse.stdout.write(RepoSurgeonEmail.Divider + b"\n" + update.as_string(unixfrom=False))
 
     def help_edit(self):
         print("""
@@ -8562,7 +8562,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                 elif filtercmd.startswith('--dedos'):
                     if not self.attributes:
                         self.attributes = {"c", "a", "C"}
-                    self.sub = lambda s: s.replace("\r\n", "\n")
+                    self.sub = lambda s: s.replace("\r\n", b"\n")
                 else:
                     raise Recoverable("--shell or --regex or --dedos required")
             def do(self, content, pathsubst=b""):
@@ -9420,19 +9420,19 @@ first directory component from every path.
                 allpaths = set()
                 for _, event in self.selected(Commit):
                     allpaths.update(event.paths())
-                parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
+                parse.stdout.write(b"\n".join(sorted(allpaths)) + b"\n")
                 return
         fields = line.split()
         if fields[0] == "sub":
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
-            print("\n".join(modified))
+            print(b"\n".join(modified))
         elif fields[0] == "sup":
             try:
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[f.find(os.sep)+1:])
-                print("\n".join(modified))
+                print(b"\n".join(modified))
             except IndexError:
                 raise Recoverable("no / in sup path.")
         self.chosen().invalidate_manifests()
@@ -9464,24 +9464,24 @@ This command supports > redirection.
             for ei, event in self.selected(Commit):
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
-                header += " " + ((72 - len(header)) * "=") + "\n"
+                header += " " + ((72 - len(header)) * "=") + b"\n"
                 parse.stdout.write(header)
                 if event.fossil_id:
                     parse.stdout.write("# Fossil-ID: %s\n" % event.fossil_id)
                 parse.stdout.write("commit %s\n" % event.branch)
                 if event.mark:
                     parse.stdout.write("mark %s\n" % event.mark)
-                parse.stdout.write("\n")
+                parse.stdout.write(b"\n")
                 if filter_func is None:
-                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                    parse.stdout.write(b"\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark)
                             in event.manifest().iteritems()))
                 else:
-                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                    parse.stdout.write(b"\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark)
                             in event.manifest().iteritems()
                             if filter_func(path)))
-                parse.stdout.write("\n")
+                parse.stdout.write(b"\n")
 
     def help_tagify(self):
         print("""
@@ -10115,7 +10115,7 @@ map when the repo is written or rebuilt.
                             if hasattr(event, "lister"):
                                 summary = event.lister(None, ei, screenwidth())
                                 if summary:
-                                    parse.stdout.write(summary + "\n")
+                                    parse.stdout.write(summary + b"\n")
 
     #
     # Examining tree states
