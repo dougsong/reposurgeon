@@ -6659,7 +6659,7 @@ into sections of the input stream instead).
         self.line = line
         try:
             if self.chosen().named(self.line):
-                self.line = "<" + self.line + ">"
+                self.line = b"<" + self.line + b">"
         except Recoverable:
             pass
         self.selection = list(self.eval_expression(set(self.chosen().all())))
@@ -6834,31 +6834,31 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
-        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
+        polyrange_initials = (b":",b"0",b"1",b"2",b"3",b"4",b"5",b"6",b"7",b"8",b"9","$", "<")
         if not self.peek() in polyrange_initials:
             polyrange = None
         # Avoid having an input redirect mistaken for the start of a literal.
         # This might break if a command can ever have both input and output
         # redirects.
-        elif self.peek() == "<" and ">" not in self.line:
+        elif self.peek() == b"<" and b">" not in self.line:
             polyrange = None
         else:
             selection = []
-            while self.peek() in polyrange_initials + (".", ","):
+            while self.peek() in polyrange_initials + (b".", b","):
                 # First, literal command numbers (1-origin)
-                match = re.match("[0-9]+", self.line)
+                match = re.match(b"[0-9]+", self.line)
                 if match:
                     number = match.group()
                     selection.append(int(number)-1)
                     self.line = self.line[len(number):]
                     continue
                 # Next, mark references
-                match = re.match(":[0-9]+", self.line)
+                match = re.match(b":[0-9]+", self.line)
                 if match:
                     markref = match.group()
                     self.line = self.line[len(markref):]
                     for (i, event) in enumerate(self.chosen()):
-                        if hasattr(event, "mark") and event.mark == markref:
+                        if hasattr(event, b"mark") and event.mark == markref:
                             selection.append(i)
                             break
                         elif hasattr(event, "committish") and event.committish == markref:
@@ -6867,26 +6867,26 @@ into sections of the input stream instead).
                     else:
                         raise Recoverable("mark %s not found." % markref)
                     continue
-                elif self.peek() == ':':
+                elif self.peek() == b':':
                     raise Recoverable("malformed mark")
                 # $ means last commit, a la ed(1).
-                if self.peek() == "$":
+                if self.peek() == b"$":
                     selection.append(len(self.chosen())-1)
                     self.pop()
                     continue
                 # Comma just delimits a location spec
-                if self.peek() == ",":
+                if self.peek() == b",":
                     self.pop()
                     continue
                 # Following ".." means a span
-                if self.line[:2] == "..":
+                if self.line[:2] == b"..":
                     if selection:
-                        selection.append("..")
+                        selection.append(b"..")
                         self.line = self.line[2:]
                         continue
                     else:
                         raise Recoverable("start of span is missing")
-                if self.peek() == "<":
+                if self.peek() == b"<":
                     self.pop()
                     closer = self.line.find(b'>')
                     if closer == -1:
@@ -6918,10 +6918,10 @@ into sections of the input stream instead).
                     last = elt
             selection = resolved
             if debug_enable(DEBUG_LEXER):
-                announce("resolved list is %s with %s left" % (selection, repr(self.line)))
+                announce(b"resolved list is %s with %s left" % (selection, repr(self.line)))
             # Sanity checks
             if spanning:
-                raise Recoverable("incomplete range expression.")
+                raise Recoverable(b"incomplete range expression.")
             for elt in selection:
                 if elt < 0 or elt > len(self.chosen())-1:
                     raise Recoverable("event number %s out of range" % (elt+1))
@@ -6934,7 +6934,7 @@ into sections of the input stream instead).
         if debug_enable(DEBUG_LEXER):
             announce("eval_textsearch(%s)" % self.line)
         self.line = self.line.lstrip()
-        if not self.peek() == '/':
+        if not self.peek() == b'/':
             return None
         elif '/' not in self.line[1:]:
             raise Recoverable("malformed text search specifier")
@@ -6948,29 +6948,29 @@ into sections of the input stream instead).
             self.line = self.line[endat+1:]
             matchers = set()
             searchable_attrs = {b"b":"branch",		# commit
-                                "c":"comment",		# commit or tag
-                                "C":"committer",	# commit
-                                "r":"committish",	# tag or reset
-                                "p":"text",		# passthrough
-                                "t":"tagger",		# tag
-                                "n":"name"		# tag
+                                b"c":"comment",		# commit or tag
+                                b"C":"committer",	# commit
+                                b"r":"committish",	# tag or reset
+                                b"p":"text",		# passthrough
+                                b"t":"tagger",		# tag
+                                b"n":"name"		# tag
                                 }
             search_in = searchable_attrs.values()
             extractor_lambdas = {
-                "branch": lambda x: x.branch,
-                "comment": lambda x: x.comment,
-                "committer": lambda x: x.committer.who(),
-                "committish": lambda x: x.committish,
-                "text": lambda x: x.text,
-                "tagger": lambda x: x.tagger.who(),
-                "name": lambda x: x.name,
+                b"branch": lambda x: x.branch,
+                b"comment": lambda x: x.comment,
+                b"committer": lambda x: x.committer.who(),
+                b"committish": lambda x: x.committish,
+                b"text": lambda x: x.text,
+                b"tagger": lambda x: x.tagger.who(),
+                b"name": lambda x: x.name,
                 }
             check_authors = False
             check_blobs = False
             check_branch = False
             if self.line and self.line[0].isalpha():
                 search_in = []
-                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] in ('a', 'B')):
+                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] in (b'a', b'B')):
                     if self.line[0] == b'a':
                         check_authors = True
                     elif self.line[0] == b'B':
@@ -7028,12 +7028,12 @@ into sections of the input stream instead).
                 break
         else:
             raise Recoverable("malformed path matcher")
-        if matcher.startswith('/'):
+        if matcher.startswith(b'/'):
             flags = ''
             while matcher[-1] in ("a", "c"):
                 flags += matcher[-1]
                 matcher = matcher[:-1]
-            if matcher[-1] != '/':
+            if matcher[-1] != b'/':
                 raise Recoverable("regexp matcher missing trailing /")
             try:
                 search = re.compile(matcher[1:-1]).search
@@ -7077,15 +7077,15 @@ into sections of the input stream instead).
             else:
                 tree = match_trees[parent.mark].snapshot()
             for fileop in event.fileops:
-                if fileop.op == 'M' and match(fileop.path):
+                if fileop.op == b'M' and match(fileop.path):
                     tree[fileop.path] = True
-                elif fileop.op in ('C', 'R') and match(fileop.target):
+                elif fileop.op in (b'C', b'R') and match(fileop.target):
                     tree[fileop.target] = True
-                elif fileop.op == 'D' and match(fileop.path):
+                elif fileop.op == b'D' and match(fileop.path):
                     del tree[fileop.path]
-                elif fileop.op == 'R' and match(fileop.source):
+                elif fileop.op == b'R' and match(fileop.source):
                     del tree[fileop.source]
-                elif fileop.op == 'deleteall':
+                elif fileop.op == b'deleteall':
                     tree = PathMap()
             match_trees[event.mark] = tree
             if (not tree) == match_all:
@@ -7093,11 +7093,11 @@ into sections of the input stream instead).
         return result
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
-        if self.peek() != "@":
+        if self.peek() != b"@":
             return None
         self.pop()
         funname = b""
-        while self.peek().isalpha() or self.peek() == '_':
+        while self.peek().isalpha() or self.peek() == b'_':
             funname += self.pop()
         if not funname or self.peek() != '(':
             return None
@@ -7105,7 +7105,7 @@ into sections of the input stream instead).
         # will eat the ending ")" itself through eval_term().
         subarg = self.eval_expression(preselection)
         try:
-            func = getattr(self, funname + "_handler")
+            func = getattr(self, funname + b"_handler")
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
         return func(subarg)
