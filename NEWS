@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+    New 'add' command to insert news fileops in commits.
+
 3.14: 2014-10-29
      Assignments are preserved across squashes (including deletions).
      Name lookups are, after the first one, significantly faster.

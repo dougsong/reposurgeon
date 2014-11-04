@@ -1,0 +1,303 @@
+blob
+mark :1
+data 120
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a merge commit.
+
+
+
+reset refs/tags/annotated
+commit refs/tags/annotated
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426675 -0500
+data 56
+A start on a test repository for the Subversion dumper.
+M 100644 :1 README
+
+blob
+mark :3
+data 10
+*.o
+*.pyc
+
+commit refs/tags/annotated
+mark :4
+author Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426758 -0500
+data 70
+Create a .gitignore in order to test whether this special case is OK.
+from :2
+M 100644 :3 .gitignore
+
+blob
+mark :5
+data 45
+This file will test deep directory creation.
+
+commit refs/tags/annotated
+mark :6
+author Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426858 -0500
+data 30
+Test DEEP DIRECTORY creation.
+from :4
+M 100644 :5 foo/bar/junk
+
+blob
+mark :7
+data 14
+*.o
+*.pyc
+*.a
+
+commit refs/tags/annotated
+mark :8
+author Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354426928 -0500
+data 70
+Test a .gitignore modification for causing the right property change.
+from :6
+M 100644 :7 .gitignore
+
+blob
+mark :9
+data 46
+echo "Hello, world, I want to be executable."
+
+commit refs/tags/annotated
+mark :10
+author Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427024 -0500
+data 37
+A script without its executable bit.
+from :8
+M 100644 :9 hello
+
+commit refs/tags/annotated
+mark :11
+author Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427041 -0500
+data 27
+Delete the deep directory.
+from :10
+D foo/bar/junk
+
+commit refs/tags/annotated
+mark :12
+author Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427171 -0500
+data 37
+Turn on the script's executable bit.
+from :11
+M 100755 :9 hello
+
+blob
+mark :13
+data 122
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a spacer commit.
+
+
+
+
+commit refs/tags/annotated
+mark :14
+author Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427300 -0500
+data 22
+Just a spacer commit.
+from :12
+M 100644 :13 README
+
+commit refs/tags/annotated
+mark :15
+author Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+data 29
+Turn off the executable bit.
+from :14
+M 100644 :9 hello
+D .gitignore
+
+blob
+mark :16
+data 156
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is another spacer commit.  This one
+will have a tag.
+
+
+
+
+
+commit refs/tags/annotated
+mark :17
+author Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428162 -0500
+data 35
+Spacer commit with a tag attached.
+from :15
+M 100644 :16 README
+M 100755 :9 hello
+
+blob
+mark :18
+data 27
+A third spacer commit.
+
+
+
+
+
+commit refs/heads/master
+mark :19
+author Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428311 -0500
+data 60
+A third spacer commit. We'll start a branch after this one.
+from :17
+M 100644 :18 README
+
+blob
+mark :20
+data 48
+First post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :21
+author Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428507 -0500
+data 44
+First post-split commit on the main branch.
+from :19
+M 100644 :20 README
+
+blob
+mark :22
+data 143
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second post-split commit on the main branch.
+
+
+
+
+
+commit refs/heads/master
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1354428862 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428901 -0500
+data 34
+Second commit on the main branch.
+from :21
+M 100644 :22 README
+
+commit refs/heads/master
+mark :24
+author Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354488772 -0500
+data 28
+Attempt to generate a copy.
+from :23
+R "hello" "goodbye"
+
+commit refs/heads/master
+mark :25
+author Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354496639 -0500
+data 31
+Attempt to generate a copy op.
+from :24
+M 100644 :22 README2
+
+blob
+mark :26
+data 137
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+First commit on the alternate branch.
+
+
+
+
+
+
+commit refs/heads/alternate
+mark :27
+author Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428413 -0500
+data 38
+First commit on the alternate branch.
+from :19
+M 100644 :26 README
+
+blob
+mark :28
+data 138
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+Second commit on the alternate branch.
+
+
+
+
+
+
+commit refs/heads/alternate
+mark :29
+author Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354428775 -0500
+data 39
+Second commit on the alternate branch.
+from :27
+M 100644 :28 README
+
+blob
+mark :30
+data 123
+This is a test repository intended to exercise all the
+features of the Subversion dump code.
+
+This is a merge commit.
+
+
+
+
+
+
+commit refs/heads/master
+mark :31
+author Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1354497854 -0500
+data 45
+Merge branch 'alternate'
+
+Conflicts:
+	README
+from :25
+merge :29
+M 100644 :30 README
+
+reset refs/heads/master
+from :31
+
+tag annotated
+from :17
+tagger Eric S. Raymond <esr@thyrsus.com> 1354428193 -0500
+data 34
+This is an example annotated tag.
+

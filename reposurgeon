@@ -8804,6 +8804,73 @@ With  the --debug option, show messages about mismatches.
                 # Prevent lossage when last is a ChangeLog commit
                 repo.objfind(span[-1]).comment = repo.objfind(span[0]).comment
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
+    def help_add(self):
+        print("""
+From a specified commit, add a specified fileop. The syntax is
+
+     add {D path | M perm mark path}
+
+A D operation is rejected unless there is an M option for the path
+in the commit's ancestry.  For an M operation to be valid, the 'perm'
+part must be a token ending with 755 or 644 and the 'mark' must
+refer to a blob that precedes the commit location.
+
+R and C fileop types may be supported in a future release.
+""")
+    def do_add(self, line):
+        "Add a fileop to a specified commit."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        if self.selection is None:
+            self.selection = []
+        repo = self.chosen()
+        fields = shlex.split(line)
+        if len(fields) < 2:
+            raise Recoverable("add requires an operation type and arguments")
+        optype = fields[0]
+        if optype == "D":
+            path = fields[1]
+            for _, event in self.selected(Commit):
+                if path in event.paths():
+                    raise Recoverable("%s alreadly has on op for %s" \
+                                      % (event.mark, path))
+                if repo.ancestor_count(event, path) == 0:
+                    raise Recoverable("no previous M for %s" % path)
+        elif optype == "M":
+            if len(fields) != 4:
+                raise Recoverable("wrong field count in add command")
+            elif fields[1].endswith("644"):
+                perms = 0o100644
+            elif fields[1].endswith("755"):
+                perms = 0o100755
+            mark = fields[2]
+            if not mark.startswith(":"):
+                raise Recoverable("garbled mark %s in add command" % mark)
+            try:
+                markval = int(mark[1:])
+            except ValueError:
+                raise Recoverable("garbled mark %s in add command" % mark)
+            if not isinstance(repo.objfind(mark), Blob):
+                raise Recoverable("mark %s in add command does not refer to a blob")
+            elif markval >= min(self.selection):
+                raise Recoverable("mark %s in add command is after add location" % mark)
+            path = fields[3]
+            for _, event in self.selected(Commit):
+                if path in event.paths():
+                    raise Recoverable("%s alreadly has on op for %s" \
+                                      % (event.mark, path))
+        else:
+            raise Recoverable("unknown operation type %s in add command" % optype)
+        for _, event in self.selected(Commit):
+            event.invalidate_pathset_cache()
+            fileop = FileOp()
+            if optype == "D":
+                fileop.construct("D", path)
+            elif optype == "M":
+                fileop.construct("M", perms, mark, path)
+            event.fileops.append(fileop)
+
     def help_remove(self):
         print("""
 From a specified commit, remove a specified fileop. The syntax is:
