@@ -1980,7 +1980,7 @@ class Commit(object):
     def references(self, mark):
         "Does this commit reference a specified blob mark?"
         for fileop in self.fileops:
-            if fileop.op == 'M' and fileop.ref == mark:
+            if fileop.op == b'M' and fileop.ref == mark:
                 return True
         return False
     def undecodable(self, codec=b"utf-8"):
@@ -2024,17 +2024,17 @@ class Commit(object):
             parts.append(b"committer %s\n" % self.committer)
         if self.comment is not None:
             comment = self.comment
-            if options and "--fossilize" in options and self.fossil_id:
+            if options and b"--fossilize" in options and self.fossil_id:
                 comment += "\nFossil-ID: %s\n" % self.fossil_id
             parts.append(b"data %d\n%s" % (len(comment), comment))
-        if "nl-after-comment" in self.repo.export_style():
+        if b"nl-after-comment" in self.repo.export_style():
             parts.append(b"\n")
         parents = self.parents()
         if parents:
             ancestor = parents[0]
             if (not internals and not incremental) or ancestor.mark in internals:
                 parts.append(b"from %s\n" % ancestor.mark)
-            elif '--callout' in options:
+            elif b'--callout' in options:
                 parts.append(b"from %s\n" % ancestor.callout())
         for ancestor in parents[1:]:
             if not internals or ancestor.mark in internals:
@@ -2052,7 +2052,7 @@ class Commit(object):
         parts.extend(op.dump(vcs) + b"\n" for op in self.fileops)
         if not "no-nl-after-commit" in self.repo.export_style():
             parts.append(b"\n")
-        return "".join(parts)
+        return b"".join(parts)
     def __str__(self):
         return self.dump()
 
@@ -2450,9 +2450,9 @@ class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class NodeAction(object):
         __slots__ = (b"revision", b"path", b"kind", b"action",
-                     "from_rev", b"from_path", b"content_hash",
-                     "from_hash", b"blob", b"props",
-                     "from_set", b"blobmark", b"generated")
+                     b"from_rev", b"from_path", b"content_hash",
+                     b"from_hash", b"blob", b"props",
+                     b"from_set", b"blobmark", b"generated")
         # If these don't match the constants above, havoc will ensue
         ActionValues = (b"add", b"delete", b"change", b"replace")
         PathTypeValues = (b"none", b"file", b"dir", b"ILLEGAL-TYPE")
@@ -2475,18 +2475,18 @@ class StreamParser:
         def __str__(self):
             # Prefer dict's repr() to OrderedDict's verbose one
             fmt = dict.__repr__ if isinstance(self.props, dict) else repr
-            return "<NodeAction: r{rev} {action} {kind} '{path}'" \
-                    "{from_rev}{from_set}{generated}{props}>".format(
+            return b"<NodeAction: r{rev} {action} {kind} '{path}'" \
+                    b"{from_rev}{from_set}{generated}{props}>".format(
                     rev = self.revision,
-                    action = "ILLEGAL-ACTION" if self.action is None else StreamParser.NodeAction.ActionValues[self.action],
+                    action = b"ILLEGAL-ACTION" if self.action is None else StreamParser.NodeAction.ActionValues[self.action],
                     kind = StreamParser.NodeAction.PathTypeValues[self.kind or -1],
                     path = self.path,
-                    from_rev = " from=%s~%s" % (self.from_rev, self.from_path)
+                    from_rev = b" from=%s~%s" % (self.from_rev, self.from_path)
                                     if self.from_rev else "",
-                    from_set = " sources=%s" % self.from_set
+                    from_set = b" sources=%s" % self.from_set
                                     if self.from_set else "",
-                    generated = " generated" if self.generated else "",
-                    props = " properties=%s" % fmt(self.props)
+                    generated = b" generated" if self.generated else "",
+                    props = b" properties=%s" % fmt(self.props)
                                     if self.props else "")
     class RevisionRecord(object):
         __slots__ = (b"nodes", b"props")
@@ -2499,14 +2499,14 @@ class StreamParser:
     # mad.  We want to let through other properties that might carry
     # useful information.
     IgnoreProperties = {
-        "svn:executable",  # We special-case this one elsewhere
-        "svn:ignore",      # We special-case this one elsewhere
-        "svn:special",     # We special-case this one elsewhere
-        "svn:mergeinfo",   # We special-case this one elsewhere
-        "svn:mime-type",
-        "svn:keywords",
-        "svn:needs-lock",
-        "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
+        b"svn:executable",  # We special-case this one elsewhere
+        b"svn:ignore",      # We special-case this one elsewhere
+        b"svn:special",     # We special-case this one elsewhere
+        b"svn:mergeinfo",   # We special-case this one elsewhere
+        b"svn:mime-type",
+        b"svn:keywords",
+        b"svn:needs-lock",
+        b"svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         }
     cvs2svn_tag_re = re.compile(b"This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
     cvs2svn_branch_re = re.compile(b"This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
@@ -2534,11 +2534,11 @@ class StreamParser:
         self.active_gitignores = {}
     def error(self, msg):
         "Throw fatal error during parsing."
-        raise Fatal(msg + " at line " + repr(self.import_line))
+        raise Fatal(msg + b" at line " + repr(self.import_line))
     def warn(self, msg):
         "Display a parse warning associated with a line."
         if self.import_line:
-            complain(msg + " at line " + repr(self.import_line))
+            complain(msg + b" at line " + repr(self.import_line))
         else:
             complain(msg)
     def gripe(self, msg):
@@ -2549,7 +2549,7 @@ class StreamParser:
             complain(msg)
     def __newmark(self):
         self.markseq += 1
-        mark = ":" + str(self.markseq)
+        mark = b":" + str(self.markseq)
         return mark
     def readline(self):
         if self.linebuffers:
@@ -2617,7 +2617,7 @@ class StreamParser:
         return (data, start)
     def fi_parse_fileop(self, fileop):
         # Read a fast-import fileop
-        if fileop.ref[0] == ':':
+        if fileop.ref[0] == b':':
             pass
         elif fileop.ref == 'inline':
             fileop.inline = self.fi_read_data()[0]
@@ -2665,10 +2665,10 @@ class StreamParser:
                 break
             elif not line.strip():
                 continue
-            elif line[0] == "K":
+            elif line[0] == b"K":
                 key = self.sd_read_blob(int(line.split()[1]))
                 line = self.readline()
-                if line[0] != 'V':
+                if line[0] != b'V':
                     raise self.error(b"property value garbled")
                 value = self.sd_read_blob(int(line.split()[1]))
                 props[key] = value
@@ -2866,7 +2866,7 @@ class StreamParser:
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                      blobcontent):
                                     rev = m.group(0).strip()
-                                    if '.' not in rev:
+                                    if b'.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
                                 blob.set_content(blobcontent, blobstart)
@@ -2924,7 +2924,7 @@ class StreamParser:
                                                     self.repo.fossil_map["CVS:"+line] = commit
                                 elif line.startswith(b"data"):
                                     commit.comment = self.fi_read_data(line)[0]
-                                    if global_options["canonicalize"]:
+                                    if global_options[b"canonicalize"]:
                                         commit.comment = commit.comment.strip().replace(b"\r\n", b"\n") + b'\n'
                                 elif line.startswith(b"from") or line.startswith(b"merge"):
                                     mark = line.split()[1]
@@ -2935,9 +2935,9 @@ class StreamParser:
                                 # Handling of file ops begins.
                                 elif line[0] in (b"C", b"D", b"R"):
                                     commit.fileops.append(FileOp(self.repo.vcs).parse(line))
-                                elif line == "deleteall\n":
+                                elif line == b"deleteall\n":
                                     commit.fileops.append(FileOp(self.repo.vcs).parse(b"deleteall"))
-                                elif line[0] == "M":
+                                elif line[0] == b"M":
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     if fileop.ref != 'inline':
                                         try:
@@ -2945,10 +2945,10 @@ class StreamParser:
                                         except AttributeError:
                                             # Crap out on anything but a
                                             # submodule link.
-                                            if fileop.mode != "160000":
+                                            if fileop.mode != b"160000":
                                                 self.error(b"ref %s could not be resolved" % fileop.ref)
                                     commit.fileops.append(fileop)
-                                    if fileop.mode == "160000":
+                                    if fileop.mode == b"160000":
                                         # This is a submodule link.  The ref
                                         # field is a SHA1 hash and the path
                                         # is an external reference name.
@@ -2958,7 +2958,7 @@ class StreamParser:
                                     else:
                                         # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
-                                elif line[0] == "N":
+                                elif line[0] == b"N":
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     commit.fileops.append(fileop)
                                     self.fi_parse_fileop(fileop)
@@ -2977,9 +2977,9 @@ class StreamParser:
                                 else:
                                     # Dodgy bzr autodetection hook...
                                     if not self.repo.vcs:
-                                        if "branch-nick" in commit.properties:
+                                        if b"branch-nick" in commit.properties:
                                             for vcs in vcstypes:
-                                                if vcs.name == "bzr":
+                                                if vcs.name == b"bzr":
                                                     self.repo.vcs = vcs
                                                     break
                                     self.pushback(line)
@@ -3050,9 +3050,9 @@ class StreamParser:
     def node_permissions(node):
         "Fileop permissions from node properties"
         if node.props:
-            if "svn:executable" in node.props:
+            if b"svn:executable" in node.props:
                 return 0o100755
-            elif "svn:special" in node.props:
+            elif b"svn:special" in node.props:
                 # Map to git symlink, which behaves the same way.
                 # Blob contents is the path the link should resolve to.
                 return 0o120000
@@ -3071,7 +3071,7 @@ class StreamParser:
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce(b"Pass 1")
-        nobranch = '--nobranch' in options
+        nobranch = b'--nobranch' in options
         copynodes = []
         for (revision, record) in self.revisions.iteritems():
             for node in record.nodes:
@@ -3081,19 +3081,19 @@ class StreamParser:
                         announce(b"copynode at %s" % node)
                 if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not nobranch:
                     for trial in global_options[b'svn_branchify']:
-                        if '*' not in trial and trial == node.path:
+                        if b'*' not in trial and trial == node.path:
                             self.branches[node.path+os.sep] = None
-                        elif trial.endswith(os.sep + '*') \
+                        elif trial.endswith(os.sep + b'*') \
                                  and os.path.dirname(trial) == os.path.dirname(node.path):
                             self.branches[node.path+os.sep] = None
-                        elif trial == '*' and not node.path + os.sep + '*' in global_options[b'svn_branchify'] and node.path.count(os.sep) < 1:
+                        elif trial == b'*' and not node.path + os.sep + b'*' in global_options[b'svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce(b"%s recognized as a branch" % node.path+os.sep)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         copynodes.sort(key=operator.attrgetter(b"from_rev"))
-        self.repo.timings.append(["copynodes", time.time()])
+        self.repo.timings.append([b"copynodes", time.time()])
         baton.twirl()
         # Build filemaps.
         if debug_enable(DEBUG_EXTRACT):
@@ -3132,7 +3132,7 @@ class StreamParser:
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
         del filemap
-        self.repo.timings.append(["filemaps", time.time()])
+        self.repo.timings.append([b"filemaps", time.time()])
         baton.twirl()
         # Blows up huge on large repos...
         #if debug_enable(DEBUG_FILEMAP):
@@ -3157,7 +3157,7 @@ class StreamParser:
                     any(filemaps[copynode.revision].ls_R(node.path)):
                 self.gripe(b"inconsistently empty from set for %s" % copynode)
             baton.twirl()
-        self.repo.timings.append(["copysets", time.time()])
+        self.repo.timings.append([b"copysets", time.time()])
         baton.twirl()
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -3169,7 +3169,7 @@ class StreamParser:
         def last_relevant_commit(max_rev, path,
                                  getbranch = operator.attrgetter(b"branch")):
             # Make path look like a branch
-            if path[0] == "/": path = path[1:]
+            if path[0] == b"/": path = path[1:]
             if path[-1] != os.sep: path = path + os.sep
             # If the revision is split, try from the last split commit
             try:
@@ -3220,15 +3220,15 @@ class StreamParser:
             if "svn:author" in record.props:
                 au = record.props.pop(b"svn:author")
             else:
-                au = "no-author"
-            if "svn:log" in record.props:
+                au = b"no-author"
+            if b"svn:log" in record.props:
                 commit.comment = record.props.pop(b"svn:log")
                 if not commit.comment.endswith(b"\n"):
                     commit.comment += b"\n"
             if '--use-uuid' in options:
-                attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
+                attribution = b"%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:
-                attribution = "%s <%s> %s" % (au, au, ad)
+                attribution = b"%s <%s> %s" % (au, au, ad)
             commit.committer = Attribution(attribution)
             commit.properties.update(record.props)
             # Zero revision is never interesting - no operations, no
@@ -3247,11 +3247,11 @@ class StreamParser:
                     announce(str(node))
                 # Handle per-path properties.
                 if node.props is not None:
-                    if "cvs2svn:cvs-rev" in node.props:
-                        cvskey = "CVS:%s:%s" % (node.path,
+                    if b"cvs2svn:cvs-rev" in node.props:
+                        cvskey = b"CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.fossil_map[cvskey] = commit
-                        del node.props["cvs2svn:cvs-rev"]
+                        del node.props[b"cvs2svn:cvs-rev"]
                     if not "--ignore-properties" in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.iteritems() \
@@ -3283,12 +3283,12 @@ class StreamParser:
                             startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
                             try:
                                 ignore = startwith + \
-                                         "# The contents of the svn:ignore" \
-                                         "property on the branch root.\n" + \
+                                         b"# The contents of the svn:ignore" \
+                                         b"property on the branch root.\n" + \
                                          node.props["svn:ignore"]
                             except KeyError:
                                 ignore = startwith
-                            node.props["svn:ignore"] = ignore
+                            node.props[b"svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)
@@ -3414,10 +3414,10 @@ class StreamParser:
                                      % (revision, node.props, node.path))
                         # svn:ignore gets handled here,
                         if node.path == os.sep:
-                            gitignore_path = ".gitignore"
+                            gitignore_path = b".gitignore"
                         else:
                             gitignore_path = os.path.join(node.path,
-                                                          ".gitignore")
+                                                          b".gitignore")
                         # There are no other directory properties that can
                         # turn into fileops.
                         ignore = node.props.get(b"svn:ignore")
@@ -3640,7 +3640,7 @@ class StreamParser:
             deleteall_ops = []
             other_ops = []
             for (branch, ops) in cliques.iteritems():
-                if len(ops) == 1 and ops[0].op == "deleteall":
+                if len(ops) == 1 and ops[0].op == b"deleteall":
                     deleteall_ops.append((branch, ops))
                 else:
                     other_ops.append((branch, ops))
@@ -3651,7 +3651,7 @@ class StreamParser:
             if len(other_ops) <= 1:
                 # In the ordinary case, we can assign all non-deleteall fileops
                 # to the base commit.
-                self.repo.fossil_map["SVN:%s" % commit.fossil_id] = commit
+                self.repo.fossil_map[b"SVN:%s" % commit.fossil_id] = commit
                 try:
                     commit.common, commit.fileops = next(oplist)
                     commit.invalidate_pathset_cache()
@@ -3789,13 +3789,13 @@ class StreamParser:
         self.fileop_branchlinks.discard(b"trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
             self.gripe(b"branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
-        self.repo.timings.append(["commits", time.time()])
+        self.repo.timings.append([b"commits", time.time()])
         if debug_enable(DEBUG_EXTRACT):
             announce(b"at post-parsing time:")
             for commit in self.repo.commits():
                 msg = commit.comment
                 if msg == None:
-                    msg = ""
+                    msg = b""
                 announce(b"r%-4s %4s %2d %2d '%s'" % \
                          (commit.fossil_id, commit.mark,
                           len(commit.fileops),
@@ -3807,7 +3807,7 @@ class StreamParser:
             try:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
-                                 "root",
+                                 b"root",
                                  second,
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
             except ValueError: # self.repo has less than two commits
@@ -3844,10 +3844,10 @@ class StreamParser:
                     commit.invalidate_pathset_cache()
                 else:
                     commit.set_branch(b"root")
-                    self.branches["root"] = None
+                    self.branches[b"root"] = None
                 lastbranch = branch
                 baton.twirl()
-            self.repo.timings.append(["branches", time.time()])
+            self.repo.timings.append([b"branches", time.time()])
             baton.twirl()
             # ...then rebuild parent links so they follow the branches
             for commit in self.repo.commits():
@@ -3859,27 +3859,27 @@ class StreamParser:
                 self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
-            self.repo.timings.append(["parents", time.time()])
+            self.repo.timings.append([b"parents", time.time()])
             baton.twirl()
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
             # last phase.
             try:
                 commit = next(c for c in self.repo.commits()
-                              if c.branch == "root")
+                              if c.branch == b"root")
             except StopIteration:
                 pass
             else:
                 earliest = self.repo.earliest_commit()
                 if commit != earliest:
                     self.branchlink[commit.mark] = (commit, earliest)
-            self.repo.timings.append(["root", time.time()])
+            self.repo.timings.append([b"root", time.time()])
             baton.twirl()
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
                 announce(b"branch roots: [{roots}], links {{{links}}}".format(
-                    roots = ", b".join(c.mark for c in branchroots),
-                    links = ", b".join(b"{l[0].mark}: {l[1].mark}".format(l=l)
+                    roots = b", ".join(c.mark for c in branchroots),
+                    links = b", ".join(b"{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.itervalues())))
             for (child, parent) in self.branchlink.itervalues():
                 if not parent.repo is self.repo:
@@ -3991,7 +3991,7 @@ class StreamParser:
                             not commit.fossil_id.startswith(revision):
                         # The reverse lookup went past the target revision
                         self.gripe(b"cannot resolve mergeinfo destination "
-                                   "to revision %s for path %s."
+                                   b"to revision %s for path %s."
                                    % (revision, node.path))
                         continue
                     for mark in new_merges:
@@ -4000,7 +4000,7 @@ class StreamParser:
                             commit.add_parent(parent)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce(b"processed new mergeinfo from r%s "
-                                     "to r%s." % (parent.fossil_id,
+                                     b"to r%s." % (parent.fossil_id,
                                                   commit.fossil_id))
                 mergeinfos[revision] = mergeinfo.snapshot()
                 baton.twirl()
@@ -4026,7 +4026,7 @@ class StreamParser:
         for commit in self.repo.commits():
             commit.canonicalize()
             baton.twirl()
-        self.repo.timings.append(["canonicalize", time.time()])
+        self.repo.timings.append([b"canonicalize", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce(b"after canonicalization")
@@ -4040,14 +4040,14 @@ class StreamParser:
                 fulltag = os.path.join(b"refs", b"tags", m.group(1))
                 self.repo.events.append(Reset(self.repo, ref=fulltag,
                                               target=commit.parents()[0]))
-                commit.delete(["--tagback"])
+                commit.delete([b"--tagback"])
             # Childless generated branch commits carry no informationn,
             # and just get removed.
             m = StreamParser.cvs2svn_branch_re.search(commit.comment)
             if m and not commit.has_children():
-                commit.delete(["--tagback"])
+                commit.delete([b"--tagback"])
             baton.twirl()
-        self.repo.timings.append(["junk", time.time()])
+        self.repo.timings.append([b"junk", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce(b"after cvs2svn artifact removal")
@@ -4074,7 +4074,7 @@ class StreamParser:
                 name = os.path.basename(commit.branch[:-1])
                 if commit.branch.startswith(b"tags"):
                     return name
-                return name + "-root"
+                return name + b"-root"
             # Fallback on standard rules.
             return None
         def taglegend(commit):
@@ -4083,7 +4083,7 @@ class StreamParser:
                     and commit.branch not in rootskip):
                 return ""
             # Otherwise, generate one for inspection.
-            legend = ["[[Tag from zero-fileop commit at Subversion r%s" \
+            legend = [b"[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.fossil_id]
             # This guard can fail on a split commit
             if commit.fossil_id in self.revisions:
@@ -4106,7 +4106,7 @@ class StreamParser:
         def compile_regex (mapping):
             regex, replace = mapping
             return re.compile(regex), replace
-        compiled_mapping = map(compile_regex, global_options["svn_branchify_mapping"])
+        compiled_mapping = map(compile_regex, global_options[b"svn_branchify_mapping"])
         # Now pretty up the branch names
         for commit in self.repo.commits():
             matched = False
@@ -4126,13 +4126,13 @@ class StreamParser:
                     branch = branch[:-1]
                 commit.set_branch(os.path.join(b"refs", b"tags",
                                               os.path.basename(branch)))
-            elif commit.branch == "trunk" + os.sep:
+            elif commit.branch == b"trunk" + os.sep:
                 commit.set_branch(os.path.join(b"refs", b"heads", b"master"))
             else:
                 commit.set_branch(os.path.join(b"refs", b"heads",
                                               os.path.basename(commit.branch[:-1])))
             baton.twirl()
-        ##self.repo.timings.append(["polishing", time.time()])
+        ##self.repo.timings.append([b"polishing", time.time()])
         baton.twirl()
         if debug_enable(DEBUG_EXTRACT):
             announce(b"after branch name mapping")
@@ -4144,7 +4144,7 @@ class StreamParser:
             if any(fileop is None for fileop in commit.fileops):
                 raise Fatal(b"Null fileop at r%s" % commit.fossil_id)
             for i in range(len(commit.fileops)-1):
-                if commit.fileops[i].op == 'D' and commit.fileops[i+1].op == 'M':
+                if commit.fileops[i].op == b'D' and commit.fileops[i+1].op == b'M':
                     if commit.fileops[i].path == commit.fileops[i+1].path:
                         commit.fileops[i].op = None
             commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
@@ -4170,18 +4170,18 @@ class StreamParser:
                         commit.remove_parent(a)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
-        self.repo.timings.append(["debubbling", time.time()])
+        self.repo.timings.append([b"debubbling", time.time()])
         baton.twirl()
         self.repo.renumber(baton=baton)
         baton.twirl()
-        self.repo.timings.append(["renumbering", time.time()])
+        self.repo.timings.append([b"renumbering", time.time()])
         self.repo.write_fossils = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
         ignore_deleteall = set(commit.mark
                                for commit in self.generated_deletes)
         for commit in self.repo.commits():
-            if commit.fileops and commit.fileops[0].op == 'deleteall' \
+            if commit.fileops and commit.fileops[0].op == b'deleteall' \
                     and commit.has_children() \
                     and commit.mark not in ignore_deleteall:
                 self.gripe(b"mid-branch deleteall on %s at <%s>." % \
