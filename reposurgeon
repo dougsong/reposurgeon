@@ -8808,14 +8808,15 @@ With  the --debug option, show messages about mismatches.
         print("""
 From a specified commit, add a specified fileop. The syntax is
 
-     add {D path | M perm mark path}
+     add {D path | M perm mark path | R source target | C source target}
 
-A D operation is rejected unless there is an M option for the path
+For a D operation to be valid there must be an M operation for the path
 in the commit's ancestry.  For an M operation to be valid, the 'perm'
 part must be a token ending with 755 or 644 and the 'mark' must
-refer to a blob that precedes the commit location.
+refer to a blob that precedes the commit location.  For an R or C
+operation to be valid, there must be an M operation for the aource
+in the commit's ancestry.
 
-R and C fileop types may be supported in a future release.
 """)
     def do_add(self, line):
         "Add a fileop to a specified commit."
@@ -8858,8 +8859,20 @@ R and C fileop types may be supported in a future release.
             path = fields[3]
             for _, event in self.selected(Commit):
                 if path in event.paths():
-                    raise Recoverable("%s alreadly has on op for %s" \
+                    raise Recoverable("%s already has on op for %s" \
                                       % (event.mark, path))
+        elif optype in ("R", "C"):
+            try:
+                source = fields[1]
+                target = fields[2]
+            except IndexError:
+                raise Recoverable("too few arguments in add %s" % optype)
+            for _, event in self.selected(Commit):
+                if source in event.paths() or target in event.paths():
+                    raise Recoverable("%s already has on op for %s or %s" \
+                                      % (event.mark, source, target))
+                if repo.ancestor_count(event, source) == 0:
+                    raise Recoverable("no previous M for %s" % source)
         else:
             raise Recoverable("unknown operation type %s in add command" % optype)
         for _, event in self.selected(Commit):
@@ -8869,6 +8882,8 @@ R and C fileop types may be supported in a future release.
                 fileop.construct("D", path)
             elif optype == "M":
                 fileop.construct("M", perms, mark, path)
+            elif optype in ("R", "C"):
+                fileop.construct(optype, source, target)
             event.fileops.append(fileop)
 
     def help_remove(self):

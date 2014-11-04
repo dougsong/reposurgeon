@@ -1257,17 +1257,21 @@ of file operations in the original commit.</para>
 <term><command>add</command>
      {<emphasis>D</emphasis> <emphasis>path</emphasis> 
      | 
-     <emphasis>M</emphasis> <emphasis>perm</emphasis> <emphasis>mark</emphasis> <emphasis>path</emphasis>}
+     <emphasis>M</emphasis> <emphasis>perm</emphasis>
+     <emphasis>mark</emphasis> <emphasis>path</emphasis>
+     |
+     <emphasis>R</emphasis> <emphasis>source</emphasis> <emphasis>target</emphasis>
+     <emphasis>C</emphasis> <emphasis>source</emphasis> <emphasis>target</emphasis>}
 </term>
 <listitem>
 <para>From a specified commit, add a specified fileop.</para>
 
-<para>A D operation is rejected unless there is an M option for the path
-in the commit's ancestry.  For an M operation to be valid, the 'perm'
-part must be a token ending with 755 or 644 and the 'mark' must
-refer to a blob that precedes the commit location.</para>
-
-<para>R and C fileop types may be supported in a future release.</para>
+<para>For a D operation to be valid there must be an M operation for
+the path in the commit's ancestry.  For an M operation to be valid,
+the 'perm' part must be a token ending with 755 or 644 and the 'mark'
+must refer to a blob that precedes the commit location.  For an R or C
+operation to be valid, there must be an M operation for the aource in
+the commit's ancestry.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

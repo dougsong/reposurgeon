@@ -1,3 +1,4 @@
+reposurgeon: :8 already has on op for .gitignore or wibble
 blob
 mark :1
 data 120
@@ -61,6 +62,7 @@ data 70
 Test a .gitignore modification for causing the right property change.
 from :6
 M 100644 :7 .gitignore
+C "README" "README-STASH"
 
 blob
 mark :9
