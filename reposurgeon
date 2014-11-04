@@ -857,7 +857,7 @@ class RepoSurgeonEmail(email.message.Message, object):
 
 class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
-    __slots__ = (b"timestamp", b"tz_offset", b"orig_tz_string")
+    __slots__ = ("timestamp", "tz_offset", "orig_tz_string")
     __hash__ = None
     date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$")
     subsecond_re = re.compile(r"\.[0-9]+Z")
@@ -1020,7 +1020,7 @@ class DateTests(unittest.TestCase):
 
 class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
-    __slots__ = (b"name", b"email", b"date")
+    __slots__ = ("name", "email", "date")
     __hash__ = None
     attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s*.*)")
     @staticmethod
@@ -1068,7 +1068,8 @@ class Attribution(object):
 
 class Blob(object):
     "Represent a detached blob of data referenced by a mark."
-    __slots__ = (b"repo", b"mark", b"pathlist", b"colors", b"cookie", b"start", b"size", b"deletehook")
+    __slots__ = ("repo", "mark", "pathlist", "colors",
+                 "cookie", "start", "size", "deletehook")
     __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
@@ -1169,8 +1170,8 @@ class Blob(object):
 
 class Tag(object):
     "Represents an annotated tag."
-    __slots__ = (b"repo", b"name", b"color", b"committish",
-                 "target", b"tagger", b"comment", b"deletehook")
+    __slots__ = ("repo", "name", "color", "committish",
+                 "target", "tagger", "comment", "deletehook")
     __hash__ = None
     def __init__(self, repo=None,
                  name=None, committish=None, target=None, tagger=None, comment=None):
@@ -1305,7 +1306,7 @@ class Tag(object):
 
 class Reset(object):
     "Represents a branch creation."
-    __slots__ = (b"repo", b"ref", b"committish", b"target", b"deletehook", b"color")
+    __slots__ = ("repo", "ref", "committish", "target", "deletehook", "color")
     __hash__ = None
     def __init__(self, repo, ref=None, committish=None, target=None):
         self.repo = None
@@ -1362,9 +1363,9 @@ class Reset(object):
 
 class FileOp(object):
     "Represent a primitive operation on a file."
-    __slots__ = (b"vcs", b"op", b"committish", b"source", b"target",
-                 "mode", b"path", b"ref", b"inline",
-                 "sourcedelete", b"targetdelete")
+    __slots__ = ("vcs", "op", "committish", "source", "target",
+                 "mode", "path", "ref", "inline",
+                 "sourcedelete", "targetdelete")
     __hash__ = None
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     sortkey_sentinel = chr(ord(b"/") + 1)
@@ -1485,7 +1486,7 @@ class FileOp(object):
 
 class Callout(object):
     "Stub object for callout marks in incomplete repository segments."
-    __slots__ = (b"mark", b"branch", b"_child_nodes")
+    __slots__ = ("mark", "branch", "_child_nodes")
     __hash__ = None
     def __init__(self, mark):
         self.mark = mark
@@ -1494,10 +1495,10 @@ class Callout(object):
 
 class Commit(object):
     "Generic commit object."
-    __slots__ = (b"repo", b"mark", b"authors", b"committer", b"comment",
-                 "branch", b"fileops", b"properties", b"filemap", b"color",
-                 "fossil_id", b"common", b"splits", b"deletehook", b"attachments",
-                 "_parent_nodes", b"_child_nodes", b"_pathset")
+    __slots__ = ("repo", "mark", "authors", "committer", "comment",
+                 "branch", "fileops", "properties", "filemap", "color",
+                 "fossil_id", "common", "splits", "deletehook", "attachments",
+                 "_parent_nodes", "_child_nodes", "_pathset")
     __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
@@ -2058,7 +2059,7 @@ class Commit(object):
 
 class Passthrough(object):
     "Represents a passthrough line."
-    __slots__ = (b"text", b"deletehook", b"color")
+    __slots__ = ("text", "deletehook", "color")
     __hash__ = None
     def __init__(self, line):
         self.text = line
@@ -2127,7 +2128,7 @@ class PathMap(object):
     """Represent the set of filenames visible in a Subversion
     revision, using copy-on-write to keep the size of the structure in
     line with the size of the Subversion repository metadata."""
-    __slots__ = (b"shared", b"maxid", b"snapid", b"store")
+    __slots__ = ("shared", "maxid", "snapid", "store")
     __hash__ = None
     _self_value = object()
     def __init__(self, other = None):
@@ -2449,10 +2450,10 @@ SD_REPLACE = 3
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class NodeAction(object):
-        __slots__ = (b"revision", b"path", b"kind", b"action",
-                     b"from_rev", b"from_path", b"content_hash",
-                     b"from_hash", b"blob", b"props",
-                     b"from_set", b"blobmark", b"generated")
+        __slots__ = ("revision", "path", "kind", "action",
+                     "from_rev", "from_path", "content_hash",
+                     "from_hash", "blob", "props",
+                     "from_set", "blobmark", "generated")
         # If these don't match the constants above, havoc will ensue
         ActionValues = (b"add", b"delete", b"change", b"replace")
         PathTypeValues = (b"none", b"file", b"dir", b"ILLEGAL-TYPE")
@@ -2489,7 +2490,7 @@ class StreamParser:
                     props = b" properties=%s" % fmt(self.props)
                                     if self.props else b"")
     class RevisionRecord(object):
-        __slots__ = (b"nodes", b"props")
+        __slots__ = ("nodes", "props")
         def __init__(self, nodes, props):
             self.nodes = nodes
             self.props = props
