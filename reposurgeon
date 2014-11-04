@@ -561,7 +561,7 @@ class GitExtractor:
                         elif line.startswith(b"object"):
                             objecthash = line.split()[1]
                         elif comment is None and not line:
-                            comment = ""
+                            comment = b""
                         elif isinstance(comment, str):
                             comment += line + b"\n"
                             if objecthash != taghash:
@@ -934,7 +934,7 @@ class Date(object):
             localdate = datetime.datetime.fromtimestamp(tm)
             gmdate = datetime.datetime.utcfromtimestamp(tm)
         finally:
-            os.putenv(b"TZ", oldtz or "")
+            os.putenv(b"TZ", oldtz or b"")
             time.tzset()
         if localdate < gmdate:
             sgn = "-"
@@ -1298,8 +1298,8 @@ class Tag(object):
         parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
         if self.tagger:
             parts.append(b"tagger %s\n" % self.tagger)
-        parts.append(b"data %d\n%s\n" % (len(self.comment or ""), self.comment or ""))
-        return "".join(parts)
+        parts.append(b"data %d\n%s\n" % (len(self.comment or b""), self.comment or b""))
+        return b"".join(parts)
     def __str__(self):
         return self.dump()
 
@@ -1388,7 +1388,7 @@ class FileOp(object):
         # First sort the renames last, then sort lexicographically
         # We append a sentinel to make sure "a/b/c" < "a/b" < "a".
         return (fileop.op == "R",
-                (fileop.path or fileop.source or "") + \
+                (fileop.path or fileop.source or b"") + \
                         fileop.sortkey_sentinel)
     def construct(self, *opargs):
         if opargs[0] == b"M":
@@ -1479,7 +1479,7 @@ class FileOp(object):
             parts = [self.op]
         else:
             raise Fatal(b"unexpected fileop %s while writing" % self.op)
-        return "".join(parts)
+        return b"".join(parts)
     def __str__(self):
         return self.dump(self.vcs)
 
@@ -2318,7 +2318,7 @@ class RepoStreamer:
                 if debug_enable(DEBUG_EXTRACT):
                     msg = commit.comment
                     if msg == None:
-                        msg = ""
+                        msg = b""
                     announce(b"r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
                 for rev in parents:
@@ -2482,12 +2482,12 @@ class StreamParser:
                     kind = StreamParser.NodeAction.PathTypeValues[self.kind or -1],
                     path = self.path,
                     from_rev = b" from=%s~%s" % (self.from_rev, self.from_path)
-                                    if self.from_rev else "",
+                                    if self.from_rev else b"",
                     from_set = b" sources=%s" % self.from_set
-                                    if self.from_set else "",
-                    generated = b" generated" if self.generated else "",
+                                    if self.from_set else b"",
+                    generated = b" generated" if self.generated else b"",
                     props = b" properties=%s" % fmt(self.props)
-                                    if self.props else "")
+                                    if self.props else b"")
     class RevisionRecord(object):
         __slots__ = (b"nodes", b"props")
         def __init__(self, nodes, props):
@@ -2585,7 +2585,7 @@ class StreamParser:
             line = self.fi_readline()
         if line.startswith(b"data <<"):
             delim = line[7:]
-            data = ""
+            data = b""
             start = self.tell()
             while True:
                 dataline = self.readline()
@@ -3634,7 +3634,7 @@ class StreamParser:
                         lastbranch = branch
                         break
                 else:
-                    cliques[""].append(fileop)
+                    cliques[b""].append(fileop)
             # Make two operation lists from the cliques, sorting cliques
             # containing only branch deletes from other cliques.
             deleteall_ops = []
@@ -4081,7 +4081,7 @@ class StreamParser:
             # Tipdelete commits and branch roots don't get any legend.
             if commit.fileops or (commit.mark in rootmarks \
                     and commit.branch not in rootskip):
-                return ""
+                return b""
             # Otherwise, generate one for inspection.
             legend = [b"[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.fossil_id]
@@ -4092,7 +4092,7 @@ class StreamParser:
                     legend.extend(str(node)+b"\n"
                             for node in self.revisions[commit.fossil_id].nodes)
             legend.append(b"]]\n")
-            return "".join(legend)
+            return b"".join(legend)
         self.repo.tagify_empty(tipdeletes = True,
                                canonicalize = False,
                                name_func = tagname,
@@ -4207,7 +4207,7 @@ class SubversionDumper:
             self.subfiles = 0
     @staticmethod
     def svnprops(pdict):
-        return "".join(b"K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
+        return b"".join(b"K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
                         for key, val in sorted(pdict.iteritems()) if val)
     @staticmethod
     def dump_revprops(fp, revision, date, author=None, log=None, parents=None):
@@ -4230,7 +4230,7 @@ class SubversionDumper:
             parts.append(SubversionDumper.svnprops({b"svn:mergeinfo": ancestral}))
         parts.append(b"PROPS-END\n")
         parts.append(b"\n")
-        revprops = "".join(parts)
+        revprops = b"".join(parts)
         fp.write(b"Prop-content-length: %d\n" % (len(revprops)-1))
         fp.write(b"Content-length: %d\n\n" % (len(revprops)-1))
         fp.write(revprops)
@@ -4862,7 +4862,7 @@ class Repository:
         if commit.fileops:
             raise Fatal(b"Attempting to tagify a commit with fileops.")
         if not commit.comment:
-            pref = ""
+            pref = b""
         else:
             pref = commit.comment + b"\n"
         self.addEvent(Tag(commit.repo,
@@ -6608,13 +6608,13 @@ into sections of the input stream instead).
                 self.capture = None
             else:
                 self.capture.append(line)
-            return ""
+            return b""
         self.history.append(line.rstrip())
         if self.echo:
             sys.stdout.write(line.rstrip()+b"\n")
         self.selection = None
         if line.startswith(b"#"):
-            return ""
+            return b""
         m = re.compile(r"\s+#")
         if m:
             line = m.split(line)[0]
@@ -6625,7 +6625,7 @@ into sections of the input stream instead).
                 line = self.set_selection_set(line)
             except Recoverable as e:
                 complain(e.msg)
-                line = ""
+                line = b""
         return line
     def do_shell(self, line):
         "Execute a shell command."
@@ -7096,7 +7096,7 @@ into sections of the input stream instead).
         if self.peek() != "@":
             return None
         self.pop()
-        funname = ""
+        funname = b""
         while self.peek().isalpha() or self.peek() == '_':
             funname += self.pop()
         if not funname or self.peek() != '(':
@@ -7200,7 +7200,7 @@ into sections of the input stream instead).
     @staticmethod
     def pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
-        tok = ""
+        tok = b""
         line = line.lstrip()
         while True:
             if not line or line[0].isspace():
@@ -7818,7 +7818,7 @@ unwieldy. Supports > redirection.
                                    % (n, (n * 100.0) / total, s))
             for key in sorted(sizes.iterkeys()):
                 sz(sizes[key], key)
-            sz(total, "")
+            sz(total, b"")
     def help_lint(self):
         print(b"""
 Look for DAG and metadata configurations that may indicate a
