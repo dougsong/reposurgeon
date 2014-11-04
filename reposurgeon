@@ -4459,7 +4459,7 @@ class SubversionDumper:
                                                    date=event.committer.date,
                                                    parents=backlinks)
                     for fileop in event.fileops:
-                        if fileop.op == "D":
+                        if fileop.op == b"D":
                             if fileop.path.endswith(b".gitignore"):
                                 svnpath = self.svnize(event.head(), fileop.path)
                                 self.pathmap[svnpath].props["svn:ignore"] = ""
@@ -4470,7 +4470,7 @@ class SubversionDumper:
                                           props = self.pathmap[svnpath].props)
                             else:
                                 self.filedelete(fp, event.head(), fileop.path)
-                        elif fileop.op == "M":
+                        elif fileop.op == b"M":
                             if fileop.path.endswith(b".gitignore"):
                                 svnpath = self.svnize(event.head(),
                                                       os.path.dirname(fileop.path))
@@ -4491,20 +4491,20 @@ class SubversionDumper:
                                                 fileop.ref,
                                                 fileop.path,
                                                 event.parents())
-                        elif fileop.op == "R":
+                        elif fileop.op == b"R":
                             self.filecopy(fp,
                                           revision,
                                           event.head(),
                                           fileop.source,
                                           fileop.target)
                             self.filedelete(fp, event.branch, fileop.source)
-                        elif fileop.op == "C":
+                        elif fileop.op == b"C":
                             self.filecopy(fp,
                                           revision,
                                           event.head(),
                                           fileop.source,
                                           fileop.target)
-                        elif fileop.op == "deleteall":
+                        elif fileop.op == b"deleteall":
                             branchdir = self.svnbranch(event.head())
                             # Here again the object is mutated, so a copy list must be used.
                             for path in self.pathmap.keys():
@@ -4857,7 +4857,7 @@ class Repository:
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
             if commit.fossil_id:
-                commit_id += " <%s>" % commit.fossil_id
+                commit_id += b" <%s>" % commit.fossil_id
             announce(b"tagifying: %s -> %s" % (commit_id, name))
         if commit.fileops:
             raise Fatal(b"Attempting to tagify a commit with fileops.")
@@ -4895,11 +4895,11 @@ class Repository:
             if commit.fileops:
                 branch = commit.branch
                 if branch[-1] == os.sep: branch = branch[:-1]
-                return "tipdelete-" + os.path.basename(branch)
+                return b"tipdelete-" + os.path.basename(branch)
             if commit.fossil_id:
-                return "emptycommit-" + commit.fossil_id
+                return b"emptycommit-" + commit.fossil_id
             elif commit.mark:
-                return "emptycommit-mark" + commit.mark[1:]
+                return b"emptycommit-mark" + commit.mark[1:]
             else:
                 return "emptycommit-index" + commit.index()
         # Use a separate loop because delete() invalidates manifests.
@@ -4921,7 +4921,7 @@ class Repository:
                         continue
                     name = name_func(commit) or default_name(commit)
                     for i in itertools.count():
-                        suffix = ".{}".format(i) if i else ""
+                        suffix = b".{}".format(i) if i else b""
                         if name + suffix not in usednames: break
                     usednames.add(name + suffix)
                     legend = legend_func(commit)
@@ -4945,7 +4945,7 @@ class Repository:
                         msg.append(b"zero-op commit on %s." % commit.branch)
                     gripe(b" ".join(msg))
                     deletia.append(index)
-        self.delete(deletia, ["--tagback"])
+        self.delete(deletia, [b"--tagback"])
     def fast_import(self, fp, options, progress=False):
         "Read a stream file and use it to populate the repo."
         StreamParser(self).fast_import(fp, options, progress)
@@ -4977,7 +4977,7 @@ class Repository:
                         complain(b"fossil property of %s overwritten" \
                                  % commit.mark)
                     if isinstance(event.cookie, str):
-                        svnkey = "SVN:" + event.cookie
+                        svnkey = b"SVN:" + event.cookie
                         self.dollar_map[svnkey] = commit
                     else:
                         (basename, cvsref) = event.cookie
@@ -4989,7 +4989,7 @@ class Repository:
                                     # git-svn didn't pick up on.
                                     complain(b"mismatched CVS header path '%s' in %s vs '%s' in %s"
                                              % (fileop.path, commit.mark, basename, event.mark))
-                                cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
+                                cvskey = b"CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
     def export_style(self):
         "How should we tune the export dump format?"
@@ -5000,7 +5000,7 @@ class Repository:
             return (b"nl-after-commit",)
     def fast_export(self, selection, fp, options, target=None, progress=False):
         "Dump the repo object in Subversion dump or fast-export format."
-        if target and target.name == "svn":
+        if target and target.name == b"svn":
             SubversionDumper(self).dump(selection, fp, progress)
             return
         if selection != self.all():
@@ -5009,8 +5009,8 @@ class Repository:
                 event = self.events[ei]
                 if isinstance(event, Commit):
                     for fileop in event.fileops:
-                        if fileop.op == 'M':
-                            if fileop.ref != "inline":
+                        if fileop.op == b'M':
+                            if fileop.ref != b"inline":
                                 implied.add(self.find(fileop.ref))
                     for tag in event.attachments:
                         implied.add(self.find(tag.committish))
@@ -5033,7 +5033,7 @@ class Repository:
                     fp.write(b"reset fossil_id\n")
                     endcommit = Commit(self)
                     endcommit.set_branch(b"refs/heads/master")
-                    endcommit.comment = "Fossil-ID notes\n"
+                    endcommit.comment = b"Fossil-ID notes\n"
                     endcommit.committer = Attribution(b"Nowhere Man <nowhere@nobody.net> " + rfc3339(time.time()))
                     for ei in selection:
                         event = self.events[ei]
@@ -5153,12 +5153,12 @@ class Repository:
             return (False, left, right, None, 0)
         # M a + D a -> D a
         # Or, could reduce to nothing if M a was the only modify..
-        elif left.op == "M" and right.op in "D":
+        elif left.op == b"M" and right.op in b"D":
             if self.ancestor_count(event, left.path) == 1:
                 return (True, None, None, None, 1)
             else:
                 return (True, right, None, None, 2)
-        elif left.op == "M" and right.op == "R":
+        elif left.op == b"M" and right.op == b"R":
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
                 if self.ancestor_count(event, left.path) == 1:
@@ -5176,7 +5176,7 @@ class Repository:
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
-        elif left.op == "M" and right.op == "C":
+        elif left.op == b"M" and right.op == b"C":
             return (False, left, right, None, 5)
         #
         # First op D or deleteall
@@ -5189,10 +5189,10 @@ class Repository:
             return (False, left, right, None, 7)
         # These cases should be impossible.  But cvs2svn actually generates
         # adjacent deletes into Subversion dumpfiles which turn into (D, D).
-        elif left.op == "deleteall" and right.op != "M":
+        elif left.op == b"deleteall" and right.op != b"M":
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
-        elif left.op == "D" and right.op == "D":
+        elif left.op == b"D" and right.op == b"D":
             return (True, left, None, None, -2)
         elif left.op == "D" and right.op in (b"R", b"C"):
             if left.path == right.source:
@@ -5221,7 +5221,7 @@ class Repository:
         elif pair == (b"R", b"M") or pair == (b"C", b"M"):
             return (False, left, right, None, 10)
         # Compose renames where possible
-        elif left.op == "R" and right.op == "R":
+        elif left.op == b"R" and right.op == b"R":
             if left.target == right.source:
                 left.target = right.target
                 return (True, left, None, None, 11)
@@ -5230,7 +5230,7 @@ class Repository:
                         "R %s %s is inconsistent with following operation" \
                         % (left.source, left.target), -6)
         # We could do R a b + C b c -> C a c + R a b, but why?
-        if left.op == "R" and right.op == "C":
+        if left.op == b"R" and right.op == b"C":
             return (False, left, right, None, 12)
         #
         # First op C
@@ -5331,7 +5331,7 @@ class Repository:
                         if '/' in event.branch and not b'/heads/' in event.branch:
                             complain(speak + b"non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
-                            announce(speak + "non-delete fileops.")
+                            announce(speak + b"non-delete fileops.")
                     if not delete:
                         if pushback and not event.has_parents():
                             complain(b"warning: "
@@ -5420,7 +5420,7 @@ class Repository:
                     earliest = parent.index()
                     swap_indices = set()
                     for fileop in event.fileops:
-                        if fileop.op == 'M':
+                        if fileop.op == b'M':
                             blob_index = self.find(fileop.ref)
                             if blob_index > earliest: swap_indices.add(blob_index)
                     if swap_indices:
@@ -5482,7 +5482,7 @@ class Repository:
                     # Only keep last M of each clique, leaving other ops alone
                     event.fileops = \
                            [op for (i, op) in enumerate(event.fileops)
-                            if (op.op != "M") or (i == cliques[op.path][-1])]
+                            if (op.op != b"M") or (i == cliques[op.path][-1])]
                     event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
                     announce(b"Commit %d, after applying policy:" % (ei + 1,))
@@ -5502,7 +5502,7 @@ class Repository:
         for event in self.events:
             if isinstance(event, Commit):
                 for fileop in event.fileops:
-                    if fileop.op == 'M':
+                    if fileop.op == b'M':
                         backreferences[fileop.ref] += 1
         def eligible(e):
             return isinstance(e, Blob) and not backreferences[e.mark]
@@ -5512,7 +5512,7 @@ class Repository:
         self.declare_sequence_mutation()
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.squash([index], ["--delete", b"--quiet", b"--tagback"])
+        self.squash([index], [b"--delete", b"--quiet", b"--tagback"])
     #
     # Delete machinery ends here
     #
@@ -5558,7 +5558,7 @@ class Repository:
                     pass
         for commit in self.commits():
             for fileop in commit.fileops:
-                if fileop.op == "M" and fileop.ref.startswith(b":"):
+                if fileop.op == b"M" and fileop.ref.startswith(b":"):
                     new = remark(fileop.ref, fileop)
                     if debug_enable(DEBUG_UNITE):
                         announce(b"renumbering %s -> %s in fileop" % (fileop.ref, new))
@@ -5594,9 +5594,9 @@ class Repository:
                     else:
                         # collision - oldname belongs to a different repo
                         if objtype == Tag:
-                            newname = color + "-" + oldname
+                            newname = color + b"-" + oldname
                         else:
-                            newname = oldname + "-" + color
+                            newname = oldname + b"-" + color
                     if newname:
                         setattr(event, attr, newname)
                         if debug_enable(DEBUG_UNITE):
@@ -5626,7 +5626,7 @@ class Repository:
             # Now marks in fileops
             if isinstance(event, Commit):
                 for fileop in event.fileops:
-                    if fileop.op == "M" and fileop.ref.startswith(b":"):
+                    if fileop.op == b"M" and fileop.ref.startswith(b":"):
                         new = fileop.ref + "-" + color
                         if debug_enable(DEBUG_UNITE):
                             announce(b"moving %s -> %s in fileop"
@@ -5696,9 +5696,9 @@ class Repository:
                 # Might cause an internal-error message, but no real
                 # harm will be done.
                 for (i, fileop) in enumerate(ancestor.fileops):
-                    if fileop.op == 'R' and fileop.target == path:
+                    if fileop.op == b'R' and fileop.target == path:
                         path = fileop.source
-                    elif fileop.op == 'M' and fileop.path == path:
+                    elif fileop.op == b'M' and fileop.path == path:
                         return (ancestor, i)
                 else:
                     backto += ancestor.parents()
@@ -5719,7 +5719,7 @@ class Repository:
                     else:
                         (ancestor, i) = previous
                         for (m, op2) in enumerate(commit.fileops):
-                            if op2.op == 'M' and \
+                            if op2.op == b'M' and \
                                ancestor.fileops[i].mode == op2.mode and \
                                ancestor.fileops[i].ref == op2.ref:
                                 renames.append((d, m))
@@ -5729,7 +5729,7 @@ class Repository:
                 commit.fileops[d].source = commit.fileops[d].path
                 commit.fileops[d].target = commit.fileops[m].path
                 del commit.fileops[d].path
-                commit.fileops[d].op = 'R'
+                commit.fileops[d].op = b'R'
                 commit.fileops.pop(m)
                 commit.invalidate_pathset_cache()
         return rename_count
@@ -5896,7 +5896,7 @@ def read_repo(source, options, preferred):
                 allfiles = fileset([vcs.subdirectory] + glob.glob(b".rs*"))
                 repo.preserve_set = allfiles - repofiles
             # kluge: git-specific hook
-            if repo.vcs.name == "git":
+            if repo.vcs.name == b"git":
                 if os.path.exists(b".git/cvs-revisions"):
                     announce(b"reading cvs-revisions map.")
                     pathrev_to_hash = {}
@@ -5991,7 +5991,7 @@ def rebuild_repo(repo, target, options, preferred):
         except OSError:
             raise Recoverable(b"target directory creation failed")
     else:
-        staging = target + "-stage" + str(os.getpid())
+        staging = target + b"-stage" + str(os.getpid())
         assert(os.path.isabs(target) and os.path.isabs(staging))
         try:
             os.mkdir(staging)
@@ -6175,7 +6175,7 @@ class RepositoryList:
         def do_color(commit, color):
             commit.color = color
             for fileop in commit.fileops:
-                if fileop.op == "M" and fileop.ref != "inline":
+                if fileop.op == b"M" and fileop.ref != b"inline":
                     blob = self.repo.find(fileop.ref)
                     assert isinstance(self.repo[blob], Blob)
                     self.repo[blob].colors.append(color)
@@ -6231,15 +6231,15 @@ class RepositoryList:
             else:
                 trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
-        early = Repository(self.repo.name + "-early")
+        early = Repository(self.repo.name + b"-early")
         os.mkdir(early.subdir())
-        late = Repository(self.repo.name + "-late")
+        late = Repository(self.repo.name + b"-late")
         os.mkdir(late.subdir())
         for event in self.repo:
             if isinstance(event, Reset):
-                if event.ref in trackbranches["early"]:
+                if event.ref in trackbranches[b"early"]:
                     early.addEvent(copy.copy(event))
-                if event.ref in trackbranches["late"]:
+                if event.ref in trackbranches[b"late"]:
                     late.addEvent(copy.copy(event))
             elif isinstance(event, Blob):
                 if "early" in event.colors:
@@ -6247,11 +6247,11 @@ class RepositoryList:
                 if "late" in event.colors:
                     late.addEvent(event.clone(late))
             else:
-                if event.color == "early":
+                if event.color == b"early":
                     if hasattr(event, b"moveto"):
                         event.moveto(early)
                     early.addEvent(event)
-                elif event.color == "late":
+                elif event.color == b"late":
                     if hasattr(event, b"moveto"):
                         event.moveto(late)
                     late.addEvent(event)
@@ -6341,10 +6341,10 @@ class RepositoryList:
                     for (i, fileop) in enumerate(event.fileops):
                         if debug_enable(DEBUG_DELETE):
                             print(str(fileop))
-                        if fileop.op in "DM":
+                        if fileop.op in b"DM":
                             if expunge.search(fileop.path):
                                 deletia.append(i)
-                        elif fileop.op in "RC":
+                        elif fileop.op in b"RC":
                             fileop.sourcedelete = expunge.search(fileop.source)
                             fileop.targetdelete = expunge.search(fileop.target)
                             if fileop.sourcedelete:
@@ -6353,7 +6353,7 @@ class RepositoryList:
                                          (fileop.op,
                                           fileop.source,
                                           fileop.target))
-                                if fileop.op == "R":
+                                if fileop.op == b"R":
                                     try:
                                         matchers.remove(b"^" + fileop.source + b"$")
                                     except ValueError:
@@ -6361,9 +6361,9 @@ class RepositoryList:
                                 matchers.append(b"^" + fileop.target + b"$")
                                 expunge = digest(matchers)
                             elif fileop.targetdelete:
-                                if fileop.op == "R":
-                                    fileop.op = "D"
-                                elif fileop.op == "C":
+                                if fileop.op == b"R":
+                                    fileop.op = b"D"
+                                elif fileop.op == b"C":
                                     deletia.append(i)
                                 matchers.append(b"^" + fileop.target + b"$")
                                 expunge = digest(matchers)
@@ -6383,14 +6383,14 @@ class RepositoryList:
             blobs = []
             for i in deletia:
                 fileop = event.fileops[i]
-                if fileop.op == 'D':
+                if fileop.op == b'D':
                     keepers.append(fileop)
                     if verbose:
                         announce(b"at %d, expunging D %s" \
                                  % (ei+1, fileop.path))
-                elif fileop.op == 'M':
+                elif fileop.op == b'M':
                     keepers.append(fileop)
-                    if fileop.ref != 'inline':
+                    if fileop.ref != b'inline':
                         bi = self.repo.find(fileop.ref)
                         blob = self.repo[bi]
                         assert(isinstance(blob, Blob))
@@ -6454,7 +6454,7 @@ class RepositoryList:
         for event in self.repo.events:
             if isinstance(event, Commit):
                 for fileop in event.fileops:
-                    if fileop.op == 'M':
+                    if fileop.op == b'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
         # Announce events that will be deleted.
@@ -6517,7 +6517,7 @@ into sections of the input stream instead).
                 if "stdin" not in self.capabilities:
                     raise Recoverable(b"no support for < redirection")
                 self.infile = m.group(0)[1:]
-                if self.infile and self.infile != '-':
+                if self.infile and self.infile != b'-':
                     try:
                         self.stdin = open(self.infile, b"r")
                         self.closem.append(self.stdin)
@@ -6532,7 +6532,7 @@ into sections of the input stream instead).
                 if "stdout" not in self.capabilities:
                     raise Recoverable(b"no support for > redirection")
                 self.outfile = m.group(0)[1:]
-                if self.outfile and self.outfile != '-':
+                if self.outfile and self.outfile != b'-':
                     if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable(b"not a plain file")
                     try:
@@ -6552,11 +6552,11 @@ into sections of the input stream instead).
                     self.options.add(m.group(0).strip())
                     self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
             # Dash redirection
-            if not self.redirected and self.line.strip() == '-':
+            if not self.redirected and self.line.strip() == b'-':
                 if "stdin" not in self.capabilities and "stdout" not in self.capabilities:
                     raise Recoverable(b"no support for - redirection")
                 else:
-                    self.line = ""
+                    self.line = b""
                     self.redirected = True
             self.line = self.line.strip()
             return self
@@ -6575,7 +6575,7 @@ into sections of the input stream instead).
         self.preferred = None
         self.ignorename = None
         self.selection = []
-        self.line = ""
+        self.line = b""
         self.history = []
         self.callstack = []
         self.definitions = {}
