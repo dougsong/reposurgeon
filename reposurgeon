@@ -189,7 +189,7 @@ vcstypes = [
     VCS(name=b"bzr",
         subdirectory=b".bzr",
         exporter=b"bzr fast-export --no-plain %(basename)s",
-        styleflags={"export-progress", b"no-nl-after-commit", b"nl-after-comment"},
+        styleflags={b"export-progress", b"no-nl-after-commit", b"nl-after-comment"},
         properties=True,
         initializer=None,
         lister=None,
@@ -218,13 +218,13 @@ bzr-orphans
     VCS(name=b"hg",
         subdirectory=b".hg",
         exporter=b"hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
-        styleflags={"import-defaults", b"nl-after-comment", b"export-progress"},
+        styleflags={b"import-defaults", b"nl-after-comment", b"export-progress"},
         properties=False,
         initializer=b"hg init",
         lister=b"hg locate",
         importer=b"hg fastimport %(tempfile)s",
         checkout=b"hg checkout",
-        preserve={".hg/hgrc"},
+        preserve={b".hg/hgrc"},
         authormap=None,
         ignorename=b".hgignore",
         dfltignores=b"",
@@ -349,13 +349,13 @@ core
     VCS(name=b"svn",
         subdirectory=b"locks",
         exporter=b"svnadmin dump .",
-        styleflags={"import-defaults", b"export-progress"},
+        styleflags={b"import-defaults", b"export-progress"},
         properties=False,
         initializer=b"svn create .",
         importer=b"svnadmin load .",
         checkout=None,
         lister=None,
-        preserve={"hooks"},
+        preserve={b"hooks"},
         authormap=None,
         ignorename=None,
         dfltignores=b"""\
@@ -382,7 +382,7 @@ core
     VCS(name=b"cvs",
         subdirectory=b"Attic",
         exporter=b"find . -name '*,v' -print | cvs-fast-export --reposurgeon",
-        styleflags={"import-defaults", b"export-progress"},
+        styleflags={b"import-defaults", b"export-progress"},
         properties=False,
         initializer=None,
         importer=None,
@@ -426,7 +426,7 @@ core
     VCS(name=b"rcs",
         subdirectory=b"RCS",
         exporter=b"find . -name '*,v' -print | cvs-fast-export -k --reposurgeon",
-        styleflags={"export-progress"},
+        styleflags={b"export-progress"},
         properties=False,
         initializer=None,
         importer=None,
@@ -1943,7 +1943,7 @@ class Commit(object):
     def alldeletes(self, killset=None):
         "Is this an all-deletes commit?"
         if killset is None:
-            killset = {"D", b"deleteall"}
+            killset = {b"D", b"deleteall"}
         return all(fileop.op in killset for fileop in self.fileops)
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
@@ -4066,7 +4066,7 @@ class StreamParser:
         # * All other commits without fileops get turned into an annotated tag
         #   with name "emptycommit-<revision>".
         rootmarks = {root.mark for root in branchroots} # empty if nobranch
-        rootskip = {"trunk"+os.sep, b"root"}
+        rootskip = {b"trunk"+os.sep, b"root"}
         def tagname(commit):
             # Give branch and tag roots a special name, except for "trunk" and
             # "root" which do not come from a regular branch copy.
@@ -4214,10 +4214,10 @@ class SubversionDumper:
         "Emit a Revision-number record describing unversioned properties."
         fp.write(b"Revision-number: %d\n" % revision)
         parts = []
-        parts.append(SubversionDumper.svnprops({"svn:log": log}))
-        parts.append(SubversionDumper.svnprops({"svn:author": author}))
+        parts.append(SubversionDumper.svnprops({b"svn:log": log}))
+        parts.append(SubversionDumper.svnprops({b"svn:author": author}))
         # Ugh.  Subversion apparently insists on those decimal places
-        parts.append(SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"}))
+        parts.append(SubversionDumper.svnprops({b"svn:date": date.rfc3339()[:-1]+".000000Z"}))
         # Hack merge links into mergeinfo properties.  This is a kluge
         # - the Subversion model is really like cherrypicking rather
         # than branch merging - but it's better than nothing, and
@@ -4227,7 +4227,7 @@ class SubversionDumper:
             parents = iter(parents)
             next(parents) # ignore main parent
             ancestral = ".".join(itertools.imap(str, sorted(parents)))
-            parts.append(SubversionDumper.svnprops({"svn:mergeinfo": ancestral}))
+            parts.append(SubversionDumper.svnprops({b"svn:mergeinfo": ancestral}))
         parts.append(b"PROPS-END\n")
         parts.append(b"\n")
         revprops = "".join(parts)
@@ -4372,15 +4372,15 @@ class SubversionDumper:
         if svnpath in self.pathmap:
             if mode == '100755':
                 if "svn:executable" not in self.pathmap[svnpath].props:
-                    self.pathmap[svnpath].props["svn:executable"] = "true"
+                    self.pathmap[svnpath].props[b"svn:executable"] = b"true"
                     changeprops = self.pathmap[svnpath].props
             elif mode == '100644':
                 if "svn:executable" in self.pathmap[svnpath].props:
-                    self.pathmap[svnpath].props["svn:executable"] = "false"
+                    self.pathmap[svnpath].props[b"svn:executable"] = b"false"
                     changeprops = self.pathmap[svnpath].props
         #if mode == "120000":
-        #    changeprops = {"svn:special":"*"}
-        #    content = "link " + content
+        #    changeprops = {b"svn:special":b"*"}
+        #    content = b"link " + content
         # The actual content
         SubversionDumper.dump_node(fp,
                   path=svnpath,
@@ -4909,7 +4909,7 @@ class Repository:
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
-            is_tipdelete = lambda c: c.alldeletes(killset={"deleteall"}) \
+            is_tipdelete = lambda c: c.alldeletes(killset={b"deleteall"}) \
                                      and not c.has_children()
         else:
             is_tipdelete = lambda _: False
@@ -5854,7 +5854,7 @@ def read_repo(source, options, preferred):
         repo.vcs = vcs
         repo.preserve_set = vcs.preserve
         showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
-        context = {"basename": os.path.basename(repo.sourcedir)}
+        context = {b"basename": os.path.basename(repo.sourcedir)}
     try:
         here = os.getcwd()
         os.chdir(repo.sourcedir)
@@ -6004,7 +6004,7 @@ def rebuild_repo(repo, target, options, preferred):
         os.chdir(staging)
         if vcs.initializer:
             do_or_die(vcs.initializer, b"repository initialization")
-        parameters = {"basename": os.path.basename(target)}
+        parameters = {b"basename": os.path.basename(target)}
         if "%(tempfile)s" in vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
@@ -6224,7 +6224,7 @@ class RepositoryList:
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
         # of that earlier.
-        trackbranches = {"early": set(), b"late": set()}
+        trackbranches = {b"early": set(), b"late": set()}
         for commit in self.repo.commits():
             if commit.color is None:
                 complain(b"%s is uncolored!" % commit.mark)
@@ -6947,7 +6947,7 @@ into sections of the input stream instead).
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = set()
-            searchable_attrs = {"b":"branch",		# commit
+            searchable_attrs = {b"b":"branch",		# commit
                                 "c":"comment",		# commit or tag
                                 "C":"committer",	# commit
                                 "r":"committish",	# tag or reset
@@ -8538,14 +8538,14 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                             subflags = subflags[:-1]
                             if flag == "g":
                                 subcount = 0
-                            elif flag in {"c", "a", "C"}:
+                            elif flag in {b"c", "a", "C"}:
                                 self.attributes.add(flag)
                             elif flag.isdigit():
                                 subcount = int(subflags)
                             else:
                                 raise Recoverable(b"unknown filter flag")
                         if not self.attributes:
-                            self.attributes = {"c", "a", "C"}
+                            self.attributes = {b"c", "a", "C"}
                         # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
                             try:
@@ -8561,7 +8561,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                                                            len(s) if subcount == 0 else subcount)
                 elif filtercmd.startswith('--dedos'):
                     if not self.attributes:
-                        self.attributes = {"c", "a", "C"}
+                        self.attributes = {b"c", "a", "C"}
                     self.sub = lambda s: s.replace(b"\r\n", b"\n")
                 else:
                     raise Recoverable(b"--shell or --regex or --dedos required")
@@ -8621,11 +8621,11 @@ repository objects in a damaged state.
             self.selection = self.chosen().all()
         (codec, line) = RepoSurgeon.pop_token(line)
         def transcode(txt, _paths=None):
-            return codecs.encode(codecs.decode(txt, codec), "utf-8")
+            return codecs.encode(codecs.decode(txt, codec), b"utf-8")
         try:
             self.data_traverse(prompt=b"Transcoding",
                                hook=transcode,
-                               attributes={"c", "a", "C"},
+                               attributes={b"c", b"a", b"C"},
                                safety=True)
         except UnicodeError:
             raise Fatal(b"UnicodeError during transcoding")
