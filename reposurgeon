@@ -8349,9 +8349,9 @@ redirection is supported).
         errors = 0
         for (i, message) in enumerate(update_list):
             event = None
-            if "Event-Number" in message:
+            if b"Event-Number" in message:
                 try:
-                    eventnum = int(message["Event-Number"]) - 1
+                    eventnum = int(message[b"Event-Number"]) - 1
                 except ValueError:
                     complain(b"event number garbled in update %d" % (i+1,))
                     errors += 1
@@ -8360,20 +8360,20 @@ redirection is supported).
                                       % (eventnum, i+1))
                     errors += 1
                 event = self.chosen()[eventnum]
-            elif "Fossil-ID" in message:
+            elif b"Fossil-ID" in message:
                 try:
-                    event = fossil_map[message["Fossil-ID"]]
+                    event = fossil_map[message[b"Fossil-ID"]]
                 except KeyError:
                     complain(b"no commit matches fossil %s" \
-                                      % message["Fossil-ID"])
+                                      % message[b"Fossil-ID"])
                     errors += 1
-            elif "Event-Mark" in message:
-                event = self.chosen().objfind(message["Event-Mark"])
+            elif b"Event-Mark" in message:
+                event = self.chosen().objfind(message[b"Event-Mark"])
                 if not event:
                     complain(b"no commit matches mark %s" \
                              % message["Event-Mark"])
                     errors += 1
-            elif "Committer" in message and "Committer-Date" in message:
+            elif b"Committer" in message and b"Committer-Date" in message:
                 blank = Commit()
                 blank.committer = Attribution()
                 blank.email_in(message)
@@ -8386,7 +8386,7 @@ redirection is supported).
                 if attribution_counts[stamp] > 1:
                     complain(b"multiple events match %s" % stamp)
                     errors += 1
-            elif "Tagger" in message and "Tagger-Date" in message:
+            elif b"Tagger" in message and b"Tagger-Date" in message:
                 blank = Tag()
                 blank.tagger = Attribution()
                 blank.email_in(message)
@@ -8399,7 +8399,7 @@ redirection is supported).
                 if attribution_counts[stamp] > 1:
                     complain(b"multiple events match %s" % stamp)
                     errors += 1
-            elif "Tag-Name" in message:
+            elif b"Tag-Name" in message:
                 blank = Tag()
                 blank.tagger = Attribution()
                 blank.email_in(message)
@@ -8432,7 +8432,7 @@ redirection is supported).
             else:
                 announce(b"%d events modified." % len(changers))
         if parse.stdout != sys.stdout:
-            if "changed" in parse.line:
+            if b"changed" in parse.line:
                 for update in changers:
                     parse.stdout.write(RepoSurgeonEmail.Divider + b"\n" + update.as_string(unixfrom=False))
 
@@ -8454,7 +8454,7 @@ blob, your editor will be called on the blob file.
             return
         if self.selection is None:
             self.selection = [n for n, o2 in enumerate(self.chosen()) \
-                              if hasattr(o2, "email_out")]
+                              if hasattr(o2, b"email_out")]
         self.edit(self.selection, line)
 
     def help_filter(self):
@@ -8537,7 +8537,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                         while subflags:
                             flag = subflags[0]
                             subflags = subflags[:-1]
-                            if flag == "g":
+                            if flag == b"g":
                                 subcount = 0
                             elif flag in {b"c", "a", "C"}:
                                 self.attributes.add(flag)
@@ -8577,7 +8577,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                     (outdesc, outtmp) = tempfile.mkstemp(prefix=self.repo.subdir())
                     try:
                         assert indesc > -1 and outdesc > -1    # pacify pylint
-                        with open(intmp, "wb") as wfp:
+                        with open(intmp, b"wb") as wfp:
                             wfp.write(content)
                         return capture(b"%s <%s" % (filtercmd, intmp))
                     finally:
@@ -8724,7 +8724,7 @@ squash with the --delete flag.
         if self.selection is None:
             self.selection = []
         with RepoSurgeon.LineParse(line) as parse:
-            self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
+            self.chosen().squash(self.selection, set([b"--delete"]) | parse.options)
 
     def help_coalesce(self):
         print(b"""
@@ -8764,23 +8764,23 @@ With  the --debug option, show messages about mismatches.
                 except ValueError:
                     raise Recoverable(b"time-fuzz value must be an integer")
             def is_clog(commit):
-                return "empty log message" in commit.comment \
+                return b"empty log message" in commit.comment \
                            and len(commit.fileops) == 1 \
-                           and commit.fileops[0].op == "M" \
+                           and commit.fileops[0].op == b"M" \
                            and commit.fileops[0].path.endswith(b"ChangeLog")
             def coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
-                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                    if verbose >= DEBUG_DELETE or b'--debug' in parse.options:
                         announce(b"committer email mismatch at %s" % cnext.id_me())
                     return False
                 if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
-                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                    if verbose >= DEBUG_DELETE or b'--debug' in parse.options:
                         announce(b"time fuzz exceeded at %s" % cnext.id_me())
                     return False
                 if changelog and not is_clog(cthis) and is_clog(cnext):
                     return True
                 if cthis.comment != cnext.comment:
-                    if verbose >= DEBUG_DELETE or '--debug' in parse.options:
+                    if verbose >= DEBUG_DELETE or b'--debug' in parse.options:
                         announce(b"comment mismatch at %s" % cnext.id_me())
                     return False
                 return True
@@ -8836,7 +8836,7 @@ in the commit's ancestry.
         if len(fields) < 2:
             raise Recoverable(b"add requires an operation type and arguments")
         optype = fields[0]
-        if optype == "D":
+        if optype == b"D":
             path = fields[1]
             for _, event in self.selected(Commit):
                 if path in event.paths():
@@ -8844,7 +8844,7 @@ in the commit's ancestry.
                                       % (event.mark, path))
                 if repo.ancestor_count(event, path) == 0:
                     raise Recoverable(b"no previous M for %s" % path)
-        elif optype == "M":
+        elif optype == b"M":
             if len(fields) != 4:
                 raise Recoverable(b"wrong field count in add command")
             elif fields[1].endswith(b"644"):
@@ -8867,7 +8867,7 @@ in the commit's ancestry.
                 if path in event.paths():
                     raise Recoverable(b"%s already has on op for %s" \
                                       % (event.mark, path))
-        elif optype in (b"R", "C"):
+        elif optype in (b"R", b"C"):
             try:
                 source = fields[1]
                 target = fields[2]
@@ -8884,11 +8884,11 @@ in the commit's ancestry.
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             fileop = FileOp()
-            if optype == "D":
+            if optype == b"D":
                 fileop.construct(b"D", path)
-            elif optype == "M":
+            elif optype == b"M":
                 fileop.construct(b"M", perms, mark, path)
-            elif optype in (b"R", "C"):
+            elif optype in (b"R", b"C"):
                 fileop.construct(optype, source, target)
             event.fileops.append(fileop)
 
@@ -8920,7 +8920,7 @@ change in a future release.
         (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
-            if opindex == "deletes":
+            if opindex == b"deletes":
                 event.fileops = [e for e in event.fileops if e.op != "D"]
                 return
             for (ind, op) in enumerate(event.fileops):
@@ -8939,7 +8939,7 @@ change in a future release.
             target = None
             if line:
                 (verb, line)  = RepoSurgeon.pop_token(line)
-                if verb == 'to':
+                if verb == b'to':
                     self.set_selection_set(line)
                     if len(self.selection) != 1:
                         raise Recoverable(b"remove to requires a singleton selection")
@@ -8987,7 +8987,7 @@ an offset literal of +0 or -0.
         if not line:
             complain(b"a signed time offset argument is required.")
             return
-        elif not line[0] in (b'-', '+'):
+        elif not line[0] in (b'-', b'+'):
             complain(b"time offset argument must begin with + or -.")
             return
         line = str(line)   # pacify pylint by forcing string type
@@ -9088,9 +9088,9 @@ branch 'qux', the branch segments are renamed 'qux-early' and
                 for (i, event) in enumerate(self.chosen().events):
                     if hasattr(event, "branch") and event.branch == basename:
                         if i <= self.selection[0]:
-                            event.branch += "-early"
+                            event.branch += b"-early"
                         else:
-                            event.branch += "-late"
+                            event.branch += b"-late"
         if verbose:
             self.do_choose(b"")
 
@@ -9183,7 +9183,7 @@ file operations in the original commit.
         else:
             raise Recoverable(b"don't know what to do for preposition %s" % prep)
         if verbose:
-            self.do_inspect(repr(where+1) + "," + repr(where+2))
+            self.do_inspect(repr(where+1) + b"," + repr(where+2))
 
     def help_unite(self):
         print(b"""
@@ -9280,7 +9280,7 @@ source branch are removed.
         if not args:
             complain(b"debranch command requires at least one argument")
         else:
-            target = 'refs/heads/master'
+            target = b'refs/heads/master'
             source = args[0]
             if len(args) == 2:
                 target = args[1]
@@ -9366,9 +9366,9 @@ silently skipped and the old path fileop is deleted instead.
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
         with RepoSurgeon.LineParse(line) as parse:
-            if verb == "rename":
-                relax = '--relax' in parse.options
-                force = '--force' in parse.options
+            if verb == b"rename":
+                relax = b'--relax' in parse.options
+                force = b'--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
                 if not target_re:
                     raise Recoverable(b"no target specified in rename")
@@ -9376,7 +9376,7 @@ silently skipped and the old path fileop is deleted instead.
                 for _,commit in repo.iterevents(types=Commit):
                     drop = []
                     for fileop in commit.fileops:
-                        for attr in (b"path", "source", "target"):
+                        for attr in (b"path", b"source", b"target"):
                             if hasattr(fileop, attr):
                                 oldpath = getattr(fileop, attr)
                                 if oldpath and re.search(source_re, oldpath):
@@ -9416,7 +9416,7 @@ first directory component from every path.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        if not line.startswith((b"sub", "sup")):
+        if not line.startswith((b"sub", b"sup")):
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
@@ -9424,12 +9424,12 @@ first directory component from every path.
                 parse.stdout.write(b"\n".join(sorted(allpaths)) + b"\n")
                 return
         fields = line.split()
-        if fields[0] == "sub":
+        if fields[0] == b"sub":
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
             print(b"\n".join(modified))
-        elif fields[0] == "sup":
+        elif fields[0] == b"sup":
             try:
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[f.find(os.sep)+1:])
