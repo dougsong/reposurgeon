@@ -200,6 +200,13 @@ for CVS, or the Subversion tools themselves for Subversion.</p>
 for you, interpreting your $(PROJECT).lift file, when you type "make".
 You may have to watch the baton spin for a few minutes.</p>
 
+<p>If you are exporting from CVS, it may be a good idea to run some
+trial conversions with cvsconvert, a wrapper script shipped with
+cvs-fast-export.  This script runs a conversion direct to git;
+the advantage is that it can do a comparison of the repository
+histories and identify problems for you to fix in your lift
+script.</p>
+
 <p>Normally <code>reposurgeon</code> will do branch analysis for you.
 On most Subversion repositories, and in particular anything with a
 standard trunk/tags/branches layout, it will do the right thing. (It
@@ -661,6 +668,8 @@ Makefile.</p>
 <p>3.12 (2014-08-12) Merging SVN .gitignore files.</p>
 
 <p>2.13 (2014-10-26) Note that git-cvsserver exists.</p>
+
+<p>2.14 (2014-11-05) Mention cvsconvert.</p>
 </div>
 <hr />
 </body>
