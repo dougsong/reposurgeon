@@ -95,7 +95,7 @@ $(PROJECT)-mirror:
 
 # Build the first-stage CVS stream dump from the local mirror
 $(PROJECT).cvs: $(PROJECT)-mirror
-	find $(PROJECT)-mirror -name '*,v' | cvs-fast-export --reposurgeon >$(PROJECT).cvs
+	find $(PROJECT)-mirror -name '*,v' | cvs-fast-export -k k --reposurgeon >$(PROJECT).cvs
 
 # Make a local checkout of the CVS mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
