@@ -438,6 +438,21 @@ core
         dfltignores=b"",	# Has none
         project=b"http://www.catb.org/~esr/cvs-fast-export",
         notes=b"Requires cvs-fast-export."),
+    VCS(name=b"src",
+        subdirectory=b".src",
+        exporter=b"src fast-export",
+        styleflags={},
+        properties=False,
+        initializer=b"src init",
+        importer=None,
+        checkout=None,
+        lister=None,
+        preserve=set(),
+        authormap=None,
+        ignorename=None,
+        dfltignores=b"",	# Has none
+        project=b"http://catb.org/~esr/src",
+        notes=b""),
     ]
 
 # Import and export filter methods for VCSes that use magic files rather
@@ -6108,7 +6123,7 @@ class popen_or_die:
         self.fp = None
     def __enter__(self):
         if debug_enable(DEBUG_COMMANDS):
-            if self.mode == "r":
+            if self.mode == "rb":
                 announce(b"%s: reading from '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
             else:
                 announce(b"%s: writing to '%s'%s" % (rfc3339(time.time()), self.command, self.legend))

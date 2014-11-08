@@ -62,7 +62,7 @@ command and written out with the <option>--format=fossil</option> option of
 the <command>write</command>. Ignore patterns are not translated
 in either direction.</para>
 
-<para>RCS and CVS are supported for read only, not write.  For both,
+<para>RCS, CVS, and SRC are supported for read only, not write.  For these,
 <command>reposurgeon</command> must be run from within a repository
 directory.</para>
 

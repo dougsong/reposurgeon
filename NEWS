@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     Import support for SRC.
+
 3.15: 1014-11-05
      New 'add' command to insert news fileops in commits.
 
