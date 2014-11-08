@@ -446,7 +446,7 @@ core
         initializer=b"src init",
         importer=None,
         checkout=None,
-        lister=None,
+        lister="src ls",
         preserve=set(),
         authormap=None,
         ignorename=None,
