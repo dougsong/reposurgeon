@@ -429,7 +429,7 @@ core
         styleflags={b"export-progress"},
         properties=False,
         initializer=None,
-        importer=None,
+        importer="rcs-fast-import",
         checkout=None,
         lister=None,
         preserve=set(),
@@ -437,22 +437,22 @@ core
         ignorename=None,
         dfltignores=b"",	# Has none
         project=b"http://www.catb.org/~esr/cvs-fast-export",
-        notes=b"Requires cvs-fast-export."),
+        notes=b"Requires cvs-fast-export and rcs-fast-import."),
     VCS(name=b"src",
         subdirectory=b".src",
         exporter=b"src fast-export",
         styleflags={},
         properties=False,
-        initializer=b"src init",
-        importer=None,
+        initializer=None,
+        importer="src fast-import",
         checkout=None,
         lister="src ls",
         preserve=set(),
         authormap=None,
-        ignorename=None,
+        ignorename=".srcignore",
         dfltignores=b"",	# Has none
         project=b"http://catb.org/~esr/src",
-        notes=b""),
+        notes=b"Requires rcs-fast-import."),
     ]
 
 # Import and export filter methods for VCSes that use magic files rather

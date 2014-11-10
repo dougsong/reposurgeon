@@ -49,12 +49,19 @@ defines a common language of primitive operations for
 
 <para>Fully supported systems (those for which
 <command>reposurgeon</command> can both read and write repositories)
-include git, hg, bzr, svn, and darcs.  For a complete list, with
+include git, hg, bzr, svn, darcs, RCS, and src.  For a complete list, with
 dependencies and technical notes, type <command>prefer</command> to
-the <command>reposurgeon</command> prompt. Also note that writing
-Subversion repositories has some significant limitations, discussed in
-the section on <link linkend="subversion">Working With
-Subversion</link>.</para>
+the <command>reposurgeon</command> prompt.</para>
+
+<para>Writing to the file-oriented systems RCS and src is done via
+<citerefentry><refentrytitle>rcs-fast-import</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and has some serious limitations because those systems cannot
+represent all the metadata in a git-fast-export stream. Consult that
+tool's documentation for details and partial workarounds.</para>
+
+<para>Writing Subversion repositories also has some
+significant limitations, discussed in the section on <link
+linkend="subversion">Working With Subversion</link>.</para>
 
 <para>Fossil repository files can be read in using the
 <option>--format=fossil</option> option of the <command>read</command>
@@ -62,7 +69,7 @@ command and written out with the <option>--format=fossil</option> option of
 the <command>write</command>. Ignore patterns are not translated
 in either direction.</para>
 
-<para>RCS, CVS, and SRC are supported for read only, not write.  For these,
+<para>CVS is supported for read only, not write.  For CVS,
 <command>reposurgeon</command> must be run from within a repository
 directory.</para>
 
@@ -2825,6 +2832,7 @@ glob or regexp syntax or negation.</para>
         <entry align='center'>from hg</entry>
         <entry align='center'>from bzr</entry>
         <entry align='center'>from darcs</entry>
+        <entry align='center'>from src</entry>
       </row>
     </thead>
     <tbody>
@@ -2836,6 +2844,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to svn</emphasis></para></entry>
@@ -2845,6 +2854,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to git</emphasis></para></entry>
@@ -2854,6 +2864,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all except !-prefixed</para></entry>
         <!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to hg</emphasis></para></entry>
@@ -2863,6 +2874,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
@@ -2872,6 +2884,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
@@ -2881,6 +2894,17 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>plain</para></entry>
         <!-- bzr --><entry><para>plain</para></entry>
         <!--darcs--><entry><para>all</para></entry>
+        <!-- src --><entry><para>all</para></entry>
+      </row>
+      <row>
+        <entry><para><emphasis role="strong">to src</emphasis></para></entry>
+        <!-- CVS --><entry><para>all except !</para></entry>
+        <!-- svn --><entry><para>all</para></entry>
+        <!-- git --><entry><para>all except !-prefixed</para></entry>
+        <!-- hg  --><entry><para>all</para></entry>
+        <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
+        <!--darcs--><entry><para>plain</para></entry>
+        <!-- src --><entry><para>all</para></entry>
       </row>
     </tbody>
   </tgroup>
