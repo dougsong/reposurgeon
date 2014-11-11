@@ -221,7 +221,7 @@ bzr-orphans
         styleflags={b"import-defaults", b"nl-after-comment", b"export-progress"},
         properties=False,
         initializer=b"hg init",
-        lister=b"hg locate",
+        lister=b"hg status -macn",
         importer=b"hg fastimport %(tempfile)s",
         checkout=b"hg checkout",
         preserve={b".hg/hgrc"},
