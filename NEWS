@@ -1,8 +1,9 @@
 			reposurgeon project news
 
-Repository head:
+3.17: 1014-11-17
      Export support for SRC and RCS.
      Bug fix for automated preservation under hg.
+     Bug fix for reparenting and checkout of commits with inline data.
 
 3.16: 1014-11-08
      Import support for SRC.
