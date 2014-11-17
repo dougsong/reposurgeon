@@ -49,11 +49,11 @@ defines a common language of primitive operations for
 
 <para>Fully supported systems (those for which
 <command>reposurgeon</command> can both read and write repositories)
-include git, hg, bzr, svn, darcs, RCS, and src.  For a complete list, with
+include git, hg, bzr, svn, darcs, RCS, and SRC.  For a complete list, with
 dependencies and technical notes, type <command>prefer</command> to
 the <command>reposurgeon</command> prompt.</para>
 
-<para>Writing to the file-oriented systems RCS and src is done via
+<para>Writing to the file-oriented systems RCS and SRC is done via
 <citerefentry><refentrytitle>rcs-fast-import</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 and has some serious limitations because those systems cannot
 represent all the metadata in a git-fast-export stream. Consult that
@@ -2813,6 +2813,9 @@ compatibility table describes which patterns will translate;
 <quote>plain</quote> indicates a plain filename with no
 glob or regexp syntax or negation.</para>
 
+<para>RCS has no ignore files or patterns and is therefore not
+included in the table.</para>
+
 <informaltable pgwide='0' frame='all'>
   <tgroup cols='3' align='center'>
     <colspec colname='c1'/>
@@ -2832,7 +2835,7 @@ glob or regexp syntax or negation.</para>
         <entry align='center'>from hg</entry>
         <entry align='center'>from bzr</entry>
         <entry align='center'>from darcs</entry>
-        <entry align='center'>from src</entry>
+        <entry align='center'>from SRC</entry>
       </row>
     </thead>
     <tbody>
@@ -2844,7 +2847,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to svn</emphasis></para></entry>
@@ -2854,7 +2857,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to git</emphasis></para></entry>
@@ -2864,7 +2867,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all except !-prefixed</para></entry>
         <!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to hg</emphasis></para></entry>
@@ -2874,7 +2877,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
@@ -2884,7 +2887,7 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
@@ -2894,17 +2897,17 @@ glob or regexp syntax or negation.</para>
         <!-- hg  --><entry><para>plain</para></entry>
         <!-- bzr --><entry><para>plain</para></entry>
         <!--darcs--><entry><para>all</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
       <row>
-        <entry><para><emphasis role="strong">to src</emphasis></para></entry>
+        <entry><para><emphasis role="strong">to SRC</emphasis></para></entry>
         <!-- CVS --><entry><para>all except !</para></entry>
         <!-- svn --><entry><para>all</para></entry>
         <!-- git --><entry><para>all except !-prefixed</para></entry>
         <!-- hg  --><entry><para>all</para></entry>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
-        <!-- src --><entry><para>all</para></entry>
+        <!-- SRC --><entry><para>all</para></entry>
       </row>
     </tbody>
   </tgroup>

@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 Repository head:
-     Export support for RCS.
+     Export support for SRC and RCS.
      Bug fix for automated preservation under hg.
 
 3.16: 1014-11-08
