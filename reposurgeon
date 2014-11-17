@@ -429,7 +429,7 @@ core
         styleflags={b"export-progress"},
         properties=False,
         initializer=None,
-        importer="rcs-fast-import",
+        importer=None,
         checkout=None,
         lister=None,
         preserve=set(),
@@ -437,22 +437,22 @@ core
         ignorename=None,
         dfltignores=b"",	# Has none
         project=b"http://www.catb.org/~esr/cvs-fast-export",
-        notes=b"Requires cvs-fast-export and rcs-fast-import."),
+        notes=b"Requires cvs-fast-export."),
     VCS(name=b"src",
         subdirectory=b".src",
         exporter=b"src fast-export",
         styleflags={},
         properties=False,
-        initializer=None,
-        importer="src fast-import",
+        initializer=b"src init",
+        importer=None,
         checkout=None,
         lister="src ls",
         preserve=set(),
         authormap=None,
-        ignorename=".srcignore",
+        ignorename=None,
         dfltignores=b"",	# Has none
         project=b"http://catb.org/~esr/src",
-        notes=b"Requires rcs-fast-import."),
+        notes=b""),
     ]
 
 # Import and export filter methods for VCSes that use magic files rather
@@ -1893,7 +1893,7 @@ class Commit(object):
         # Take own fileops into account.
         for fileop in self.fileops:
             if fileop.op == b'M':
-                ancestors[fileop.path] = (fileop.mode, fileop.ref)
+                ancestors[fileop.path] = (fileop.mode, fileop.ref, fileop.inline)
             elif fileop.op == b'D':
                 if fileop.path in ancestors:
                     del ancestors[fileop.path]
@@ -1946,12 +1946,14 @@ class Commit(object):
         # Only paths touched by non-deleteall ops can be changed.
         for path in paths:
             try:
-                mode, mark = current[path]
+                mode, mark, inline = current[path]
             except TypeError:
                 continue
-            if (mode, mark) != parent[path]:
+            if (mode, mark, inline) != parent[path]:
                 fileop = FileOp()
                 fileop.construct(b"M", mode, mark, path)
+                if mark == "inline":
+                    fileop.inline = inline
                 new_ops.append(fileop)
         # Finishing touches:
         new_ops.sort(key=FileOp.sortkey)
@@ -1968,17 +1970,22 @@ class Commit(object):
         try:
             if not os.path.exists(directory):
                 os.mkdir(directory)
-            for (path, (_, mark)) in self.manifest().iteritems():
+            for (path, (_, mark, inline)) in self.manifest().iteritems():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
                     os.makedirs(fulldir)
-                blob = self.repo.objfind(mark)
-                if blob.hasfile():
-                    os.link(blob.blobfile(), fullpath)
-                else:
+
+                if mark == "inline":
                     with open(fullpath, b"wb") as wfp:
-                        wfp.write(blob.get_content())
+                        wfp.write(inline)
+                else:
+                    blob = self.repo.objfind(mark)
+                    if blob.hasfile():
+                        os.link(blob.blobfile(), fullpath)
+                    else:
+                        with open(fullpath, b"wb") as wfp:
+                            wfp.write(blob.get_content())
         except OSError:
             raise Recoverable(b"could not create checkout directory or files.")
         return directory
@@ -9490,11 +9497,11 @@ This command supports > redirection.
                 parse.stdout.write(b"\n")
                 if filter_func is None:
                     parse.stdout.write(b"\n".join(b"%s -> %s" % (path, mark)
-                            for path, (mode, mark)
+                            for path, (mode, mark, _)
                             in event.manifest().iteritems()))
                 else:
                     parse.stdout.write(b"\n".join(b"%s -> %s" % (path, mark)
-                            for path, (mode, mark)
+                            for path, (mode, mark, _)
                             in event.manifest().iteritems()
                             if filter_func(path)))
                 parse.stdout.write(b"\n")
@@ -9613,9 +9620,11 @@ modified as a result.
             f = FileOp()
             f.construct(b"deleteall")
             newops = [f]
-            for (path, (mode, mark)) in child.manifest().iteritems():
+            for (path, (mode, mark, inline)) in child.manifest().iteritems():
                 f = FileOp()
                 f.construct(b"M", mode, mark, path)
+                if mark == "inline":
+                    f.inline = inline
                 newops.append(f)
             newops.extend(child.fileops)
             child.fileops = newops
