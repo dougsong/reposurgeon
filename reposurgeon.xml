@@ -1521,6 +1521,7 @@ operations in the root survive.</para>
 </varlistentry>
 <varlistentry>
 <term><command>graft</command>
+	[--prune]
         <emphasis>reponame</emphasis>
 </term>
 <listitem>
@@ -1538,6 +1539,9 @@ commits in the currently chosen repo.</para>
 it is grafted to the selected one. Any other callouts in the named repo are also
 resolved in the context of the currently chosen one. Finally, the
 named repo is removed from the load list.</para>
+
+<para>With the option --prune, prepend a deleteall operation into the root
+of the grafted repository.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -5675,7 +5675,7 @@ class Repository:
         other.events = []
         other.cleanup()
         #del other
-    def graft(self, graft_repo, graft_point):
+    def graft(self, graft_repo, graft_point, options):
         "Graft a repo on to this one at a specified point."
         if graft_point is None:
             persist = {}
@@ -5692,6 +5692,13 @@ class Repository:
         self.absorb(graft_repo)
         if graft_point:
             graftroot.add_parent(where.mark)
+
+        if "--prune" in options:
+            # Prepend a deleteall. Roots have nothing upline to preserve.
+            delop = FileOp()
+            delop.construct(b"deleteall")
+            graftroot.fileops.insert(0, delop)
+
         # Resolve all callouts
         for commit in graft_repo.commits():
             for (idx, parent) in enumerate(commit.parents()):
@@ -9258,6 +9265,9 @@ Labels and branches in the named repo are prefixed with its name; then
 it is grafted to the selected one. Any other callouts in the named repo are also
 resolved in the context of the currently chosen one. Finally, the
 named repo is removed from the load list.
+
+With the option --prune, prepend a deleteall operation into the root
+of the grafted repository.
 """)
     def do_graft(self, line):
         "Graft a named repo onto the selected one."
@@ -9266,25 +9276,26 @@ named repo is removed from the load list.
             return
         if not self.repolist:
             raise Recoverable(b"no repositories are loaded.")
-        if line in self.reponames():
-            graft_repo = self.repo_by_name(line)
-        else:
-            raise Recoverable(b"no such repo as %s" % line)
-        require_graft_point = True
-        if self.selection is not None and len(self.selection) == 1:
-            graft_point = self.selection[0]
-        else:
-            for commit in graft_repo.commits():
-                for parent in commit.parents():
-                    if Commit.is_callout(parent.mark):
-                        require_graft_point = False
-            if not require_graft_point:
-                graft_point = None
+        with RepoSurgeon.LineParse(line) as parse:
+            if parse.line in self.reponames():
+                graft_repo = self.repo_by_name(parse.line)
             else:
-                raise Recoverable(b"a singleton selection set is required.")
-        # OK, we've got the two repos and the graft point.  Do it.
-        self.chosen().graft(graft_repo, graft_point)
-        self.remove_by_name(graft_repo.name)
+                raise Recoverable(b"no such repo as %s" % parse.line)
+            require_graft_point = True
+            if self.selection is not None and len(self.selection) == 1:
+                graft_point = self.selection[0]
+            else:
+                for commit in graft_repo.commits():
+                    for parent in commit.parents():
+                        if Commit.is_callout(parent.mark):
+                            require_graft_point = False
+                if not require_graft_point:
+                    graft_point = None
+                else:
+                    raise Recoverable(b"a singleton selection set is required.")
+            # OK, we've got the two repos and the graft point.  Do it.
+            self.chosen().graft(graft_repo, graft_point, parse.options)
+            self.remove_by_name(graft_repo.name)
 
     def help_debranch(self):
         print(b"""
