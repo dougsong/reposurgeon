@@ -1421,6 +1421,7 @@ class FileOp(object):
             self.setOp(b"deleteall")
         else:
             raise Fatal(b"unexpected fileop %s" % opargs[0])
+        return self
     def parse(self, opline):
         if opline.startswith(b"M"):
             m = FileOp.modify_re.match(opline)
@@ -6334,12 +6335,13 @@ class RepositoryList:
             # in the grafted branch unless they have modify ops in the branch
             # root.
             if "--prune" in options:
-                keepers = root.paths()
+                deletes = []
                 for path in most_recent.manifest():
-                    if not path in keepers:
-                        fileop = FileOp()
-                        fileop.construct(b"D", path)
-                        root.fileops.append(fileop)
+                    fileop = FileOp()
+                    fileop.construct(b"D", path)
+                    deletes.append(fileop)
+                root.fileops = deletes + root.fileops
+                root.canonicalize()
         # Put the result on the load list
         self.repolist.append(union)
         self.choose(union)
