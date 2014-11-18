@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     The graft command now has a --prune option like unite.
+
 3.17: 1014-11-17
      Export support for SRC and RCS.
      Bug fix for automated preservation under hg.

@@ -10,3 +10,7 @@ Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>
 
 Daniel Brooks <db48x@db48x.net>
    Date unit testing, improvements for split and expunge commands.
+
+Chris Lemmons <alficles@gmail.com>
+   Solved some problems with inline blobs, improved interoperability with
+   Mercurial, wrote the --prune option for graft.
