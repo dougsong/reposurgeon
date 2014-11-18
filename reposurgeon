@@ -9231,6 +9231,10 @@ older ones). After all grafts, marks will be renumbered.
 The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
 type.
+
+With the option --prune, at each join generate D ops for every
+file that doesn't have a modify operation in the root commit of the
+branch being grafted on.
 """)
     def do_unite(self, line):
         "Unite repos together."
