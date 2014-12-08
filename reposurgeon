@@ -4766,7 +4766,7 @@ class Repository:
             if len(matches) < 1:
                 raise Recoverable(b"no events match %s" % ref)
             elif len(matches) > 1:
-                if ordinal is not None and ordinal < len(matches):
+                if ordinal is not None and ordinal <= len(matches):
                     selection.add(matches[ordinal-1])
                 else:
                     selection |= set(matches)
