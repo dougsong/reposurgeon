@@ -9713,7 +9713,7 @@ lightweight tags, actually sequences of commits with a common
 branchname beginning with 'refs/tags' - in this case the tag is
 considered to point to the last commit in the sequence, (3) Reset
 objects.  These may occur in combination; in fact, stream exporters
-form sysyems with annotation tags commonly express each of these as a
+from systems with annotation tags commonly express each of these as a
 true tag object (1) pointing at the tip commit of a sequence (2) in
 which the basename of the common branch field is identical to the tag
 name.  An exporter that generates lightweight-tagged commit sequences (2)
