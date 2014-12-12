@@ -1512,11 +1512,11 @@ older ones). After all grafts, marks will be renumbered.</para>
 separated by '+'. It will have no source directory or preferred system
 type.</para>
 
-<para>With the option --prune, at each join D operations will be
-for every ancestral file existing wiol be prepended to the root
-commit, then it will be canonicalized using the rules for squashing
-the effect will be that only files with properly matching M, R, and C
-operations in the root survive.</para>
+<para>With the option --prune, at each join D operations for every
+ancestral file existing will be prepended to the root commit, then it
+will be canonicalized using the rules for squashing the effect will be
+that only files with properly matching M, R, and C operations in the
+root survive.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
