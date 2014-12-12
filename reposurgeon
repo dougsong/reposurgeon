@@ -3368,7 +3368,7 @@ class StreamParser:
                                          and node.path not in self.branchdeletes
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce(b"r%s: directory copy to %s from " \
-                                     "r%s~%s (branchcopy %s)" \
+                                     b"r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
                                         node.from_rev,
@@ -4003,8 +4003,8 @@ class StreamParser:
                                     own_merges.add(from_commit.mark)
                                 else:
                                     self.gripe(b"cannot resolve mergeinfo "
-                                               "source from revision %s for "
-                                               "path %s." % (from_rev,
+                                               b"source from revision %s for "
+                                               b"path %s." % (from_rev,
                                                              node.path))
                     mergeinfo[(node.path,)] = own_merges
                     new_merges = own_merges - existing_merges
@@ -4650,7 +4650,7 @@ class Repository:
             ind = self.find(mark)
             if ind is not None: return ind
         raise Fatal(b"internal error: <%s> not matched "
-                    "in repository %s" % (obj.fossil_id, self.name))
+                    b"in repository %s" % (obj.fossil_id, self.name))
     def find(self, mark):
         "Find an object index by mark"
         if not self._mark_to_index:
@@ -9581,7 +9581,7 @@ from the highest member (child) to the lowest (parent).
             (_, earlier), (_, later) = commits
         except (TypeError, ValueError):
             raise Recoverable(b"merge requires a selection set "
-                              "with at least two commits.")
+                              b"with at least two commits.")
         later.add_parent(earlier)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
