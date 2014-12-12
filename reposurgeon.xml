@@ -293,7 +293,7 @@ letters. These are the type letters:</para>
       <row>
         <entry align='center'>D</entry>
         <entry align='center'>all-delete commits</entry>
-        <entry><para>These are artifacts produced by some oolder
+        <entry><para>These are artifacts produced by some older
 	repository-conversion tools.</para></entry>
       </row>
       <row>
@@ -722,7 +722,7 @@ every tag that refers to it.</para>
 
 <para>Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
-dump.  When this happens and <option>--callout</option> optioonm was
+dump.  When this happens and <option>--callout</option> option was
 specified, the write code replaces the merge mark with a callout, the
 action stamp of the parent commit; otherwise the parent mark is
 omitted.  Importers will fail when reading a stream dump with callouts;
@@ -1280,7 +1280,7 @@ of file operations in the original commit.</para>
 the path in the commit's ancestry.  For an M operation to be valid,
 the 'perm' part must be a token ending with 755 or 644 and the 'mark'
 must refer to a blob that precedes the commit location.  For an R or C
-operation to be valid, there must be an M operation for the aource in
+operation to be valid, there must be an M operation for the source in
 the commit's ancestry.</para>
 </listitem>
 </varlistentry>
@@ -1362,7 +1362,7 @@ output file in a form that can be fed back in.</para>
 <listitem>
 <para>In the selected objects (defaulting to none) set every instance
 of a named field to a string value.  The string may be quoted to
-include whitespace, and use backslash eacapes interpreted by the
+include whitespace, and use backslash escapes interpreted by the
 Python string-escape codec, such as \n and \t. </para>
 
 <para>Attempts to set nonexistent attributes are ignored. Valid values
@@ -1419,7 +1419,7 @@ work as a delimiter in place of the /; this makes it easier to use
 / in patterns. Ordinarily only the first such
 substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal gives the maximum number
-of substitutions to perform. Other flags available restrict substiution
+of substitutions to perform. Other flags available restrict substitution
 scope - 'c' for comment text only, 'C' for committer name only, 'a'
 for author names only.</para>
 
@@ -2266,7 +2266,7 @@ for exploring the selection-set language.</para></listitem>
 It is an error to assign to a name that is already assigned, or to
 any existing branch name.  Assignments may be cleared by sequence
 mutations (though not ordinary deletions); you will see a warning
-whe n this occurs.</para>
+when this occurs.</para>
 
 <para>Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.</para>

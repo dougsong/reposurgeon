@@ -9,7 +9,7 @@
 # 5. For svn, set SVN_URL to point at the remote repository you want to convert.
 # 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module.
 #    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
-#    include the path to the CVS modules directory after the hosyname. 
+#    include the path to the CVS modules directory after the hostname.
 # 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
 # 8. Run 'make stubmap' to create a stub author map.
 # 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool

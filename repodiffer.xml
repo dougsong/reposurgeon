@@ -126,7 +126,7 @@ is reposurgeon vs. git-svn.</para></listitem>
 <listitem><para>Ignore email addresses when comparing names.  This 
 can be useful when comparing two repositories translated from Subversion;
 typically they'll have the Subversion Unix user ID as the name part of the
-adress, but whether and how a host part is generated for the address varies.
+address, but whether and how a host part is generated for the address varies.
 </para></listitem>
 </varlistentry>
 </variablelist>
