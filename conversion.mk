@@ -20,6 +20,8 @@
 # name extra metadata such as a comments mailbox.
 #
 # After the conversion, you can perform a sanity check with 'make diff'.
+# You can check individual tags or branches with 'make diff-tag'
+#
 # Note that CVS-checkout directories not matched in a conversion may be
 # historical relics containing only CVSROOT directories.
 
@@ -37,6 +39,8 @@ REPOSURGEON = reposurgeon
 # Configuration ends here
 
 .PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap diff
+# Tell make not to auto-remove tag directories, because it only tries rm and hence fails
+.PRECIOUS: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
 
 default: $(PROJECT)-$(TARGET_VCS)
 
@@ -50,11 +54,11 @@ $(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).lift $(PROJECT).map $(EXTRAS)
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
-	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz 
+	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz $(PROJECT)-*-$(TARGET_VCS)
 
 # Force full rebuild from the remote repo on the next make.
 remote-clobber: local-clobber
-	rm -fr $(PROJECT).$(SOURCE_VCS) $(PROJECT)-mirror $(PROJECT)-checkout
+	rm -fr $(PROJECT).$(SOURCE_VCS) $(PROJECT)-mirror $(PROJECT)-checkout $(PROJECT)-*-checkout
 
 # Get the (empty) state of the author mapping from the first-stage stream
 stubmap: $(PROJECT).$(SOURCE_VCS)
@@ -65,6 +69,10 @@ EXCLUDE = -x CVS -x .$(SOURCE_VCS) -x .$(TARGET_VCS)
 EXCLUDE += -x .$(SOURCE_VCS)ignore -x .$(TARGET_VCS)ignore
 diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 	diff $(EXCLUDE) -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+
+# Compare specific tags of the unconverted and converted repositories
+diff-%: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
+	diff $(EXCLUDE) -r -u $(PROJECT)-$*-checkout $(PROJECT)-$*-$(TARGET_VCS)
 
 # Source-VCS-specific productions to build the first-stage stream dump
 
@@ -83,6 +91,10 @@ $(PROJECT)-mirror:
 $(PROJECT)-checkout: $(PROJECT)-mirror
 	svn co file://${PWD}/$(PROJECT)-mirror $(PROJECT)-checkout
 
+# Make a local checkout of the Subversion mirror for inspection at a specific tag
+$(PROJECT)-%-checkout: $(PROJECT)-mirror
+	svn co -r $* file://${PWD}/$(PROJECT)-mirror $(PROJECT)-$*-checkout
+
 endif
 
 ifeq ($(SOURCE_VCS),cvs)
@@ -99,12 +111,23 @@ $(PROJECT).cvs: $(PROJECT)-mirror
 
 # Make a local checkout of the CVS mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
-	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -kk $(CVS_MODULE)
-	mv $(CVS_MODULE) $(PROJECT)-checkout
+	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -d $(PROJECT)-checkout -kk $(CVS_MODULE)
+
+# Make a local checkout of the CVS mirror for inspection at a specific tag
+$(PROJECT)-%-checkout: $(PROJECT)-mirror
+	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
 
 endif
 
+# Check out specific tags or branches from the converted repo
+$(PROJECT)-%-hg: $(PROJECT)-hg
+	hg clone -u $* $(PROJECT)-hg $@
+
 ifeq ($(TARGET_VCS),git)
+
+# Check out specific tags or branches from the converted repo
+$(PROJECT)-%-git: $(PROJECT)-git
+	mkdir $@ && git -C $@ --git-dir ../$(PROJECT)-$(TARGET_VCS)/.git checkout -f $*
 
 #
 # The following productions are git-specific
