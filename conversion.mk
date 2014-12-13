@@ -74,6 +74,10 @@ diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 diff-%: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
 	diff $(EXCLUDE) -r -u $(PROJECT)-$*-checkout $(PROJECT)-$*-$(TARGET_VCS)
 
+# Compare all tags
+diff-all-tags: $(PROJECT)-tags.txt
+	make $(shell sed -e 's/^/diff-/' $(PROJECT)-tags.txt)
+
 # Source-VCS-specific productions to build the first-stage stream dump
 
 ifeq ($(SOURCE_VCS),svn)
@@ -116,6 +120,13 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 # Make a local checkout of the CVS mirror for inspection at a specific tag
 $(PROJECT)-%-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
+
+$(PROJECT)-tags.txt: $(PROJECT)-mirror
+	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror rlog -h $(CVS_MODULE) 2>&1 \
+	| awk -F"[.:]" '/^\t/{print $$1}' \
+	| awk '{print $$1}' \
+	| sort -u \
+	> $(PROJECT)-tags.txt
 
 endif
 
