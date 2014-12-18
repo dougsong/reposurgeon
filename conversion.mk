@@ -114,6 +114,7 @@ $(PROJECT).cvs: $(PROJECT)-mirror
 	find $(PROJECT)-mirror -name '*,v' | cvs-fast-export --reposurgeon >$(PROJECT).cvs
 
 # Make a local checkout of the CVS mirror for inspection
+# Note: if your project contains binary files, change -kk to -kb.
 $(PROJECT)-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -d $(PROJECT)-checkout -kk $(CVS_MODULE)
 

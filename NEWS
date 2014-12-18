@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     Minor bugfix for handling of indexed action stamps.
+
 3.18: 2014-11-28
      The graft command now has a --prune option like unite.
 

@@ -1,6 +1,6 @@
 = TO-DO =
 
-* mergeinfo interpretation needs some work. Present implementation may
+* SVN mergeinfo interpretation needs some work. Present implementation may
   create confusing merge links in some cases.
 
 * Someday, port fully to Python 3.  At that point, reapply the commit
@@ -9,4 +9,3 @@
 * The Subversion dumper is pretty weak, more a proof of concept than
   anything useful for production.
 
-* New features: ancestors-of in selections.
