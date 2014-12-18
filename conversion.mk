@@ -119,6 +119,7 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -d $(PROJECT)-checkout -kk $(CVS_MODULE)
 
 # Make a local checkout of the CVS mirror for inspection at a specific tag
+# Note: if your project contains binary files, change -kk to -kb.
 $(PROJECT)-%-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
 
@@ -131,9 +132,13 @@ $(PROJECT)-tags.txt: $(PROJECT)-mirror
 
 endif
 
+ifeq ($(TARGET_VCS),hg)
+
 # Check out specific tags or branches from the converted repo
 $(PROJECT)-%-hg: $(PROJECT)-hg
 	hg clone -u $* $(PROJECT)-hg $@
+
+endif
 
 ifeq ($(TARGET_VCS),git)
 
