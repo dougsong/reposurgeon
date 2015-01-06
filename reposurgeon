@@ -51,7 +51,7 @@ version="3.19"
 #
 # The rest of the surgical code lives outside the core classes. Most
 # of it lives in the RepoSurgeon class (the command interpreter) or
-# the RepositoryList class (which encapsulated name access to a list
+# the RepositoryList class (which encapsulated by-name access to a list
 # of repositories and also hosts surgical operations involving
 # multiple repositories). A few bits, like the repository reader and
 # builder, have enough logic that's independent of these
@@ -456,9 +456,9 @@ core
     ]
 
 # Import and export filter methods for VCSes that use magic files rather
-# than magic directories. So far there is only one of these
+# than magic directories. So far there is only one of these.
 #
-# Each entry maps a read/write option to an (importer, exporter) oair.
+# Each entry maps a read/write option to an (importer, exporter) pair.
 # The input filter must be an *exporter from* that takes an alien file
 # and emits a fast-import stream on standard output.  The exporter
 # must be an *importer to* that takes an import stream on standard input
