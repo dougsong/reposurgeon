@@ -468,14 +468,6 @@ file_filters = {
     "fossil" : (b"fossil export --git %s", b"fossil import --git %s"),
     }
 
-# No user-serviceable parts below this line
-
-class Fatal(Exception):
-    "Unrecoverable error."
-    def __init__(self, msg):
-        Exception.__init__(self)
-        self.msg = msg
-
 # How to write extractor classes:
 #
 # Clone one of the existing ones and mutate.
@@ -669,6 +661,14 @@ class GitExtractor:
 # More extractors go here
 
 extractors = [GitExtractor()]
+
+# No user-serviceable parts below this line
+
+class Fatal(Exception):
+    "Unrecoverable error."
+    def __init__(self, msg):
+        Exception.__init__(self)
+        self.msg = msg
 
 verbose         = 0
 DEBUG_SVNDUMP   = 2    # Debug Subversion dumping
