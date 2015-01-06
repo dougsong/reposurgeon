@@ -123,6 +123,7 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 $(PROJECT)-%-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
 
+#  Get a list of tags from the CVS repository
 $(PROJECT)-tags.txt: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror rlog -h $(CVS_MODULE) 2>&1 \
 	| awk -F"[.:]" '/^\t/{print $$1}' \
