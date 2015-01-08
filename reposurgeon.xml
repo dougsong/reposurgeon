@@ -3036,7 +3036,8 @@ child object's hash (git and hg both do this).</para>
 
 <para>Guarantee: <command>reposurgeon</command> only requires
 main memory proportional to the size of a repository's metadata
-history, not its entire content history.</para>
+history, not its entire content history. (Exception: the data from
+inline content is held in memory.)</para>
 
 <para>Guarantee: In the worst case, <command>reposurgeon</command>
 makes its own copy of every content blob in the repository's history
