@@ -1508,6 +1508,8 @@ class Callout(object):
         self.mark = mark
         self.branch = None
         self._child_nodes = []
+    def callout(self):
+        return self.mark
 
 class Commit(object):
     "Generic commit object."
