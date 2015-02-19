@@ -3094,11 +3094,13 @@ the write-side support is more of a sketch or proof-of-concept than a
 robust implementation;  it only works on very simple cases and does
 not round-trip. It may improve in future releases.</para>
 
-<para>Limitation: <command>reposurgeon</command> may misbehave under
-a filesystem which smashes case in filenames, or which nominally
+<para>Limitation: <command>reposurgeon</command> may misbehave under a
+filesystem which smashes case in filenames, or which nominally
 preserves case but maps names differing only by case to the same
-filesystem node (Mac OS X behaves like this).  Problems will arise
-if any two paths in a repo differ by case only.</para>
+filesystem node (Mac OS X behaves like this by default).  Problems
+will arise if any two paths in a repo differ by case only. To avoid
+the problem on a Mac, do all your surgery on an HFS+ file system
+formatted with case sensitivity specifically enabled.</para>
 
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
