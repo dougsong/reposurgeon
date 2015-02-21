@@ -46,14 +46,14 @@ roundtrip:
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$; \
-	    [ -s /tmp/r$$$$ ] && diff -u $${file} /tmp/rs$$$$; \
+	    [ -s /tmp/r$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
-	    [ -s /tmp/rs$$$$ ] && diff -u $${file} /tmp/rs$$$$; \
+	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 
@@ -64,7 +64,7 @@ mailboxing:
 	@for file in *.fi; do \
 	    echo "  $${file}";\
 	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" >/tmp/regress; \
-	    [ -s /tmp/regress ] && diff -u $${file} /tmp/regress; \
+	    [ -s /tmp/regress ] && diff --text -u $${file} /tmp/regress; \
 	done
 	@rm -f /tmp/regress
 
@@ -81,7 +81,7 @@ fi-regress:
 	@for file in $(TESTLOADS); do \
 	    echo -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
-	    then diff -u $${file}.chk /tmp/regress; \
+	    then diff --text -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
@@ -99,7 +99,7 @@ coalesce:
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" >/tmp/regress; \
-	    [ -s /tmp/regress ] && diff -u $${file}.chk /tmp/regress; \
+	    [ -s /tmp/regress ] && diff --text -u $${file}.chk /tmp/regress; \
 	done
 	@rm -f /tmp/regress
 
@@ -110,7 +110,7 @@ git-regress:
 	@for test in $(GITLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
 	    ./fi-to-fi) <$${test}.fi | sed '/# Fossil-ID:/d' >/tmp/regress; \
-	    then diff -u $${test}.fi /tmp/regress; \
+	    then diff --text -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
@@ -149,7 +149,7 @@ svnload-regress:
 	    then \
 		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		$(REPOSURGEON) "read \<$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
-		then diff -u $${test}.chk /tmp/regress; \
+		then diff --text -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
 		(cd /tmp/reposurgeon$$$$; \
@@ -173,7 +173,7 @@ fossil-regress:
 	do \
 	    if echo "  $${test}.svn" >&2; \
 	    $(REPOSURGEON) "read \<$${test}.svn" "fossils write -" >/tmp/regress 2>/dev/null; \
-	    then diff -u $${test}.map /tmp/regress; \
+	    then diff --text -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
 	@rm -f /tmp/regress
@@ -195,7 +195,7 @@ svndump-regress:
 	    then \
 		if echo "  $${test}.fi" >&2; \
 		$(REPOSURGEON) "read \<$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff -u $${test}.chk /tmp/stripped$$$$; \
+		then diff --text -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 		svn-to-svn -n -q </tmp/prestripped$$$$; \
 	    fi \
@@ -215,7 +215,7 @@ svncheck:
 		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1; \
 		if echo "  $${test}.svn" >&2; \
 		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
+		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 	    fi \
 	done
@@ -234,7 +234,7 @@ repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
 	    echo -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
-	    sh $${file}.sh | diff -u $${file}.chk -; \
+	    sh $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
 
