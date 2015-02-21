@@ -10208,7 +10208,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir1 = bounds[0].checkout()
         dir2 = bounds[1].checkout()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            command = "diff -r --label 'commit %s' --label 'commit %s' -u %s %s" % \
+            command = "diff -r --label 'commit %s' --label 'commit %s' -u '%s' '%s'" % \
                       (bounds[0].mark, bounds[1].mark, dir1, dir2)
             if parse.stdout != sys.stdout:
                 command += " >" + parse.stdout.name
