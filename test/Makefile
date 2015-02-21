@@ -6,6 +6,9 @@
 PATH := ..:.:${PATH}
 REPOSURGEON = reposurgeon 
 
+# Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
+ECHO=/bin/echo
+
 default:
 	@(cd ..; make -e --quiet pylint)
 	@$(REPOSURGEON) "runtests"
@@ -79,7 +82,7 @@ fi-buildregress:
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
-	    echo -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
+	    $(ECHO) -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff --text -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
@@ -147,7 +150,7 @@ svnload-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if echo -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
+		(if $(ECHO) -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		$(REPOSURGEON) "read \<$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
@@ -233,7 +236,7 @@ repodiffer-buildregress:
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
-	    echo -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
 	    sh $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
