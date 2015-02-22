@@ -1,9 +1,11 @@
 			reposurgeon project news
 
-Repository head:
-     Bugfix for writing callouts in partial dumps.
-     Add a warning to the documentation about the consequences of Mac OS X.
+
+3.20: 2015-02-22
+     Code is now fully functional, all regression test passing, on Mac OS X.     
+     Warn in the docs about the consequences of case-smashing filesystems.
      diff command no longer relies on external diff(1).
+     Bugfix for writing callouts in partial dumps.
 
 3.19: 2015-01-06
      Minor bugfix for handling of indexed action stamps.
