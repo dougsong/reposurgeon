@@ -110,9 +110,9 @@ reposurgeon
 reposurgeon.xml
 test
 !rm -fr foobar
-diff -r --label 'commit :108' --label 'commit :110' -u "commit :108" "commit :110"
---- commit :108
-+++ commit :110
+101,103 diff
+--- reposurgeon (:108)
++++ reposurgeon (:110)
 @@ -575,13 +575,13 @@
          if self.verbose >= 2:
              print "eval_visibility(%s)" % self.line
@@ -144,7 +144,6 @@ diff -r --label 'commit :108' --label 'commit :110' -u "commit :108" "commit :11
                  # First, literal command numbers (1-origin)
                  match = re.match("[0-9]+", self.line)
                  if match:
-101,103 diff
 101,103 manifest
 Event 101 ===============================================================
 commit refs/tags/annotated-sample

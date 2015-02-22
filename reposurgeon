@@ -11,7 +11,7 @@ from __future__ import print_function #unicode_literals
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
-import functools, filecmp, datetime
+import functools, filecmp, datetime, difflib
 import email.message, email.parser
 
 # This import only works on Unixes.  The intention is to enable
@@ -2008,6 +2008,12 @@ class Commit(object):
         for fileop in self.fileops:
             if fileop.op == b'M' and fileop.ref == mark:
                 return True
+        return False
+    def blob_by_name(self, name):
+        "Look up file conyent by name."
+        for fileop in self.fileops:
+            if fileop.op == b'M' and fileop.path == name:
+                return self.repo.objfind(fileop.ref).get_content()
         return False
     def undecodable(self, codec=b"utf-8"):
         "Does this commit have undecodable i18n sequences in it?"
@@ -10205,14 +10211,34 @@ must resolve to exactly two commits. Supports > redirection.
                not isinstance(bounds[0], Commit) or \
                not isinstance(bounds[1], Commit):
             raise Recoverable(b"a pair of commits is required.")
-        dir1 = bounds[0].checkout()
-        dir2 = bounds[1].checkout()
+        dir1 = set(bounds[0].manifest())
+        dir2 = set(bounds[1].manifest())
+        allpaths = list(dir1 | dir2)
+        allpaths.sort()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-            command = "diff -r --label 'commit %s' --label 'commit %s' -u '%s' '%s'" % \
-                      (bounds[0].mark, bounds[1].mark, dir1, dir2)
-            if parse.stdout != sys.stdout:
-                command += " >" + parse.stdout.name
-            os.system(command)
+            for path in allpaths:
+                if path in dir1 and path in dir2:
+                    # FIXME: Can we detect binary files and do something
+                    # more useful here?
+                    fromtext = bounds[0].blob_by_name(path)
+                    totext = bounds[1].blob_by_name(path)
+                    # Don't list identical files
+                    if fromtext != totext:
+                        lines0 = fromtext.split('\n')
+                        lines1 = totext.split('\n')
+                        file0 = path + " (" + bounds[0].mark + ")"
+                        file1 = path + " (" + bounds[1].mark + ")"
+                        for line in difflib.unified_diff(lines0, lines1,
+                                                         fromfile=file0,
+                                                         tofile=file1,
+                                                         lineterm=""):
+                            parse.stdout.write(line + "\n")
+                elif path in dir1:
+                    parse.stdout.write("%s: removed\n" % path)
+                elif path in dir2:
+                    parse.stdout.write("%s: added\n" % path)
+                else:
+                    raise Recoverable("internal error - missing path in diff")
 
     #
     # Setting paths to branchify
