@@ -147,7 +147,7 @@ PROPS-END
 #include <assert.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -160,7 +160,7 @@ PROPS-END
 #define rand()		lrand48()
 extern long lrand48();
 extern void srand48();
-#define bzero(s, n)	(void)memset((char *)(s), '
+#define bzero(s, n)	(void)memset((char *)(s), '\0', n)
 extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
@@ -188,8 +188,8 @@ extern void exit();
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -359,26 +359,16 @@ static void intro()
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -537,9 +527,9 @@ static void initgame()
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -559,7 +549,7 @@ static void initgame()
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -1232,16 +1222,11 @@ char *op[];
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -1252,8 +1237,7 @@ char *op[];
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -1262,8 +1246,7 @@ char *op[];
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -1272,8 +1255,7 @@ char *op[];
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -1557,7 +1539,7 @@ PROPS-END
 #include <assert.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -1570,7 +1552,7 @@ PROPS-END
 #define rand()		lrand48()
 extern long lrand48();
 extern void srand48();
-#define bzero(s, n)	(void)memset((char *)(s), '
+#define bzero(s, n)	(void)memset((char *)(s), '\0', n)
 extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
@@ -1600,8 +1582,8 @@ static bool checkplace();
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -1776,26 +1758,16 @@ static void intro()
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -1960,9 +1932,9 @@ static void initgame()
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -1983,7 +1955,7 @@ static void initgame()
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -2690,16 +2662,11 @@ char *op[];
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -2710,8 +2677,7 @@ char *op[];
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -2720,8 +2686,7 @@ char *op[];
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -2730,8 +2695,7 @@ char *op[];
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -3060,7 +3024,7 @@ PROPS-END
 #include <assert.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -3073,7 +3037,7 @@ PROPS-END
 #define rand()		lrand48()
 extern long lrand48();
 extern void srand48();
-#define bzero(s, n)	(void)memset((char *)(s), '
+#define bzero(s, n)	(void)memset((char *)(s), '\0', n)
 extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
@@ -3103,8 +3067,8 @@ static bool checkplace();
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -3279,26 +3243,16 @@ static void intro()
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -3463,9 +3417,9 @@ static void initgame()
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -3486,7 +3440,7 @@ static void initgame()
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -4193,16 +4147,11 @@ char *op[];
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -4213,8 +4162,7 @@ char *op[];
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -4223,8 +4171,7 @@ char *op[];
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -4233,8 +4180,7 @@ char *op[];
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -4368,7 +4314,7 @@ PROPS-END
 #include <assert.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -4381,7 +4327,7 @@ PROPS-END
 #define rand()		lrand48()
 extern long lrand48();
 extern void srand48();
-#define bzero(s, n)	(void)memset((char *)(s), '
+#define bzero(s, n)	(void)memset((char *)(s), '\0', n)
 extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
@@ -4411,8 +4357,8 @@ static bool checkplace();
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -4587,26 +4533,16 @@ static void intro()
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -4771,9 +4707,9 @@ static void initgame()
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -4794,7 +4730,7 @@ static void initgame()
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -5501,16 +5437,11 @@ char *op[];
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -5521,8 +5452,7 @@ char *op[];
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -5531,8 +5461,7 @@ char *op[];
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -5541,8 +5470,7 @@ char *op[];
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -5989,7 +5917,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -6006,7 +5934,7 @@ extern long lrand48();
 extern void srand48();
 #endif
 
-#define bzero(s, n)	(void)memset((char *)(s), '
+#define bzero(s, n)	(void)memset((char *)(s), '\0', n)
 extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
@@ -6036,8 +5964,8 @@ static bool checkplace();
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -6212,26 +6140,16 @@ static void intro()
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -6396,9 +6314,9 @@ static void initgame()
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -6419,7 +6337,7 @@ static void initgame()
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -7126,16 +7044,11 @@ char *op[];
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -7146,8 +7059,7 @@ char *op[];
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -7156,8 +7068,7 @@ char *op[];
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -7166,8 +7077,7 @@ char *op[];
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -7487,7 +7397,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -7511,8 +7421,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -7690,26 +7600,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -7868,9 +7768,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -7889,7 +7789,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -8604,16 +8504,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -8624,8 +8519,7 @@ static void do_options(int c, char *op[])
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -8634,8 +8528,7 @@ static void do_options(int c, char *op[])
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -8644,8 +8537,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -9297,7 +9189,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -9321,8 +9213,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -9500,26 +9392,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -9678,9 +9560,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -9699,7 +9581,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -10414,16 +10296,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(1);
 		break;
 	    case '-':
@@ -10434,8 +10311,7 @@ static void do_options(int c, char *op[])
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -10444,8 +10320,7 @@ static void do_options(int c, char *op[])
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(1);
 		    }
 		    break;
@@ -10454,8 +10329,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(1);
 		}
 	    }
@@ -10589,7 +10463,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -10616,8 +10490,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -10795,26 +10669,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -10984,9 +10848,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -11005,7 +10869,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -11728,16 +11592,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(EXIT_FAILURE);
 		break;
 	    case '-':
@@ -11748,8 +11607,7 @@ static void do_options(int c, char *op[])
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -11758,8 +11616,7 @@ static void do_options(int c, char *op[])
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -11768,8 +11625,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(EXIT_FAILURE);
 		}
 	    }
@@ -12169,7 +12025,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -12196,8 +12052,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -12375,26 +12231,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -12562,9 +12408,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -12583,7 +12429,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -13323,16 +13169,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(EXIT_FAILURE);
 		break;
 	    case '-':
@@ -13343,8 +13184,7 @@ static void do_options(int c, char *op[])
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -13353,8 +13193,7 @@ static void do_options(int c, char *op[])
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -13363,8 +13202,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(EXIT_FAILURE);
 		}
 	    }
@@ -14976,7 +14814,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -15003,8 +14841,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -15182,26 +15020,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -15369,9 +15197,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -15390,7 +15218,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -16130,16 +15958,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(EXIT_FAILURE);
 		break;
 	    case '-':
@@ -16150,8 +15973,7 @@ static void do_options(int c, char *op[])
 		    if (salvo == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -16160,8 +15982,7 @@ static void do_options(int c, char *op[])
 		    if (blitz == 1)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -16170,8 +15991,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(EXIT_FAILURE);
 		}
 	    }
@@ -16872,7 +16692,7 @@ Content-length: 815
 PROPS-END
 #	Makefile for bs, the Battleships game
 
-VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
+VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s//\1/p')
 
 # Flags for use with the Linux ncurses package (recommended)
 TERMLIB = -lncurses
@@ -17465,7 +17285,7 @@ PROPS-END
 #endif
 
 #ifndef A_UNDERLINE	/* BSD curses */
-#define	beep()	write(1,"",1);
+#define	beep()	write(1,"\007",1);
 #define	cbreak	crmode
 #define	saveterm savetty
 #define	resetterm resetty
@@ -17492,8 +17312,8 @@ static int getcoord(int);
 #define COMPUTER	1
 #define MARK_HIT	'H'
 #define MARK_MISS	'o'
-#define CTRLC		''	/* used as terminate command */
-#define FF		''	/* used as redraw command */
+#define CTRLC		'\003'	/* used as terminate command */
+#define FF		'\014'	/* used as redraw command */
 
 /* coordinate handling */
 #define BWIDTH		10
@@ -17671,26 +17491,16 @@ static void intro(void)
     (void)clear();
     (void)mvaddstr(4,29,"Welcome to Battleship!");
     (void)move(8,0);
-    PR("                                                  \
-");
-    PR("                           \                     \ \
-");
-    PR("                          \ \                   \ \ \_____________
-");
-    PR("                         \ \ \_____________      \ \/            |
-");
-    PR("                          \ \/             \      \/             |
-");
-    PR("                           \/               \_____/              |__
-");
-    PR("           ________________/                                       |
-");
-    PR("           \  S.S. Penguin                                         |
-");
-    PR("            \                                                     /
-");
-    PR("             \___________________________________________________/
-");
+    PR("                                                  \\\n");
+    PR("                           \\                     \\ \\\n");
+    PR("                          \\ \\                   \\ \\ \\_____________\n");
+    PR("                         \\ \\ \\_____________      \\ \\/            |\n");
+    PR("                          \\ \\/             \\      \\/             |\n");
+    PR("                           \\/               \\_____/              |__\n");
+    PR("           ________________/                                       |\n");
+    PR("           \\  S.S. Penguin                                         |\n");
+    PR("            \\                                                     /\n");
+    PR("             \\___________________________________________________/\n");
 
     (void) mvaddstr(22,27,"Hit any key to continue..."); (void)refresh();
     (void) getch();
@@ -17858,9 +17668,9 @@ static void initgame(void)
 
     (void) mvaddstr(MYBASE,   MXBASE, "Aiming keys:");
     (void) mvaddstr(SYBASE,   SXBASE, "y k u    7 8 9");
-    (void) mvaddstr(SYBASE+1, SXBASE, " \|/      \|/ ");
+    (void) mvaddstr(SYBASE+1, SXBASE, " \\|/      \\|/ ");
     (void) mvaddstr(SYBASE+2, SXBASE, "h-+-l    4-+-6");
-    (void) mvaddstr(SYBASE+3, SXBASE, " /|\      /|\ ");
+    (void) mvaddstr(SYBASE+3, SXBASE, " /|\\      /|\\ ");
     (void) mvaddstr(SYBASE+4, SXBASE, "b j n    1 2 3");
 
     /* have the computer place ships */
@@ -17879,7 +17689,7 @@ static void initgame(void)
 	for (i = 0; i < SHIPTYPES; i++)
 	    if (!plyship[i].placed)
 		*cp++ = plyship[i].symbol;
-	*cp = '
+	*cp = '\0';
 
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked+1);
@@ -18619,16 +18429,11 @@ static void do_options(int c, char *op[])
 	    {
 	    default:
 	    case '?':
-		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]
-");
-		(void) fprintf(stderr, "	Where the options are:
-");
-		(void) fprintf(stderr, "	-s : play a salvo game
-");
-		(void) fprintf(stderr, "	-b : play a blitz game
-");
-		(void) fprintf(stderr, "	-c : ships may be adjacent
-");
+		(void) fprintf(stderr, "Usage: battle [-s | -b] [-c]\n");
+		(void) fprintf(stderr, "\tWhere the options are:\n");
+		(void) fprintf(stderr, "\t-s : play a salvo game\n");
+		(void) fprintf(stderr, "\t-b : play a blitz game\n");
+		(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 		exit(EXIT_FAILURE);
 		break;
 	    case '-':
@@ -18639,8 +18444,7 @@ static void do_options(int c, char *op[])
 		    if (salvo)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -b and -s are mutually exclusive
-");
+				"Bad Arg: -b and -s are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -18649,8 +18453,7 @@ static void do_options(int c, char *op[])
 		    if (blitz)
 		    {
 			(void) fprintf(stderr,
-				"Bad Arg: -s and -b are mutually exclusive
-");
+				"Bad Arg: -s and -b are mutually exclusive\n");
 			exit(EXIT_FAILURE);
 		    }
 		    break;
@@ -18659,8 +18462,7 @@ static void do_options(int c, char *op[])
 		    break;
 		default:
 		    (void) fprintf(stderr,
-			    "Bad arg: type \"%s ?\" for usage message
-", op[0]);
+			    "Bad arg: type \"%s ?\" for usage message\n", op[0]);
 		    exit(EXIT_FAILURE);
 		}
 	    }
@@ -18929,7 +18731,7 @@ Content-length: 902
 PROPS-END
 #	Makefile for bs, the Battleships game
 
-VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
+VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s//\1/p')
 
 # Flags for use with the Linux ncurses package (recommended)
 TERMLIB = -lncurses
@@ -19179,7 +18981,7 @@ Content-length: 946
 PROPS-END
 #	Makefile for bs, the Battleships game
 
-VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s///p')
+VERSION=$(shell sed <bs.spec -n -e '/Version: \(.*\)/s//\1/p')
 
 # Flags for use with the Linux ncurses package (recommended)
 TERMLIB = -lncurses

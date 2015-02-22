@@ -46,6 +46,10 @@ quiet=""
 # Suppress fossil emission by default
 streamopts='prefer git'
 
+# Built-in echo insidiously expands backslash escapes.  This is a problem
+# when stripping... 
+ECHO=/bin/echo
+
 while getopts degnrstv:q opt
 do
     case $opt in
@@ -71,12 +75,12 @@ then
     do
 	case $line in
 	    [0-9]*)
-		if [ $seen_date = T ]; then echo "$line"; fi ;  
+		if [ $seen_date = T ]; then $ECHO "$line"; fi ;  
 		seen_date=T ;;
 	    UUID*)  
-		if [ $seen_uuid = T ]; then echo "$line"; fi ; 
+		if [ $seen_uuid = T ]; then $ECHO "$line"; fi ; 
 		seen_uuid=T ;;
-	    *) echo "$line" ;;
+	    *) $ECHO "$line" ;;
 	esac
     done
 fi
