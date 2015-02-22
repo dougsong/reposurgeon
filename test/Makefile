@@ -94,7 +94,7 @@ COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    $(REPOSURGEON) "read \<$${file}.fi; coalesce; write -" > $${file}.chk; \
+	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" > $${file}.chk; \
 	done
 	@rm -f /tmp/regress
 coalesce:
@@ -151,7 +151,7 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if $(ECHO) -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
-		$(REPOSURGEON) "read \<$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
+		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
@@ -175,7 +175,7 @@ fossil-regress:
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "read \<$${test}.svn" "fossils write -" >/tmp/regress 2>/dev/null; \
+	    $(REPOSURGEON) "read <$${test}.svn" "fossils write -" >/tmp/regress 2>/dev/null; \
 	    then diff --text -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
@@ -187,7 +187,7 @@ svndump-buildregress:
 	@for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
-	    $(REPOSURGEON) "read \<$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk; \
+	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk; \
 	done
 	@make --quiet clean
 svndump-regress:
@@ -197,7 +197,7 @@ svndump-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		if echo "  $${test}.fi" >&2; \
-		$(REPOSURGEON) "read \<$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "read <$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff --text -u $${test}.chk /tmp/stripped$$$$; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 		svn-to-svn -n -q </tmp/prestripped$$$$; \
