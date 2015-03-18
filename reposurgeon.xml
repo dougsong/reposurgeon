@@ -307,6 +307,11 @@ letters. These are the type letters:</para>
         <entry><para>&nbsp;</para></entry>
       </row>
       <row>
+        <entry align='center'>U</entry>
+        <entry align='center'>commits wuth callouts as parents</entry>
+        <entry><para>&nbsp;</para></entry>
+      </row>
+      <row>
         <entry align='center'>M</entry>
         <entry align='center'>merge (multi-parent) commits</entry>
         <entry><para>&nbsp;</para></entry>

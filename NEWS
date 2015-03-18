@@ -1,5 +1,6 @@
 			reposurgeon project news
-
+Repository head:
+     In selection expressions, =U is the set of all commits with callouts.
 
 3.20: 2015-02-22
      Code is now fully functional, all regression test passing, on Mac OS X.     

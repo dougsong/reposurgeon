@@ -1819,6 +1819,8 @@ class Commit(object):
         self.repo.invalidate_manifests()
     def has_parents(self):
         return bool(self._parent_nodes)
+    def has_callouts(self):
+        return bool([c for c in self._parent_nodes if isinstance(c, Callout)])
     def children(self):
         "Get a list of this commit's children."
         return self._child_nodes
@@ -6840,6 +6842,7 @@ into sections of the input stream instead).
                 "P" : lambda e: isinstance(e, Passthrough),
                 "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
                 "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
+                "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
