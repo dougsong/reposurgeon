@@ -12,7 +12,9 @@ Description: A tool for editing version-control repository history
  production of very high-quality conversions from Subversion to any 
  supported DVCS.
 
-XBS-Gitorious-URL: https://gitorious.org/reposurgeon/
+XBS-Repository-URL: http://thyrsus.com/gitweb/?p=reposurgeon.git/
+
+XBS=Clone-From: git@thyrsus.com:reposurgeon
 
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
