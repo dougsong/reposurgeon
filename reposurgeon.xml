@@ -2097,7 +2097,7 @@ forget to re-set it.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>branchify_mapping</command>
+<term><command>branchify_map</command>
           [<emphasis>/regex/branch/</emphasis>...]
 </term>
 <listitem>
