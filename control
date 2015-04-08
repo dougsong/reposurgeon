@@ -18,6 +18,10 @@ XBS-HTML-Target: index.html
 
 XBS-Repository-URL: http://thyrsus.com/gitweb/?p=reposurgeon.git/
 
+XBS-Developer-Clone: git@thyrsus.com:reposurgeon
+
+XBS-Anonymous-Clone: git://thyrsus.com/repositories/reposurgeon.git
+
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
 XBS-OpenHub-URL: https://www.ohloh.net/p/reposurgeon
