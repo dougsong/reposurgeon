@@ -3,7 +3,7 @@
 
 Package: reposurgeon
 
-Description: A tool for editing version-control repository history
+Description: A tool for editing version-control repository history.
  reposurgeon enables risky operations that version-control systems don't want 
  to let you do, such as editing past comments and metadata and removing
  commits.  It works with any version control system that can export and 
@@ -12,17 +12,15 @@ Description: A tool for editing version-control repository history
  production of very high-quality conversions from Subversion to any 
  supported DVCS.
 
-XBS-Repository-URL: http://thyrsus.com/gitweb/?p=reposurgeon.git/
+Homepage: http://www.catb.org/~esr/reposurgeon
 
-XBS=Clone-From: git@thyrsus.com:reposurgeon
+XBS-HTML-Target: index.html
+
+XBS-Repository-URL: http://thyrsus.com/gitweb/?p=reposurgeon.git/
 
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
 XBS-OpenHub-URL: https://www.ohloh.net/p/reposurgeon
-
-Homepage: http://www.catb.org/~esr/reposurgeon
-
-XBS-HTML-Target: index.html
 
 XBS-Logo: reposturgeon.png
 

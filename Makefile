@@ -105,3 +105,6 @@ zip: $(SOURCES)
 
 release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html features.html
 	shipper version=$(VERS) | sh -e -x
+
+refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
+	shipper -N -w version=$(VERS) | sh -e -x

@@ -5474,7 +5474,7 @@ class Repository:
                 else:
                     if event.branch and "/tags/" in event.branch \
                             and new_target.branch != event.branch:
-                        # By deleting the commit, we would loose the fact that
+                        # By deleting the commit, we would lose the fact that
                         # it moves its branch (to create a lightweight tag for
                         # instance): replace it by a Reset which will save this
                         # very information. The following loop will take care
