@@ -39,7 +39,7 @@ then
     mkdir $local
     cvssync -o $local "$operand"
     echo "$operand" >$local/.cvssync
-elif [ -d $operand/.cvssync ]
+elif [ -f $operand/.cvssync ]
 then
     cvssync -o $operand `cat $operand/.cvssync`
 else
