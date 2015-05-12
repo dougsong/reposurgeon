@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "docbook/docbookx.dtd">
+<refentry id='repotool.1'>
+<refmeta>
+<refentrytitle>repotool</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>May 06 2015</refmiscinfo>
+<refmiscinfo class='productname'>repotool</refmiscinfo>
+<refmiscinfo class='source'>repotool</refmiscinfo>
+<refmiscinfo class='manual'>Development Tools</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>repotool</refname>
+<refpurpose>query a CVS, Subversion, git, bzr, hg, or
+darcs repository in a uniform way</refpurpose>
+</refnamediv>
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>repotool</command>
+      <replaceable>action</replaceable>
+      <arg choice='opt'><replaceable>URL-or-dir</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+<para>repotool is a script wrapper around repository query operations
+that differ by version-control system.  It is little use by itself,
+existing mainly to simplify the generic conversion makefile shipped with
+<citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+<para>Not all actions are supported on all systems.  You will get an
+error message and a return value of 1 when attempting an unsupported
+action.</para>
+
+<para>The 'export' action, run from within a repository directory
+(within a module directory for CVS), dumps a copy of a CVS,
+Subversion, git, bzr, hg, or darcs repository to a flat
+history file readable by reposurgeon.</para>
+
+<para>The 'tags' option, run from within a repository directory
+(within a module directory for CVS), returns a list of the
+repository's release tags.</para>
+
+<para>The 'mirror' action makes or updates a local mirror of a
+Subversion or CVS repo. It requires a single argument,
+either a Subversion URL or a CVS URL, or the name
+of a local mirror directory created by a previous run. The first form
+creates a local mirror of the repository in a directory named after
+the last segment of the URL, with the suffix
+<quote>-mirror</quote>. The second form updates the local mirror,
+doing an incremental fetch; just give the mirror directory
+name.</para>
+
+<para>Subversion URLs are as specified in the public
+documentation for those systems.  CVS URLs must specify a host and
+repository path, followed by a '#', followed by a module name.</para>
+</refsect1>
+
+<refsect1 id='requirements'><title>REQUIREMENTS</title>
+
+<para>
+The export action is a wrapper around either native export facilities or the
+following engines:
+<citerefentry><refentrytitle>cvs-fast-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(for CVS),
+<citerefentry><refentrytitle>svnadmin</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(for SVN),
+<citerefentry><refentrytitle>hg-fast-export.py</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+(for hg).
+You must have the appropriate engine in your $PATH
+for whatever kind of repository you are streaming.
+</para>
+  
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+
+<para><citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+
+<para>Eric S. Raymond <email>esr@thyrsus.com</email>. This tool is
+distributed with reposurgeon; see the project page at <ulink
+url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>.</para>
+</refsect1>
+</refentry>

@@ -20,14 +20,14 @@ VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 SOURCES = README NEWS AUTHORS COPYING TODO
 SOURCES += \
 	reposurgeon reposurgeon.xml \
-	repopuller repopuller.xml \
+	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	conversion.mk features.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png
 
-all: reposurgeon.1 repopuller.1 repodiffer.1 \
-     reposurgeon.html repopuller.html repodiffer.html \
+all: reposurgeon.1 repopuller.1 repotool.1 repodiffer.1 \
+     reposurgeon.html repopuller.html repotool.html repodiffer.html \
      features.html
 
 reposurgeon.1: reposurgeon.xml
@@ -36,11 +36,11 @@ reposurgeon.1: reposurgeon.xml
 reposurgeon.html: reposurgeon.xml
 	xmlto html-nochunks reposurgeon.xml
 
-repopuller.1: repopuller.xml
-	xmlto man repopuller.xml
+repotool.1: repotool.xml
+	xmlto man repotool.xml
 
-repopuller.html: repopuller.xml
-	xmlto html-nochunks repopuller.xml
+repotool.html: repotool.xml
+	xmlto html-nochunks repotool.xml
 
 repodiffer.1: repodiffer.xml
 	xmlto man repodiffer.xml

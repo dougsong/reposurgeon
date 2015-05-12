@@ -1,26 +1,34 @@
 # Generic makefile for DVCS conversions using reposurgeon
 #
 # Steps to using this:
-# 0. Copy this into a scratch directory as Makefile
-# 1. Make sure git, reposurgeon, and repopuller are on your $PATH.
-# 2. Set PROJECT to the name of your project
-# 3. Set SOURCE_VCS to svn or cvs
-# 4. Set TARGET_VCS to git, hg, or bzr
-# 5. For svn, set SVN_URL to point at the remote repository you want to convert.
-# 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module.
+# 0. Copy this into a scratch directory as Makefile.
+# 1. Make sure reposurgeon, repostreamer, and repopuller are on your $PATH.
+# 2. Set PROJECT to the name of your project.
+# 3. Set SOURCE_VCS to svn or cvs.
+# 4. Set TARGET_VCS to git, hg, or bzr.
+# 5. For svn, set REMOTE_URL to point at the remote repository
+#    you want to convert.
+# 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module,
+#    then uncomment the line that builds REMOTE_URL 
 #    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
 #    include the path to the CVS modules directory after the hostname.
 # 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
 # 8. Run 'make stubmap' to create a stub author map.
-# 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool
-# 10. Run 'make' to build a converted repository
+# 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool.
+# 10. Run 'make' to build a converted repository.
+#
+# The reason both first- and second-stage stream files are generated is that,
+# especially with Subversion, making the first-stage stream file is often
+# painfully slow. By splitting the process, we lower the overhead of
+# experiments with the lift script.
 #
 # For a production-quality conversion you will need to edit the map
 # file and the lift script.  During the process you can set EXTRAS to
 # name extra metadata such as a comments mailbox.
 #
-# After the conversion, you can perform a sanity check with 'make diff'.
-# You can check individual tags or branches with 'make diff-tag'
+# After the conversion, you may be able to perform a sanity check with
+# 'make diff' (supported for CVS and svn).  You can check
+# individual tags or branches with 'make diff-tag'
 #
 # Note that CVS-checkout directories not matched in a conversion may be
 # historical relics containing only CVSROOT directories.
@@ -29,10 +37,11 @@ PROJECT = foo
 SOURCE_VCS = svn
 TARGET_VCS = git
 EXTRAS = 
-SVN_URL = svn://svn.debian.org/$(PROJECT)
+REMOTE_URL = svn://svn.debian.org/$(PROJECT)
 CVS_HOST = cvs.sourceforge.net
 #CVS_HOST = cvs.savannah.gnu.org
 CVS_MODULE = $(PROJECT)
+#REMOTE_URL = cvs://$(CVS_HOST)/$(PROJECT)#$(CVS_MODULE)
 VERBOSITY = "verbose 1"
 REPOSURGEON = reposurgeon
 
@@ -51,6 +60,15 @@ $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 # Build the second-stage fast-import stream from the first-stage stream dump
 $(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).lift $(PROJECT).map $(EXTRAS)
 	$(REPOSURGEON) $(VERBOSITY) "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "prefer git" "script $(PROJECT).lift" "fossils write >$(PROJECT).fo" "write >$(PROJECT).fi"
+
+# Build the first-stage stream dump from the local mirror
+$(PROJECT).$(SOURCE_VCS): $(PROJECT)-mirror
+	repotool mirror $(PROJECT)-mirror
+	(cd $(PROJECT)-mirror/ >/dev/null; repotool export) >$(PROJECT).$(SOURCE_VCS)
+
+# Build a local mirror of the remote repository
+$(PROJECT)-mirror:
+	repotool mirror $(REMOTE_URL)
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
@@ -82,15 +100,6 @@ diff-all-tags: $(PROJECT)-tags.txt
 
 ifeq ($(SOURCE_VCS),svn)
 
-# Build the first-stage (Subversion) stream dump from the local mirror
-$(PROJECT).svn: $(PROJECT)-mirror
-	repopuller $(PROJECT)-mirror
-	svnadmin dump $(PROJECT)-mirror/ >$(PROJECT).svn
-
-# Build a local mirror of the remote Subversion repo
-$(PROJECT)-mirror:
-	repopuller $(SVN_URL)
-
 # Make a local checkout of the Subversion mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
 	svn co file://${PWD}/$(PROJECT)-mirror $(PROJECT)-checkout
@@ -102,16 +111,6 @@ $(PROJECT)-%-checkout: $(PROJECT)-mirror
 endif
 
 ifeq ($(SOURCE_VCS),cvs)
-
-# Mirror a CVS repo. Requires cvssync(1) from the cvs-fast-export
-# distribution, version 1.13 or later. You will need to have cvs-fast-export
-# installed as well.
-$(PROJECT)-mirror:
-	cvssync -c -o $(PROJECT)-mirror "cvs://$(CVS_HOST)/$(PROJECT)#$(CVS_MODULE)"
-
-# Build the first-stage CVS stream dump from the local mirror
-$(PROJECT).cvs: $(PROJECT)-mirror
-	find $(PROJECT)-mirror -name '*,v' | cvs-fast-export --reposurgeon >$(PROJECT).cvs
 
 # Make a local checkout of the CVS mirror for inspection
 # Note: if your project contains binary files, change -kk to -kb.
@@ -187,7 +186,7 @@ endif
 
 # General cleanup and utility
 clean:
-	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fo
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fi *.fo
 
 # Bundle up the conversion metadata for shipping
 SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)

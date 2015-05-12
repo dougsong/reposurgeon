@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# repotool - query multiple repostory types in a unitform way.
+#
+# export: Run this from within a repository directory (for CVS, within
+# a module directory).  In all cases but Subversion this generates a
+# git-fast-export file to standard output. For Subversion it emits a
+# Subversion dump file.  The export commands should bekept
+# synchronized with the table of front ends in reposurgeon.
+#
+# mirror: Initially requires a single argument, either an SVN URL (e.g
+# something like svn://svn.hercules-390.org/hercules or
+# svn://svn.debian.org/nut), or a CVS URL (e.g. something like
+# cvs://rfk.cvs.sourceforge.net/cvsroot/rfk#robotfindskitten), or
+# the name of a local mirror directory created by a previous run.
+# The first run creates a local mirror of the repository in a directory named
+# after the last segment of the URL: that is, the second example
+# above would be unpacked into a local directory named 'nut-mirror'.
+# Later runs can update the local mirror by giving the mirror directory name.
+#
+# tags: Run this from within a repository directory (for CVS, within
+# a module directory). Return a list of release tags in the repository.
+#
+operation=$1
+shift;
+
+case $operation in
+export)
+    if [ -f *,v ]
+    then
+	    find . -name '*,v' | cvs-fast-export --reposurgeon 
+    elif [ -d locks ]
+    then
+	    svnadmin dump .
+    elif [ -f SCCS/s.ChangeSet ]
+    then
+	    sp fast-export .
+    elif [ -f .git ]
+    then
+	    git fast-export --all
+    elif [ -f .bzr ]
+    then
+	    bzr fast-export --no-plain .
+    elif [ -f .hg ]
+    then
+	    hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .
+    elif [ -f _darcs ]
+    then
+	    cd darcs fastconvert export
+    else
+	echo "repostreamer: does not look like a repository directory of known type."
+	exit 1
+    fi
+    ;;
+mirror)
+    operand=$1
+
+    if [ `expr "$operand" : "svn://"` = 6 \
+	-o `expr "$operand" : "svn+ssh://"` = 10 \
+	-o `expr "$operand" : "https://"` = 8 \
+	-o `expr "$operand" : "http://"` = 7 ]
+    then
+	local=`basename $operand`-mirror
+	svnadmin create $local
+	cat >$local/hooks/pre-revprop-change <<EOF
+#!/bin/sh
+exit 0;
+EOF
+	chmod a+x $local/hooks/pre-revprop-change
+	svnsync init file://${PWD}/$local $operand
+	svnsync synchronize file://${PWD}/$local
+    elif [ -d "$operand/locks" ]
+    then
+	svnsync synchronize file://${PWD}/$operand
+    elif [ `expr "$operand" : "cvs://"` = 6 ]
+    then
+	local=`echo basename $operand | sed -e /.*#/s///`-mirror
+	mkdir $local
+	cvssync -o $local "$operand"
+	echo "$operand" >$local/.cvssync
+    elif [ -f $operand/.cvssync ]
+    then
+	cvssync -o $operand `cat $operand/.cvssync`
+    else
+	echo "repotool: $operand does not look like a Subversion or CVS repository."
+	exit 1
+    fi
+    ;;
+tags)
+    set -- `echo *,v`
+    if [ -f $1 ]
+    then
+        # FIXME: doesn't work yet
+	module=`basename ${PWD}`
+	cd ..
+	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
+	| awk -F"[.:]" '/^\t/{print $$1}' \
+	| awk '{print $$1}'
+    elif [ -d SCCS ]
+    then
+	sp tags | sed -n "/	/s///p"
+    else
+        echo "repotool: unknown action '$operation'."        
+    fi
+    ;;
+*)
+    echo "repotool: unknown action '$operation'."
+esac
+
+exit 0
+
+# end
