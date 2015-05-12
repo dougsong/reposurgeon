@@ -91,12 +91,12 @@ author field.</para></listitem>
 <listitem><para>Ignore differences in the author date part.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>author</term>
+<term>committer</term>
 <listitem><para>Ignore differences in the (name part of the) 
 committer field.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>authordate</term>
+<term>committerdate</term>
 <listitem><para>Ignore differences in the commit date part</para></listitem>
 </varlistentry>
 <varlistentry>

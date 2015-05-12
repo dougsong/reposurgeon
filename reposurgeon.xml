@@ -1683,7 +1683,7 @@ pointing at their tip commits.</para>
 <para>This command tries to handle all combinations in a natural way by
 doing up to three operations on any true tag, commit sequence, and
 reset matching the source name. In a rename, all are renamed together.
-In a delete, any matching or reset tag is deleted; then matching
+In a delete, any matching tag or reset is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.</para>

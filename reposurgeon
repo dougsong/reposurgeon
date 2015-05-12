@@ -8862,7 +8862,7 @@ For a D operation to be valid there must be an M operation for the path
 in the commit's ancestry.  For an M operation to be valid, the 'perm'
 part must be a token ending with 755 or 644 and the 'mark' must
 refer to a blob that precedes the commit location.  For an R or C
-operation to be valid, there must be an M operation for the aource
+operation to be valid, there must be an M operation for the source
 in the commit's ancestry.
 
 """)
@@ -8882,7 +8882,7 @@ in the commit's ancestry.
             path = fields[1]
             for _, event in self.selected(Commit):
                 if path in event.paths():
-                    raise Recoverable(b"%s alreadly has on op for %s" \
+                    raise Recoverable(b"%s alreadly has an op for %s" \
                                       % (event.mark, path))
                 if repo.ancestor_count(event, path) == 0:
                     raise Recoverable(b"no previous M for %s" % path)
@@ -9728,12 +9728,12 @@ from systems with annotation tags commonly express each of these as a
 true tag object (1) pointing at the tip commit of a sequence (2) in
 which the basename of the common branch field is identical to the tag
 name.  An exporter that generates lightweight-tagged commit sequences (2)
-may or may not generate resets poinmting at their tip commits.
+may or may not generate resets pointing at their tip commits.
 
 This command tries to handle all combinations in a natural way by
 doing up to three operations on any true tag, commit sequence, and
 reset matching the source name. In a rename, all are renamed together.
-In a delete, any matching or reset is tag is deleted; then matching
+In a delete, any matching tag or reset is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
