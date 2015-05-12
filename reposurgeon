@@ -9405,7 +9405,7 @@ back-reference syntax.
 
 Ordinarily, if the target path already exists in the fileops, or is visible
 in the ancestry of the commit, this command throws an error.  With the
---force option, the ancestry check is skipped.
+--force option, these checks are skipped.
 """)
     def do_path(self, line):
         "Rename paths in the history."
