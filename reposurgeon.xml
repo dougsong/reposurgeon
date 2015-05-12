@@ -1553,7 +1553,7 @@ of the grafted repository.</para>
 <term><command>path</command>
         [<emphasis>source</emphasis>]
         <command>rename</command>
-        [<command>--force</command>}|<command>--relax</command>]
+        [<command>--force</command>}]
         [<emphasis>target</emphasis>]
 </term>
 <listitem>
@@ -1564,9 +1564,8 @@ back-reference syntax.</para>
 
 <para>Ordinarily, if the target path already exists in the fileops, or
 is visible in the ancestry of the commit, this command throws an
-error.  With the <option>--force</option> option, the ancestry check
-is skipped. With <option>--relax</option>, the rename is silently
-skipped and the old path fileop is deleted instead.</para>
+error.  With the <option>--force</option> option, these checks
+are skipped.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

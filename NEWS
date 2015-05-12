@@ -1,4 +1,8 @@
 			reposurgeon project news
+
+Repository head:
+     The path rename --relax option has been removed as too confusing.
+
 3.21: 2015-04-02
      In selection expressions, =U is the set of all commits with callouts.
 
