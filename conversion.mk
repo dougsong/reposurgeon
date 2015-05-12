@@ -187,7 +187,7 @@ endif
 
 # General cleanup and utility
 clean:
-	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fo
 
 # Bundle up the conversion metadata for shipping
 SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
