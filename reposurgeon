@@ -6843,6 +6843,7 @@ into sections of the input stream instead).
                 "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
                 "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
                 "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
+                "Z" : lambda e: isinstance(e, Commit) and not e.fileops,
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
@@ -7412,6 +7413,8 @@ More ways to construct event sets:
 =R         all resets
 =P         all passthroughs
 =O         all orphan (parentless) commits
+=U         all commits with callouts as parents
+=Z         all commits with no fileops
 =M         all merge commits
 =F         all fork (multiple-child) commits
 =L         all commits with unclean multi-line comments

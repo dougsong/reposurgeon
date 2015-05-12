@@ -2,9 +2,10 @@
 
 Repository head:
      The path rename --relax option has been removed as too confusing.
+     In selection expressions, =Z is the set of all commits with no fileops.
 
 3.21: 2015-04-02
-     In selection expressions, =U is the set of all commits with callouts.
+     I
 
 3.20: 2015-02-22
      Code is now fully functional, all regression test passing, on Mac OS X.     
