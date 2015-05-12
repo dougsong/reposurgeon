@@ -78,6 +78,15 @@ and headers so it's in the same format as the rest of the mailbox."
   (interactive)
   (query-replace-regexp "\\brevision \\([0-9][0-9.]+\\)\\b" "[[BZR:\\1]]"))
 
+(defun clean-until-committer ()
+  "Remove all headers from next mbox entry until Committer and Committer-Date."
+  (interactive)
+  (re-search-forward (concat "^" reposurgeon-mail-delimiter))
+  (let ((kill-whole-line t))
+    (while (not (looking-at "^Committer:\\|^$"))
+      (kill-line)))
+  )
+
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
 (when (not reposurgeon-mode-map)
