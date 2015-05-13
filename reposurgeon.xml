@@ -1342,7 +1342,7 @@ and give it as a following argument.</para>
 <varlistentry>
 <term><command>mailbox_in</command>
         [&lt;<emphasis>infile</emphasis>]
-        [<emphasis>changed</emphasis> &gt;<emphasis>outfile</emphasis>]
+        [<emphasis>--changed</emphasis> &gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
 <para>Accept a mailbox file of messages in RFC822 format representing the
@@ -1359,7 +1359,7 @@ is applied to.  This is unlikely to have good results.</para>
 mailbox_in logic will attempt to match the commit or tag first by
 Fossil-ID, then by a unique committer ID and timestamp pair.</para>
 
-<para>If output is redirected and the modifier <quote>changed</quote>
+<para>If output is redirected and the modifier <quote>--changed</quote>
 appears, a minimal set of modifications actually made is written to the
 output file in a form that can be fed back in.</para>
 </listitem>
