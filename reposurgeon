@@ -902,8 +902,9 @@ class Date(object):
         "Recognize date formats that exporters or email programs might emit."
         # Special case: we may want current time
         if text is None:
-            self.timestamp = time.time()
+            self.timestamp = int(time.time())
             self.tz_offset = 0
+            self.orig_tz_string = "+0000"
             return
         # Otherwise, look for git's preferred format, which is a timestamp
         # in UTC followed by an offset to be used as a hint for what
@@ -1316,7 +1317,7 @@ class Tag(object):
             modified = True
             if self.tagger.date is None:
                 self.tagger.date = Date(None)
-            if self.tagger is None:
+            if self.tagger.name is None:
                 (self.tagger.name, self.tagger.email) = whoami()
         return modified
     def undecodable(self, codec=b"utf-8"):
@@ -1778,7 +1779,7 @@ class Commit(object):
             modified = True
             if self.committer.date is None:
                 self.committer.date = Date(None)
-            if self.committer is None:
+            if self.committer.name is None:
                 (self.committer.name, self.committer.email) = whoami()
         return modified
     def set_mark(self, mark):
