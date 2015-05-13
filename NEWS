@@ -5,6 +5,7 @@ Repository head:
      In selection expressions, =Z is the set of all commits with no fileops.
      repopuller has been replaced by the more general repotool.
      For consistency, the 'changed' modifier of mailbox_in is now '--changed'.
+     New '--create' option of mailbox_in to create new tags and commits.
 
 3.21: 2015-04-02
      In selection expressions, =U is the set of all commits with callouts.

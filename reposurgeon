@@ -11,7 +11,7 @@ from __future__ import print_function #unicode_literals
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
-import functools, filecmp, datetime, difflib
+import functools, filecmp, datetime, difflib, commands
 import email.message, email.parser
 
 # This import only works on Unixes.  The intention is to enable
@@ -687,6 +687,27 @@ quiet = False
 
 global_options = {}
 
+def whoami():
+    "Ask various programs that keep track of who you are who you are."
+    # Git version-control system
+    (nameerr, nameout) = commands.getstatusoutput("git config user.name")
+    (emailerr, emailout) = commands.getstatusoutput("git config user.email")
+    if nameerr == 0 and nameout and emailerr == 0 and emailout:
+        return (nameout, emailout)
+    # Various random configs
+    for (fn, mine) in (
+        ("~/.hgrc", r"username\s*=\s*(.*)\s<([^>]*)>"),                # Mercurial
+        ("~/.lynxrc", r"personal_mail_address\s*=\s*(.*)\s<([^>]*)>")  # Lynx
+        ):
+        fn = os.path.expanduser(fn)
+        if os.path.exists(fn):
+            for line in open(fn):
+                m = re.search(mine, line)
+                if m:
+                    return (m.group(1), m.group(2))
+    # Out of alternatives
+    raise Fatal("can't deduce user identity!")
+
 def screenwidth():
     "Return the current width of the terminal window."
     with popen_or_die(b'stty size', b"rb") as tp:
@@ -879,7 +900,12 @@ class Date(object):
     offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$")
     def __init__(self, text, error=Fatal):
         "Recognize date formats that exporters or email programs might emit."
-        # First, look for git's preferred format, which is a timestamp
+        # Special case: we may want current time
+        if text is None:
+            self.timestamp = time.time()
+            self.tz_offset = 0
+            return
+        # Otherwise, look for git's preferred format, which is a timestamp
         # in UTC followed by an offset to be used as a hint for what
         # timezone to display the date in when converting to other
         # formats
@@ -1240,7 +1266,7 @@ class Tag(object):
         if self.comment and not self.comment.endswith(b"\n"):
             complain(b"in tag %s, comment was not LF-terminated." % self.name)
         return str(msg)
-    def email_in(self, msg):
+    def email_in(self, msg, fill=False):
         "Update this Tag from a parsed email message."
         if "Tag-Name" not in msg:
             raise Fatal(b"update to tag %s is malformed" % self.name)
@@ -1286,6 +1312,12 @@ class Tag(object):
                       % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
+        if fill:
+            modified = True
+            if self.tagger.date is None:
+                self.tagger.date = Date(None)
+            if self.tagger is None:
+                (self.tagger.name, self.tagger.email) = whoami()
         return modified
     def undecodable(self, codec=b"utf-8"):
         "Does this tag have undecodable i18n sequences in it?"
@@ -1641,7 +1673,7 @@ class Commit(object):
     def action_stamp(self):
         "Control how a commit stamp is made."
         return self.committer.action_stamp()
-    def email_in(self, msg):
+    def email_in(self, msg, fill=False):
         "Update this commit from a parsed email message."
         modified = False
         if b"Branch" in msg:
@@ -1742,6 +1774,12 @@ class Commit(object):
                       % (self.id_me(), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
+        if fill:
+            modified = True
+            if self.committer.date is None:
+                self.committer.date = Date(None)
+            if self.committer is None:
+                (self.committer.name, self.committer.email) = whoami()
         return modified
     def set_mark(self, mark):
         "Set the commit's mark."
@@ -8353,7 +8391,15 @@ Users should be aware that modifying an Event-Number field will change
 which event the update from that message is applied to.  This is
 unlikely to have good results.
 
-If the Event-Number field is absent, the mailbox_in logic will
+If the --create modifier is present, new tags and commits will be
+appended to the repository.  In this case it is an error for a tag name
+to match any exting tag name. Commit objects are created with no fileops.
+If Committer-Date or Tagger-Date fields are not present they are filled
+in with the time at which this command is executed. If Committer or Tagger
+fields are not present, reposurgeon will attempt to deduce the user's
+git-style identity and fill it in.
+
+Otherwise, if the Event-Number field is absent, the mailbox_in logic will
 attempt to match the commit or tag first by Fossil-ID, then by a unique
 committer ID and timestamp pair.
 
@@ -8392,6 +8438,22 @@ redirection is supported).
                 fossil_map[commit.fossil_id] = commit
         events = []
         errors = 0
+        # Special case - event creattion
+        if '--create' in parse.options:
+            for (i, message) in enumerate(update_list):
+                if b"Tag-Name" in message:
+                    blank = Tag()
+                    blank.tagger = Attribution()
+                    blank.email_in(message, fill=True)
+                    blank.committish = [c for c in self.chosen().commits()][-1].mark
+                else:
+                    blank = Commit()
+                    blank.committer = Attribution()
+                    blank.email_in(message, fill=True)
+                    blank.mark = ":" + str(len(self.chosen().events) + 1)
+                self.chosen().events.append(blank)
+            return
+        # Normal case - no --create
         for (i, message) in enumerate(update_list):
             event = None
             if b"Event-Number" in message:
