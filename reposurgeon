@@ -2051,7 +2051,7 @@ class Commit(object):
                 return True
         return False
     def blob_by_name(self, name):
-        "Look up file conyent by name."
+        "Look up file content by name."
         for fileop in self.fileops:
             if fileop.op == b'M' and fileop.path == name:
                 return self.repo.objfind(fileop.ref).get_content()
