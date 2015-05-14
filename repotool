@@ -96,9 +96,6 @@ tags)
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
 	| awk -F"[.:]" '/^\t/{print $$1}' \
 	| awk '{print $$1}'
-    elif [ -d SCCS ]
-    then
-	sp tags | sed -n "/	/s///p"
     else
         echo "repotool: unknown action '$operation'."        
     fi
