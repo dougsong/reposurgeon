@@ -32,9 +32,6 @@ export)
     elif [ -d locks ]
     then
 	    svnadmin dump .
-    elif [ -f SCCS/s.ChangeSet ]
-    then
-	    sp fast-export .
     elif [ -f .git ]
     then
 	    git fast-export --all
