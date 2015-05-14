@@ -152,6 +152,10 @@ checkout)
     then
 	git clone --quiet --shared --no-checkout . $outdir
 	cd $outdir
+	if [ -z "$rev" ]
+	then
+	    rev="master"
+	fi
 	git checkout --quiet $rev
 	rm -rf .git
     elif [ -d .bzr ]
