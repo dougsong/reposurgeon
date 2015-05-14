@@ -51,6 +51,12 @@ location. It may take afollowing optional argument which is a tag
 or revision specification; if this argument is not given, the tip
 (most recent) mainline revision is assumed.</para>
 
+<para>The 'compare' action takes two repository directories and
+a revision spec (typically a tag name). If the revision spec is
+omitted, the tip of the main line of both repositories will be
+used.  The selected revisions are cpmpated with diff -u -r, with
+noise due to SCCS/RCS/CVS keyword expansion ignored.</para>
+
 <para>The 'mirror' action makes or updates a local mirror of a
 Subversion or CVS repo. It requires a single argument,
 either a Subversion URL or a CVS URL, or the name
