@@ -32,16 +32,16 @@ export)
     elif [ -d locks ]
     then
 	    svnadmin dump .
-    elif [ -f .git ]
+    elif [ -d .git ]
     then
 	    git fast-export --all
-    elif [ -f .bzr ]
+    elif [ -d .bzr ]
     then
 	    bzr fast-export --no-plain .
-    elif [ -f .hg ]
+    elif [ -d .hg ]
     then
 	    hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .
-    elif [ -f _darcs ]
+    elif [ -d _darcs ]
     then
 	    darcs fastconvert export
     else
@@ -95,16 +95,16 @@ tags)
     elif [ -d locks ]
     then
 	    svn ls "^/tags"
-    elif [ -f .git ]
+    elif [ -d .git ]
     then
 	    git tag -l
-    elif [ -f .bzr ]
+    elif [ -d .bzr ]
     then
 	    bzr tags
-    elif [ -f .hg ]
+    elif [ -d .hg ]
     then
 	    hg tags
-    elif [ -f _darcs ]
+    elif [ -d _darcs ]
     then
 	    darcs show tags
     else
