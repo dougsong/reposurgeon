@@ -20,7 +20,7 @@ darcs repository in a uniform way</refpurpose>
 
 <cmdsynopsis>
   <command>repotool</command>
-      <replaceable>action</replaceable>
+      <arg><replaceable>action</replaceable></arg>
       <arg choice='opt'><replaceable>URL-or-dir</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -44,6 +44,12 @@ history file readable by reposurgeon.</para>
 <para>The 'tags' option, run from within a repository directory
 (within a module directory for CVS), returns a list of the
 repository's release tags.</para>
+
+<para>The 'checkout' option checks out a working copy of the
+repository. It takes one required argument - the checkout directory
+location. It may take afollowing optional argument which is a tag
+or revision specification; if this argument is not given, the tip
+(most recent) mainline revision is assumed.</para>
 
 <para>The 'mirror' action makes or updates a local mirror of a
 Subversion or CVS repo. It requires a single argument,
