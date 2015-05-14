@@ -150,9 +150,9 @@ checkout)
 	svn co $rev file://${PWD} $outdir
     elif [ -d .git ]
     then
-	git clone --shared --no-checkout . $outdir
+	git clone --quiet --shared --no-checkout . $outdir
 	cd $outdir
-	git checkout $rev
+	git checkout --quiet $rev
 	rm -rf .git
     elif [ -d .bzr ]
     then
@@ -196,7 +196,7 @@ compare)
     cd $repo1; repotool checkout /tmp/source $rev
     cd $repo2; repotool checkout /tmp/target $rev
     cd $here
-    diff -u -r /tmp/source /tmp/target
+    diff --ignore-matching-lines='@(#) ' --ignore-matching-lines='Id' -u -r /tmp/source /tmp/target
     ;;
 *)
     echo "repotool: unknown action '$operation'."
