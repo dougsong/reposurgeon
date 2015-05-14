@@ -160,8 +160,12 @@ checkout)
 	exit 1
     elif [ -d .hg ]
     then
-	echo "Not yet supported."
-	exit 1
+	if [ "$rev" ]
+	then
+	    rev="-u $rev"
+	fi
+	hg clone $rev $(PROJECT)-hg $outdir
+	rm -rf ${outdir}/.hg
     elif [ -d _darcs ]
     then
 	echo "Not yet supported."

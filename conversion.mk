@@ -74,6 +74,14 @@ $(PROJECT)-mirror:
 $(PROJECT)-tags.txt: $(PROJECT)-mirror
 	cd $(PROJECT)-mirror >/dev/null; repotool tags
 
+# Make a local checkout of the source mirror for inspection
+$(PROJECT)-checkout: $(PROJECT)-mirror
+	cd $(PROJECT)-mirror >/dev/null; repotool checkout $(PROJECT)-checkout
+
+# Make a local checkout of the source mirror for inspection at a specific tag
+$(PROJECT)-%-checkout: $(PROJECT)-mirror
+	cd $(PROJECT)-mirror >/dev/null; repotool $(PROJECT)-$*-checkout $*
+
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
 	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz $(PROJECT)-*-$(TARGET_VCS)
@@ -100,51 +108,11 @@ diff-%: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
 diff-all-tags: $(PROJECT)-tags.txt
 	make $(shell sed -e 's/^/diff-/' $(PROJECT)-tags.txt)
 
-# Source-VCS-specific productions to build the first-stage stream dump
-
-ifeq ($(SOURCE_VCS),svn)
-
-# Make a local checkout of the Subversion mirror for inspection
-$(PROJECT)-checkout: $(PROJECT)-mirror
-	svn co file://${PWD}/$(PROJECT)-mirror $(PROJECT)-checkout
-
-# Make a local checkout of the Subversion mirror for inspection at a specific tag
-$(PROJECT)-%-checkout: $(PROJECT)-mirror
-	svn co -r $* file://${PWD}/$(PROJECT)-mirror $(PROJECT)-$*-checkout
-
-endif
-
-ifeq ($(SOURCE_VCS),cvs)
-
-# Make a local checkout of the CVS mirror for inspection
-# Note: if your project contains binary files, change -kk to -kb.
-$(PROJECT)-checkout: $(PROJECT)-mirror
-	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -d $(PROJECT)-checkout -kk $(CVS_MODULE)
-
-# Make a local checkout of the CVS mirror for inspection at a specific tag
-# Note: if your project contains binary files, change -kk to -kb.
-$(PROJECT)-%-checkout: $(PROJECT)-mirror
-	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
-
-endif
-
-ifeq ($(TARGET_VCS),hg)
-
-# Check out specific tags or branches from the converted repo
-$(PROJECT)-%-hg: $(PROJECT)-hg
-	hg clone -u $* $(PROJECT)-hg $@
-
-endif
-
-ifeq ($(TARGET_VCS),git)
-
-# Check out specific tags or branches from the converted repo
-$(PROJECT)-%-git: $(PROJECT)-git
-	mkdir $@ && git -C $@ --git-dir ../$(PROJECT)-$(TARGET_VCS)/.git checkout -f $*
-
 #
 # The following productions are git-specific
 #
+
+ifeq ($(TARGET_VCS),git)
 
 # Browse the generated git repository
 gitk: $(PROJECT)-git
