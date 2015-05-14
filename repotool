@@ -90,12 +90,11 @@ tags)
     set -- `echo *,v`
     if [ -f $1 ]
     then
-        # FIXME: doesn't work yet
+        # Will screw up if any tag is not common to all files
 	module=`basename ${PWD}`
 	cd ..
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	| awk -F"[.:]" '/^\t/{print $$1}' \
-	| awk '{print $$1}'
+	| sed -n "/^\t/s/\t\([^:]*\).*/\1/p" | sort -u
     else
         echo "repotool: unknown action '$operation'."        
     fi
