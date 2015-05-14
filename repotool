@@ -175,6 +175,29 @@ checkout)
         exit 1
     fi
     ;;
+compare)
+    repo1=`realpath $1`
+    shift
+    repo2=`realpath $1`
+    shift
+    rev=$1
+    if [ -z "$repo1" -o -z "$repo2" ]
+    then
+	echo "repotool: two repositories are required for comparison."
+	exit 1
+    fi
+    if [ -z "$rev" ]
+    then
+	echo "repotool: a revision is required for comparison."
+	exit 1
+    fi
+    here=$PWD
+    rm -fr /tmp/source /tmp/target
+    cd $repo1; repotool checkout /tmp/source $rev
+    cd $repo2; repotool checkout /tmp/target $rev
+    cd $here
+    diff -u -r /tmp/source /tmp/target
+    ;;
 *)
     echo "repotool: unknown action '$operation'."
 esac
