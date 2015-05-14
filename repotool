@@ -43,9 +43,9 @@ export)
 	    hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .
     elif [ -f _darcs ]
     then
-	    cd darcs fastconvert export
+	    darcs fastconvert export
     else
-	echo "repostreamer: does not look like a repository directory of known type."
+	echo "repotool: does not look like a repository directory of known type."
 	exit 1
     fi
     ;;
@@ -92,8 +92,24 @@ tags)
 	cd ..
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
 	| sed -n "/^\t/s/\t\([^:]*\).*/\1/p" | sort -u
+    elif [ -d locks ]
+    then
+	    svn ls "^/tags"
+    elif [ -f .git ]
+    then
+	    git tag -l
+    elif [ -f .bzr ]
+    then
+	    bzr tags
+    elif [ -f .hg ]
+    then
+	    hg tags
+    elif [ -f _darcs ]
+    then
+	    darcs show tags
     else
-        echo "repotool: unknown action '$operation'."        
+        echo "repotool: tags listing not supported for this repository type."
+        exit 1
     fi
     ;;
 *)
