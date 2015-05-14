@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# repotool - query multiple repostory types in a unitform way.
+# repotool - query multiple repository types in a uniform way.
 #
 # export: Run this from within a repository directory (for CVS, within
 # a module directory).  In all cases but Subversion this generates a
@@ -20,6 +20,11 @@
 #
 # tags: Run this from within a repository directory (for CVS, within
 # a module directory). Return a list of release tags in the repository.
+#
+# checkout: Run this from within a repository directory (for CVS, within
+# a module directory). First arg is a directory to perform the checkout to.
+# Second arg, if presemt, is a revision or tag spec. Without the spec, the
+# checkout is of the tip trevision on the mainline or master branch
 #
 operation=$1
 shift;
