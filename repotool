@@ -196,7 +196,7 @@ compare)
     cd $repo1; repotool checkout /tmp/source $rev
     cd $repo2; repotool checkout /tmp/target $rev
     cd $here
-    diff --ignore-matching-lines='@(#) ' --ignore-matching-lines='Id' -u -r /tmp/source /tmp/target
+    diff --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' -u -r /tmp/source /tmp/target
     ;;
 *)
     echo "repotool: unknown action '$operation'."
