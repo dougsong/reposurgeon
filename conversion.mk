@@ -70,6 +70,10 @@ $(PROJECT).$(SOURCE_VCS): $(PROJECT)-mirror
 $(PROJECT)-mirror:
 	repotool mirror $(REMOTE_URL)
 
+#  Get a list of tags from the project mirror
+$(PROJECT)-tags.txt: $(PROJECT)-mirror
+	cd $(PROJECT)-mirror >/dev/null; repotool tags
+
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
 	rm -fr $(PROJECT).fi $(PROJECT)-$(TARGET_VCS) *~ .rs* $(PROJECT)-conversion.tar.gz $(PROJECT)-*-$(TARGET_VCS)
@@ -121,14 +125,6 @@ $(PROJECT)-checkout: $(PROJECT)-mirror
 # Note: if your project contains binary files, change -kk to -kb.
 $(PROJECT)-%-checkout: $(PROJECT)-mirror
 	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror co -P -r $* -d $(PROJECT)-$*-checkout -kk $(CVS_MODULE)
-
-#  Get a list of tags from the CVS repository
-$(PROJECT)-tags.txt: $(PROJECT)-mirror
-	cvs -Q -d:local:${PWD}/$(PROJECT)-mirror rlog -h $(CVS_MODULE) 2>&1 \
-	| awk -F"[.:]" '/^\t/{print $$1}' \
-	| awk '{print $$1}' \
-	| sort -u \
-	> $(PROJECT)-tags.txt
 
 endif
 
