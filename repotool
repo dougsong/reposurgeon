@@ -112,6 +112,60 @@ tags)
         exit 1
     fi
     ;;
+checkout)
+    outdir=$1
+    if [ -z "$outdir" ]
+    then
+	echo "repotool: target directory is required for checkout."
+	exit 1
+    else
+	outdir=`realpath $1`
+    fi
+    shift
+    rev=$1
+    set -- `echo *,v`
+    if [ -f $1 ]
+    then
+	module=`basename ${PWD}`
+	cd ..
+	if [ "$rev" ]
+	then
+	    rev="-d $rev"
+	fi
+	# By choosing -kb we get binary files right, but won't
+	# suppress any expanded keywords that might be lurking
+	# in masters.   
+	cvs -Q -d:local:${PWD} co -P $rev -d $outdir -kb $module
+    elif [ -d locks ]
+    then
+	if [ "$rev" ]
+	then
+	    rev="-d $rev"
+	fi
+	svn co $rev file://${PWD} $outdir
+    elif [ -d .git ]
+    then
+	git clone --shared --no-checkout . $outdir
+	cd $outdir
+	git checkout $rev
+	rm -rf .git
+    elif [ -d .bzr ]
+    then
+	echo "Not yet supported."
+	exit 1
+    elif [ -d .hg ]
+    then
+	echo "Not yet supported."
+	exit 1
+    elif [ -d _darcs ]
+    then
+	echo "Not yet supported."
+	exit 1
+    else
+        echo "repotool: tags listing not supported for this repository type."
+        exit 1
+    fi
+    ;;
 *)
     echo "repotool: unknown action '$operation'."
 esac
