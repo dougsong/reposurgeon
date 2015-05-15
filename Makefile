@@ -26,8 +26,8 @@ SOURCES += \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png
 
-all: reposurgeon.1 repopuller.1 repotool.1 repodiffer.1 \
-     reposurgeon.html repopuller.html repotool.html repodiffer.html \
+all: reposurgeon.1 repotool.1 repodiffer.1 \
+     reposurgeon.html repotool.html repodiffer.html \
      features.html
 
 reposurgeon.1: reposurgeon.xml
@@ -63,7 +63,7 @@ install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
-	$(INSTALL) -m 755 reposurgeon repopuller repodiffer "$(target)/bin"
+	$(INSTALL) -m 755 reposurgeon repotool repodiffer "$(target)/bin"
 	$(INSTALL) -m 644 README NEWS TODO *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
@@ -95,7 +95,7 @@ pylint:
 check:
 	cd test; $(MAKE) --quiet
 
-dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repopuller.1 repodiffer.1
+dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repotool.1 repodiffer.1
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
 	@md5sum reposurgeon-$(VERS).tar.gz >reposurgeon-$(VERS).md5
