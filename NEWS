@@ -8,6 +8,7 @@ Repository head:
      New '--create' option of mailbox_in to create new tags and commits.
      The command prompt can be queried or set with the new command 'prompt'.
      Change in terminology: fossil IDs and maps are now legacy IDs and maps.
+     A front end can now set legacy IDs via the "legacy-id" property.
 
 3.21: 2015-04-02
      In selection expressions, =U is the set of all commits with callouts.

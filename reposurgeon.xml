@@ -667,9 +667,13 @@ fast-import stream or Subversion dumpfile from standard input (this
 will be useful in filters constructed with command-line
 arguments).</para>
 
-<para>If the contents is a fast-import stream, any "cvs-revisions" property
+<para>If the contents is a fast-import stream, any "cvs-revision" property
 on a commit is taken to be a newline-separated list of CVS revision cookies
 pointing to the commit, and used for reference lifting.</para>
+
+<para>If the contents is a fast-import stream, any "legacy-id" property
+on a commit is taken to be a legacy ID token pointing to the commit,
+and used for reference-lifting.</para>
 
 <para>If the read location is a git repository and contains a
 <filename>.git/cvsauthors</filename> file (such as is left in place
