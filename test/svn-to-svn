@@ -43,7 +43,7 @@ cleanup=T
 strip=F
 verbose="0"
 quiet=""
-# Suppress fossil emission by default
+# Suppress legacy emission by default
 streamopts='prefer git'
 
 # Built-in echo insidiously expands backslash escapes.  This is a problem

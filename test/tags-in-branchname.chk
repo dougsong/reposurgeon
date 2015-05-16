@@ -19,7 +19,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer frnchfrgg <frnchfrgg> 1360515686 +0000
@@ -32,7 +32,7 @@ blob
 mark :3
 data 0
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer frnchfrgg <frnchfrgg> 1360515799 +0000
@@ -42,7 +42,7 @@ Add a file
 from :2
 M 100644 :3 a
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/root
 mark :5
 committer frnchfrgg <frnchfrgg> 1360157557 +0000

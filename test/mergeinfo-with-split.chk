@@ -24,7 +24,7 @@ mark :2
 data 94
 this svn repository is for testing reposurgeon's way of dealing with svn:mergeinfo properties
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :3
 committer db48x <db48x> 1352198193 +0000
@@ -38,7 +38,7 @@ mark :4
 data 5
 0.99
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :5
 committer db48x <db48x> 1352198254 +0000
@@ -52,7 +52,7 @@ mark :6
 data 4
 1.0
 
-# Fossil-ID: 3.1
+# Legacy-ID: 3.1
 commit refs/heads/v1.0
 mark :7
 committer db48x <db48x> 1352198315 +0000
@@ -63,7 +63,7 @@ release party
 from :3
 M 100644 :6 VERSION
 
-# Fossil-ID: 3.2
+# Legacy-ID: 3.2
 commit refs/heads/master
 mark :8
 committer db48x <db48x> 1352198315 +0000
@@ -79,7 +79,7 @@ mark :9
 data 4
 1.1
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :10
 committer db48x <db48x> 1352198352 +0000
@@ -93,7 +93,7 @@ mark :11
 data 6
 1.0.1
 
-# Fossil-ID: 5
+# Legacy-ID: 5
 commit refs/heads/v1.0
 mark :12
 committer db48x <db48x> 1352198405 +0000
@@ -107,7 +107,7 @@ mark :13
 data 4
 1.2
 
-# Fossil-ID: 6
+# Legacy-ID: 6
 commit refs/heads/master
 mark :14
 committer db48x <db48x> 1352198970 +0000
@@ -122,7 +122,7 @@ mark :15
 data 6
 1.0.2
 
-# Fossil-ID: 7
+# Legacy-ID: 7
 commit refs/heads/v1.0
 mark :16
 committer db48x <db48x> 1352199006 +0000
@@ -136,7 +136,7 @@ mark :17
 data 6
 1.0.3
 
-# Fossil-ID: 8
+# Legacy-ID: 8
 commit refs/heads/v1.0
 mark :18
 committer db48x <db48x> 1352199011 +0000
@@ -150,7 +150,7 @@ mark :19
 data 4
 1.3
 
-# Fossil-ID: 9
+# Legacy-ID: 9
 commit refs/heads/master
 mark :20
 committer db48x <db48x> 1352199061 +0000
@@ -164,7 +164,7 @@ mark :21
 data 4
 1.4
 
-# Fossil-ID: 10
+# Legacy-ID: 10
 commit refs/heads/master
 mark :22
 committer db48x <db48x> 1352199290 +0000

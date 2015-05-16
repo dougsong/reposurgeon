@@ -23,7 +23,7 @@ blob
 mark :2
 data 0
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :3
 committer frnchfrgg <frnchfrgg> 1360157203 +0000
@@ -37,7 +37,7 @@ mark :4
 data 10
 abcdefghi
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :5
 committer frnchfrgg <frnchfrgg> 1360157263 +0000
@@ -47,7 +47,7 @@ Create trunk/y/a this time
 from :3
 M 100644 :4 y/a
 
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :6
 committer frnchfrgg <frnchfrgg> 1360157263 +0000
@@ -57,7 +57,7 @@ Delete the recent file
 from :5
 D y/a
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :7
 committer frnchfrgg <frnchfrgg> 1360157278 +0000
@@ -67,7 +67,7 @@ Take trunk/y/a from trunk/x/a then modify it
 from :6
 M 100644 :2 y/a
 
-# Fossil-ID: 5
+# Legacy-ID: 5
 commit refs/heads/master
 mark :8
 committer frnchfrgg <frnchfrgg> 1360157278 +0000

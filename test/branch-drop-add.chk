@@ -20,7 +20,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer db48x <db48x> 1352540133 +0000
@@ -43,7 +43,7 @@ mark :5
 data 22
 feature development A
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :6
 committer db48x <db48x> 1352540135 +0000
@@ -65,7 +65,7 @@ data 44
 feature development A
 feature development B
 
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :9
 committer db48x <db48x> 1352540137 +0000
@@ -80,7 +80,7 @@ mark :10
 data 4
 1.0
 
-# Fossil-ID: 5
+# Legacy-ID: 5
 commit refs/heads/v1.0
 mark :11
 committer db48x <db48x> 1352540141 +0000
@@ -101,7 +101,7 @@ feature development A
 feature development B
 feature development C
 
-# Fossil-ID: 6
+# Legacy-ID: 6
 commit refs/heads/master
 mark :14
 committer db48x <db48x> 1352540143 +0000
@@ -111,7 +111,7 @@ from :9
 M 100644 :12 VERSION
 M 100644 :13 src
 
-# Fossil-ID: 7
+# Legacy-ID: 7
 commit refs/heads/v1.0
 mark :15
 committer db48x <db48x> 1352540145 +0000
@@ -120,7 +120,7 @@ delete incorrect 1.0 branch
 from :11
 deleteall
 
-# Fossil-ID: 8
+# Legacy-ID: 8
 commit refs/heads/v1.0
 mark :16
 committer db48x <db48x> 1352540147 +0000
@@ -133,7 +133,7 @@ M 100644 :3 README
 M 100644 :12 VERSION
 M 100644 :13 src
 
-# Fossil-ID: 9
+# Legacy-ID: 9
 commit refs/heads/v1.0
 mark :17
 committer db48x <db48x> 1352540149 +0000
@@ -155,7 +155,7 @@ feature development B
 feature development C
 feature development D
 
-# Fossil-ID: 10
+# Legacy-ID: 10
 commit refs/heads/master
 mark :20
 committer db48x <db48x> 1352540151 +0000
@@ -178,7 +178,7 @@ feature development B
 feature development C
 bugfix 1
 
-# Fossil-ID: 11
+# Legacy-ID: 11
 commit refs/heads/v1.0
 mark :23
 committer db48x <db48x> 1352540153 +0000
@@ -202,7 +202,7 @@ feature development C
 feature development D
 bugfix 1
 
-# Fossil-ID: 12
+# Legacy-ID: 12
 commit refs/heads/master
 mark :26
 committer db48x <db48x> 1352540156 +0000
@@ -223,7 +223,7 @@ feature development D
 bugfix 1
 feature development E
 
-# Fossil-ID: 13
+# Legacy-ID: 13
 commit refs/heads/master
 mark :28
 committer db48x <db48x> 1352540158 +0000

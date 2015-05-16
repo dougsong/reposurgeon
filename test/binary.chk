@@ -2,7 +2,7 @@ blob
 mark :1
 data 1
 ÿ
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer david <david> 1387907240 +0000

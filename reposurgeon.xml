@@ -177,9 +177,9 @@ edit                   ;; edit all editable objects
 236..$ list            ;; List events from 236 to the last
 
 &lt;2317&gt; inspect         ;; Look for a tag with the name 2317, a tip commit
-                       ;; of a branch named 2317, or a commit with fossil-ID
+                       ;; of a branch named 2317, or a commit with legacy ID
                        ;; 2317. Inspect what is found. A plain number is
-                       ;; probably a fossil-ID inherited from a Subversion
+                       ;; probably a legacy ID inherited from a Subversion
                        ;; revision number.
 
 /regression/ list      ;; list all commits and tags with comments or
@@ -231,10 +231,10 @@ distinguish them from command keywords.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><firstterm>fossil IDs</firstterm></term>
+<term><firstterm>legacy IDs</firstterm></term>
 <listitem>
 <para>If the contents of name brackets (&lt; &gt;) does not match a tag or
-branch name, the interpreter next searches fossil IDs of commits.  This
+branch name, the interpreter next searches legacy IDs of commits.  This
 is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
@@ -386,8 +386,8 @@ to a single object, either a commit or tag.</para>
         <entry align='center'>the branch tip commit</entry>
       </row>
       <row>
-        <entry align='center'>fossil ID</entry>
-        <entry align='center'>commit with that fossil ID</entry>
+        <entry align='center'>legacy ID</entry>
+        <entry align='center'>commit with that legacy ID</entry>
       </row>
       <row>
         <entry align='center'>assigned name</entry>
@@ -677,8 +677,8 @@ by <command>git cvsimport -A</command>) that file will be read in as
 if it had been given to the <command>authors read</command> command.</para>
 
 <para>If the read location is a directory, and its repository
-subdirectory has a file named <filename>fossils</filename>, that file
-will be read as though passed to a <filename>fossil read</filename>
+subdirectory has a file named <filename>legacy-map</filename>, that file
+will be read as though passed to a <filename>legacy read</filename>
 command.</para>
 
 <para>If the read location is a file and the <option>--format=fossil</option>
@@ -695,7 +695,7 @@ extension is removed from the load list name.</para>
 </varlistentry>
 <varlistentry>
 <term><command>write</command>
-        [--fossilize] [--format=fossil] [--noincremental] [--callout]
+        [--legacy] [--format=fossil] [--noincremental] [--callout]
         [<emphasis>&gt;outfile</emphasis>|<emphasis>-</emphasis>]
 </term>
 <listitem>
@@ -713,7 +713,7 @@ contents are backed up to a save directory.</para>
 <option>--format=fossil</option> is used, the file is written in
 Fossil repository format.</para>
 
-<para>With the <option>--fossilize</option> option, the Fossil-ID of
+<para>With the <option>--legacy</option> option, the Legacy-ID of
 each commit is appended to its commit comment at write time. This
 option is mainly useful for debugging conversion edge cases.</para>
 
@@ -816,10 +816,10 @@ backup directory after repo rebuild. The default preserve list
 depends on the repository type, and can be displayed with the
 <command>stats</command> command.</para>
 
-<para>If <command>reposurgeon</command> has a nonempty fossil map,
-it will be written to a file named <filename>fossils</filename>
+<para>If <command>reposurgeon</command> has a nonempty legacy map,
+it will be written to a file named <filename>legacy-map</filename>
 in the repository subdirectory as though by a
-<filename>fossil write</filename> command. (This will normally
+<filename>legacy write</filename> command. (This will normally
 be the case for Subversion and CVS conversions.)</para>
 </listitem>
 </varlistentry>
@@ -873,7 +873,7 @@ argument.</para>
 you want to modify.  It lists commits in the selection set by event
 sequence number with summary information. The first column is raw
 event numbers, the second a timestamp in local time. If the repository
-has fossil IDs, they will be displayed in the third column. The
+has legacy IDs, they will be displayed in the third column. The
 leading portion of the comment follows.
 </para></listitem>
 </varlistentry>
@@ -1196,7 +1196,7 @@ have no fileops (thus no tree differences with their first parent). To change
 that, use the <option>--tagify-merges</option> option.</para>
 
 <para>The name of the tag is 'emptycommit-<emphasis>ident</emphasis>', where
-<emphasis>ident</emphasis> is generated from the fossil_id of the deleted
+<emphasis>ident</emphasis> is generated from the legacy ID of the deleted
 commit, or from its mark, or from its index in the repository, with a
 disambiguation suffix if needed.</para>
 
@@ -1357,7 +1357,7 @@ is applied to.  This is unlikely to have good results.</para>
 
 <para>If the Event-Number and Event-Mark fields are absent, the
 mailbox_in logic will attempt to match the commit or tag first by
-Fossil-ID, then by a unique committer ID and timestamp pair.</para>
+Legacy-ID, then by a unique committer ID and timestamp pair.</para>
 
 <para>If output is redirected and the modifier <quote>--changed</quote>
 appears, a minimal set of modifications actually made is written to the
@@ -1851,7 +1851,7 @@ There is nothing to be done about this; tools using action stamps need to be
 aware of the possibility and throw a warning when it occurs.</para>
 
 <para>In order to support reference lifting,
-<command>reposurgeon</command> internally builds a fossil-reference
+<command>reposurgeon</command> internally builds a legacy-reference
 map that associates revision identifiers in older version-control
 systems with commits.  The contents of this map comes from three
 places: (1) cvs2svn:rev properties if the repository was read from a
@@ -1864,7 +1864,7 @@ find possible CVS and Subversion references with the
 <command>references</command>; then replace them with equivalent
 cookies; then run <command>references lift</command> to turn the
 cookies into action stamps (using the information in the
-fossil-reference map) without having to do the lookup by hand.</para>
+legacy-reference map) without having to do the lookup by hand.</para>
 
 <variablelist>
 <varlistentry>
@@ -1883,7 +1883,7 @@ command supports &gt;-redirection.</para>
 found.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
-cookies in comments into action stamps using the fossil map. An action
+cookies in comments into action stamps using the legacy map. An action
 stamp is a timestamp/email/sequence-number combination uniquely
 identifying the commit associated with that blob, as described in
 <xref linkend='style'/>.</para>
@@ -1893,7 +1893,7 @@ or even that any at all will be. Normally all references in history
 from a Subversion repository will resolve, but CVS references are less
 likely to be resolvable.</para>
 
-<para>Also, this command enables writing of the fossil map as 'fossil'
+<para>Also, this command enables writing of the legacy map as 'legacy'
 passthroughs when the repo is written to a stream file.</para>
 </listitem>
 </varlistentry>
@@ -2418,25 +2418,25 @@ included.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>fossils</command>
+<term><command>legacy</command>
           [<command>read</command>|<command>write</command>]
           [<command>&lt;filename</command>]
           [<command>&gt;filename</command>]
 </term>
 <listitem>
-<para>Apply or list fossil-reference information. Does not take a
+<para>Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 &lt;-redirected filename; the 'write' variant writes to standard
 output or a &gt;-redirected filename.</para>
 
-<para> A fossil-reference file maps reference cookies to (committer,
+<para> A legacy-reference file maps reference cookies to (committer,
 commit-date, sequence-number) pairs; these in turn (should) uniquely
 identify a commit.  The format is two whitespace-separated fields:
 the cookie followed by an action stamp identifying the commit.</para>
 
 <para>It should not normally be necessary to use this command.  The
-fossil map is automatically preserved through repository reads and
-rebuilds, being stored in the file <filename>fossils</filename> under
+legacy map is automatically preserved through repository reads and
+rebuilds, being stored in the file <filename>legacy-map</filename> under
 the repository subdirectory..</para>
 </listitem>
 </varlistentry>
@@ -2595,7 +2595,7 @@ into a tag. This rule cleans up after aborted branch renames.</para>
 <para>Occasionally (and usually by mistake) a branchy Subversion
 repository will contain revisions that touch multiple branches. These
 are handled by partitioning them into multiple import-stream commits,
-one on each affected branch. The Fossil-ID of such a split commit
+one on each affected branch. The Legacy-ID of such a split commit
 will have a pseudo-decimal part - for example, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
 2317.1, 2317.2, and 2317.3.</para>
@@ -2640,8 +2640,8 @@ git-svn style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
 the <command>authors read</command> command.</para>
 
-<para>Reading a Subversion stream enables writing of the fossil map as
-'fossil' passthroughs when the repo is written to a stream
+<para>Reading a Subversion stream enables writing of the legacy map as
+'legacy' passthroughs when the repo is written to a stream
 file.</para>
 
 <para><command>reposurgeon</command> tries hard to silently do the
@@ -3058,9 +3058,10 @@ command expected policies as trailing arguments to alter its behaviour. The new
 syntax uses similarly named options with leading dashes, that can appear
 anywhere after the tagify command</para>
 
-<para>In versions before 2.9. the syntax of "authors", "fossils",
-"list", and "mailbox_{in|out}" was different. They took plain filename
-arguments rather that using redirect &lt; and &gt;.</para>
+<para>In versions before 2.9. the syntax of "authors", "legacy",
+"list", and "mailbox_{in|out}" was different (and "legacy" was
+"fossils"). They took plain filename arguments rather that using
+redirect &lt; and &gt;.</para>
 </refsect1>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>

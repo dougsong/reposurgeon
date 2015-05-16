@@ -429,27 +429,27 @@ class Difference:
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-def read_fossilmap(fn):
-    fossildict = {}
+def read_legacymap(fn):
+    legacydict = {}
     for line in open(fn):
-        (fossil, stamp) = line.split()
+        (legacy, stamp) = line.split()
         (timefield, person) = stamp.split('!')
         if ':' in person:
             (person, seq) = person.split(':')
             seq = int(seq) - 1
         else:
             seq = 0
-        assert fossil and timefield and person
+        assert legacy and timefield and person
         rfc3339date = time.strptime(timefield, "%Y-%m-%dT%H:%M:%SZ")
         timestamp = calendar.timegm(rfc3339date)
         # Presently, ignore CVS cookies as they can't be mapped to changesets
-        if not fossil.startswith("CVS"):
-            fossildict[(person, str(timestamp))] = fossil
-    return fossildict
+        if not legacy.startswith("CVS"):
+            legacydict[(person, str(timestamp))] = legacy
+    return legacydict
 
 diffdict = {}
 
-def report_pair(a, b, fossils):
+def report_pair(a, b, legacies):
     global n_equal, n_insertions, n_deletions, n_changed, spancount
     tell = ""
     if a is None:
@@ -474,33 +474,33 @@ def report_pair(a, b, fossils):
         spancount += 1
         if showequal:
             tell += "equal: %s == %s" % (a, b)
-            fossil = fossils and fossils.get(a.action_stamp())
-            if fossil:
-                tell += " (" + fossil + ")"
+            legacy = legacies and legacies.get(a.action_stamp())
+            if legacy:
+                tell += " (" + legacy + ")"
             tell += "\n"
         return tell
     if spancount and not showequal:
         tell += "%d equal pairs.\n" % spancount
         spancount = 0
     n_changed += 1
-    fossil = fossils and fossils.get(a.action_stamp())
-    if fossil:
-        fossilid = "(" + fossil + ") "
+    legacy = legacies and legacies.get(a.action_stamp())
+    if legacy:
+        legacyid = "(" + legacy + ") "
     else:
-        fossilid = ""
+        legacyid = ""
     if diff in diffdict:
-        tell += "%s%s -> %s: same differences as for %s.\n" % (fossilid, a, b, diffdict[diff])
+        tell += "%s%s -> %s: same differences as for %s.\n" % (legacyid, a, b, diffdict[diff])
     else:
-        tell += "changed: %s%s -> %s in %s.\n" % (fossilid, a, b, ",".join(diff.difference_types))
+        tell += "changed: %s%s -> %s in %s.\n" % (legacyid, a, b, ",".join(diff.difference_types))
         if "parents" in diff.difference_types:
             def parent_show(c, p):
                 commit = c.repo.fastlookup[p]
-                fossil = fossils and fossils.get(commit.action_stamp())
-                if fossil:
-                    fossilid = "(" + fossil + ") "
+                legacy = legacies and legacies.get(commit.action_stamp())
+                if legacy:
+                    legacyid = "(" + legacy + ") "
                 else:
-                    fossilid = ""
-                return fossilid + str(commit)
+                    legacyid = ""
+                return legacyid + str(commit)
             tell += " parents: "
             tell += ", ".join([parent_show(a, parent) for parent in a.parents])
             tell += " -> "
@@ -536,7 +536,7 @@ def report_pair(a, b, fossils):
                     shutil.rmtree(b_tree)
     return tell
 
-def diff_single(single, alpha, beta, fossils):
+def diff_single(single, alpha, beta, legacies):
     "Examine the difference between two specified commits."
     global ignores
     try:
@@ -553,10 +553,10 @@ def diff_single(single, alpha, beta, fossils):
         sys.stderr.write("repodiffer: no match for %s\n" % b)
         sys.exit(1)
     ignores += "parents"
-    sys.stdout.write(report_pair(ac, bc, fossils))
+    sys.stdout.write(report_pair(ac, bc, legacies))
     return 1 if a and b and Difference(a, b).different else 0
 
-def diff_all(alpha, beta, fossils):
+def diff_all(alpha, beta, legacies):
     "Walk through time-ordered commit pairs, finding differences."
     alpha.sort()
     beta.sort()
@@ -610,7 +610,7 @@ def diff_all(alpha, beta, fossils):
         # Report on the pair table
         say = ""
         for (a, b) in pairs:
-            say += report_pair(a, b, fossils)
+            say += report_pair(a, b, legacies)
             if a and b and Difference(a, b).different:
                 content_differences += 1
             baton.bumpcounter()
@@ -644,14 +644,14 @@ if __name__ == '__main__':
     if sys.hexversion < 0x02070000:
         sys.stderr.write("repodiffer: requires Python 2.7 or later.")
         sys.exit(1)
-    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:tv:", ["changes-only", "show-equal", "full-hash", "ignore=", "fossil-map=", "single=", "quiet", "tree-diff", "verbose="])
+    (options, arguments) = getopt.getopt(sys.argv[1:], "cefi:m:qs:tv:", ["changes-only", "show-equal", "full-hash", "ignore=", "legacy-map=", "single=", "quiet", "tree-diff", "verbose="])
     alpha = None
     beta = None
     changes_only = False
     showequal = False
     fullhash = False
     ignores = ""
-    fossilmap = None
+    legacymap = None
     single = None
     quiet = False
     treediff = False
@@ -667,8 +667,8 @@ if __name__ == '__main__':
             fullhash = True
         elif opt == '-i' or opt == '--ignore':
             ignores = val
-        elif opt == '-m' or opt == '--fossil-map':
-            fossilmap = val
+        elif opt == '-m' or opt == '--legacy-map':
+            legacymap = val
         elif opt == '-s' or opt == '--single':
             single = val
         elif opt == '-q' or opt == '--quiet':
@@ -691,11 +691,11 @@ if __name__ == '__main__':
     try:
         alpha = Repository(alpha)
         beta  = Repository(beta)
-        fossils = fossilmap and read_fossilmap(fossilmap)
+        legacies = legacymap and read_legacymap(legacymap)
         if single:
-            sys.exit(diff_single(single, alpha, beta, fossils))
+            sys.exit(diff_single(single, alpha, beta, legacies))
         else:
-            sys.exit(diff_all(alpha, beta, fossils))
+            sys.exit(diff_all(alpha, beta, legacies))
     except Fatal, err:
         sys.stderr.write(err.msg + "\n")
         del alpha

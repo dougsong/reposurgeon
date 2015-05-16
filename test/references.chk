@@ -24,7 +24,7 @@ reposurgeon: r327~branches/reportbuf/scripts/hotplug/.gitignore: user-created .g
 reposurgeon: r327~branches/reportbuf/server/.gitignore: user-created .gitignore ignored.
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1903 ==============================================================
-# Fossil-ID: 352
+# Legacy-ID: 352
 commit refs/heads/Development
 mark :1903
 committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
@@ -66,7 +66,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer no-author <no-author> 1106836394 +0000
@@ -1594,7 +1594,7 @@ mark :306
 data 49
 Revision is 2, file path is trunk/server/user.h.
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :307
 committer Arnaud Quette <arnaud.quette@free.fr> 1106836394 +0000
@@ -2006,7 +2006,7 @@ mark :327
 data 61
 Revision is 6, file path is trunk/packaging/RedHat/nut.spec.
 
-# Fossil-ID: 6
+# Legacy-ID: 6
 commit refs/heads/master
 mark :328
 committer Arnaud Quette <arnaud.quette@free.fr> 1109582047 +0000
@@ -2034,7 +2034,7 @@ M 100644 :324 include/version
 M 100644 :326 man/mge-shut.8
 M 100644 :327 packaging/RedHat/nut.spec
 
-# Fossil-ID: 7
+# Legacy-ID: 7
 commit refs/heads/Stable
 mark :329
 committer no-author <no-author> 1109582047 +0000
@@ -2044,7 +2044,7 @@ from :307
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-# Fossil-ID: 8
+# Legacy-ID: 8
 commit refs/heads/Testing
 mark :330
 committer no-author <no-author> 1109582047 +0000
@@ -2054,7 +2054,7 @@ from :307
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-# Fossil-ID: 9
+# Legacy-ID: 9
 commit refs/heads/r2.0.1
 mark :331
 committer no-author <no-author> 1109582047 +0000
@@ -2064,7 +2064,7 @@ from :307
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
-# Fossil-ID: 11
+# Legacy-ID: 11
 commit refs/heads/v2.1.0
 mark :332
 committer no-author <no-author> 1109582047 +0000
@@ -2104,7 +2104,7 @@ mark :338
 data 63
 Revision is 12, file path is branches/v2.1.0/man/genericups.8.
 
-# Fossil-ID: 12
+# Legacy-ID: 12
 commit refs/heads/v2.1.0
 mark :339
 committer Arnaud Quette <arnaud.quette@free.fr> 1111154978 +0000
@@ -2133,7 +2133,7 @@ mark :342
 data 62
 Revision is 13, file path is branches/v2.1.0/man/nutupsdrv.8.
 
-# Fossil-ID: 13
+# Legacy-ID: 13
 commit refs/heads/v2.1.0
 mark :343
 committer Arnaud Quette <arnaud.quette@free.fr> 1111155858 +0000
@@ -2154,7 +2154,7 @@ mark :345
 data 63
 Revision is 14, file path is branches/v2.1.0/data/driver.list.
 
-# Fossil-ID: 14
+# Legacy-ID: 14
 commit refs/heads/v2.1.0
 mark :346
 committer Arnaud Quette <arnaud.quette@free.fr> 1111156878 +0000
@@ -2174,7 +2174,7 @@ mark :348
 data 66
 Revision is 15, file path is branches/v2.1.0/drivers/tripplite.c.
 
-# Fossil-ID: 15
+# Legacy-ID: 15
 commit refs/heads/v2.1.0
 mark :349
 committer Arnaud Quette <arnaud.quette@free.fr> 1111420841 +0000
@@ -2199,7 +2199,7 @@ mark :352
 data 66
 Revision is 16, file path is branches/v2.1.0/drivers/powermust.c.
 
-# Fossil-ID: 16
+# Legacy-ID: 16
 commit refs/heads/v2.1.0
 mark :353
 committer Arnaud Quette <arnaud.quette@free.fr> 1111487067 +0000
@@ -2220,7 +2220,7 @@ mark :355
 data 69
 Revision is 17, file path is branches/v2.1.0/drivers/energizerups.c.
 
-# Fossil-ID: 17
+# Legacy-ID: 17
 commit refs/heads/v2.1.0
 mark :356
 committer Arnaud Quette <arnaud.quette@free.fr> 1111495710 +0000
@@ -2245,7 +2245,7 @@ mark :359
 data 66
 Revision is 18, file path is branches/v2.1.0/drivers/fentonups.h.
 
-# Fossil-ID: 18
+# Legacy-ID: 18
 commit refs/heads/v2.1.0
 mark :360
 committer Arnaud Quette <arnaud.quette@free.fr> 1111503828 +0000
@@ -2266,7 +2266,7 @@ mark :362
 data 64
 Revision is 19, file path is branches/v2.1.0/drivers/apccmib.h.
 
-# Fossil-ID: 19
+# Legacy-ID: 19
 commit refs/heads/v2.1.0
 mark :363
 committer Arnaud Quette <arnaud.quette@free.fr> 1111507691 +0000
@@ -2331,7 +2331,7 @@ mark :374
 data 62
 Revision is 20, file path is branches/v2.1.0/man/mge-utalk.8.
 
-# Fossil-ID: 20
+# Legacy-ID: 20
 commit refs/heads/v2.1.0
 mark :375
 committer Arnaud Quette <arnaud.quette@free.fr> 1111594003 +0000
@@ -2365,7 +2365,7 @@ mark :378
 data 62
 Revision is 21, file path is branches/v2.1.0/man/powermust.8.
 
-# Fossil-ID: 21
+# Legacy-ID: 21
 commit refs/heads/v2.1.0
 mark :379
 committer Arnaud Quette <arnaud.quette@free.fr> 1111594897 +0000
@@ -2421,7 +2421,7 @@ mark :388
 data 66
 Revision is 24, file path is branches/v2.1.0/drivers/newhidups.h.
 
-# Fossil-ID: 24
+# Legacy-ID: 24
 commit refs/heads/v2.1.0
 mark :389
 committer Arnaud Quette <arnaud.quette@free.fr> 1113564273 +0000
@@ -2464,7 +2464,7 @@ mark :394
 data 63
 Revision is 25, file path is branches/v2.1.0/drivers/cpsups.h.
 
-# Fossil-ID: 25
+# Legacy-ID: 25
 commit refs/heads/v2.1.0
 mark :395
 committer Arnaud Quette <arnaud.quette@free.fr> 1113566691 +0000
@@ -2502,7 +2502,7 @@ mark :400
 data 61
 Revision is 26, file path is branches/v2.1.0/man/snmp-ups.8.
 
-# Fossil-ID: 26
+# Legacy-ID: 26
 commit refs/heads/v2.1.0
 mark :401
 committer Arnaud Quette <arnaud.quette@free.fr> 1113569162 +0000
@@ -2555,7 +2555,7 @@ mark :409
 data 59
 Revision is 30, file path is branches/v2.1.0/man/bcmxcp.8.
 
-# Fossil-ID: 30
+# Legacy-ID: 30
 commit refs/heads/v2.1.0
 mark :410
 committer Arnaud Quette <arnaud.quette@free.fr> 1114168368 +0000
@@ -2576,7 +2576,7 @@ mark :411
 data 69
 Revision is 32, file path is branches/v2.1.0/drivers/netvisionmib.h.
 
-# Fossil-ID: 32
+# Legacy-ID: 32
 commit refs/heads/v2.1.0
 mark :412
 committer Arnaud Quette <arnaud.quette@free.fr> 1114168464 +0000
@@ -2595,7 +2595,7 @@ mark :414
 data 61
 Revision is 33, file path is branches/v2.1.0/drivers/main.c.
 
-# Fossil-ID: 33
+# Legacy-ID: 33
 commit refs/heads/v2.1.0
 mark :415
 committer Arnaud Quette <arnaud.quette@free.fr> 1114285306 +0000
@@ -2620,7 +2620,7 @@ mark :418
 data 67
 Revision is 34, file path is branches/v2.1.0/drivers/cyberpower.c.
 
-# Fossil-ID: 34
+# Legacy-ID: 34
 commit refs/heads/v2.1.0
 mark :419
 committer Arnaud Quette <arnaud.quette@free.fr> 1114285876 +0000
@@ -2641,7 +2641,7 @@ mark :421
 data 63
 Revision is 35, file path is branches/v2.1.0/drivers/etapro.c.
 
-# Fossil-ID: 35
+# Legacy-ID: 35
 commit refs/heads/v2.1.0
 mark :422
 committer Arnaud Quette <arnaud.quette@free.fr> 1114369758 +0000
@@ -2671,7 +2671,7 @@ mark :426
 data 66
 Revision is 36, file path is branches/v2.1.0/drivers/Makefile.in.
 
-# Fossil-ID: 36
+# Legacy-ID: 36
 commit refs/heads/v2.1.0
 mark :427
 committer Arnaud Quette <arnaud.quette@free.fr> 1114460201 +0000
@@ -2693,7 +2693,7 @@ mark :429
 data 66
 Revision is 37, file path is branches/v2.1.0/drivers/Makefile.in.
 
-# Fossil-ID: 37
+# Legacy-ID: 37
 commit refs/heads/v2.1.0
 mark :430
 committer Arnaud Quette <arnaud.quette@free.fr> 1114460457 +0000
@@ -2723,7 +2723,7 @@ mark :434
 data 66
 Revision is 38, file path is branches/v2.1.0/drivers/Makefile.in.
 
-# Fossil-ID: 38
+# Legacy-ID: 38
 commit refs/heads/v2.1.0
 mark :435
 committer Arnaud Quette <arnaud.quette@free.fr> 1114712580 +0000
@@ -2750,7 +2750,7 @@ mark :438
 data 65
 Revision is 39, file path is branches/v2.1.0/drivers/apcsmart.h.
 
-# Fossil-ID: 39
+# Legacy-ID: 39
 commit refs/heads/v2.1.0
 mark :439
 committer Arnaud Quette <arnaud.quette@free.fr> 1114793924 +0000
@@ -2786,7 +2786,7 @@ mark :444
 data 61
 Revision is 41, file path is branches/v2.1.0/man/snmp-ups.8.
 
-# Fossil-ID: 41
+# Legacy-ID: 41
 commit refs/heads/v2.1.0
 mark :445
 committer Arnaud Quette <arnaud.quette@free.fr> 1115032950 +0000
@@ -2819,7 +2819,7 @@ mark :449
 data 62
 Revision is 42, file path is branches/v2.1.0/man/Makefile.in.
 
-# Fossil-ID: 42
+# Legacy-ID: 42
 commit refs/heads/v2.1.0
 mark :450
 committer Arnaud Quette <arnaud.quette@free.fr> 1115034152 +0000
@@ -2841,7 +2841,7 @@ mark :452
 data 62
 Revision is 43, file path is branches/v2.1.0/man/Makefile.in.
 
-# Fossil-ID: 43
+# Legacy-ID: 43
 commit refs/heads/v2.1.0
 mark :453
 committer Arnaud Quette <arnaud.quette@free.fr> 1115034255 +0000
@@ -2881,7 +2881,7 @@ mark :459
 data 66
 Revision is 44, file path is branches/v2.1.0/drivers/newhidups.h.
 
-# Fossil-ID: 44
+# Legacy-ID: 44
 commit refs/heads/v2.1.0
 mark :460
 committer Arnaud Quette <arnaud.quette@free.fr> 1115111508 +0000
@@ -2900,7 +2900,7 @@ mark :461
 data 54
 Revision is 45, file path is branches/v2.1.0/CHANGES.
 
-# Fossil-ID: 45
+# Legacy-ID: 45
 commit refs/heads/v2.1.0
 mark :462
 committer Arnaud Quette <arnaud.quette@free.fr> 1115111677 +0000
@@ -2949,7 +2949,7 @@ mark :470
 data 61
 Revision is 48, file path is branches/v2.1.0/man/upscode2.8.
 
-# Fossil-ID: 48
+# Legacy-ID: 48
 commit refs/heads/v2.1.0
 mark :471
 committer Arnaud Quette <arnaud.quette@free.fr> 1115114980 +0000
@@ -2975,7 +2975,7 @@ mark :473
 data 63
 Revision is 49, file path is branches/v2.1.0/data/driver.list.
 
-# Fossil-ID: 49
+# Legacy-ID: 49
 commit refs/heads/v2.1.0
 mark :474
 committer Arnaud Quette <arnaud.quette@free.fr> 1115121121 +0000
@@ -3005,7 +3005,7 @@ mark :478
 data 62
 Revision is 50, file path is branches/v2.1.0/man/fentonups.8.
 
-# Fossil-ID: 50
+# Legacy-ID: 50
 commit refs/heads/v2.1.0
 mark :479
 committer Arnaud Quette <arnaud.quette@free.fr> 1115130747 +0000
@@ -3057,7 +3057,7 @@ mark :487
 data 58
 Revision is 54, file path is branches/v2.1.0/man/solis.8.
 
-# Fossil-ID: 54
+# Legacy-ID: 54
 commit refs/heads/v2.1.0
 mark :488
 committer Arnaud Quette <arnaud.quette@free.fr> 1115192424 +0000
@@ -3078,7 +3078,7 @@ mark :489
 data 53
 Revision is 55, file path is branches/v2.1.0/README.
 
-# Fossil-ID: 55
+# Legacy-ID: 55
 commit refs/heads/v2.1.0
 mark :490
 committer Arnaud Quette <arnaud.quette@free.fr> 1115193564 +0000
@@ -3372,7 +3372,7 @@ mark :547
 data 62
 Revision is 56, file path is branches/Testing/man/upscode2.8.
 
-# Fossil-ID: 56
+# Legacy-ID: 56
 commit refs/heads/Testing
 mark :548
 committer Arnaud Quette <arnaud.quette@free.fr> 1115199397 +0000
@@ -3472,7 +3472,7 @@ mark :555
 data 78
 Revision is 58, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 58
+# Legacy-ID: 58
 commit refs/heads/Testing
 mark :556
 committer Arnaud Quette <arnaud.quette@free.fr> 1117110147 +0000
@@ -3517,7 +3517,7 @@ mark :562
 data 67
 Revision is 59, file path is branches/Testing/drivers/newhidups.h.
 
-# Fossil-ID: 59
+# Legacy-ID: 59
 commit refs/heads/Testing
 mark :563
 committer Arnaud Quette <arnaud.quette@free.fr> 1117655129 +0000
@@ -3556,7 +3556,7 @@ mark :568
 data 78
 Revision is 60, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 60
+# Legacy-ID: 60
 commit refs/heads/Testing
 mark :569
 committer Arnaud Quette <arnaud.quette@free.fr> 1117804226 +0000
@@ -3614,7 +3614,7 @@ mark :578
 data 67
 Revision is 61, file path is branches/Testing/drivers/tripplite.c.
 
-# Fossil-ID: 61
+# Legacy-ID: 61
 commit refs/heads/Testing
 mark :579
 committer Arnaud Quette <arnaud.quette@free.fr> 1119425976 +0000
@@ -3671,7 +3671,7 @@ mark :587
 data 65
 Revision is 62, file path is branches/Testing/include/version.h.
 
-# Fossil-ID: 62
+# Legacy-ID: 62
 commit refs/heads/Testing
 mark :588
 committer Arnaud Quette <arnaud.quette@free.fr> 1119442233 +0000
@@ -3692,7 +3692,7 @@ mark :589
 data 55
 Revision is 64, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 64
+# Legacy-ID: 64
 commit refs/heads/Testing
 mark :590
 committer Arnaud Quette <arnaud.quette@free.fr> 1119553881 +0000
@@ -3921,7 +3921,7 @@ mark :634
 data 77
 Revision is 66, file path is branches/Development/packaging/mandriva/upsmon.
 
-# Fossil-ID: 66
+# Legacy-ID: 66
 commit refs/heads/Development
 mark :635
 committer Arnaud Quette <arnaud.quette@free.fr> 1119560962 +0000
@@ -3973,7 +3973,7 @@ M 100644 :631 packaging/mandriva/nut.spec
 M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 
-# Fossil-ID: 67
+# Legacy-ID: 67
 commit refs/heads/Development
 mark :636
 committer Arnaud Quette <arnaud.quette@free.fr> 1119564571 +0000
@@ -3993,7 +3993,7 @@ mark :638
 data 64
 Revision is 68, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 68
+# Legacy-ID: 68
 commit refs/heads/Testing
 mark :639
 committer Arnaud Quette <arnaud.quette@free.fr> 1119860693 +0000
@@ -4013,7 +4013,7 @@ mark :641
 data 68
 Revision is 69, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 69
+# Legacy-ID: 69
 commit refs/heads/Development
 mark :642
 committer Arnaud Quette <arnaud.quette@free.fr> 1119862770 +0000
@@ -4049,7 +4049,7 @@ mark :647
 data 69
 Revision is 70, file path is branches/Development/include/version.h.
 
-# Fossil-ID: 70
+# Legacy-ID: 70
 commit refs/heads/Development
 mark :648
 committer Arnaud Quette <arnaud.quette@free.fr> 1119971078 +0000
@@ -4077,7 +4077,7 @@ mark :651
 data 64
 Revision is 71, file path is branches/Testing/drivers/mgemib.h.
 
-# Fossil-ID: 71
+# Legacy-ID: 71
 commit refs/heads/Testing
 mark :652
 committer Arnaud Quette <arnaud.quette@free.fr> 1119971483 +0000
@@ -4108,7 +4108,7 @@ mark :656
 data 65
 Revision is 72, file path is branches/Testing/include/version.h.
 
-# Fossil-ID: 72
+# Legacy-ID: 72
 commit refs/heads/Testing
 mark :657
 committer Arnaud Quette <arnaud.quette@free.fr> 1120139016 +0000
@@ -4130,7 +4130,7 @@ mark :659
 data 63
 Revision is 73, file path is branches/Testing/drivers/solis.c.
 
-# Fossil-ID: 73
+# Legacy-ID: 73
 commit refs/heads/Testing
 mark :660
 committer Arnaud Quette <arnaud.quette@free.fr> 1120139170 +0000
@@ -4150,7 +4150,7 @@ mark :662
 data 68
 Revision is 74, file path is branches/Testing/drivers/genericups.c.
 
-# Fossil-ID: 74
+# Legacy-ID: 74
 commit refs/heads/Testing
 mark :663
 committer Arnaud Quette <arnaud.quette@free.fr> 1120206766 +0000
@@ -4175,7 +4175,7 @@ mark :666
 data 67
 Revision is 75, file path is branches/Development/drivers/solis.c.
 
-# Fossil-ID: 75
+# Legacy-ID: 75
 commit refs/heads/Development
 mark :667
 committer Arnaud Quette <arnaud.quette@free.fr> 1120207188 +0000
@@ -4196,7 +4196,7 @@ mark :669
 data 68
 Revision is 76, file path is branches/Development/drivers/isbmex.c.
 
-# Fossil-ID: 76
+# Legacy-ID: 76
 commit refs/heads/Development
 mark :670
 committer Arnaud Quette <arnaud.quette@free.fr> 1120224823 +0000
@@ -4216,7 +4216,7 @@ mark :672
 data 64
 Revision is 77, file path is branches/Testing/drivers/isbmex.c.
 
-# Fossil-ID: 77
+# Legacy-ID: 77
 commit refs/heads/Testing
 mark :673
 committer Arnaud Quette <arnaud.quette@free.fr> 1120224945 +0000
@@ -4266,7 +4266,7 @@ mark :681
 data 66
 Revision is 78, file path is branches/Development/man/snmp-ups.8.
 
-# Fossil-ID: 78
+# Legacy-ID: 78
 commit refs/heads/Development
 mark :682
 committer Arnaud Quette <arnaud.quette@free.fr> 1120570729 +0000
@@ -4289,7 +4289,7 @@ mark :683
 data 71
 Revision is 79, file path is branches/Development/drivers/dummy-ups.c.
 
-# Fossil-ID: 79
+# Legacy-ID: 79
 commit refs/heads/Development
 mark :684
 committer Arnaud Quette <arnaud.quette@free.fr> 1120571857 +0000
@@ -4313,7 +4313,7 @@ mark :687
 data 76
 Revision is 80, file path is branches/Testing/packaging/RedHat/nut.spec.in.
 
-# Fossil-ID: 80
+# Legacy-ID: 80
 commit refs/heads/Testing
 mark :688
 committer Arnaud Quette <arnaud.quette@free.fr> 1121856341 +0000
@@ -4349,7 +4349,7 @@ mark :693
 data 80
 Revision is 81, file path is branches/Development/packaging/RedHat/nut.spec.in.
 
-# Fossil-ID: 81
+# Legacy-ID: 81
 commit refs/heads/Development
 mark :694
 committer Arnaud Quette <arnaud.quette@free.fr> 1121859397 +0000
@@ -4377,7 +4377,7 @@ mark :697
 data 64
 Revision is 82, file path is branches/Testing/drivers/isbmex.c.
 
-# Fossil-ID: 82
+# Legacy-ID: 82
 commit refs/heads/Testing
 mark :698
 committer Arnaud Quette <arnaud.quette@free.fr> 1121859428 +0000
@@ -4398,7 +4398,7 @@ mark :700
 data 68
 Revision is 83, file path is branches/Development/drivers/libusb.c.
 
-# Fossil-ID: 83
+# Legacy-ID: 83
 commit refs/heads/Development
 mark :701
 committer Arnaud Quette <arnaud.quette@free.fr> 1121867657 +0000
@@ -4418,7 +4418,7 @@ mark :703
 data 64
 Revision is 84, file path is branches/Testing/drivers/libusb.c.
 
-# Fossil-ID: 84
+# Legacy-ID: 84
 commit refs/heads/Testing
 mark :704
 committer Arnaud Quette <arnaud.quette@free.fr> 1121867936 +0000
@@ -4443,7 +4443,7 @@ mark :707
 data 65
 Revision is 85, file path is branches/Development/drivers/gendb.
 
-# Fossil-ID: 85
+# Legacy-ID: 85
 commit refs/heads/Development
 mark :708
 committer Arnaud Quette <arnaud.quette@free.fr> 1121955345 +0000
@@ -4469,7 +4469,7 @@ mark :711
 data 61
 Revision is 86, file path is branches/Testing/drivers/gendb.
 
-# Fossil-ID: 86
+# Legacy-ID: 86
 commit refs/heads/Testing
 mark :712
 committer Arnaud Quette <arnaud.quette@free.fr> 1121955482 +0000
@@ -4515,7 +4515,7 @@ mark :719
 data 45
 Revision is 87, file path is trunk/Makefile.
 
-# Fossil-ID: 87.1
+# Legacy-ID: 87.1
 commit refs/heads/Development
 mark :720
 committer Arnaud Quette <arnaud.quette@free.fr> 1122032683 +0000
@@ -4531,7 +4531,7 @@ M 100644 :716 drivers/dummy-ups.h
 M 100644 :717 drivers/libusb.c
 M 100644 :718 man/newhidups.8
 
-# Fossil-ID: 87.2
+# Legacy-ID: 87.2
 commit refs/heads/master
 mark :721
 committer Arnaud Quette <arnaud.quette@free.fr> 1122032683 +0000
@@ -4557,7 +4557,7 @@ mark :724
 data 72
 Revision is 88, file path is branches/Development/drivers/genericups.h.
 
-# Fossil-ID: 88
+# Legacy-ID: 88
 commit refs/heads/Development
 mark :725
 committer Arnaud Quette <arnaud.quette@free.fr> 1122035323 +0000
@@ -4578,7 +4578,7 @@ mark :727
 data 71
 Revision is 89, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 89
+# Legacy-ID: 89
 commit refs/heads/Development
 mark :728
 committer Arnaud Quette <arnaud.quette@free.fr> 1122043987 +0000
@@ -4603,7 +4603,7 @@ mark :731
 data 67
 Revision is 90, file path is branches/Testing/drivers/newhidups.h.
 
-# Fossil-ID: 90
+# Legacy-ID: 90
 commit refs/heads/Testing
 mark :732
 committer Arnaud Quette <arnaud.quette@free.fr> 1122049444 +0000
@@ -4624,7 +4624,7 @@ mark :734
 data 64
 Revision is 91, file path is branches/Testing/drivers/bcmxcp.c.
 
-# Fossil-ID: 91
+# Legacy-ID: 91
 commit refs/heads/Testing
 mark :735
 committer Arnaud Quette <arnaud.quette@free.fr> 1122452815 +0000
@@ -4639,7 +4639,7 @@ mark :736
 data 64
 Revision is 92, file path is branches/Testing/drivers/bcmxcp.c.
 
-# Fossil-ID: 92
+# Legacy-ID: 92
 commit refs/heads/Testing
 mark :737
 committer Arnaud Quette <arnaud.quette@free.fr> 1122452923 +0000
@@ -4653,7 +4653,7 @@ mark :738
 data 55
 Revision is 93, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 93
+# Legacy-ID: 93
 commit refs/heads/Testing
 mark :739
 committer Arnaud Quette <arnaud.quette@free.fr> 1122453015 +0000
@@ -4727,7 +4727,7 @@ mark :752
 data 45
 Revision is 94, file path is trunk/Makefile.
 
-# Fossil-ID: 94.1
+# Legacy-ID: 94.1
 commit refs/heads/Development
 mark :753
 committer Arnaud Quette <arnaud.quette@free.fr> 1122499175 +0000
@@ -4749,7 +4749,7 @@ M 100644 :748 data/html/header.html
 M 100644 :750 data/html/index.html
 M 100644 :751 data/html/nut-banner.png
 
-# Fossil-ID: 94.2
+# Legacy-ID: 94.2
 commit refs/heads/master
 mark :754
 committer Arnaud Quette <arnaud.quette@free.fr> 1122499175 +0000
@@ -4765,7 +4765,7 @@ mark :755
 data 63
 Revision is 95, file path is branches/Development/Makefile.in.
 
-# Fossil-ID: 95
+# Legacy-ID: 95
 commit refs/heads/Development
 mark :756
 committer Arnaud Quette <arnaud.quette@free.fr> 1122533678 +0000
@@ -4779,7 +4779,7 @@ mark :757
 data 68
 Revision is 96, file path is branches/Development/drivers/bcmxcp.c.
 
-# Fossil-ID: 96
+# Legacy-ID: 96
 commit refs/heads/Development
 mark :758
 committer Arnaud Quette <arnaud.quette@free.fr> 1122895603 +0000
@@ -4793,7 +4793,7 @@ mark :759
 data 68
 Revision is 97, file path is branches/Development/man/genericups.8.
 
-# Fossil-ID: 97
+# Legacy-ID: 97
 commit refs/heads/Development
 mark :760
 committer Arnaud Quette <arnaud.quette@free.fr> 1122895648 +0000
@@ -4807,7 +4807,7 @@ mark :761
 data 45
 Revision is 98, file path is trunk/Makefile.
 
-# Fossil-ID: 98
+# Legacy-ID: 98
 commit refs/heads/master
 mark :762
 committer Arnaud Quette <arnaud.quette@free.fr> 1122895733 +0000
@@ -4816,7 +4816,7 @@ add install-cgi-html to install-cgi rule
 from :754
 M 100644 :761 Makefile
 
-# Fossil-ID: 99
+# Legacy-ID: 99
 commit refs/tags/alioth_SVN_migration
 mark :763
 committer no-author <no-author> 1122895733 +0000
@@ -4842,7 +4842,7 @@ mark :766
 data 72
 Revision is 100, file path is branches/Development/drivers/newhidups.c.
 
-# Fossil-ID: 100
+# Legacy-ID: 100
 commit refs/heads/Development
 mark :767
 committer Arnaud Quette <arnaud.quette@free.fr> 1122895781 +0000
@@ -4868,7 +4868,7 @@ mark :770
 data 72
 Revision is 101, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 101
+# Legacy-ID: 101
 commit refs/heads/Development
 mark :771
 committer Arnaud Quette <arnaud.quette@free.fr> 1122904456 +0000
@@ -4904,7 +4904,7 @@ mark :776
 data 72
 Revision is 102, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 102
+# Legacy-ID: 102
 commit refs/heads/Development
 mark :777
 committer Arnaud Quette <arnaud.quette@free.fr> 1122982203 +0000
@@ -4932,7 +4932,7 @@ mark :780
 data 72
 Revision is 103, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 103
+# Legacy-ID: 103
 commit refs/heads/Development
 mark :781
 committer Arnaud Quette <arnaud.quette@free.fr> 1123060431 +0000
@@ -4948,7 +4948,7 @@ mark :782
 data 69
 Revision is 104, file path is branches/Development/drivers/libusb.c.
 
-# Fossil-ID: 104
+# Legacy-ID: 104
 commit refs/heads/Development
 mark :783
 committer Arnaud Quette <arnaud.quette@free.fr> 1123061201 +0000
@@ -5017,7 +5017,7 @@ mark :795
 data 83
 Revision is 105, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 105
+# Legacy-ID: 105
 commit refs/heads/Development
 mark :796
 committer Arnaud Quette <arnaud.quette@free.fr> 1123675568 +0000
@@ -5067,7 +5067,7 @@ mark :802
 data 67
 Revision is 106, file path is branches/Testing/drivers/mge-shut.h.
 
-# Fossil-ID: 106
+# Legacy-ID: 106
 commit refs/heads/Testing
 mark :803
 committer Arnaud Quette <arnaud.quette@free.fr> 1124190184 +0000
@@ -5106,7 +5106,7 @@ mark :808
 data 67
 Revision is 107, file path is branches/Development/drivers/main.c.
 
-# Fossil-ID: 107
+# Legacy-ID: 107
 commit refs/heads/Development
 mark :809
 committer Arnaud Quette <arnaud.quette@free.fr> 1124192911 +0000
@@ -5164,7 +5164,7 @@ mark :818
 data 75
 Revision is 111, file path is branches/Development/scripts/hotplug/README.
 
-# Fossil-ID: 111
+# Legacy-ID: 111
 commit refs/heads/Development
 mark :819
 committer Arnaud Quette <arnaud.quette@free.fr> 1124201426 +0000
@@ -5191,7 +5191,7 @@ mark :821
 data 69
 Revision is 112, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 112
+# Legacy-ID: 112
 commit refs/heads/Development
 mark :822
 committer Arnaud Quette <arnaud.quette@free.fr> 1124225738 +0000
@@ -5211,7 +5211,7 @@ mark :824
 data 65
 Revision is 113, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 113
+# Legacy-ID: 113
 commit refs/heads/Testing
 mark :825
 committer Arnaud Quette <arnaud.quette@free.fr> 1124225964 +0000
@@ -5236,7 +5236,7 @@ mark :828
 data 58
 Revision is 114, file path is branches/Testing/UPGRADING.
 
-# Fossil-ID: 114
+# Legacy-ID: 114
 commit refs/heads/Testing
 mark :829
 committer Arnaud Quette <arnaud.quette@free.fr> 1124229374 +0000
@@ -5267,7 +5267,7 @@ mark :833
 data 68
 Revision is 115, file path is branches/Development/man/mge-utalk.8.
 
-# Fossil-ID: 115
+# Legacy-ID: 115
 commit refs/heads/Development
 mark :834
 committer Arnaud Quette <arnaud.quette@free.fr> 1124368165 +0000
@@ -5299,7 +5299,7 @@ mark :838
 data 68
 Revision is 116, file path is branches/Testing/drivers/mge-utalk.h.
 
-# Fossil-ID: 116
+# Legacy-ID: 116
 commit refs/heads/Testing
 mark :839
 committer Arnaud Quette <arnaud.quette@free.fr> 1124369141 +0000
@@ -5346,7 +5346,7 @@ mark :846
 data 71
 Revision is 117, file path is branches/Testing/scripts/hotplug/README.
 
-# Fossil-ID: 117
+# Legacy-ID: 117
 commit refs/heads/Testing
 mark :847
 committer Arnaud Quette <arnaud.quette@free.fr> 1124782754 +0000
@@ -5426,7 +5426,7 @@ mark :860
 data 83
 Revision is 123, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 123
+# Legacy-ID: 123
 commit refs/heads/Development
 mark :861
 committer Charles Lepple <clepple+nut@gmail.com> 1125116335 +0000
@@ -5453,7 +5453,7 @@ mark :862
 data 69
 Revision is 124, file path is branches/Development/drivers/libhid.c.
 
-# Fossil-ID: 124
+# Legacy-ID: 124
 commit refs/heads/Development
 mark :863
 committer Charles Lepple <clepple+nut@gmail.com> 1125117374 +0000
@@ -5492,7 +5492,7 @@ mark :869
 data 72
 Revision is 125, file path is branches/Development/include/config.h.in.
 
-# Fossil-ID: 125
+# Legacy-ID: 125
 commit refs/heads/Development
 mark :870
 committer Charles Lepple <clepple+nut@gmail.com> 1125117776 +0000
@@ -5512,7 +5512,7 @@ mark :871
 data 72
 Revision is 126, file path is branches/Development/drivers/Makefile.in.
 
-# Fossil-ID: 126
+# Legacy-ID: 126
 commit refs/heads/Development
 mark :872
 committer Charles Lepple <clepple+nut@gmail.com> 1125542538 +0000
@@ -5522,7 +5522,7 @@ during 'make clean'.
 from :870
 M 100644 :871 drivers/Makefile.in
 
-# Fossil-ID: 127
+# Legacy-ID: 127
 commit refs/heads/Tripp_Lite_Omni
 mark :873
 committer no-author <no-author> 1125542538 +0000
@@ -5608,7 +5608,7 @@ mark :877
 data 80
 Revision is 129, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 129
+# Legacy-ID: 129
 commit refs/heads/Tripp_Lite_Omni
 mark :878
 committer Charles Lepple <clepple+nut@gmail.com> 1125769870 +0000
@@ -5625,7 +5625,7 @@ mark :879
 data 80
 Revision is 130, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 130
+# Legacy-ID: 130
 commit refs/heads/Tripp_Lite_Omni
 mark :880
 committer Charles Lepple <clepple+nut@gmail.com> 1125773439 +0000
@@ -5645,7 +5645,7 @@ mark :882
 data 80
 Revision is 131, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 131
+# Legacy-ID: 131
 commit refs/heads/Tripp_Lite_Omni
 mark :883
 committer Charles Lepple <clepple+nut@gmail.com> 1125776006 +0000
@@ -5661,7 +5661,7 @@ mark :884
 data 80
 Revision is 132, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 132
+# Legacy-ID: 132
 commit refs/heads/Tripp_Lite_Omni
 mark :885
 committer Charles Lepple <clepple+nut@gmail.com> 1125784323 +0000
@@ -5680,7 +5680,7 @@ mark :887
 data 80
 Revision is 133, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 133
+# Legacy-ID: 133
 commit refs/heads/Tripp_Lite_Omni
 mark :888
 committer Charles Lepple <clepple+nut@gmail.com> 1125787610 +0000
@@ -5695,7 +5695,7 @@ mark :889
 data 80
 Revision is 134, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 134
+# Legacy-ID: 134
 commit refs/heads/Tripp_Lite_Omni
 mark :890
 committer Charles Lepple <clepple+nut@gmail.com> 1125788173 +0000
@@ -5709,7 +5709,7 @@ mark :891
 data 80
 Revision is 135, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 135
+# Legacy-ID: 135
 commit refs/heads/Tripp_Lite_Omni
 mark :892
 committer Charles Lepple <clepple+nut@gmail.com> 1125793465 +0000
@@ -5723,7 +5723,7 @@ mark :893
 data 80
 Revision is 136, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 136
+# Legacy-ID: 136
 commit refs/heads/Tripp_Lite_Omni
 mark :894
 committer Charles Lepple <clepple+nut@gmail.com> 1125804571 +0000
@@ -5737,7 +5737,7 @@ mark :895
 data 80
 Revision is 137, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 137
+# Legacy-ID: 137
 commit refs/heads/Tripp_Lite_Omni
 mark :896
 committer Charles Lepple <clepple+nut@gmail.com> 1125805270 +0000
@@ -5751,7 +5751,7 @@ mark :897
 data 80
 Revision is 138, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 138
+# Legacy-ID: 138
 commit refs/heads/Tripp_Lite_Omni
 mark :898
 committer Charles Lepple <clepple+nut@gmail.com> 1126185391 +0000
@@ -5770,7 +5770,7 @@ mark :900
 data 74
 Revision is 139, file path is branches/Development/data/html/Makefile.in.
 
-# Fossil-ID: 139
+# Legacy-ID: 139
 commit refs/heads/Development
 mark :901
 committer Arnaud Quette <arnaud.quette@free.fr> 1126263012 +0000
@@ -5795,7 +5795,7 @@ mark :904
 data 76
 Revision is 140, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 140
+# Legacy-ID: 140
 commit refs/heads/Development
 mark :905
 committer Arnaud Quette <arnaud.quette@free.fr> 1126267606 +0000
@@ -5811,7 +5811,7 @@ mark :906
 data 73
 Revision is 141, file path is branches/Tripp_Lite_Omni/data/driver.list.
 
-# Fossil-ID: 141
+# Legacy-ID: 141
 commit refs/heads/Tripp_Lite_Omni
 mark :907
 committer Charles Lepple <clepple+nut@gmail.com> 1126268122 +0000
@@ -5830,7 +5830,7 @@ mark :909
 data 76
 Revision is 143, file path is branches/Tripp_Lite_Omni/man/tripplite_usb.8.
 
-# Fossil-ID: 143
+# Legacy-ID: 143
 commit refs/heads/Tripp_Lite_Omni
 mark :910
 committer Charles Lepple <clepple+nut@gmail.com> 1126270517 +0000
@@ -5880,7 +5880,7 @@ mark :918
 data 72
 Revision is 144, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 144
+# Legacy-ID: 144
 commit refs/heads/Development
 mark :919
 committer Arnaud Quette <arnaud.quette@free.fr> 1126276359 +0000
@@ -5906,7 +5906,7 @@ mark :921
 data 71
 Revision is 145, file path is branches/Development/docs/new-names.txt.
 
-# Fossil-ID: 145
+# Legacy-ID: 145
 commit refs/heads/Development
 mark :922
 committer Arnaud Quette <arnaud.quette@free.fr> 1126277072 +0000
@@ -5921,7 +5921,7 @@ mark :923
 data 71
 Revision is 146, file path is branches/Development/docs/new-names.txt.
 
-# Fossil-ID: 146
+# Legacy-ID: 146
 commit refs/heads/Development
 mark :924
 committer Arnaud Quette <arnaud.quette@free.fr> 1126279494 +0000
@@ -5945,7 +5945,7 @@ mark :927
 data 68
 Revision is 147, file path is branches/Development/man/belkinunv.8.
 
-# Fossil-ID: 147
+# Legacy-ID: 147
 commit refs/heads/Development
 mark :928
 committer Arnaud Quette <arnaud.quette@free.fr> 1126281698 +0000
@@ -5961,7 +5961,7 @@ mark :929
 data 80
 Revision is 148, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 148
+# Legacy-ID: 148
 commit refs/heads/Tripp_Lite_Omni
 mark :930
 committer Charles Lepple <clepple+nut@gmail.com> 1126322693 +0000
@@ -5980,7 +5980,7 @@ mark :932
 data 80
 Revision is 150, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 150
+# Legacy-ID: 150
 commit refs/heads/Tripp_Lite_Omni
 mark :933
 committer Charles Lepple <clepple+nut@gmail.com> 1126387009 +0000
@@ -6000,7 +6000,7 @@ mark :935
 data 80
 Revision is 151, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 151
+# Legacy-ID: 151
 commit refs/heads/Tripp_Lite_Omni
 mark :936
 committer Charles Lepple <clepple+nut@gmail.com> 1126392959 +0000
@@ -6016,7 +6016,7 @@ mark :937
 data 80
 Revision is 152, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 152
+# Legacy-ID: 152
 commit refs/heads/Tripp_Lite_Omni
 mark :938
 committer Charles Lepple <clepple+nut@gmail.com> 1126483619 +0000
@@ -6032,7 +6032,7 @@ mark :939
 data 87
 Revision is 153, file path is branches/Tripp_Lite_Omni/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 153
+# Legacy-ID: 153
 commit refs/heads/Tripp_Lite_Omni
 mark :940
 committer Charles Lepple <clepple+nut@gmail.com> 1126485165 +0000
@@ -6046,7 +6046,7 @@ mark :941
 data 80
 Revision is 154, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 154
+# Legacy-ID: 154
 commit refs/heads/Tripp_Lite_Omni
 mark :942
 committer Charles Lepple <clepple+nut@gmail.com> 1126485478 +0000
@@ -6265,7 +6265,7 @@ mark :984
 data 73
 Revision is 155, file path is branches/Development/drivers/victronups.h.
 
-# Fossil-ID: 155
+# Legacy-ID: 155
 commit refs/heads/Development
 mark :985
 committer Arnaud Quette <arnaud.quette@free.fr> 1126528716 +0000
@@ -6320,7 +6320,7 @@ mark :986
 data 61
 Revision is 156, file path is branches/Development/Makefile.
 
-# Fossil-ID: 156
+# Legacy-ID: 156
 commit refs/heads/Development
 mark :987
 committer Arnaud Quette <arnaud.quette@free.fr> 1126529023 +0000
@@ -6354,7 +6354,7 @@ mark :992
 data 69
 Revision is 158, file path is branches/Development/man/bcmxcp_usb.8.
 
-# Fossil-ID: 158
+# Legacy-ID: 158
 commit refs/heads/Development
 mark :993
 committer Arnaud Quette <arnaud.quette@free.fr> 1126530130 +0000
@@ -6377,7 +6377,7 @@ mark :995
 data 72
 Revision is 159, file path is branches/Development/drivers/newhidups.c.
 
-# Fossil-ID: 159
+# Legacy-ID: 159
 commit refs/heads/Development
 mark :996
 committer Peter Selinger <selinger@users.sourceforge.net> 1126547712 +0000
@@ -6408,7 +6408,7 @@ mark :1000
 data 72
 Revision is 160, file path is branches/Development/drivers/newhidups.c.
 
-# Fossil-ID: 160
+# Legacy-ID: 160
 commit refs/heads/Development
 mark :1001
 committer Peter Selinger <selinger@users.sourceforge.net> 1126575581 +0000
@@ -6421,7 +6421,7 @@ M 100644 :998 drivers/libhid.h
 M 100644 :999 drivers/libusb.c
 M 100644 :1000 drivers/newhidups.c
 
-# Fossil-ID: 161
+# Legacy-ID: 161
 commit refs/heads/regex_branch
 mark :1002
 committer no-author <no-author> 1126575581 +0000
@@ -6614,7 +6614,7 @@ mark :1010
 data 69
 Revision is 162, file path is branches/regex_branch/man/newhidups.8.
 
-# Fossil-ID: 162
+# Legacy-ID: 162
 commit refs/heads/regex_branch
 mark :1011
 committer Peter Selinger <selinger@users.sourceforge.net> 1126589842 +0000
@@ -6648,7 +6648,7 @@ mark :1013
 data 69
 Revision is 163, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 163
+# Legacy-ID: 163
 commit refs/heads/Development
 mark :1014
 committer Arnaud Quette <arnaud.quette@free.fr> 1126601371 +0000
@@ -6693,7 +6693,7 @@ mark :1021
 data 72
 Revision is 165, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 165
+# Legacy-ID: 165
 commit refs/heads/Development
 mark :1022
 committer Peter Selinger <selinger@users.sourceforge.net> 1126645866 +0000
@@ -6733,7 +6733,7 @@ mark :1026
 data 72
 Revision is 166, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 166
+# Legacy-ID: 166
 commit refs/heads/Development
 mark :1027
 committer Peter Selinger <selinger@users.sourceforge.net> 1126715194 +0000
@@ -6746,7 +6746,7 @@ M 100644 :1024 docs/new-names.txt
 M 100644 :1025 drivers/belkin-hid.h
 M 100644 :1026 drivers/newhidups.h
 
-# Fossil-ID: 167
+# Legacy-ID: 167
 commit refs/tags/regex_branch_base0
 mark :1028
 committer no-author <no-author> 1126715194 +0000
@@ -6916,7 +6916,7 @@ mark :1031
 data 73
 Revision is 168, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 168
+# Legacy-ID: 168
 commit refs/heads/regex_branch
 mark :1032
 committer Peter Selinger <selinger@users.sourceforge.net> 1126722985 +0000
@@ -6968,7 +6968,7 @@ mark :1039
 data 73
 Revision is 169, file path is branches/regex_branch/drivers/newhidups.h.
 
-# Fossil-ID: 169
+# Legacy-ID: 169
 commit refs/heads/regex_branch
 mark :1040
 committer Peter Selinger <selinger@users.sourceforge.net> 1126723806 +0000
@@ -7020,7 +7020,7 @@ mark :1047
 data 73
 Revision is 170, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 170
+# Legacy-ID: 170
 commit refs/heads/regex_branch
 mark :1048
 committer Peter Selinger <selinger@users.sourceforge.net> 1126747027 +0000
@@ -7074,7 +7074,7 @@ mark :1054
 data 73
 Revision is 171, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 171
+# Legacy-ID: 171
 commit refs/heads/regex_branch
 mark :1055
 committer Peter Selinger <selinger@users.sourceforge.net> 1126755611 +0000
@@ -7111,7 +7111,7 @@ mark :1058
 data 69
 Revision is 172, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 172
+# Legacy-ID: 172
 commit refs/heads/Development
 mark :1059
 committer Peter Selinger <selinger@users.sourceforge.net> 1126756583 +0000
@@ -7143,7 +7143,7 @@ mark :1063
 data 73
 Revision is 173, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 173
+# Legacy-ID: 173
 commit refs/heads/regex_branch
 mark :1064
 committer Peter Selinger <selinger@users.sourceforge.net> 1126814093 +0000
@@ -7170,7 +7170,7 @@ mark :1067
 data 73
 Revision is 174, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 174
+# Legacy-ID: 174
 commit refs/heads/regex_branch
 mark :1068
 committer Peter Selinger <selinger@users.sourceforge.net> 1126832764 +0000
@@ -7201,7 +7201,7 @@ mark :1072
 data 66
 Revision is 175, file path is branches/Development/drivers/gendb.
 
-# Fossil-ID: 175
+# Legacy-ID: 175
 commit refs/heads/Development
 mark :1073
 committer Peter Selinger <selinger@users.sourceforge.net> 1126834591 +0000
@@ -7224,7 +7224,7 @@ mark :1075
 data 66
 Revision is 176, file path is branches/Development/drivers/gendb.
 
-# Fossil-ID: 176
+# Legacy-ID: 176
 commit refs/heads/Development
 mark :1076
 committer Peter Selinger <selinger@users.sourceforge.net> 1126916971 +0000
@@ -7241,7 +7241,7 @@ mark :1077
 data 80
 Revision is 177, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 177
+# Legacy-ID: 177
 commit refs/heads/Tripp_Lite_Omni
 mark :1078
 committer Charles Lepple <clepple+nut@gmail.com> 1126985329 +0000
@@ -7255,7 +7255,7 @@ mark :1079
 data 80
 Revision is 178, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 178
+# Legacy-ID: 178
 commit refs/heads/Tripp_Lite_Omni
 mark :1080
 committer Charles Lepple <clepple+nut@gmail.com> 1126986818 +0000
@@ -7269,7 +7269,7 @@ mark :1081
 data 80
 Revision is 179, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 179
+# Legacy-ID: 179
 commit refs/heads/Tripp_Lite_Omni
 mark :1082
 committer Charles Lepple <clepple+nut@gmail.com> 1126988862 +0000
@@ -7283,7 +7283,7 @@ mark :1083
 data 60
 Revision is 180, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 180
+# Legacy-ID: 180
 commit refs/heads/Development
 mark :1084
 committer Peter Selinger <selinger@users.sourceforge.net> 1126989517 +0000
@@ -7297,7 +7297,7 @@ mark :1085
 data 80
 Revision is 181, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 181
+# Legacy-ID: 181
 commit refs/heads/Tripp_Lite_Omni
 mark :1086
 committer Charles Lepple <clepple+nut@gmail.com> 1126992855 +0000
@@ -7311,7 +7311,7 @@ mark :1087
 data 80
 Revision is 182, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 182
+# Legacy-ID: 182
 commit refs/heads/Tripp_Lite_Omni
 mark :1088
 committer Charles Lepple <clepple+nut@gmail.com> 1126995251 +0000
@@ -7325,7 +7325,7 @@ mark :1089
 data 80
 Revision is 183, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 183
+# Legacy-ID: 183
 commit refs/heads/Tripp_Lite_Omni
 mark :1090
 committer Charles Lepple <clepple+nut@gmail.com> 1127081880 +0000
@@ -7339,7 +7339,7 @@ mark :1091
 data 80
 Revision is 184, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 184
+# Legacy-ID: 184
 commit refs/heads/Tripp_Lite_Omni
 mark :1092
 committer Charles Lepple <clepple+nut@gmail.com> 1127084428 +0000
@@ -7353,7 +7353,7 @@ mark :1093
 data 80
 Revision is 185, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 185
+# Legacy-ID: 185
 commit refs/heads/Tripp_Lite_Omni
 mark :1094
 committer Charles Lepple <clepple+nut@gmail.com> 1127087329 +0000
@@ -7367,7 +7367,7 @@ mark :1095
 data 80
 Revision is 186, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 186
+# Legacy-ID: 186
 commit refs/heads/Tripp_Lite_Omni
 mark :1096
 committer Charles Lepple <clepple+nut@gmail.com> 1127088758 +0000
@@ -7386,7 +7386,7 @@ mark :1098
 data 66
 Revision is 187, file path is branches/Development/drivers/gendb.
 
-# Fossil-ID: 187
+# Legacy-ID: 187
 commit refs/heads/Development
 mark :1099
 committer Peter Selinger <selinger@users.sourceforge.net> 1127146364 +0000
@@ -7406,7 +7406,7 @@ mark :1101
 data 72
 Revision is 188, file path is branches/Development/drivers/Makefile.in.
 
-# Fossil-ID: 188
+# Legacy-ID: 188
 commit refs/heads/Development
 mark :1102
 committer Peter Selinger <selinger@users.sourceforge.net> 1127148214 +0000
@@ -7421,7 +7421,7 @@ mark :1103
 data 60
 Revision is 189, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 189
+# Legacy-ID: 189
 commit refs/heads/Development
 mark :1104
 committer Peter Selinger <selinger@users.sourceforge.net> 1127148312 +0000
@@ -7455,7 +7455,7 @@ mark :1109
 data 73
 Revision is 190, file path is branches/regex_branch/drivers/newhidups.c.
 
-# Fossil-ID: 190
+# Legacy-ID: 190
 commit refs/heads/regex_branch
 mark :1110
 committer Peter Selinger <selinger@users.sourceforge.net> 1127152308 +0000
@@ -7473,7 +7473,7 @@ mark :1111
 data 69
 Revision is 191, file path is branches/regex_branch/man/newhidups.8.
 
-# Fossil-ID: 191
+# Legacy-ID: 191
 commit refs/heads/regex_branch
 mark :1112
 committer Peter Selinger <selinger@users.sourceforge.net> 1127171035 +0000
@@ -7572,7 +7572,7 @@ mark :1130
 data 76
 Revision is 196, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 196
+# Legacy-ID: 196
 commit refs/heads/Development
 mark :1131
 committer Peter Selinger <selinger@users.sourceforge.net> 1127178958 +0000
@@ -7649,7 +7649,7 @@ mark :1140
 data 68
 Revision is 197, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 197
+# Legacy-ID: 197
 commit refs/heads/Development
 mark :1141
 committer Peter Selinger <selinger@users.sourceforge.net> 1127181565 +0000
@@ -7686,7 +7686,7 @@ mark :1145
 data 76
 Revision is 198, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 198
+# Legacy-ID: 198
 commit refs/heads/Development
 mark :1146
 committer Peter Selinger <selinger@users.sourceforge.net> 1127182384 +0000
@@ -7769,7 +7769,7 @@ mark :1160
 data 72
 Revision is 200, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 200
+# Legacy-ID: 200
 commit refs/heads/Development
 mark :1161
 committer Peter Selinger <selinger@users.sourceforge.net> 1127520984 +0000
@@ -7846,7 +7846,7 @@ mark :1170
 data 76
 Revision is 201, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 201
+# Legacy-ID: 201
 commit refs/heads/Development
 mark :1171
 committer Peter Selinger <selinger@users.sourceforge.net> 1127523038 +0000
@@ -7868,7 +7868,7 @@ mark :1172
 data 60
 Revision is 202, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 202
+# Legacy-ID: 202
 commit refs/heads/Development
 mark :1173
 committer Peter Selinger <selinger@users.sourceforge.net> 1127525566 +0000
@@ -7882,7 +7882,7 @@ mark :1174
 data 80
 Revision is 203, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 203
+# Legacy-ID: 203
 commit refs/heads/Tripp_Lite_Omni
 mark :1175
 committer Charles Lepple <clepple+nut@gmail.com> 1127526503 +0000
@@ -7936,7 +7936,7 @@ mark :1184
 data 76
 Revision is 204, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 204
+# Legacy-ID: 204
 commit refs/heads/Development
 mark :1185
 committer Peter Selinger <selinger@users.sourceforge.net> 1127529542 +0000
@@ -8000,7 +8000,7 @@ mark :1194
 data 72
 Revision is 205, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 205
+# Legacy-ID: 205
 commit refs/heads/Development
 mark :1195
 committer Peter Selinger <selinger@users.sourceforge.net> 1127536645 +0000
@@ -8027,7 +8027,7 @@ mark :1196
 data 80
 Revision is 206, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 206
+# Legacy-ID: 206
 commit refs/heads/Tripp_Lite_Omni
 mark :1197
 committer Charles Lepple <clepple+nut@gmail.com> 1127790847 +0000
@@ -8041,7 +8041,7 @@ mark :1198
 data 80
 Revision is 207, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 
-# Fossil-ID: 207
+# Legacy-ID: 207
 commit refs/heads/Tripp_Lite_Omni
 mark :1199
 committer Charles Lepple <clepple+nut@gmail.com> 1127793462 +0000
@@ -8050,7 +8050,7 @@ More Smartpro variables
 from :1197
 M 100644 :1198 drivers/tripplite_usb.c
 
-# Fossil-ID: 208
+# Legacy-ID: 208
 commit refs/tags/CFL_TL_pre_Dev_merge
 mark :1200
 committer no-author <no-author> 1127793462 +0000
@@ -8124,7 +8124,7 @@ mark :1202
 data 66
 Revision is 209, file path is branches/Development/docs/acpi.txt.
 
-# Fossil-ID: 209
+# Legacy-ID: 209
 commit refs/heads/Development
 mark :1203
 committer Arnaud Quette <arnaud.quette@free.fr> 1128113371 +0000
@@ -8159,7 +8159,7 @@ mark :1208
 data 65
 Revision is 210, file path is branches/Development/man/bcmxcp.8.
 
-# Fossil-ID: 210
+# Legacy-ID: 210
 commit refs/heads/Development
 mark :1209
 committer Arnaud Quette <arnaud.quette@free.fr> 1128114489 +0000
@@ -8177,7 +8177,7 @@ mark :1210
 data 69
 Revision is 211, file path is branches/Development/drivers/bcmxcp.c.
 
-# Fossil-ID: 211
+# Legacy-ID: 211
 commit refs/heads/Development
 mark :1211
 committer Arnaud Quette <arnaud.quette@free.fr> 1128114639 +0000
@@ -8191,7 +8191,7 @@ mark :1212
 data 69
 Revision is 212, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 212
+# Legacy-ID: 212
 commit refs/heads/Development
 mark :1213
 committer Arnaud Quette <arnaud.quette@free.fr> 1128115342 +0000
@@ -8225,7 +8225,7 @@ mark :1218
 data 61
 Revision is 213, file path is branches/Testing/man/bcmxcp.8.
 
-# Fossil-ID: 213
+# Legacy-ID: 213
 commit refs/heads/Testing
 mark :1219
 committer Arnaud Quette <arnaud.quette@free.fr> 1128115451 +0000
@@ -8248,7 +8248,7 @@ mark :1221
 data 69
 Revision is 214, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 214
+# Legacy-ID: 214
 commit refs/heads/Development
 mark :1222
 committer Arnaud Quette <arnaud.quette@free.fr> 1128117884 +0000
@@ -8263,7 +8263,7 @@ mark :1223
 data 56
 Revision is 215, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 215
+# Legacy-ID: 215
 commit refs/heads/Testing
 mark :1224
 committer Arnaud Quette <arnaud.quette@free.fr> 1128118101 +0000
@@ -8277,7 +8277,7 @@ mark :1225
 data 60
 Revision is 216, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 216
+# Legacy-ID: 216
 commit refs/heads/Development
 mark :1226
 committer Arnaud Quette <arnaud.quette@free.fr> 1128118105 +0000
@@ -8296,7 +8296,7 @@ mark :1228
 data 70
 Revision is 217, file path is branches/Development/docs/upssched.txt.
 
-# Fossil-ID: 217
+# Legacy-ID: 217
 commit refs/heads/Development
 mark :1229
 committer Arnaud Quette <arnaud.quette@free.fr> 1128190832 +0000
@@ -8311,7 +8311,7 @@ mark :1230
 data 70
 Revision is 218, file path is branches/Development/docs/upssched.txt.
 
-# Fossil-ID: 218
+# Legacy-ID: 218
 commit refs/heads/Development
 mark :1231
 committer Arnaud Quette <arnaud.quette@free.fr> 1128190997 +0000
@@ -8330,7 +8330,7 @@ mark :1233
 data 66
 Revision is 219, file path is branches/Testing/docs/upssched.txt.
 
-# Fossil-ID: 219
+# Legacy-ID: 219
 commit refs/heads/Testing
 mark :1234
 committer Arnaud Quette <arnaud.quette@free.fr> 1128191153 +0000
@@ -8375,7 +8375,7 @@ mark :1241
 data 83
 Revision is 220, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 220
+# Legacy-ID: 220
 commit refs/heads/Development
 mark :1242
 committer Charles Lepple <clepple+nut@gmail.com> 1128204677 +0000
@@ -8399,7 +8399,7 @@ mark :1243
 data 60
 Revision is 221, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 221
+# Legacy-ID: 221
 commit refs/heads/Development
 mark :1244
 committer Peter Selinger <selinger@users.sourceforge.net> 1128206595 +0000
@@ -8413,7 +8413,7 @@ mark :1245
 data 76
 Revision is 222, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 222
+# Legacy-ID: 222
 commit refs/heads/Development
 mark :1246
 committer Charles Lepple <clepple+nut@gmail.com> 1128206702 +0000
@@ -8432,7 +8432,7 @@ mark :1248
 data 72
 Revision is 223, file path is branches/Development/man/tripplite_usb.8.
 
-# Fossil-ID: 223
+# Legacy-ID: 223
 commit refs/heads/Development
 mark :1249
 committer Charles Lepple <clepple+nut@gmail.com> 1128207497 +0000
@@ -8447,7 +8447,7 @@ mark :1250
 data 76
 Revision is 224, file path is branches/Development/drivers/tripplite_usb.c.
 
-# Fossil-ID: 224
+# Legacy-ID: 224
 commit refs/heads/Development
 mark :1251
 committer Charles Lepple <clepple+nut@gmail.com> 1128217573 +0000
@@ -8466,7 +8466,7 @@ mark :1253
 data 72
 Revision is 225, file path is branches/Development/drivers/newhidups.c.
 
-# Fossil-ID: 225
+# Legacy-ID: 225
 commit refs/heads/Development
 mark :1254
 committer Peter Selinger <selinger@users.sourceforge.net> 1128376387 +0000
@@ -8491,7 +8491,7 @@ mark :1257
 data 73
 Revision is 226, file path is branches/Development/drivers/belkin-hid.c.
 
-# Fossil-ID: 226
+# Legacy-ID: 226
 commit refs/heads/Development
 mark :1258
 committer Peter Selinger <selinger@users.sourceforge.net> 1128376892 +0000
@@ -8517,7 +8517,7 @@ mark :1261
 data 73
 Revision is 227, file path is branches/Development/drivers/belkin-hid.c.
 
-# Fossil-ID: 227
+# Legacy-ID: 227
 commit refs/heads/Development
 mark :1262
 committer Peter Selinger <selinger@users.sourceforge.net> 1128396877 +0000
@@ -8533,7 +8533,7 @@ mark :1263
 data 70
 Revision is 228, file path is branches/Development/drivers/nut_usb.c.
 
-# Fossil-ID: 228
+# Legacy-ID: 228
 commit refs/heads/Development
 mark :1264
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128584322 +0000
@@ -8552,7 +8552,7 @@ mark :1266
 data 65
 Revision is 229, file path is branches/Testing/man/gamatronic.8.
 
-# Fossil-ID: 229
+# Legacy-ID: 229
 commit refs/heads/Testing
 mark :1267
 committer Arnaud Quette <arnaud.quette@free.fr> 1128673774 +0000
@@ -8602,7 +8602,7 @@ mark :1275
 data 65
 Revision is 230, file path is branches/Development/debian/rules.
 
-# Fossil-ID: 230
+# Legacy-ID: 230
 commit refs/heads/Development
 mark :1276
 committer Arnaud Quette <arnaud.quette@free.fr> 1128806501 +0000
@@ -8663,7 +8663,7 @@ mark :1285
 data 64
 Revision is 231, file path is branches/Development/man/al175.8.
 
-# Fossil-ID: 231
+# Legacy-ID: 231
 commit refs/heads/Development
 mark :1286
 committer Arnaud Quette <arnaud.quette@free.fr> 1128807543 +0000
@@ -8685,7 +8685,7 @@ mark :1287
 data 60
 Revision is 232, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 232
+# Legacy-ID: 232
 commit refs/heads/Development
 mark :1288
 committer Charles Lepple <clepple+nut@gmail.com> 1128815190 +0000
@@ -8704,7 +8704,7 @@ mark :1290
 data 69
 Revision is 233, file path is branches/Development/drivers/libhid.c.
 
-# Fossil-ID: 233
+# Legacy-ID: 233
 commit refs/heads/Development
 mark :1291
 committer Peter Selinger <selinger@users.sourceforge.net> 1128825731 +0000
@@ -8744,7 +8744,7 @@ mark :1297
 data 72
 Revision is 234, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 234
+# Legacy-ID: 234
 commit refs/heads/Development
 mark :1298
 committer Peter Selinger <selinger@users.sourceforge.net> 1128835977 +0000
@@ -8768,7 +8768,7 @@ mark :1300
 data 60
 Revision is 235, file path is branches/Testing/Makefile.in.
 
-# Fossil-ID: 235
+# Legacy-ID: 235
 commit refs/heads/Testing
 mark :1301
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128889764 +0000
@@ -8833,7 +8833,7 @@ mark :1312
 data 65
 Revision is 236, file path is branches/Testing/man/bcmxcp_usb.8.
 
-# Fossil-ID: 236
+# Legacy-ID: 236
 commit refs/heads/Testing
 mark :1313
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128890310 +0000
@@ -8862,7 +8862,7 @@ mark :1315
 data 61
 Revision is 237, file path is branches/Testing/configure.in.
 
-# Fossil-ID: 237
+# Legacy-ID: 237
 commit refs/heads/Testing
 mark :1316
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128893078 +0000
@@ -8972,7 +8972,7 @@ mark :1336
 data 64
 Revision is 238, file path is branches/Testing/man/newhidups.8.
 
-# Fossil-ID: 238
+# Legacy-ID: 238
 commit refs/heads/Testing
 mark :1337
 committer Peter Selinger <selinger@users.sourceforge.net> 1128896340 +0000
@@ -9043,7 +9043,7 @@ mark :1345
 data 79
 Revision is 239, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 239
+# Legacy-ID: 239
 commit refs/heads/Testing
 mark :1346
 committer Charles Lepple <clepple+nut@gmail.com> 1128910373 +0000
@@ -9069,7 +9069,7 @@ mark :1348
 data 69
 Revision is 240, file path is branches/Development/drivers/Doxyfile.
 
-# Fossil-ID: 240
+# Legacy-ID: 240
 commit refs/heads/Development
 mark :1349
 committer Charles Lepple <clepple+nut@gmail.com> 1128910734 +0000
@@ -9089,7 +9089,7 @@ mark :1351
 data 72
 Revision is 241, file path is branches/Development/man/tripplite_usb.8.
 
-# Fossil-ID: 241
+# Legacy-ID: 241
 commit refs/heads/Development
 mark :1352
 committer Charles Lepple <clepple+nut@gmail.com> 1128910797 +0000
@@ -9104,7 +9104,7 @@ mark :1353
 data 56
 Revision is 242, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 242
+# Legacy-ID: 242
 commit refs/heads/Testing
 mark :1354
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128952772 +0000
@@ -9118,7 +9118,7 @@ mark :1355
 data 68
 Revision is 243, file path is branches/Development/drivers/al175.c.
 
-# Fossil-ID: 243
+# Legacy-ID: 243
 commit refs/heads/Development
 mark :1356
 committer Arnaud Quette <arnaud.quette@free.fr> 1128973434 +0000
@@ -9137,7 +9137,7 @@ mark :1358
 data 69
 Revision is 244, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 244
+# Legacy-ID: 244
 commit refs/heads/Development
 mark :1359
 committer Arnaud Quette <arnaud.quette@free.fr> 1128975619 +0000
@@ -9157,7 +9157,7 @@ mark :1361
 data 62
 Revision is 245, file path is branches/Testing/drivers/gendb.
 
-# Fossil-ID: 245
+# Legacy-ID: 245
 commit refs/heads/Testing
 mark :1362
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128977420 +0000
@@ -9182,7 +9182,7 @@ mark :1365
 data 65
 Revision is 246, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 246
+# Legacy-ID: 246
 commit refs/heads/Testing
 mark :1366
 committer Arnaud Quette <arnaud.quette@free.fr> 1129014162 +0000
@@ -9203,7 +9203,7 @@ mark :1368
 data 65
 Revision is 247, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 247
+# Legacy-ID: 247
 commit refs/heads/Testing
 mark :1369
 committer Peter Selinger <selinger@users.sourceforge.net> 1129066536 +0000
@@ -9243,7 +9243,7 @@ mark :1375
 data 68
 Revision is 248, file path is branches/Development/debian/po/fr.po.
 
-# Fossil-ID: 248
+# Legacy-ID: 248
 commit refs/heads/Development
 mark :1376
 committer Arnaud Quette <arnaud.quette@free.fr> 1129724011 +0000
@@ -9272,7 +9272,7 @@ mark :1379
 data 68
 Revision is 249, file path is branches/Development/debian/po/vi.po.
 
-# Fossil-ID: 249
+# Legacy-ID: 249
 commit refs/heads/Development
 mark :1380
 committer Arnaud Quette <arnaud.quette@free.fr> 1129754142 +0000
@@ -9323,7 +9323,7 @@ mark :1388
 data 65
 Revision is 250, file path is branches/Development/man/nitram.8.
 
-# Fossil-ID: 250
+# Legacy-ID: 250
 commit refs/heads/Development
 mark :1389
 committer Arnaud Quette <arnaud.quette@free.fr> 1129754699 +0000
@@ -9349,7 +9349,7 @@ mark :1391
 data 70
 Revision is 251, file path is branches/Development/drivers/mge-hid.h.
 
-# Fossil-ID: 251
+# Legacy-ID: 251
 commit refs/heads/Development
 mark :1392
 committer Peter Selinger <selinger@users.sourceforge.net> 1129864201 +0000
@@ -9384,7 +9384,7 @@ mark :1397
 data 72
 Revision is 252, file path is branches/Development/drivers/newhidups.c.
 
-# Fossil-ID: 252
+# Legacy-ID: 252
 commit refs/heads/Development
 mark :1398
 committer Peter Selinger <selinger@users.sourceforge.net> 1129864779 +0000
@@ -9423,7 +9423,7 @@ mark :1403
 data 68
 Revision is 253, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 253
+# Legacy-ID: 253
 commit refs/heads/Development
 mark :1404
 committer Peter Selinger <selinger@users.sourceforge.net> 1129866672 +0000
@@ -9467,7 +9467,7 @@ mark :1410
 data 71
 Revision is 254, file path is branches/Development/drivers/mge-shut.h.
 
-# Fossil-ID: 254
+# Legacy-ID: 254
 commit refs/heads/Development
 mark :1411
 committer Peter Selinger <selinger@users.sourceforge.net> 1129916631 +0000
@@ -9492,7 +9492,7 @@ mark :1413
 data 69
 Revision is 255, file path is branches/Development/drivers/libusb.h.
 
-# Fossil-ID: 255
+# Legacy-ID: 255
 commit refs/heads/Development
 mark :1414
 committer Peter Selinger <selinger@users.sourceforge.net> 1130045257 +0000
@@ -9527,7 +9527,7 @@ mark :1419
 data 72
 Revision is 256, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 256
+# Legacy-ID: 256
 commit refs/heads/Development
 mark :1420
 committer Peter Selinger <selinger@users.sourceforge.net> 1130045805 +0000
@@ -9580,7 +9580,7 @@ mark :1428
 data 66
 Revision is 257, file path is branches/Development/man/megatec.8.
 
-# Fossil-ID: 257
+# Legacy-ID: 257
 commit refs/heads/Development
 mark :1429
 committer Arnaud Quette <arnaud.quette@free.fr> 1130158839 +0000
@@ -9604,7 +9604,7 @@ mark :1430
 data 78
 Revision is 258, file path is branches/Development/drivers/Makefile.drvbuild.
 
-# Fossil-ID: 258
+# Legacy-ID: 258
 commit refs/heads/Development
 mark :1431
 committer Arnaud Quette <arnaud.quette@free.fr> 1130180530 +0000
@@ -9640,7 +9640,7 @@ mark :1436
 data 66
 Revision is 259, file path is branches/Development/server/conf.c.
 
-# Fossil-ID: 259
+# Legacy-ID: 259
 commit refs/heads/Development
 mark :1437
 committer Arnaud Quette <arnaud.quette@free.fr> 1131312459 +0000
@@ -9658,7 +9658,7 @@ mark :1438
 data 68
 Revision is 260, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 260
+# Legacy-ID: 260
 commit refs/heads/Development
 mark :1439
 committer Charles Lepple <clepple+nut@gmail.com> 1131342348 +0000
@@ -9709,7 +9709,7 @@ mark :1447
 data 72
 Revision is 261, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 261
+# Legacy-ID: 261
 commit refs/heads/Development
 mark :1448
 committer Peter Selinger <selinger@users.sourceforge.net> 1131401660 +0000
@@ -9735,7 +9735,7 @@ mark :1450
 data 76
 Revision is 262, file path is branches/Development/drivers/tripplite-hid.h.
 
-# Fossil-ID: 262
+# Legacy-ID: 262
 commit refs/heads/Development
 mark :1451
 committer Peter Selinger <selinger@users.sourceforge.net> 1131418757 +0000
@@ -9775,7 +9775,7 @@ mark :1457
 data 72
 Revision is 263, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 263
+# Legacy-ID: 263
 commit refs/heads/Development
 mark :1458
 committer Peter Selinger <selinger@users.sourceforge.net> 1131502616 +0000
@@ -9824,7 +9824,7 @@ mark :1465
 data 71
 Revision is 264, file path is branches/Development/drivers/mge-shut.c.
 
-# Fossil-ID: 264
+# Legacy-ID: 264
 commit refs/heads/Development
 mark :1466
 committer Peter Selinger <selinger@users.sourceforge.net> 1131772736 +0000
@@ -9880,7 +9880,7 @@ mark :1474
 data 87
 Revision is 268, file path is branches/Testing/scripts/hotplug-ng/nut-usbups.rules.in.
 
-# Fossil-ID: 268
+# Legacy-ID: 268
 commit refs/heads/Testing
 mark :1475
 committer Arnaud Quette <arnaud.quette@free.fr> 1132000632 +0000
@@ -9901,7 +9901,7 @@ mark :1476
 data 61
 Revision is 269, file path is branches/Testing/configure.in.
 
-# Fossil-ID: 269
+# Legacy-ID: 269
 commit refs/heads/Testing
 mark :1477
 committer Arnaud Quette <arnaud.quette@free.fr> 1132002440 +0000
@@ -9920,7 +9920,7 @@ mark :1479
 data 65
 Revision is 270, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 270
+# Legacy-ID: 270
 commit refs/heads/Testing
 mark :1480
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1132072270 +0000
@@ -9940,7 +9940,7 @@ mark :1482
 data 69
 Revision is 271, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 271
+# Legacy-ID: 271
 commit refs/heads/Development
 mark :1483
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1132072688 +0000
@@ -9950,7 +9950,7 @@ from :1466
 M 100644 :1481 CHANGES
 M 100644 :1482 data/driver.list
 
-# Fossil-ID: 272
+# Legacy-ID: 272
 commit refs/heads/reportbuf
 mark :1484
 committer no-author <no-author> 1132072688 +0000
@@ -10126,7 +10126,7 @@ M 100644 :634 packaging/mandriva/upsmon
 M 100644 :818 scripts/hotplug/README
 M 100644 :1241 scripts/hotplug/libhid.usermap
 
-# Fossil-ID: 273
+# Legacy-ID: 273
 commit refs/tags/reportbuf_base
 mark :1485
 committer no-author <no-author> 1132072688 +0000
@@ -10348,7 +10348,7 @@ mark :1494
 data 70
 Revision is 274, file path is branches/reportbuf/drivers/newhidups.c.
 
-# Fossil-ID: 274
+# Legacy-ID: 274
 commit refs/heads/reportbuf
 mark :1495
 committer Peter Selinger <selinger@users.sourceforge.net> 1132804550 +0000
@@ -10376,7 +10376,7 @@ mark :1497
 data 68
 Revision is 275, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 275
+# Legacy-ID: 275
 commit refs/heads/Development
 mark :1498
 committer Peter Selinger <selinger@users.sourceforge.net> 1132811584 +0000
@@ -10396,7 +10396,7 @@ mark :1500
 data 72
 Revision is 276, file path is branches/Development/drivers/fentonups.h.
 
-# Fossil-ID: 276
+# Legacy-ID: 276
 commit refs/heads/Development
 mark :1501
 committer Arnaud Quette <arnaud.quette@free.fr> 1132929756 +0000
@@ -10421,7 +10421,7 @@ mark :1504
 data 83
 Revision is 277, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 277
+# Legacy-ID: 277
 commit refs/heads/Development
 mark :1505
 committer Peter Selinger <selinger@users.sourceforge.net> 1133842095 +0000
@@ -10448,7 +10448,7 @@ mark :1508
 data 91
 Revision is 278, file path is branches/Development/scripts/hotplug-ng/nut-usbups.rules.in.
 
-# Fossil-ID: 278
+# Legacy-ID: 278
 commit refs/heads/Development
 mark :1509
 committer Charles Lepple <clepple+nut@gmail.com> 1133879793 +0000
@@ -10484,7 +10484,7 @@ mark :1514
 data 64
 Revision is 279, file path is branches/Testing/man/newhidups.8.
 
-# Fossil-ID: 279
+# Legacy-ID: 279
 commit refs/heads/Testing
 mark :1515
 committer Arnaud Quette <arnaud.quette@free.fr> 1134769309 +0000
@@ -10502,7 +10502,7 @@ mark :1516
 data 56
 Revision is 280, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 280
+# Legacy-ID: 280
 commit refs/heads/Testing
 mark :1517
 committer Arnaud Quette <arnaud.quette@free.fr> 1134769942 +0000
@@ -10541,7 +10541,7 @@ mark :1523
 data 68
 Revision is 281, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 281
+# Legacy-ID: 281
 commit refs/heads/Development
 mark :1524
 committer Arnaud Quette <arnaud.quette@free.fr> 1134981718 +0000
@@ -10560,7 +10560,7 @@ mark :1525
 data 71
 Revision is 282, file path is branches/Development/conf/upsstats.html.
 
-# Fossil-ID: 282
+# Legacy-ID: 282
 commit refs/heads/Development
 mark :1526
 committer Charles Lepple <clepple+nut@gmail.com> 1135214299 +0000
@@ -10574,7 +10574,7 @@ mark :1527
 data 65
 Revision is 283, file path is branches/Testing/data/driver.list.
 
-# Fossil-ID: 283
+# Legacy-ID: 283
 commit refs/heads/Testing
 mark :1528
 committer Arnaud Quette <arnaud.quette@free.fr> 1135258531 +0000
@@ -10598,7 +10598,7 @@ mark :1531
 data 66
 Revision is 284, file path is branches/Testing/include/version.h.
 
-# Fossil-ID: 284
+# Legacy-ID: 284
 commit refs/heads/Testing
 mark :1532
 committer Arnaud Quette <arnaud.quette@free.fr> 1135261781 +0000
@@ -10614,7 +10614,7 @@ mark :1533
 data 68
 Revision is 286, file path is branches/Development/man/newhidups.8.
 
-# Fossil-ID: 286
+# Legacy-ID: 286
 commit refs/heads/Development
 mark :1534
 committer Charles Lepple <clepple+nut@gmail.com> 1135355353 +0000
@@ -10631,7 +10631,7 @@ mark :1535
 data 64
 Revision is 287, file path is branches/Testing/man/newhidups.8.
 
-# Fossil-ID: 287
+# Legacy-ID: 287
 commit refs/heads/Testing
 mark :1536
 committer Charles Lepple <clepple+nut@gmail.com> 1135355368 +0000
@@ -10663,7 +10663,7 @@ mark :1540
 data 66
 Revision is 288, file path is branches/Development/man/megatec.8.
 
-# Fossil-ID: 288
+# Legacy-ID: 288
 commit refs/heads/Development
 mark :1541
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1136254541 +0000
@@ -10690,7 +10690,7 @@ mark :1544
 data 66
 Revision is 289, file path is branches/Development/man/megatec.8.
 
-# Fossil-ID: 289
+# Legacy-ID: 289
 commit refs/heads/Development
 mark :1545
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137255844 +0000
@@ -10717,7 +10717,7 @@ mark :1548
 data 64
 Revision is 290, file path is branches/Testing/man/mge-utalk.8.
 
-# Fossil-ID: 290
+# Legacy-ID: 290
 commit refs/heads/Testing
 mark :1549
 committer Arnaud Quette <arnaud.quette@free.fr> 1137422368 +0000
@@ -10743,7 +10743,7 @@ mark :1552
 data 64
 Revision is 291, file path is branches/Testing/man/powermust.8.
 
-# Fossil-ID: 291
+# Legacy-ID: 291
 commit refs/heads/Testing
 mark :1553
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137450165 +0000
@@ -10770,7 +10770,7 @@ mark :1556
 data 64
 Revision is 292, file path is branches/Testing/man/powermust.8.
 
-# Fossil-ID: 292
+# Legacy-ID: 292
 commit refs/heads/Testing
 mark :1557
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137628762 +0000
@@ -10796,7 +10796,7 @@ mark :1560
 data 66
 Revision is 293, file path is branches/Development/man/megatec.8.
 
-# Fossil-ID: 293
+# Legacy-ID: 293
 commit refs/heads/Development
 mark :1561
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137629085 +0000
@@ -10863,7 +10863,7 @@ mark :1572
 data 69
 Revision is 294, file path is branches/Development/include/common.h.
 
-# Fossil-ID: 294
+# Legacy-ID: 294
 commit refs/heads/Development
 mark :1573
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1137771159 +0000
@@ -10917,7 +10917,7 @@ mark :1580
 data 66
 Revision is 298, file path is branches/Development/man/optiups.8.
 
-# Fossil-ID: 298
+# Legacy-ID: 298
 commit refs/heads/Development
 mark :1581
 committer Arnaud Quette <arnaud.quette@free.fr> 1137874347 +0000
@@ -10952,7 +10952,7 @@ mark :1585
 data 55
 Revision is 299, file path is branches/Testing/README.
 
-# Fossil-ID: 299
+# Legacy-ID: 299
 commit refs/heads/Testing
 mark :1586
 committer Arnaud Quette <arnaud.quette@free.fr> 1138010695 +0000
@@ -10969,7 +10969,7 @@ mark :1587
 data 56
 Revision is 300, file path is branches/Testing/INSTALL.
 
-# Fossil-ID: 300
+# Legacy-ID: 300
 commit refs/heads/Testing
 mark :1588
 committer Arnaud Quette <arnaud.quette@free.fr> 1138011773 +0000
@@ -10983,7 +10983,7 @@ mark :1589
 data 56
 Revision is 301, file path is branches/Testing/CHANGES.
 
-# Fossil-ID: 301
+# Legacy-ID: 301
 commit refs/heads/Testing
 mark :1590
 committer Arnaud Quette <arnaud.quette@free.fr> 1138012183 +0000
@@ -11022,7 +11022,7 @@ mark :1596
 data 61
 Revision is 302, file path is branches/Development/docs/FAQ.
 
-# Fossil-ID: 302
+# Legacy-ID: 302
 commit refs/heads/Development
 mark :1597
 committer Arnaud Quette <arnaud.quette@free.fr> 1138025087 +0000
@@ -11041,7 +11041,7 @@ mark :1598
 data 69
 Revision is 303, file path is branches/Development/data/driver.list.
 
-# Fossil-ID: 303
+# Legacy-ID: 303
 commit refs/heads/Development
 mark :1599
 committer Arnaud Quette <arnaud.quette@free.fr> 1138031118 +0000
@@ -11070,7 +11070,7 @@ mark :1603
 data 72
 Revision is 304, file path is branches/Development/drivers/tripplite.c.
 
-# Fossil-ID: 304
+# Legacy-ID: 304
 commit refs/heads/Development
 mark :1604
 committer Arnaud Quette <arnaud.quette@free.fr> 1138139400 +0000
@@ -11102,7 +11102,7 @@ mark :1608
 data 68
 Revision is 305, file path is branches/Testing/drivers/tripplite.c.
 
-# Fossil-ID: 305
+# Legacy-ID: 305
 commit refs/heads/Testing
 mark :1609
 committer Arnaud Quette <arnaud.quette@free.fr> 1138139480 +0000
@@ -11159,7 +11159,7 @@ mark :1618
 data 71
 Revision is 306, file path is branches/Development/drivers/snmp-ups.h.
 
-# Fossil-ID: 306
+# Legacy-ID: 306
 commit refs/heads/Development
 mark :1619
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1138292746 +0000
@@ -11186,7 +11186,7 @@ mark :1621
 data 70
 Revision is 307, file path is branches/Development/drivers/apc-hid.c.
 
-# Fossil-ID: 307
+# Legacy-ID: 307
 commit refs/heads/Development
 mark :1622
 committer Peter Selinger <selinger@users.sourceforge.net> 1138374293 +0000
@@ -11216,7 +11216,7 @@ mark :1626
 data 71
 Revision is 308, file path is branches/Development/drivers/snmp-ups.h.
 
-# Fossil-ID: 308
+# Legacy-ID: 308
 commit refs/heads/Development
 mark :1627
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1138382229 +0000
@@ -11233,7 +11233,7 @@ mark :1628
 data 68
 Revision is 309, file path is branches/Development/server/sstate.c.
 
-# Fossil-ID: 309
+# Legacy-ID: 309
 commit refs/heads/Development
 mark :1629
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138459138 +0000
@@ -11255,7 +11255,7 @@ mark :1630
 data 60
 Revision is 310, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 310
+# Legacy-ID: 310
 commit refs/heads/Development
 mark :1631
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138460074 +0000
@@ -11277,7 +11277,7 @@ mark :1633
 data 70
 Revision is 311, file path is branches/Development/drivers/safenet.h.
 
-# Fossil-ID: 311
+# Legacy-ID: 311
 commit refs/heads/Development
 mark :1634
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138463062 +0000
@@ -11294,7 +11294,7 @@ mark :1635
 data 70
 Revision is 312, file path is branches/Development/drivers/safenet.c.
 
-# Fossil-ID: 312
+# Legacy-ID: 312
 commit refs/heads/Development
 mark :1636
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138466710 +0000
@@ -11314,7 +11314,7 @@ mark :1638
 data 73
 Revision is 313, file path is branches/Development/drivers/genericups.c.
 
-# Fossil-ID: 313
+# Legacy-ID: 313
 commit refs/heads/Development
 mark :1639
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138650690 +0000
@@ -11341,7 +11341,7 @@ mark :1642
 data 70
 Revision is 314, file path is branches/Development/drivers/safenet.h.
 
-# Fossil-ID: 314
+# Legacy-ID: 314
 commit refs/heads/Development
 mark :1643
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138743571 +0000
@@ -11363,7 +11363,7 @@ mark :1645
 data 70
 Revision is 315, file path is branches/Development/drivers/apc-hid.c.
 
-# Fossil-ID: 315
+# Legacy-ID: 315
 commit refs/heads/Development
 mark :1646
 committer Peter Selinger <selinger@users.sourceforge.net> 1138790469 +0000
@@ -11373,7 +11373,7 @@ from :1643
 M 100644 :1644 CHANGES
 M 100644 :1645 drivers/apc-hid.c
 
-# Fossil-ID: 316
+# Legacy-ID: 316
 commit refs/heads/Development
 mark :1647
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138808231 +0000
@@ -11421,7 +11421,7 @@ data 96
 /upsmon
 /upsrw
 /upssched
-# Fossil-ID: 318
+# Legacy-ID: 318
 commit refs/heads/Development
 mark :1650
 committer Peter Selinger <selinger@users.sourceforge.net> 1138817815 +0000
@@ -11503,7 +11503,7 @@ mark :1656
 data 15
 /Makefile
 /upsd
-# Fossil-ID: 319
+# Legacy-ID: 319
 commit refs/heads/Development
 mark :1657
 committer Peter Selinger <selinger@users.sourceforge.net> 1138817821 +0000
@@ -11536,7 +11536,7 @@ mark :1660
 data 68
 Revision is 320, file path is branches/Development/man/upsdrvctl.8.
 
-# Fossil-ID: 320
+# Legacy-ID: 320
 commit refs/heads/Development
 mark :1661
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915495 +0000
@@ -11555,7 +11555,7 @@ mark :1662
 data 60
 Revision is 321, file path is branches/Development/CREDITS.
 
-# Fossil-ID: 321
+# Legacy-ID: 321
 commit refs/heads/Development
 mark :1663
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915697 +0000
@@ -11570,7 +11570,7 @@ mark :1664
 data 72
 Revision is 322, file path is branches/Development/drivers/upsdrvctl.c.
 
-# Fossil-ID: 322
+# Legacy-ID: 322
 commit refs/heads/Development
 mark :1665
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138916263 +0000
@@ -11590,7 +11590,7 @@ mark :1667
 data 72
 Revision is 323, file path is branches/Development/drivers/upsdrvctl.c.
 
-# Fossil-ID: 323
+# Legacy-ID: 323
 commit refs/heads/Development
 mark :1668
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138999366 +0000
@@ -11612,7 +11612,7 @@ mark :1670
 data 73
 Revision is 324, file path is branches/Development/drivers/genericups.c.
 
-# Fossil-ID: 324
+# Legacy-ID: 324
 commit refs/heads/Development
 mark :1671
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139084494 +0000
@@ -11633,7 +11633,7 @@ mark :1673
 data 72
 Revision is 325, file path is branches/Development/drivers/upsdrvctl.c.
 
-# Fossil-ID: 325
+# Legacy-ID: 325
 commit refs/heads/Development
 mark :1674
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139088241 +0000
@@ -11643,7 +11643,7 @@ from :1671
 M 100644 :1672 CHANGES
 M 100644 :1673 drivers/upsdrvctl.c
 
-# Fossil-ID: 326
+# Legacy-ID: 326
 commit refs/tags/reportbuf_base0
 mark :1675
 committer no-author <no-author> 1139088241 +0000
@@ -11913,7 +11913,7 @@ mark :1722
 data 66
 Revision is 327, file path is branches/reportbuf/server/sstate.c.
 
-# Fossil-ID: 327
+# Legacy-ID: 327
 commit refs/heads/reportbuf
 mark :1723
 committer Peter Selinger <selinger@users.sourceforge.net> 1139223108 +0000
@@ -11988,7 +11988,7 @@ mark :1724
 data 64
 Revision is 328, file path is branches/Testing/man/powermust.8.
 
-# Fossil-ID: 328
+# Legacy-ID: 328
 commit refs/heads/Testing
 mark :1725
 committer Arnaud Quette <arnaud.quette@free.fr> 1139306503 +0000
@@ -12002,7 +12002,7 @@ mark :1726
 data 57
 Revision is 329, file path is branches/Testing/docs/FAQ.
 
-# Fossil-ID: 329
+# Legacy-ID: 329
 commit refs/heads/Testing
 mark :1727
 committer Arnaud Quette <arnaud.quette@free.fr> 1139306649 +0000
@@ -12036,7 +12036,7 @@ mark :1732
 data 59
 Revision is 330, file path is branches/Testing/install-sh.
 
-# Fossil-ID: 330
+# Legacy-ID: 330
 commit refs/heads/Testing
 mark :1733
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313020 +0000
@@ -12064,7 +12064,7 @@ mark :1736
 data 66
 Revision is 331, file path is branches/Testing/include/version.h.
 
-# Fossil-ID: 331
+# Legacy-ID: 331
 commit refs/heads/Testing
 mark :1737
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313473 +0000
@@ -12080,7 +12080,7 @@ mark :1738
 data 57
 Revision is 332, file path is branches/Testing/Makefile.
 
-# Fossil-ID: 332
+# Legacy-ID: 332
 commit refs/heads/Testing
 mark :1739
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313556 +0000
@@ -12094,7 +12094,7 @@ mark :1740
 data 56
 Revision is 333, file path is branches/Testing/INSTALL.
 
-# Fossil-ID: 333
+# Legacy-ID: 333
 commit refs/heads/Testing
 mark :1741
 committer Arnaud Quette <arnaud.quette@free.fr> 1139314191 +0000
@@ -12263,7 +12263,7 @@ mark :1773
 data 86
 Revision is 334, file path is branches/Stable/scripts/hotplug-ng/nut-usbups.rules.in.
 
-# Fossil-ID: 334
+# Legacy-ID: 334
 commit refs/heads/Stable
 mark :1774
 committer Arnaud Quette <arnaud.quette@free.fr> 1139322717 +0000
@@ -12624,7 +12624,7 @@ mark :1838
 data 78
 Revision is 335, file path is branches/Stable/scripts/hotplug/libhid.usermap.
 
-# Fossil-ID: 335
+# Legacy-ID: 335
 commit refs/heads/Stable
 mark :1839
 committer Arnaud Quette <arnaud.quette@free.fr> 1139322980 +0000
@@ -12701,7 +12701,7 @@ mark :1840
 data 69
 Revision is 337, file path is branches/Development/man/genericups.8.
 
-# Fossil-ID: 337
+# Legacy-ID: 337
 commit refs/heads/Development
 mark :1841
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139343543 +0000
@@ -12726,7 +12726,7 @@ mark :1843
 data 66
 Revision is 338, file path is branches/Development/man/megatec.8.
 
-# Fossil-ID: 338
+# Legacy-ID: 338
 commit refs/heads/Development
 mark :1844
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1139354808 +0000
@@ -12761,7 +12761,7 @@ mark :1849
 data 71
 Revision is 339, file path is branches/Development/conf/upsstats.html.
 
-# Fossil-ID: 339
+# Legacy-ID: 339
 commit refs/heads/Development
 mark :1850
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139469643 +0000
@@ -12794,7 +12794,7 @@ mark :1854
 data 72
 Revision is 340, file path is branches/Development/man/upsstats.html.5.
 
-# Fossil-ID: 340
+# Legacy-ID: 340
 commit refs/heads/Development
 mark :1855
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139490850 +0000
@@ -12811,7 +12811,7 @@ mark :1856
 data 60
 Revision is 341, file path is branches/Development/CHANGES.
 
-# Fossil-ID: 341
+# Legacy-ID: 341
 commit refs/heads/Development
 mark :1857
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139491553 +0000
@@ -12830,7 +12830,7 @@ mark :1859
 data 72
 Revision is 342, file path is branches/Development/drivers/belkinunv.c.
 
-# Fossil-ID: 342
+# Legacy-ID: 342
 commit refs/heads/Development
 mark :1860
 committer Peter Selinger <selinger@users.sourceforge.net> 1139500870 +0000
@@ -12845,7 +12845,7 @@ mark :1861
 data 64
 Revision is 343, file path is branches/Development/MAINTAINERS.
 
-# Fossil-ID: 343
+# Legacy-ID: 343
 commit refs/heads/Development
 mark :1862
 committer Peter Selinger <selinger@users.sourceforge.net> 1139501290 +0000
@@ -12864,7 +12864,7 @@ mark :1864
 data 73
 Revision is 344, file path is branches/Development/drivers/bcmxcp_ser.c.
 
-# Fossil-ID: 344
+# Legacy-ID: 344
 commit refs/heads/Development
 mark :1865
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139513225 +0000
@@ -12889,7 +12889,7 @@ mark :1868
 data 69
 Revision is 345, file path is branches/Development/include/common.h.
 
-# Fossil-ID: 345
+# Legacy-ID: 345
 commit refs/heads/Development
 mark :1869
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139517729 +0000
@@ -12917,7 +12917,7 @@ mark :1872
 data 68
 Revision is 346, file path is branches/Development/man/upsdrvctl.8.
 
-# Fossil-ID: 346
+# Legacy-ID: 346
 commit refs/heads/Development
 mark :1873
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139518807 +0000
@@ -12956,7 +12956,7 @@ mark :1878
 data 69
 Revision is 347, file path is branches/Development/drivers/nitram.h.
 
-# Fossil-ID: 347
+# Legacy-ID: 347
 commit refs/heads/Development
 mark :1879
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139564973 +0000
@@ -12994,7 +12994,7 @@ mark :1884
 data 69
 Revision is 348, file path is branches/Development/drivers/serial.h.
 
-# Fossil-ID: 348
+# Legacy-ID: 348
 commit refs/heads/Development
 mark :1885
 committer Peter Selinger <selinger@users.sourceforge.net> 1139610472 +0000
@@ -13014,7 +13014,7 @@ mark :1886
 data 60
 Revision is 349, file path is branches/Development/CREDITS.
 
-# Fossil-ID: 349
+# Legacy-ID: 349
 commit refs/heads/Development
 mark :1887
 committer Peter Selinger <selinger@users.sourceforge.net> 1139651014 +0000
@@ -13038,7 +13038,7 @@ mark :1890
 data 69
 Revision is 350, file path is branches/Development/drivers/serial.h.
 
-# Fossil-ID: 350
+# Legacy-ID: 350
 commit refs/heads/Development
 mark :1891
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674045 +0000
@@ -13055,7 +13055,7 @@ mark :1892
 data 61
 Revision is 351, file path is branches/Development/docs/FAQ.
 
-# Fossil-ID: 351
+# Legacy-ID: 351
 commit refs/heads/Development
 mark :1893
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674720 +0000
@@ -13112,7 +13112,7 @@ mark :1902
 data 72
 Revision is 352, file path is branches/Development/drivers/newhidups.h.
 
-# Fossil-ID: 352
+# Legacy-ID: 352
 commit refs/heads/Development
 mark :1903
 committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
@@ -13232,7 +13232,7 @@ mark :1923
 data 74
 Revision is 353, file path is branches/Development/drivers/tripplitesu.c.
 
-# Fossil-ID: 353
+# Legacy-ID: 353
 commit refs/heads/Development
 mark :1924
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139998875 +0000
@@ -13261,7 +13261,7 @@ M 100644 :1921 drivers/oneac.c
 M 100644 :1922 drivers/tripplite-hid.c
 M 100644 :1923 drivers/tripplitesu.c
 
-# Fossil-ID: 355
+# Legacy-ID: 355
 commit refs/heads/master
 mark :1925
 committer Charles Lepple <clepple+nut@gmail.com> 1140096558 +0000
@@ -13270,7 +13270,7 @@ Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
 from :762
 deleteall
 
-# Fossil-ID: 356
+# Legacy-ID: 356
 commit refs/heads/master
 mark :1926
 committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
@@ -13700,7 +13700,7 @@ M 100644 :304 server/user-data.h
 M 100644 :305 server/user.c
 M 100644 :306 server/user.h
 
-# Fossil-ID: 358
+# Legacy-ID: 358
 commit refs/heads/master
 mark :1927
 committer Charles Lepple <clepple+nut@gmail.com> 1140282414 +0000
@@ -13720,7 +13720,7 @@ mark :1928
 data 45
 Revision is 359, file path is trunk/CHANGES.
 
-# Fossil-ID: 359
+# Legacy-ID: 359
 commit refs/heads/master
 mark :1929
 committer Charles Lepple <clepple+nut@gmail.com> 1140527628 +0000
@@ -13734,7 +13734,7 @@ mark :1930
 data 45
 Revision is 360, file path is trunk/INSTALL.
 
-# Fossil-ID: 360
+# Legacy-ID: 360
 commit refs/heads/master
 mark :1931
 committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
@@ -13753,7 +13753,7 @@ mark :1933
 data 57
 Revision is 361, file path is trunk/drivers/upsdrvctl.c.
 
-# Fossil-ID: 361
+# Legacy-ID: 361
 commit refs/heads/master
 mark :1934
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
@@ -13768,7 +13768,7 @@ mark :1935
 data 45
 Revision is 362, file path is trunk/CHANGES.
 
-# Fossil-ID: 362
+# Legacy-ID: 362
 commit refs/heads/master
 mark :1936
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
@@ -13782,7 +13782,7 @@ mark :1937
 data 54
 Revision is 363, file path is trunk/data/driver.list.
 
-# Fossil-ID: 363
+# Legacy-ID: 363
 commit refs/heads/master
 mark :1938
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056605 +0000
@@ -13796,7 +13796,7 @@ mark :1939
 data 45
 Revision is 364, file path is trunk/CHANGES.
 
-# Fossil-ID: 364
+# Legacy-ID: 364
 commit refs/heads/master
 mark :1940
 committer Arnaud Quette <arnaud.quette@free.fr> 1141071413 +0000
@@ -13895,7 +13895,7 @@ mark :1944
 data 56
 Revision is 365, file path is trunk/drivers/snmp-ups.c.
 
-# Fossil-ID: 365
+# Legacy-ID: 365
 commit refs/heads/master
 mark :1945
 committer Arnaud Quette <arnaud.quette@free.fr> 1141072973 +0000
@@ -13912,7 +13912,7 @@ mark :1946
 data 53
 Revision is 367, file path is trunk/common/common.c.
 
-# Fossil-ID: 367
+# Legacy-ID: 367
 commit refs/heads/master
 mark :1947
 committer Peter Selinger <selinger@users.sourceforge.net> 1141378966 +0000
@@ -13926,7 +13926,7 @@ mark :1948
 data 45
 Revision is 368, file path is trunk/CHANGES.
 
-# Fossil-ID: 368
+# Legacy-ID: 368
 commit refs/heads/master
 mark :1949
 committer Peter Selinger <selinger@users.sourceforge.net> 1141390367 +0000
@@ -13965,7 +13965,7 @@ mark :1955
 data 51
 Revision is 369, file path is trunk/server/upsd.c.
 
-# Fossil-ID: 369
+# Legacy-ID: 369
 commit refs/heads/master
 mark :1956
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141417548 +0000
@@ -13989,7 +13989,7 @@ mark :1958
 data 55
 Revision is 370, file path is trunk/drivers/safenet.c.
 
-# Fossil-ID: 370
+# Legacy-ID: 370
 commit refs/heads/master
 mark :1959
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141482672 +0000
@@ -14044,7 +14044,7 @@ mark :1968
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 
-# Fossil-ID: 371
+# Legacy-ID: 371
 commit refs/heads/Testing
 mark :1969
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
@@ -14066,7 +14066,7 @@ M 100644 :1966 drivers/libhid.h
 M 100644 :1967 drivers/newhidups.c
 M 100644 :1968 drivers/newhidups.h
 
-# Fossil-ID: 372
+# Legacy-ID: 372
 commit refs/heads/Testing
 mark :1970
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494469 +0000

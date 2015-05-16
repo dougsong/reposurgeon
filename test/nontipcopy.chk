@@ -19,7 +19,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322088070 +0000
@@ -36,7 +36,7 @@ It has no other actual purpose than to exercise repostreamer.
 It is normally formed, with trunk and branches and tags directories
 at the top level.  Initially, the only content is this README.
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer esr <esr> 1322088164 +0000
@@ -56,7 +56,7 @@ at the top level.  Initially, the only content is this README.
 
 Now we do ur first modification.
 
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :6
 committer esr <esr> 1322088260 +0000
@@ -76,7 +76,7 @@ at the top level.  Initially, the only content is this README.
 
 Now we do our first modification.
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :8
 committer esr <esr> 1322088662 +0000
@@ -90,7 +90,7 @@ mark :9
 data 74
 This file only exists so repostreamer won't process this branch as a tag.
 
-# Fossil-ID: 7
+# Legacy-ID: 7
 commit refs/heads/sample-branch
 mark :10
 committer esr <esr> 1322509428 +0000
@@ -111,7 +111,7 @@ at the top level.  Initially, the only content is this README.
 Now we do our first modification.
 And our second content modification.
 
-# Fossil-ID: 8
+# Legacy-ID: 8
 commit refs/heads/master
 mark :12
 committer esr <esr> 1322533305 +0000
@@ -143,7 +143,7 @@ data 293
 # The contents of the svn:ignoreproperty on the branch root.
 /*.pyc
 
-# Fossil-ID: 9
+# Legacy-ID: 9
 commit refs/heads/master
 mark :14
 committer esr <esr> 1322533492 +0000

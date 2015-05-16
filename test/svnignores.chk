@@ -4,7 +4,7 @@ data 112
 This repository is branchless.  It includes ignore property sets...
 
 ...which should turn into .gitignore files.
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1322694387 +0000
@@ -17,7 +17,7 @@ mark :3
 data 7
 /*.pyc
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer esr <esr> 1322694494 +0000
@@ -31,7 +31,7 @@ mark :5
 data 49
 Now we modify the README just as a placeholder.
  
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :6
 committer esr <esr> 1322694572 +0000
@@ -40,7 +40,7 @@ Modify the one visible file.
 from :4
 M 100644 :5 README
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :7
 committer esr <esr> 1322694685 +0000
@@ -58,7 +58,7 @@ Put another change here just so we have a commit after the property delete.
 
  
 
-# Fossil-ID: 5
+# Legacy-ID: 5
 commit refs/heads/master
 mark :9
 committer esr <esr> 1322694737 +0000

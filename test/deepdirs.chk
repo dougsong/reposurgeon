@@ -19,7 +19,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1324128964 +0000
@@ -32,7 +32,7 @@ mark :3
 data 37
 This is a test Subversion repository
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer esr <esr> 1324128964 +0000
@@ -56,7 +56,7 @@ mark :7
 data 51
 This is the example child2 from the foo directory.
 
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :8
 committer esr <esr> 1324129126 +0000
@@ -72,7 +72,7 @@ mark :9
 data 17
 Modified README.
 
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :10
 committer esr <esr> 1324129213 +0000
@@ -81,7 +81,7 @@ Put some distance between the directory creation and the copy we'll do next.
 from :8
 M 100644 :9 README
 
-# Fossil-ID: 5
+# Legacy-ID: 5
 commit refs/heads/foocopy
 mark :11
 committer esr <esr> 1324319862 +0000
@@ -105,7 +105,7 @@ mark :12
 data 23
 Twice-modified README.
 
-# Fossil-ID: 6
+# Legacy-ID: 6
 commit refs/heads/master
 mark :13
 committer esr <esr> 1324319931 +0000
@@ -114,7 +114,7 @@ Another spacer commit.
 from :10
 M 100644 :12 README
 
-# Fossil-ID: 7
+# Legacy-ID: 7
 commit refs/heads/master
 mark :14
 committer esr <esr> 1324320054 +0000
@@ -132,7 +132,7 @@ mark :15
 data 24
 Thrice-modified README.
 
-# Fossil-ID: 8
+# Legacy-ID: 8
 commit refs/heads/master
 mark :16
 committer esr <esr> 1324320090 +0000
@@ -141,7 +141,7 @@ Yet another spacer commit.
 from :14
 M 100644 :15 README
 
-# Fossil-ID: 9
+# Legacy-ID: 9
 commit refs/heads/master
 mark :17
 committer esr <esr> 1324320228 +0000

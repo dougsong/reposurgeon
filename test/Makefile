@@ -15,7 +15,7 @@ default:
 	@make -e --quiet all
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
-		git-regress svnload-regress fossil-regress svndump-regress \
+		git-regress svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress
 	@echo "=== No diff output is good news."
 
@@ -26,9 +26,9 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 .svn.fi:
 	$(REPOSURGEON) "read <$<" "prefer git" "write -" >$@
 .svn.map:
-	$(REPOSURGEON) "read <$<" "fossils write -" >$@
+	$(REPOSURGEON) "read <$<" "legacy write -" >$@
 
-buildregress: fi-buildregress svnload-buildregress fossil-buildregress \
+buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress
 
 clean:
@@ -112,7 +112,7 @@ git-regress:
 	@echo "=== Testing git-extractor:"
 	@for test in $(GITLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
-	    ./fi-to-fi) <$${test}.fi | sed '/# Fossil-ID:/d' >/tmp/regress; \
+	    ./fi-to-fi) <$${test}.fi | sed '/# Legacy-ID:/d' >/tmp/regress; \
 	    then diff --text -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
@@ -164,18 +164,18 @@ svnload-regress:
 	@rm -f /tmp/regress
 
 REFLOADS=references mergeinfo-with-split
-fossil-buildregress:
+legacy-buildregress:
 	@for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
 	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null; \
 	done
-fossil-regress:
-	@echo "=== Testing fossil-map generation:"
+legacy-regress:
+	@echo "=== Testing legacy-map generation:"
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "read <$${test}.svn" "fossils write -" >/tmp/regress 2>/dev/null; \
+	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress 2>/dev/null; \
 	    then diff --text -u $${test}.map /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done

@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test lifting of fossil references
+ ## Test lifting of legacy references
 
 UUID: cbe4824d-5261-45e1-906a-c00dd1423e37
 

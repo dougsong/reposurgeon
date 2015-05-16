@@ -19,7 +19,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer khan <khan> 1354595761 +0000
@@ -32,7 +32,7 @@ mark :3
 data 12
 Hello world
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer khan <khan> 1354595761 +0000

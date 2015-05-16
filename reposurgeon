@@ -1548,7 +1548,7 @@ class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
-                 "fossil_id", "common", "splits", "deletehook", "attachments",
+                 "legacy_id", "common", "splits", "deletehook", "attachments",
                  "_parent_nodes", "_child_nodes", "_pathset")
     __hash__ = None
     def __init__(self, repo=None):
@@ -1562,7 +1562,7 @@ class Commit(object):
         self.properties = collections.OrderedDict()         # commit properties (extension)
         self.filemap = None
         self.color = None
-        self.fossil_id = None        # Commit's ID in an alien system
+        self.legacy_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
         self.splits = None           # split command increments this
                                      # to avoid creating multiple new commits
@@ -1578,8 +1578,8 @@ class Commit(object):
     def id_me(self):
         "ID this commit for humans."
         myid = "commit@%s" % self.mark
-        if self.fossil_id:
-            myid += "=<%s>" % self.fossil_id
+        if self.legacy_id:
+            myid += "=<%s>" % self.legacy_id
         return myid
     def when(self):
         "Imputed timestamp for sorting after unites."
@@ -1604,23 +1604,23 @@ class Commit(object):
         c._parent_nodes = [] # avoid confusing set_parents()
         c.set_parents(list(self.parents()))
         return c
-    def showfossil(self):
-        "Show a fossil ID in the expected form for the ancestral system."
-        if not self.fossil_id:
+    def showlegacy(self):
+        "Show a legacy ID in the expected form for the ancestral system."
+        if not self.legacy_id:
             return None
         # Special case for Subversion
         if self.repo and self.repo.vcs and self.repo.vcs.name == b"svn":
-            return b"r" + self.fossil_id
+            return b"r" + self.legacy_id
         else:
-            return self.fossil_id
+            return self.legacy_id
     def lister(self, _modifiers, eventnum, cols):
         "Enable do_list() to report commits."
         topline = self.comment.split(b"\n")[0]
         summary = "%6d %s %6s " % \
                       (eventnum+1, self.committer.date.rfc3339(), self.mark)
-        if self.fossil_id:
-            fossil = "<%s>" % self.fossil_id
-            summary += "%6s " % fossil
+        if self.legacy_id:
+            legacy = "<%s>" % self.legacy_id
+            summary += "%6s " % legacy
         report = (summary + topline)
         if cols:
             report = report[:cols]
@@ -1660,8 +1660,8 @@ class Commit(object):
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, b"Author" + repr(2+i))
         self.committer.email_out(modifiers, msg, b"Committer")
-        if self.fossil_id:
-            msg[b"Fossil-ID"] = self.fossil_id
+        if self.legacy_id:
+            msg[b"Legacy-ID"] = self.legacy_id
         for (name, value) in self.properties.iteritems():
             hdr = "-".join(s.capitalize() for s in name.split(b"-"))
             value = value.replace(b"\n", r"\n")
@@ -1747,10 +1747,10 @@ class Commit(object):
                                      % (msg[b"Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
-        if b"Fossil-ID" in msg:
-            if msg[b"Fossil-ID"] != self.fossil_id:
+        if b"Legacy-ID" in msg:
+            if msg[b"Legacy-ID"] != self.legacy_id:
                 modified = True
-                msg[b"Fossil-ID"] = self.fossil_id
+                msg[b"Legacy-ID"] = self.legacy_id
         newprops = collections.OrderedDict()
         for prophdr in msg.keys():
             if not prophdr.startswith(b"Property-"): continue
@@ -2083,8 +2083,8 @@ class Commit(object):
                     incremental = True
         if incremental:
             parts.append(b"reset %s^0\n\n" % self.branch)
-        if self.fossil_id:
-            parts.append(b"# Fossil-ID: %s\n" % self.fossil_id)
+        if self.legacy_id:
+            parts.append(b"# Legacy-ID: %s\n" % self.legacy_id)
         parts.append(b"commit %s\n" % self.branch)
         if realized is not None:
             realized[self.branch] = True
@@ -2097,8 +2097,8 @@ class Commit(object):
             parts.append(b"committer %s\n" % self.committer)
         if self.comment is not None:
             comment = self.comment
-            if options and b"--fossilize" in options and self.fossil_id:
-                comment += "\nFossil-ID: %s\n" % self.fossil_id
+            if options and b"--legacy" in options and self.legacy_id:
+                comment += "\nLegacy-ID: %s\n" % self.legacy_id
             parts.append(b"data %d\n%s" % (len(comment), comment))
         if b"nl-after-comment" in self.repo.export_style():
             parts.append(b"\n")
@@ -2473,7 +2473,7 @@ class RepoStreamer:
                     reset.ref = commit.branch
                     repo.addEvent(reset)
                 commit.fileops.sort(key=FileOp.sortkey)
-                commit.fossil_id = revision
+                commit.legacy_id = revision
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(self.__newmark())
                 self.commit_map[revision] = commit
@@ -2767,7 +2767,7 @@ class StreamParser:
                 # resource leek
                 self.repo.seekstream = open(self.fp.name)
             with Baton(b"reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
-                self.import_line = self.repo.fossil_count = 0
+                self.import_line = self.repo.legacy_count = 0
                 self.linebuffers = []
                 # First, determine the input type
                 line = self.readline()
@@ -2894,7 +2894,7 @@ class StreamParser:
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
-                            self.repo.fossil_count += 1
+                            self.repo.legacy_count += 1
                             if debug_enable(DEBUG_SVNPARSE):
                                 announce(b"revision parsing, line %d: ends" % \
                                          (self.import_line))
@@ -2904,8 +2904,8 @@ class StreamParser:
                     self.svn_process(options, baton)
                     elapsed = time.time() - baton.time
                     baton.twirl(b"%d revisions (%d/s)" %
-                                 (self.repo.fossil_count,
-                                  int(self.repo.fossil_count/elapsed)))
+                                 (self.repo.legacy_count,
+                                  int(self.repo.legacy_count/elapsed)))
                 else:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
@@ -2994,7 +2994,7 @@ class StreamParser:
                                         if name == "cvs-revisions":
                                             for line in value.split(b'\n'):
                                                 if line:
-                                                    self.repo.fossil_map["CVS:"+line] = commit
+                                                    self.repo.legacy_map["CVS:"+line] = commit
                                 elif line.startswith(b"data"):
                                     commit.comment = self.fi_read_data(line)[0]
                                     if global_options[b"canonicalize"]:
@@ -3251,7 +3251,7 @@ class StreamParser:
                 pass
             # Find the commit object...
             try:
-                obj = self.repo.fossil_map["SVN:%s" % max_rev]
+                obj = self.repo.legacy_map["SVN:%s" % max_rev]
             except KeyError:
                 return None
             # ...then iterate backwards from there...
@@ -3323,7 +3323,7 @@ class StreamParser:
                     if b"cvs2svn:cvs-rev" in node.props:
                         cvskey = b"CVS:%s:%s" % (node.path,
                                                 node.props["cvs2svn:cvs-rev"])
-                        self.repo.fossil_map[cvskey] = commit
+                        self.repo.legacy_map[cvskey] = commit
                         del node.props[b"cvs2svn:cvs-rev"]
                     if not "--ignore-properties" in options:
                         prop_items = ((prop, val) \
@@ -3534,7 +3534,7 @@ class StreamParser:
                             newnode.generated = True
                             expanded_nodes.append(newnode)
                             del self.active_gitignores[gitignore_path]
-            # Lift .cvsignore files, which we can assume are fossils
+            # Lift .cvsignore files, which we can assume are legacies
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
             for node in expanded_nodes:
@@ -3720,11 +3720,11 @@ class StreamParser:
             oplist = itertools.chain(other_ops, deleteall_ops)
             # Create all commits corresponding to the revision
             newcommits = []
-            commit.fossil_id = revision
+            commit.legacy_id = revision
             if len(other_ops) <= 1:
                 # In the ordinary case, we can assign all non-deleteall fileops
                 # to the base commit.
-                self.repo.fossil_map[b"SVN:%s" % commit.fossil_id] = commit
+                self.repo.legacy_map[b"SVN:%s" % commit.legacy_id] = commit
                 try:
                     commit.common, commit.fileops = next(oplist)
                     commit.invalidate_pathset_cache()
@@ -3741,8 +3741,8 @@ class StreamParser:
                 split = commit.clone()
                 split.common = branch
                 # Sequence numbers for split commits are 1-origin
-                split.fossil_id += StreamParser.SplitSep + str(i + 1)
-                self.repo.fossil_map["SVN:%s" % split.fossil_id] = split
+                split.legacy_id += StreamParser.SplitSep + str(i + 1)
+                self.repo.legacy_map["SVN:%s" % split.legacy_id] = split
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.__newmark())
                 split.fileops = fileops
@@ -3752,7 +3752,7 @@ class StreamParser:
             # not consisting entirely of deleteall operations.
             if len(other_ops) > 1:
                 # Store the last used split id
-                split_commits[revision] = split.fossil_id
+                split_commits[revision] = split.legacy_id
             # Sort fileops according to git rules
             for newcommit in newcommits:
                 newcommit.fileops.sort(key=FileOp.sortkey)
@@ -3776,7 +3776,7 @@ class StreamParser:
                               and node.path.startswith(newcommit.common)]
                     if copies and debug_enable(DEBUG_TOPOLOGY):
                         announce(b"r%s: copy operations %s" %
-                                     (newcommit.fossil_id, copies))
+                                     (newcommit.legacy_id, copies))
                     # If the copies include one for the directory, use that as
                     # the first parent: most of the files in the new branch
                     # will come from that copy, and that might well be a full
@@ -3792,7 +3792,7 @@ class StreamParser:
                         self.directory_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce(b"r%s: directory copy with %s" \
-                                     % (newcommit.fossil_id, copies))
+                                     % (newcommit.legacy_id, copies))
                     # Use may have botched a branch creation by doing a
                     # non-Subversion directory copy followed by a bunch of
                     # Subversion adds. Blob hashes will match existing files,
@@ -3824,7 +3824,7 @@ class StreamParser:
                         self.fileop_branchlinks.add(newcommit.common)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce(b"r%s: making branch link %s" %
-                                     (newcommit.fossil_id, newcommit.common))
+                                     (newcommit.legacy_id, newcommit.common))
                         # Use max() on the reversed iterator since max returns
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
@@ -3837,7 +3837,7 @@ class StreamParser:
                             self.branchlink[newcommit.mark] = (newcommit, prev)
                             if debug_enable(DEBUG_TOPOLOGY):
                                 announce(b"r%s: link %s (%s) back to %s (%s, %s)" % \
-                                         (newcommit.fossil_id,
+                                         (newcommit.legacy_id,
                                           newcommit.mark,
                                           newcommit.common,
                                           latest.from_rev,
@@ -3870,7 +3870,7 @@ class StreamParser:
                 if msg == None:
                     msg = b""
                 announce(b"r%-4s %4s %2d %2d '%s'" % \
-                         (commit.fossil_id, commit.mark,
+                         (commit.legacy_id, commit.mark,
                           len(commit.fileops),
                           len(commit.properties),
                           msg.strip()[:20]))
@@ -3882,7 +3882,7 @@ class StreamParser:
                 self.repo.tagify(initial,
                                  b"root",
                                  second,
-                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.fossil_id)
+                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.legacy_id)
             except ValueError: # self.repo has less than two commits
                 self.gripe(b"could not tagify root commit.")
         # Now, branch analysis.
@@ -3981,7 +3981,7 @@ class StreamParser:
                 if getattr(commit.branch, b"fileops", None) \
                         and root.branch != (b"trunk" + os.sep):
                     self.gripe(b"r%s: can't connect nonempty branch %s to origin" \
-                                % (root.fossil_id, root.branch))
+                                % (root.legacy_id, root.branch))
             self.repo.timings.append(["branchlinks", time.time()])
             baton.twirl()
             # Add links due to svn:mergeinfo properties
@@ -4047,7 +4047,7 @@ class StreamParser:
                                 from_commit = last_relevant_commit(
                                                     from_rev, from_path)
                                 if from_commit is not None and \
-                                        int(from_commit.fossil_id.split(b".",1)[0]) \
+                                        int(from_commit.legacy_id.split(b".",1)[0]) \
                                             >= int(min_rev):
                                     own_merges.add(from_commit.mark)
                                 else:
@@ -4061,7 +4061,7 @@ class StreamParser:
                     # Find the correct commit in the split case
                     commit = last_relevant_commit(revision, node.path)
                     if commit is None or \
-                            not commit.fossil_id.startswith(revision):
+                            not commit.legacy_id.startswith(revision):
                         # The reverse lookup went past the target revision
                         self.gripe(b"cannot resolve mergeinfo destination "
                                    b"to revision %s for path %s."
@@ -4073,8 +4073,8 @@ class StreamParser:
                             commit.add_parent(parent)
                         if debug_enable(DEBUG_TOPOLOGY):
                             announce(b"processed new mergeinfo from r%s "
-                                     b"to r%s." % (parent.fossil_id,
-                                                  commit.fossil_id))
+                                     b"to r%s." % (parent.legacy_id,
+                                                  commit.legacy_id))
                 mergeinfos[revision] = mergeinfo.snapshot()
                 baton.twirl()
             del mergeinfo, mergeinfos
@@ -4088,7 +4088,7 @@ class StreamParser:
                     except IndexError:
                         ancestor = '-'
                     announce(b"r%-4s %4s %4s %2d %2d '%s'" % \
-                             (commit.fossil_id,
+                             (commit.legacy_id,
                               commit.mark, ancestor,
                               len(commit.fileops),
                               len(commit.properties),
@@ -4157,13 +4157,13 @@ class StreamParser:
                 return b""
             # Otherwise, generate one for inspection.
             legend = [b"[[Tag from zero-fileop commit at Subversion r%s" \
-                             % commit.fossil_id]
+                             % commit.legacy_id]
             # This guard can fail on a split commit
-            if commit.fossil_id in self.revisions:
-                if self.revisions[commit.fossil_id].nodes:
+            if commit.legacy_id in self.revisions:
+                if self.revisions[commit.legacy_id].nodes:
                     legend.append(b":\n")
                     legend.extend(str(node)+b"\n"
-                            for node in self.revisions[commit.fossil_id].nodes)
+                            for node in self.revisions[commit.legacy_id].nodes)
             legend.append(b"]]\n")
             return b"".join(legend)
         self.repo.tagify_empty(tipdeletes = True,
@@ -4215,7 +4215,7 @@ class StreamParser:
         # These show up as redundant (D, M) fileop pairs.
         for commit in self.repo.commits():
             if any(fileop is None for fileop in commit.fileops):
-                raise Fatal(b"Null fileop at r%s" % commit.fossil_id)
+                raise Fatal(b"Null fileop at r%s" % commit.legacy_id)
             for i in range(len(commit.fileops)-1):
                 if commit.fileops[i].op == b'D' and commit.fileops[i+1].op == b'M':
                     if commit.fileops[i].path == commit.fileops[i+1].path:
@@ -4235,7 +4235,7 @@ class StreamParser:
                 pass
             else:
                 if a is b:
-                    self.gripe(b"r%s: duplicate parent marks" % commit.fossil_id)
+                    self.gripe(b"r%s: duplicate parent marks" % commit.legacy_id)
                 elif a.branch == b.branch == commit.branch:
                     if b.committer.date < a.committer.date:
                         (a, b) = (b, a)
@@ -4248,7 +4248,7 @@ class StreamParser:
         self.repo.renumber(baton=baton)
         baton.twirl()
         self.repo.timings.append([b"renumbering", time.time()])
-        self.repo.write_fossils = True
+        self.repo.write_legacy = True
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
         ignore_deleteall = set(commit.mark
@@ -4258,7 +4258,7 @@ class StreamParser:
                     and commit.has_children() \
                     and commit.mark not in ignore_deleteall:
                 self.gripe(b"mid-branch deleteall on %s at <%s>." % \
-                        (commit.branch, commit.fossil_id))
+                        (commit.branch, commit.legacy_id))
         self.repo.timings.append(["linting", time.time()])
         # Treat this in-core state is though it was read from an SVN repo
         self.repo.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == "svn")
@@ -4637,10 +4637,10 @@ class Repository:
         self.case_coverage = set()
         self.basedir = os.getcwd()
         self.uuid = None
-        self.write_fossils = False
+        self.write_legacy = False
         self.dollar_map = {}        # From dollar cookies in files
-        self.fossil_map = {}    # From anything that doesn't survive rebuild
-        self.fossil_count = None
+        self.legacy_map = {}    # From anything that doesn't survive rebuild
+        self.legacy_count = None
         self.timings = []
         self.assignments = {}
         self._has_manifests = False
@@ -4699,7 +4699,7 @@ class Repository:
             ind = self.find(mark)
             if ind is not None: return ind
         raise Fatal(b"internal error: <%s> not matched "
-                    b"in repository %s" % (obj.fossil_id, self.name))
+                    b"in repository %s" % (obj.legacy_id, self.name))
     def find(self, mark):
         "Find an object index by mark"
         if not self._mark_to_index:
@@ -4723,8 +4723,8 @@ class Repository:
         for (i, event) in enumerate(self.events):
             if isinstance(event, Tag):
                 self._namecache[event.name] = [i]
-            if hasattr(event, b"fossil_id") and event.fossil_id:
-                self._namecache[event.fossil_id] = [i]
+            if hasattr(event, b"legacy_id") and event.legacy_id:
+                self._namecache[event.legacy_id] = [i]
             if hasattr(event, b"committer"):
                 key = event.committer.action_stamp()
                 if key not in self._namecache:
@@ -4875,8 +4875,8 @@ class Repository:
                 contributors[event.tagger.name] = event.tagger.who()
         for (name, cid) in contributors.iteritems():
             fp.write(b"%s = %s\n" % (name, cid))
-    def read_fossilmap(self, fp):
-        "Read a fossil-references dump and initialize the repo's fossil map."
+    def read_legacymap(self, fp):
+        "Read a legacy-references dump and initialize the repo's legacy map."
         commit_map = {}
         for event in self.commits():
             key = (event.committer.date.timestamp, event.committer.email)
@@ -4886,19 +4886,19 @@ class Repository:
         try:
             matched = unmatched = 0
             for line in fp:
-                (fossil, stamp) = line.split()
+                (legacy, stamp) = line.split()
                 (timefield, person) = stamp.split(b'!')
                 if ':' in person:
                     (person, seq) = person.split(b':')
                     seq = int(seq) - 1
                 else:
                     seq = 0
-                assert fossil and timefield and person
+                assert legacy and timefield and person
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in commit_map:
-                    self.fossil_map[fossil] = commit_map[when_who][seq]
-                    if fossil.startswith(b"SVN:"):
-                        commit_map[when_who][seq].fossil_id = fossil[4:]
+                    self.legacy_map[legacy] = commit_map[when_who][seq]
+                    if legacy.startswith(b"SVN:"):
+                        commit_map[when_who][seq].legacy_id = legacy[4:]
                     matched += 1
                 else:
                     unmatched += 1
@@ -4907,20 +4907,20 @@ class Repository:
                          % (matched, unmatched, matched+unmatched))
             del commit_map
         except ValueError:
-            raise Recoverable(b"bad syntax in fossils file.")
-    def write_fossilmap(self, fp):
-        "Dump fossil references."
+            raise Recoverable(b"bad syntax in legacy map.")
+    def write_legacymap(self, fp):
+        "Dump legacy references."
         for cookie, commit in sorted(
-                self.fossil_map.iteritems(),
+                self.legacy_map.iteritems(),
                 key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:
                 serial = ''
             # The objfind test is needed in case this repo is an expunge
-            # fragment with a copied fossil map.  It's a simple substitute
+            # fragment with a copied legacy map.  It's a simple substitute
             # for partitioning the map at expunge time.
-            if self.objfind(commit.mark) and commit.fossil_id:
+            if self.objfind(commit.mark) and commit.legacy_id:
                 fp.write(b"%s\t%s!%s%s\n" % (cookie,
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
@@ -4929,8 +4929,8 @@ class Repository:
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
-            if commit.fossil_id:
-                commit_id += b" <%s>" % commit.fossil_id
+            if commit.legacy_id:
+                commit_id += b" <%s>" % commit.legacy_id
             announce(b"tagifying: %s -> %s" % (commit_id, name))
         if commit.fileops:
             raise Fatal(b"Attempting to tagify a commit with fileops.")
@@ -4969,8 +4969,8 @@ class Repository:
                 branch = commit.branch
                 if branch[-1] == os.sep: branch = branch[:-1]
                 return b"tipdelete-" + os.path.basename(branch)
-            if commit.fossil_id:
-                return b"emptycommit-" + commit.fossil_id
+            if commit.legacy_id:
+                return b"emptycommit-" + commit.legacy_id
             elif commit.mark:
                 return b"emptycommit-mark" + commit.mark[1:]
             else:
@@ -5007,8 +5007,8 @@ class Repository:
                     deletia.append(index)
                 else:
                     msg = []
-                    if commit.fossil_id:
-                        msg.append(b"r%s:" % commit.fossil_id)
+                    if commit.legacy_id:
+                        msg.append(b"r%s:" % commit.legacy_id)
                     elif commit.mark:
                         msg.append(b"'%s':" % commit.mark)
                     msg.append(b"deleting parentless")
@@ -5024,7 +5024,7 @@ class Repository:
         StreamParser(self).fast_import(fp, options, progress)
         self.readtime = time.time()
     def parse_dollar_cookies(self):
-        "Extract info about fossil references from CVS/SVN header cookies."
+        "Extract info about legacy references from CVS/SVN header cookies."
         if self.dollar_map:
             return
         # The goal here is to throw away CVS and Subversion header
@@ -5032,7 +5032,7 @@ class Repository:
         # headers after conversion to a later version. For each
         # cookie, all but the earliest blob containing it has it
         # as a fossil which should be removed.  Then, the earliest
-        # commit referencing that blob gets a fossil property set;
+        # commit referencing that blob gets a legacy property set;
         # later references will be branching artifacts.
         seen = set()
         for event in self.events:
@@ -5046,8 +5046,8 @@ class Repository:
                             commit = self.events[ei]
                             break
                     seen.add(event.cookie)
-                    if "fossil" in commit.properties:
-                        complain(b"fossil property of %s overwritten" \
+                    if "legacy" in commit.properties:
+                        complain(b"legacy property of %s overwritten" \
                                  % commit.mark)
                     if isinstance(event.cookie, str):
                         svnkey = b"SVN:" + event.cookie
@@ -5091,28 +5091,28 @@ class Repository:
             selection.sort()
         with Baton(b"reposurgeon: exporting", enable=progress) as baton:
             try:
-                fossil_latch = False
+                legacy_latch = False
                 realized = {}
                 selection_marks = [self.events[i].mark for i in selection if hasattr(self.events[i], b"mark")]
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
-                    #fossil_latch = fossil_latch or hasattr(event, b"fossil_id")
+                    #legacy_latch = legacy_latch or hasattr(event, b"legacy_id")
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, b"mark"):
                             announce(b"writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(event.dump(target, options=options, realized=realized, internals=selection_marks))
-                if fossil_latch:
-                    fp.write(b"reset fossil_id\n")
+                if legacy_latch:
+                    fp.write(b"reset legacy_id\n")
                     endcommit = Commit(self)
                     endcommit.set_branch(b"refs/heads/master")
-                    endcommit.comment = b"Fossil-ID notes\n"
+                    endcommit.comment = b"Legacy-ID notes\n"
                     endcommit.committer = Attribution(b"Nowhere Man <nowhere@nobody.net> " + rfc3339(time.time()))
                     for ei in selection:
                         event = self.events[ei]
-                        if hasattr(event, b"fossil_id"):
+                        if hasattr(event, b"legacy_id"):
                             fileop = FileOp()
-                            fileop.inline = "Fossil-ID: %s" % event.fossil_id
+                            fileop.inline = "Legacy-ID: %s" % event.legacy_id
                             fileop.construct(b'N', b'inline', event.mark)
                             endcommit.fileops.append(fileop)
                     fp.write(str(endcommit))
@@ -5958,10 +5958,10 @@ def read_repo(source, options, preferred):
                 announce(b"reading author map.")
                 with open(repo.vcs.authormap, b"rb") as fp:
                     repo.read_authormap(range(len(repo.events)),fp)
-            fossils = os.path.join(vcs.subdirectory, b"fossils")
-            if os.path.exists(fossils):
-                with open(fossils, b"rb") as rfp:
-                    repo.read_fossilmap(rfp)
+            legacy_map = os.path.join(vcs.subdirectory, b"legacy_map")
+            if os.path.exists(legacy_map):
+                with open(legacy_map, b"rb") as rfp:
+                    repo.read_legacymap(rfp)
             if vcs.lister:
                 def fileset(exclude):
                     allfiles = []
@@ -6007,7 +6007,7 @@ def read_repo(source, options, preferred):
                         for ((path, rev), value) in pathrev_to_hash.iteritems():
                             if value in hash_to_action:
                                 (ctime, cperson) = hash_to_action[value]
-                                action_to_mark[(ctime, cperson)].fossil_id = "CVS:%s:%s" % (path, rev)
+                                action_to_mark[(ctime, cperson)].legacy_id = "CVS:%s:%s" % (path, rev)
                         del pathrev_to_hash
                         del hash_to_action
                         del stamp_set
@@ -6100,14 +6100,14 @@ def rebuild_repo(repo, target, options, preferred):
                 repo.fast_export(range(len(repo)), tp, options,
                                  target=preferred,
                                  progress=verbose>0)
-        if repo.write_fossils:
+        if repo.write_legacy:
             try:
-                fossilfile = os.path.join(vcs.subdirectory, b"fossils")
-                with open(fossilfile, b"wb") as wfp:
-                    repo.write_fossilmap(wfp)
+                legacyfile = os.path.join(vcs.subdirectory, b"legacy-map")
+                with open(legacyfile, b"wb") as wfp:
+                    repo.write_legacymap(wfp)
             except IOError:
-                raise Recoverable(b"fossils file %s could not be written." \
-                                  % fossilfile)
+                raise Recoverable(b"legacy-map file %s could not be written." \
+                                  % legacyfile)
 
         do_or_die(vcs.checkout, b"repository_checkout")
         if verbose:
@@ -7430,7 +7430,7 @@ First, these ways of constructing singleton sets:
 
 123        event numbered 123 (1-origin)
 :345       event with mark 345
-<456>      commit with fossil-ID 456 (probably a Subversion revsion)
+<456>      commit with legacy-ID 456 (probably a Subversion revsion)
 <foo>      the tag named 'foo', or failing that the tip commmit of branch foo
 
 You can select commits and tags by date, or by date and committer:
@@ -7611,7 +7611,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
         if name in repo.assignments:
             raise Recoverable(b"%s has already been set" % name)
         elif repo.named(name):
-            raise Recoverable(b"%s conflicts with a branch, tag, fossil, or date" % name)
+            raise Recoverable(b"%s conflicts with a branch, tag, legacy-ID, or date" % name)
         else:
             repo.assignments[name] = self.selection
 
@@ -7760,17 +7760,17 @@ Report phase-timing results from repository analysis.
         "Report repo-analysis times."
         total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
         commit_count = sum(1 for _ in self.repo.commits())
-        if self.repo.fossil_count is None:
+        if self.repo.legacy_count is None:
             print(b"        commits: %d" % commit_count)
         else:
-            print(b"        commits: %d (from %d)" % (commit_count, self.repo.fossil_count))
+            print(b"        commits: %d (from %d)" % (commit_count, self.repo.legacy_count))
         for (i, (phase, _interval)) in enumerate(self.repo.timings):
             if i > 0:
                 interval = self.repo.timings[i][1] - self.repo.timings[i-1][1]
                 print(b"%15s: %.3f (%2.2f%%)" % (phase,
                                               interval,
                                               (interval * 100)/total))
-        print(b"          total: %.3f (%d/sec)" % (total, int((self.repo.fossil_count or commit_count))/total))
+        print(b"          total: %.3f (%d/sec)" % (total, int((self.repo.legacy_count or commit_count))/total))
 
     #
     # Information-gathering
@@ -7822,7 +7822,7 @@ in the currently-selected repo. Supports > redirection.
         print(b"""
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
-has fossil IDs, they will be displayed in the third column. The
+has legacy IDs, they will be displayed in the third column. The
 leading portion of the comment follows. Supports > redirection.
 """)
     def do_list(self, line):
@@ -8342,8 +8342,8 @@ for graphviz. Supports > redirection.
                 if isinstance(event, Commit):
                     summary = cgi.escape(event.comment.split(b'\n')[0][:42])
                     cid = event.mark
-                    if event.fossil_id:
-                        cid = event.showfossil() + " &rarr; " + cid
+                    if event.legacy_id:
+                        cid = event.showlegacy() + " &rarr; " + cid
                     parse.stdout.write(b'\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
                     if all(event.branch != child.branch for child in event.children()):
@@ -8406,7 +8406,7 @@ fields are not present, reposurgeon will attempt to deduce the user's
 git-style identity and fill it in.
 
 Otherwise, if the Event-Number field is absent, the mailbox_in logic will
-attempt to match the commit or tag first by Fossil-ID, then by a unique
+attempt to match the commit or tag first by Legacy-ID, then by a unique
 committer ID and timestamp pair.
 
 If output is redirected and the modifier '--changed' appears, a minimal
@@ -8438,10 +8438,10 @@ redirection is supported).
                     stamp = event.tagger.action_stamp()
                     attribution_map[stamp] = event
                     attribution_counts[stamp] += 1
-        fossil_map = {}
+        legacy_map = {}
         for commit in self.chosen().commits():
-            if commit.fossil_id:
-                fossil_map[commit.fossil_id] = commit
+            if commit.legacy_id:
+                legacy_map[commit.legacy_id] = commit
         events = []
         errors = 0
         # Special case - event creattion
@@ -8473,12 +8473,12 @@ redirection is supported).
                                       % (eventnum, i+1))
                     errors += 1
                 event = self.chosen()[eventnum]
-            elif b"Fossil-ID" in message:
+            elif b"Legacy-ID" in message:
                 try:
-                    event = fossil_map[message[b"Fossil-ID"]]
+                    event = legacy_map[message[b"Legacy-ID"]]
                 except KeyError:
-                    complain(b"no commit matches fossil %s" \
-                                      % message[b"Fossil-ID"])
+                    complain(b"no commit matches legacy-ID %s" \
+                                      % message[b"Legacy-ID"])
                     errors += 1
             elif b"Event-Mark" in message:
                 event = self.chosen().objfind(message[b"Event-Mark"])
@@ -9583,8 +9583,8 @@ This command supports > redirection.
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + b"\n"
                 parse.stdout.write(header)
-                if event.fossil_id:
-                    parse.stdout.write(b"# Fossil-ID: %s\n" % event.fossil_id)
+                if event.legacy_id:
+                    parse.stdout.write(b"# Legacy-ID: %s\n" % event.legacy_id)
                 parse.stdout.write(b"commit %s\n" % event.branch)
                 if event.mark:
                     parse.stdout.write(b"mark %s\n" % event.mark)
@@ -9610,7 +9610,7 @@ fileops (thus no tree differences with their first parent). To change that, see
 the '--tagify-merges' option.
 
 The name of the tag is 'emptycommit-<ident>', where <ident> is generated from
-the fossil_id of the deleted commit, or from its mark, or from its index in the
+the legacy_id of the deleted commit, or from its mark, or from its index in the
 repository, with a disambiguation suffix if needed.
 
 tagify currently recognizes three options: first is '--canonicalize' which
@@ -10119,14 +10119,14 @@ part to the right of an equals sign will need editing.
     #
     # Reference lifting
     #
-    def help_fossils(self):
+    def help_legacy(self):
         print(b"""
-Apply or list fossil-reference information. Does not take a
+Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
 output or a >-redirected filename.
 """)
-    def do_fossils(self, line):
+    def do_legacy(self, line):
         "Apply a reference-mapping file."
         if self.chosen() is None:
             complain(b"no repo has been chosen.")
@@ -10135,15 +10135,15 @@ output or a >-redirected filename.
             line = line[5:].strip()
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
-                    raise Recoverable(b"fossils write no longer takes a filename argument - use > redirection instead")
-                self.chosen().write_fossilmap(parse.stdout)
+                    raise Recoverable(b"legacy write does not take a filename argument - use > redirection instead")
+                self.chosen().write_legacymap(parse.stdout)
         else:
             if line.startswith(b"read"):
                 line = line[4:].strip()
             with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
                 if parse.tokens():
-                    raise Recoverable(b"fossils read no longer takes a filename argument - use < redirection instead")
-                self.chosen().read_fossilmap(parse.stdin)
+                    raise Recoverable(b"legacy read does not take a filename argument - use < redirection instead")
+                self.chosen().read_legacymap(parse.stdin)
 
     def help_references(self):
         print(b"""
@@ -10186,9 +10186,9 @@ map when the repo is written or rebuilt.
                     return matchobj.group(0) # no replacement
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.fossil_map.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.legacy_map.get(p) or repo.dollar_map.get(p)),
                      (b"SVN:[0-9]+",
-                      lambda p: repo.fossil_map.get(p) or repo.dollar_map.get(p)),
+                      lambda p: repo.legacy_map.get(p) or repo.dollar_map.get(p)),
                      (b":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
@@ -10200,7 +10200,7 @@ map when the repo is written or rebuilt.
                             event.comment)
                         hits += new_hits
             announce(b"%d references resolved." % hits)
-            repo.write_fossils = True
+            repo.write_legacy = True
         else:
             # No modifier, just list or edit
             refstyles = (

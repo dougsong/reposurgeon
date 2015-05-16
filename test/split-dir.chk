@@ -6,7 +6,7 @@ read --nobranch <split-dir.svn
 * split-dir
 :2 split in bar
 Event 2 =================================================================
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :2
 committer brooksd <brooksd> 1353813663 +0000
@@ -19,7 +19,7 @@ M 100644 :1 foo/src
 reposurgeon: couldn't find 'zed' in a fileop path.
 :5 split in f
 Event 6 =================================================================
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :5
 committer brooksd <brooksd> 1353813667 +0000
@@ -37,7 +37,7 @@ data 2
 a
 
 Event 2 =================================================================
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :2
 committer brooksd <brooksd> 1353813663 +0000
@@ -47,7 +47,7 @@ M 100644 :1 baz/src
 M 100644 :1 foo/src
 
 Event 3 =================================================================
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :2.1
 committer brooksd <brooksd> 1353813663 +0000
@@ -64,7 +64,7 @@ a
 b
 
 Event 5 =================================================================
-# Fossil-ID: 3
+# Legacy-ID: 3
 commit refs/heads/master
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
@@ -76,7 +76,7 @@ M 100644 :3 baz/src
 M 100644 :3 foo/src
 
 Event 6 =================================================================
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :5
 committer brooksd <brooksd> 1353813667 +0000
@@ -87,7 +87,7 @@ M 100644 :3 bar2/src
 M 100644 :3 baz2/src
 
 Event 7 =================================================================
-# Fossil-ID: 4
+# Legacy-ID: 4
 commit refs/heads/master
 mark :5.1
 committer brooksd <brooksd> 1353813667 +0000

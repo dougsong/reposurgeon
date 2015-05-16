@@ -36,10 +36,10 @@ fi
 git svn ${gitsvnquiet} --stdlayout --no-metadata clone file://${PWD}/${stem}-repo ${stem}-svn >$sink 2>$sink
 
 # Now make a git repo directly from the dump using reposurgeon
-reposurgeon "set svn_use_uuid" "read $1" "prefer git" "fossils write >${stem}.fo" "rebuild ${stem}-git"
+reposurgeon "set svn_use_uuid" "read $1" "prefer git" "legacy write >${stem}.fo" "rebuild ${stem}-git"
 
 # Diff the two repos. We need the ignore because git-svn doesn't lift ignores
-repodiffer -q --ignore="gitignore" --tree-diff --fossil-map=${stem}.fo ${stem}-git ${stem}-svn
+repodiffer -q --ignore="gitignore" --tree-diff --legacy-map=${stem}.fo ${stem}-git ${stem}-svn
 exit $?
 
 # end

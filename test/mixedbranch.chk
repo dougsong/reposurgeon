@@ -19,7 +19,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Fossil-ID: 1
+# Legacy-ID: 1
 commit refs/heads/master
 mark :2
 committer esr <esr> 1355183327 +0000
@@ -32,7 +32,7 @@ mark :3
 data 37
 This is a test Subversion repository
 
-# Fossil-ID: 2
+# Legacy-ID: 2
 commit refs/heads/master
 mark :4
 committer esr <esr> 1355183329 +0000
@@ -55,7 +55,7 @@ This is a test Subversion repository
 
 About to do evil mixed-branch commit: trunk side.
 
-# Fossil-ID: 3.1
+# Legacy-ID: 3.1
 commit refs/heads/foobar
 mark :7
 committer esr <esr> 1355183671 +0000
@@ -66,7 +66,7 @@ This is an evil mixed-branch commit.
 from :2
 M 100644 :5 README
 
-# Fossil-ID: 3.2
+# Legacy-ID: 3.2
 commit refs/heads/master
 mark :8
 committer esr <esr> 1355183671 +0000

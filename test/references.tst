@@ -1,4 +1,4 @@
-## Test authors read, fossil-ID refs, heredocs, comment editing
+## Test authors read, legacy-ID refs, heredocs, comment editing
 read <references.svn
 authors read <<EOF
 esr-guest = Eric S. Raymond <esr-guest@alioth.debian.org>

@@ -26,7 +26,7 @@
       <arg choice='opt'>--changes-only</arg>
       <arg choice='opt'>--full-hash</arg>
       <arg choice='opt'>--tree-diff</arg>
-      <arg choice='opt'>--fossil-map <replaceable>mapfile</replaceable></arg>
+      <arg choice='opt'>--legacy-map <replaceable>mapfile</replaceable></arg>
       <arg choice='opt'>--single <replaceable>id1=id2</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream1</replaceable></arg>
       <arg choice='plain'><replaceable>repo-or-stream2</replaceable></arg>
@@ -65,11 +65,11 @@ listing of insertions and deletions.</para>
 
 <para>The --show-equal or -e option enables listing of equal commits.</para>
 
-<para>The --fossil-map or -m option takes a fossil map file in the format
-produced by reposurgeon, associating fossil commit IDs with committer/time
+<para>The --legacy-map or -m option takes a legacy map file in the format
+produced by reposurgeon, associating legacy commit IDs with committer/time
 pairs.  If the tool can find a matching committer/time pair for a commit
 in this file, reports on this commit (and any matched pair it is part of)
-will be decorated with the fossil ID of the commit. (This will work, in 
+will be decorated with the legacy ID of the commit. (This will work, in 
 particular, for displaying Subversion revisions of commits lifted from
 a Subversion file.)</para>
 
