@@ -2367,7 +2367,7 @@ ignored.</para>
 </varlistentry>
 <varlistentry>
 <term><command>version</command>
-        [<emphasis>required</emphasis>...]
+        [<emphasis>version</emphasis>...]
 </term>
 <listitem>
 <para>With no argument, display the program version and the list of
@@ -2380,6 +2380,34 @@ compatible).</para>
 <para>It is good practice to start your lift script with a version
 requirement, especially if you are going to archive it for later
 reference.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><command>prompt</command>
+        [<emphasis>format</emphasis>...]
+</term>
+<listitem>
+<para>Set the command prompt format to the value of the command line; with
+an empty command line, display it. The prompt format is evaluated in
+Python after each command with the following dictionary substitutions:</para>
+
+<variablelist>
+<varlistentry>
+<term>chosen</term>
+<listitem>
+<para>The name of the selected repository, or None if none is currently
+selected.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>Thus, one useful format might be 'rs[%(chosen)s]%% '.</para>
+
+<para>More format items may be added in the future.  The default
+prompt corresponds to the format 'reposurgeon%% '. The format line is
+evaluated with shell quotng of tokens, so that spaces can be
+included.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

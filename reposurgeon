@@ -6653,6 +6653,7 @@ into sections of the input stream instead).
         self.use_rawinput = True
         self.echo = 0
         self.prompt = "reposurgeon% "
+        self.prompt_format = "reposurgeon%% "
         self.preferred = None
         self.ignorename = None
         self.selection = []
@@ -6678,6 +6679,10 @@ into sections of the input stream instead).
             complain(e.msg)
     def postcmd(self, unused, line):
         assert unused is not []   # pacify pylint
+        try:
+            self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
+        except ValueError:
+            announce("bad prompt format - remember, literal % must be doubled.")
         if line == "EOF":
             return True
     def emptyline(self):
@@ -10586,6 +10591,29 @@ Typing EOT (usually Ctrl-D) will exit quietly.
     def do_exit(self, _line):
         announce(b"exiting, elapsed time %d sec." % (time.time() - self.start_time))
         sys.exit(0)
+
+    #
+    # Prompt customization
+    #
+    def help_prompt(self):
+        print(b"""
+Set the command prompt format to the value of the command line; with
+an empty command line, display it. The prompt format is evaluated in Python
+after each command with the following dictionary substitutions:
+
+chosen: The name of the selected repository, or None if none currently selected.
+
+Thus, one useful format might be 'rs[%(chosen)s]%% '
+
+More format items may be added in the future.  The default prompt corresponds
+to the format 'reposurgeon%% '. The format line is evaluated with shell quotng
+of tokens, so that spaces can be included.
+""")
+    def do_prompt(self, line):
+        if line:
+            self.prompt_format = " ".join(shlex.split(line))
+        else:
+            print("prompt = %s" % self.prompt_format)
 
     #
     # Running unit tests (undocumented)
