@@ -2995,10 +2995,13 @@ class StreamParser:
                                             for line in value.split(b'\n'):
                                                 if line:
                                                     self.repo.legacy_map["CVS:"+line] = commit
-                                        # Handle legacy IDs
+                                        # Handle legacy IDs.
                                         if name == "legacy-id" and value:
-                                            self.legacy_id = value
-                                            self.repo.legacy_map[value] = commit
+                                            commit.legacy_id = value
+                                            if self.repo.vcs:
+                                                self.repo.legacy_map[self.repo.vcs.name.upper() + ":" + value] = commit
+                                            else:
+                                                self.repo.legacy_map[value] = commit
                                 elif line.startswith(b"data"):
                                     commit.comment = self.fi_read_data(line)[0]
                                     if global_options[b"canonicalize"]:
