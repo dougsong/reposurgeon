@@ -51,16 +51,19 @@ location. It may take afollowing optional argument which is a tag
 or revision specification; if this argument is not given, the tip
 (most recent) mainline revision is assumed.</para>
 
-<para>The 'compare' action takes two repository directories and
-a revision spec (typically a tag name). If the revision spec is
-omitted, the tip of the main line of both repositories will be
-used.  The selected revisions are cpmpared with diff -u -r, with
-noise due to SCCS/RCS/CVS keyword expansion ignored.</para>
+<para>The 'compare' action takes two repository directories and a
+revision spec (typically a tag name). If the revision spec is omitted,
+the tip of the main line of both repositories will be used.  The
+selected revisions are cpmpared with diff -u -r, with noise due to
+SCCS/RCS/CVS keyword expansion ignored.  You can follow the command
+verb with one or more -x options followed by basenames of paths to
+exclude from comparison.</para>
 
-<para>The 'compareall' action  takes two repository directories,
+<para>The 'compareall' action takes two repository directories,
 extracts a list of tags from the first, then compares the repository
 contents at each tag in the list, generating a compare report for
-each.</para>
+each.  You can follow the command verb with one or more -x options
+followed by basenames of paths to exclude from comparison.</para>
 
 <para>The 'mirror' action makes or updates a local mirror of a
 Subversion or CVS repo. It requires a single argument,

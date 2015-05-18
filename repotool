@@ -156,6 +156,14 @@ checkout)
     fi
     ;;
 compare)
+    exclude=
+    while getopts x: opt
+    do
+	case $opt in
+	    x) exclude="$exclude --exclude=$OPTARG" ;;
+	esac
+    done
+    shift $(($OPTIND - 1))
     repo1=`realpath $1`
     shift
     repo2=`realpath $1`
@@ -171,13 +179,21 @@ compare)
     cd $repo1; repotool checkout /tmp/source $rev
     cd $repo2; repotool checkout /tmp/target $rev
     cd $here
-    diff --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' -u -r /tmp/source /tmp/target | sed \
+    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' -u -r /tmp/source /tmp/target| sed \
 			-e '/Only in .tmp./s//Only in /' \
 			-e '/: /s::/:' \
 			-e '/source./s//source: /' \
 		        -e '/target./s//target: /'
     ;;
 compareall)
+    exclude=
+    while getopts x: opt
+    do
+	case $opt in
+	    x) exclude="$exclude -x $OPTARG" ;;
+	esac
+    done
+    shift $(($OPTIND - 1))
     repo1=`realpath $1`
     shift
     repo2=`realpath $1`
@@ -195,7 +211,7 @@ compareall)
     do
 	echo "----------------------------------------------------------------"
 	echo "${tag}:"
-	repotool compare $repo1 $repo2 $tag
+	repotool compare $exclude $repo1 $repo2 $tag
     done
     ;;
 *)
