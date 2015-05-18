@@ -179,7 +179,7 @@ compare)
     cd $repo1; repotool checkout /tmp/source $rev
     cd $repo2; repotool checkout /tmp/target $rev
     cd $here
-    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' -u -r /tmp/source /tmp/target| sed \
+    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' -u -r /tmp/source /tmp/target| sed \
 			-e '/Only in .tmp./s//Only in /' \
 			-e '/: /s::/:' \
 			-e '/source./s//source: /' \
