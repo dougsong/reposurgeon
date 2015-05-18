@@ -9050,10 +9050,11 @@ change in a future release.
             return
         if self.selection is None:
             self.selection = []
+        orig = line
         (opindex, line) = RepoSurgeon.pop_token(line)
         # FIXME: This needs more general parsing
         optypes = "DMRCN"
-        if re.match("[DMRCN]*", opindex):
+        if re.match("[DMRCN]+$", opindex):
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
@@ -9074,7 +9075,7 @@ change in a future release.
                 try:
                     ind = int(opindex) - 1
                 except (ValueError, IndexError):
-                    complain(b"invalid or missing fileop specification %s" % opindex)
+                    complain(b"invalid or missing fileop specification '%s' on %s" % (opindex, repr(orig)))
                     return
             target = None
             if line:
