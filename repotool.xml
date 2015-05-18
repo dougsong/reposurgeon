@@ -54,8 +54,13 @@ or revision specification; if this argument is not given, the tip
 <para>The 'compare' action takes two repository directories and
 a revision spec (typically a tag name). If the revision spec is
 omitted, the tip of the main line of both repositories will be
-used.  The selected revisions are cpmpated with diff -u -r, with
+used.  The selected revisions are cpmpared with diff -u -r, with
 noise due to SCCS/RCS/CVS keyword expansion ignored.</para>
+
+<para>The 'compareall' action  takes two repository directories,
+extracts a list of tags from the first, then compares the repository
+contents at each tag in the list, generating a compare report for
+each.</para>
 
 <para>The 'mirror' action makes or updates a local mirror of a
 Subversion or CVS repo. It requires a single argument,
