@@ -521,7 +521,7 @@ set of all commits and blobs related to a path matching the given
 expression. The path expression itself is either a path literal or a
 regular expression surrounded by slashes. Immediately after the
 trailing / of a path regexp you can put any number of the following
-characters which act as flags: 'a' and 'c'.</para>
+characters which act as flags: 'a', 'c', 'D', "M', 'R', 'C', 'N'.</para>
 
 <para>By default, a path is related to a commit if the latter has a
 fileop that touches that file path - modifies that change it, deletes
@@ -538,11 +538,15 @@ directory in the chosen repository.</para>
 <para>A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use '^' or '$' if you want the
 expression to only match at the beginning or end of paths.  When the 'a' flag is
-in use, the path expression selects commits whose every path match the regular
+in use, the path expression selects commits whose every path matches the regular
 expression. This is not always a subset of commits selected without the 'a'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
 use e.g. '[/regex/] &amp; [/regex/a]'.</para>
+
+<para>The flags 'D', "M', 'R', 'C', 'N' restrict match checking to the
+corresponding fileop types.  Note that this means an 'a' match is
+easier (not harder) to achieve.  These are no-iops when used with 'c'.</para>
 
 <para>A path or literal matches a blob if it matches any path that
 appeared in a modification fileop that referred to that blob. To

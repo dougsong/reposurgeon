@@ -1125,7 +1125,7 @@ class Blob(object):
     def id_me(self):
         "ID this blob for humans."
         return b"blob@%s" % self.mark
-    def paths(self):
+    def paths(self, _pathtype=None):
         "For uniformity with commits and fileops."
         return self.pathlist
     def blobfile(self, create=False):
@@ -1484,8 +1484,12 @@ class FileOp(object):
         else:
             raise Fatal(b"unexpected fileop %s while parsing" % opline)
         return self
-    def paths(self):
+    def paths(self, pathtype=None):
         "Return the set of all paths touched by this file op."
+        if not pathtype:
+            pathtype = set(('M', 'D', 'R', 'C', 'N'))
+        if self.op not in pathtype:
+            return set()
         if self.op in (b"M", b"D"): return {self.path}
         if self.op in (b"R", b"C"): return {self.source, self.target}
         # Ugh...this isn't right for deleteall, but since we don't expect
@@ -1892,12 +1896,12 @@ class Commit(object):
         for (i, op) in enumerate(self.fileops):
             if op is not None:
                 print(b"%d: %-20s" % (i, str(op)))
-    def paths(self):
+    def paths(self, pathtype=None):
         "Return the set of all paths touched by this commit."
         if self._pathset is None:
             self._pathset = set()
             for fileop in self.fileops:
-                self._pathset |= fileop.paths()
+                self._pathset |= fileop.paths(pathtype)
         return self._pathset
     def invalidate_pathset_cache(self):
         "Force a rebuild on the next call to paths()."
@@ -7124,9 +7128,9 @@ into sections of the input stream instead).
         else:
             raise Recoverable("malformed path matcher")
         if matcher.startswith(b'/'):
-            flags = ''
-            while matcher[-1] in ("a", "c"):
-                flags += matcher[-1]
+            flags = set()
+            while matcher[-1] in ("a", "c", "D", "M", "R", "C", "N"):
+                flags.add(matcher[-1])
                 matcher = matcher[:-1]
             if matcher[-1] != b'/':
                 raise Recoverable("regexp matcher missing trailing /")
@@ -7139,10 +7143,14 @@ into sections of the input stream instead).
                                               preselection,
                                               b"a" in flags)
             all_or_any = all if b"a" in flags else any
+            if "a" in flags:
+                flags.remove("a")
+            if "c" in flags:
+                flags.remove("c")
             hits = set([])
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
-                if all_or_any(itertools.imap(search, event.paths())):
+                if all_or_any(itertools.imap(search, event.paths(flags))):
                     hits.add(i)
             return hits
         else:
@@ -7457,6 +7465,10 @@ More ways to construct event sets:
            A 'b' search also finds blobs and tags attached to commits on
            matching branches.
 [foo]      all commits and blobs touching the file named 'foo'.
+[/bar/]    all commits and blobs touching a file matching the regexp 'bar'. Suffix
+           flags: a=all fileops must match other selectors, not just any one;
+           c=match aganst checkout paths, DMRCN=match only against given
+           fileop types (no-op when used with 'c').
 =C         all commits
 =H         all head (branch tip) commits
 =T         all tags
