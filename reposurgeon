@@ -9028,11 +9028,12 @@ in the commit's ancestry.
         print(b"""
 From a specified commit, remove a specified fileop. The syntax is:
 
-     remove OP [to COMMIT]
+     remove [DMRCN] OP [to COMMIT]
 
-The OP must be one of (a) the keyword 'deletes', (b) a file path, or
-(c) a 1-origin numeric index.  The 'deletes' keyword selects all D
-fileops in the commit; the others select one each.
+The OP must be one of (a) the keyword 'deletes', (b) a file path, (c)
+a file patch preceded by an op type set (some subset of the letters
+DMRCN), or (c) a 1-origin numeric index.  The 'deletes' keyword
+selects all D fileops in the commit; the others select one each.
 
 If the to clause is present, the removed op is appended to the
 commit specified by the following singleton selection set.  This option
@@ -9050,12 +9051,19 @@ change in a future release.
         if self.selection is None:
             self.selection = []
         (opindex, line) = RepoSurgeon.pop_token(line)
+        # FIXME: This needs more general parsing
+        optypes = "DMRCN"
+        if re.match("[DMRCN]*", opindex):
+            optypes = opindex
+            (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             if opindex == b"deletes":
                 event.fileops = [e for e in event.fileops if e.op != "D"]
                 return
             for (ind, op) in enumerate(event.fileops):
+                if hasattr(op, "op") and getattr(op, "op") not in optypes:
+                    continue
                 if hasattr(op, "path") and getattr(op, "path") == opindex:
                     break
                 if hasattr(op, "source") and getattr(op, "source") == opindex:

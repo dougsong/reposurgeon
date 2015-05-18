@@ -1309,8 +1309,9 @@ the commit's ancestry.</para>
 </term>
 <listitem>
 <para>From a specified commit, remove a specified fileop.  The op must
-be one of (a) the keyword <quote>deletes</quote>, (b) a file path, or
-(c) a 1-origin numeric index. The <quote>deletes</quote> keyword
+be one of (a) the keyword <quote>deletes</quote>, (b) a file path, (c)
+a file path preceded by an op type set (some subset of the letters
+DMRCN), or (d) a 1-origin numeric index. The <quote>deletes</quote> keyword
 selects all D fileops in the commit; the others select one
 each.</para>
 
