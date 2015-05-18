@@ -2,30 +2,6 @@
 #
 # repotool - query multiple repository types in a uniform way.
 #
-# export: Run this from within a repository directory (for CVS, within
-# a module directory).  In all cases but Subversion this generates a
-# git-fast-export file to standard output. For Subversion it emits a
-# Subversion dump file.  The export commands should bekept
-# synchronized with the table of front ends in reposurgeon.
-#
-# mirror: Initially requires a single argument, either an SVN URL (e.g
-# something like svn://svn.hercules-390.org/hercules or
-# svn://svn.debian.org/nut), or a CVS URL (e.g. something like
-# cvs://rfk.cvs.sourceforge.net/cvsroot/rfk#robotfindskitten), or
-# the name of a local mirror directory created by a previous run.
-# The first run creates a local mirror of the repository in a directory named
-# after the last segment of the URL: that is, the second example
-# above would be unpacked into a local directory named 'nut-mirror'.
-# Later runs can update the local mirror by giving the mirror directory name.
-#
-# tags: Run this from within a repository directory (for CVS, within
-# a module directory). Return a list of release tags in the repository.
-#
-# checkout: Run this from within a repository directory (for CVS, within
-# a module directory). First arg is a directory to perform the checkout to.
-# Second arg, if presemt, is a revision or tag spec. Without the spec, the
-# checkout is of the tip trevision on the mainline or master branch
-#
 operation=$1
 shift;
 
