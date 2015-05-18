@@ -204,8 +204,11 @@ compareall)
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
+    echo "----------------------------------------------------------------"
+    echo "HEAD:"
+    repotool compare $exclude $repo1 $repo2
     here=$PWD
-    cd $repo1; tags=`git tag -l`
+    cd $repo1; tags=`repotool tags`
     cd $here
     for tag in $tags
     do

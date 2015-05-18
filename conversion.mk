@@ -94,19 +94,23 @@ remote-clobber: local-clobber
 stubmap: $(PROJECT).$(SOURCE_VCS)
 	$(REPOSURGEON) "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
-# Compare the head revisions of the unconverted and converted repositories
+# Compare the histories of the unconverted and converted repositories at head
+# and all tags
 EXCLUDE = -x CVS -x .$(SOURCE_VCS) -x .$(TARGET_VCS)
 EXCLUDE += -x .$(SOURCE_VCS)ignore -x .$(TARGET_VCS)ignore
-diff: $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
-	diff $(EXCLUDE) -r -u $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+compare:
+	repotool compareall $(EXCLUDE)  $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 
-# Compare specific tags of the unconverted and converted repositories
-diff-%: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
-	diff $(EXCLUDE) -r -u $(PROJECT)-$*-checkout $(PROJECT)-$*-$(TARGET_VCS)
+# General cleanup and utility
+clean:
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fi *.fo
 
-# Compare all tags
-diff-all-tags: $(PROJECT)-tags.txt
-	make $(shell sed -e 's/^/diff-/' $(PROJECT)-tags.txt)
+# Bundle up the conversion metadata for shipping
+SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
+$(PROJECT)-conversion.tar.gz: $(SOURCES)
+	tar --dereference --transform 's:^:$(PROJECT)-conversion/:' -czvf $(PROJECT)-conversion.tar.gz $(SOURCES)
+
+dist: $(PROJECT)-conversion.tar.gz
 
 #
 # The following productions are git-specific
@@ -147,15 +151,4 @@ repodiffer: $(PROJECT)-git-svn $(PROJECT)-git
 	repodiffer --ignore="gitignore,comment" --fossil-map=$(PROJECT).fo $(PROJECT)-git $(PROJECT)-git-svn | tee REPODIFFER.LOG
 
 endif
-
-# General cleanup and utility
-clean:
-	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fi *.fo
-
-# Bundle up the conversion metadata for shipping
-SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
-$(PROJECT)-conversion.tar.gz: $(SOURCES)
-	tar --dereference --transform 's:^:$(PROJECT)-conversion/:' -czvf $(PROJECT)-conversion.tar.gz $(SOURCES)
-
-dist: $(PROJECT)-conversion.tar.gz
 
