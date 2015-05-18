@@ -195,7 +195,11 @@ compare)
     cd $repo1; repotool checkout /tmp/source $rev
     cd $repo2; repotool checkout /tmp/target $rev
     cd $here
-    diff --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' -u -r /tmp/source /tmp/target | sed '/Only in .tmp./s//Only in /'
+    diff --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' -u -r /tmp/source /tmp/target | sed \
+			-e '/Only in .tmp./s//Only in /' \
+			-e '/: /s::/:' \
+			-e '/source./s//source: /' \
+		        -e '/target./s//target: /'
     ;;
 *)
     echo "repotool: unknown action '$operation'."
