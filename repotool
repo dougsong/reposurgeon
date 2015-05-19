@@ -60,7 +60,7 @@ EOF
     then
 	cvssync -o $operand `cat $operand/.cvssync`
     else
-	echo "repotool: $operand does not look like a Subversion or CVS repository."
+	echo "repotool: $operand does not look like a repository mirror."
 	exit 1
     fi
     ;;
