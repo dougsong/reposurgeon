@@ -199,23 +199,29 @@ compareall)
 	esac
     done
     shift $(($OPTIND - 1))
-    repo1=`realpath $1`
+    repo1=$1
+    repopath1=`realpath $1`
     shift
-    repo2=`realpath $1`
+    repo2=$1
+    repopath2=`realpath $1`
     shift
-    rev=$1
     if [ -z "$repo1" -o -z "$repo2" ]
     then
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
-    echo "----------------------------------------------------------------"
-    echo "HEAD:"
-    repotool compare $exclude $repo1 $repo2
+    #echo "----------------------------------------------------------------"
+    #echo "HEAD:"
+    #repotool compare $exclude $repo1 $repo2
     here=$PWD
-    cd $repo1; tags=`repotool tags`
+    cd $repopath1; repotool tags | sort >/tmp/tags1
+    cd $repopath2; repotool tags | sort >/tmp/tags2
+    echo "----------------------------------------------------------------"
+    echo "Tags only in $repo1:"; comm -23 /tmp/tags1 /tmp/tags2
+    echo "----------------------------------------------------------------"
+    echo "Tags only in $repo2:"; comm -13 /tmp/tags1 /tmp/tags2
     cd $here
-    for tag in $tags
+    for tag in `comm -12 /tmp/tags1 /tmp/tags2`
     do
 	echo "----------------------------------------------------------------"
 	echo "${tag}:"
