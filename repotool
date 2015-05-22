@@ -7,10 +7,13 @@ shift;
 
 case $operation in
 export)
-    if [ -f *,v ]
-    then
-	    find . -name '*,v' | cvs-fast-export --reposurgeon 
-    elif [ -d locks ]
+	for file in *,v; do
+		if [ -f "$file" ]; then
+			find -name \*,v | cvs-fast-export --reposurgeon
+			break
+		fi
+	done
+    if [ -d locks ]
     then
 	    svnadmin dump .
     elif [ -d .git ]
