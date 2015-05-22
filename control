@@ -16,11 +16,7 @@ Homepage: http://www.catb.org/~esr/reposurgeon
 
 XBS-HTML-Target: index.html
 
-XBS-Repository-URL: http://thyrsus.com/gitweb/?p=reposurgeon.git
-
-XBS-Developer-Clone: git@thyrsus.com:reposurgeon
-
-XBS-Anonymous-Clone: git://thyrsus.com/repositories/reposurgeon.git
+XBS-Repository-URL: https://gitlab.com/esr/reposurgeon
 
 XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
