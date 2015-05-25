@@ -61,7 +61,7 @@ install: all
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
 	$(INSTALL) -m 755 reposurgeon repotool repodiffer "$(target)/bin"
-	$(INSTALL) -m 644 README NEWS TODO *.html \
+	$(INSTALL) -m 644 README NEWS TODO conversion.mk *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
