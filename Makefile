@@ -7,13 +7,10 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-CC?=gcc
-CFLAGS?=-O2
-LDFLAGS?=
-
+CYTHON?=cython
 PYVERSION=2.7
-pyinclude?=$(shell pkg-config --cflags python || echo "-I/usr/include/python$(PYVERSION)")
-pylib?=$(shell pkg-config --libs python || echo "-l$python$(PYVERSION)")
+pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/include/python$(PYVERSION)")
+pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-l$python$(PYVERSION)")
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
@@ -55,7 +52,7 @@ reporting-bugs.html: reporting-bugs.asc
 	asciidoc reporting-bugs.asc
 
 cyreposurgeon: reposurgeon
-	cython --embed reposurgeon -o cyreposurgeon.c
+	$(CYTHON) --embed reposurgeon -o cyreposurgeon.c
 	${CC} ${CFLAGS} $(pyinclude) -c cyreposurgeon.c -o cyreposurgeon.o
 	${CC} ${CFLAGS} ${LDFLAGS} cyreposurgeon.o $(pylib) -o cyreposurgeon
 
