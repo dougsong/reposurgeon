@@ -65,6 +65,10 @@ install: all
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
+install-cyreposurgeon: cyreposurgeon
+	$(INSTALL) -d "$(target)/bin"
+	$(INSTALL) -m 755 cyreposurgeon "$(target)/bin"
+
 clean:
 	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
