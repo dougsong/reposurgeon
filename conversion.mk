@@ -133,7 +133,7 @@ $(PROJECT)-git-svn:
 	git svn --stdlayout --no-metadata --authors-file=$(PROJECT).map clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
 
 # Compare file manifests on the master branch
-compare: $(PROJECT)-git-svn $(PROJECT)-git
+oldcompare: $(PROJECT)-git-svn $(PROJECT)-git
 	@echo; echo "Comparing the directory manifests..."
 	@rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
 	@(cd $(PROJECT)-git-svn >/dev/null; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
