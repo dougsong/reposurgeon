@@ -9718,6 +9718,9 @@ from the highest member (child) to the lowest (parent).
         if self.chosen() is None:
             complain(b"no repo has been chosen.")
             return
+        if self.selection is None:
+            print(b"No selection")
+        self.selection = RepoSurgeon.condition(self.selection)
         try:
             commits = sorted(self.selected(Commit))
             commits[1:-1] = [] # Drop all but first and last
@@ -9742,6 +9745,9 @@ commit's first parent, but doesn't need you to find the first parent yourself.
         if self.chosen() is None:
             complain(b"no repo has been chosen.")
             return
+        if self.selection is None:
+            print(b"No selection")
+        self.selection = RepoSurgeon.condition(self.selection)
         try:
             if len(self.selection) != 1: raise ValueError()
             (_, commit), = self.selected(Commit)
@@ -9768,6 +9774,9 @@ modified as a result.
         if repo is None:
             complain(b"no repo has been chosen.")
             return
+        if self.selection is None:
+            print(b"No selection")
+        self.selection = RepoSurgeon.condition(self.selection)
         try:
             if len(self.selection) != 2: raise ValueError()
             (_, parent), (_, child) = sorted(self.selected(Commit))
