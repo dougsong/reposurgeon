@@ -4835,6 +4835,16 @@ class Repository:
             if selection:
                 return selection
         return None
+    def condition(self, selection, extend=False):
+        "Recondition a selection that may contain commit-fileop lists."
+        if type(selection) == type(0):
+            return self.condition([selection], extend)[0]
+        if extend:
+            # Turn all commit indices into commit-fileop references
+            return map(lambda x: tuple([x] + list[range(len(self.events[x].fileops))])  if type(x) == type(0) and isinstance(self.events[x], Commit) else x, selection)
+        else:
+            # Discard file-index lists
+            return map(lambda x: x[0] if type(x) == type(()) else x, selection)
     def invalidate_object_map(self):
         "Force an object-map rebuild on the next lookup."
         self._mark_to_object = {}
@@ -7295,7 +7305,7 @@ into sections of the input stream instead).
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
                 self.selection = self.chosen().all()
-            self.selection = RepoSurgeon.condition(self.selection)
+            self.selection = self.chosen().condition(self.selection)
             for i, event in self.selected():
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
@@ -7315,7 +7325,7 @@ into sections of the input stream instead).
         line = line.lstrip()
         return (tok, line)
     def edit(self, selection, line):
-        selection = RepoSurgeon.condition(selection)
+        selection = self.chosen().condition(selection)
         # Mailboxize and edit the non-blobs in the selection
         # Assumes that self.chosen() and selection are not None
         editor = line.strip() or os.getenv("EDITOR")
@@ -7364,7 +7374,7 @@ into sections of the input stream instead).
 
     def data_traverse(self, prompt, hook, attributes, safety):
         "Filter commit metadata (and possibly blobs) through a specified hook."
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         blobs = any(isinstance(self.chosen().events[i], Blob)
                     for i in self.selection)
         nonblobs = any(not isinstance(self.chosen().events[i], Blob)
@@ -7439,14 +7449,6 @@ into sections of the input stream instead).
                     altered += (content != modified)
                 baton.twirl()
         announce("%d items modified." % altered)
-
-    @staticmethod
-    def condition(selection, extend=False):
-        "Recondition a selection that may contain compound commits."
-        if type(selection) == type(0):
-            return RepoSurgeon.condition([selection], extend)[0]
-        if not extend:
-            return map(lambda x: x[0] if type(x) == type(()) else x, selection)
 
     def help_selection(self):
         print("""
@@ -7613,7 +7615,7 @@ for exploring the selection-set language.
         if self.selection is None:
             print(b"No selection")
         elif isinstance(self.selection, list):
-            self.selection = RepoSurgeon.condition(self.selection)
+            self.selection = self.chosen().condition(self.selection)
             if line:
                 sys.stdout.write(b"%s: " % line)
             print([x+1 for x in self.selection])
@@ -7638,7 +7640,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
             return
         if self.selection is None:
             raise Recoverable(b"No selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         name = line.strip()
         if name in repo.assignments:
             raise Recoverable(b"%s has already been set" % name)
@@ -7757,7 +7759,7 @@ file in the blob.  Supports > redirection.
         # we can maintain columnation.
         if self.selection is None:
             self.selection = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for i, event in self.selected():
                 if isinstance(event, Blob):
@@ -7848,7 +7850,7 @@ in the currently-selected repo. Supports > redirection.
             return
         elif self.selection == None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write(b"%d\n" % len(self.selection))
 
@@ -7917,7 +7919,7 @@ unwieldy. Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         sizes = {}
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             for _, event in self.selected():
@@ -7962,7 +7964,7 @@ Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             unmapped = re.compile(b"[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set()
@@ -8111,7 +8113,7 @@ currently chosen repo.
                 return
         if self.selection is not None:
             raise Recoverable(b"drop does not take a selection set")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if not line:
             line = self.chosen().name
         if line in self.reponames():
@@ -8254,7 +8256,7 @@ For a list of supported types, invoke the 'prefer' command.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if line:
             line = os.path.expanduser(line)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
@@ -8295,7 +8297,7 @@ before each event dump.
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
                 self.selection = self.chosen().all()
-            self.selection = RepoSurgeon.condition(self.selection)
+            self.selection = self.chosen().condition(self.selection)
             for ei, event in self.selected():
                 header = b"Event %s, " % repr(ei+1)
                 header = header[:-2]
@@ -8364,7 +8366,7 @@ for graphviz. Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write(b"digraph {\n")
             for _, event in self.selected():
@@ -8658,7 +8660,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
         if self.selection is None:
             complain(b"no selection")
             return
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         class FilterCommand:
             def __init__(self, repo, filtercmd):
                 "Initialize the filter from the command line."
@@ -8774,7 +8776,7 @@ repository objects in a damaged state.
             return
         elif self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         (codec, line) = RepoSurgeon.pop_token(line)
         def transcode(txt, _paths=None):
             return codecs.encode(codecs.decode(txt, codec), b"utf-8")
@@ -8805,7 +8807,7 @@ for other interesting values.
             return
         if self.selection is None:
             raise Recoverable(b"no selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         fields = shlex.split(line)
         if not fields or len(fields) != 2:
             raise Recoverable(b"missing or malformed setfield line")
@@ -8832,7 +8834,7 @@ the new text is appended.
             return
         if self.selection is None:
             raise Recoverable(b"no selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line) as parse:
             fields = shlex.split(parse.line)
             if not fields:
@@ -8860,7 +8862,7 @@ removal of fileops associated with commits requires this.
             return
         if self.selection is None:
             self.selection = []
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line) as parse:
             self.chosen().squash(self.selection, parse.options)
     def help_delete(self):
@@ -8881,7 +8883,7 @@ squash with the --delete flag.
             return
         if self.selection is None:
             self.selection = []
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line) as parse:
             self.chosen().squash(self.selection, set([b"--delete"]) | parse.options)
 
@@ -8914,7 +8916,7 @@ With  the --debug option, show messages about mismatches.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line) as parse:
             timefuzz = 90
             changelog = "--changelog" in parse.options
@@ -8991,7 +8993,7 @@ in the commit's ancestry.
             return
         if self.selection is None:
             self.selection = []
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         repo = self.chosen()
         fields = shlex.split(line)
         if len(fields) < 2:
@@ -9079,7 +9081,7 @@ change in a future release.
             return
         if self.selection is None:
             self.selection = []
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         orig = line
         (opindex, line) = RepoSurgeon.pop_token(line)
         # FIXME: This needs more general parsing
@@ -9155,7 +9157,7 @@ an offset literal of +0 or -0.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if not line:
             complain(b"a signed time offset argument is required.")
             return
@@ -9217,7 +9219,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         if self.chosen() is None:
             complain(b"no repo has been chosen.")
             return
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if self.selection is None:
             self.selection = []
         if len(self.selection) == 0:
@@ -9300,7 +9302,7 @@ file path matches.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         self.expunge(self.selection, line.split())
 
     def help_split(self):
@@ -9335,7 +9337,7 @@ file operations in the original commit.
             self.selection = []
         if len(self.selection) != 1:
             raise Recoverable(b"selection of a single commit required for this command")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         where = self.selection[0]
         event = self.chosen()[where]
         if not isinstance(event, Commit):
@@ -9545,7 +9547,7 @@ in the ancestry of the commit, this command throws an error.  With the
         repo = self.chosen()
         if self.selection is None:
             self.selection = repo.all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
         with RepoSurgeon.LineParse(line) as parse:
@@ -9595,7 +9597,7 @@ first directory component from every path.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if not line.startswith((b"sub", b"sup")):
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
                 allpaths = set()
@@ -9634,7 +9636,7 @@ This command supports > redirection.
             raise Recoverable(b"no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             filter_func = None
             line = parse.line.strip()
@@ -9698,7 +9700,7 @@ commits that have no fileops.
             raise Recoverable(b"no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         with RepoSurgeon.LineParse(line) as parse:
             if parse.line:
                 raise Recoverable(b"too many arguments for tagify.")
@@ -9720,7 +9722,7 @@ from the highest member (child) to the lowest (parent).
             return
         if self.selection is None:
             print(b"No selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         try:
             commits = sorted(self.selected(Commit))
             commits[1:-1] = [] # Drop all but first and last
@@ -9747,7 +9749,7 @@ commit's first parent, but doesn't need you to find the first parent yourself.
             return
         if self.selection is None:
             print(b"No selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         try:
             if len(self.selection) != 1: raise ValueError()
             (_, commit), = self.selected(Commit)
@@ -9776,7 +9778,7 @@ modified as a result.
             return
         if self.selection is None:
             print(b"No selection")
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         try:
             if len(self.selection) != 2: raise ValueError()
             (_, parent), (_, child) = sorted(self.selected(Commit))
@@ -9909,7 +9911,7 @@ fields are changed and a warning is issued.
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "move":
             self.set_selection_set(line)
-            self.selection = RepoSurgeon.condition(self.selection)
+            self.selection = self.chosen().condition(self.selection)
             try:
                 if len(self.selection) != 1: raise ValueError()
                 (_, target), = self.selected(Commit)
@@ -10003,7 +10005,7 @@ moved, no branch fields are changed.
             else:
                 raise Recoverable(b"can't move multiple resets")
             self.set_selection_set(line)
-            self.selection = RepoSurgeon.condition(self.selection)
+            self.selection = self.chosen().condition(self.selection)
             reset.forget()
             try:
                 if len(self.selection) != 1: raise ValueError()
@@ -10179,7 +10181,7 @@ part to the right of an equals sign will need editing.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if line.startswith(b"write"):
             line = line[5:].strip()
             with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
@@ -10248,7 +10250,7 @@ map when the repo is written or rebuilt.
         repo.parse_dollar_cookies()
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if "lift" in line:
             hits = 0
             def substitute(getter, matchobj):
@@ -10331,7 +10333,7 @@ set must resolve to a singleton commit.
         repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         if not line:
             raise Recoverable(b"no target directory specified.")
         if len(self.selection) == 1:
@@ -10355,7 +10357,7 @@ must resolve to exactly two commits. Supports > redirection.
         repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
-        self.selection = RepoSurgeon.condition(self.selection)
+        self.selection = self.chosen().condition(self.selection)
         bounds = tuple(repo.events[i] for i in sorted(self.selection))
         if len(self.selection) != 2 or \
                not isinstance(bounds[0], Commit) or \
