@@ -38,6 +38,7 @@ SOURCE_VCS = svn
 TARGET_VCS = git
 EXTRAS = 
 REMOTE_URL = svn://svn.debian.org/$(PROJECT)
+REMOTE_URL = http://$(PROJECT).googlecode.com/svn/
 CVS_HOST = cvs.sourceforge.net
 #CVS_HOST = cvs.savannah.gnu.org
 CVS_MODULE = $(PROJECT)
@@ -68,7 +69,7 @@ $(PROJECT).$(SOURCE_VCS): $(PROJECT)-mirror
 
 # Build a local mirror of the remote repository
 $(PROJECT)-mirror:
-	repotool mirror $(REMOTE_URL)
+	repotool mirror $(REMOTE_URL) $(PROJECT)-mirror
 
 #  Get a list of tags from the project mirror
 $(PROJECT)-tags.txt: $(PROJECT)-mirror

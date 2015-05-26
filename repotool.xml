@@ -73,7 +73,8 @@ either a Subversion URL or a CVS URL, or the name
 of a local mirror directory created by a previous run. The first form
 creates a local mirror of the repository in a directory named after
 the last segment of the URL, with the suffix
-<quote>-mirror</quote>. The second form updates the local mirror,
+<quote>-mirror</quote> (the local mirror name can be overridden by an
+optional) second argument. The second form updates the local mirror,
 doing an incremental fetch; just give the mirror directory
 name.</para>
 

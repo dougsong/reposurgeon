@@ -35,13 +35,20 @@ export)
     ;;
 mirror)
     operand=$1
+    shift
+    mirrordir=$1
 
     if [ `expr "$operand" : "svn://"` = 6 \
 	-o `expr "$operand" : "svn+ssh://"` = 10 \
 	-o `expr "$operand" : "https://"` = 8 \
 	-o `expr "$operand" : "http://"` = 7 ]
     then
-	local=`basename $operand`-mirror
+	if [ "$mirrordir" ]
+	then
+	   local=$mirrordir
+	else
+	    local=`basename $operand`-mirror
+	fi
 	svnadmin create $local
 	cat >$local/hooks/pre-revprop-change <<EOF
 #!/bin/sh
