@@ -1656,7 +1656,7 @@ class Commit(object):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg[b"Event-Number"] = str(eventnum+1)
-        msg[b"Event-Mark:"] = self.mark
+        msg[b"Event-Mark"] = self.mark
         msg[b"Branch"] = self.branch
         msg[b"Parents"] = b" ".join(self.parent_marks())
         if self.authors:
