@@ -8028,13 +8028,13 @@ First, if there are multiple repositories in a directory you do a read
 on, reposurgeon will read the preferred one (otherwise it will
 complain that it can't choose among them).
 
-Secondly, if there is a selected repo, this will change its type.
+Secondly, this will change reposurgeon's preferred type for output.
 This means that you do a write to a directory, it will build a repo of
 the preferred type rather than its original type (if it had one).
 
 If no preferred type has been explicitly selected, reading in a
-repository (but not a fast-import stream) will implicitly set it
-to the type of that repository.
+repository (but not a fast-import stream) will implicitly set reposurgeon's
+preference to the type of that repository.
 """)
     def do_prefer(self, line):
         "Report or select the preferred repository type."
@@ -8051,8 +8051,6 @@ to the type of that repository.
             for repotype in vcstypes + extractors:
                 if line.lower() == repotype.name:
                     self.preferred = repotype
-                    if self.chosen():
-                        self.chosen().vcs = self.preferred
                     break
             else:
                 complain(b"known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))

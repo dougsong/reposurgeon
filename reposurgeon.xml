@@ -2223,13 +2223,18 @@ system) this has two effects:</para>
 directory you do a read on, reposurgeon will read the preferred one
 (otherwise it will complain that it can't choose among them).</para>
 
-<para>Secondly, if there is a selected repo, this will change its type.
+<para>Secondly, this will change reposurgeon's preferred type for output.
 This means that you do a write to a directory, it will build a repo of
 the preferred type rather than its original type (if it had one).</para>
 
 <para>If no preferred type has been explicitly selected, reading in a
-repository (but not a fast-import stream) will implicitly set it
-to the type of that repository.</para>
+repository (but not a fast-import stream) will implicitly set the
+preferred type to the type of that repository.</para>
+
+<para>In older versions of <application>reposurgeon</application> this
+command changed the type of the selected repository, if there is one.
+That behavior interacted badly with attempts to interpret legacy IDs
+and has been removed.</para>
 </listitem>
 </varlistentry>
 </variablelist>
