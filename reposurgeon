@@ -112,6 +112,8 @@ class VCS:
         self.cookies = cookies
         self.project = project
         self.notes = notes
+    bare_numeric = r"\b[0-9]+\b"
+    dotted_numeric = r"\b[0-9]+(?:\.[0-9]+)+\b"
     def __str__(self):
         realignores = [line for line in self.dfltignores.split(b'\n') if not line.startswith(b"# ")]
         return b"         Name: {self.name}\n" \
@@ -217,7 +219,7 @@ __pycache__
 bzr-orphans
 # Simulated bzr default ignores end here
 """,
-        cookies=(r"\b[0-9]+\b",),
+        cookies=(VCS.bare_numeric,),
         notes=b"Requires the bzr-fast-import plugin."),
     # Export is tested and works; import is flaky.
     VCS(name=b"hg",
@@ -233,7 +235,7 @@ bzr-orphans
         authormap=None,
         ignorename=b".hgignore",
         dfltignores=b"",
-        cookies=(r"\b[0-9]+\b",),
+        cookies=(VCS.bare_numeric,),
         project=b"http://mercurial.selenic.com/",
         notes=b"The hg export-import methods are not part of stock Mercurial."),
     # Styleflags may need tweaking for round-tripping
@@ -384,8 +386,8 @@ core
 .DS_store
 # Simulated Subversion default ignores end here
 """,
-        cookies=(r"\br([0-9]+)\b",
-                 r"\b(?:SVN|svn|Subversion|subversion|rev|version).*\b([0-9]+)\b"),
+        cookies=(r"\b(?:SVN|svn|Subversion|subversion|rev|version)\s*"+VCS.bare_numeric,
+                 "r" + VCS.bare_numeric, VCS.bare_numeric),
         project=b"http://subversion.apache.org/",
         notes=b"Run from the repository, not a checkout directory."),
     VCS(name=b"cvs",
@@ -430,8 +432,8 @@ _$*
 core
 # Simulated cvs default ignores end here
 """,
-        cookies=(r"(?:CVS|cvs|rev|version).*\b([0-9][0-9.]+)\b",
-                 r"\b[0-9]+(?:\.[0-9])+\b"),
+        cookies=(r"(?:CVS|cvs|rev|version)\s*" + VCS.dotted_numeric,
+                 VCS.dotted_numeric),
         project=b"http://www.catb.org/~esr/cvs-fast-export",
         notes=b"Requires cvs-fast-export."),
     VCS(name=b"rcs",
@@ -447,8 +449,8 @@ core
         authormap=None,
         ignorename=None,
         dfltignores=b"",	# Has none
-        cookies=(r"(?:RCS|rcs|rev|version).*\b([0-9][0-9.]+)\b",
-                 r"[0-9]+\.[0-9]+\.[0-9]+\b"),
+        cookies=(r"(?:RCS|rcs|rev|version)\s*" + VCS.dotted_numeric,
+                 VCS.dotted_numeric),
         project=b"http://www.catb.org/~esr/cvs-fast-export",
         notes=b"Requires cvs-fast-export."),
     VCS(name=b"src",
@@ -464,7 +466,7 @@ core
         authormap=None,
         ignorename=None,
         dfltignores=b"",	# Has none
-        cookies=(r"\b[0-9]+\b",),
+        cookies=(VCS.bare_numeric,),
         project=b"http://catb.org/~esr/src",
         notes=b""),
     ]
@@ -8109,7 +8111,7 @@ repository-read time, but may remain unset if the source was a stream
 file.
 
 The source type affects the interpretation of legacy IDs (for
-purposes of the =R visibility set and the 'references' command) by
+purposes of the =N visibility set and the 'references' command) by
 controlling the regular expressions used to recognize them. If no
 preferred output type has been set, it may also change the output
 format of stream files made from the repository.

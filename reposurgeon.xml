@@ -2253,7 +2253,7 @@ repository-read time, but may remain unset if the source was a stream
 file.</para>
 
 <para>The source type affects the interpretation of legacy IDs (for
-purposes of the =R visibility set and the 'references' command) by
+purposes of the =N visibility set and the 'references' command) by
 controlling the regular expressions used to recognize them. If no
 preferred output type has been set, it may also change the output
 format of stream files made from the repository.</para>
