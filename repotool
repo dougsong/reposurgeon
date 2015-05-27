@@ -197,7 +197,7 @@ compare)
 			-e '/source./s//source: /' \
 		        -e '/target./s//target: /'
     ;;
-compareall)
+compare-tags)
     exclude=
     diffopts=-q
     while getopts qux: opt

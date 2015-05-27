@@ -96,11 +96,13 @@ stubmap: $(PROJECT).$(SOURCE_VCS)
 	$(REPOSURGEON) "read <$(PROJECT).$(SOURCE_VCS)" "authors write >$(PROJECT).map"
 
 # Compare the histories of the unconverted and converted repositories at head
-# and all tags
+# and all tags.
 EXCLUDE = -x CVS -x .$(SOURCE_VCS) -x .$(TARGET_VCS)
 EXCLUDE += -x .$(SOURCE_VCS)ignore -x .$(TARGET_VCS)ignore
-compare:
-	repotool compareall $(EXCLUDE)  $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+headcompare:
+	repotool compare $(EXCLUDE) $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
+tagscompare:
+	repotool compare-tags $(EXCLUDE) $(PROJECT)-checkout $(PROJECT)-$(TARGET_VCS)
 
 # General cleanup and utility
 clean:

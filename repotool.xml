@@ -60,7 +60,7 @@ verb with one or more -x options followed by basenames of paths to
 exclude from comparison. You can get a context-diff report on file
 digfferences with the -u option.</para>
 
-<para>The 'compareall' action takes two repository directories,
+<para>The 'compare-tags' action takes two repository directories,
 extracts a list of tags from the first, then compares the repository
 contents at each tag in the list, generating a compare report for
 each.  You can follow the command verb with one or more -x options
