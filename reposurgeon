@@ -8319,7 +8319,7 @@ selection set argument being ignored; if that target directory is
 nonempty its contents are backed up to a save directory.
 
 Property extensions will be omitted if the importer for the
-selected repository type cannot digest them.
+preferred repository type cannot digest them.
 
 The --fossil option can be used to write out binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.

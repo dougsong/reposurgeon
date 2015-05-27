@@ -756,7 +756,7 @@ command.</para>
 but unlikely to lead to good results if it is loaded by an importer.</para>
 
 <para>Property extensions will be be omitted from the output if the
-importer for the selected repository type cannot digest them.</para>
+importer for the preferred repository type cannot digest them.</para>
 
 <para>Note: to examine small groups of commits without the progress
 meter, use <command>inspect</command>.</para>
