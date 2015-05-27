@@ -10302,11 +10302,11 @@ output or a >-redirected filename.
 
     def help_references(self):
         print(b"""
-With no modifier, produces a listing of events that may have
+With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
-of the command supports >-redirection
+of the command supports >-redirection.  Equivalent to '=N list'.
 
-With the modifier 'edit', edit this set.
+With the modifier 'edit', edit this set. Equivalent to '=N edit'.
 
 With the modifier 'lift', transform commit-reference cookies from CVS
 and Subversion into action stamps.  This command expects cookies

@@ -1883,18 +1883,19 @@ legacy-reference map) without having to do the lookup by hand.</para>
 <variablelist>
 <varlistentry>
 <term><command>references</command>
-          [<command>lift</command>]
+          [<command>lift</command>|<command>edit</command>|<command>lift</command>]
           [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Search commit comments for strings that might be CVS- or
-Subversion-style revision identifiers. This will be useful when you
-want to replace them with equivalent cookies that can automatically be
-translated into VCS-independent action stamps. This reporting
-command supports &gt;-redirection.</para>
+<para>With the modifier 'list', list commit and tag comments for strings
+that might be CVS- or Subversion-style revision identifiers. This will
+be useful when you want to replace them with equivalent cookies that
+can automatically be translated into VCS-independent action
+stamps. This reporting command supports &gt;-redirection.
+It is equivalent to '=N list'.</para>
 
 <para>With the modifier 'edit', edit the set where revision IDs are
-found.</para>
+found.  This is equivalent to '=N edit'.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the legacy map. An action
@@ -1906,9 +1907,6 @@ identifying the commit associated with that blob, as described in
 or even that any at all will be. Normally all references in history
 from a Subversion repository will resolve, but CVS references are less
 likely to be resolvable.</para>
-
-<para>Also, this command enables writing of the legacy map as 'legacy'
-passthroughs when the repo is written to a stream file.</para>
 </listitem>
 </varlistentry>
 </variablelist>
