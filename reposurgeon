@@ -112,8 +112,8 @@ class VCS:
         self.cookies = cookies
         self.project = project
         self.notes = notes
-    bare_numeric = r"\b[0-9]+\b"
-    dotted_numeric = r"\b[0-9]+(?:\.[0-9]+)+\b"
+    bare_numeric = r"\s[0-9]+\s"
+    dotted_numeric = r"\s[0-9]+(?:\.[0-9]+)+\s"
     def __str__(self):
         realignores = [line for line in self.dfltignores.split(b'\n') if not line.startswith(b"# ")]
         return b"         Name: {self.name}\n" \
