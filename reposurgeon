@@ -112,8 +112,8 @@ class VCS:
         self.cookies = cookies
         self.project = project
         self.notes = notes
-    bare_numeric = r"\s[0-9]+\s"
-    dotted_numeric = r"\s[0-9]+(?:\.[0-9]+)+\s"
+    bare_numeric = r"[0-9]+"
+    dotted_numeric = r"[0-9]+(?:\.[0-9]+)+"
     def __str__(self):
         realignores = [line for line in self.dfltignores.split(b'\n') if not line.startswith(b"# ")]
         return b"         Name: {self.name}\n" \
@@ -386,8 +386,10 @@ core
 .DS_store
 # Simulated Subversion default ignores end here
 """,
-        cookies=(r"\b(?:SVN|svn|Subversion|subversion|rev|version)\s*"+VCS.bare_numeric,
-                 "r" + VCS.bare_numeric, VCS.bare_numeric),
+        cookies=(
+    r"\b(?:SVN|svn|Subversion|subversion|rev|version)\s+"+VCS.bare_numeric,
+                 "r" + VCS.bare_numeric,
+                 r"\w" + VCS.bare_numeric + r"\w"),
         project=b"http://subversion.apache.org/",
         notes=b"Run from the repository, not a checkout directory."),
     VCS(name=b"cvs",
@@ -6919,6 +6921,7 @@ into sections of the input stream instead).
         return term
     def has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
+        self.chosen().parse_dollar_cookies()
         if hasattr(event, "comment"):
             text = event.comment
         elif hasattr(event, "text"):
@@ -10319,7 +10322,6 @@ map when the repo is written or rebuilt.
             complain(b"no repo has been chosen.")
             return
         repo = self.chosen()
-        repo.parse_dollar_cookies()
         if self.selection is None:
             self.selection = self.chosen().all()
         self.selection = self.chosen().condition(self.selection)
@@ -10355,34 +10357,13 @@ map when the repo is written or rebuilt.
             announce(b"%d references resolved." % hits)
             repo.write_legacy = True
         else:
-            # No modifier, just list or edit
-            refstyles = (
-                # Subversion references
-                r"\Wr([0-9]+)\W",
-                r"(?:SVN|svn|Subversion|subversion|rev|version).*\W([0-9]+)\W",
-                # CVS references
-                r"(?:CVS|cvs|rev|version).*\W([0-9][0-9.]+)\W",
-                # Possible bare CVS references
-                r"[0-9]+\.[0-9]+\.[0-9]+",
-                )
-            idhits = []
-            for ei, event in self.selected():
-                if hasattr(event, "comment"):
-                    text = event.comment
-                elif hasattr(event, "text"):
-                    text = event.text
-                else:
-                    continue
-                for pattern in refstyles:
-                    if re.search(pattern, text):
-                        if ei not in idhits:
-                            idhits.append(ei)
-            if idhits:
+            self.selection = [e for e in range(len(repo.events)) if self.has_reference(repo.events[e])]
+            if self.selection:
                 if line.startswith(b"edit"):
-                    self.edit(idhits, line[4:].strip())
+                    self.edit(self.selection, line[4:].strip())
                 else:
                     with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
-                        for ei in idhits:
+                        for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
                                 summary = event.lister(None, ei, screenwidth())
