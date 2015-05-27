@@ -1,7 +1,8 @@
 			reposurgeon project news
 
 Repository head:
-     The 'prefer' commsnd no longer changes repository type.
+     The 'prefer' command no longer changes the repo type, but 'sourcetype' does.
+     The =N set is all commits and tags with text matching a legacy ID.
 
 3.22: 2015-05-20
      The path rename --relax option has been removed as too confusing.
