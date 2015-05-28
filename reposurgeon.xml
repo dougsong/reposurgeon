@@ -1003,7 +1003,8 @@ problem. Presently checks for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existence of
 multiple roots, (5) committer and author IDs that don't look
 well-formed as DVCS IDs, (6) multiple child links with identical
-branch labels descending from the same commit.</para>
+branch labels descending from the same commit, (7) time and
+action-stamp collisions.</para>
 
 <para>The modifiers and output format of this command are unstable; they may
 change without notice as more sanity checks are added.</para>

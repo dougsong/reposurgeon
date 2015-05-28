@@ -4097,6 +4097,7 @@ class StreamParser:
                                    b"to revision %s for path %s."
                                    % (revision, node.path))
                         continue
+                    # Alter the DAG to express merges.
                     for mark in new_merges:
                         parent = self.repo.objfind(mark)
                         if parent not in commit.parents():
@@ -4676,6 +4677,7 @@ class Repository:
         self.assignments = {}
         self._has_manifests = False
         self.inlines = 0
+        self.uniqueness = None
     def cleanup(self):
         "Release blob files associated with this repo."
         nuke(self.subdir(), b"reposurgeon: cleaning up %s" % self.subdir())
@@ -5103,6 +5105,39 @@ class Repository:
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = b"CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
+    def check_uniqueness(self, verbose):
+        "Audit the repository for uniqueness properties."
+        self.uniqueness = None
+        timecheck = {}
+        time_collisions = {}
+        for event in self.commits():
+            when = event.when()
+            if when in timecheck:
+                if when not in time_collisions:
+                    time_collisions[when] = [timecheck[when]]
+                time_collisions[when].append(event)
+            timecheck[when] = event
+        if not time_collisions:
+            self.uniqueness = "committer_date"
+            if verbose:
+                announce("All commit times in this repository are unique.")
+            return
+        announce("These timestamps have multiple commits: %s" \
+                 % " ".join(map(rfc3339, time_collisions.keys())))
+        stamp_collisions = set()
+        for clique in time_collisions.values():
+            stampcheck = {}
+            for event in clique:
+                if event.action_stamp() in stampcheck:
+                    stamp_collisions.add(stampcheck[event.action_stamp()])
+                    stamp_collisions.add(event.mark)
+                stampcheck[event.action_stamp()] = event.mark
+        if not stamp_collisions:
+            self.uniqueness = "committer_stamp"
+            announce("All commit stamps in this repository are unique.")
+            return
+        announce("These marks are in stamp collisions: %s" \
+                  % " ".join(stamp_collisions))
     def export_style(self):
         "How should we tune the export dump format?"
         if self.vcs:
@@ -7981,7 +8016,8 @@ problem. Presently checks for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existance of
 multiple roots, (5) committer and author IDs that don't look
 well-formed as DVCS IDs, (6) multiple child links with identical
-branch labels descending from the same commit.
+branch labels descending from the same commit, (7) time and
+action-stamp collisions.
 
 Supports > redirection.
 """)
@@ -8041,6 +8077,7 @@ Supports > redirection.
                 parse.stdout.write(b"empty name: %s\n" % item)
             for item in badaddress:
                 parse.stdout.write(b"email address missing @: %s\n" % item)
+        self.chosen().check_uniqueness(True)
     #
     # Housekeeping
     #
