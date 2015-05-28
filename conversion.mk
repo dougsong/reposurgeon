@@ -77,11 +77,11 @@ $(PROJECT)-tags.txt: $(PROJECT)-mirror
 
 # Make a local checkout of the source mirror for inspection
 $(PROJECT)-checkout: $(PROJECT)-mirror
-	cd $(PROJECT)-mirror >/dev/null; repotool checkout $(PROJECT)-checkout
+	cd $(PROJECT)-mirror >/dev/null; repotool checkout ../$(PROJECT)-checkout
 
 # Make a local checkout of the source mirror for inspection at a specific tag
 $(PROJECT)-%-checkout: $(PROJECT)-mirror
-	cd $(PROJECT)-mirror >/dev/null; repotool $(PROJECT)-$*-checkout $*
+	cd $(PROJECT)-mirror >/dev/null; repotool ../$(PROJECT)-$*-checkout $*
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
