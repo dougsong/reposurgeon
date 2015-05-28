@@ -110,7 +110,7 @@ checkout)
 	echo "repotool: target directory is required for checkout."
 	exit 1
     else
-	outdir=`realpath $1`
+	outdirpath=`realpath $1`
     fi
     shift
     rev=$1
@@ -126,7 +126,7 @@ checkout)
 	# By choosing -kb we get binary files right, but won't
 	# suppress any expanded keywords that might be lurking
 	# in masters.   
-	cvs -Q -d:local:${PWD} co -P $rev -d $outdir -kb $module
+	cvs -Q -d:local:${PWD} co -P $rev -d $outdirpath -kb $module
     elif [ -d locks ]
     then
 	if [ "$rev" ]
@@ -137,13 +137,11 @@ checkout)
     elif [ -d .git ]
     then
 	git clone --quiet --shared --no-checkout . $outdir
-	cd $outdir
 	if [ -z "$rev" ]
 	then
 	    rev="master"
 	fi
-	git checkout --quiet $rev
-	rm -rf .git
+	cd $outdir >/dev/null; git checkout --quiet $rev
     elif [ -d .bzr ]
     then
 	echo "Not yet supported."
@@ -152,10 +150,9 @@ checkout)
     then
 	if [ "$rev" ]
 	then
-	    rev="-u $rev"
+	    rev="-u $rev"Directory-habdling and checkout fixes to repotool.
 	fi
 	hg clone $rev $(PROJECT)-hg $outdir
-	rm -rf ${outdir}/.hg
     elif [ -d _darcs ]
     then
 	echo "Not yet supported."
