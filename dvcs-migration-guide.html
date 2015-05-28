@@ -220,12 +220,18 @@ tool that handles multibranch Subversion repositories in full
 generality. It can even translate Subversion commits that alter
 multiple branches.</p>
 
+<p>Special Google Code note: If you are converting a Subversion
+project from Google Code, you ,ay want to use the command "debranch
+wiki" to turn the wiki branch into a subdirectory on your master
+branch.</p>
+
 <p>Performance tip: <code>reposurgeon</code> should analyze Subversion
 repositories at the rate of over 10K commits per minute, but that rate
 falls off somewhat on very large repositories (apparently due to I/O
-costs). You can speed it up significantly by running it under <a
-href="http://pypy.org/compat.html">pypy</a>.
-
+costs). You can speed it up significantly by building a binary with <a
+href="http://cython.org/">cython</a>; there's a production to do this
+in the reposurgeon Makefile.
+			       
 <h2 id="other">Other VCSes</h2>
 
 <p>SCCS: Use <a href="http://www.catb.org/esr/sccs2rcs/">sccs2rcs</a>
@@ -667,9 +673,11 @@ Makefile.</p>
 
 <p>3.12 (2014-08-12) Merging SVN .gitignore files.</p>
 
-<p>2.13 (2014-10-26) Note that git-cvsserver exists.</p>
+<p>3.13 (2014-10-26) Note that git-cvsserver exists.</p>
 
-<p>2.14 (2014-11-05) Mention cvsconvert.</p>
+<p>3.14 (2014-11-05) Mention cvsconvert.</p>
+
+<p>3.15 (2015-05-27) A note on Google Code.</p>
 </div>
 <hr />
 </body>
