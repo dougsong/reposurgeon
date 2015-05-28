@@ -5105,7 +5105,7 @@ class Repository:
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = b"CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
-    def check_uniqueness(self, verbose):
+    def check_uniqueness(self, verbosely):
         "Audit the repository for uniqueness properties."
         self.uniqueness = None
         timecheck = {}
@@ -5119,7 +5119,7 @@ class Repository:
             timecheck[when] = event
         if not time_collisions:
             self.uniqueness = "committer_date"
-            if verbose:
+            if verbosely:
                 announce("All commit times in this repository are unique.")
             return
         announce("These timestamps have multiple commits: %s" \
