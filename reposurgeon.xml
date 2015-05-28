@@ -3047,7 +3047,7 @@ a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]</para>
 </blockquote>
 
-<para>It is also good practive to include a generated tag at the
+<para>It is also good practice to include a generated tag at the
 point of conversion. E.g</para>
 
 <programlisting>
