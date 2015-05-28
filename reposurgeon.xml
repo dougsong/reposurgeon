@@ -1873,11 +1873,11 @@ Subversion dump stream, (2) $Id$ and $Revision$ headers in repository
 files, and (3) the <filename>.git/cvs-revisions</filename> created by
 <command>git cvsimport</command>.</para>
 
-<para>The detailed sequence for lifting possible references is this: first,
-find possible CVS and Subversion references with the
-<command>references</command>; then replace them with equivalent
-cookies; then run <command>references lift</command> to turn the
-cookies into action stamps (using the information in the
+<para>The detailed sequence for lifting possible references is this:
+first, find possible CVS and Subversion references with the
+<command>references</command> or =N visibility set; then replace them
+with equivalent cookies; then run <command>references lift</command>
+to turn the cookies into action stamps (using the information in the
 legacy-reference map) without having to do the lookup by hand.</para>
 
 <variablelist>
@@ -3046,8 +3046,19 @@ by cvs2svn have been removed, commit references have been mapped into
 a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]</para>
 </blockquote>
-</refsect1>
 
+<para>It is also good practive to include a generated tag at the
+point of conversion. E.g</para>
+
+<programlisting>
+mailbox_in --create &lt;&lt;EOF
+Tag-Name: git-conversion
+
+Marks the spot at which this repository was converted from Subversion to git.
+EOF
+</programlisting>
+
+</refsect1>
 <refsect1 id='advanced'><title>ADVANCED EXAMPLES</title>
 
 <programlisting>
