@@ -5,7 +5,7 @@ Repository head:
      The =N set is all commits and tags with text matching a legacy ID.
      Legacy-ID recognition is more intelligent, depending on the source type.
      The 'lint' command now checks for time and action-stamp collisions.
-     Exporters can now embedd a repository type declration in an import stream.
+     Exporters can now embed a repository type declaration in an import stream.
      Fast-import syntax extensions are documented.
 
 3.22: 2015-05-20
