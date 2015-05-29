@@ -3073,6 +3073,56 @@ a specified string. (The trick here is that ? extends the singleton
 set consisting of the last eligible ChangeLog blob to its set of
 referring commits, and <command>list</command>only notices the
 commits.)</para>
+
+</refsect1>
+
+<refsect1 id='extensions'><title>STREAM SYNTAX EXTENSIONS</title>
+
+<para>The event-stream parser in <quote>reposurgeon</quote> supports some
+extended syntax. Exporters designed to work with <quote>reposurgeon</quote>
+may have a --reposurgeon option that enables emission of extended
+syntax; notably, this is true of
+<citerefentry><refentrytitle>cvs-fast-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+The remainde of this section describes thes syntax extensions.</para>
+
+<para>The token <quote>reposurgeon</quote> at the start of a line in a
+fast-import stream signals <application>reposurgeon</application> that the
+remainder is an extension command to be interpreted by
+<quote>reposurgeon</quote> rather than describing repository
+structure.</para>
+
+<para>One such extension command is implemented:
+<command>sourcetype</command>, which behaves identically to the
+<application>reposurgeon</application> <command>sourcetype</command>
+command. An exporter for a version-control system named
+<quote>frobozz</quote> could, for example, say
+
+<programlisting>
+reposurgeon sourcetype frobozz
+</programlisting>
+</para>
+
+<para>Also accepted is the bzr syntax for setting per-commit
+properties.  While parsing commit syntax, a line beginning with the
+token <quote>property</quote> must contibue with a
+whitespace-separated property-name token. If it is then followed by a
+newline it is taken to set that boolean-valued property to true. Otherwise
+it must be followed by a numeric token specifying a data length, a
+space, following data (which may contain newlines) and a terminating
+newline. For example:
+
+<programlisting>
+commit refs/heads/master
+mark :1
+committer Eric S. Raymond &lt;esr@thyrsus.com&gt; 1289147634 -0500
+data 16
+Example commit.
+
+property legacy-id 2 r1
+M 644 inline README
+</programlisting>
+</para>
+
 </refsect1>
 
 <refsect1 id='changes'><title>INCOMPATIBLE LANGUAGE CHANGES</title>
