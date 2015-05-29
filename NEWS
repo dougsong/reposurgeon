@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.23: 2015-05-29
      The 'prefer' command no longer changes the repo type, but 'sourcetype' does.
      The =N set is all commits and tags with text matching a legacy ID.
      Legacy-ID recognition is more intelligent, depending on the source type.
