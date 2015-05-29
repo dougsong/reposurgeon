@@ -2543,7 +2543,7 @@ since start.</para>
 dumpfiles or edit a Subversion repository (and you must point it at a
 repository, not a checkout directory).  The
 <application>reposurgeon</application> distribution includes a script
-named <quote>repopuller</quote> that you can use to make and then
+named <quote>repotool</quote> that you can use to make and then
 incrementally update a local mirror of a remote repository for
 editing or conversion purposes.</para>
 
@@ -2573,7 +2573,7 @@ it.</para>
 </variablelist>
 
 <para>These modifiers can go anywhere in any order on the read command
-line after the read verb. They must be whitespace separated.</para>
+line after the read verb. They must be whitespace-separated.</para>
 
 <para>Here are the rules used for mapping subdirectories in a
 Subversion repository to branches:</para>
