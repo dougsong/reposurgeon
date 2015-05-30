@@ -8154,8 +8154,12 @@ stream.
         if not self.chosen():
             complain(b"no repo has been chosen.")
             return
+        repo = self.chosen()
         if not line:
-            print(self.chosen().vcs.name)
+            if self.chosen().vcs:
+                print("%s: %s" % (repo.name, repo.vcs.name))
+            else:
+                print("%s: no preferred type." % repo.name)
         else:
             for repotype in vcstypes + extractors:
                 if line.lower() == repotype.name:
