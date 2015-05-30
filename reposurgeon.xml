@@ -1209,10 +1209,11 @@ if it has no fileops. By default merge commits are not considered, even if they
 have no fileops (thus no tree differences with their first parent). To change
 that, use the <option>--tagify-merges</option> option.</para>
 
-<para>The name of the tag is 'emptycommit-<emphasis>ident</emphasis>', where
-<emphasis>ident</emphasis> is generated from the legacy ID of the deleted
-commit, or from its mark, or from its index in the repository, with a
-disambiguation suffix if needed.</para>
+<para>The name of the generated tag will be
+'emptycommit-<emphasis>ident</emphasis>', where
+<emphasis>ident</emphasis> is generated from the legacy ID of the
+deleted commit, or from its mark, or from its index in the repository,
+with a disambiguation suffix if needed.</para>
 
 <para>With the <option>--canonicalize</option>, tagify tries harder to detect
 trivial commits by first ensuring that all fileops of selected commits will
@@ -1225,7 +1226,8 @@ corresponding tags get names of the form
 'emptycommit-<emphasis>ident</emphasis>'.</para>
 
 <para>With the <option>--tagify-merges</option>, tagify also tagifies merge
-commits that have no fileops.</para>
+commits that have no fileops. When this is done the merge link is move to the
+yagified commit's parent.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

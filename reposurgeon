@@ -9756,9 +9756,10 @@ fileops. By default merge commits are not considered, even if they have no
 fileops (thus no tree differences with their first parent). To change that, see
 the '--tagify-merges' option.
 
-The name of the tag is 'emptycommit-<ident>', where <ident> is generated from
-the legacy_id of the deleted commit, or from its mark, or from its index in the
-repository, with a disambiguation suffix if needed.
+The name of the generated tag wiill be 'emptycommit-<ident>', where <ident>
+is generated from the legacy_id of the deleted commit, or from its
+mark, or from its index in the repository, with a disambiguation
+suffix if needed.
 
 tagify currently recognizes three options: first is '--canonicalize' which
 makes tagify try harder to detect trivial commits by first ensuring that all
@@ -9771,7 +9772,8 @@ corresponding tags get names of the form 'tipdelete-<branchname>' rather than
 the default 'emptycommit-<ident>'.
 
 The third option is '--tagify-merges' that makes reposurgeon also tagify merge
-commits that have no fileops.
+commits that have no fileops.  When this is done the merge link is move to the
+yagified commit's parent.
 """)
     def do_tagify(self, line):
         "Search for empty commits and turn them into tags."
