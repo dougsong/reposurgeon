@@ -258,21 +258,28 @@ wiki page on conversion tools</a>.
 and putting it into production, you should check it for basic
 correctness.</p>
 
-<p>Use diff(1) with the -r option to compare a head checkout of the
-unconverted repository with a checkout of the converted
-repository. The only differences you should see are those due to
-keyword expansion and ignore-file lifting.  If this is not true, you
-have found a serious bug in either reposurgeon or the front end
-it used. Consult http://www.catb.org/~esr/reposurgeon/reporting-bugs.html
-for information on how to usefully report bugs.</p>
+<p>Pay attention to error messages emitted during the lift.  Most
+of these, and remedial actions to take, are described in the
+reposurgeon manual.</p>
+
+<p>For Subversion lifts, use the "compare" and "compare-tags"
+productions to compare the head revision and tagged revisions between
+the unconverted repostory.  If you didn't use the cvsconvert wrapper
+for your CVS lift, these productions hve a similar effect. The only
+differences you should see are those due to keyword expansion and
+ignore-file lifting.  If this is not true, you have found a serious
+bug in either reposurgeon or the front end it used. Consult
+http://www.catb.org/~esr/reposurgeon/reporting-bugs.html for
+information on how to usefully report bugs.</p>
 
 <p>If you are convering from Subversion, <code>make repodiffer</code>.
 This is a sanity check that redoes your repo conversion with
 <code>git-svn</code>, then compares the file contents of each pair of
 revisions it can match by committer and timestamp.  They should have
 no file-content differences; if they do, there is a bug in either
-<code>reposurgeon</code> or <code>git-svn</code> (I have seen both
-cases).</p>
+<code>reposurgeon</code> or <code>git-svn</code> I have seen both
+cases, but bugs in git-svn are common and sometimes severe. It
+</p>
 
 <p>If you are convering from CVS, use reposurgeon's graph command to
 examine the conversion, looking (in particular) for misplaced tags or
@@ -305,12 +312,12 @@ practice produces more readable output from <code>git log</code>
 and <code>hg log</code>. For a really high-quality conversion, 
 multiline comments should be edited into this form.</dd>
 
-<dt></em>No-fileop commits.</em></dt>
+<dt><em>No-fileop commits</em></dt>
 <dd>Commits with no fileops are automatically transformed into tags
 when reading a Subversion repository.  Other importers may generate
 them for various reasons; you can detect them with the =Z visibility
 set and clean them up with the command <command>tagify</command>
-(refer to the reposurgein manual page for detailed usage). In order
+(refer to the reposurgeon manual for detailed usage). In order
 to preserve the behavior that read followed by immediate write does
 not modify a stream file, this simplification is not done by default.</dd>
 
