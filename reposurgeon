@@ -2955,12 +2955,12 @@ class StreamParser:
                                         if fields[1].endswith(b",v"):
                                             # CVS revision
                                             blob.cookie = (fields[1][:-2], fields[2])
-                                            if self.repo.hint("cvs"):
+                                            if self.repo.hint("cvs") and verbose > 0:
                                                 announce("$Id$ header hints at CVS.")
                                         else:
                                             # Subversion revision
                                             blob.cookie = fields[1]
-                                            if self.repo.hint("svn"):
+                                            if self.repo.hint("svn") and verbose > 0:
                                                 announce("$Id$ header hints at svn.")
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                      blobcontent):
@@ -2968,7 +2968,7 @@ class StreamParser:
                                     if b'.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                        if self.repo.hint("svn"):
+                                        if self.repo.hint("svn") and verbose > 0:
                                             announce("$Revision$ header hints at svn.")
                                 blob.set_content(blobcontent, blobstart)
                             else:
@@ -6099,7 +6099,7 @@ def read_repo(source, options, preferred):
                         del stamp_set
         # We found a matching custom extractor
         if extractor:
-            repo.hint(extractor.name, strong=True)
+            repo.stronghint=True
             streamer = RepoStreamer(extractor)
             streamer.extract(repo, progress=verbose>0)
     finally:
