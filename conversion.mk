@@ -106,7 +106,7 @@ tagscompare:
 
 # General cleanup and utility
 clean:
-	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz REPODIFFER.LOG *.$(SOURCE_VCS) *.fi *.fo
+	rm -fr *~ .rs* $(PROJECT)-conversion.tar.gz *.$(SOURCE_VCS) *.fi *.fo
 
 # Bundle up the conversion metadata for shipping
 SOURCES = Makefile $(PROJECT).lift $(PROJECT).map $(EXTRAS)
@@ -130,28 +130,6 @@ gitk: $(PROJECT)-git
 # tuned for very large repositories.
 gc: $(PROJECT)-git
 	cd $(PROJECT)-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
-
-# Make a conversion using a competing tool
-$(PROJECT)-git-svn:
-	git svn --stdlayout --no-metadata --authors-file=$(PROJECT).map clone file://${PWD}/$(PROJECT)-mirror $(PROJECT)-git-svn
-
-# Compare file manifests on the master branch
-oldcompare: $(PROJECT)-git-svn $(PROJECT)-git
-	@echo; echo "Comparing the directory manifests..."
-	@rm -f GITSVN.MANIFEST PROJECTGIT.MANIFEST
-	@(cd $(PROJECT)-git-svn >/dev/null; find . -type f | sort | fgrep -v '.git') >GITSVN.MANIFEST
-	@(cd $(PROJECT)-git >/dev/null; find . -type f | sort | fgrep -v '.git') >PROJECTGIT.MANIFEST
-	@echo "Comparing file manifests..."
-	@diff -u GITSVN.MANIFEST PROJECTGIT.MANIFEST
-	@echo "No diff output is good news"
-	@echo; echo "Comparing file contents..."
-	@set -e; for file in `cd $(PROJECT)-git-svn >/dev/null; git ls-files`; do cmp $(PROJECT)-git-svn/$$file $(PROJECT)-git/$$file; done
-	@echo "No cmp output is good news"
-
-# Compare all files in all revisions.  Ignore .gitignores, as reposurgeon
-# makes them  but git-svn does not.
-repodiffer: $(PROJECT)-git-svn $(PROJECT)-git
-	repodiffer --ignore="gitignore,comment" --fossil-map=$(PROJECT).fo $(PROJECT)-git $(PROJECT)-git-svn | tee REPODIFFER.LOG
 
 endif
 
