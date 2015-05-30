@@ -51,6 +51,9 @@ features.html: features.asc
 reporting-bugs.html: reporting-bugs.asc
 	asciidoc reporting-bugs.asc
 
+dvcs-migration-guide.html: dvcs-migration-guide.asc
+	asciidoc -a toc dvcs-migration-guide.asc
+
 cyreposurgeon: reposurgeon
 	$(CYTHON) --embed reposurgeon -o cyreposurgeon.c
 	${CC} ${CFLAGS} $(pyinclude) -c cyreposurgeon.c -o cyreposurgeon.o
@@ -104,7 +107,7 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
 zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html features.html
+release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
 
 refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
