@@ -130,7 +130,6 @@ class VCS:
                b"    Authormap: {self.authormap}\n" \
                b"   Ignorename: {self.ignorename}\n" \
                b"      Ignores: {{{ignores}}}\n" \
-               b"      Cookies: {{{cookies}}}\n" \
                b"      Project: {self.project}\n" \
                b"        Notes: {{{notes}}}\n".format(
                        self = self,
@@ -189,7 +188,7 @@ vcstypes = [
         authormap=b".git/cvs-authors",
         ignorename=b".gitignore",
         dfltignores=b"",	# Has none
-        cookies=(r"\b[0-9a-f]{6}\b", r"\b[0-9a-f]{40}\b"),
+        cookies=(r"\b[0-9a-f]{6}\b", r"\b[0-9a-f]{40}\b",),
         project=b"http://git-scm.com/",
         notes=b"The authormap is not required, but will be used if present."),
     #
@@ -352,7 +351,7 @@ core
 .DS_Store
 # Simulated darcs default ignores end here
 """,
-        cookies=None,
+        cookies=[],
         project=b"http://darcs.net/",
         notes=b"Assumes no boringfile preference has been set."),
     # Export is experimental and doesn't round-trip
@@ -361,7 +360,7 @@ core
         exporter=b"svnadmin dump .",
         styleflags={b"import-defaults", b"export-progress"},
         properties=False,
-        initializer=b"svn create .",
+        initializer=b"svnadmin create .",
         importer=b"svnadmin load .",
         checkout=None,
         lister=None,
@@ -6323,7 +6322,10 @@ class RepositoryList:
             return name + str(seq)
     def repo_by_name(self, name):
         "Retrieve a repo by name."
-        return self.repolist[self.reponames().index(name)]
+        try:
+            return self.repolist[self.reponames().index(name)]
+        except ValueError:
+            raise Recoverable("no repository named %s is loaded." % name)
     def remove_by_name(self, name):
         "Remove a repo by name."
         if self.repo and self.repo.name == name:
