@@ -272,16 +272,7 @@ bug in either reposurgeon or the front end it used. Consult
 http://www.catb.org/~esr/reposurgeon/reporting-bugs.html for
 information on how to usefully report bugs.</p>
 
-<p>If you are convering from Subversion, <code>make repodiffer</code>.
-This is a sanity check that redoes your repo conversion with
-<code>git-svn</code>, then compares the file contents of each pair of
-revisions it can match by committer and timestamp.  They should have
-no file-content differences; if they do, there is a bug in either
-<code>reposurgeon</code> or <code>git-svn</code> I have seen both
-cases, but bugs in git-svn are common and sometimes severe. It
-</p>
-
-<p>If you are convering from CVS, use reposurgeon's graph command to
+<p>If you are converting from CVS, use reposurgeon's graph command to
 examine the conversion, looking (in particular) for misplaced tags or
 branch joins. Often these can be manually repaired with little
 effort. These flaws do 'not' necessarily imply bugs in cvs-fast-export
@@ -695,7 +686,10 @@ Makefile.</p>
 
 <p>3.15 (2015-05-27) A note on Google Code.</p>
 
-<p>HEAD: Improved advice about force-pushing.</p>
+<p>HEAD: Improved advice about force-pushing.  Simplified conversion procedure.
+No longer recommending comparison of Subversion with a git-svn translation;
+it's too flaky and limited for that to be a good idea.</p>
+
 </div>
 <hr />
 </body>
