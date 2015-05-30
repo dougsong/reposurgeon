@@ -20,12 +20,13 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	conversion.mk features.asc \
+	dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png
 
 all: reposurgeon.1 repotool.1 repodiffer.1 \
      reposurgeon.html repotool.html repodiffer.html \
-     features.html
+     dvcs-migration-guide.html features.html
 
 reposurgeon.1: reposurgeon.xml
 	xmlto man reposurgeon.xml
