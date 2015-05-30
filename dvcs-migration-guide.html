@@ -306,11 +306,10 @@ multiline comments should be edited into this form.</dd>
 <dt><em>No-fileop commits</em></dt>
 <dd>Commits with no fileops are automatically transformed into tags
 when reading a Subversion repository.  Other importers may generate
-them for various reasons; you can detect them with the =Z visibility
-set and clean them up with the command <command>tagify</command>
-(refer to the reposurgeon manual for detailed usage). In order
-to preserve the behavior that read followed by immediate write does
-not modify a stream file, this simplification is not done by default.</dd>
+them for various reasons; you can detect them as the =Z visibility
+set. In order to preserve the behavior that read followed by immediate
+write does not modify a stream file, this simplification is not done
+by default.</dd>
 
 <dt><em>Branch tip deletes, deletealls, and unexpressed merges</em></dt> 
 <dd>In Subversion it is common practice to delete a branch directory
@@ -340,13 +339,6 @@ is necessary for live-gatewaying, and useful during one-shot
 conversions, but you will probably not want it in the final repo.</dd>
 </dl>
 
-<p>The two kinds of git-svn cruft are only an issue if you're
-starting from repository that has been preconverted with
-<code>git-svn</code>, which is the procedure older versions of this
-guide recommended.  Since its 2.0 version you can use
-<code>reposurgeon</code> to read Subversion repos directly, which is a
-better idea and avoids these problems.</p>
-
 <h2 id="reposurgeon">Surgical cleanup using reposurgeon</h2>
 
 <p>You can use <a
@@ -364,12 +356,12 @@ with reposurgeon follow.</p>
 <li>Check for leftover cvs2svn junk commits and remove them if possible.</li>
 <li>Lift references in commit comments.</li>
 <li>Massage comments into summary-line-plus-continuation form.</li>
-<li>Remove delete-only tip commits where appropriate.</li>
+<li>Remove empty and delete-only tip commits where appropriate.</li>
 <li>Review generated tags, pruning as appropriate.</li>
 <li>Look for branch merge points and patch parent marks to make them.</li>
 <li>Fix up or remove $-keyword cookies in the latest revision.</li>
 <li>If there's a root branch, check for and remove junk commits on it.</li>
-<li>For the record, make a commit noting time and date of the repo lift.</li>
+<li>For the record, make a tag noting time and date of the repo lift.</li>
 <li>If your target was git, run  <code>git gc &#45;&#45;aggressive</code>.</li>
 </ol>
 
@@ -381,7 +373,11 @@ conversion is usually less than a day of work.</p>
 <p>You can use the <code>authors read</code> command to perform the
 author-ID mapping operation with <code>reposurgeon</code>.</p>
 
-<p>The command <code>list /cvs2svn/</code> will show you all remaining
+<p>You can find empty commits as the =Z visibility set set and clean
+them up with the command <command>tagify</command>. Consult the
+reposurgeon manual page for usage details.</p>
+			       
+<p>The command <code>/cvs2svn/ list</code> will show you all remaining
 <code>cvs2svn</code> artifacts.  Some can be deleted; a clue to look
 for is junk commits generated to carry a tag at branch tips that have
 one or two M fileops referring to a blob much earlier than the commit.
@@ -465,8 +461,10 @@ a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]
 </blockquote>
 
-<p>You should also, as previously noted, leave a comment in the normal
-commit sequence noting the switchover.</p>
+<p>You should also, as previously noted, leave a tag in the normal
+commit sequence noting the switchover.  You can do this with
+rthe <command>mailbox --create<command> command; see the reposurgeon
+manual page for details and an example.</p>
 
 <h2 id="recovery">Nonsurgical cleanup steps</h2>
 
@@ -686,9 +684,10 @@ Makefile.</p>
 
 <p>3.15 (2015-05-27) A note on Google Code.</p>
 
-<p>HEAD: Improved advice about force-pushing.  Simplified conversion procedure.
+<p>4.0 () Improved advice about force-pushing.  Simplified conversion procedure.
 No longer recommending comparison of Subversion with a git-svn translation;
-it's too flaky and limited for that to be a good idea.</p>
+it's too flaky and limited for that to be a good idea. Add recommendation
+to create a synthetic conversion tag.</p>
 
 </div>
 <hr />
