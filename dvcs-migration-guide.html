@@ -505,20 +505,16 @@ pointing to the public location.</p></li>
 <li><p>Warn the public repo's users that it is briefly going out 
 of service and they will need to re-clone it afterwards!</em></p></li>
 
-<li><p>From your modified local repo, try 
+<li><p>Ensure that it is possible to force-push to the repository.
+How you do this will vary depending on your hosting site.</p>
 
-<pre><code> 
-git push -f origin HEAD:master
-</code></pre>
-<div>&nbsp;</div>
+<li><p>On gitlab.com, under Settings, there is a "Protected Branches"
+item you can use. If you unprotect a branch, you can force-push to it.</p></li>
 
-to push the new history up to the public repo. This will work if the
-public repo is not locked against non fast-forward updates; otherwise,
-try the next step.</p> </li>
-
-<li><p>Re-initialize the public repo. You'll need ssh addess to the bare repo
-directory on the host - let's suppose it's 'myproject'. Pop up to the
-enclosing directory and do this:
+<p>Elsewhere, you may be able to re-initialize the public repo (this
+works, for example, on SourceForge). You'll need ssh access to the
+bare repo directory on the host - let's suppose it's 'myproject'. Pop
+up to the enclosing directory and do this:
 
 <pre><code>
     mv myproject myproject-hidden
@@ -535,6 +531,15 @@ you're clearing it (mv is atomic).</p>
 
 <p>After re-initializing, you should be able to run <code>git
 push</code> to push the new history up to the public repo.</p></li>
+
+<li><p>From your modified local repo, try 
+
+<pre><code> 
+git push --mirror --force
+</code></pre>
+<div>&nbsp;</div>
+
+to push the new history up to the public repo.</li>
 
 <li><p>Inform the public repo's users that it is available and remind
 them that they will need to re-clone it.</p></li>
@@ -678,6 +683,8 @@ Makefile.</p>
 <p>3.14 (2014-11-05) Mention cvsconvert.</p>
 
 <p>3.15 (2015-05-27) A note on Google Code.</p>
+
+<p>HEAD: Improved advice about force-pushing.</p>
 </div>
 <hr />
 </body>
