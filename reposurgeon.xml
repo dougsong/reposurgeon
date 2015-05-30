@@ -2769,16 +2769,6 @@ sure the renamed branch is connected to master.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>cannot resolve mergeinfo from (or to) split commit</term>
-<listitem>
-<para>Either the source or target of a revision mentioned in a mergeinfo
-property was a pathological mixed commit that has been split up into
-multiple branches; <command>reposurgeon</command> can't figure out how
-to create the merge link on its own.  You will have to patch the right
-link in by hand with the 'merge' command.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term>mid-branch deleteall</term>
 <listitem>
 <para>A deleteall operation has been found in the middle of a branch
