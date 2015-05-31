@@ -1,5 +1,10 @@
 			reposurgeon project news
 
+Repository head:
+     Fix repository-type detection bug introduced in 3.23.
+     DVCS Migration HOWTO is now merged into this distribution.
+     Legacy-ID detection is now more discriminating, based on sourcetype.
+
 3.23: 2015-05-29
      The 'prefer' command no longer changes the repo type, but 'sourcetype' does.
      The =N set is all commits and tags with text matching a legacy ID.
