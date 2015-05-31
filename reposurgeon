@@ -2597,7 +2597,6 @@ class StreamParser:
         b"svn:executable",  # We special-case this one elsewhere
         b"svn:ignore",      # We special-case this one elsewhere
         b"svn:special",     # We special-case this one elsewhere
-        b"svn:mergeinfo",   # We special-case this one elsewhere
         b"svn:mime-type",
         b"svn:keywords",
         b"svn:needs-lock",
@@ -3368,7 +3367,7 @@ class StreamParser:
                     if not "--ignore-properties" in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.iteritems() \
-                                        if prop not in StreamParser.IgnoreProperties)
+                                        if ((prop not in StreamParser.IgnoreProperties) and not (prop == "svn:mergeinfo" and node.kind == SD_DIR)))
                         try:
                             first = next(prop_items)
                         except StopIteration:
