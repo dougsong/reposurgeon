@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.24: 2015-05-31
      Fix repository-type detection bug introduced in 3.23.
      DVCS Migration HOWTO is now merged into this distribution.
      Legacy-ID detection is now more discriminating, based on sourcetype.
