@@ -6409,8 +6409,7 @@ class popen_or_die:
         if extype:
             if verbose:
                 complain(b"fatal exception in popen_or_die.")
-            raise extype(value)
-        if self.fp.close() is not None:
+        if self.fp.close() is not None and not extype:
             raise Fatal(b"%s%s returned error." % (self.command, self.legend))
         return False
 
