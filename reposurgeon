@@ -511,7 +511,127 @@ file_filters = {
 # particular, RFC3339 dates are good, so are RFC822 (email) dates,
 # and so is git's native integer-Unix-timestamp/timezone pairs.
 
-class GitExtractor:
+class Extractor(object):
+    "Base class for repository extractors."
+    # Written around commonalities between git and hg; extending further
+    # might need structural changes.
+    name = "extractor-base"
+    subdirectory = None # for use in detecting corresponding VCS
+    visible = False # report in list of extractors; use even if not preferred
+    properties = False # does this VCS support commit properties?
+    ignorename = None
+    def __init__(self):
+        self.revlist = [] # commit identifiers
+        self.parents = {} # commit -> [parent-commit, ...]
+        self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
+        self.refs = {} # 'refs/class/name' -> commit
+        self.tags = [] # list of Tag objects
+    def analyze(self, baton):
+        "Analyze a repository for streaming."
+        self.find_revision_ids(baton)
+        baton.twirl()
+        self.find_commit_data(baton)
+        baton.twirl()
+        self.find_all_references(baton)
+        baton.twirl()
+        self.color_branches(baton)
+        baton.twirl()
+    def find_revision_ids(self, baton):
+        "Get the topologically-ordered list of revisions and parents"
+        # fill in self.revlist
+        # fill in self.parents
+        assert baton is not None # pacify pylint
+    def find_commit_data(self, baton):
+        "Get all other per-commit data except branch IDs"
+        # fill in self.meta[]['ci']
+        # fill in self.meta[]['ai']
+        assert baton is not None # pacify pylint
+    def find_all_references(self, baton):
+        "Find all branch heads and tags"
+        # fill in self.refs
+        # fill in self.tags
+        assert baton is not None # pacify pylint
+    def color_branches(self, baton):
+        """Color branches in the order the tips occur.  Emulate the
+        git-export order."""
+        for refname, refobj in sorted(self.refs.iteritems(),
+                                      key=lambda ref: self.revlist.index(ref[1])):
+            self.__branch_color(refobj, refname)
+        uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
+        if uncolored:
+            if verbose >= 1:
+                raise Fatal(b"missing branch attribute for: %s" % uncolored)
+            else:
+                raise Fatal(b"some branches do not have local ref names.")
+        assert baton is not None # pacify pylint
+    def __branch_color(self, rev, color):
+        if rev.startswith(b"ref"):
+            return
+        while not 'branch' in self.meta[rev]:
+            self.meta[rev][b'branch'] = color
+            parents = self.get_parents(rev)
+            if not parents:
+                break
+            elif len(parents) == 1:
+                # This case avoids blowing Python's stack by recursing
+                # too deep on large repos.
+                rev = parents[0]
+            else:
+                for parent in parents:
+                    self.__branch_color(parent, color)
+                break
+    def pre_extract(self, repo):
+        "Hook for any setup actions required before streaming."
+        assert repo is not None  # Pacify pylint
+    def post_extract(self, repo):
+        "Hook for any cleanup actions required after streaming."
+        if not self.properties:
+            for event in repo.commits():
+                event.properties = collections.OrderedDict()
+    def isclean(self):
+        "Return True if repo has no unsaved changes."
+        return True
+    def get_revlist(self):
+        "Return a list of commit ID strings in commit timestamp order."
+        return self.revlist
+    def get_taglist(self):
+        "Return a list of tag name strings."
+        return self.tags
+    def iter_resets(self):
+        "Return an iterator yielding (reset name, revision) pairs."
+        return (item for item in self.refs.iteritems() if "/tags/" not in item[0])
+    def checkout(self, rev, filemap):
+        "Check the directory out to a specified revision, return a manifest."
+        assert filemap is not None # pacify pylint
+        assert rev is not None # pacify pylint
+        return []
+    def cleanup(self, rev, issued):
+        "Cleanup after checkout."
+        assert rev and (issued is not None) # Pacify pylint
+    def get_parents(self, rev):
+        "Return the list of commit IDs of a commit's parents."
+        return self.parents[rev]
+    def get_branch(self, rev):
+        return self.meta[rev][b'branch']
+    def get_comment(self, rev):
+        "Return a commit's change comment as a string."
+        assert rev is not None # pacify pylint
+        return None
+    def get_committer(self, rev):
+        "Return the committer's ID/date as a string."
+        return self.meta[rev][b'ci']
+    def get_authors(self, rev):
+        "Return the author's name and email address as a string."
+        return [self.meta[rev][b'ai']]
+    def get_properties(self, rev):
+        "Return a list of properties for the commit."
+        assert rev is not None # Pacify pylint
+        if self.properties:
+            raise NotImplementedError()
+        else:
+            return collections.OrderedDict()
+
+class GitExtractor(Extractor):
     "Repository extractor for the git version-control system."
     # Regardless of what revision and branch was current at start,
     # after the git extractor runs the head revision on the master branch
@@ -528,45 +648,33 @@ class GitExtractor:
     # is not intended to replace git-fast-export; it only exists as a
     # test for the generic RepoStreamer code and a model for future
     # extractors.
-    def __init__(self):
-        # These must be set for every extractor class
-        self.name = "git-extractor"
-        self.subdirectory = ".git"
-        self.visible = False
-        self.properties = False
-        self.ignorename = ".gitignore"
-        # These are internal
-        self.revlist = []
-        self.parents = {}
-        self.header = {}
-        self.meta = {}
-        self.tags = []
-        self.refs = {}
-        self.baton = None
-    def analyze(self, baton):
-        "Analyze a git repository for streaming."
-        self.baton = baton
-        # Get the topologically-ordered list of revisions and parent hashes
+    name = "git-extractor"
+    subdirectory = ".git"
+    visible = False
+    properties = False
+    ignorename = ".gitignore"
+    def find_revision_ids(self, baton):
+        super(GitExtractor, self).find_revision_ids(baton)
         with popen_or_die(b"git log --all --topo-order --reverse --format='%H %P'") as fp:
             for line in fp:
                 fields = line.strip().split()
                 self.revlist.append(fields[0])
                 self.parents[fields[0]] = fields[1:]
-        self.baton.twirl()
-        # Next, all other per-commit data except branch IDs
+    def find_commit_data(self, baton):
+        super(GitExtractor, self).find_commit_data(baton)
         with popen_or_die(b"git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'") as fp:
             for line in fp:
                 (h, ci, ai) = line.strip().split(b'|')
                 self.meta[h] = {b'ci':ci, b'ai':ai}
-        # Next, find all refs
+    def find_all_references(self, baton):
+        super(GitExtractor, self).find_all_references(baton)
         for root, dirs, files in os.walk(b".git/refs"):
             for leaf in files:
                 assert dirs is not None  # Pacify pylint
                 ref = os.path.join(root, leaf)
                 with open(ref, b"rb") as fp:
                     self.refs[ref[5:]] = fp.read().strip()
-        self.baton.twirl()
-        # Next, grab all tag objects.
+        baton.twirl()
         with popen_or_die(b"git tag -l") as fp:
             for line in fp:
                 tag = line.strip()
@@ -597,84 +705,24 @@ class GitExtractor:
                                                      comment=comment,
                                                      committish=objecthash))
                     self.refs["refs/tags/" + tag] = objecthash
-        self.baton.twirl()
-        # Color branches in the order the tips occur.  Emulate the
-        # git-export order.
-        for refname, refobj in sorted(self.refs.iteritems(),
-                                      key=lambda ref: self.revlist.index(ref[1])):
-            self.__branch_color(refobj, refname)
-        uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
-        if uncolored:
-            if verbose >= 1:
-                raise Fatal(b"missing branch attribute for: %s" % uncolored)
-            else:
-                raise Fatal(b"some branches do not have local ref names.")
-        self.baton.twirl()
     def __metadata(self, rev, fmt):
         with popen_or_die(b"git log -1 --format='%s' %s" % (fmt, rev)) as fp:
             return fp.read()[:-1]
-    def __branch_color(self, rev, color):
-        if rev.startswith(b"ref"):
-            return
-        while not 'branch' in self.meta[rev]:
-            self.meta[rev][b'branch'] = color
-            parents = self.get_parents(rev)
-            if not parents:
-                break
-            elif len(parents) == 1:
-                # This case avoids blowing Python's stack by recursing
-                # too deep on large repos.
-                rev = parents[0]
-            else:
-                for parent in parents:
-                    self.__branch_color(parent, color)
-                break
-    def pre_extract(self, repo):
-        "Hook for any setup actions required before streaming."
-        assert repo is not None  # Pacify pylint
     def post_extract(self, repo):
-        for event in repo.commits():
-            event.properties = collections.OrderedDict()
+        super(GitExtractor, self).post_extract(repo)
         os.system(b"git checkout --quiet master")
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return not capture(b"git ls-files --modified")
-    def get_revlist(self):
-        "Return a list of commit ID strings in commit timestamp order."
-        return self.revlist
-    def get_taglist(self):
-        "Return a list of tag name strings."
-        return self.tags
-    def iter_resets(self):
-        "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in self.refs.iteritems() if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
         os.system(b"git checkout --quiet %s" % rev)
         manifest = capture(b"git ls-files").split()
         return manifest
-    def cleanup(self, rev, issued):
-        "Cleanup after checkout."
-        assert rev and (issued is not None) # Pacify pylint
-    def get_parents(self, rev):
-        "Return the list of commit IDs of a commit's parents."
-        return self.parents[rev]
-    def get_branch(self, rev):
-        return self.meta[rev][b'branch']
     def get_comment(self, rev):
         "Return a commit's change comment as a string."
         return self.__metadata(rev, b"%B")
-    def get_committer(self, rev):
-        "Return the committer's ID/date as a string."
-        return self.meta[rev][b'ci']
-    def get_authors(self, rev):
-        "Return the author's name and email address as a string."
-        return [self.meta[rev][b'ai']]
-    def get_properties(self, rev):
-        "Return a list of properties for the commit."
-        assert rev is not None # Pacify pylint
-        return collections.OrderedDict()
 
 # More extractors go here
 
