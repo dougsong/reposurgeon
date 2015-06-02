@@ -1754,6 +1754,9 @@ class Commit(object):
     def append_operation(self, op):
         "Append to the set of fileops associated with this commit."
         self.fileops.append(op)
+    def sort_operations(self):
+        "Sort fileops the same way git-fast-export does."
+        self.fileops.sort(key=FileOp.sortkey)
     def clone(self, repo=None):
         "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
@@ -2168,7 +2171,7 @@ class Commit(object):
                     fileop.inline = inline
                 new_ops.append(fileop)
         # Finishing touches:
-        new_ops.sort(key=FileOp.sortkey)
+        self.sort_operations()
         self._pathset = None
     def alldeletes(self, killset=None):
         "Is this an all-deletes commit?"
@@ -2640,7 +2643,7 @@ class RepoStreamer:
                     reset = Reset(repo)
                     reset.ref = commit.branch
                     repo.addEvent(reset)
-                commit.operations().sort(key=FileOp.sortkey)
+                commit.sort_operations()
                 commit.legacy_id = revision
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(self.__newmark())
@@ -3942,7 +3945,7 @@ class StreamParser:
                 split_commits[revision] = split.legacy_id
             # Sort fileops according to git rules
             for newcommit in newcommits:
-                newcommit.operations().sort(key=FileOp.sortkey)
+                newcommit.sort_operations()
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
