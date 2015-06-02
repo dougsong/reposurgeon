@@ -791,14 +791,14 @@ class HgExtractor(Extractor):
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
         capture(b"hg update -C tip")
-        if not "master" in repo.branchset():
+        if not "refs/heads/master" in repo.branchset():
             for event in repo:
                 if isinstance(event, Commit):
-                    if event.branch == "default":
-                        event.set_branch("master")
+                    if event.branch == "refs/heads/default":
+                        event.set_branch("refs/heads/master")
                 elif isinstance(event, Reset):
-                    if event.ref == "default":
-                        event.ref = "master"
+                    if event.ref == "refs/heads/default":
+                        event.ref = "refs/heads/master"
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return not capture(b"hg status --modified")
