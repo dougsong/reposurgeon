@@ -521,11 +521,11 @@ class Extractor(object):
     properties = False # does this VCS support commit properties?
     ignorename = None
     def __init__(self):
-        self.revlist = [] # commit identifiers
+        self.revlist = [] # commit identifiers, oldest first
         self.parents = {} # commit -> [parent-commit, ...]
         self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
         self.refs = {} # 'refs/class/name' -> commit
-        self.tags = [] # list of Tag objects
+        self.tags = [] # Tag objects (annotated tags only)
     def analyze(self, baton):
         "Analyze a repository for streaming."
         self.find_revision_ids(baton)
@@ -654,20 +654,19 @@ class GitExtractor(Extractor):
     properties = False
     ignorename = ".gitignore"
     def find_revision_ids(self, baton):
-        super(GitExtractor, self).find_revision_ids(baton)
+        assert baton is not None # pacify pylint
         with popen_or_die(b"git log --all --topo-order --reverse --format='%H %P'") as fp:
             for line in fp:
                 fields = line.strip().split()
                 self.revlist.append(fields[0])
                 self.parents[fields[0]] = fields[1:]
     def find_commit_data(self, baton):
-        super(GitExtractor, self).find_commit_data(baton)
+        assert baton is not None # pacify pylint
         with popen_or_die(b"git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'") as fp:
             for line in fp:
                 (h, ci, ai) = line.strip().split(b'|')
                 self.meta[h] = {b'ci':ci, b'ai':ai}
     def find_all_references(self, baton):
-        super(GitExtractor, self).find_all_references(baton)
         for root, dirs, files in os.walk(b".git/refs"):
             for leaf in files:
                 assert dirs is not None  # Pacify pylint
@@ -724,9 +723,84 @@ class GitExtractor(Extractor):
         "Return a commit's change comment as a string."
         return self.__metadata(rev, b"%B")
 
+class HgExtractor(Extractor):
+    "Repository extractor for the hg version-control system."
+    # Regardless of what revision and branch was current at start,
+    # after the hg extractor runs the tip (most recent revision on any branch)
+    # will be checked out.
+    name = "hg-extractor"
+    subdirectory = ".hg"
+    visible = False
+    properties = False
+    ignorename = ".hgignore"
+    def find_revision_ids(self, baton):
+        "Get the topologically-ordered list of revisions and parents"
+        assert baton is not None # pacify pylint
+        # hg changesets can only have up to two parents
+        # we have to use short (12-nibble) hashes because that's all "hg tags"
+        # and "hg branches" give us.  Hg's CLI is rubbish
+        with popen_or_die(b"hg log -T '{node|short} {p1node|short} {p2node|short}\\n'") as fp:
+            for line in fp:
+                fields = line.strip().split()
+                self.revlist.append(fields[0])
+                # non-existent parents are given all-0s hashes.
+                # Did I mention that Hg's CLI is rubbish?
+                self.parents[fields[0]] = [f for f in fields[1:] if f != '0'*12]
+        self.revlist = list(reversed(self.revlist))
+    def find_commit_data(self, baton):
+        "Get all other per-commit data except branch IDs"
+        assert baton is not None # pacify pylint
+        with popen_or_die(b"hg log -T '{node|short}|{author} {date|rfc822date}\\n'") as fp:
+            for line in fp:
+                (h, ci) = line.strip().split(b'|')
+                # Because hg doesn't store separate author and committer info,
+                # we just use the committer for both.
+                self.meta[h] = {b'ci':ci, b'ai':ci}
+    def find_all_references(self, baton):
+        "Find all branch heads and tags"
+        assert baton is not None # pacify pylint
+        # both branches and tags output "name      num:hash" lines
+        # branches may also append " (inactive)"
+        ref_re = re.compile(r'(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?')
+        with popen_or_die(b"hg branches") as fp:
+            for line in fp:
+                m = ref_re.match(line)
+                if m is None:
+                    raise Recoverable(b"Unreadable 'hg branches' line: %r" % line)
+                n, h = m.groups()
+                self.refs['refs/heads/%s'%n] = h
+        with popen_or_die(b"hg tags") as fp:
+            for line in fp:
+                m = ref_re.match(line)
+                if m is None:
+                    raise Recoverable(b"Unreadable 'hg tags' line: %r" % line)
+                n, h = m.groups()
+                if n == 'tip': # pseudo-tag for most recent commit
+                    continue # We don't want it
+                self.refs['refs/tags/%s'%n] = h
+        # We have no annotated tags, so self.tags = []
+        # Conceivably it might be better to treat the commit message that
+        # creates the tag as an annotation, but that's a job for the surgeon
+        # later, not the extractor now.
+    def post_extract(self, repo):
+        super(HgExtractor, self).post_extract(repo)
+        capture(b"hg update -C tip")
+    def isclean(self):
+        "Return True if repo has no unsaved changes."
+        return not capture(b"hg status --modified")
+    def checkout(self, rev, filemap):
+        "Check the directory out to a specified revision, return a manifest."
+        assert filemap is not None # pacify pylint
+        capture(b"hg update -C %s" % rev)
+        manifest = capture(b"hg manifest").split()
+        return manifest
+    def get_comment(self, rev):
+        "Return a commit's change comment as a string."
+        return capture(b"hg log -r %s -T '{desc}\\n'" % rev)
+
 # More extractors go here
 
-extractors = [GitExtractor()]
+extractors = [GitExtractor(), HgExtractor()]
 
 # No user-serviceable parts below this line
 
