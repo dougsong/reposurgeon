@@ -238,7 +238,10 @@ bzr-orphans
         dfltignores=b"",
         cookies=(VCS.bare_numeric, r"\b[0-9a-f]{40}\b"),
         project=b"http://mercurial.selenic.com/",
-        notes=b"The hg fastimport method is not part of stock Mercurial."),
+        notes=b"""The hg fastimport method is not part of stock Mercurial.
+If there is no branch named 'master' in a repo wgen it is read, the hg 'default'
+branch is renamed to 'master'.
+"""),
     # Styleflags may need tweaking for round-tripping
     VCS(name=b"darcs",
         subdirectory=b"_darcs",
@@ -788,14 +791,14 @@ class HgExtractor(Extractor):
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
         capture(b"hg update -C tip")
-        for event in repo:
-            # FIXME: Deal with the possibility that we may already have a master
-            if isinstance(event, Commit):
-                if event.branch == "default":
-                    event.set_branch("master")
-            elif isinstance(event, Reset):
-                if event.ref == "default":
-                    event.ref = "master"
+        if not "master" in repo.branchset():
+            for event in repo:
+                if isinstance(event, Commit):
+                    if event.branch == "default":
+                        event.set_branch("master")
+                elif isinstance(event, Reset):
+                    if event.ref == "default":
+                        event.ref = "master"
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return not capture(b"hg status --modified")
