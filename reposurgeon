@@ -75,7 +75,9 @@ version="3.24"
 #
 # Extractor classes build the deserialized internal representation directly.
 # Each extractor class is a set of VCS-specific methods to be used by the
-# RepoStreamer driver class.
+# RepoStreamer driver class.  Key detail: when a repository is recognized by
+# an extractor it sets the repository type to point to the corresponding
+# VCS instance.
 #
 
 class VCS:
@@ -221,10 +223,9 @@ bzr-orphans
 """,
         cookies=(VCS.nobug + VCS.bare_numeric,),
         notes=b"Requires the bzr-fast-import plugin."),
-    # Export is tested and works; import is flaky.
     VCS(name=b"hg",
         subdirectory=b".hg",
-        exporter=b"hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .",
+        exporter=None,
         styleflags={b"import-defaults", b"nl-after-comment", b"export-progress"},
         properties=False,
         initializer=b"hg init",
@@ -235,9 +236,9 @@ bzr-orphans
         authormap=None,
         ignorename=b".hgignore",
         dfltignores=b"",
-        cookies=(VCS.bare_numeric,),
+        cookies=(VCS.bare_numeric, r"\b[0-9a-f]{40}\b"),
         project=b"http://mercurial.selenic.com/",
-        notes=b"The hg export-import methods are not part of stock Mercurial."),
+        notes=b"The hg fastimport method is not part of stock Mercurial."),
     # Styleflags may need tweaking for round-tripping
     VCS(name=b"darcs",
         subdirectory=b"_darcs",
@@ -649,6 +650,7 @@ class GitExtractor(Extractor):
     # test for the generic RepoStreamer code and a model for future
     # extractors.
     name = "git-extractor"
+    vcstype = next(vcstype for vcstype in vcstypes if vcstype.name == "git")
     subdirectory = ".git"
     visible = False
     properties = False
@@ -729,8 +731,9 @@ class HgExtractor(Extractor):
     # after the hg extractor runs the tip (most recent revision on any branch)
     # will be checked out.
     name = "hg-extractor"
+    vcstype = next(vcstype for vcstype in vcstypes if vcstype.name == "hg")
     subdirectory = ".hg"
-    visible = False
+    visible = True
     properties = False
     ignorename = ".hgignore"
     def find_revision_ids(self, baton):
@@ -786,7 +789,7 @@ class HgExtractor(Extractor):
         super(HgExtractor, self).post_extract(repo)
         capture(b"hg update -C tip")
         for event in repo:
-            # FIXME: Deal with the possibility that we may already have a master 
+            # FIXME: Deal with the possibility that we may already have a master
             if isinstance(event, Commit):
                 if event.branch == "default":
                     event.set_branch("master")
@@ -2653,6 +2656,7 @@ class RepoStreamer:
                     tag.remember(repo, target=c)
                 repo.addEvent(tag)
             self.extractor.post_extract(repo)
+        repo.vcs = self.extractor.vcstype
         return repo
 
 # Stream parsing
@@ -6125,7 +6129,7 @@ def read_repo(source, options, preferred):
         if preferred and possible.name != preferred.name:
             continue
         subdir = os.path.join(source, possible.subdirectory)
-        if os.path.exists(subdir) and os.path.isdir(subdir):
+        if os.path.exists(subdir) and os.path.isdir(subdir) and possible.exporter:
             vcs = possible
             hitcount += 1
     for possible in extractors:
@@ -8252,7 +8256,7 @@ preference to the type of that repository.
             for option in file_filters:
                 print(b"read and write have a --format=%s option that supports %s files."
                       % (option, option.capitalize()))
-            if any(ext.visible for ext in extractors):
+            if any(ext.visible and not ext.vcstype for ext in extractors):
                 print(b"Other systems supported for read only: %s\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
         else:

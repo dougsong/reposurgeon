@@ -846,7 +846,7 @@ list of paths to be restored from the backup directory after a
 <command>rebuild</command>. Each argument, if any, is interpreted as a
 pathname.  The current preserve list is displayed afterwards.</para>
 
-<para>It is only necessary to use this command if your version-control
+<para>It is only necessary to use this feature if your version-control
 system lacks a command to list files under version control. Under
 systems with such a command (which include git and hg), all files that
 are neither beneath the repository dot directory nor under reposurgeon

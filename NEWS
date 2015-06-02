@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     hg is now supported through an extractor class, no plugin required.
+
 3.24: 2015-05-31
      Fix repository-type detection bug introduced in 3.23.
      DVCS Migration HOWTO is now merged into this distribution.
