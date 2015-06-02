@@ -119,7 +119,7 @@ git-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor
-HGLOADS = testrepo
+HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
 	@for test in $(HGLOADS); do \

@@ -20,8 +20,13 @@ prefix "test_" will be automatically run by the unit test framework.
 
 === fi-to-fi ===
 
-Builds a repo from a fast-import stream on stdin, or streams an existing 
-repo to stdout.
+Builds a git repo from a fast-import stream on stdin, or streams an
+existing repo to stdout.
+
+=== hg-to-fi ===
+
+Builds an hg repo from a fast-import stream on stdin, or streams an
+existing repo to stdout.
 
 === svn-to-svn ===
 
