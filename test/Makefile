@@ -118,6 +118,18 @@ git-regress:
 	done
 	@rm -f /tmp/regress
 
+# Test the hg extractor
+HGLOADS = testrepo
+hg-regress:
+	@echo "=== Testing hg-extractor:"
+	@for test in $(HGLOADS); do \
+	    if (echo "  $${test}.fi" >&2; \
+	    ./hg-to-fi) <$${test}.fi | sed '/# Legacy-ID:/d' >/tmp/regress; \
+	    then diff --text -u $${test}.fi /tmp/regress; \
+	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	done
+	@rm -f /tmp/regress
+
 # Make a new repo and checkout directory to create a Subversion test load.
 # Reminder - a branch copy looks like this:
 # svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/foo

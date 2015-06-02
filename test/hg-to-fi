@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# hg-to-fi - build hg repo from fast-import stream on stdin, or stream a hg repo to stdout
+#
+# Intended for reposurgeon roundtripping tests with Mercurial.
+#
+# With the -n option, create a repo corresponding to the input file
+# and check out a working copy for editing, but do not stream the
+# result to stdout and do not delete the repo.  A following argument,
+# if present, becomes the name of the repo; otherwise, it is created 
+# under /tmp.
+#
+# With the -r option, expect the repo to exist, and throw a
+# stream dump to stdout; then do not delete the repo.
+#
+# To add complexity to a test load, do -n, then edit the test repo with
+# hg, then use -d.
+#
+BIN=${PWD}/..
+
+extract=True
+stream=True
+cleanup=True
+
+while getopts nr opt
+do
+    case $opt in
+	n) extract=True ;  stream=False ; cleanup=False ;;
+    r) extract=False ; stream=True  ; cleanup=False ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+# This lets us set the repo location 
+testrepo=${1:-/tmp/test-repo}
+
+# Should we build a repo from the input file?
+if [ $extract = True ]
+then
+	# Go via git, because hg convert is standard and hg fastimport isn't
+    rm -fr $testrepo.git $testrepo; mkdir $testrepo.git $testrepo
+    (cd $testrepo.git >/dev/null; git init --quiet; git fast-import --quiet; git checkout)
+    hg --config extensions.convert= convert $testrepo.git $testrepo > /dev/null
+    rm -fr $testrepo.git
+fi
+
+# Should we stream the repo?
+if [ $stream = True ]
+then
+    ${BIN}/reposurgeon "read $testrepo" "prefer git" "write -"
+fi
+
+# Should we clean up the test directory
+if [ $cleanup = True ]
+then
+    rm -fr $testrepo test-checkout
+fi
