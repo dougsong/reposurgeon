@@ -1565,14 +1565,14 @@ class Reset(object):
 
 class FileOp(object):
     "Represent a primitive operation on a file."
-    __slots__ = ("vcs", "op", "committish", "source", "target",
+    __slots__ = ("repo", "op", "committish", "source", "target",
                  "mode", "path", "ref", "inline",
                  "sourcedelete", "targetdelete")
     __hash__ = None
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
     sortkey_sentinel = chr(ord(b"/") + 1)
-    def __init__(self, vcs=None):
-        self.vcs = vcs
+    def __init__(self, repo):
+        self.repo = repo
         self.op = None
         self.committish = None
         self.source = None
@@ -1689,7 +1689,7 @@ class FileOp(object):
             raise Fatal(b"unexpected fileop %s while writing" % self.op)
         return b"".join(parts)
     def __str__(self):
-        return self.dump(self.vcs)
+        return self.dump(self.repo.vcs)
 
 class Callout(object):
     "Stub object for callout marks in incomplete repository segments."
@@ -1970,6 +1970,7 @@ class Commit(object):
     def moveto(self, repo):
         "Change the repo this commit is associated with."
         for fileop in self.operations():
+            fileop.repo = repo
             if fileop.op == b'N':
                 self.repo.inlines -=1
                 repo.inlines += 1
@@ -2157,7 +2158,7 @@ class Commit(object):
         self.set_operations(new_ops)
         for path in check_delete:
             if path in parent and path not in current:
-                fileop = FileOp()
+                fileop = FileOp(self.repo)
                 fileop.construct(b"D", path)
                 new_ops.append(fileop)
         # Generate needed M fileops.
@@ -2168,7 +2169,7 @@ class Commit(object):
             except TypeError:
                 continue
             if (mode, mark, inline) != parent[path]:
-                fileop = FileOp()
+                fileop = FileOp(self.repo)
                 fileop.construct(b"M", mode, mark, path)
                 if mark == "inline":
                     fileop.inline = inline
@@ -2602,17 +2603,17 @@ class RepoStreamer:
                                 for (oldpath, oldsig) in self.filemap[revision].items():
                                     if oldsig == newsig:
                                         if oldpath in removed:
-                                            op = FileOp()
+                                            op = FileOp(repo)
                                             op.construct(b'R', oldpath, path)
                                             commit.append_operation(op)
                                             del self.filemap[revision][oldpath]
                                         elif oldpath != path:
-                                            op = FileOp()
+                                            op = FileOp(self.repo)
                                             op.construct(b'C', oldpath, path)
                                             commit.append_operation(op)
                                         break
                                 else:
-                                    op = FileOp()
+                                    op = FileOp(repo)
                                     op.construct(b'M',
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
@@ -2632,12 +2633,12 @@ class RepoStreamer:
                             blob.pathlist.append(path)
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
-                            op = FileOp()
+                            op = FileOp(repo)
                             op.construct(b'M', newsig.perms, blobmark, path)
                             commit.append_operation(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
-                        op = FileOp()
+                        op = FileOp(repo)
                         op.construct(b'D', tbd)
                         commit.append_operation(op)
                         del self.filemap[revision][tbd]
@@ -3196,11 +3197,11 @@ class StreamParser:
                                         commit.add_parent(mark)
                                 # Handling of file ops begins.
                                 elif line[0] in (b"C", b"D", b"R"):
-                                    commit.append_operation(FileOp(self.repo.vcs).parse(line))
+                                    commit.append_operation(FileOp(self.repo).parse(line))
                                 elif line == b"deleteall\n":
-                                    commit.append_operation(FileOp(self.repo.vcs).parse(b"deleteall"))
+                                    commit.append_operation(FileOp(self.repo).parse(b"deleteall"))
                                 elif line[0] == b"M":
-                                    fileop = FileOp(self.repo.vcs).parse(line)
+                                    fileop = FileOp(self.repo).parse(line)
                                     if fileop.ref != 'inline':
                                         try:
                                             self.repo.objfind(fileop.ref).pathlist.append(fileop.path)
@@ -3221,7 +3222,7 @@ class StreamParser:
                                         # 100644, 100755, 120000.
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == b"N":
-                                    fileop = FileOp(self.repo.vcs).parse(line)
+                                    fileop = FileOp(self.repo).parse(line)
                                     commit.append_operation(fileop)
                                     self.fi_parse_fileop(fileop)
                                     self.repo.inlines += 1
@@ -3751,7 +3752,7 @@ class StreamParser:
                 if node.kind == SD_FILE:
                     if node.action == SD_DELETE:
                         assert node.blob is None
-                        fileop = FileOp()
+                        fileop = FileOp(self.repo)
                         fileop.construct(b"D", node.path)
                         actions.append((node, fileop))
                         ancestor_nodes[node.path] = None
@@ -3865,7 +3866,7 @@ class StreamParser:
                             subversion_file_copy or
                             permissions_changed):
                             assert perms
-                            fileop = FileOp()
+                            fileop = FileOp(self.repo)
                             fileop.construct(b"M",
                                              perms,
                                              node.blobmark,
@@ -3879,7 +3880,7 @@ class StreamParser:
                 elif node.action in (SD_DELETE, SD_REPLACE):
                     if debug_enable(DEBUG_EXTRACT):
                         announce(b"r%s: deleteall %s" % (revision,node.path))
-                    fileop = FileOp()
+                    fileop = FileOp(self.repo)
                     fileop.construct(b"deleteall", node.path[:-1])
                     actions.append((node, fileop))
             # Time to generate commits from actions and fileops.
@@ -4164,7 +4165,7 @@ class StreamParser:
                     while len(commit.children()) == 1 and not commit.operations():
                         commit = commit.first_child()
                     if commit.operations() or commit.has_children():
-                        fileop = FileOp()
+                        fileop = FileOp(self.repo)
                         fileop.construct(b"deleteall")
                         commit.prepend_operation(fileop)
                         self.generated_deletes.append(commit)
@@ -5351,7 +5352,7 @@ class Repository:
                     for ei in selection:
                         event = self.events[ei]
                         if hasattr(event, b"legacy_id"):
-                            fileop = FileOp()
+                            fileop = FileOp(self)
                             fileop.inline = "Legacy-ID: %s" % event.legacy_id
                             fileop.construct(b'N', b'inline', event.mark)
                             endcommit.append_operation(fileop)
@@ -5712,7 +5713,7 @@ class Repository:
                     # starts with an empty tree (as event does) instead of
                     # inheriting that of its new first parent.
                     if event_pos == 0 and not event.parents():
-                        fileop = FileOp()
+                        fileop = FileOp(self)
                         fileop.construct(b"deleteall")
                         child.prepend_operation(fileop)
                         child.invalidate_pathset_cache()
@@ -5984,7 +5985,7 @@ class Repository:
 
         if "--prune" in options:
             # Prepend a deleteall. Roots have nothing upline to preserve.
-            delop = FileOp()
+            delop = FileOp(self)
             delop.construct(b"deleteall")
             graftroot.prepend_operation(delop)
 
@@ -6636,7 +6637,7 @@ class RepositoryList:
             if "--prune" in options:
                 deletes = []
                 for path in most_recent.manifest():
-                    fileop = FileOp()
+                    fileop = FileOp(self)
                     fileop.construct(b"D", path)
                     deletes.append(fileop)
                 root.set_operations(deletes + root.operations())
@@ -9300,7 +9301,7 @@ in the commit's ancestry.
             raise Recoverable(b"unknown operation type %s in add command" % optype)
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
-            fileop = FileOp()
+            fileop = FileOp(self.chosen())
             if optype == b"D":
                 fileop.construct(b"D", path)
             elif optype == b"M":
@@ -10026,11 +10027,11 @@ modified as a result.
             raise Recoverable(b"unknown policy for reparent")
         if line != "rebase":
             # Recreate the state of the tree
-            f = FileOp()
+            f = FileOp(repo)
             f.construct(b"deleteall")
             newops = [f]
             for (path, (mode, mark, inline)) in child.manifest().iteritems():
-                f = FileOp()
+                f = FileOp(repo)
                 f.construct(b"M", mode, mark, path)
                 if mark == "inline":
                     f.inline = inline
@@ -10341,7 +10342,7 @@ default patterns.
                     blob.mark = ":insert"
                     repo.events.insert(repo.index(earliest), blob)
                     repo.declare_sequence_mutation(b"ignore creation")
-                    newop = FileOp()
+                    newop = FileOp(self.chosen())
                     newop.construct(b"M", 0o100664, ":insert", self.ignorename)
                     earliest.append_operation(newop)
                     repo.renumber()
