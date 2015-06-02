@@ -1745,12 +1745,18 @@ class Commit(object):
     def set_branch(self, branch):
         "Set the repo's branch field, optimizing for fast comparisons."
         self.branch = intern(branch)
+    def operations(self):
+        "Fileops associated with this commit; hides how this is represented."
+        return self.fileops
+    def set_operations(self, ops):
+        "Replace the set of fileops associated with this commit."
+        self.fileops = ops
     def clone(self, repo=None):
         "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
         c.committer = copy.deepcopy(self.committer)
         c.authors = copy.deepcopy(self.authors)
-        c.fileops = []
+        c.set_operations([])
         c.filemap = None
         c._pathset = None
         c.color = None
@@ -1948,13 +1954,13 @@ class Commit(object):
     def forget(self):
         "De-link this commit from its parents."
         self.set_parents([])
-        for fileop in self.fileops:
+        for fileop in self.operations():
             if fileop.op == b'N':
                 self.repo.inlines -=1
         self.repo = None
     def moveto(self, repo):
         "Change the repo this commit is associated with."
-        for fileop in self.fileops:
+        for fileop in self.operations():
             if fileop.op == b'N':
                 self.repo.inlines -=1
                 repo.inlines += 1
@@ -2041,20 +2047,20 @@ class Commit(object):
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = collections.defaultdict(list)
-        for (i, fileop) in enumerate(self.fileops):
+        for (i, fileop) in enumerate(self.operations()):
             if fileop.op == b"M": cliques[fileop.path].append(i)
         return cliques
     def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
         print(b"commit %d, mark %s:" % (self.repo.find(self.mark)+1, self.mark))
-        for (i, op) in enumerate(self.fileops):
+        for (i, op) in enumerate(self.operations()):
             if op is not None:
                 print(b"%d: %-20s" % (i, str(op)))
     def paths(self, pathtype=None):
         "Return the set of all paths touched by this commit."
         if self._pathset is None:
             self._pathset = set()
-            for fileop in self.fileops:
+            for fileop in self.operations():
                 self._pathset |= fileop.paths(pathtype)
         return self._pathset
     def invalidate_pathset_cache(self):
@@ -2069,7 +2075,7 @@ class Commit(object):
                 break
             else:
                 ancestor = parents[0]
-                for fileop in ancestor.fileops:
+                for fileop in ancestor.operations():
                     if fileop.op == b"D" and fileop.path == path:
                         break
                     elif fileop.op == b"M" and fileop.path == path:
@@ -2093,7 +2099,7 @@ class Commit(object):
         except IndexError:
             ancestors = PathMap()
         # Take own fileops into account.
-        for fileop in self.fileops:
+        for fileop in self.operations():
             if fileop.op == b'M':
                 ancestors[fileop.path] = (fileop.mode, fileop.ref, fileop.inline)
             elif fileop.op == b'D':
@@ -2113,12 +2119,12 @@ class Commit(object):
         "Replace fileops by a minimal set of D and M with the same result."
         # If last fileop is a deleteall, only keep that.
         try:
-            lastop = self.fileops[-1]
+            lastop = self.operations()[-1]
         except IndexError:
             return
         else:
             if lastop.op == b"deleteall":
-                self.fileops = [lastop]
+                self.set_operations([lastop])
                 return
         # Fetch the tree state before us...
         try:
@@ -2132,13 +2138,14 @@ class Commit(object):
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
         # Generate needed D fileops.
-        if any(op.op == b"deleteall" for op in self.fileops):
+        if any(op.op == b"deleteall" for op in self.operations()):
             # Any file in the parent tree might disappear.
             check_delete = parent
         else:
             # Only files touched by non-deleteall ops might disappear.
             check_delete = paths
-        self.fileops = new_ops = []
+        new_ops = []
+        self.set_operations(new_ops)
         for path in check_delete:
             if path in parent and path not in current:
                 fileop = FileOp()
@@ -2164,7 +2171,7 @@ class Commit(object):
         "Is this an all-deletes commit?"
         if killset is None:
             killset = {b"D", b"deleteall"}
-        return all(fileop.op in killset for fileop in self.fileops)
+        return all(fileop.op in killset for fileop in self.operations())
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
         if not directory:
@@ -2204,13 +2211,13 @@ class Commit(object):
         raise Recoverable(b"can't deduce a branch head for %s" % self.mark)
     def references(self, mark):
         "Does this commit reference a specified blob mark?"
-        for fileop in self.fileops:
+        for fileop in self.operations():
             if fileop.op == b'M' and fileop.ref == mark:
                 return True
         return False
     def blob_by_name(self, name):
         "Look up file content by name."
-        for fileop in self.fileops:
+        for fileop in self.operations():
             if fileop.op == b'M' and fileop.path == name:
                 return self.repo.objfind(fileop.ref).get_content()
         return False
@@ -2280,7 +2287,7 @@ class Commit(object):
                         parts.append(b"property %s\n" % name)
                 else:
                     parts.append(b"property %s %d %s\n" % (name, len(str(value)), str(value)))
-        parts.extend(op.dump(vcs) + b"\n" for op in self.fileops)
+        parts.extend(op.dump(vcs) + b"\n" for op in self.operations())
         if not "no-nl-after-commit" in self.repo.export_style():
             parts.append(b"\n")
         return b"".join(parts)
@@ -2588,12 +2595,12 @@ class RepoStreamer:
                                         if oldpath in removed:
                                             op = FileOp()
                                             op.construct(b'R', oldpath, path)
-                                            commit.fileops.append(op)
+                                            commit.operations().append(op)
                                             del self.filemap[revision][oldpath]
                                         elif oldpath != path:
                                             op = FileOp()
                                             op.construct(b'C', oldpath, path)
-                                            commit.fileops.append(op)
+                                            commit.operations().append(op)
                                         break
                                 else:
                                     op = FileOp()
@@ -2601,7 +2608,7 @@ class RepoStreamer:
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
                                                  path)
-                                    commit.fileops.append(op)
+                                    commit.operations().append(op)
                         else:
                             # Content hash doesn't match any existing blobs
                             if debug_enable(DEBUG_EXTRACT):
@@ -2618,25 +2625,25 @@ class RepoStreamer:
                             # Its new fileop is added to the commit
                             op = FileOp()
                             op.construct(b'M', newsig.perms, blobmark, path)
-                            commit.fileops.append(op)
+                            commit.operations().append(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
                         op = FileOp()
                         op.construct(b'D', tbd)
-                        commit.fileops.append(op)
+                        commit.operations().append(op)
                         del self.filemap[revision][tbd]
                 self.extractor.cleanup(revision, True)
                 if not parents and commit.branch != "refs/heads/master":
                     reset = Reset(repo)
                     reset.ref = commit.branch
                     repo.addEvent(reset)
-                commit.fileops.sort(key=FileOp.sortkey)
+                commit.operations().sort(key=FileOp.sortkey)
                 commit.legacy_id = revision
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(self.__newmark())
                 self.commit_map[revision] = commit
                 if debug_enable(DEBUG_EXTRACT):
-                    announce(b"r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.fileops)))
+                    announce(b"r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
                 repo.addEvent(commit)
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
@@ -3180,9 +3187,9 @@ class StreamParser:
                                         commit.add_parent(mark)
                                 # Handling of file ops begins.
                                 elif line[0] in (b"C", b"D", b"R"):
-                                    commit.fileops.append(FileOp(self.repo.vcs).parse(line))
+                                    commit.operations().append(FileOp(self.repo.vcs).parse(line))
                                 elif line == b"deleteall\n":
-                                    commit.fileops.append(FileOp(self.repo.vcs).parse(b"deleteall"))
+                                    commit.operations().append(FileOp(self.repo.vcs).parse(b"deleteall"))
                                 elif line[0] == b"M":
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     if fileop.ref != 'inline':
@@ -3193,7 +3200,7 @@ class StreamParser:
                                             # submodule link.
                                             if fileop.mode != b"160000":
                                                 self.error(b"ref %s could not be resolved" % fileop.ref)
-                                    commit.fileops.append(fileop)
+                                    commit.operations().append(fileop)
                                     if fileop.mode == b"160000":
                                         # This is a submodule link.  The ref
                                         # field is a SHA1 hash and the path
@@ -3206,7 +3213,7 @@ class StreamParser:
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == b"N":
                                     fileop = FileOp(self.repo.vcs).parse(line)
-                                    commit.fileops.append(fileop)
+                                    commit.operations().append(fileop)
                                     self.fi_parse_fileop(fileop)
                                     self.repo.inlines += 1
                                 # Handling of file ops ends.
@@ -3902,7 +3909,8 @@ class StreamParser:
                 # to the base commit.
                 self.repo.legacy_map[b"SVN:%s" % commit.legacy_id] = commit
                 try:
-                    commit.common, commit.fileops = next(oplist)
+                    commit.common, stage = next(oplist)
+                    commit.set_operations(stage)
                     commit.invalidate_pathset_cache()
                 except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
@@ -3921,7 +3929,7 @@ class StreamParser:
                 self.repo.legacy_map["SVN:%s" % split.legacy_id] = split
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.__newmark())
-                split.fileops = fileops
+                split.set_operations(fileops)
                 split.invalidate_pathset_cache()
                 newcommits.append(split)
             # The revision is truly mixed if there is more than one clique
@@ -3931,7 +3939,7 @@ class StreamParser:
                 split_commits[revision] = split.legacy_id
             # Sort fileops according to git rules
             for newcommit in newcommits:
-                newcommit.fileops.sort(key=FileOp.sortkey)
+                newcommit.operations().sort(key=FileOp.sortkey)
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
@@ -4047,12 +4055,12 @@ class StreamParser:
                     msg = b""
                 announce(b"r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
-                          len(commit.fileops),
+                          len(commit.operations()),
                           len(commit.properties),
                           msg.strip()[:20]))
         baton.twirl()
         # First, turn the root commit into a tag
-        if self.repo.events and not self.repo.earliest_commit().fileops:
+        if self.repo.events and not self.repo.earliest_commit().operations():
             try:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
@@ -4084,7 +4092,7 @@ class StreamParser:
                                   None)
                 if branch is not None:
                     commit.set_branch(branch)
-                    for fileop in commit.fileops:
+                    for fileop in commit.operations():
                         if fileop.op in (b"M", b"D"):
                             fileop.path = fileop.path[len(branch):]
                         elif fileop.op in (b"R", b"C"):
@@ -4144,12 +4152,12 @@ class StreamParser:
                     # The deleteall is put on the first commit of the branch
                     # which has fileops or more than one child.
                     commit = child
-                    while len(commit.children()) == 1 and not commit.fileops:
+                    while len(commit.children()) == 1 and not commit.operations():
                         commit = commit.first_child()
-                    if commit.fileops or commit.has_children():
+                    if commit.operations() or commit.has_children():
                         fileop = FileOp()
                         fileop.construct(b"deleteall")
-                        commit.fileops.insert(0, fileop)
+                        commit.operations().insert(0, fileop)
                         self.generated_deletes.append(commit)
                 if parent not in child.parents():
                     child.add_parent(parent)
@@ -4267,7 +4275,7 @@ class StreamParser:
                     announce(b"r%-4s %4s %4s %2d %2d '%s'" % \
                              (commit.legacy_id,
                               commit.mark, ancestor,
-                              len(commit.fileops),
+                              len(commit.operations()),
                               len(commit.properties),
                               commit.branch))
         baton.twirl()
@@ -4329,7 +4337,7 @@ class StreamParser:
             return None
         def taglegend(commit):
             # Tipdelete commits and branch roots don't get any legend.
-            if commit.fileops or (commit.mark in rootmarks \
+            if commit.operations() or (commit.mark in rootmarks \
                     and commit.branch not in rootskip):
                 return b""
             # Otherwise, generate one for inspection.
@@ -4391,13 +4399,13 @@ class StreamParser:
         # These are lots of examples of this in the nut.svn test load.
         # These show up as redundant (D, M) fileop pairs.
         for commit in self.repo.commits():
-            if any(fileop is None for fileop in commit.fileops):
+            if any(fileop is None for fileop in commit.operations()):
                 raise Fatal(b"Null fileop at r%s" % commit.legacy_id)
-            for i in range(len(commit.fileops)-1):
-                if commit.fileops[i].op == b'D' and commit.fileops[i+1].op == b'M':
-                    if commit.fileops[i].path == commit.fileops[i+1].path:
-                        commit.fileops[i].op = None
-            commit.fileops = [fileop for fileop in commit.fileops if fileop.op is not None]
+            for i in range(len(commit.operations())-1):
+                if commit.operations()[i].op == b'D' and commit.operations()[i+1].op == b'M':
+                    if commit.operations()[i].path == commit.operations()[i+1].path:
+                        commit.operations()[i].op = None
+            commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
             baton.twirl()
         self.repo.timings.append(["canonicalizing", time.time()])
         baton.twirl()
@@ -4431,7 +4439,7 @@ class StreamParser:
         ignore_deleteall = set(commit.mark
                                for commit in self.generated_deletes)
         for commit in self.repo.commits():
-            if commit.fileops and commit.fileops[0].op == b'deleteall' \
+            if commit.operations() and commit.operations()[0].op == b'deleteall' \
                     and commit.has_children() \
                     and commit.mark not in ignore_deleteall:
                 self.gripe(b"mid-branch deleteall on %s at <%s>." % \
@@ -4708,7 +4716,7 @@ class SubversionDumper:
                                                    author=event.committer.email.split(b"@")[0],
                                                    date=event.committer.date,
                                                    parents=backlinks)
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.op == b"D":
                             if fileop.path.endswith(b".gitignore"):
                                 svnpath = self.svnize(event.head(), fileop.path)
@@ -5121,7 +5129,7 @@ class Repository:
             if commit.legacy_id:
                 commit_id += b" <%s>" % commit.legacy_id
             announce(b"tagifying: %s -> %s" % (commit_id, name))
-        if commit.fileops:
+        if commit.operations():
             raise Fatal(b"Attempting to tagify a commit with fileops.")
         if not commit.comment:
             pref = b""
@@ -5154,7 +5162,7 @@ class Repository:
                                         default it always returns ""."""
         # Default scheme for tag names
         def default_name(commit):
-            if commit.fileops:
+            if commit.operations():
                 branch = commit.branch
                 if branch[-1] == os.sep: branch = branch[:-1]
                 return b"tipdelete-" + os.path.basename(branch)
@@ -5177,7 +5185,7 @@ class Repository:
             is_tipdelete = lambda _: False
         deletia = []
         for index, commit in self.iterevents(commits, types=Commit):
-            if (not commit.fileops) or is_tipdelete(commit):
+            if (not commit.operations()) or is_tipdelete(commit):
                 if commit.has_parents():
                     if len(commit.parents()) > 1 and not tagify_merges:
                         continue
@@ -5187,7 +5195,8 @@ class Repository:
                         if name + suffix not in usednames: break
                     usednames.add(name + suffix)
                     legend = legend_func(commit)
-                    if commit.fileops: commit.fileops = []
+                    if commit.operations():
+                        commit.set_operations([])
                     self.tagify(commit,
                                 name + suffix,
                                 commit.parents()[0],
@@ -5201,7 +5210,7 @@ class Repository:
                     elif commit.mark:
                         msg.append(b"'%s':" % commit.mark)
                     msg.append(b"deleting parentless")
-                    if commit.fileops:
+                    if commit.operations():
                         msg.append(b"tip delete of %s." % commit.branch)
                     else:
                         msg.append(b"zero-op commit on %s." % commit.branch)
@@ -5243,7 +5252,7 @@ class Repository:
                         self.dollar_map[svnkey] = commit
                     else:
                         (basename, cvsref) = event.cookie
-                        for fileop in commit.fileops:
+                        for fileop in commit.operations():
                             if fileop.op == 'M' and fileop.ref == event.mark:
                                 if not os.path.basename(fileop.path).endswith(basename):
                                     # Usually the harmless result of a
@@ -5303,7 +5312,7 @@ class Repository:
             for ei in selection:
                 event = self.events[ei]
                 if isinstance(event, Commit):
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.op == b'M':
                             if fileop.ref != b"inline":
                                 implied.add(self.find(fileop.ref))
@@ -5336,7 +5345,7 @@ class Repository:
                             fileop = FileOp()
                             fileop.inline = "Legacy-ID: %s" % event.legacy_id
                             fileop.construct(b'N', b'inline', event.mark)
-                            endcommit.fileops.append(fileop)
+                            endcommit.operations().append(fileop)
                     fp.write(str(endcommit))
             except IOError as e:
                 raise Fatal(b"export error: %s" % e)
@@ -5419,7 +5428,7 @@ class Repository:
         "Count modifications of a path in this commit and its ancestors."
         count = 0
         while True:
-            for fileop in event.fileops:
+            for fileop in event.operations():
                 if fileop and fileop.op == "M" and fileop.path == path:
                     count += 1
                     break
@@ -5559,30 +5568,30 @@ class Repository:
         coverage = set()
         # Handling deleteall operations is simple
         lastdeleteall = None
-        for (i, a) in enumerate(commit.fileops):
+        for (i, a) in enumerate(commit.operations()):
             if a.op == "deleteall":
                 lastdeleteall = i
         if lastdeleteall is not None:
             if debug_enable(DEBUG_DELETE):
                 announce(b"removing all before rightmost deleteall")
-            commit.fileops = commit.fileops[lastdeleteall:]
+            commit.set_operations(commit.operations()[lastdeleteall:])
             commit.invalidate_pathset_cache()
         # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
             mutated = False
-            for i in range(len(commit.fileops)):
-                for j in range(i+1, len(commit.fileops)):
-                    a = commit.fileops[i]
-                    b = commit.fileops[j]
+            for i in range(len(commit.operations())):
+                for j in range(i+1, len(commit.operations())):
+                    a = commit.operations()[i]
+                    b = commit.operations()[j]
                     if a is not None and b is not None and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         if debug_enable(DEBUG_DELETE):
                             announce(b"Reduction case %d fired on %s" % (case, (i,j)))
                         if modified:
                             mutated = True
-                            commit.fileops[i] = newa
-                            commit.fileops[j] = newb
+                            commit.operations()[i] = newa
+                            commit.operations()[j] = newb
                             if debug_enable(DEBUG_DELETE):
                                 announce(b"During canonicalization:")
                                 commit.fileop_dump()
@@ -5591,7 +5600,7 @@ class Repository:
                             coverage.add(case)
             if not mutated:
                 break
-            commit.fileops = [x for x in commit.fileops if x is not None]
+            commit.set_operations([x for x in commit.operations() if x is not None])
             commit.invalidate_pathset_cache()
         return coverage
     def squash(self, selected, policy):
@@ -5683,7 +5692,7 @@ class Repository:
                     # parent, and mark each such child as needing
                     # resolution.
                     if pushforward and child.parents()[0] == event:
-                        child.fileops = copy.copy(event.fileops) + child.fileops
+                        child.set_operations(copy.copy(event.operations()) + child.operations())
                         child.invalidate_pathset_cache()
                         altered.append(child)
                     # Really set the parents to the newly constructed list
@@ -5696,7 +5705,7 @@ class Repository:
                     if event_pos == 0 and not event.parents():
                         fileop = FileOp()
                         fileop.construct(b"deleteall")
-                        child.fileops.insert(0, fileop)
+                        child.operations().insert(0, fileop)
                         child.invalidate_pathset_cache()
                         altered.append(child)
                 # We might be trying to hand the event's fileops to its
@@ -5706,7 +5715,7 @@ class Repository:
                     # parent fileop list and mark the parent as needing
                     # resolution.
                     parent = event.parents()[0]
-                    parent.fileops += copy.copy(event.fileops)
+                    parent.set_operations(parent.operations() + copy.copy(event.operations()))
                     parent.invalidate_pathset_cache()
                     altered.append(parent)
                     # We need to ensure all fileop blobs are defined before the
@@ -5714,7 +5723,7 @@ class Repository:
                     # appear before the primary parent in the stream.
                     earliest = parent.index()
                     swap_indices = set()
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.op == b'M':
                             blob_index = self.find(fileop.ref)
                             if blob_index > earliest: swap_indices.add(blob_index)
@@ -5775,9 +5784,9 @@ class Repository:
                                     % (event.mark, path))
                 if "--coalesce" in policy:
                     # Only keep last M of each clique, leaving other ops alone
-                    event.fileops = \
-                           [op for (i, op) in enumerate(event.fileops)
-                            if (op.op != b"M") or (i == cliques[op.path][-1])]
+                    event.set_operations( \
+                           [op for (i, op) in enumerate(event.operations())
+                            if (op.op != b"M") or (i == cliques[op.path][-1])])
                     event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
                     announce(b"Commit %d, after applying policy:" % (ei + 1,))
@@ -5796,7 +5805,7 @@ class Repository:
         backreferences = collections.Counter()
         for event in self.events:
             if isinstance(event, Commit):
-                for fileop in event.fileops:
+                for fileop in event.operations():
                     if fileop.op == b'M':
                         backreferences[fileop.ref] += 1
         def eligible(e):
@@ -5852,7 +5861,7 @@ class Repository:
                 except AttributeError:
                     pass
         for commit in self.commits():
-            for fileop in commit.fileops:
+            for fileop in commit.operations():
                 if fileop.op == b"M" and fileop.ref.startswith(b":"):
                     new = remark(fileop.ref, fileop)
                     if debug_enable(DEBUG_UNITE):
@@ -5920,7 +5929,7 @@ class Repository:
             self.invalidate_object_map()
             # Now marks in fileops
             if isinstance(event, Commit):
-                for fileop in event.fileops:
+                for fileop in event.operations():
                     if fileop.op == b"M" and fileop.ref.startswith(b":"):
                         new = fileop.ref + "-" + color
                         if debug_enable(DEBUG_UNITE):
@@ -5968,7 +5977,7 @@ class Repository:
             # Prepend a deleteall. Roots have nothing upline to preserve.
             delop = FileOp()
             delop.construct(b"deleteall")
-            graftroot.fileops.insert(0, delop)
+            graftroot.operations().insert(0, delop)
 
         # Resolve all callouts
         for commit in graft_repo.commits():
@@ -5997,7 +6006,7 @@ class Repository:
                 # down one side of a merge bubble but not the other.
                 # Might cause an internal-error message, but no real
                 # harm will be done.
-                for (i, fileop) in enumerate(ancestor.fileops):
+                for (i, fileop) in enumerate(ancestor.operations()):
                     if fileop.op == b'R' and fileop.target == path:
                         path = fileop.source
                     elif fileop.op == b'M' and fileop.path == path:
@@ -6013,26 +6022,26 @@ class Repository:
         # pylint: disable=unpacking-non-sequence
         for commit in self.commits():
             renames = []
-            for (d, op) in enumerate(commit.fileops):
+            for (d, op) in enumerate(commit.operations()):
                 if op.op == b'D':
                     previous = self.__last_modification(commit, op.path)
                     if not previous:
                         raise Recoverable(b"internal error looking for renames of %s" % op.path)
                     else:
                         (ancestor, i) = previous
-                        for (m, op2) in enumerate(commit.fileops):
+                        for (m, op2) in enumerate(commit.operations()):
                             if op2.op == b'M' and \
-                               ancestor.fileops[i].mode == op2.mode and \
-                               ancestor.fileops[i].ref == op2.ref:
+                               ancestor.operations()[i].mode == op2.mode and \
+                               ancestor.operations()[i].ref == op2.ref:
                                 renames.append((d, m))
                                 rename_count += 1
                                 break
             for (d, m) in renames:
-                commit.fileops[d].source = commit.fileops[d].path
-                commit.fileops[d].target = commit.fileops[m].path
-                del commit.fileops[d].path
-                commit.fileops[d].op = b'R'
-                commit.fileops.pop(m)
+                commit.operations()[d].source = commit.operations()[d].path
+                commit.operations()[d].target = commit.operations()[m].path
+                del commit.operations()[d].path
+                commit.operations()[d].op = b'R'
+                commit.operations().pop(m)
                 commit.invalidate_pathset_cache()
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
@@ -6041,7 +6050,7 @@ class Repository:
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
-                for fileop in event.fileops:
+                for fileop in event.operations():
                     if fileop.op in (b"M", b"D"):
                         newpath = hook(fileop.path)
                         if newpath != fileop.path:
@@ -6061,7 +6070,7 @@ class Repository:
     def split_commit(self, where, splitfunc):
         event = self.events[where]
         # Fileop split happens here
-        (fileops, fileops2) = splitfunc(event.fileops)
+        (fileops, fileops2) = splitfunc(event.operations())
         if fileops and fileops2:
             self.events.insert(where+1, event.clone())
             self.declare_sequence_mutation(b"commit split")
@@ -6079,9 +6088,9 @@ class Repository:
                 child.replace_parent(event, event2)
             event2.set_parents([event])
             # and then finalize the ops
-            event2.fileops = fileops2
+            event2.set_operations(fileops2)
             event2.invalidate_pathset_cache()
-            event.fileops = fileops
+            event.set_operations(fileops)
             event.invalidate_pathset_cache()
             return True
         return False
@@ -6479,7 +6488,7 @@ class RepositoryList:
         late.remove_parent(early)
         def do_color(commit, color):
             commit.color = color
-            for fileop in commit.fileops:
+            for fileop in commit.operations():
                 if fileop.op == b"M" and fileop.ref != b"inline":
                     blob = self.repo.find(fileop.ref)
                     assert isinstance(self.repo[blob], Blob)
@@ -6621,7 +6630,7 @@ class RepositoryList:
                     fileop = FileOp()
                     fileop.construct(b"D", path)
                     deletes.append(fileop)
-                root.fileops = deletes + root.fileops
+                root.set_operations(deletes + root.operations())
                 root.canonicalize()
         # Put the result on the load list
         self.repolist.append(union)
@@ -6644,7 +6653,7 @@ class RepositoryList:
                 event = self.repo[ei]
                 deletia = []
                 if hasattr(event, b"fileops"):
-                    for (i, fileop) in enumerate(event.fileops):
+                    for (i, fileop) in enumerate(event.operations()):
                         if debug_enable(DEBUG_DELETE):
                             print(str(fileop))
                         if fileop.op in b"DM":
@@ -6688,7 +6697,7 @@ class RepositoryList:
             keepers = []
             blobs = []
             for i in deletia:
-                fileop = event.fileops[i]
+                fileop = event.operations()[i]
                 if fileop.op == b'D':
                     keepers.append(fileop)
                     if verbose:
@@ -6709,14 +6718,14 @@ class RepositoryList:
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
             deletia = set(deletia) # To speed up the following
-            event.fileops = [op for (i, op) in enumerate(event.fileops)
-                                if i not in deletia]
+            event.set_operations([op for (i, op) in enumerate(event.operations())
+                                  if i not in deletia])
             event.invalidate_pathset_cache()
             # If there are any keeper fileops, hang them them and
             # their blobs on keeps, cloning the commit() for them.
             if keepers:
                 newevent = event.clone(expunged)
-                newevent.fileops = keepers
+                newevent.set_operations(keepers)
                 newevent.invalidate_pathset_cache()
                 for blob in blobs:
                     blob.deletehook = blob.clone(expunged)
@@ -6759,7 +6768,7 @@ class RepositoryList:
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
-                for fileop in event.fileops:
+                for fileop in event.operations():
                     if fileop.op == b'M':
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
@@ -6767,7 +6776,7 @@ class RepositoryList:
         if debug_enable(DEBUG_DELETE):
             to_delete = [i+1 for i,e in enumerate(self.repo.events)
                     if (isinstance(e, Blob) and not backreferences[e.mark])
-                    or (isinstance(e, Commit) and not e.fileops)]
+                    or (isinstance(e, Commit) and not e.operations())]
             if not to_delete:
                 announce(b"deletion set is empty.")
             else:
@@ -7014,7 +7023,7 @@ into sections of the input stream instead).
                     for i in preselection:
                         event2 = self.chosen().events[i]
                         if isinstance(event2, Commit):
-                            for fileop in event2.fileops:
+                            for fileop in event2.operations():
                                 if fileop.op == 'M' and fileop.ref==event.mark:
                                     add_list.append(i)
                 elif isinstance(event, (Tag, Reset)):
@@ -7128,7 +7137,7 @@ into sections of the input stream instead).
                 "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
                 "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
                 "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
-                "Z" : lambda e: isinstance(e, Commit) and not e.fileops,
+                "Z" : lambda e: isinstance(e, Commit) and not e.operations(),
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
                 "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
@@ -7410,7 +7419,7 @@ into sections of the input stream instead).
                 tree = PathMap()
             else:
                 tree = match_trees[parent.mark].snapshot()
-            for fileop in event.fileops:
+            for fileop in event.operations():
                 if fileop.op == b'M' and match(fileop.path):
                     tree[fileop.path] = True
                 elif fileop.op in (b'C', b'R') and match(fileop.target):
@@ -7558,13 +7567,13 @@ into sections of the input stream instead).
                 def find_successor(event, path):
                     here = []
                     for child in event.children():
-                        for fileop in child.fileops:
+                        for fileop in child.operations():
                             if fileop.op == "M" and fileop.path == path:
                                 here.append(child.mark)
                         here += find_successor(child, path)
                     return here
                 for event in self.chosen().commits():
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.op == 'M' and fileop.ref == singleton.mark:
                             if len(find_successor(event, fileop.path)) > 0:
                                 complain("beware: not the last 'M %s' on its branch" % fileop.path)
@@ -7607,7 +7616,7 @@ into sections of the input stream instead).
             for ei in range(self.selection[0], self.selection[-1]):
                 event = self.chosen().events[ei]
                 if isinstance(event, (Commit, Tag)):
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.inline is not None:
                             self.selection.append(ei)
             self.selection.sort()
@@ -7654,7 +7663,7 @@ into sections of the input stream instead).
                         if anychanged:
                             altered += 1
                     if blobs and isinstance(event, Commit):
-                        for fileop in event.fileops:
+                        for fileop in event.operations():
                             if fileop.inline is not None:
                                 oldinline = fileop.inline
                                 fileop.inline = hook(fileop.inline, event.path)
@@ -8144,7 +8153,7 @@ unwieldy. Supports > redirection.
                     for author in event.authors:
                         sizes[event.branch] += len(str(author))
                     sizes[event.branch] += len(event.comment)
-                    for fileop in event.fileops:
+                    for fileop in event.operations():
                         if fileop.op == "M":
                             sizes[event.branch] += self.repo.objfind(fileop.ref).size
                 elif isinstance(event, Tag):
@@ -8189,7 +8198,7 @@ Supports > redirection.
             emptyname = set()
             badaddress = set()
             for _, event in self.selected(Commit):
-                if event.fileops and event.fileops[0].op == 'deleteall' and event.has_children():
+                if event.operations() and event.operations()[0].op == 'deleteall' and event.has_children():
                     deletealls.add(b"on %s at %s" % (event.branch, event.id_me()))
                 if not event.has_parents() and not event.has_children():
                     disconnected.add(event.id_me())
@@ -8586,7 +8595,7 @@ This is intended for producing reduced test cases from large repositories.
                     if len(event.children()) != 1 or len(event.parents()) != 1:
                         interesting.add(event.mark)
                     else:
-                        for op in event.fileops:
+                        for op in event.operations():
                             if op.op != b'M' or repo.ancestor_count(event.parents()[0], op.path) == 0:
                                 interesting.add(event.mark)
                                 break
@@ -9164,9 +9173,9 @@ With  the --debug option, show messages about mismatches.
                     raise Recoverable(b"time-fuzz value must be an integer")
             def is_clog(commit):
                 return b"empty log message" in commit.comment \
-                           and len(commit.fileops) == 1 \
-                           and commit.fileops[0].op == b"M" \
-                           and commit.fileops[0].path.endswith(b"ChangeLog")
+                           and len(commit.operations()) == 1 \
+                           and commit.operations()[0].op == b"M" \
+                           and commit.operations()[0].path.endswith(b"ChangeLog")
             def coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
                     if verbose >= DEBUG_DELETE or b'--debug' in parse.options:
@@ -9289,7 +9298,7 @@ in the commit's ancestry.
                 fileop.construct(b"M", perms, mark, path)
             elif optype in (b"R", b"C"):
                 fileop.construct(optype, source, target)
-            event.fileops.append(fileop)
+            event.operations().append(fileop)
 
     def help_remove(self):
         print(b"""
@@ -9327,9 +9336,9 @@ change in a future release.
         for _, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             if opindex == b"deletes":
-                event.fileops = [e for e in event.fileops if e.op != "D"]
+                event.set_operations([e for e in event.operations() if e.op != "D"])
                 return
-            for (ind, op) in enumerate(event.fileops):
+            for (ind, op) in enumerate(event.operations()):
                 if hasattr(op, "op") and getattr(op, "op") not in optypes:
                     continue
                 if hasattr(op, "path") and getattr(op, "path") == opindex:
@@ -9353,9 +9362,9 @@ change in a future release.
                         raise Recoverable(b"remove to requires a singleton selection")
                     target = self.selection[0]
             try:
-                removed = event.fileops.pop(ind)
+                removed = event.operations().pop(ind)
                 if target:
-                    self.chosen().events[target].fileops.append(removed)
+                    self.chosen().events[target].operations().append(removed)
                 # FIXME: Scavenge blobs left with no references
             except IndexError:
                 complain(b"out-of-range fileop index %s" % ind)
@@ -9578,7 +9587,7 @@ file operations in the original commit.
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
-                if splitpoint not in range(1, len(event.fileops)):
+                if splitpoint not in range(1, len(event.operations())):
                     raise Recoverable(b"fileop index out of range")
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
@@ -9734,7 +9743,7 @@ source branch are removed.
             pref = os.path.basename(source)
             for ci in scommits:
                 found = False
-                for fileop in repo.events[ci].fileops:
+                for fileop in repo.events[ci].operations():
                     if fileop.op in (b"D", "M"):
                         fileop.path = os.path.join(pref, fileop.path)
                         found = True
@@ -9789,7 +9798,7 @@ in the ancestry of the commit, this command throws an error.  With the
                 actions = []
                 for _,commit in repo.iterevents(types=Commit):
                     drop = []
-                    for fileop in commit.fileops:
+                    for fileop in commit.operations():
                         for attr in (b"path", b"source", b"target"):
                             if hasattr(fileop, attr):
                                 oldpath = getattr(fileop, attr)
@@ -9802,7 +9811,7 @@ in the ancestry of the commit, this command throws an error.  With the
                                     else:
                                         actions.append((fileop, attr, newpath))
                     for fileop in drop:
-                        commit.fileops.remove(fileop)
+                        commit.operations().remove(fileop)
                     if drop:
                         commit.invalidate_pathset_cache()
                 # All checks must pass before any renames
@@ -10017,8 +10026,8 @@ modified as a result.
                 if mark == "inline":
                     f.inline = inline
                 newops.append(f)
-            newops.extend(child.fileops)
-            child.fileops = newops
+            newops.extend(child.operations())
+            child.set_operations(newops)
         child.set_parents([parent])
 
     def help_branch(self):
@@ -10316,7 +10325,7 @@ default patterns.
                 # Create an early ignore file if required.
                 # Don't move this before the modification pass!
                 earliest = repo.earliest_commit()
-                if not [fileop for fileop in earliest.fileops if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
+                if not [fileop for fileop in earliest.operations() if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
                     blob = Blob(repo)
                     blob.pathlist.append(self.ignorename)
                     blob.set_content(self.preferred.dfltignores)
@@ -10325,14 +10334,14 @@ default patterns.
                     repo.declare_sequence_mutation(b"ignore creation")
                     newop = FileOp()
                     newop.construct(b"M", 0o100664, ":insert", self.ignorename)
-                    earliest.fileops.append(newop)
+                    earliest.operations().append(newop)
                     repo.renumber()
                     announce(b"initial %s created." % self.ignorename)
             announce(b"%d %s blobs modified." % (changecount, self.ignorename))
         if 'rename' in line:
             changecount = 0
             for (_, event) in repo.iterevents(indices=None, types=(Commit,)):
-                for fileop in event.fileops:
+                for fileop in event.operations():
                     for attr in (b"path", "source", "target"):
                         if hasattr(fileop, attr):
                             oldpath = getattr(fileop, "path")
