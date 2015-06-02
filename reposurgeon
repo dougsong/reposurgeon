@@ -1754,6 +1754,9 @@ class Commit(object):
     def append_operation(self, op):
         "Append to the set of fileops associated with this commit."
         self.fileops.append(op)
+    def prepend_operation(self, op):
+        "Prepend to the set of fileops associated with this commit."
+        self.fileops.insert(0, op)
     def sort_operations(self):
         "Sort fileops the same way git-fast-export does."
         self.fileops.sort(key=FileOp.sortkey)
@@ -4163,7 +4166,7 @@ class StreamParser:
                     if commit.operations() or commit.has_children():
                         fileop = FileOp()
                         fileop.construct(b"deleteall")
-                        commit.operations().insert(0, fileop)
+                        commit.prepend_operation(fileop)
                         self.generated_deletes.append(commit)
                 if parent not in child.parents():
                     child.add_parent(parent)
@@ -5711,7 +5714,7 @@ class Repository:
                     if event_pos == 0 and not event.parents():
                         fileop = FileOp()
                         fileop.construct(b"deleteall")
-                        child.operations().insert(0, fileop)
+                        child.prepend_operation(fileop)
                         child.invalidate_pathset_cache()
                         altered.append(child)
                 # We might be trying to hand the event's fileops to its
@@ -5983,7 +5986,7 @@ class Repository:
             # Prepend a deleteall. Roots have nothing upline to preserve.
             delop = FileOp()
             delop.construct(b"deleteall")
-            graftroot.operations().insert(0, delop)
+            graftroot.prepend_operation(delop)
 
         # Resolve all callouts
         for commit in graft_repo.commits():
