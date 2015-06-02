@@ -1751,6 +1751,9 @@ class Commit(object):
     def set_operations(self, ops):
         "Replace the set of fileops associated with this commit."
         self.fileops = ops
+    def append_operation(self, op):
+        "Append to the set of fileops associated with this commit."
+        self.fileops.append(op)
     def clone(self, repo=None):
         "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
@@ -2595,12 +2598,12 @@ class RepoStreamer:
                                         if oldpath in removed:
                                             op = FileOp()
                                             op.construct(b'R', oldpath, path)
-                                            commit.operations().append(op)
+                                            commit.append_operation(op)
                                             del self.filemap[revision][oldpath]
                                         elif oldpath != path:
                                             op = FileOp()
                                             op.construct(b'C', oldpath, path)
-                                            commit.operations().append(op)
+                                            commit.append_operation(op)
                                         break
                                 else:
                                     op = FileOp()
@@ -2608,7 +2611,7 @@ class RepoStreamer:
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
                                                  path)
-                                    commit.operations().append(op)
+                                    commit.append_operation(op)
                         else:
                             # Content hash doesn't match any existing blobs
                             if debug_enable(DEBUG_EXTRACT):
@@ -2625,12 +2628,12 @@ class RepoStreamer:
                             # Its new fileop is added to the commit
                             op = FileOp()
                             op.construct(b'M', newsig.perms, blobmark, path)
-                            commit.operations().append(op)
+                            commit.append_operation(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
                         op = FileOp()
                         op.construct(b'D', tbd)
-                        commit.operations().append(op)
+                        commit.append_operation(op)
                         del self.filemap[revision][tbd]
                 self.extractor.cleanup(revision, True)
                 if not parents and commit.branch != "refs/heads/master":
@@ -3187,9 +3190,9 @@ class StreamParser:
                                         commit.add_parent(mark)
                                 # Handling of file ops begins.
                                 elif line[0] in (b"C", b"D", b"R"):
-                                    commit.operations().append(FileOp(self.repo.vcs).parse(line))
+                                    commit.append_operation(FileOp(self.repo.vcs).parse(line))
                                 elif line == b"deleteall\n":
-                                    commit.operations().append(FileOp(self.repo.vcs).parse(b"deleteall"))
+                                    commit.append_operation(FileOp(self.repo.vcs).parse(b"deleteall"))
                                 elif line[0] == b"M":
                                     fileop = FileOp(self.repo.vcs).parse(line)
                                     if fileop.ref != 'inline':
@@ -3200,7 +3203,7 @@ class StreamParser:
                                             # submodule link.
                                             if fileop.mode != b"160000":
                                                 self.error(b"ref %s could not be resolved" % fileop.ref)
-                                    commit.operations().append(fileop)
+                                    commit.append_operation(fileop)
                                     if fileop.mode == b"160000":
                                         # This is a submodule link.  The ref
                                         # field is a SHA1 hash and the path
@@ -3213,7 +3216,7 @@ class StreamParser:
                                         self.fi_parse_fileop(fileop)
                                 elif line[0] == b"N":
                                     fileop = FileOp(self.repo.vcs).parse(line)
-                                    commit.operations().append(fileop)
+                                    commit.append_operation(fileop)
                                     self.fi_parse_fileop(fileop)
                                     self.repo.inlines += 1
                                 # Handling of file ops ends.
@@ -5345,7 +5348,7 @@ class Repository:
                             fileop = FileOp()
                             fileop.inline = "Legacy-ID: %s" % event.legacy_id
                             fileop.construct(b'N', b'inline', event.mark)
-                            endcommit.operations().append(fileop)
+                            endcommit.append_operation(fileop)
                     fp.write(str(endcommit))
             except IOError as e:
                 raise Fatal(b"export error: %s" % e)
@@ -9298,7 +9301,7 @@ in the commit's ancestry.
                 fileop.construct(b"M", perms, mark, path)
             elif optype in (b"R", b"C"):
                 fileop.construct(optype, source, target)
-            event.operations().append(fileop)
+            event.append_operation(fileop)
 
     def help_remove(self):
         print(b"""
@@ -9364,7 +9367,7 @@ change in a future release.
             try:
                 removed = event.operations().pop(ind)
                 if target:
-                    self.chosen().events[target].operations().append(removed)
+                    self.chosen().events[target].append_operation(removed)
                 # FIXME: Scavenge blobs left with no references
             except IndexError:
                 complain(b"out-of-range fileop index %s" % ind)
@@ -10334,7 +10337,7 @@ default patterns.
                     repo.declare_sequence_mutation(b"ignore creation")
                     newop = FileOp()
                     newop.construct(b"M", 0o100664, ":insert", self.ignorename)
-                    earliest.operations().append(newop)
+                    earliest.append_operation(newop)
                     repo.renumber()
                     announce(b"initial %s created." % self.ignorename)
             announce(b"%d %s blobs modified." % (changecount, self.ignorename))
