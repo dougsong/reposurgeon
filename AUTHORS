@@ -14,3 +14,6 @@ Daniel Brooks <db48x@db48x.net>
 Chris Lemmons <alficles@gmail.com>
    Solved some problems with inline blobs, improved interoperability with
    Mercurial, wrote the --prune option for graft.
+
+Edward Cree <ec429@cantab.net>
+   Wrote the Hg extractor class and its test.
