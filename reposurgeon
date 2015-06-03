@@ -8471,7 +8471,7 @@ For a list of supported types, invoke the 'prefer' command.
             if parse.redirected:
                 repo = Repository()
                 for option in parse.options:
-                    if option.startswith(b"--format=b"):
+                    if option.startswith(b"--format="):
                         vcs = option.split(b"=")[1]
                         try:
                             infilter = file_filters[vcs][0]
