@@ -4822,6 +4822,7 @@ class Repository:
         self.readtime = time.time()
         self.vcs = None
         self.stronghint = False
+        self.hintlist = []
         self.sourcedir = None
         self.seekstream = None
         self.events = []    # A list of the events encountered, in order
@@ -4863,14 +4864,18 @@ class Repository:
             raise Fatal(b"can't create operating directory")
     def hint(self, name, strong=False):
         "Hint what the source of this repository might be."
-        newvcs = next(vcstype for vcstype in vcstypes if vcstype.name == name)
-        if self.vcs and self.vcs != newvcs and self.stronghint and strong:
-            raise Recoverable("new hint %s conficts with old %s" \
-                              % (newvcs.name, self.vs.name))
+        newhint = not self.hintlist or name not in self.hintlist
+        if newhint and self.stronghint and strong:
+            announce("new hint %s conficts with old %s" \
+                              % (name, self.hintlist[-1]))
+            return False
         if not self.stronghint:
-            self.vcs = newvcs
+            self.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == name)
+            if newhint:
+                self.hintlist.append(name)
+        notify = newhint and not self.stronghint
         self.stronghint = self.stronghint or strong
-        return not self.stronghint
+        return notify
     def size(self):
         "Return the size of this import stream, for statistics display."
         return sum(len(str(e)) for e in self.events)
