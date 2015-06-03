@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.25: 2015-06-03
      Reading hg is now supported through an extractor class, no plugin required.
 
 3.24: 2015-05-31
