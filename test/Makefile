@@ -15,7 +15,8 @@ default:
 	@make -e --quiet all
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
-		git-regress svnload-regress legacy-regress svndump-regress \
+		git-regress hg-regress svnload-regress legacy-regress \
+		svndump-regress \
 		repodiffer-regress
 	@echo "=== No diff output is good news."
 

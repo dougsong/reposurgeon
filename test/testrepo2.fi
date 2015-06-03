@@ -6,6 +6,7 @@ This is a dummy test repository.
 It has no other purpose in life than to be used for making fast-import
 files with which to test reposurgeon and, possibly, other similsr tools.
 
+reset refs/heads/master
 commit refs/heads/master
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1288996926 -0400
