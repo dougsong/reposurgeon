@@ -8725,6 +8725,9 @@ redirection is supported).
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
+        if self.chosen() is None:
+            complain(b"no repo has been chosen.")
+            return
         with RepoSurgeon.LineParse(line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
             while True:
