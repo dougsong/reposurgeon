@@ -8919,7 +8919,7 @@ only.
 With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slighly faster).
 
-With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
+With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
 """)
     def do_filter(self, line):
         if not self.chosen():
