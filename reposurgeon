@@ -9946,9 +9946,9 @@ tips with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form 'tipdelete-<branchname>' rather than
 the default 'emptycommit-<ident>'.
 
-The third option is '--tagify-merges' that makes reposurgeon also tagify merge
-commits that have no fileops.  When this is done the merge link is move to the
-yagified commit's parent.
+The third option is '--tagify-merges' that makes reposurgeon also
+tagify merge commits that have no fileops.  When this is done the
+merge link is moved to the tagified commit's parent.
 """)
     def do_tagify(self, line):
         "Search for empty commits and turn them into tags."
@@ -9956,15 +9956,17 @@ yagified commit's parent.
         if repo is None:
             raise Recoverable(b"no repo has been chosen")
         if self.selection is None:
-            self.selection = self.chosen().all()
+            self.selection = repo.all()
         with RepoSurgeon.LineParse(line) as parse:
             if parse.line:
                 raise Recoverable(b"too many arguments for tagify.")
+            before = len([repo.commits()])
             repo.tagify_empty(
                     commits = self.selection,
                     canonicalize = "--canonicalize" in parse.options,
                     tipdeletes = "--tipdeletes" in parse.options,
                     tagify_merges = "--tagify-merges" in parse.options)
+            announce("%d commits tagified." % (len([repo.commits()]) - before))
 
     def help_merge(self):
         print(b"""
