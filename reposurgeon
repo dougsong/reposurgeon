@@ -6341,7 +6341,8 @@ def rebuild_repo(repo, target, options, preferred):
                 assert tfdesc > -1    # pacify pylint
                 with open(tfname, b"wb") as tp:
                     repo.fast_export(range(len(repo)), tp, options, progress=verbose>0, target=preferred)
-                do_or_die(vcs.exporter % parameters, b"import")
+                parameters[b"tempfile"] = tfname
+                do_or_die(vcs.importer % parameters, b"import")
             finally:
                 os.remove(tfname)
                 os.close(tfdesc)
