@@ -7690,7 +7690,7 @@ into sections of the input stream instead).
                         event.set_content(modified)
                     altered += (content != modified)
                 baton.twirl()
-        announce("%d items modified." % altered)
+        announce("%d items modified by %s." % (altered, prompt.lower()))
 
     def help_selection(self):
         print("""
@@ -8854,9 +8854,9 @@ redirection is supported).
                 changers.append(update)
         if verbose:
             if not changers:
-                announce(b"no events modified.")
+                announce(b"no events modified by mailbox_in.")
             else:
-                announce(b"%d events modified." % len(changers))
+                announce(b"%d events modified by mailbox_in." % len(changers))
         if parse.stdout != sys.stdout:
             if b"--changed" in parse.options:
                 for update in changers:
