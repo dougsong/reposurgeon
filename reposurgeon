@@ -4998,7 +4998,7 @@ class Repository:
         try:
             date = Date(date)
             datematch = lambda t: t == date
-        except Fatal:
+        except (Fatal, ValueError):
             try:
                 date = calendar.timegm(time.strptime(date, b"%Y-%m-%d"))
                 datematch = lambda t: t.timestamp >= date and t.timestamp < date + 24*60*60
@@ -9960,13 +9960,14 @@ merge link is moved to the tagified commit's parent.
         with RepoSurgeon.LineParse(line) as parse:
             if parse.line:
                 raise Recoverable(b"too many arguments for tagify.")
-            before = len([repo.commits()])
+            before = len([c for c in repo.commits()])
             repo.tagify_empty(
                     commits = self.selection,
                     canonicalize = "--canonicalize" in parse.options,
                     tipdeletes = "--tipdeletes" in parse.options,
                     tagify_merges = "--tagify-merges" in parse.options)
-            announce("%d commits tagified." % (len([repo.commits()]) - before))
+            after = len([c for c in repo.commits()])
+            announce("%d commits tagified." % (before - after))
 
     def help_merge(self):
         print(b"""
