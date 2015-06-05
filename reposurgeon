@@ -6213,7 +6213,7 @@ def read_repo(source, options, preferred):
             vcs = possible
             hitcount += 1
     for possible in extractors:
-        if preferred and possible.name != preferred.name:
+        if preferred and possible.name not in [preferred.name, preferred.name + "-extractor"]:
             continue
         subdir = os.path.join(source, possible.subdirectory)
         if os.path.exists(subdir) and os.path.isdir(subdir):
