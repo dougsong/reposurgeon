@@ -7722,7 +7722,7 @@ More ways to construct event sets:
 [foo]      all commits and blobs touching the file named 'foo'.
 [/bar/]    all commits and blobs touching a file matching the regexp 'bar'. Suffix
            flags: a=all fileops must match other selectors, not just any one;
-           c=match aganst checkout paths, DMRCN=match only against given
+           c=match against checkout paths, DMRCN=match only against given
            fileop types (no-op when used with 'c').
 =C         all commits
 =H         all head (branch tip) commits
