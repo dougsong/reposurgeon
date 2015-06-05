@@ -21,6 +21,13 @@ try:
 except ImportError:
     pass
 
+# This import will only work if python-hglib is installed.
+# It is used by the HgExtractor to improve performance.
+try:
+    import hglib
+except ImportError:
+    hglib = None
+
 version="3.25"
 
 #
@@ -739,13 +746,50 @@ class HgExtractor(Extractor):
     visible = True
     properties = False
     ignorename = ".hgignore"
+    def __init__(self):
+        super(HgExtractor, self).__init__()
+        self.hgclient = None
+    class _hg_or_die:
+        def __init__(self, client, *cmdline):
+            self.client = client
+            self.cmdline = cmdline
+            if self.cmdline[0] == b"hg":
+                self.cmdline.pop(0)
+            self.fp = hglib.util.BytesIO(self.client.rawcommand(self.cmdline))
+        def __enter__(self):
+            return self.fp
+        def __exit__(self, extype, value, traceback_unused):
+            if extype:
+                if verbose:
+                    complain(b"fatal exception in _hg_or_die.")
+            if self.fp.close() is not None and not extype:
+                raise Fatal(b"%s returned error." % (self.cmdline,))
+            return False
+    def hg_or_die(self, *cmdline):
+        if hglib is not None and self.hgclient is not None:
+            return self._hg_or_die(self.hgclient, *cmdline)
+        else:
+            # We know this quoting is sufficient, because the only variables
+            # we ever pass into this function are revision IDs, which are
+            # shell-safe.  It'd be nice to use pipes.quote or shlex.quote, but
+            # pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
+            # until 3.3.
+            return popen_or_die(b"hg "+b" ".join([b"'%s'"%(s,) for s in cmdline]))
+    def hg_capture(self, *cmdline):
+        with self.hg_or_die(*cmdline) as fp:
+            output = fp.read()
+        return output
+    def analyze(self, baton):
+        if hglib is not None:
+            self.hgclient = hglib.open(os.curdir)
+        super(HgExtractor, self).analyze(baton)
     def find_revision_ids(self, baton):
         "Get the topologically-ordered list of revisions and parents"
         assert baton is not None # pacify pylint
         # hg changesets can only have up to two parents
         # we have to use short (12-nibble) hashes because that's all "hg tags"
         # and "hg branches" give us.  Hg's CLI is rubbish
-        with popen_or_die(b"hg log -T '{node|short} {p1node|short} {p2node|short}\\n'") as fp:
+        with self.hg_or_die(b"log", b"-T", b"{node|short} {p1node|short} {p2node|short}\\n") as fp:
             for line in fp:
                 fields = line.strip().split()
                 self.revlist.append(fields[0])
@@ -756,7 +800,7 @@ class HgExtractor(Extractor):
     def find_commit_data(self, baton):
         "Get all other per-commit data except branch IDs"
         assert baton is not None # pacify pylint
-        with popen_or_die(b"hg log -T '{node|short}|{author} {date|rfc822date}\\n'") as fp:
+        with self.hg_or_die(b"log", b"-T", b"{node|short}|{author} {date|rfc822date}\\n") as fp:
             for line in fp:
                 (h, ci) = line.strip().split(b'|')
                 # Because hg doesn't store separate author and committer info,
@@ -768,14 +812,14 @@ class HgExtractor(Extractor):
         # both branches and tags output "name      num:hash" lines
         # branches may also append " (inactive)"
         ref_re = re.compile(r'(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?')
-        with popen_or_die(b"hg branches") as fp:
+        with self.hg_or_die(b"branches") as fp:
             for line in fp:
                 m = ref_re.match(line)
                 if m is None:
                     raise Recoverable(b"Unreadable 'hg branches' line: %r" % line)
                 n, h = m.groups()
                 self.refs['refs/heads/%s'%n] = h
-        with popen_or_die(b"hg tags") as fp:
+        with self.hg_or_die(b"tags") as fp:
             for line in fp:
                 m = ref_re.match(line)
                 if m is None:
@@ -790,7 +834,7 @@ class HgExtractor(Extractor):
         # later, not the extractor now.
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
-        capture(b"hg update -C tip")
+        self.hg_capture(b"update", b"-C", b"tip")
         if not "refs/heads/master" in repo.branchset():
             for event in repo:
                 if isinstance(event, Commit):
@@ -799,18 +843,22 @@ class HgExtractor(Extractor):
                 elif isinstance(event, Reset):
                     if event.ref == "refs/heads/default":
                         event.ref = "refs/heads/master"
+        if self.hgclient is not None:
+            # make sure we don't pick it up again later, since the cwd may change
+            self.hgclient.close()
+            self.hgclient = None
     def isclean(self):
         "Return True if repo has no unsaved changes."
-        return not capture(b"hg status --modified")
+        return not self.hg_capture(b"status", b"--modified")
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return a manifest."
         assert filemap is not None # pacify pylint
-        capture(b"hg update -C %s" % rev)
-        manifest = capture(b"hg manifest").split()
+        self.hg_capture(b"update", b"-C", rev)
+        manifest = self.hg_capture(b"manifest").split()
         return manifest
     def get_comment(self, rev):
         "Return a commit's change comment as a string."
-        return capture(b"hg log -r %s -T '{desc}\\n'" % rev)
+        return self.hg_capture(b"log", b"-r", rev, b"-T", b"{desc}\\n")
 
 # More extractors go here
 
