@@ -1333,6 +1333,15 @@ behavior may change in a future release.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>blob</command>
+</term>
+<listitem>
+<para>Create a blob at mark :1 after renumbering other marks starting from
+:2.  Data is taken from stdin, which may be a here-doc.  This can be
+used with the add command to patch synthetic data into a repository.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>renumber</command>
 </term>
 <listitem>

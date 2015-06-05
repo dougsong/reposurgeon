@@ -5390,8 +5390,11 @@ class Repository:
         except OSError as e:
             raise Fatal(b"repo rename %s -> %s failed: %s"
                                        % (self.subdir(), self.subdir(newname), e))
-    def addEvent(self, event):
-        self.events.append(event)
+    def addEvent(self, event, where=None):
+        if where is not None:
+            self.events.insert(where, event)
+        else:
+            self.events.append(event)
         self.declare_sequence_mutation()
     @memoized_iterator(b"_commits")
     def commits(self):
@@ -9283,7 +9286,7 @@ in the commit's ancestry.
             try:
                 markval = int(mark[1:])
             except ValueError:
-                raise Recoverable(b"garbled mark %s in add command" % mark)
+                raise Recoverable(b"non-numeric mark %s in add command" % mark)
             if not isinstance(repo.objfind(mark), Blob):
                 raise Recoverable(b"mark %s in add command does not refer to a blob")
             elif markval >= min(self.selection):
@@ -9317,6 +9320,28 @@ in the commit's ancestry.
             elif optype in (b"R", b"C"):
                 fileop.construct(optype, source, target)
             event.append_operation(fileop)
+
+    def help_blob(self):
+        print(b"""
+Syntax:
+
+     blob
+
+Create a blob at mark :1 after renumbering other marks starting from
+:2.  Data is taken from stdin, which may be a here-doc.  This can be
+used with the add command to patch data into a repository.
+""")
+    def do_blob(self, line):
+        "Add a fileop to a specified commit."
+        if not self.chosen():
+            complain(b"no repo is loaded")
+            return
+        self.chosen().renumber(2)
+        blob = Blob(self.chosen())
+        blob.set_mark(":1")
+        self.chosen().addEvent(blob, where=0)
+        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            blob.set_content(parse.stdin.read())
 
     def help_remove(self):
         print(b"""

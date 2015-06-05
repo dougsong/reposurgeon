@@ -1,5 +1,6 @@
 read <tagify.fi
 tagify
+reposurgeon: 1 commits tagified.
 write -
 blob
 mark :1
@@ -86,6 +87,7 @@ Third revision, without fileops.
 
 
 1..:6 tagify --tipdeletes
+reposurgeon: 0 commits tagified.
 write -
 blob
 mark :1
@@ -172,6 +174,7 @@ Third revision, without fileops.
 
 
 1..$ tagify --tipdeletes
+reposurgeon: 1 commits tagified.
 write -
 blob
 mark :1
@@ -257,6 +260,7 @@ Sixth revision.
 
 
 tagify --canonicalize --tipdeletes
+reposurgeon: 1 commits tagified.
 write -
 blob
 mark :1
@@ -341,6 +345,7 @@ Fourth revision, with a fileop doing nothing.
 
 
 tagify --tagify-merges
+reposurgeon: 1 commits tagified.
 write -
 blob
 mark :1

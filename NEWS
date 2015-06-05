@@ -2,6 +2,7 @@
 
 3.25: 2015-06-03
      Reading hg is now supported through an extractor class, no plugin required.
+     Now 'blob' command allows creating new content from lift scripts.
 
 3.24: 2015-05-31
      Fix repository-type detection bug introduced in 3.23.
