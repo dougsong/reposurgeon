@@ -246,8 +246,10 @@ bzr-orphans
         cookies=(VCS.bare_numeric, r"\b[0-9a-f]{40}\b"),
         project=b"http://mercurial.selenic.com/",
         notes=b"""The hg fastimport method is not part of stock Mercurial.
+
 If there is no branch named 'master' in a repo when it is read, the hg 'default'
 branch is renamed to 'master'.
+
 The extractor for the 'read' command will be much faster if the 'hglib' Python
 library is installed.  See <https://mercurial.selenic.com/wiki/PythonHglib>.
 """),
