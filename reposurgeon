@@ -6913,16 +6913,20 @@ into sections of the input stream instead).
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
             # Output redirection
-            m = re.search(r">\S+", self.line)
+            m = re.search(r">>?\S+", self.line)
             if m:
                 if "stdout" not in self.capabilities:
                     raise Recoverable(b"no support for > redirection")
-                self.outfile = m.group(0)[1:]
+                self.outfile = m.group(0)[m.group(0).count('>'):]
                 if self.outfile and self.outfile != b'-':
                     if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable(b"not a plain file")
                     try:
-                        self.stdout = open(self.outfile, b"wb")
+                        if m.group(0).count('>') > 1:
+                            mode = b"ab"
+                        else:
+                            mode = b"wb"
+                        self.stdout = open(self.outfile, mode)
                         self.closem.append(self.stdout)
                     except (IOError, OSError):
                         raise Recoverable(b"can't open %s for write" \

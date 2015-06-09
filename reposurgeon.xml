@@ -875,7 +875,8 @@ repository.</para>
 <para>The output of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
 output filename with <quote>&gt;</quote> and give it as a following
-argument.</para>
+argument.  If you use <quote>&gt;&gt;</quote> the file is opened
+for append rather than write.</para>
 
 <variablelist>
 <varlistentry>
