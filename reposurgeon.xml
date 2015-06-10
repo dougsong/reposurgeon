@@ -3091,20 +3091,19 @@ syntax; notably, this is true of
 <citerefentry><refentrytitle>cvs-fast-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 The remainde of this section describes thes syntax extensions.</para>
 
-<para>The token <quote>reposurgeon</quote> at the start of a line in a
-fast-import stream signals <application>reposurgeon</application> that the
-remainder is an extension command to be interpreted by
-<quote>reposurgeon</quote> rather than describing repository
-structure.</para>
+<para>The token <quote>reposurgeon</quote> at the start of a comment
+line in a fast-import stream signals
+<application>reposurgeon</application> that the remainder is an
+extension command to be interpreted by <quote>reposurgeon</quote>.</para>
 
 <para>One such extension command is implemented:
-<command>sourcetype</command>, which behaves identically to the
+<command>#sourcetype</command>, which behaves identically to the
 <application>reposurgeon</application> <command>sourcetype</command>
 command. An exporter for a version-control system named
 <quote>frobozz</quote> could, for example, say
 
 <programlisting>
-reposurgeon sourcetype frobozz
+#reposurgeon sourcetype frobozz
 </programlisting>
 </para>
 
