@@ -1,4 +1,5 @@
 reposurgeon: branchify nontrunk nontrunkbranch
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -20,8 +21,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/nontrunk
+#legacy-id 1
 mark :2
 committer esr <esr> 1352756454 +0000
 data 25
@@ -34,8 +35,8 @@ data 103
 The purpose of this test repo is to check what happens in conversion when
 a branchy repo has no trunk.
 
-# Legacy-ID: 2
 commit refs/heads/nontrunk
+#legacy-id 2
 mark :4
 committer esr <esr> 1352756560 +0000
 data 40
@@ -43,8 +44,8 @@ This follows "svn add nontrunk/README".
 from :2
 M 100644 :3 README
 
-# Legacy-ID: 3
 commit refs/heads/nontrunkbranch
+#legacy-id 3
 mark :5
 committer esr <esr> 1352757484 +0000
 data 46
@@ -60,8 +61,8 @@ a branchy repo has no trunk.
 
 This is a random modification on the branch side.
 
-# Legacy-ID: 4
 commit refs/heads/nontrunkbranch
+#legacy-id 4
 mark :7
 committer esr <esr> 1352757592 +0000
 data 42

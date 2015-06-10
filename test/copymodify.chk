@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -23,8 +24,8 @@ blob
 mark :2
 data 0
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :3
 committer frnchfrgg <frnchfrgg> 1360157203 +0000
 data 26
@@ -37,8 +38,8 @@ mark :4
 data 10
 abcdefghi
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :5
 committer frnchfrgg <frnchfrgg> 1360157263 +0000
 data 28
@@ -47,8 +48,8 @@ Create trunk/y/a this time
 from :3
 M 100644 :4 y/a
 
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :6
 committer frnchfrgg <frnchfrgg> 1360157263 +0000
 data 24
@@ -57,8 +58,8 @@ Delete the recent file
 from :5
 D y/a
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :7
 committer frnchfrgg <frnchfrgg> 1360157278 +0000
 data 46
@@ -67,8 +68,8 @@ Take trunk/y/a from trunk/x/a then modify it
 from :6
 M 100644 :2 y/a
 
-# Legacy-ID: 5
 commit refs/heads/master
+#legacy-id 5
 mark :8
 committer frnchfrgg <frnchfrgg> 1360157278 +0000
 data 22

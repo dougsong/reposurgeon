@@ -1,9 +1,10 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 1
 ÿ
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer david <david> 1387907240 +0000
 data 18

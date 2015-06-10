@@ -1,11 +1,12 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 112
 This repository is branchless.  It includes ignore property sets...
 
 ...which should turn into .gitignore files.
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1322694387 +0000
 data 33
@@ -17,8 +18,8 @@ mark :3
 data 7
 /*.pyc
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1322694494 +0000
 data 47
@@ -31,8 +32,8 @@ mark :5
 data 49
 Now we modify the README just as a placeholder.
  
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :6
 committer esr <esr> 1322694572 +0000
 data 29
@@ -40,8 +41,8 @@ Modify the one visible file.
 from :4
 M 100644 :5 README
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :7
 committer esr <esr> 1322694685 +0000
 data 103
@@ -58,8 +59,8 @@ Put another change here just so we have a commit after the property delete.
 
  
 
-# Legacy-ID: 5
 commit refs/heads/master
+#legacy-id 5
 mark :9
 committer esr <esr> 1322694737 +0000
 data 12

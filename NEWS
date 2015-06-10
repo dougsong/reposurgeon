@@ -3,6 +3,8 @@
 Repository head:
      Output redirect with '>>' appends to the output file.
      The strip blob command can take a selection set.
+     Repo source type is now kept inline in stream files and emitted on write.
+     Legacy IDs are now kept inline in stream files and emitted on write.
 
 3.25: 2015-06-03
      Reading hg is now supported through an extractor class, no plugin required.

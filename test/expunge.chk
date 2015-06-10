@@ -4,7 +4,7 @@ quiet on
 read --nobranch <expunge.svn
 * expunge
 1..$ expunge /^releases\/v1.0\/.*/
-reposurgeon: at 6, expunging M releases/v1.0/VERSION
+reposurgeon: at 7, expunging M releases/v1.0/VERSION
 choose
 * expunge
 - expunge-expunges

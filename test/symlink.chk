@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 0
@@ -6,8 +7,8 @@ blob
 mark :2
 data 4
 file
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :3
 committer esr <esr> 1383839390 +0000
 data 28

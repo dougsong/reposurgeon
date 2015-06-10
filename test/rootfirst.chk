@@ -1,10 +1,11 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 38
 Revision is 1, file path is wads.tex.
 
-# Legacy-ID: 1
 commit refs/heads/root
+#legacy-id 1
 mark :2
 committer david <david> 1297810770 +0000
 data 37
@@ -32,8 +33,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 2
 commit refs/heads/figures
+#legacy-id 2
 mark :4
 committer klein <klein> 1310433824 +0000
 data 8

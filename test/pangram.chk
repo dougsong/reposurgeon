@@ -1,10 +1,11 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 46
 The quick brown fox jumped over the lazy dog.
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1383884810 +0000
 data 32

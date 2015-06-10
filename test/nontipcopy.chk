@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1322088070 +0000
 data 21
@@ -36,8 +37,8 @@ It has no other actual purpose than to exercise repostreamer.
 It is normally formed, with trunk and branches and tags directories
 at the top level.  Initially, the only content is this README.
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1322088164 +0000
 data 21
@@ -56,8 +57,8 @@ at the top level.  Initially, the only content is this README.
 
 Now we do ur first modification.
 
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :6
 committer esr <esr> 1322088260 +0000
 data 32
@@ -76,8 +77,8 @@ at the top level.  Initially, the only content is this README.
 
 Now we do our first modification.
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :8
 committer esr <esr> 1322088662 +0000
 data 24
@@ -90,8 +91,8 @@ mark :9
 data 74
 This file only exists so repostreamer won't process this branch as a tag.
 
-# Legacy-ID: 7
 commit refs/heads/sample-branch
+#legacy-id 7
 mark :10
 committer esr <esr> 1322509428 +0000
 data 48
@@ -111,8 +112,8 @@ at the top level.  Initially, the only content is this README.
 Now we do our first modification.
 And our second content modification.
 
-# Legacy-ID: 8
 commit refs/heads/master
+#legacy-id 8
 mark :12
 committer esr <esr> 1322533305 +0000
 data 66
@@ -143,8 +144,8 @@ data 293
 # The contents of the svn:ignoreproperty on the branch root.
 /*.pyc
 
-# Legacy-ID: 9
 commit refs/heads/master
+#legacy-id 9
 mark :14
 committer esr <esr> 1322533492 +0000
 data 43

@@ -1975,7 +1975,7 @@ class Commit(object):
         if b"Legacy-ID" in msg:
             if msg[b"Legacy-ID"] != self.legacy_id:
                 modified = True
-                msg[b"Legacy-ID"] = self.legacy_id
+                self.legacy_id = msg[b"Legacy-ID"]
         newprops = collections.OrderedDict()
         for prophdr in msg.keys():
             if not prophdr.startswith(b"Property-"): continue
@@ -2310,9 +2310,9 @@ class Commit(object):
                     incremental = True
         if incremental:
             parts.append(b"reset %s^0\n\n" % self.branch)
-        if self.legacy_id:
-            parts.append(b"# Legacy-ID: %s\n" % self.legacy_id)
         parts.append(b"commit %s\n" % self.branch)
+        if self.legacy_id:
+            parts.append(b"#legacy-id %s\n" % self.legacy_id)
         if realized is not None:
             realized[self.branch] = True
         if self.mark:
@@ -2599,6 +2599,8 @@ class RepoStreamer:
             raise Recoverable(b"directory %s has unsaved changes." % os.getcwd())
         repo.makedir()
         with Baton(prompt=b"Extracting", enable=progress) as self.baton:
+            repo.addEvent(Passthrough("#reposurgeon sourcetype %s\n" \
+                                      % self.extractor.vcstype.name))
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
             #saved_umask = os.umask(0)
@@ -3197,6 +3199,14 @@ class StreamParser:
                                 line = self.fi_readline()
                                 if not line:
                                     break
+                                elif line.startswith(b"#legacy-id"):
+                                    # reposurgeon extension, expected to
+                                    # be immediately after "commit" if present
+                                    commit.legacy_id = line.split()[1]
+                                    if self.repo.vcs:
+                                        self.repo.legacy_map[self.repo.vcs.name.upper() + ":" + commit.legacy_id] = commit
+                                    else:
+                                        self.repo.legacy_map[commit.legacy_id] = commit
                                 elif line.startswith(b"mark"):
                                     commit.set_mark(line[5:].strip())
                                 elif line.startswith(b"author"):
@@ -3236,13 +3246,6 @@ class StreamParser:
                                             for line in value.split(b'\n'):
                                                 if line:
                                                     self.repo.legacy_map["CVS:"+line] = commit
-                                        # Handle legacy IDs.
-                                        if name == "legacy-id" and value:
-                                            commit.legacy_id = value
-                                            if self.repo.vcs:
-                                                self.repo.legacy_map[self.repo.vcs.name.upper() + ":" + value] = commit
-                                            else:
-                                                self.repo.legacy_map[value] = commit
                                 elif line.startswith(b"data"):
                                     commit.comment = self.fi_read_data(line)[0]
                                     if global_options[b"canonicalize"]:
@@ -3391,6 +3394,7 @@ class StreamParser:
                     % (path, self.branches.keys()))
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
+        self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce(b"Pass 1")
@@ -5395,31 +5399,15 @@ class Repository:
             selection.sort()
         with Baton(b"reposurgeon: exporting", enable=progress) as baton:
             try:
-                legacy_latch = False
                 realized = {}
                 selection_marks = [self.events[i].mark for i in selection if hasattr(self.events[i], b"mark")]
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
-                    #legacy_latch = legacy_latch or hasattr(event, b"legacy_id")
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, b"mark"):
                             announce(b"writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(event.dump(target, options=options, realized=realized, internals=selection_marks))
-                if legacy_latch:
-                    fp.write(b"reset legacy_id\n")
-                    endcommit = Commit(self)
-                    endcommit.set_branch(b"refs/heads/master")
-                    endcommit.comment = b"Legacy-ID notes\n"
-                    endcommit.committer = Attribution(b"Nowhere Man <nowhere@nobody.net> " + rfc3339(time.time()))
-                    for ei in selection:
-                        event = self.events[ei]
-                        if hasattr(event, b"legacy_id"):
-                            fileop = FileOp(self)
-                            fileop.inline = "Legacy-ID: %s" % event.legacy_id
-                            fileop.construct(b'N', b'inline', event.mark)
-                            endcommit.append_operation(fileop)
-                    fp.write(str(endcommit))
             except IOError as e:
                 raise Fatal(b"export error: %s" % e)
     def preserve(self, filename):

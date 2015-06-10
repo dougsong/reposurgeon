@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1322682380 +0000
 data 65
@@ -32,8 +33,8 @@ mark :3
 data 60
 This is the trunk version of README, without modifications.
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1322682431 +0000
 data 38
@@ -46,8 +47,8 @@ mark :5
 data 73
 This is the trunk version of README, with an illustrative modifications.
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :6
 committer esr <esr> 1322682994 +0000
 data 24
@@ -60,8 +61,8 @@ mark :7
 data 71
 This is the branch version of README, after we've actually changed it.
 
-# Legacy-ID: 5
 commit refs/heads/samplebranch
+#legacy-id 5
 mark :8
 committer esr <esr> 1322683160 +0000
 data 39
@@ -75,8 +76,8 @@ data 61
 This is the trunk version of README, with its typo removed.
 
 
-# Legacy-ID: 6
 commit refs/heads/master
+#legacy-id 6
 mark :10
 committer esr <esr> 1322683251 +0000
 data 23
@@ -91,8 +92,8 @@ This is the branch version of README, after we've actually changed it.
 
 Second modification to the README.
 
-# Legacy-ID: 7
 commit refs/heads/samplebranch
+#legacy-id 7
 mark :12
 committer esr <esr> 1322691357 +0000
 data 40

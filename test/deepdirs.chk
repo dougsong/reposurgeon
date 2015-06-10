@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1324128964 +0000
 data 18
@@ -32,8 +33,8 @@ mark :3
 data 37
 This is a test Subversion repository
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1324128964 +0000
 data 24
@@ -56,8 +57,8 @@ mark :7
 data 51
 This is the example child2 from the foo directory.
 
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :8
 committer esr <esr> 1324129126 +0000
 data 78
@@ -72,8 +73,8 @@ mark :9
 data 17
 Modified README.
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :10
 committer esr <esr> 1324129213 +0000
 data 77
@@ -81,8 +82,8 @@ Put some distance between the directory creation and the copy we'll do next.
 from :8
 M 100644 :9 README
 
-# Legacy-ID: 5
 commit refs/heads/foocopy
+#legacy-id 5
 mark :11
 committer esr <esr> 1324319862 +0000
 data 148
@@ -105,8 +106,8 @@ mark :12
 data 23
 Twice-modified README.
 
-# Legacy-ID: 6
 commit refs/heads/master
+#legacy-id 6
 mark :13
 committer esr <esr> 1324319931 +0000
 data 23
@@ -114,8 +115,8 @@ Another spacer commit.
 from :10
 M 100644 :12 README
 
-# Legacy-ID: 7
 commit refs/heads/master
+#legacy-id 7
 mark :14
 committer esr <esr> 1324320054 +0000
 data 136
@@ -132,8 +133,8 @@ mark :15
 data 24
 Thrice-modified README.
 
-# Legacy-ID: 8
 commit refs/heads/master
+#legacy-id 8
 mark :16
 committer esr <esr> 1324320090 +0000
 data 27
@@ -141,8 +142,8 @@ Yet another spacer commit.
 from :14
 M 100644 :15 README
 
-# Legacy-ID: 9
 commit refs/heads/master
+#legacy-id 9
 mark :17
 committer esr <esr> 1324320228 +0000
 data 174

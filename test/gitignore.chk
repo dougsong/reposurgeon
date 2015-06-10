@@ -1,4 +1,5 @@
 reposurgeon: r4~trunk/.gitignore: user-created .gitignore ignored.
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -20,8 +21,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer chungy <chungy> 1391603574 +0000
 data 27
@@ -36,8 +37,8 @@ reposurgeon handles ignores and the case of pre-existing .gitignore
 files in a Subversion repository. This is not an uncommon case with
 git-svn users operating with a repository.
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer chungy <chungy> 1391603626 +0000
 data 42
@@ -68,8 +69,8 @@ data 294
 # The contents of the svn:ignoreproperty on the branch root.
 /*.html
 
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :6
 committer chungy <chungy> 1391603677 +0000
 data 14
@@ -77,8 +78,8 @@ Ignore *.html
 from :4
 M 100644 :5 .gitignore
 
-# Legacy-ID: 5
 commit refs/heads/cool-feature
+#legacy-id 5
 mark :7
 committer chungy <chungy> 1391603866 +0000
 data 125
@@ -104,8 +105,8 @@ svn:ignore: in fact, this should be general enough to handle the case
 of from-any-VCS to-any-target-VCS, but Subversion->Git is being used
 as the example here.
 
-# Legacy-ID: 6
 commit refs/heads/cool-feature
+#legacy-id 6
 mark :9
 committer chungy <chungy> 1391603993 +0000
 data 44
@@ -113,8 +114,8 @@ Explain what the expected result should be.
 from :7
 M 100644 :8 README
 
-# Legacy-ID: 7
 commit refs/heads/master
+#legacy-id 7
 mark :10
 committer chungy <chungy> 1391604041 +0000
 data 33
@@ -143,8 +144,8 @@ include the default svn:ignore properties, *.html, and *.txt. *.html
 coming from svn:ignore and *.txt coming from the stored-in-svn
 .gitignore
 
-# Legacy-ID: 8
 commit refs/heads/master
+#legacy-id 8
 mark :12
 committer chungy <chungy> 1391604109 +0000
 data 35

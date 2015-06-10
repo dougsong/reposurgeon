@@ -3089,9 +3089,11 @@ extended syntax. Exporters designed to work with <quote>reposurgeon</quote>
 may have a --reposurgeon option that enables emission of extended
 syntax; notably, this is true of
 <citerefentry><refentrytitle>cvs-fast-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
-The remainde of this section describes thes syntax extensions.</para>
+The remainder of this section describes these syntax extensions.  The
+properties they set are (usually) preserved and re-output when the stream file
+is written.</para>
 
-<para>The token <quote>reposurgeon</quote> at the start of a comment
+<para>The token <quote>#reposurgeon</quote> at the start of a comment
 line in a fast-import stream signals
 <application>reposurgeon</application> that the remainder is an
 extension command to be interpreted by <quote>reposurgeon</quote>.</para>
@@ -3107,8 +3109,12 @@ command. An exporter for a version-control system named
 </programlisting>
 </para>
 
+<para>Within a commit, a magic comment of the form
+<quote>#legacy-id</quote> declares a legacy ID from the stream file's
+source version-control system.</para>
+
 <para>Also accepted is the bzr syntax for setting per-commit
-properties.  While parsing commit syntax, a line beginning with the
+properties. While parsing commit syntax, a line beginning with the
 token <quote>property</quote> must contibue with a
 whitespace-separated property-name token. If it is then followed by a
 newline it is taken to set that boolean-valued property to true. Otherwise
@@ -3127,6 +3133,10 @@ property legacy-id 2 r1
 M 644 inline README
 </programlisting>
 </para>
+
+<para>Unlike other extensions, bzr properties are only preserved on
+stream output if the preferred type is bzr, because any importer other
+than bzr's will choke on them.</para>
 
 </refsect1>
 

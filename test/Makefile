@@ -113,7 +113,7 @@ git-regress:
 	@echo "=== Testing git-extractor:"
 	@for test in $(GITLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
-	    ./fi-to-fi) <$${test}.fi | sed '/# Legacy-ID:/d' >/tmp/regress; \
+	    ./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
 	    then diff --text -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
@@ -125,7 +125,7 @@ hg-regress:
 	@echo "=== Testing hg-extractor:"
 	@for test in $(HGLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
-	    ./hg-to-fi) <$${test}.fi | sed '/# Legacy-ID:/d' >/tmp/regress; \
+	    ./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
 	    then diff --text -u $${test}.fi /tmp/regress; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done

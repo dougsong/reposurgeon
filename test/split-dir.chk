@@ -5,9 +5,9 @@ quiet on
 read --nobranch <split-dir.svn
 * split-dir
 :2 split in bar
-Event 2 =================================================================
-# Legacy-ID: 2
+Event 3 =================================================================
 commit refs/heads/master
+#legacy-id 2
 mark :2
 committer brooksd <brooksd> 1353813663 +0000
 data 33
@@ -18,9 +18,9 @@ M 100644 :1 foo/src
 :5 split in zed
 reposurgeon: couldn't find 'zed' in a fileop path.
 :5 split in f
-Event 6 =================================================================
-# Legacy-ID: 4
+Event 7 =================================================================
 commit refs/heads/master
+#legacy-id 4
 mark :5
 committer brooksd <brooksd> 1353813667 +0000
 data 27
@@ -31,14 +31,16 @@ M 100644 :3 baz2/src
 
 inspect
 Event 1 =================================================================
+#reposurgeon sourcetype svn
+Event 2 =================================================================
 blob
 mark :1
 data 2
 a
 
-Event 2 =================================================================
-# Legacy-ID: 2
+Event 3 =================================================================
 commit refs/heads/master
+#legacy-id 2
 mark :2
 committer brooksd <brooksd> 1353813663 +0000
 data 33
@@ -46,9 +48,9 @@ add a new file in each directory
 M 100644 :1 baz/src
 M 100644 :1 foo/src
 
-Event 3 =================================================================
-# Legacy-ID: 2
+Event 4 =================================================================
 commit refs/heads/master
+#legacy-id 2
 mark :2.1
 committer brooksd <brooksd> 1353813663 +0000
 data 33
@@ -56,16 +58,16 @@ add a new file in each directory
 from :2
 M 100644 :1 bar/src
 
-Event 4 =================================================================
+Event 5 =================================================================
 blob
 mark :3
 data 4
 a
 b
 
-Event 5 =================================================================
-# Legacy-ID: 3
+Event 6 =================================================================
 commit refs/heads/master
+#legacy-id 3
 mark :4
 committer brooksd <brooksd> 1353813665 +0000
 data 34
@@ -75,9 +77,9 @@ M 100644 :3 bar/src
 M 100644 :3 baz/src
 M 100644 :3 foo/src
 
-Event 6 =================================================================
-# Legacy-ID: 4
+Event 7 =================================================================
 commit refs/heads/master
+#legacy-id 4
 mark :5
 committer brooksd <brooksd> 1353813667 +0000
 data 27
@@ -86,9 +88,9 @@ from :4
 M 100644 :3 bar2/src
 M 100644 :3 baz2/src
 
-Event 7 =================================================================
-# Legacy-ID: 4
+Event 8 =================================================================
 commit refs/heads/master
+#legacy-id 4
 mark :5.1
 committer brooksd <brooksd> 1353813667 +0000
 data 27
@@ -96,7 +98,7 @@ copy the three directories
 from :5
 M 100644 :3 foo2/src
 
-Event 8 =================================================================
+Event 9 =================================================================
 tag root
 from :2
 tagger brooksd <brooksd> 1353813660 +0000

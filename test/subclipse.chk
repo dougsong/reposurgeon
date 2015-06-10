@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer khan <khan> 1354595761 +0000
 data 18
@@ -32,8 +33,8 @@ mark :3
 data 12
 Hello world
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer khan <khan> 1354595761 +0000
 data 8

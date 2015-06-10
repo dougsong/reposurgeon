@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1323741971 +0000
 data 18
@@ -32,8 +33,8 @@ mark :3
 data 37
 This is a test Subversion repository
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1323741972 +0000
 data 24
@@ -47,8 +48,8 @@ data 80
 This is a placeholder.  We want a commit between the copies we're 
 going to do.
 
-# Legacy-ID: 4
 commit refs/heads/testbranch
+#legacy-id 4
 mark :6
 committer esr <esr> 1323742474 +0000
 data 20
@@ -61,8 +62,8 @@ mark :7
 data 55
 After creating this, we'll copy it to the test branch.
 
-# Legacy-ID: 5
 commit refs/heads/master
+#legacy-id 5
 mark :8
 committer esr <esr> 1323742614 +0000
 data 62
@@ -70,8 +71,8 @@ This will be our source for the file copy to the test branch.
 from :4
 M 100644 :7 copysource
 
-# Legacy-ID: 6
 commit refs/heads/testbranch
+#legacy-id 6
 mark :9
 committer esr <esr> 1323742713 +0000
 data 147
@@ -86,8 +87,8 @@ mark :10
 data 46
 A random modification for the file copy test.
 
-# Legacy-ID: 7
 commit refs/heads/testbranch
+#legacy-id 7
 mark :11
 committer esr <esr> 1323742854 +0000
 data 37

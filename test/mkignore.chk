@@ -1,3 +1,4 @@
+#reposurgeon sourcetype svn
 blob
 mark :1
 data 225
@@ -19,8 +20,8 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-# Legacy-ID: 1
 commit refs/heads/master
+#legacy-id 1
 mark :2
 committer esr <esr> 1352221383 +0000
 data 18
@@ -32,8 +33,8 @@ mark :3
 data 37
 This is a test Subversion repository
 
-# Legacy-ID: 2
 commit refs/heads/master
+#legacy-id 2
 mark :4
 committer esr <esr> 1352221384 +0000
 data 24
@@ -50,8 +51,8 @@ generated when a directory is created at the same time as its
 svn:ignore property is set."
 
 
-# Legacy-ID: 3
 commit refs/heads/master
+#legacy-id 3
 mark :6
 committer esr <esr> 1352221483 +0000
 data 33
@@ -64,8 +65,8 @@ mark :7
 data 7
 /*.pyc
 
-# Legacy-ID: 4
 commit refs/heads/master
+#legacy-id 4
 mark :8
 committer esr <esr> 1352221597 +0000
 data 138
@@ -86,8 +87,8 @@ svn:ignore property is set."
 
 Add another commit so we can see if the .gitignore gets created.
 
-# Legacy-ID: 5
 commit refs/heads/master
+#legacy-id 5
 mark :10
 committer esr <esr> 1352221642 +0000
 data 65
