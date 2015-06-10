@@ -10411,69 +10411,73 @@ default patterns.
             self.ignorename = self.preferred.ignorename
         if not self.preferred:
             raise Recoverable(b"preferred repository type has not been set")
+        if not self.ignorename:
+            raise Recoverable(b"preferred repository type has no declared ignorename")
         def isignore(blob):
-            return len(blob.pathlist) == 1 \
-                       and blob.pathlist[0].endswith(self.ignorename)
-        if 'defaults' in line:
-            if "import-defaults" in self.preferred.styleflags:
-                raise Recoverable(b"importer already set default ignores")
-            elif not self.preferred.dfltignores:
-                raise Recoverable(b"no default ignores in %s" % self.preferred.name)
-            else:
+            return len(blob.pathlist) \
+                       and all(x.endswith(self.ignorename) for x in blob.pathlist)
+        for verb in line.split():
+            if verb == 'defaults':
+                if "import-defaults" in self.preferred.styleflags:
+                    raise Recoverable(b"importer already set default ignores")
+                elif not self.preferred.dfltignores:
+                    raise Recoverable(b"no default ignores in %s" % self.preferred.name)
+                else:
+                    changecount = 0
+                    # Modify existing ignore files
+                    for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
+                        if isignore(blob):
+                            blob.set_content(self.preferred.dfltignores \
+                                         + blob.get_content())
+                            changecount += 1
+                    # Create an early ignore file if required.
+                    # Don't move this before the modification pass!
+                    earliest = repo.earliest_commit()
+                    if not [fileop for fileop in earliest.operations() if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
+                        blob = Blob(repo)
+                        blob.pathlist.append(self.ignorename)
+                        blob.set_content(self.preferred.dfltignores)
+                        blob.mark = ":insert"
+                        repo.events.insert(repo.index(earliest), blob)
+                        repo.declare_sequence_mutation(b"ignore creation")
+                        newop = FileOp(self.chosen())
+                        newop.construct(b"M", 0o100664, ":insert", self.ignorename)
+                        earliest.append_operation(newop)
+                        repo.renumber()
+                        announce(b"initial %s created." % self.ignorename)
+                announce(b"%d %s blobs modified." % (changecount, self.ignorename))
+            elif verb == 'rename':
                 changecount = 0
-                # Modify existing ignore files
+                for (_, event) in repo.iterevents(indices=None, types=(Commit,)):
+                    for fileop in event.operations():
+                        for attr in (b"path", "source", "target"):
+                            if hasattr(fileop, attr):
+                                oldpath = getattr(fileop, "path")
+                                if oldpath and oldpath.endswith(self.ignorename):
+                                    newpath = os.path.join(os.path.dirname(oldpath),
+                                                       self.preferred.ignorename)
+                                    setattr(fileop, attr, newpath)
+                                    changecount += 1
+                                    if fileop.op == "M":
+                                        blob = repo.objfind(fileop.ref)
+                                        if blob.pathlist[0] == oldpath:
+                                            blob.pathlist[0] = newpath
+                announce(b"%d ignore files renamed (%s -> %s)."
+                         % (changecount,
+                            self.ignorename,
+                            self.preferred.ignorename))
+                self.ignorename = self.preferred.ignorename
+            elif verb == 'translate':
+                changecount = 0
                 for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
                     if isignore(blob):
-                        blob.set_content(self.preferred.dfltignores \
-                                     + blob.get_content())
-                        changecount += 1
-                # Create an early ignore file if required.
-                # Don't move this before the modification pass!
-                earliest = repo.earliest_commit()
-                if not [fileop for fileop in earliest.operations() if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
-                    blob = Blob(repo)
-                    blob.pathlist.append(self.ignorename)
-                    blob.set_content(self.preferred.dfltignores)
-                    blob.mark = ":insert"
-                    repo.events.insert(repo.index(earliest), blob)
-                    repo.declare_sequence_mutation(b"ignore creation")
-                    newop = FileOp(self.chosen())
-                    newop.construct(b"M", 0o100664, ":insert", self.ignorename)
-                    earliest.append_operation(newop)
-                    repo.renumber()
-                    announce(b"initial %s created." % self.ignorename)
-            announce(b"%d %s blobs modified." % (changecount, self.ignorename))
-        if 'rename' in line:
-            changecount = 0
-            for (_, event) in repo.iterevents(indices=None, types=(Commit,)):
-                for fileop in event.operations():
-                    for attr in (b"path", "source", "target"):
-                        if hasattr(fileop, attr):
-                            oldpath = getattr(fileop, "path")
-                            if oldpath and oldpath.endswith(self.ignorename):
-                                newpath = os.path.join(os.path.dirname(oldpath),
-                                                   self.preferred.ignorename)
-                                setattr(fileop, attr, newpath)
+                        if self.preferred.name == "hg":
+                            if not blob.get_content().startswith(b"syntax: glob\n"):
+                                blob.set_content(b"syntax: glob\n" + blob.get_content())
                                 changecount += 1
-                                if fileop.op == "M":
-                                    blob = repo.objfind(fileop.ref)
-                                    if blob.pathlist[0] == oldpath:
-                                        blob.pathlist[0] = newpath
-            announce(b"%d ignore files renamed (%s -> %s)."
-                     % (changecount,
-                        self.ignorename,
-                        self.preferred.ignorename))
-            self.ignorename = self.preferred.ignorename
-        if 'translate' in line:
-            changecount = 0
-            for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
-                if isignore(blob):
-                    if self.preferred.name == "hg":
-                        if not blob.get_content().startswith(b"syntax: glob\n"):
-                            blob.set_content(b"syntax: glob\n" + blob.get_content())
-                            changecount += 1
-            announce(b"%d %s blobs modified." % (changecount, self.ignorename))
-
+                announce(b"%d %s blobs modified." % (changecount, self.ignorename))
+            else:
+                raise Recoverable("unknown verb %s in ignores line" % verb)
     #
     # Artifact removal
     #
