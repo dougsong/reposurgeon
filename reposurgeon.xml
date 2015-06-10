@@ -176,6 +176,9 @@ edit                   ;; edit all editable objects
 
 236..$ list            ;; List events from 236 to the last
 
+&lt;#523&gt; inspect         ;; Look for commit #523; they are numbered 
+                       ;; 1-origin from the beginning of the repository.
+
 &lt;2317&gt; inspect         ;; Look for a tag with the name 2317, a tip commit
                        ;; of a branch named 2317, or a commit with legacy ID
                        ;; 2317. Inspect what is found. A plain number is
@@ -239,6 +242,12 @@ is especially useful when you have imported a Subversion dump; it
 means that commits made from it can be referred to by their corresponding
 Subversion revision numbers.</para>
 </listitem>
+</varlistentry>
+<varlistentry>
+<term><firstterm>commit numbers</firstterm></term>
+<listitem><para>Anumeric literal within  name brackets (&lt; &gt;)
+preceded by # is interpreted as a 1-origin
+commit-sequence number.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term><firstterm>$</firstterm></term>

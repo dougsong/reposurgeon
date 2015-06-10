@@ -4994,7 +4994,11 @@ class Repository:
     def __build_namecache(self):
         "Avoid repeated O(n**2) lookups."
         self._namecache = {}
+        commitcount = 0
         for (i, event) in enumerate(self.events):
+            if isinstance(event, Commit):
+                commitcount += 1
+                self._namecache["#%d" % commitcount] = [i]
             if isinstance(event, Tag):
                 self._namecache[event.name] = [i]
             if hasattr(event, b"legacy_id") and event.legacy_id:
