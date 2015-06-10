@@ -87,6 +87,18 @@ and headers so it's in the same format as the rest of the mailbox."
       (kill-line)))
   )
 
+(defun kill-comment-entry ()
+  "Remove current mailbox entry, move to next."
+  (interactive)
+  (re-search-backward (concat "^" reposurgeon-mail-delimiter))
+  (beginning-of-line)
+  (forward-line 1)
+  (let ((kill-whole-line t))
+    (while (not (looking-at (concat "^" reposurgeon-mail-delimiter)))
+      (kill-line))
+    (kill-line))
+  )
+
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
 (when (not reposurgeon-mode-map)
@@ -94,6 +106,7 @@ and headers so it's in the same format as the rest of the mailbox."
   (define-key reposurgeon-mode-map (kbd "C-x s") 'svn-cookify)
   (define-key reposurgeon-mode-map (kbd "C-x c") 'cvs-cookify)
   (define-key reposurgeon-mode-map (kbd "C-x .") 'cvs-split-summary)
+  (define-key reposurgeon-mode-map (kbd "C-x C-k") 'kill-comment-entry)
   )
 
 (define-derived-mode reposurgeon-mode
