@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.26: 2015-06-10
      Output redirect with '>>' appends to the output file.
      The strip blob command can take a selection set.
      Repo source type is now kept inline in stream files and emitted on write.
