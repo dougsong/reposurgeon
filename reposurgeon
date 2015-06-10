@@ -8594,7 +8594,7 @@ For a list of supported types, invoke the 'prefer' command.
             # interprets an empty argument list as '.'
             if parse.redirected or not parse.line:
                 for option in parse.options:
-                    if option.startswith(b"--format=b"):
+                    if option.startswith(b"--format="):
                         vcs = option.split(b"=")[1]
                         try:
                             outfilter = file_filters[vcs][1]
@@ -8643,6 +8643,9 @@ Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
 this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
 
+A selection set is effective only with the 'blobs' option, defaulting to all
+blobs. The 'reduce' mode always acts on the entire repository.
+
 This is intended for producing reduced test cases from large repositories.
 """)
     def do_strip(self, line):
@@ -8651,14 +8654,15 @@ This is intended for producing reduced test cases from large repositories.
         if repo is None:
             complain(b"no repo has been chosen.")
             return
+        if self.selection is None:
+            self.selection = self.chosen().all()
         if not line:
             striptypes = [b"blobs"]
         else:
             striptypes = line.split()
         if "blobs" in striptypes:
-            for event in repo.events:
-                if isinstance(event, Blob):
-                    event.set_content(b"Blob at %s\n" % event.mark)
+            for (_, event) in self.selected(Blob):
+                event.set_content(b"Blob at %s\n" % event.mark)
         if "reduce" in striptypes:
             interesting = set([])
             for event in repo.events:
