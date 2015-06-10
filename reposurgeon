@@ -3130,12 +3130,13 @@ class StreamParser:
                     self.repo.timings.append((b"parsing", time.time()))
                     self.svn_process(options, baton)
                     elapsed = time.time() - baton.time
-                    baton.twirl(b"%d revisions (%d/s)" %
+                    baton.twirl(b"%d svn revisions (%d/s)" %
                                  (self.repo.legacy_count,
                                   int(self.repo.legacy_count/elapsed)))
                 else:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
+                    commitcount = 0
                     while True:
                         line = self.fi_readline()
                         if not line:
@@ -3160,12 +3161,11 @@ class StreamParser:
                                         if fields[1].endswith(b",v"):
                                             # CVS revision
                                             blob.cookie = (fields[1][:-2], fields[2])
-                                            if self.repo.hint("cvs") and verbose > 0:
-                                                announce("$Id$ header hints at CVS.")
+                                            self.repo.hint(("$Id$", "cvs"))
                                         else:
                                             # Subversion revision
                                             blob.cookie = fields[1]
-                                            if self.repo.hint("svn") and verbose > 0:
+                                            if self.repo.hint(("$Id$", "svn")):
                                                 announce("$Id$ header hints at svn.")
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
                                                      blobcontent):
@@ -3173,7 +3173,7 @@ class StreamParser:
                                     if b'.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
-                                        if self.repo.hint("svn") and verbose > 0:
+                                        if self.repo.hint(("$Revision$", "svn")):
                                             announce("$Revision$ header hints at svn.")
                                 blob.set_content(blobcontent, blobstart)
                             else:
@@ -3302,6 +3302,7 @@ class StreamParser:
                             if commit.mark is None:
                                 self.warn(b"unmarked commit")
                             self.repo.addEvent(commit)
+                            commitcount += 1
                             baton.twirl()
                         elif line.startswith(b"reset"):
                             reset = Reset(self.repo)
@@ -3347,6 +3348,10 @@ class StreamParser:
                             self.repo.addEvent(Passthrough(line))
                     # End of fast-import parsing
                     self.repo.timings.append((b"parsing", time.time()))
+                    if self.repo.stronghint:
+                        baton.twirl("%d %s commits" % (commitcount, self.repo.vcs.name))
+                    else:
+                        baton.twirl("%d commits" % commitcount)
                 self.import_line = 0
                 if not self.repo.events:
                     raise Recoverable(b"ignoring empty repository")
@@ -4914,17 +4919,18 @@ class Repository:
                 os.mkdir(target)
         except OSError:
             raise Fatal(b"can't create operating directory")
-    def hint(self, name, strong=False):
+    def hint(self, clue, strong=False):
         "Hint what the source of this repository might be."
-        newhint = not self.hintlist or name not in self.hintlist
+        newhint = not self.hintlist or clue not in self.hintlist
         if newhint and self.stronghint and strong:
             announce("new hint %s conficts with old %s" \
-                              % (name, self.hintlist[-1]))
+                              % (clue, self.hintlist[-1]))
             return False
         if not self.stronghint:
-            self.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == name)
+            if type(clue) == type(""):
+                self.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == clue)
             if newhint:
-                self.hintlist.append(name)
+                self.hintlist.append(clue)
         notify = newhint and not self.stronghint
         self.stronghint = self.stronghint or strong
         return notify
