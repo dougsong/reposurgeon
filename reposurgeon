@@ -10441,7 +10441,7 @@ default patterns.
                         repo.events.insert(repo.index(earliest), blob)
                         repo.declare_sequence_mutation(b"ignore creation")
                         newop = FileOp(self.chosen())
-                        newop.construct(b"M", 0o100664, ":insert", self.ignorename)
+                        newop.construct(b"M", 0o100644, ":insert", self.ignorename)
                         earliest.append_operation(newop)
                         repo.renumber()
                         announce(b"initial %s created." % self.ignorename)
