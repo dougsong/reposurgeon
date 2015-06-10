@@ -48,7 +48,7 @@
   (insert "]]")
   )
 
-(defun cvs-split-summary ()
+(defun gitify-comment ()
   "Break the first line of a paragraph comment following git conventions."
   (interactive)
   (delete-horizontal-space)
@@ -105,13 +105,13 @@ and headers so it's in the same format as the rest of the mailbox."
   (setq reposurgeon-mode-map (make-sparse-keymap))
   (define-key reposurgeon-mode-map (kbd "C-x s") 'svn-cookify)
   (define-key reposurgeon-mode-map (kbd "C-x c") 'cvs-cookify)
-  (define-key reposurgeon-mode-map (kbd "C-x .") 'cvs-split-summary)
+  (define-key reposurgeon-mode-map (kbd "C-x .") 'gitify-comment)
   (define-key reposurgeon-mode-map (kbd "C-x C-k") 'kill-comment-entry)
   )
 
 (define-derived-mode reposurgeon-mode
   text-mode "Reposurgeon"
-  "Major mode for editing reposurgeon comment dumps.
+  "Major mode for editing reposurgeon comment mailboxes.
 \\{reposurgeon-mode-map}"
   (setq case-fold-search nil))
 
