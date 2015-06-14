@@ -10,7 +10,7 @@ target=$(DESTDIR)$(prefix)
 CYTHON?=cython
 PYVERSION=2.7
 pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/include/python$(PYVERSION)")
-pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-l$python$(PYVERSION)")
+pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSION)")
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
