@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+Repository head:
+     Per-repo-type preserves aren't clobbered when there's a lister.
+     Read support for Monotone, not yet very well tested.
+
 3.26: 2015-06-10
      Output redirect with '>>' appends to the output file.
      The strip blob command can take a selection set.

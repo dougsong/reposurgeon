@@ -369,6 +369,60 @@ core
         cookies=[],
         project=b"http://darcs.net/",
         notes=b"Assumes no boringfile preference has been set."),
+    # Styleflags may need tweaking for round-tripping
+    VCS(name=b"mtn",
+        subdirectory=b"_MTN",
+        exporter=b"mtn git_export",
+        styleflags=set(),
+        properties=False,
+        initializer=None,
+        lister=b"mtn list known",
+        importer=None,
+        checkout=None,
+        preserve=set(),
+        authormap=None,
+        ignorename=b".mtn_ignore",	# Assumes default hooks
+        dfltignores=b"""
+*.a
+*.so
+*.o
+*.la
+*.lo
+^core
+*.class
+*.pyc
+*.pyo
+*.g?mo
+*.intltool*-merge*-cache
+*.aux
+*.bak
+*.orig
+*.rej
+%~
+*.[^/]**.swp
+*#[^/]*%#
+*.scc
+^*.DS_Store
+/*.DS_Store
+^desktop*.ini
+/desktop*.ini
+autom4te*.cache
+*.deps
+*.libs
+*.consign
+*.sconsign
+CVS
+*.svn
+SCCS
+_darcs
+*.cdv
+*.git
+*.bzr
+*.hg
+""",
+        cookies=[],
+        project=b"http://www.monotone.ca/",
+        notes=b"Exporter is buggy, occasionally emitting negative timestamps."),
     # Export is experimental and doesn't round-trip
     VCS(name=b"svn",
         subdirectory=b"locks",
