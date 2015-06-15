@@ -6273,7 +6273,7 @@ def read_repo(source, options, preferred):
                 with popen_or_die(vcs.lister) as fp:
                     repofiles = set(fp.read().split())
                 allfiles = fileset([vcs.subdirectory] + glob.glob(b".rs*"))
-                repo.preserve_set = allfiles - repofiles
+                repo.preserve_set |= (allfiles - repofiles)
             # kluge: git-specific hook
             if repo.vcs.name == b"git":
                 if os.path.exists(b".git/cvs-revisions"):
