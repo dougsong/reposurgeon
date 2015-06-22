@@ -10,7 +10,7 @@
      The strip blob command can take a selection set.
      Repo source type is now kept inline in stream files and emitted on write.
      Legacy IDs are now kept inline in stream files and emitted on write.
-     The aelection syntax <#nnn> now names commit nnn, 1-origin numbering.
+     The selection syntax <#nnn> now names commit nnn, 1-origin numbering.
 
 3.25: 2015-06-03
      Reading hg is now supported through an extractor class, no plugin required.
@@ -45,7 +45,7 @@
      In selection expressions, =U is the set of all commits with callouts.
 
 3.20: 2015-02-22
-     Code is now fully functional, all regression test passing, on Mac OS X.     
+     Code is now fully functional, all regression tests passing, on Mac OS X.
      Warn in the docs about the consequences of case-smashing filesystems.
      diff command no longer relies on external diff(1).
      Bugfix for writing callouts in partial dumps.
