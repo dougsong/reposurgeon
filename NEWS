@@ -1,7 +1,8 @@
 			reposurgeon project news
 
-Repository head:
+3.27: 2015-06-22
      Per-repo-type preserves aren't clobbered when there's a lister.
+     Git repository hooks are preserved.
      Read support for Monotone, not yet very well tested.
 
 3.26: 2015-06-10
