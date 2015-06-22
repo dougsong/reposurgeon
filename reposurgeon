@@ -6502,6 +6502,8 @@ def rebuild_repo(repo, target, options, preferred):
                     src = os.path.join(savedir, sub)
                     dst = os.path.join(target, sub)
                     if os.path.exists(src):
+                        if os.path.exists(dst) and os.path.isdir(dst):
+                            shutil.rmtree(dst)
                         if os.path.isdir(src):
                             shutil.copytree(src, dst)
                         else:
