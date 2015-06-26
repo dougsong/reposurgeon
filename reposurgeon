@@ -3664,7 +3664,7 @@ class StreamParser:
                             startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
                             try:
                                 ignore = startwith + \
-                                         b"# The contents of the svn:ignore" \
+                                         b"# The contents of the svn:ignore " \
                                          b"property on the branch root.\n" + \
                                          node.props["svn:ignore"]
                             except KeyError:
