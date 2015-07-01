@@ -1952,6 +1952,10 @@ class Commit(object):
         return str(msg)
     def action_stamp(self):
         "Control how a commit stamp is made."
+        # Prefer the author stamp because that doesn't change when patches
+        # are replayed onto a repository, while the commit stamp will.
+        if self.authors:
+            self.authors[0].action_stamp()
         return self.committer.action_stamp()
     def email_in(self, msg, fill=False):
         "Update this commit from a parsed email message."

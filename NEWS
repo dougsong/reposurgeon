@@ -4,6 +4,7 @@ Repository head:
      Make repotool honor the mirror directory argument for CVS.
      Fix gitlab issue 4: even successful CVS export returns error code.
      Fix some name lookup issues from the cache needing invalidation.
+     Implement and document that action stamps from author dates are preferred.
 
 3.27: 2015-06-22
      Per-repo-type preserves aren't clobbered when there's a lister.
