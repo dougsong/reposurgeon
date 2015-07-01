@@ -37,6 +37,7 @@
      New '--create' option of mailbox_in to create new tags and commits.
      The command prompt can be queried or set with the new command 'prompt'.
      Change in terminology: fossil IDs and maps are now legacy IDs and maps.
+     The 'fossils {read.write}' commands are now 'legacy {read,write}'.
      A front end can now set legacy IDs via the "legacy-id" property.
      DMRCN suffix flags on restrict path regexp matches to specified op types.
      The 'remove' command can now be told to look for specific fileop types.
