@@ -62,7 +62,12 @@ EOF
 	svnsync synchronize file://${PWD}/$operand
     elif [ `expr "$operand" : "cvs://"` = 6 ]
     then
-	local=`echo basename $operand | sed -e /.*#/s///`-mirror
+	if [ "$mirrordir" ]
+	then
+	   local=$mirrordir
+	else
+	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
+        fi
 	mkdir $local
 	cvssync -o $local "$operand"
 	echo "$operand" >$local/.cvssync
