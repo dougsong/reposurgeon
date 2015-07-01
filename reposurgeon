@@ -5521,8 +5521,7 @@ class Repository:
         "Mark the repo event sequence sequence modified."
         self._commits = None
         self._mark_to_index = {}
-        if warning:
-            self._namecache = {}
+        self._namecache = {}
         if self.assignments and warning:
             self.assignments = {}
             announce(b"assignments invalidated by " + warning)
