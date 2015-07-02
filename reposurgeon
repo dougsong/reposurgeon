@@ -1516,8 +1516,8 @@ class Tag(object):
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tags."
         return "%6d\ttag\t%s" % (eventnum+1, self.name)
-    def email_out(self, modifiers, eventnum):
-        "Enable do_mailbox_out() to report these."
+    def email_out(self, modifiers, eventnum, filter_regexp=None):
+        "Enable do_mailbox_out() to report tag metadata."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Tag-Name"] = self.name
@@ -1526,6 +1526,10 @@ class Tag(object):
         msg.set_payload(self.comment)
         if self.comment and not self.comment.endswith(b"\n"):
             complain(b"in tag %s, comment was not LF-terminated." % self.name)
+        if filter_regexp:
+            for key in msg.keys():
+                if not filter_regexp.match(key + ":"):
+                    del msg[key]
         return str(msg)
     def email_in(self, msg, fill=False):
         "Update this Tag from a parsed email message."
@@ -1927,8 +1931,8 @@ class Commit(object):
             if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
                 return
         return b"%6d\tcommit\t%s" % (eventnum+1, self.branch)
-    def email_out(self, modifiers, eventnum):
-        "Enable do_mailbox_out() to report these."
+    def email_out(self, modifiers, eventnum, filter_regexp=None):
+        "Enable do_mailbox_out() to report commit metadate."
         msg = RepoSurgeonEmail()
         msg[b"Event-Number"] = str(eventnum+1)
         msg[b"Event-Mark"] = self.mark
@@ -1949,6 +1953,10 @@ class Commit(object):
         msg.set_payload(self.comment)
         if not self.comment.endswith(b"\n"):
             complain(b"in commit %s, comment was not LF-terminated." % self.mark)
+        if filter_regexp:
+            for key in msg.keys():
+                if not filter_regexp.match(key + ":"):
+                    del msg[key]
         return str(msg)
     def action_stamp(self):
         "Control how a commit stamp is made."
@@ -2422,7 +2430,7 @@ class Passthrough(object):
         self.text = line
         self.deletehook = None
         self.color = None
-    def email_out(self, _modifiers, eventnum):
+    def email_out(self, _modifiers, eventnum, _filter_regexp=None):
         "Enable do_mailbox_out() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
@@ -8814,10 +8822,27 @@ Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
 is, presently, blobs and resets). Supports > redirection.
+
+May have an option --filter, followed by = and a /-enclosed regular expression.
+If this is given, only headers with names matching it are emitted.  In this
+context the name of the header includes its trailing colon.
 """)
     def do_mailbox_out(self, line):
         "Generate a mailbox file representing object metadata."
-        self.report_select(line, "email_out")
+        filter_regexp = None
+        opts = shlex.split(line)
+        for token in opts:
+            if token.startswith("--filter="):
+                token = token[9:]
+                if len(token) < 2 or token[0] != '/' or token[-1] != '/':
+                    raise Recoverable("malformed filter option in mailbox_out")
+                try:
+                    filter_regexp = re.compile(token[1:-1])
+                except sre_constants.error as e:
+                    raise Recoverable(b"filter compilation error - %s" % e)
+            else:
+                raise Recoverable("unknown option in mailbox_out")
+        self.report_select(line, "email_out", (filter_regexp,))
 
     def help_mailbox_in(self):
         print(b"""

@@ -1368,6 +1368,11 @@ ignored (that is, presently, blobs and resets).</para>
 <para>The output from this command can optionally be redirected
 to a named output file. Prefix the filename with <quote>&gt;</quote>
 and give it as a following argument.</para>
+
+<para>May have an option --filter, followed by = and a /-enclosed
+regular expression.  If this is given, only headers with names
+matching it are emitted.  In this context the name of the header
+includes its trailing colon.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
