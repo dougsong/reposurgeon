@@ -3645,6 +3645,15 @@ class StreamParser:
                                                 node.props["cvs2svn:cvs-rev"])
                         self.repo.legacy_map[cvskey] = commit
                         del node.props[b"cvs2svn:cvs-rev"]
+                    # Remove blank lines from svn:ignore property values.
+                    if b"svn:ignore" in node.props:
+                        old_ignore = node.props[b"svn:ignore"]
+                        ignore_lines = [line for line in old_ignore.splitlines(True) if line != b"\n"]
+                        new_ignore = b"".join(ignore_lines)
+                        if new_ignore == b"":
+                            del node.props[b"svn:ignore"]
+                        else:
+                            node.props[b"svn:ignore"] = new_ignore
                     if not "--ignore-properties" in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.iteritems() \

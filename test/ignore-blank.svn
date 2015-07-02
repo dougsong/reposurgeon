@@ -1,0 +1,110 @@
+SVN-fs-dump-format-version: 2
+ ## Test svn:ignores including blank lines
+
+UUID: 8edf61ba-ee0a-46d6-ac8f-5163a225850d
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-06-26T11:30:58.161785Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-26T11:30:58.324319Z
+K 7
+svn:log
+V 17
+Project structure
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-26T11:30:58.420363Z
+K 7
+svn:log
+V 26
+comment for svn revision 2
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 34
+Text-content-md5: 8250f03cd6fb21f89c118063c3a7ee7a
+Text-content-sha1: eac06ee10fbabd66cad0d03927bed2f3f6941d5c
+Content-length: 44
+
+PROPS-END
+File contents for svn revision 2.
+
+
+Revision-number: 3
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-26T11:30:58.543828Z
+K 7
+svn:log
+V 33
+add some ignores with blank lines
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 52
+Content-length: 52
+
+K 10
+svn:ignore
+V 20
+
+foo.txt
+
+bar.txt
+
+
+
+PROPS-END
+
+
