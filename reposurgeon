@@ -7983,7 +7983,8 @@ for exploring the selection-set language.
 
     def help_assign(self):
         print(b"""
-Compute a leading selection set and assign it to a symbolic name.
+Compute a leading selection set and assign it to a symbolic name, which
+must follow the assign keyword.
 It is an error to assign to a name that is already assigned, or to
 any existing branch name.  Assignments may be cleared by some sequence
 mutations (though not by ordinary deletion); you will see a warning
