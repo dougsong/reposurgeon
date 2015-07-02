@@ -847,7 +847,7 @@ class HgExtractor(Extractor):
         # hg changesets can only have up to two parents
         # we have to use short (12-nibble) hashes because that's all "hg tags"
         # and "hg branches" give us.  Hg's CLI is rubbish
-        with self.hg_or_die(b"log", b"-T", b"{node|short} {p1node|short} {p2node|short}\\n") as fp:
+        with self.hg_or_die(b"log", b"--template", b"{node|short} {p1node|short} {p2node|short}\\n") as fp:
             for line in fp:
                 fields = line.strip().split()
                 self.revlist.append(fields[0])
@@ -858,7 +858,7 @@ class HgExtractor(Extractor):
     def find_commit_data(self, baton):
         "Get all other per-commit data except branch IDs"
         assert baton is not None # pacify pylint
-        with self.hg_or_die(b"log", b"-T", b"{node|short}|{author} {date|rfc822date}\\n") as fp:
+        with self.hg_or_die(b"log", b"--template", b"{node|short}|{author} {date|rfc822date}\\n") as fp:
             for line in fp:
                 (h, ci) = line.strip().split(b'|')
                 # Because hg doesn't store separate author and committer info,
@@ -916,7 +916,7 @@ class HgExtractor(Extractor):
         return manifest
     def get_comment(self, rev):
         "Return a commit's change comment as a string."
-        return self.hg_capture(b"log", b"-r", rev, b"-T", b"{desc}\\n")
+        return self.hg_capture(b"log", b"-r", rev, b"--template", b"{desc}\\n")
 
 # More extractors go here
 
