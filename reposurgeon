@@ -8849,8 +8849,10 @@ context the name of the header includes its trailing colon.
                     filter_regexp = re.compile(token[1:-1])
                 except sre_constants.error as e:
                     raise Recoverable(b"filter compilation error - %s" % e)
+            elif token.startswith(">"):
+                continue
             else:
-                raise Recoverable("unknown option in mailbox_out")
+                raise Recoverable("unknown option %s in mailbox_out" % token)
         self.report_select(line, "email_out", (filter_regexp,))
 
     def help_mailbox_in(self):
