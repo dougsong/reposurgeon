@@ -1,0 +1,73 @@
+SVN-fs-dump-format-version: 2
+ ## Test case for use of legacy ID after blob creation
+
+UUID: 332098c2-dfe2-4735-a935-ae6e1269b247
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-07-03T10:55:19.325998Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-07-03T10:55:20.512489Z
+K 7
+svn:log
+V 17
+Project structure
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-07-03T10:55:20.963037Z
+K 7
+svn:log
+V 26
+comment for svn revision 2
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 34
+Text-content-md5: 8250f03cd6fb21f89c118063c3a7ee7a
+Text-content-sha1: eac06ee10fbabd66cad0d03927bed2f3f6941d5c
+Content-length: 44
+
+PROPS-END
+File contents for svn revision 2.
+
+

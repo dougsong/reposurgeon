@@ -1,0 +1,160 @@
+SVN-fs-dump-format-version: 2
+ ## Test case for use of legacy ID after squash --delete
+
+UUID: 79c0667a-aa5c-4038-b159-c9e910b74fdb
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-06-24T15:17:22.674566Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-24T15:17:22.909006Z
+K 7
+svn:log
+V 17
+Project structure
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-24T15:17:22.998950Z
+K 7
+svn:log
+V 26
+comment for svn revision 2
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 34
+Text-content-md5: 8250f03cd6fb21f89c118063c3a7ee7a
+Text-content-sha1: eac06ee10fbabd66cad0d03927bed2f3f6941d5c
+Content-length: 44
+
+PROPS-END
+File contents for svn revision 2.
+
+
+Revision-number: 3
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-24T15:17:23.096291Z
+K 7
+svn:log
+V 26
+comment for svn revision 3
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: change
+Text-content-length: 34
+Text-content-md5: 18c36f2a90c6fd50818fbc0b2fc3ece5
+Text-content-sha1: 03f75397dd1cd9c23aed9276b1602c12010be841
+Content-length: 34
+
+File contents for svn revision 3.
+
+
+Revision-number: 4
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-24T15:17:23.156092Z
+K 7
+svn:log
+V 26
+comment for svn revision 4
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: change
+Text-content-length: 34
+Text-content-md5: 60eef8c0ae9101ac33883873e0be67a2
+Text-content-sha1: 0d953755722813b231c11f233c113f6bbe76bc4d
+Content-length: 34
+
+File contents for svn revision 4.
+
+
+Revision-number: 5
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-06-24T15:17:23.261092Z
+K 7
+svn:log
+V 26
+comment for svn revision 5
+PROPS-END
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: change
+Text-content-length: 34
+Text-content-md5: 6a8f7f9cb97bcceaff24285a77eb0962
+Text-content-sha1: 0ef204daede435d6176914ea8f39eb7a394c04f6
+Content-length: 34
+
+File contents for svn revision 5.
+
+
