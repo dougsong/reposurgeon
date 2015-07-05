@@ -9798,7 +9798,7 @@ file operations in the original commit.
         else:
             raise Recoverable(b"don't know what to do for preposition %s" % prep)
         if verbose:
-            self.do_inspect(repr(where+1) + b"," + repr(where+2))
+            announce("new commits are events %s and %s." % (where+1, where+2))
 
     def help_unite(self):
         print(b"""
