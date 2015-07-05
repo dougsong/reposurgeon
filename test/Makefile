@@ -9,6 +9,10 @@ REPOSURGEON = reposurgeon
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO=/bin/echo
 
+# Without this, under CentOS Python may emit invisible ANSI strings
+# that confuse diff
+TERM := dumb
+
 default:
 	@(cd ..; make -e --quiet pylint)
 	@$(REPOSURGEON) "runtests"
