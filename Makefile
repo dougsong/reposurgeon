@@ -3,6 +3,8 @@
 #
 
 INSTALL=install
+XMLTO=xmlto
+ASCIIDOC=asciidoc
 prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
@@ -24,41 +26,32 @@ SOURCES += \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png
 
+.PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh
+.INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
+.PRECIOUS: cyreposurgeon.o cyrepodiffer.o
+
 all: reposurgeon.1 repotool.1 repodiffer.1 \
      reposurgeon.html repotool.html repodiffer.html \
-     dvcs-migration-guide.html features.html
+     dvcs-migration-guide.html features.html reporting-bugs.html
 
-reposurgeon.1: reposurgeon.xml
-	xmlto man reposurgeon.xml
+%.1: %.xml
+	$(XMLTO) man $<
 
-reposurgeon.html: reposurgeon.xml
-	xmlto html-nochunks reposurgeon.xml
+%.html: %.xml
+	$(XMLTO) html-nochunks $<
 
-repotool.1: repotool.xml
-	xmlto man repotool.xml
+dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc
+%.html: %.asc
+	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
 
-repotool.html: repotool.xml
-	xmlto html-nochunks repotool.xml
+cy%.c: %
+	$(CYTHON) --embed $< -o $@
 
-repodiffer.1: repodiffer.xml
-	xmlto man repodiffer.xml
+cy%.o: cy%.c
+	${CC} ${CFLAGS} $(pyinclude) -c $< -o $@
 
-repodiffer.html: repodiffer.xml
-	xmlto html-nochunks repodiffer.xml
-
-features.html: features.asc
-	asciidoc features.asc
-
-reporting-bugs.html: reporting-bugs.asc
-	asciidoc reporting-bugs.asc
-
-dvcs-migration-guide.html: dvcs-migration-guide.asc
-	asciidoc -a toc dvcs-migration-guide.asc
-
-cyreposurgeon: reposurgeon
-	$(CYTHON) --embed reposurgeon -o cyreposurgeon.c
-	${CC} ${CFLAGS} $(pyinclude) -c cyreposurgeon.c -o cyreposurgeon.o
-	${CC} ${CFLAGS} ${LDFLAGS} cyreposurgeon.o $(pylib) -o cyreposurgeon
+cy%: cy%.o
+	${CC} ${CFLAGS} ${LDFLAGS} $^ $(pylib) -o $@
 
 install: all
 	$(INSTALL) -d "$(target)/bin"

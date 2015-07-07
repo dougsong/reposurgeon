@@ -3,6 +3,6 @@
 MANIFEST
 *.tar.gz
 *.md5
-cyreposurgeon
-cyreposurgeon.c
-cyreposurgeon.o
+cy*
+cy*.c
+cy*.o
