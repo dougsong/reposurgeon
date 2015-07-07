@@ -11126,7 +11126,7 @@ Runs the unit tests and reports the results.
             for name in available:
                 runtest(name)
 
-if __name__ == '__main__':
+def main():
     # Increase max stack size from 8MB to 512MB
     # Needed to handle really large repositories.
     try:
@@ -11180,6 +11180,9 @@ if __name__ == '__main__':
         sys.exit(1)
     except KeyboardInterrupt:
         print(b"")
+
+if __name__ == '__main__':
+    main()
 
 # The following sets edit modes for GNU EMACS
 # Local Variables:
