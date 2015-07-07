@@ -11016,8 +11016,8 @@ defined are accessible to later 'eval' calls.
                 # The additional args are required to make the function
                 # visible to a later eval.
                 execfile(parse.stdin.name, locals(), globals())
-            except SyntaxError:
-                raise Recoverable(b"invalid syntax in extension function")
+            except SyntaxError as e:
+                raise Recoverable(b"extension function - %s\n%s" % (e, e.text))
             except IOError:
                 raise Recoverable(b"I/O error, can't find or open input source")
 
