@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+Repository head:
+     Use of branchify/branchify_map is now less likely to produce invalid resets.
+     "branchify_map reset" actually works now.
+
 3.28: 2015-07-05
      Make repotool honor the mirror directory argument for CVS.
      Fix gitlab issue 4: even successful CVS export returns error code.
