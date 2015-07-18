@@ -10864,9 +10864,10 @@ to re-set it.
     def do_branchify_map(self, line):
         if self.selection is not None:
             raise Recoverable(b"branchifyMap does not take a selection set")
-        if line.strip() is "reset":
+        line = line.strip()
+        if line == "reset":
             global_options['svn_branchify_mapping'] = []
-        if line.strip():
+        elif line:
             def split_regex(regex):
                 separator = regex[0]
                 if separator is not regex[-1]:
@@ -10876,7 +10877,7 @@ to re-set it.
                     raise Recoverable(b"Regex '%s' has an empty search or replace part" % regex)
                 return match ,replace
             global_options['svn_branchify_mapping'] = \
-                    map(split_regex, line.strip().split())
+                    map(split_regex, line.split())
         announce(b"branchify_map, regex -> branch name")
         for match, replace in global_options['svn_branchify_mapping']:
             announce( "\t" + match + " -> " + replace)
