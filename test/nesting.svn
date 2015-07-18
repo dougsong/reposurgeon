@@ -1,0 +1,125 @@
+SVN-fs-dump-format-version: 2
+ ## Test subversion tags nested below the root
+
+UUID: d78ab92e-2daf-406e-8f5d-6076d9ca5d9c
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-07-04T15:08:48.953374Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 133
+Content-length: 133
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-07-04T15:08:49.110563Z
+K 7
+svn:log
+V 35
+Project structure for msbuild files
+PROPS-END
+
+Node-path: cpp-msbuild
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: cpp-msbuild/branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: cpp-msbuild/tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: cpp-msbuild/trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-07-04T15:08:49.206793Z
+K 7
+svn:log
+V 20
+import project state
+PROPS-END
+
+Node-path: cpp-msbuild/trunk/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 16
+Text-content-md5: 98475036dc73d318982805bf4b16e8b2
+Text-content-sha1: d7dff2b1ef48b9c20c23d7b3a08b557957cec3c9
+Content-length: 26
+
+PROPS-END
+This is a file.
+
+
+Revision-number: 3
+Prop-content-length: 111
+Content-length: 111
+
+K 10
+svn:author
+V 3
+iay
+K 8
+svn:date
+V 27
+2015-07-04T15:08:49.250138Z
+K 7
+svn:log
+V 13
+tag a version
+PROPS-END
+
+Node-path: cpp-msbuild/tags/2.5.1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: cpp-msbuild/trunk
+
+

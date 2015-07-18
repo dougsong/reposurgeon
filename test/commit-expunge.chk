@@ -26,9 +26,6 @@ Initialize the right directory.
 from :3
 M 100755 :4 gitpacker
 
-reset refs/tags/foobar
-from :5
-
 blob
 mark :7
 data 11
