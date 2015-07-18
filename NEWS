@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-3.26: 2015-07-05
+3.28: 2015-07-05
      Make repotool honor the mirror directory argument for CVS.
      Fix gitlab issue 4: even successful CVS export returns error code.
      Fix some name lookup issues from the cache needing invalidation.
