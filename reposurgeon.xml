@@ -1911,7 +1911,7 @@ legacy-reference map) without having to do the lookup by hand.</para>
 <variablelist>
 <varlistentry>
 <term><command>references</command>
-          [<command>lift</command>|<command>edit</command>|<command>lift</command>]
+          [<command>list</command>|<command>edit</command>|<command>lift</command>]
           [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
