@@ -174,7 +174,7 @@ class VCS:
 # we need to be prepared to cope with that.
 #
 # %(tempfile)s in a command gets substituted with the name of a
-# tempile that the calling code will know to read or write from as
+# tempfile that the calling code will know to read or write from as
 # appropriate after the command is done.  If your exporter can simply
 # dump to stdout, or your importer read from stdin, leave out the
 # %(tempfile)s; reposurgeon will popen(3) the command, and it will
@@ -3065,7 +3065,7 @@ class StreamParser:
                 # We can't just pass the input file object here, it
                 # leads to bad results when fast_import is called
                 # within a with clause.  Alas, this is a potential
-                # resource leek
+                # resource leak.
                 self.repo.seekstream = open(self.fp.name)
             with Baton(b"reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = self.repo.legacy_count = 0
