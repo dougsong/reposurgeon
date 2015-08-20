@@ -8395,7 +8395,7 @@ Supports > redirection.
                 parse.stdout.write(b"empty name: %s\n" % item)
             for item in badaddress:
                 parse.stdout.write(b"email address missing @: %s\n" % item)
-        self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write(s + "\n"))
+        self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
     #
     # Housekeeping
     #
