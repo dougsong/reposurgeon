@@ -123,7 +123,7 @@ class VCS:
         self.notes = notes
     bare_numeric = r"[0-9]+"
     dotted_numeric = r"[0-9]+(?:\.[0-9]+)+"
-    nobug = r"(?<!bug )"	# Feeble, but lookbehinds must be fixed-width.
+    nobug = r"(?<!bug )"        # Feeble, but lookbehinds must be fixed-width.
     def __str__(self):
         realignores = [line for line in self.dfltignores.split(b'\n') if not line.startswith(b"# ")]
         return b"         Name: {self.name}\n" \
@@ -196,7 +196,7 @@ vcstypes = [
         preserve=set([b'.git/config', b'.git/hooks']),
         authormap=b".git/cvs-authors",
         ignorename=b".gitignore",
-        dfltignores=b"",	# Has none
+        dfltignores=b"",        # Has none
         cookies=(r"\b[0-9a-f]{6}\b", r"\b[0-9a-f]{40}\b",),
         project=b"http://git-scm.com/",
         notes=b"The authormap is not required, but will be used if present."),
@@ -381,7 +381,7 @@ core
         checkout=None,
         preserve=set(),
         authormap=None,
-        ignorename=b".mtn_ignore",	# Assumes default hooks
+        ignorename=b".mtn_ignore",      # Assumes default hooks
         dfltignores=b"""
 *.a
 *.so
@@ -519,7 +519,7 @@ core
         preserve=set(),
         authormap=None,
         ignorename=None,
-        dfltignores=b"",	# Has none
+        dfltignores=b"",        # Has none
         cookies=(r"(?:RCS|rcs|rev|version)\s*" + VCS.dotted_numeric,
                  VCS.dotted_numeric),
         project=b"http://www.catb.org/~esr/cvs-fast-export",
@@ -536,7 +536,7 @@ core
         preserve=set(),
         authormap=None,
         ignorename=None,
-        dfltignores=b"",	# Has none
+        dfltignores=b"",        # Has none
         cookies=(VCS.nobug + VCS.bare_numeric,),
         project=b"http://catb.org/~esr/src",
         notes=b""),
@@ -1835,8 +1835,8 @@ class Commit(object):
         self.splits = None           # split command increments this
                                      # to avoid creating multiple new commits
                                      # with duplicate marks
-        self.deletehook = None	     # Hook used during deletion operations
-        self.attachments = []	     # Tags pointing at this commit
+        self.deletehook = None       # Hook used during deletion operations
+        self.attachments = []        # Tags pointing at this commit
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
         self._pathset = None
@@ -2977,8 +2977,8 @@ class StreamParser:
             except ValueError:
                 self.error(b"bad count in data")
         elif line.startswith(b"property"):
-            line = line[9:]			# Skip this token
-            line = line[line.index(b" "):]	# Skip the property name
+            line = line[9:]                     # Skip this token
+            line = line[line.index(b" "):]      # Skip the property name
             nextws = line.index(b" ")
             count = int(line[:nextws-1])
             start = self.tell()
@@ -5956,7 +5956,7 @@ class Repository:
             return isinstance(e, Blob) and not backreferences[e.mark]
         self.filter_assignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
-        self.invalidate_manifests()	# Might not be needed
+        self.invalidate_manifests()     # Might not be needed
         self.declare_sequence_mutation()
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
@@ -6402,7 +6402,7 @@ class CriticalRegion:
     # runtime errors at this value and above.
     NSIG = 32
     def __init__(self):
-        self.handlers = None	# Pacifies pylint
+        self.handlers = None    # Pacifies pylint
     def __enter__(self):
         "Begin critical region."
         if debug_enable(DEBUG_COMMANDS):
@@ -7437,13 +7437,13 @@ into sections of the input stream instead).
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = set()
-            searchable_attrs = {b"b":"branch",		# commit
-                                b"c":"comment",		# commit or tag
-                                b"C":"committer",	# commit
-                                b"r":"committish",	# tag or reset
-                                b"p":"text",		# passthrough
-                                b"t":"tagger",		# tag
-                                b"n":"name"		# tag
+            searchable_attrs = {b"b":"branch",          # commit
+                                b"c":"comment",         # commit or tag
+                                b"C":"committer",       # commit
+                                b"r":"committish",      # tag or reset
+                                b"p":"text",            # passthrough
+                                b"t":"tagger",          # tag
+                                b"n":"name"             # tag
                                 }
             search_in = searchable_attrs.values()
             extractor_lambdas = {
