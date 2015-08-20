@@ -5418,7 +5418,7 @@ class Repository:
                                              % (fileop.path, commit.mark, basename, event.mark))
                                 cvskey = b"CVS:%s:%s" % (fileop.path, cvsref)
                                 self.dollar_map[cvskey] = commit
-    def check_uniqueness(self, verbosely):
+    def check_uniqueness(self, verbosely, announcer=announce):
         "Audit the repository for uniqueness properties."
         self.uniqueness = None
         timecheck = {}
@@ -5433,9 +5433,9 @@ class Repository:
         if not time_collisions:
             self.uniqueness = "committer_date"
             if verbosely:
-                announce("All commit times in this repository are unique.")
+                announcer("All commit times in this repository are unique.")
             return
-        announce("These timestamps have multiple commits: %s" \
+        announcer("These timestamps have multiple commits: %s" \
                  % " ".join(map(rfc3339, time_collisions.keys())))
         stamp_collisions = set()
         for clique in time_collisions.values():
@@ -5447,9 +5447,9 @@ class Repository:
                 stampcheck[event.action_stamp()] = event.mark
         if not stamp_collisions:
             self.uniqueness = "committer_stamp"
-            announce("All commit stamps in this repository are unique.")
+            announcer("All commit stamps in this repository are unique.")
             return
-        announce("These marks are in stamp collisions: %s" \
+        announcer("These marks are in stamp collisions: %s" \
                   % " ".join(stamp_collisions))
     def export_style(self):
         "How should we tune the export dump format?"
@@ -8389,7 +8389,7 @@ Supports > redirection.
                 parse.stdout.write(b"empty name: %s\n" % item)
             for item in badaddress:
                 parse.stdout.write(b"email address missing @: %s\n" % item)
-        self.chosen().check_uniqueness(True)
+        self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write(s + "\n"))
     #
     # Housekeeping
     #
