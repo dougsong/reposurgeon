@@ -67,15 +67,15 @@ install-cyreposurgeon: cyreposurgeon
 	$(INSTALL) -m 755 cyreposurgeon "$(target)/bin"
 
 clean:
-	rm -fr  *~ *.1 *.html *.tar.gz MANIFEST *.md5
+	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
 	rm -f cyreposurgeon.c cyreposurgeon.o cyreposurgeon
 
-reposurgeon-$(VERS).tar.gz: $(SOURCES)
+reposurgeon-$(VERS).tar.xz: $(SOURCES)
 	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
 	@(cd ..; ln -s reposurgeon reposurgeon-$(VERS))
-	(cd ..; tar -czf reposurgeon/reposurgeon-$(VERS).tar.gz `cat reposurgeon/MANIFEST`)
+	(cd ..; tar -cJf reposurgeon/reposurgeon-$(VERS).tar.xz `cat reposurgeon/MANIFEST`)
 	@(cd ..; rm reposurgeon-$(VERS))
 
 version:
@@ -93,15 +93,15 @@ pylint:
 check:
 	cd test; $(MAKE) --quiet
 
-dist: reposurgeon-$(VERS).tar.gz reposurgeon.1 repotool.1 repodiffer.1
+dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
 
-reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.gz
-	@md5sum reposurgeon-$(VERS).tar.gz >reposurgeon-$(VERS).md5
+reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
+	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
 
 zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
-release: reposurgeon-$(VERS).tar.gz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html dvcs-migration-guide.html features.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
 
 refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
