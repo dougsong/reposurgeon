@@ -5,6 +5,35 @@ repomapper - update a contributor map from an /etc/password file
 
 import sys, collections, re, getopt
 
+class ContribMap:
+    def __init__(self, fn):
+        self.payload = collections.OrderedDict()
+        for line in open(fn):
+            m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
+            if m is None:
+                sys.stderr.write("repomapper: malformed attribution line %s.\n" % repr(line))
+                sys.exit(1)
+            name = m.group(1)
+            fullname = m.group(2).strip()
+            email = m.group(3)
+            tz = m.group(4)
+            self.payload[name] = [fullname, email, tz]
+    def suffix(self, addr):
+        "Add an address suffix to entries lacking one."
+        for (name, (fullname, email, tz)) in self.payload.items():
+            if '@' not in email:
+                self.payload[name] = [fullname, email + "@" + addr, tz]
+    def write(self, fp, pred=None):
+        "Write the current state of this contrib map."
+        for (name, (fullname, email, tz)) in self.payload.items():
+            if pred != None and not pred(name, fullname, email, tz):
+                continue
+            out = "%s = %s <%s>" % (name, fullname, email)
+            if tz:
+                out += " " + tz
+            out += "\n"
+            fp.write(out)
+
 if __name__ == '__main__':
     host = ""
     passwdfile = None
@@ -20,17 +49,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Read in an ordered dictionary of existing attributions.
-    contribmap = collections.OrderedDict()
-    for line in open(arguments[0]):
-        m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
-        if m is None:
-            sys.stderr.write("repomapper: malformed attribution line %s.\n" % repr(line))
-            sys.exit(1)
-        name = m.group(1)
-        fullname = m.group(2).strip()
-        email = m.group(3)
-        tz = m.group(4)
-        contribmap[name] = [fullname, email, tz]
+    contribmap = ContribMap(arguments[0])
+
+    # Apply the -h option
+    if host:
+        contribmap.suffix(host)
 
     # With -p, read the password data
     if passwdfile:
@@ -45,30 +68,18 @@ if __name__ == '__main__':
                 sys.stderr.write("repomapper: malformed passwd line.\n")
                 sys.exit(1)
         # Attempt to fill in the contribmap
-        for (name, (fullname, email, tz)) in contribmap.items():
+        for (name, (fullname, email, tz)) in contribmap.payload.items():
             if name not in passwd:
                 sys.stderr.write("repomapper: %s not in password file.\n" % name)
             elif fullname == name:
-                contribmap[name] = [passwd[name], email, tz]
+                contribmap.payload[name] = [passwd[name], email, tz]
             elif fullname.lower() != passwd[name].lower():
                 sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
         # Now dump the result
-        for (name, (fullname, email, tz)) in contribmap.items():
-            suffix = ""
-            if host and "@" not in email:
-                suffix = "@" + host
-            out = "%s = %s <%s%s>" % (name, fullname, suffix, email)
-            if tz:
-                out += " " + tz
-            print out
+        contribmap.write(sys.stdout)
         raise SystemExit(0)
 
     # By default, report on incomplete entries
-    for (name, (fullname, email, tz)) in contribmap.items():
-        if name == fullname or "@" not in email:
-            out = "%s = %s <%s>" % (name, fullname, email)
-            if tz:
-                out += " " + tz
-            print out
+    contribmap.write(sys.stdout, lambda n, f, e, t: n == f or "@" not in e)
 
 # end
