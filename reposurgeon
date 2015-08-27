@@ -10231,11 +10231,12 @@ commits, the latest of which is the commit to modify, and the earliest is the
 new first parent. All other parents links are cleared; if you want you can
 recreate them with the 'merge' command.
 
-By default, the manifest of the reparented commit is computed before modifying
-it, and fileops are prepended so that the manifest stays unchanged even when
-the first parent has been changed. Using the keyword 'rebase' as a third
-argument inhibits this behavior and the tree contents of all descendents can be
-modified as a result.
+By default, the manifest of the reparented commit is computed before
+modifying it; a deleteall and fileops are prepended so that the
+manifest stays unchanged even when the first parent has been
+changed. Using the keyword 'rebase' as a third argument inhibits this
+behavior - no deleteall is issued and the tree contents of all
+descendents can be modified as a result.
 """)
     def do_reparent(self, line):
         repo = self.chosen()
