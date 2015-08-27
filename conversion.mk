@@ -26,12 +26,8 @@
 # file and the lift script.  During the process you can set EXTRAS to
 # name extra metadata such as a comments mailbox.
 #
-# After the conversion, you may be able to perform a sanity check with
-# 'make diff' (supported for CVS and svn).  You can check
-# individual tags or branches with 'make diff-tag'
-#
-# Note that CVS-checkout directories not matched in a conversion may be
-# historical relics containing only CVSROOT directories.
+# Afterwards, you can use the headcompare and tagscompare productions
+# to check your work.
 
 PROJECT = foo
 SOURCE_VCS = svn
@@ -48,7 +44,7 @@ REPOSURGEON = reposurgeon
 
 # Configuration ends here
 
-.PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap diff
+.PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap
 # Tell make not to auto-remove tag directories, because it only tries rm and hence fails
 .PRECIOUS: $(PROJECT)-%-checkout $(PROJECT)-%-$(TARGET_VCS)
 
