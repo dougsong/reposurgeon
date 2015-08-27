@@ -9,7 +9,7 @@ if __name__ == '__main__':
     host = ""
     passwdfile = None
     (options, arguments) = getopt.getopt(sys.argv[1:], "h:p:",
-                                         ["host=","passwd="])
+                                         ["host=", "passwd="])
     for (opt, val) in options:
         if opt == '-h' or opt == '--host':
             host = val
