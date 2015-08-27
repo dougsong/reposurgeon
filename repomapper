@@ -3,16 +3,25 @@
 repomapper - update a contributor map from an /etc/password file
 """
 
-import sys, collections, re
+import sys, collections, re, getopt
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        sys.stderr.write("repomapper: requires two file arguments.\n")
+    host = ""
+    passwdfile = None
+    (options, arguments) = getopt.getopt(sys.argv[1:], "h:p:",
+                                         ["host=","passwd="])
+    for (opt, val) in options:
+        if opt == '-h' or opt == '--host':
+            host = val
+        elif opt == '-p' or opt == '--passwd':
+            passwdfile = val
+    if len(arguments) < 1:
+        sys.stderr.write("repomapper: requires a coontrib file argument.\n")
         sys.exit(1)
 
     # Read in an ordered dictionary of existing attributions.
     contribmap = collections.OrderedDict()
-    for line in open(sys.argv[1]):
+    for line in open(arguments[0]):
         m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
         if m is None:
             sys.stderr.write("repomapper: malformed attribution line %s.\n" % repr(line))
@@ -23,29 +32,41 @@ if __name__ == '__main__':
         tz = m.group(4)
         contribmap[name] = [fullname, email, tz]
 
-    # Read the password data
-    passwd = {}
-    for line in open(sys.argv[2]):
-        try:
-            (name, _hash, _uid, _gid, gecos, _home, _dir) = line.split(":")
-            if "," in gecos:
-                gecos = gecos.split(",").pop(0)
-            passwd[name] = gecos
-        except ValueError:
-            sys.stderr.write("repomapper: malformed passwd line.\n")
-            sys.exit(1)
+    # With -p, read the password data
+    if passwdfile:
+        passwd = {}
+        for line in open(passwdfile):
+            try:
+                (name, _hash, _uid, _gid, gecos, _home, _dir) = line.split(":")
+                if "," in gecos:
+                    gecos = gecos.split(",").pop(0)
+                passwd[name] = gecos
+            except ValueError:
+                sys.stderr.write("repomapper: malformed passwd line.\n")
+                sys.exit(1)
+        # Attempt to fill in the contribmap
+        for (name, (fullname, email, tz)) in contribmap.items():
+            if name not in passwd:
+                sys.stderr.write("repomapper: %s not in password file.\n" % name)
+            elif fullname == name:
+                contribmap[name] = [passwd[name], email, tz]
+            elif fullname.lower() != passwd[name].lower():
+                sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
+            suffix = ""
+            if host and "@" not in email:
+                suffix = "@" + host
+            out = "%s = %s <%s%s>" % (name, fullname, suffix, email)
+            if tz:
+                out += " " + tz
+            print out
+        raise SystemExit(0)
 
-    # Attempt to fill in the contribmap
+    # By default, report on incomplete entries
     for (name, (fullname, email, tz)) in contribmap.items():
-        if name not in passwd:
-            sys.stderr.write("repomapper: %s not in password file.\n" % name)
-        elif fullname == name:
-            contribmap[name] = [passwd[name], email, tz]
-        elif fullname.lower() != passwd[name].lower():
-            sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
-        out = "%s = %s <%s>" % (name, fullname, email)
-        if tz:
-            out += " " + tz
-        print out
+        if name == fullname or "@" not in email:
+            out = "%s = %s <%s>" % (name, fullname, email)
+            if tz:
+                out += " " + tz
+            print out
 
 # end
