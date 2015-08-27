@@ -21,7 +21,8 @@ changed or deleted or inserted. It may be useful for comparing the
 output of different repository-conversion tools in detail.
 
 Another auxiliary program, `repotool`, assists in mirroring Subversion
-repositories.
+repositories.  Yet another, `repomapper`, assists in automatically preparing
+contributor maps of CVS and SVN repositories.
 
 This distribution also includes a generic `Makefile` (named
 `conversion.mk`) describing a repeatable conversion workflow using these
