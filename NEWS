@@ -1,6 +1,7 @@
 			reposurgeon project news
 
 Repository head:
+     The new repomapper tool helps prepare contributor maps.
      Use of branchify/branchify_map is now less likely to produce invalid resets.
      "branchify_map reset" actually works now.
      Prevent a crash on enpty SVN comments produced by dumpfiltering.

@@ -21,6 +21,7 @@ SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
+	repomapper repomapper.xml \
 	conversion.mk features.asc \
 	dvcs-migration-guide.asc \
 	reposurgeon-mode.el
@@ -30,8 +31,8 @@ SOURCES += Makefile control reposturgeon.png
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
-all: reposurgeon.1 repotool.1 repodiffer.1 \
-     reposurgeon.html repotool.html repodiffer.html \
+all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 \
+     reposurgeon.html repotool.html repodiffer.html repomapper.html \
      dvcs-migration-guide.html features.html reporting-bugs.html
 
 %.1: %.xml
@@ -86,9 +87,11 @@ COMMON_PYLINT = --rcfile=/dev/null --reports=n \
 	--dummy-variables-rgx='^_'
 PYLINTOPTS1 = "C0103,C0111,C0301,C0302,C0322,C0324,C0325,C0321,C0323,C0330,C1001,R0201,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,W0108,W0110,W0123,W0141,W0142,W0212,W0233,W0603,W0632,W0640,W0511,W0611,E1101,E1103,E1124,I0011,F0401"
 PYLINTOPTS2 = "C0103,C0111,C0301,C0326,C0330,C1001,W0603,W0621,E1101,E1103,R0902,R0903,R0912,R0914,R0915"
+PYLINTOPTS3 = "C0103,C0301"
 pylint:
 	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
 	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS2) repodiffer
+	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS3) repomapper
 
 check:
 	cd test; $(MAKE) --quiet

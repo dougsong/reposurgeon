@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+"""
+repomapper - update a contributor map from an /etc/password file
+"""
+
+import sys, collections, re
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        sys.stderr.write("repomapper: requires two file arguments.\n")
+        sys.exit(1)
+
+    # Read in an ordered dictionary of existing attributions.
+    contribmap = collections.OrderedDict()
+    for line in open(sys.argv[1]):
+        m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
+        if m is None:
+            sys.stderr.write("repomapper: malformed attribution line %s.\n" % repr(line))
+            sys.exit(1)
+        name = m.group(1)
+        fullname = m.group(2).strip()
+        email = m.group(3)
+        tz = m.group(4)
+        contribmap[name] = [fullname, email, tz]
+
+    # Read the password data
+    passwd = {}
+    for line in open(sys.argv[2]):
+        try:
+            (name, _hash, _uid, _gid, gecos, _home, _dir) = line.split(":")
+            if "," in gecos:
+                gecos = gecos.split(",").pop(0)
+            passwd[name] = gecos
+        except ValueError:
+            sys.stderr.write("repomapper: malformed passwd line.\n")
+            sys.exit(1)
+
+    # Attempt to fill in the contribmap
+    for (name, (fullname, email, tz)) in contribmap.items():
+        if name not in passwd:
+            sys.stderr.write("repomapper: %s not in password file.\n" % name)
+        elif fullname == name:
+            contribmap[name] = [passwd[name], email, tz]
+        elif fullname.lower() != passwd[name].lower():
+            sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
+        out = "%s = %s <%s>" % (name, fullname, email)
+        if tz:
+            out += " " + tz
+        print out
+
+# end

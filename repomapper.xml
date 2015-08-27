@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "docbook/docbookx.dtd">
+<refentry id='repomapper.1'>
+<refmeta>
+<refentrytitle>repomapper</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>Aug 26 2015</refmiscinfo>
+<refmiscinfo class='productname'>repomapper</refmiscinfo>
+<refmiscinfo class='source'>repomapper</refmiscinfo>
+<refmiscinfo class='manual'>Development Tools</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>repomapper</refname>
+<refpurpose>update a contributor map from a password file</refpurpose>
+</refnamediv>
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>repomapper</command>
+      <arg><replaceable>contribmap</replaceable></arg>
+      <arg><replaceable>passwordfile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+<para>Older, centralized version-control systems such as CVS and
+SVN cenralize a repository on one host and identify users by their
+account names on that host.  Distributed version-control systems such
+as git and Mercurial identify users by a netwide-unique ID consisting
+of a name-among-humans followed by an email address.</para>
+
+<para>When moving a repository from a centralized to a distributed
+system, therefore, one of the prerequisites is a contributor map that
+associates each account name on the old system to a DVCS-style ID
+on the new one.  This tool automates part of that process.</para>
+
+<para>The first argument file must be a contributor map such as is
+read by the <command>authors read</command> subcommand of
+<citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>. It
+may be a fresh or stub map, produced by <command>authors
+write</command> before any human-name or email information has been
+added.  Or it may have name-among-humans and email information filled
+in for some entries.</para>
+
+<para>The second argument file must be the Unix password file from the
+centralized repository host. Only the username and the comment (or
+'gecos') field containing the user's name-among-humans are used. Other
+fields are ignored, including the password-hash field.  (On modern
+Unixes this field does not contain the actual hash, which lives in a
+different file named <filename>/etc/shadow</filename>, so
+<filename>/etc/passwd</filename> can be shared without security
+risk.)</para>
+
+<para>A stub map entry looks something like this:
+
+<programlisting>
+foonly = foonly &lt;foonly&gt;
+</programlisting>
+</para>
+
+<para>The same entry, fully filled in, might look something like this:
+
+<programlisting>
+foonly = Fred Foonly &lt;foonly@fubar.net&gt;
+</programlisting>
+</para>
+
+<para>What this tool does for each entry in the contrib file is look
+for a username in the password file matching the name to the left of
+the equal sign.  If a match is found, the user's name-among-humans is
+extracted from the gecos field and replaces the text between the
+<quote>=</quote> and the <quote>&lt;</quote>.</para>
+
+<para>Thus, the stub line above and the
+<filename>/etc/passwd</filename> line
+
+<programlisting>
+foonly:x:1000:1000:Fred Foonly,,,:/home/foonly:/bin/bash
+</programlisting>
+
+will combine to produce this on output:
+
+<programlisting>
+foonly = Fred Foonly &lt;foonly&gt;
+</programlisting>
+
+Note that the email-address part (and, if present, the
+optional trailing timezone field) are not modified.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+
+<para><citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+
+<para>Eric S. Raymond <email>esr@thyrsus.com</email>. This tool is
+distributed with reposurgeon; see the project page at <ulink
+url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>.</para>
+</refsect1>
+</refentry>
