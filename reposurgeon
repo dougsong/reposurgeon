@@ -7147,7 +7147,7 @@ into sections of the input stream instead).
         except Recoverable:
             pass
         self.selection = list(self.eval_expression(set(self.chosen().all())))
-        if self.line == line:
+        if self.line.lstrip() == line.lstrip():
             self.selection = None
         else:
             # TODO: We probably want to stop doing this
