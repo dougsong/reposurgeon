@@ -52,6 +52,8 @@ if __name__ == '__main__':
                 contribmap[name] = [passwd[name], email, tz]
             elif fullname.lower() != passwd[name].lower():
                 sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
+        # Now dump the result
+        for (name, (fullname, email, tz)) in contribmap.items():
             suffix = ""
             if host and "@" not in email:
                 suffix = "@" + host
