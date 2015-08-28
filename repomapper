@@ -6,12 +6,14 @@ repomapper - update a contributor map from an /etc/password file
 import sys, collections, re, getopt
 
 class Contributor:
+    "Associate a usename with a DVCS-style ID."
     def __init__(self, name, fullname, email, tz):
         self.name = name
         self.fullname = fullname
         self.email = email
         self.tz = tz
     def incomplete(self):
+        "Does this entry need completion?"
         return self.name == self.fullname or "@" not in self.email
     def __str__(self):
         out = "%s = %s <%s>" % (self.name, self.fullname, self.email)
@@ -21,6 +23,7 @@ class Contributor:
         return out
 
 class ContribMap:
+    "A map of contributors."
     def __init__(self, fn):
         self.payload = collections.OrderedDict()
         for line in open(fn):
@@ -35,12 +38,12 @@ class ContribMap:
             self.payload[name] = Contributor(name, fullname, email, tz)
     def suffix(self, addr):
         "Add an address suffix to entries lacking one."
-        for (name, obj) in self.payload.items():
+        for (_name, obj) in self.payload.items():
             if '@' not in obj.email:
                 obj.email += "@" + addr
     def write(self, fp, incomplete=False):
         "Write the current state of this contrib map."
-        for (name, obj) in self.payload.items():
+        for (_name, obj) in self.payload.items():
             if incomplete and not obj.incomplete():
                 continue
             fp.write(str(obj))
@@ -88,14 +91,14 @@ if __name__ == '__main__':
             elif obj.fullname == name:
                 contribmap.payload[name].fullname = passwd[name]
             elif obj.fullname.lower() != passwd[name].lower():
-                sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
+                sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, obj.fullname, passwd[name]))
         # Now dump the result
         contribmap.write(sys.stdout, incomplete=False)
         raise SystemExit(0)
 
     # With -u, copy in all complete entries in the update file
     if updatefile:
-        updatemap = ContribMap(updatefile);
+        updatemap = ContribMap(updatefile)
         for (name, obj) in updatemap.payload.items():
             if name not in contribmap.payload:
                 contribmap.payload[name] = obj
