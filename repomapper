@@ -48,13 +48,16 @@ class ContribMap:
 if __name__ == '__main__':
     host = ""
     passwdfile = None
-    (options, arguments) = getopt.getopt(sys.argv[1:], "h:p:",
+    updatefile = None
+    (options, arguments) = getopt.getopt(sys.argv[1:], "h:p:u:",
                                          ["host=", "passwd="])
     for (opt, val) in options:
         if opt == '-h' or opt == '--host':
             host = val
         elif opt == '-p' or opt == '--passwd':
             passwdfile = val
+        elif opt == "-u":
+            updatefile = val
     if len(arguments) < 1:
         sys.stderr.write("repomapper: requires a contrib-map file argument.\n")
         sys.exit(1)
@@ -86,6 +89,16 @@ if __name__ == '__main__':
                 contribmap.payload[name].fullname = passwd[name]
             elif obj.fullname.lower() != passwd[name].lower():
                 sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
+        # Now dump the result
+        contribmap.write(sys.stdout, incomplete=False)
+        raise SystemExit(0)
+
+    # With -u, copy in all complete entries in the update file
+    if updatefile:
+        updatemap = ContribMap(updatefile);
+        for (name, obj) in updatemap.payload.items():
+            if name not in contribmap.payload:
+                contribmap.payload[name] = obj
         # Now dump the result
         contribmap.write(sys.stdout, incomplete=False)
         raise SystemExit(0)

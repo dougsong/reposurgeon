@@ -20,6 +20,7 @@
 <cmdsynopsis>
   <command>repomapper</command>
       <arg choice="opt">-p <replaceable>passwordfile</replaceable></arg>
+      <arg choice="opt">-u <replaceable>updatefile</replaceable></arg>
       <arg choice="opt">-h <replaceable>host</replaceable></arg>
       <arg choice='plain'><replaceable>contribmap</replaceable></arg>
 </cmdsynopsis>
@@ -46,15 +47,6 @@ write</command> before any human-name or email information has been
 added.  Or it may have name-among-humans and email information filled
 in for some entries.</para>
 
-<para>The second argument file must be the Unix password file from the
-centralized repository host. Only the username and the comment (or
-'gecos') field containing the user's name-among-humans are used. Other
-fields are ignored, including the password-hash field.  (On modern
-Unixes this field does not contain the actual hash, which lives in a
-different file named <filename>/etc/shadow</filename>, so
-<filename>/etc/passwd</filename> can be shared without security
-risk.)</para>
-
 <para>A stub map entry looks something like this:
 
 <programlisting>
@@ -75,9 +67,17 @@ right side of the equals sign is identical to the account name on the
 left, or the email field contains no @-sign, or both.</para> 
 
 <para>With the -p option, this tool fills in the full-name field using
-the password file given as argument.  That is, for each entry in the
-contrib file it looks for a username in the password file matching the
-name to the left of the equal sign.  If a match is found, the user's
+the password file given as argument. Only the username and the comment (or
+'gecos') field containing the user's name-among-humans are used. Other
+fields are ignored, including the password-hash field.  (On modern
+Unixes this field does not contain the actual hash, which lives in a
+different file named <filename>/etc/shadow</filename>, so
+<filename>/etc/passwd</filename> can be shared without security
+risk.)</para>
+
+<para>In the -p mode, or each entry in the contrib file the program
+looks for a username in the password file matching the name to the
+left of the equal sign.  If a match is found, the user's
 name-among-humans is extracted from the gecos field and replaces the
 text between the <quote>=</quote> and the <quote>&lt;</quote>.</para>
 
@@ -101,6 +101,12 @@ optional trailing timezone field) are not normally modified.</para>
 a host name which should be appended (after a @) to every email field
 rgat does not already contain.  The argument would typically be the
 fully-qualified domain name of the repository host.</para>
+
+<para>In the -u mode of operation, the option argument must be a contributor
+file, which is taken as a source of updates.  Each contributor entry
+with a username not matching any in the main contributor map is copied
+into the latter.</para>
+
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
