@@ -25,7 +25,7 @@ class Contributor:
 class ContribMap:
     "A map of contributors."
     def __init__(self, fn):
-        self.payload = collections.OrderedDict()
+        self.payload = {}
         for line in open(fn):
             m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
             if m is None:
@@ -43,10 +43,12 @@ class ContribMap:
                 obj.email += "@" + addr
     def write(self, fp, incomplete=False):
         "Write the current state of this contrib map."
-        for (_name, obj) in self.payload.items():
-            if incomplete and not obj.incomplete():
+        keys = self.payload.keys()
+        keys.sort()
+        for name in keys:
+            if incomplete and not self.payload[name].incomplete():
                 continue
-            fp.write(str(obj))
+            fp.write(str(self.payload[name]))
 
 if __name__ == '__main__':
     host = ""
