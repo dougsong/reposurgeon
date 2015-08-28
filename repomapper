@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-repomapper - update a contributor map from an /etc/password file
+repomapper - update and manipulate contributor maps
 """
 
 import sys, collections, re, getopt
