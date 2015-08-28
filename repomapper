@@ -3,7 +3,7 @@
 repomapper - update and manipulate contributor maps
 """
 
-import sys, collections, re, getopt
+import sys, re, getopt
 
 class Contributor:
     "Associate a usename with a DVCS-style ID."
