@@ -164,6 +164,34 @@ outputs:
 
 	    Initial import.
 
+== The fleetwood test case ==
+
+According to Mike Fleetwood, fleetwood.svn was created with the following
+sequence of operations:
+
+------------------------------------------------------
+svn commit -m 'commit one'
+svn copy $REPO/trunk $REPO/tags/1.0 -m 'Release 1.0'
+svn mv $REPO/tags/1.0 $REPO/tags/1.0rc1 -m 'No release ready yet'
+svn commit -m 'commit two'
+svn copy $REPO/trunk $REPO/tags/1.0 -m 'Fixed release 1.0'
+------------------------------------------------------
+
+He then converted ut with these commands:
+
+------------------------------------------------------
+branchify_map :tags/(.*)/:tags/\1:
+read </tmp/repo.svndump
+prefer git
+write >/tmp/repo.fi
+------------------------------------------------------
+
+After conversion the, tag named '1.0' refers to the first commit with
+the first tagging message 'Release 1.0', rather than the second commit
+with the second tagging message 'Fixed release 1.0'.
+
+This is arguably a bug.
+
 == A note about branchreplace.svn ==
 
 This was produced from the NUT Subversion repo as follows:

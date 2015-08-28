@@ -1,0 +1,236 @@
+SVN-fs-dump-format-version: 2
+ ## Test tag-move-retag sequence
+
+UUID: 36c6b7c2-7dd0-4751-a5ba-f70b929e5202
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-07-25T21:09:49.595457Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 22
+Create trunk directory
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:09:50.157359Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 120
+Content-length: 120
+
+K 7
+svn:log
+V 21
+Create tags directory
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:09:50.572903Z
+PROPS-END
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 124
+Content-length: 124
+
+K 7
+svn:log
+V 25
+Create branches directory
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:09:50.966139Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 109
+Content-length: 109
+
+K 7
+svn:log
+V 10
+commit one
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:10:01.473245Z
+PROPS-END
+
+Node-path: trunk/test.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: 5bbf5a52328e7439ae6e719dfe712200
+Text-content-sha1: c7059bb19433cc3cabaa6236c83d56668a843dd2
+Content-length: 14
+
+PROPS-END
+one
+
+
+Revision-number: 5
+Prop-content-length: 110
+Content-length: 110
+
+K 7
+svn:log
+V 11
+Release 1.0
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:10:07.902582Z
+PROPS-END
+
+Node-path: tags/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: trunk
+
+
+Revision-number: 6
+Prop-content-length: 119
+Content-length: 119
+
+K 7
+svn:log
+V 20
+No release ready yet
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:10:13.840080Z
+PROPS-END
+
+Node-path: tags/1.0rc1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: tags/1.0
+
+
+Node-path: tags/1.0
+Node-action: delete
+
+
+Revision-number: 7
+Prop-content-length: 109
+Content-length: 109
+
+K 7
+svn:log
+V 10
+commit two
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:10:21.022282Z
+PROPS-END
+
+Node-path: trunk/test.txt
+Node-kind: file
+Node-action: change
+Text-content-length: 8
+Text-content-md5: 2094b601daac3d68f5aed51d3c20f7cd
+Text-content-sha1: c708d7ef841f7e1748436b8ef5670d0b2de1a227
+Content-length: 8
+
+one
+two
+
+
+Revision-number: 8
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 17
+Fixed release 1.0
+K 10
+svn:author
+V 4
+mike
+K 8
+svn:date
+V 27
+2015-07-25T21:10:25.862421Z
+PROPS-END
+
+Node-path: tags/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 7
+Node-copyfrom-path: trunk
+
+
