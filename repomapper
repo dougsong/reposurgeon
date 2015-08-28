@@ -5,6 +5,21 @@ repomapper - update a contributor map from an /etc/password file
 
 import sys, collections, re, getopt
 
+class Contributor:
+    def __init__(self, name, fullname, email, tz):
+        self.name = name
+        self.fullname = fullname
+        self.email = email
+        self.tz = tz
+    def incomplete(self):
+        return self.name == self.fullname or "@" not in self.email
+    def __str__(self):
+        out = "%s = %s <%s>" % (self.name, self.fullname, self.email)
+        if self.tz:
+            out += " " + self.tz
+        out += "\n"
+        return out
+
 class ContribMap:
     def __init__(self, fn):
         self.payload = collections.OrderedDict()
@@ -17,22 +32,18 @@ class ContribMap:
             fullname = m.group(2).strip()
             email = m.group(3)
             tz = m.group(4)
-            self.payload[name] = [fullname, email, tz]
+            self.payload[name] = Contributor(name, fullname, email, tz)
     def suffix(self, addr):
         "Add an address suffix to entries lacking one."
-        for (name, (fullname, email, tz)) in self.payload.items():
-            if '@' not in email:
-                self.payload[name] = [fullname, email + "@" + addr, tz]
-    def write(self, fp, pred=None):
+        for (name, obj) in self.payload.items():
+            if '@' not in obj.email:
+                obj.email += "@" + addr
+    def write(self, fp, incomplete=False):
         "Write the current state of this contrib map."
-        for (name, (fullname, email, tz)) in self.payload.items():
-            if pred != None and not pred(name, fullname, email, tz):
+        for (name, obj) in self.payload.items():
+            if incomplete and not obj.incomplete():
                 continue
-            out = "%s = %s <%s>" % (name, fullname, email)
-            if tz:
-                out += " " + tz
-            out += "\n"
-            fp.write(out)
+            fp.write(str(obj))
 
 if __name__ == '__main__':
     host = ""
@@ -45,7 +56,7 @@ if __name__ == '__main__':
         elif opt == '-p' or opt == '--passwd':
             passwdfile = val
     if len(arguments) < 1:
-        sys.stderr.write("repomapper: requires a coontrib file argument.\n")
+        sys.stderr.write("repomapper: requires a contrib-map file argument.\n")
         sys.exit(1)
 
     # Read in an ordered dictionary of existing attributions.
@@ -68,18 +79,18 @@ if __name__ == '__main__':
                 sys.stderr.write("repomapper: malformed passwd line.\n")
                 sys.exit(1)
         # Attempt to fill in the contribmap
-        for (name, (fullname, email, tz)) in contribmap.payload.items():
+        for (name, obj) in contribmap.payload.items():
             if name not in passwd:
                 sys.stderr.write("repomapper: %s not in password file.\n" % name)
-            elif fullname == name:
-                contribmap.payload[name] = [passwd[name], email, tz]
-            elif fullname.lower() != passwd[name].lower():
+            elif obj.fullname == name:
+                contribmap.payload[name].fullname = passwd[name]
+            elif obj.fullname.lower() != passwd[name].lower():
                 sys.stderr.write("repomapper: %s -> %s should be %s.\n" % (name, fullname, passwd[name]))
         # Now dump the result
-        contribmap.write(sys.stdout)
+        contribmap.write(sys.stdout, incomplete=False)
         raise SystemExit(0)
 
     # By default, report on incomplete entries
-    contribmap.write(sys.stdout, lambda n, f, e, t: n == f or "@" not in e)
+    contribmap.write(sys.stdout, incomplete=True)
 
 # end
