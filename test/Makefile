@@ -21,7 +21,7 @@ default:
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
 		svndump-regress \
-		repodiffer-regress
+		repodiffer-regress repomapper-regress
 	@echo "=== No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
@@ -34,7 +34,7 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 	$(REPOSURGEON) "read <$<" "legacy write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
-	svndump-buildregress repodiffer-buildregress
+	svndump-buildregress repodiffer-buildregress repomapper-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -253,6 +253,22 @@ repodiffer-buildregress:
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
+	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    sh $${file}.sh | diff --text -u $${file}.chk -; \
+	done
+	@rm -f /tmp/regress
+
+# Regression-testing of repomapper; look at the *.sh and
+# corresponding *.chk files to see which tests this runs.
+REPOMAPPER := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
+repomapper-buildregress:
+	@-for file in $(REPOMAPPER); do \
+	    echo "Remaking $${file}.chk"; \
+	    sh $${file}.sh >$${file}.chk; \
+	done
+repomapper-regress:
+	@echo "=== Running repomapper tests:"
+	@-for file in $(REPOMAPPER); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
 	    sh $${file}.sh | diff --text -u $${file}.chk -; \
 	done
