@@ -8,6 +8,6 @@ foonly = foonly <foonly>
 EOF
 
 # Only the foonly line should be emitted
-repomapper /tmp/contrib$$
+repomapper -i /tmp/contrib$$
 
 #end
