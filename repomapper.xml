@@ -19,6 +19,7 @@
 
 <cmdsynopsis>
   <command>repomapper</command>
+      <arg choice="opt">-i</a>
       <arg choice="opt">-p <replaceable>passwordfile</replaceable></arg>
       <arg choice="opt">-u <replaceable>updatefile</replaceable></arg>
       <arg choice="opt">-h <replaceable>host</replaceable></arg>
@@ -61,10 +62,13 @@ foonly = Fred Foonly &lt;foonly@fubar.net&gt;
 </programlisting>
 </para>
 
-<para>The default behavior of the tool is to report map entries that
-are not yet in DVCS form - that is, either the fullname field on the
-right side of the equals sign is identical to the account name on the
-left, or the email field contains no @-sign, or both.</para> 
+<para>The default behavior of the tool is to report all map entries,
+in effect a sorting copy of the file.</para>
+
+<para>With -i, it reports only entries that are not yet in DVCS form -
+that is, either the fullname field on the right side of the equals
+sign is identical to the account name on the left, or the email field
+contains no @-sign, or both.</para>
 
 <para>With the -p option, this tool fills in the full-name field using
 the password file given as the option's argument. Only the username

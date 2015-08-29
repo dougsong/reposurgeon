@@ -54,11 +54,14 @@ if __name__ == '__main__':
     host = ""
     passwdfile = None
     updatefile = None
-    (options, arguments) = getopt.getopt(sys.argv[1:], "h:p:u:",
+    incomplete = False
+    (options, arguments) = getopt.getopt(sys.argv[1:], "h:ip:u:",
                                          ["host=", "passwd="])
     for (opt, val) in options:
         if opt == '-h' or opt == '--host':
             host = val
+        elif opt == '-i':
+            incomplete = True
         elif opt == '-p' or opt == '--passwd':
             passwdfile = val
         elif opt == "-u":
@@ -109,6 +112,6 @@ if __name__ == '__main__':
         raise SystemExit(0)
 
     # By default, report on incomplete entries
-    contribmap.write(sys.stdout, incomplete=True)
+    contribmap.write(sys.stdout, incomplete=incomplete)
 
 # end
