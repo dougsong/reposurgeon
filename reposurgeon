@@ -2669,7 +2669,7 @@ class RepoStreamer:
         repo.makedir()
         with Baton(prompt=b"Extracting", enable=progress) as self.baton:
             repo.addEvent(Passthrough("#reposurgeon sourcetype %s\n" \
-                                      % self.extractor.vcstype.name))
+                                      % self.extractor.vcstype.name), where=0)
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
             #saved_umask = os.umask(0)
