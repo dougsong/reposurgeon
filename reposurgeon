@@ -8031,7 +8031,12 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
             complain(b"no repo has been chosen.")
             return
         if self.selection is None:
-            raise Recoverable(b"No selection")
+            if line:
+                raise Recoverable(b"No selection")
+            else:
+                print(repo.assignments)
+                for n, v in repo.assignments.items():
+                    announce("%s = %s" % (n, v))
         name = line.strip()
         if name in repo.assignments:
             raise Recoverable(b"%s has already been set" % name)

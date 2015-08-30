@@ -19,7 +19,7 @@
 
 <cmdsynopsis>
   <command>repomapper</command>
-      <arg choice="opt">-i</a>
+      <arg choice="opt">-i</arg>
       <arg choice="opt">-p <replaceable>passwordfile</replaceable></arg>
       <arg choice="opt">-u <replaceable>updatefile</replaceable></arg>
       <arg choice="opt">-h <replaceable>host</replaceable></arg>
