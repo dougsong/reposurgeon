@@ -99,6 +99,11 @@ and headers so it's in the same format as the rest of the mailbox."
     (kill-line))
   )
 
+(defun svn-index ()
+     "Show Subversion dump structure by eliding most lines."
+     (interactive)
+     (grep (format "egrep -nH -e \"Node-path|Revision-number|Node-copyfrom\" %s " (buffer-file-name))))
+
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
 (when (not reposurgeon-mode-map)
