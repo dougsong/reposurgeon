@@ -3480,7 +3480,8 @@ class StreamParser:
                         if b'*' not in trial and trial == node.path:
                             self.branches[node.path+os.sep] = None
                         elif trial.endswith(os.sep + b'*') \
-                                 and os.path.dirname(trial) == os.path.dirname(node.path):
+                                 and os.path.dirname(trial) == os.path.dirname(node.path) \
+                                 and not node.path + os.sep + b'*' in global_options[b'svn_branchify']:
                             self.branches[node.path+os.sep] = None
                         elif trial == b'*' and not node.path + os.sep + b'*' in global_options[b'svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
