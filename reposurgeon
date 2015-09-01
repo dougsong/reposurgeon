@@ -8406,21 +8406,40 @@ Supports > redirection.
                     if not author.name:
                         emptyname.add(event.id_me())
 
-            for item in deletealls:
-                parse.stdout.write(b"mid-branch delete: %s\n" % item)
-            for item in disconnected:
-                parse.stdout.write(b"disconnected commit: %s\n" % item)
-            if len(roots) > 1:
-                parse.stdout.write(b"multiple root commits: %s\n" % roots)
-            for item in shortset:
-                parse.stdout.write(b"unknown shortname: %s\n" % item)
-            for item in emptyaddr:
-                parse.stdout.write(b"empty address: %s\n" % item)
-            for item in emptyname:
-                parse.stdout.write(b"empty name: %s\n" % item)
-            for item in badaddress:
-                parse.stdout.write(b"email address missing @: %s\n" % item)
-            self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
+            if not parse.options or "--deletealls" in parse.options \
+                   or "-d" in parse.options:
+                for item in deletealls:
+                    parse.stdout.write(b"mid-branch delete: %s\n" % item)
+            if not parse.options or "--connected" in parse.options \
+                   or "-c" in parse.options:
+                for item in disconnected:
+                    parse.stdout.write(b"disconnected commit: %s\n" % item)
+            if not parse.options or "--roots" in parse.options \
+                   or "-r" in parse.options:
+                if len(roots) > 1:
+                    parse.stdout.write(b"multiple root commits: %s\n" % roots)
+            if not parse.options or "--names" in parse.options \
+                   or "-n" in parse.options:
+                for item in shortset:
+                    parse.stdout.write(b"unknown shortname: %s\n" % item)
+                for item in emptyaddr:
+                    parse.stdout.write(b"empty address: %s\n" % item)
+                for item in emptyname:
+                    parse.stdout.write(b"empty name: %s\n" % item)
+                for item in badaddress:
+                    parse.stdout.write(b"email address missing @: %s\n" % item)
+            if not parse.options or "--uniqueness" in parse.options \
+                   or "-u" in parse.options:
+                self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
+            if "--options" in parse.options or "-?" in parse.options:
+                print("""\
+--deletealls    -d     report mid-branch deletealls
+--connected     -c     report disconnected commits
+--roots         -r     report on multiple roots
+--attributions  -a     report on anomalies in usernames and attributions
+--uniqueness    -u     report on collisions among action stamps
+--options       -?     list available options\
+""")
     #
     # Housekeeping
     #

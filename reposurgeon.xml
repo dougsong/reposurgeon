@@ -1011,7 +1011,10 @@ well-formed as DVCS IDs, (6) multiple child links with identical
 branch labels descending from the same commit, (7) time and
 action-stamp collisions.</para>
 
-<para>The modifiers and output format of this command are unstable; they may
+<para>Options to issue only partial reports are supported; "lint
+--options" or "lint -?" lists them.</para>
+
+<para>The options and output format of this command are unstable; they may
 change without notice as more sanity checks are added.</para>
 </listitem>
 </varlistentry>
