@@ -1,0 +1,25 @@
+[alias]
+	# git stamp <commit-ish> - print a reposurgeon-style action stamp
+	stamp = show -s --format='%cI!%ce'
+
+	# git scommit <stamp> <rev-list-args> - list most recent commit that matches <stamp>.
+	# Must also specify a branch to search or --all, after these arguments.
+	scommit = "!f(){ d=${1%%!*}; a=${1##*!}; arg=\"--until=$d -1\"; if [ $a != $1 ]; then arg=\"$arg --committer=$a\"; fi; shift; git rev-list $arg ${1:+\"$@\"}; }; f"
+
+	# git scommits <stamp> <rev-list-args> - as above, but list all matching commits.
+	scommits = "!f(){ d=${1%%!*}; a=${1##*!}; arg=\"--until=$d --after $d\"; if [ $a != $1 ]; then arg=\"$arg --committer=$a\"; fi; shift; git rev-list $arg ${1:+\"$@\"}; }; f"
+
+	# git smaster <stamp> - list most recent commit on master that matches <stamp>.
+	smaster = "!f(){ git scommit \"$1\" master --first-parent; }; f"
+	smasters = "!f(){ git scommits \"$1\" master --first-parent; }; f"
+
+	# git shs <stamp> - show the commits on master that match <stamp>.
+	shs = "!f(){ stamp=$(git smasters $1); shift; git show ${stamp:?not found} $*; }; f"
+
+	# git slog <stamp> <log-args> - start git log at <stamp> on master
+	slog = "!f(){ stamp=$(git smaster $1); shift; git log ${stamp:?not found} $*; }; f"
+
+	# git sco <stamp> - check out most recent commit on master that matches <stamp>.
+	sco = "!f(){ stamp=$(git smaster $1); shift; git checkout ${stamp:?not found} $*; }; f"
+
+

@@ -1889,6 +1889,39 @@ branch).  It attempts to refer to a commit without being VCS-specific.
 Thus, instead of "commit 304a53c2" or "r2355",
 "2011-10-25T15:11:09Z!fred@foonly.com".</para>
 
+<para>The following git aliases allow git to work directly with action
+stamps.  Append it to your <filename>~/.gitconfig</filename>; if you
+already have an [alias] section, leave off the first line.</para>
+
+<!-- Keep this updated from reposurgeon-git-aliases -->
+<programlisting>
+<![CDATA[
+[alias]
+	# git stamp <commit-ish> - print a reposurgeon-style action stamp
+	stamp = show -s --format='%cI!%ce'
+
+	# git scommit <stamp> <rev-list-args> - list most recent commit that matches <stamp>.
+	# Must also specify a branch to search or --all, after these arguments.
+	scommit = "!f(){ d=${1%%!*}; a=${1##*!}; arg=\"--until=$d -1\"; if [ $a != $1 ]; then arg=\"$arg --committer=$a\"; fi; shift; git rev-list $arg ${1:+\"$@\"}; }; f"
+
+	# git scommits <stamp> <rev-list-args> - as above, but list all matching commits.
+	scommits = "!f(){ d=${1%%!*}; a=${1##*!}; arg=\"--until=$d --after $d\"; if [ $a != $1 ]; then arg=\"$arg --committer=$a\"; fi; shift; git rev-list $arg ${1:+\"$@\"}; }; f"
+
+	# git smaster <stamp> - list most recent commit on master that matches <stamp>.
+	smaster = "!f(){ git scommit \"$1\" master --first-parent; }; f"
+	smasters = "!f(){ git scommits \"$1\" master --first-parent; }; f"
+
+	# git shs <stamp> - show the commits on master that match <stamp>.
+	shs = "!f(){ stamp=$(git smasters $1); shift; git show ${stamp:?not found} $*; }; f"
+
+	# git slog <stamp> <log-args> - start git log at <stamp> on master
+	slog = "!f(){ stamp=$(git smaster $1); shift; git log ${stamp:?not found} $*; }; f"
+
+	# git sco <stamp> - check out most recent commit on master that matches <stamp>.
+	sco = "!f(){ stamp=$(git smaster $1); shift; git checkout ${stamp:?not found} $*; }; f"
+]]>
+</programlisting>
+
 <para>There is a rare case in which an action stamp
 will not refer uniquely to one commit. It is theoretically possible
 that the same author might check in revisions on different branches

@@ -25,7 +25,7 @@ SOURCES += \
 	conversion.mk features.asc \
 	dvcs-migration-guide.asc \
 	reposurgeon-mode.el
-SOURCES += Makefile control reposturgeon.png
+SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 
 .PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c

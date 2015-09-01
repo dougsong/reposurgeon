@@ -28,6 +28,9 @@ This distribution also includes a generic `Makefile` (named
 `conversion.mk`) describing a repeatable conversion workflow using these
 tools, and the DVCS Migration Guide that describes how to use it.
 
+The file 'reposurgeon-git-aliases` can be appended to your `~/.gitconfig' to
+support working directly with action stamps in git.
+
 Finally, an Emacs Lisp mode with useful functions for editing large
 comment mailboxes is included.
 
