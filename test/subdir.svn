@@ -1,0 +1,175 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 40e17f46-c76c-4b77-95dd-f987b66dad4a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2015-09-01T01:29:09.389245Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 5
+jason
+K 8
+svn:date
+V 27
+2015-09-01T01:29:09.601910Z
+K 7
+svn:log
+V 18
+Directory layout.
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 5
+jason
+K 8
+svn:date
+V 27
+2015-09-01T01:29:09.799842Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 37
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 106
+Content-length: 106
+
+K 10
+svn:author
+V 5
+jason
+K 8
+svn:date
+V 27
+2015-09-01T01:34:21.450136Z
+K 7
+svn:log
+V 7
+subdir
+
+PROPS-END
+
+Node-path: branches/subdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 107
+Content-length: 107
+
+K 10
+svn:author
+V 5
+jason
+K 8
+svn:date
+V 27
+2015-09-01T01:34:24.700053Z
+K 7
+svn:log
+V 8
+mybranch
+PROPS-END
+
+Node-path: branches/subdir/mybranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 5
+jason
+K 8
+svn:date
+V 27
+2015-09-01T02:32:51.744847Z
+K 7
+svn:log
+V 13
+add more text
+PROPS-END
+
+Node-path: branches/subdir/mybranch/README
+Node-kind: file
+Node-action: change
+Text-content-length: 51
+Text-content-md5: 5d4e9b628b2a7759410b36ad3ea22010
+Text-content-sha1: 186a6c4dcb0ef30040809d6d5904a51924eb8a7c
+Content-length: 51
+
+This is a test Subversion repository
+and more text
+
+
