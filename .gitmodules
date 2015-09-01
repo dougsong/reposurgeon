@@ -1,6 +1,6 @@
 [submodule "externals/agito"]
 	path = externals/agito
-	url = git@github.com:fragglet/agito.git
+	url = git://github.com/fragglet/agito.git
 [submodule "externals/svn2git"]
 	path = externals/svn2git
-	url = git@github.com:nirvdrum/svn2git.git
+	url = git://github.com/nirvdrum/svn2git.git
