@@ -8015,12 +8015,14 @@ for exploring the selection-set language.
 
     def help_assign(self):
         print(b"""
-Compute a leading selection set and assign it to a symbolic name, which
-must follow the assign keyword.
-It is an error to assign to a name that is already assigned, or to
-any existing branch name.  Assignments may be cleared by some sequence
-mutations (though not by ordinary deletion); you will see a warning
-when this occurs.
+
+Compute a leading selection set and assign it to a symbolic name,
+which must follow the assign keyword. It is an error to assign to a
+name that is already assigned, or to any existing branch name.
+Assignments may be cleared by some sequence mutations (though not by
+ordinary deletion); you will see a warning when this occurs.
+
+With no selection set and no argument, list all assignments.
 
 Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.
@@ -8034,9 +8036,9 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
             if line:
                 raise Recoverable(b"No selection")
             else:
-                print(repo.assignments)
                 for n, v in repo.assignments.items():
                     announce("%s = %s" % (n, v))
+                return
         name = line.strip()
         if name in repo.assignments:
             raise Recoverable(b"%s has already been set" % name)
@@ -8176,8 +8178,9 @@ file in the blob.  Supports > redirection.
                     parse.stdout.write(b"?      -      %s\n" % (event,))
     def help_profile(self):
         print(b"""
-Enable profiling. Must be one of the initial command-line arguments, and
-gathers statistics only on code executed via '-'.
+Enable profiling. Profile statistics are dumped to the path given as argument.
+Must be one of the initial command-line arguments, and gathers statistics only
+on code executed via '-'.
 """)
     def do_profile(self, line):
         "Enable profiling."

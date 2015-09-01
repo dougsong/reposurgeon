@@ -2348,7 +2348,7 @@ any existing branch name.  Assignments may be cleared by sequence
 mutations (though not ordinary deletions); you will see a warning
 when this occurs.</para>
 
-<para>With no selection set and no name, list all assignments.</para>
+<para>With no selection set and no name, list all assignments.></para>
 
 <para>Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.</para>
@@ -2542,7 +2542,8 @@ disk space.</para>
 <term><command>profile</command>
 </term>
 <listitem>
-<para>Enable profiling. Must be one of the initial command-line arguments, and
+<para>Enable profiling. Profile statistics are dumped to the path
+given as argument. Must be one of the initial command-line arguments, and
 gathers statistics only on code executed via '-'.</para>
 </listitem>
 </varlistentry>
