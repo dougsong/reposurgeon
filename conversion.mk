@@ -12,10 +12,13 @@
 #    then uncomment the line that builds REMOTE_URL 
 #    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
 #    include the path to the CVS modules directory after the hostname.
-# 7. Create a $(PROJECT).lift script for your custom commands, initially empty.
+# 7. Run 'make initialize' to create your initial, empty, opts and lift files.
 # 8. Run 'make stubmap' to create a stub author map.
 # 9. (Optional) set REPOSURGEON to point at a faster cython build of the tool.
-# 10. Run 'make' to build a converted repository.
+# 10. (Optional) use a text editor to explicitly substitute $(PROJECT),
+#     $(SOURCE_VCS), and $(TARGET_VCS), then remove those definitions.  This
+#     will make the productions much easier to read.
+# 11. Run 'make' to build a converted repository.
 #
 # The reason both first- and second-stage stream files are generated is that,
 # especially with Subversion, making the first-stage stream file is often
@@ -28,6 +31,7 @@
 #
 # Afterwards, you can use the headcompare and tagscompare productions
 # to check your work.
+#
 
 PROJECT = foo
 SOURCE_VCS = svn
@@ -50,13 +54,17 @@ REPOSURGEON = reposurgeon
 
 default: $(PROJECT)-$(TARGET_VCS)
 
+initialize:
+	echo "# Pre-read options for reposurgeon go here." >$(PROJECT).opts
+	echo "# Lift commands for $(PROJECT) $(SOURCE_VCS) -> $(TARGET_VCS)" >$(PROJECT).lift
+
 # Build the converted repo from the second-stage fast-import stream
 $(PROJECT)-$(TARGET_VCS): $(PROJECT).fi
 	rm -fr $(PROJECT)-$(TARGET_VCS); $(REPOSURGEON) "read <$(PROJECT).fi" "prefer $(TARGET_VCS)" "rebuild $(PROJECT)-$(TARGET_VCS)"
 
 # Build the second-stage fast-import stream from the first-stage stream dump
-$(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).lift $(PROJECT).map $(EXTRAS)
-	$(REPOSURGEON) $(VERBOSITY) "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "sourcetype $(SOURCE_VCS)" "prefer git" "script $(PROJECT).lift" "legacy write >$(PROJECT).fo" "write >$(PROJECT).fi"
+$(PROJECT).fi: $(PROJECT).$(SOURCE_VCS) $(PROJECT).opts $(PROJECT).lift $(PROJECT).map $(EXTRAS)
+	$(REPOSURGEON) $(VERBOSITY) "script $(PROJECT).opts" "read <$(PROJECT).$(SOURCE_VCS)" "authors read <$(PROJECT).map" "sourcetype $(SOURCE_VCS)" "prefer git" "script $(PROJECT).lift" "legacy write >$(PROJECT).fo" "write >$(PROJECT).fi"
 
 # Build the first-stage stream dump from the local mirror
 $(PROJECT).$(SOURCE_VCS): $(PROJECT)-mirror
