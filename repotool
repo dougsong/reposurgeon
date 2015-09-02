@@ -126,7 +126,7 @@ ${project}-checkout: ${project}-mirror
 
 # Make a local checkout of the source mirror for inspection at a specific tag
 ${project}-%-checkout: ${project}-mirror
-	cd ${project}-mirror >/dev/null; repotool ../${project}-$*-checkout $*
+	cd ${project}-mirror >/dev/null; repotool checkout ../${project}-\$*-checkout \$*
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
