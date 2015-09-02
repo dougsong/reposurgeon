@@ -16,7 +16,7 @@ pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSIO
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\(.*\)/s//\1/p')
 
-SOURCES = README NEWS AUTHORS COPYING TODO
+SOURCES = README.md NEWS AUTHORS COPYING TODO
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
@@ -58,7 +58,7 @@ install: all
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
 	$(INSTALL) -m 755 reposurgeon repotool repodiffer "$(target)/bin"
-	$(INSTALL) -m 644 README NEWS TODO reposurgeon-git-aliases *.html \
+	$(INSTALL) -m 644 README.md NEWS TODO reposurgeon-git-aliases *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 
