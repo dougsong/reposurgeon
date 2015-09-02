@@ -24,8 +24,6 @@ XBS-OpenHub-URL: https://www.ohloh.net/p/reposurgeon
 
 XBS-Logo: reposturgeon.png
 
-XBS-Web-Extras: conversion.mk
-
 XBS-VC-Tag-Template: %(version)s
 
 XBS-Validate: make check
