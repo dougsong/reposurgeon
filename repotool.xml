@@ -13,7 +13,7 @@
 </refmeta>
 <refnamediv id='name'>
 <refname>repotool</refname>
-<refpurpose>query a CVS, Subversion, git, bzr, hg, or
+<refpurpose>query or manipulate a CVS, Subversion, git, bzr, hg, or
 darcs repository in a uniform way</refpurpose>
 </refnamediv>
 <refsynopsisdiv id='synopsis'>
@@ -27,14 +27,23 @@ darcs repository in a uniform way</refpurpose>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 
-<para>repotool is a script wrapper around repository query operations
-that differ by version-control system.  It is little use by itself,
-existing mainly to simplify the generic conversion makefile shipped with
+<para>repotool is a script wrapper around repository operations that
+differ by version-control system.  It is little use by itself,
+existing mainly to generate and simplify a conversion makefile usable
+with
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 <para>Not all actions are supported on all systems.  You will get an
 error message and a return value of 1 when attempting an unsupported
 action.</para>
+
+<para>The "initialize" option takes a project name and generates a
+Makefile that will sequence various steps of a repository
+conversion. It also generates stub lift and options files. This is
+meant to be run in an empty work directory, and it is an error to do
+'initialize' where any of these files already exist.  Afterwards, you
+will need to set some variables in the Makefile; read its header
+comment.</para>
 
 <para>The 'export' action, run from within a repository directory
 (within a module directory for CVS), dumps a copy of a CVS,

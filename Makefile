@@ -22,8 +22,7 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
-	conversion.mk features.asc \
-	dvcs-migration-guide.asc \
+	features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 
@@ -59,7 +58,7 @@ install: all
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
 	$(INSTALL) -m 755 reposurgeon repotool repodiffer "$(target)/bin"
-	$(INSTALL) -m 644 README NEWS TODO conversion.mk *.html \
+	$(INSTALL) -m 644 README NEWS TODO reposurgeon-git-aliases *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
 

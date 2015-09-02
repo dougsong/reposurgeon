@@ -9,6 +9,7 @@ Repository head:
      Prevent a crash on empty SVN comments produced by dumpfiltering.
      'assign' with no selection set or arguments lists assignments.
      New --user-ignores option on Subversion reads passes through .gitignores.
+     'repotool initialize' now generates an easier-to-read conversion makefile.
 
 3.28: 2015-07-05
      Make repotool honor the mirror directory argument for CVS.

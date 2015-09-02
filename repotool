@@ -1,11 +1,169 @@
 #!/bin/bash
 #
-# repotool - query multiple repository types in a uniform way.
+# repotool - query and manipulate multiple repository types in a uniform way.
 #
 operation=$1
 shift;
 
 case $operation in
+initialize)
+    project=$1
+    if [ -z "$1" ]
+    then
+	echo "repotool: initialize requires a project name."
+	exit 1
+    fi
+    if [ -f Makefile ]
+    then
+	echo "repotool: a Makefile already exists here."
+	exit 1
+    fi
+    if [ -f "${project}.opts" ]
+    then
+	echo "repotool: a project options file already exists here."
+	exit 1
+    fi
+    if [ -f "${project}.lift" ]
+    then
+	echo "repotool: a project lift file already exists here."
+	exit 1
+    fi
+    echo "repotool: generating Makefile, some variables in it need to be set."
+    cat >Makefile <<EOF
+# Makefile for $project conversion using reposurgeon
+#
+# Steps to using this:
+# 1. Make sure reposurgeon and repotool are on your \$PATH.
+# 2. Set SOURCE_VCS to svn, cvs, git, hg, bzr, or darcs.
+# 3. Set TARGET_VCS to git, hg, bzr, or darcs.
+# 4. For svn, set REMOTE_URL to point at the remote repository
+#    you want to convert.
+# 5. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module,
+#    then uncomment the line that builds REMOTE_URL 
+#    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
+#    include the path to the CVS modules directory after the hostname.
+# 6. Run 'make stubmap' to create a stub author map.
+# 7. (Optional) set REPOSURGEON to point at a faster cython build of the tool.
+# 8. (Optional) use a text editor to explicitly substitute
+#     \$(SOURCE_VCS), and \$(TARGET_VCS), then remove those definitions.  This
+#     will make the productions much easier to read.
+# 9. Run 'make' to build a converted repository.
+#
+# The reason both first- and second-stage stream files are generated is that,
+# especially with Subversion, making the first-stage stream file is often
+# painfully slow. By splitting the process, we lower the overhead of
+# experiments with the lift script.
+#
+# For a production-quality conversion you will need to edit the map
+# file and the lift script.  During the process you can set EXTRAS to
+# name extra metadata such as a comments mailbox.
+#
+# Afterwards, you can use the headcompare and tagscompare productions
+# to check your work.
+#
+
+SOURCE_VCS = svn
+TARGET_VCS = git
+EXTRAS = 
+REMOTE_URL = svn://svn.debian.org/${project}
+#REMOTE_URL = https://${project}.googlecode.com/svn/
+CVS_HOST = cvs.sourceforge.net
+#CVS_HOST = cvs.savannah.gnu.org
+CVS_MODULE = ${project}
+#REMOTE_URL = cvs://\$(CVS_HOST)/${project}#\$(CVS_MODULE)
+VERBOSITY = "verbose 1"
+REPOSURGEON = reposurgeon
+
+# Configuration ends here
+
+.PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap
+# Tell make not to auto-remove tag directories, because it only tries rm and hence fails
+.PRECIOUS: ${project}-%-checkout ${project}-%-\$(TARGET_VCS)
+
+default: ${project}-\$(TARGET_VCS)
+
+# Build the converted repo from the second-stage fast-import stream
+${project}-\$(TARGET_VCS): ${project}.fi
+	rm -fr ${project}-\$(TARGET_VCS); \$(REPOSURGEON) "read <${project}.fi" "prefer \$(TARGET_VCS)" "rebuild ${project}-\$(TARGET_VCS)"
+
+# Build the second-stage fast-import stream from the first-stage stream dump
+${project}.fi: ${project}.\$(SOURCE_VCS) ${project}.opts ${project}.lift ${project}.map \$(EXTRAS)
+	\$(REPOSURGEON) \$(VERBOSITY) "script ${project}.opts" "read <${project}.\$(SOURCE_VCS)" "authors read <${project}.map" "sourcetype \$(SOURCE_VCS)" "prefer git" "script ${project}.lift" "legacy write >${project}.fo" "write >${project}.fi"
+
+# Build the first-stage stream dump from the local mirror
+${project}.\$(SOURCE_VCS): ${project}-mirror
+	repotool mirror ${project}-mirror
+	(cd ${project}-mirror/ >/dev/null; repotool export) >${project}.\$(SOURCE_VCS)
+
+# Build a local mirror of the remote repository
+${project}-mirror:
+	repotool mirror \$(REMOTE_URL) ${project}-mirror
+
+#  Get a list of tags from the project mirror
+${project}-tags.txt: ${project}-mirror
+	cd ${project}-mirror >/dev/null; repotool tags
+
+# Make a local checkout of the source mirror for inspection
+${project}-checkout: ${project}-mirror
+	cd ${project}-mirror >/dev/null; repotool checkout ../${project}-checkout
+
+# Make a local checkout of the source mirror for inspection at a specific tag
+${project}-%-checkout: ${project}-mirror
+	cd ${project}-mirror >/dev/null; repotool ../${project}-$*-checkout $*
+
+# Force rebuild of first-stage stream from the local mirror on the next make
+local-clobber: clean
+	rm -fr ${project}.fi ${project}-\$(TARGET_VCS) *~ .rs* ${project}-conversion.tar.gz ${project}-*-\$(TARGET_VCS)
+
+# Force full rebuild from the remote repo on the next make.
+remote-clobber: local-clobber
+	rm -fr ${project}.\$(SOURCE_VCS) ${project}-mirror ${project}-checkout ${project}-*-checkout
+
+# Get the (empty) state of the author mapping from the first-stage stream
+stubmap: ${project}.\$(SOURCE_VCS)
+	\$(REPOSURGEON) "read <${project}.\$(SOURCE_VCS)" "authors write >${project}.map"
+
+# Compare the histories of the unconverted and converted repositories at head
+# and all tags.
+EXCLUDE = -x CVS -x .\$(SOURCE_VCS) -x .\$(TARGET_VCS)
+EXCLUDE += -x .\$(SOURCE_VCS)ignore -x .\$(TARGET_VCS)ignore
+headcompare:
+	repotool compare \$(EXCLUDE) ${project}-checkout ${project}-\$(TARGET_VCS)
+tagscompare:
+	repotool compare-tags \$(EXCLUDE) ${project}-checkout ${project}-\$(TARGET_VCS)
+
+# General cleanup and utility
+clean:
+	rm -fr *~ .rs* ${project}-conversion.tar.gz *.\$(SOURCE_VCS) *.fi *.fo
+
+# Bundle up the conversion metadata for shipping
+SOURCES = Makefile ${project}.lift ${project}.map \$(EXTRAS)
+${project}-conversion.tar.gz: \$(SOURCES)
+	tar --dereference --transform 's:^:${project}-conversion/:' -czvf ${project}-conversion.tar.gz \$(SOURCES)
+
+dist: ${project}-conversion.tar.gz
+
+#
+# The following productions are git-specific
+#
+
+ifeq (\$(TARGET_VCS),git)
+
+# Browse the generated git repository
+gitk: ${project}-git
+	cd ${project}-git; gitk --all
+
+# Run a garbage-collect on the generated git repository.  Import doesn't.
+# This repack call is the active part of gc --aggressive.  This call is
+# tuned for very large repositories.
+gc: ${project}-git
+	cd ${project}-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
+
+endif
+EOF
+    echo "# Pre-read options for reposurgeon go here." >${project}.opts
+    echo "# Lift commands for ${project}" >${project}.lift
+    ;;
 export)
     cvs=no	
     for file in *,v; do
