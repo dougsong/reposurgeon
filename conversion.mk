@@ -4,8 +4,8 @@
 # 0. Copy this into a scratch directory as Makefile.
 # 1. Make sure reposurgeon, repostreamer, and repopuller are on your $PATH.
 # 2. Set PROJECT to the name of your project.
-# 3. Set SOURCE_VCS to svn or cvs.
-# 4. Set TARGET_VCS to git, hg, or bzr.
+# 3. Set SOURCE_VCS to svn, cvs, git, hg, bzr, or darcs.
+# 4. Set TARGET_VCS to git, hg, bzr, or darcs.
 # 5. For svn, set REMOTE_URL to point at the remote repository
 #    you want to convert.
 # 6. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module,
