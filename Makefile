@@ -22,7 +22,7 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
-	features.asc dvcs-migration-guide.asc \
+	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 
