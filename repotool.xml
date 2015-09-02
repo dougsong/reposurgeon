@@ -46,10 +46,11 @@ history file readable by reposurgeon.</para>
 repository's release tags.</para>
 
 <para>The 'checkout' option checks out a working copy of the
-repository. It takes one required argument - the checkout directory
-location. It may take afollowing optional argument which is a tag
-or revision specification; if this argument is not given, the tip
-(most recent) mainline revision is assumed.</para>
+repository. It must be called from within the repository. It takes one
+required argument - the checkout directory location. It may take a
+following optional argument which is a tag or revision specification;
+if this argument is not given, the tip (most recent) mainline revision
+is assumed.</para>
 
 <para>The 'compare' action takes two repository directories and a
 revision spec (typically a tag name). If the revision spec is omitted,

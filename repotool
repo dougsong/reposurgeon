@@ -159,9 +159,9 @@ checkout)
     then
 	if [ "$rev" ]
 	then
-	    rev="-u $rev"Directory-habdling and checkout fixes to repotool.
+	    rev="-u $rev"
 	fi
-	hg clone $rev $(PROJECT)-hg $outdir
+	hg clone $rev $outdir
     elif [ -d _darcs ]
     then
 	echo "Not yet supported."
