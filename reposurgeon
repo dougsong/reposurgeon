@@ -3773,22 +3773,23 @@ class StreamParser:
                             # to match the copy of svn:ignore props on the
                             # Subversion side. We use the just updated
                             # active_gitignores dict for that purpose.
-                            for gipath, ignore in list(
-                                        (gi,v) for (gi,v) in
-                                        self.active_gitignores.iteritems()
-                                        if gi.startswith(node.path)):
-                                blob = Blob(self.repo)
-                                blob.set_content(ignore)
-                                subnode = StreamParser.NodeAction()
-                                subnode.path = gipath
-                                subnode.revision = revision
-                                subnode.action = SD_ADD
-                                subnode.kind = SD_FILE
-                                subnode.blob = blob
-                                subnode.content_hash = \
-                                        hashlib.md5(ignore).hexdigest()
-                                subnode.generated = True
-                                expanded_nodes.append(subnode)
+                            if '--user-ignores' not in options:
+                                for gipath, ignore in list(
+                                            (gi,v) for (gi,v) in
+                                            self.active_gitignores.iteritems()
+                                            if gi.startswith(node.path)):
+                                    blob = Blob(self.repo)
+                                    blob.set_content(ignore)
+                                    subnode = StreamParser.NodeAction()
+                                    subnode.path = gipath
+                                    subnode.revision = revision
+                                    subnode.action = SD_ADD
+                                    subnode.kind = SD_FILE
+                                    subnode.blob = blob
+                                    subnode.content_hash = \
+                                            hashlib.md5(ignore).hexdigest()
+                                    subnode.generated = True
+                                    expanded_nodes.append(subnode)
                             # Now generate copies for all files in the source
                             for source in node.from_set:
                                 lookback = filemaps[node.from_rev][source]
@@ -3819,58 +3820,59 @@ class StreamParser:
                             announce(b"r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
                         # svn:ignore gets handled here,
-                        if node.path == os.sep:
-                            gitignore_path = b".gitignore"
-                        else:
-                            gitignore_path = os.path.join(node.path,
-                                                          b".gitignore")
-                        # There are no other directory properties that can
-                        # turn into fileops.
-                        ignore = node.props.get(b"svn:ignore")
-                        if ignore is not None:
-                            # svn:ignore properties are nonrecursive
-                            # to lower directories, but .gitignore
-                            # patterns are recursive.  Thus we need to
-                            # anchor the translated pattern with
-                            # leading / in order to render the
-                            # Subversion behavior accurately.  Hiwever,
-                            # if dibe naively this clobbers the branch-root
-                            # defaults, so we need to have orotected thise
-                            # with a leadung slash and reverse the transform.
-                            ignore = re.sub(b"\n(?!#)", b"\n/", b"\n" + ignore)
-                            ignore = ignore.replace("\n//", "\n")
-                            ignore = ignore[1:]
-                            if ignore.endswith(b"/"):
-                                ignore = ignore[:-1]
-                            blob = Blob(self.repo)
-                            blob.set_content(ignore)
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_ADD
-                            newnode.kind = SD_FILE
-                            newnode.blob = blob
-                            newnode.content_hash = \
-                                    hashlib.md5(ignore).hexdigest()
-                            if debug_enable(DEBUG_IGNORES):
-                                announce(b"r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
-                            # Must append rather than simply performing.
-                            # Otherwise when the property is unset we
-                            # won't have the right thing happen.
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            self.active_gitignores[gitignore_path] = ignore
-                        elif gitignore_path in self.active_gitignores:
-                            newnode = StreamParser.NodeAction()
-                            newnode.path = gitignore_path
-                            newnode.revision = revision
-                            newnode.action = SD_DELETE
-                            newnode.kind = SD_FILE
-                            if debug_enable(DEBUG_IGNORES):
-                                announce(b"r%s: queuing up %s deletion." % (revision, newnode.path))
-                            newnode.generated = True
-                            expanded_nodes.append(newnode)
-                            del self.active_gitignores[gitignore_path]
+                        if '--user-ignores' not in options:
+                            if node.path == os.sep:
+                                gitignore_path = b".gitignore"
+                            else:
+                                gitignore_path = os.path.join(node.path,
+                                                              b".gitignore")
+                            # There are no other directory properties that can
+                            # turn into fileops.
+                            ignore = node.props.get(b"svn:ignore")
+                            if ignore is not None:
+                                # svn:ignore properties are nonrecursive
+                                # to lower directories, but .gitignore
+                                # patterns are recursive.  Thus we need to
+                                # anchor the translated pattern with
+                                # leading / in order to render the
+                                # Subversion behavior accurately.  Hiwever,
+                                # if dibe naively this clobbers the branch-root
+                                # defaults, so we need to have orotected thise
+                                # with a leadung slash and reverse the transform.
+                                ignore = re.sub(b"\n(?!#)", b"\n/", b"\n" + ignore)
+                                ignore = ignore.replace("\n//", "\n")
+                                ignore = ignore[1:]
+                                if ignore.endswith(b"/"):
+                                    ignore = ignore[:-1]
+                                blob = Blob(self.repo)
+                                blob.set_content(ignore)
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = gitignore_path
+                                newnode.revision = revision
+                                newnode.action = SD_ADD
+                                newnode.kind = SD_FILE
+                                newnode.blob = blob
+                                newnode.content_hash = \
+                                        hashlib.md5(ignore).hexdigest()
+                                if debug_enable(DEBUG_IGNORES):
+                                    announce(b"r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                                # Must append rather than simply performing.
+                                # Otherwise when the property is unset we
+                                # won't have the right thing happen.
+                                newnode.generated = True
+                                expanded_nodes.append(newnode)
+                                self.active_gitignores[gitignore_path] = ignore
+                            elif gitignore_path in self.active_gitignores:
+                                newnode = StreamParser.NodeAction()
+                                newnode.path = gitignore_path
+                                newnode.revision = revision
+                                newnode.action = SD_DELETE
+                                newnode.kind = SD_FILE
+                                if debug_enable(DEBUG_IGNORES):
+                                    announce(b"r%s: queuing up %s deletion." % (revision, newnode.path))
+                                newnode.generated = True
+                                expanded_nodes.append(newnode)
+                                del self.active_gitignores[gitignore_path]
             # Lift .cvsignore files, which we can assume are legacies
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
@@ -3986,6 +3988,7 @@ class StreamParser:
                         # merged by hand.
                         if new_content \
                            and not node.generated \
+                           and '--user-ignores' not in options \
                            and node.path.endswith(b".gitignore"):
                             self.gripe(b"r%s~%s: user-created .gitignore ignored." \
                                        % (node.revision, node.path))

@@ -2630,11 +2630,17 @@ its behavior when reading Subversion repositories:</para>
 settings.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term>--user-ignores</term>
+<listitem><para>Don't generate .gitignore files from svn:ignore
+properties.  Instead, just pass through .gitignore files found in the
+history.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term>--use-uuid</term>
 <listitem><para>If the --use-uuid read option is set, the repository's
 UUID will be used as the hostname when faking up email addresses, a la
-git-svn.  Otherwise, addresses will be the way git cvs-import does
-it.</para>
+git-svn.  Otherwise, addresses will be generated the way git cvs-import does
+it, simply ciopying the username into the address field.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -2719,11 +2725,20 @@ contents will be the path to which the symlink should resolve).</para>
 <application>cvs2svn</application> are incorporated into the internal map
 used for reference-lifting, then discarded.</para>
 
-<para>Per-directory svn:ignore properties become .gitignore files.
+<para>Normally, per-directory svn:ignore properties become .gitignore files.
 Actual .gitignore files in a Subversion directory are presumed to have
 been created by git-svn users separately from native Subversion ignore
 properties and discarded with a warning. It is up to the user to merge
-the content of such files into the target repository by hand.</para>
+the content of such files into the target repository by hand.  But
+this behavior is inverted by the --user-ignores option; if that is on,
+.gitignore files are passed through and Subversion svn:ignore
+properties are discarded.</para>
+
+<para>(Regardless of the setting of the --user-ignores option,
+.cvsignore files found in Subversion repositories always become
+.gitignores in the translation.  The assumption is that these date
+from before a CVS-to-SVN lift and should be preserved to affect
+behavior when browsing that section of the repository.)</para>
 
 <para>svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
 on a revision A with a merge source range ending in revision B produces
@@ -2771,8 +2786,9 @@ ignores which may or may not be congruent with those in the generated
 <filename>.gitignore</filename> files that the Subversion ignore
 properties will be translated into.  You'll need to make a policy
 decision about which set of ignores to use in the conversion, and
-possibly to delete either the generated
-<filename>.gitignore</filename> files or the user-created ones.</para>
+possibly set the --user-ignores option on read to pass through
+user-created <filename>.gitignore</filename> files; in that case this
+warning will not be emitted.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -2802,7 +2818,8 @@ user-defined property, or the Subversion properties
 svn:externals. These properties cannot be expressed in an import
 stream; the user is notified in case this is a showstopper for the
 conversion or some corrective action is required, but normally this
-error can be ignored.</para>
+error can be ignored.  This warning is suppressed by the
+--ignore-properties option.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
