@@ -1,13 +1,13 @@
 			reposurgeon project news
 
 Repository head:
-     Now included: git aliases that allow git to work with action stamps
+     Now included: git aliases that allow git to work with action stamps.
      The new repomapper tool helps prepare contributor maps.
      Use of branchify/branchify_map is now less likely to produce invalid resets.
      branchify_map has been changed to handle subdirectories better.
      "branchify_map reset" actually works now.
      Prevent a crash on empty SVN comments produced by dumpfiltering.
-     'assign' with no selection set or arguments lists assignments.
+     'assign' command with no selection set or arguments lists assignments.
      New --user-ignores option on Subversion reads passes through .gitignores.
      'repotool initialize' now generates an easier-to-read conversion makefile.
 
