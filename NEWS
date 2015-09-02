@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.29: 2015-09-02
      Now included: git aliases that allow git to work with action stamps.
      The new repomapper tool helps prepare contributor maps.
      Use of branchify/branchify_map is now less likely to produce invalid resets.

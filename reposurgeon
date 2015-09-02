@@ -28,7 +28,7 @@ try:
 except ImportError:
     hglib = None
 
-version="3.28"
+version="3.29"
 
 #
 # This code is intended to be hackable to support for special-purpose or
