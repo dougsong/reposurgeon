@@ -2,6 +2,7 @@
 *.html
 MANIFEST
 *.tar.gz
+*.xz
 *.md5
 cy*
 cy*.c
