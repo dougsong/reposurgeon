@@ -164,7 +164,7 @@ outputs:
 
 	    Initial import.
 
-== The fleetwood test case ==
+== The tagretract test case ==
 
 According to Mike Fleetwood, fleetwood.svn was created with the following
 sequence of operations:
@@ -186,9 +186,14 @@ prefer git
 write >/tmp/repo.fi
 ------------------------------------------------------
 
+This sequence is captured in tagretract.tst.
+
 After conversion the, tag named '1.0' refers to the first commit with
 the first tagging message 'Release 1.0', rather than the second commit
 with the second tagging message 'Fixed release 1.0'.
+
+The behavior does not change if the initial branchify is omitted, except
+for a mid-branch-delete warning.
 
 This is arguably a bug.
 

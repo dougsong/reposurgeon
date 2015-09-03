@@ -5358,6 +5358,8 @@ class Repository:
             is_tipdelete = lambda _: False
         deletia = []
         for index, commit in self.iterevents(commits, types=Commit):
+            #print("Examining: %s (%s), %s %s" % (commit.mark, commit.comment,
+            #                                      commit.operations(), is_tipdelete(commit)))
             if (not commit.operations()) or is_tipdelete(commit):
                 if commit.has_parents():
                     if len(commit.parents()) > 1 and not tagify_merges:
