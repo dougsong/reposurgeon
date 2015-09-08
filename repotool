@@ -86,7 +86,7 @@ initialize)
 EXTRAS = 
 REMOTE_URL = svn://svn.debian.org/${project}
 #REMOTE_URL = https://${project}.googlecode.com/svn/
-CVS_HOST = cvs.sourceforge.net
+CVS_HOST = ${project}.cvs.sourceforge.net
 #CVS_HOST = cvs.savannah.gnu.org
 CVS_MODULE = ${project}
 #REMOTE_URL = cvs://\$(CVS_HOST)/${project}#\$(CVS_MODULE)
@@ -144,9 +144,9 @@ stubmap: ${project}.${source_vcs}
 # and all tags.
 EXCLUDE = -x CVS -x .${source_vcs} -x .${target_vcs}
 EXCLUDE += -x .${source_vcs}ignore -x .${target_vcs}ignore
-headcompare:
+headcompare: ${project}-checkout
 	repotool compare \$(EXCLUDE) ${project}-checkout ${project}-${target_vcs}
-tagscompare:
+tagscompare: ${project}-checkout
 	repotool compare-tags \$(EXCLUDE) ${project}-checkout ${project}-${target_vcs}
 
 # General cleanup and utility
