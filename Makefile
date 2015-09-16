@@ -57,7 +57,7 @@ install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
-	$(INSTALL) -m 755 reposurgeon repotool repodiffer "$(target)/bin"
+	$(INSTALL) -m 755 reposurgeon repomapper repotool repodiffer "$(target)/bin"
 	$(INSTALL) -m 644 README.md NEWS TODO reposurgeon-git-aliases *.html \
 		"$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
