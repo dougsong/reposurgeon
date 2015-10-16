@@ -1,0 +1,92 @@
+--- simple.fi
++++ repotool-export
+@@ -13317,7 +13317,8 @@
+ Name change.
+ from :66
+ M 100644 :67 Makefile
+-R "rs" "reposurgeon"
++M 100755 :65 reposurgeon
++D rs
+ M 100644 :68 test/Makefile
+ 
+ blob
+@@ -13999,8 +14000,8 @@
+ Follow up on name change.
+ from :71
+ M 100644 :72 Makefile
+-M 100755 :73 reposurgeon
+ M 100644 :74 reposurgeon.xml
++M 100755 :73 reposurgeon
+ 
+ blob
+ mark :76
+@@ -14704,8 +14705,8 @@
+ data 22
+ Implemented 'prefer'.
+ from :77
+-M 100755 :78 reposurgeon
+ M 100644 :79 reposurgeon.xml
++M 100755 :78 reposurgeon
+ 
+ blob
+ mark :81
+@@ -16441,8 +16442,8 @@
+ data 46
+ Try to get the write and rebuild logic right.
+ from :84
+-M 100755 :85 reposurgeon
+ M 100644 :86 reposurgeon.xml
++M 100755 :85 reposurgeon
+ 
+ blob
+ mark :88
+@@ -17886,8 +17887,8 @@
+ data 35
+ Cut verbosity, improve statistics.
+ from :89
+-M 100755 :90 reposurgeon
+ M 100644 :91 reposurgeon.xml
++M 100755 :90 reposurgeon
+ 
+ blob
+ mark :93
+@@ -18739,8 +18740,8 @@
+ data 26
+ Added the 'view' command.
+ from :92
+-M 100755 :93 reposurgeon
+ M 100644 :94 reposurgeon.xml
++M 100755 :93 reposurgeon
+ 
+ blob
+ mark :96
+@@ -19699,8 +19700,8 @@
+ data 53
+ Implement and document 'index'; document some plans.
+ from :95
+-M 100755 :96 reposurgeon
+ M 100644 :97 reposurgeon.xml
++M 100755 :96 reposurgeon
+ 
+ blob
+ mark :99
+@@ -26300,8 +26301,8 @@
+ data 41
+ Document the new selection-set language.
+ from :110
+-M 100755 :111 reposurgeon
+ M 100644 :112 reposurgeon.xml
++M 100755 :111 reposurgeon
+ 
+ blob
+ mark :114
+@@ -31754,8 +31755,8 @@
+ The prefix position what triggering some obscure bug in the Python cmd
+ class; the symptom was that "$ verbose" wouldn't parse properly.
+ from :123
+-M 100755 :124 reposurgeon
+ M 100644 :125 reposurgeon.xml
++M 100755 :124 reposurgeon
+ 
+ blob
+ mark :127
