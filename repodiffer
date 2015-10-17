@@ -3,6 +3,8 @@
 # Compare git repositories or fast-import streams for differences.
 #
 # Requires git and tar(1).
+#
+# SPDX-License-Identifier: BSD-2-clause
 
 import sys, os, getopt, subprocess, tempfile, hashlib, shutil, time, calendar, re
 
