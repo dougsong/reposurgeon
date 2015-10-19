@@ -248,13 +248,13 @@ REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
 repodiffer-buildregress:
 	@-for file in $(REPODIFFER); do \
 	    echo "Remaking $${file}.chk"; \
-	    sh $${file}.sh >$${file}.chk; \
+	    $(SHELL) $${file}.sh >$${file}.chk; \
 	done
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
-	    sh $${file}.sh | diff --text -u $${file}.chk -; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
 
@@ -264,13 +264,13 @@ REPOMAPPER := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
 	@-for file in $(REPOMAPPER); do \
 	    echo "Remaking $${file}.chk"; \
-	    sh $${file}.sh >$${file}.chk; \
+	    $(SHELL) $${file}.sh >$${file}.chk; \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
 	@-for file in $(REPOMAPPER); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
-	    sh $${file}.sh | diff --text -u $${file}.chk -; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
 
