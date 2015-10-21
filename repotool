@@ -339,7 +339,7 @@ checkout)
 	module=`ls -1 | grep -v CVSROOT`
 	if [ "$rev" ]
 	then
-	    rev="-d $rev"
+	    rev="-r $rev"
 	fi
 	# By choosing -kb we get binary files right, but won't
 	# suppress any expanded keywords that might be lurking
