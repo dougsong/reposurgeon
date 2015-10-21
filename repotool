@@ -144,10 +144,10 @@ stubmap: ${project}.${source_vcs}
 # and all tags.
 EXCLUDE = -x CVS -x .${source_vcs} -x .${target_vcs}
 EXCLUDE += -x .${source_vcs}ignore -x .${target_vcs}ignore
-headcompare: ${project}-checkout
-	repotool compare \$(EXCLUDE) ${project}-checkout ${project}-${target_vcs}
-tagscompare: ${project}-checkout
-	repotool compare-tags \$(EXCLUDE) ${project}-checkout ${project}-${target_vcs}
+headcompare: ${project}-mirror ${project}-${target_vcs}
+	repotool compare \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
+tagscompare: ${project}-mirror ${project}-${target_vcs}
+	repotool compare-tags \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
 
 # General cleanup and utility
 clean:
