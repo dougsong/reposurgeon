@@ -280,7 +280,7 @@ tags)
 	    bzr tags
     elif [ -d .hg ]
     then
-	    hg tags
+	    hg tags --template '{tag}\n'
     elif [ -d _darcs ]
     then
 	    darcs show tags
