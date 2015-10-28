@@ -8995,6 +8995,7 @@ redirection is supported).
                     blank.committer = Attribution()
                     blank.email_in(message, fill=True)
                     blank.mark = ":" + str(len(self.chosen().events) + 1)
+                    blank.repo = self.chosen()
                 self.chosen().events.append(blank)
             return
         # Normal case - no --create
