@@ -6102,6 +6102,7 @@ class Repository:
                         fileop.ref = new
         return persist
     def absorb(self, other):
+        "Absorb all events from the repository OTHER into SELF."
         # Only vcstype, sourcedir, and basedir are not copied here
         self.preserve_set |= other.preserve_set
         self.case_coverage |= other.case_coverage
@@ -9707,6 +9708,24 @@ an offset literal of +0 or -0.
                     author.date.timestamp += offset
                     if len(args) > 1:
                         author.date.timezone = args[1]
+
+    def help_when(self):
+        print(b"""
+Interconvert between git timestamps (integer Unix time plus TZ) and
+RFC3339 format.  Takes one argument, autodetects the format.  Useful
+when eyeballing export streams.  Also accepts any other supported
+date format and converts to RFC3339.
+""")
+    def do_when(self, line):
+        "Interconvert between integer Unix time and RFC3339 format."
+        if not line:
+            complain(b"a timestamp in either integer or RFC3339 form is required.")
+            return
+        d = Date(line, Recoverable)
+        if 'Z' in line:
+            print(str(d))
+        else:
+            print(d.rfc3339())
 
     def help_divide(self):
         print(b"""

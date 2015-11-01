@@ -1018,6 +1018,19 @@ action-stamp collisions.</para>
 change without notice as more sanity checks are added.</para>
 </listitem>
 </varlistentry>
+
+<varlistentry>
+<term><command>when</command>
+        &gt;<emphasis>timespec</emphasis>
+</term>
+<listitem>
+<para>Interconvert between git timestamps (integer Unix time plus TZ) and
+RFC3339 format.  Takes one argument, autodetects the format.  Useful
+when eyeballing export streams.  Also accepts any other supported
+date format and converts to RFC3339.
+</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
