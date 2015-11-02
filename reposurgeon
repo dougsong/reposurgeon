@@ -8827,9 +8827,10 @@ This is intended for producing reduced test cases from large repositories.
                     neighbors |= set(event.parent_marks())
                     neighbors |= set(event.child_marks())
             interesting |= neighbors
+            oldlen = len(repo.events)
             repo.delete([i for i in range(len(repo.events)) \
                          if isinstance(event, Commit) and event.mark not in interesting])
-
+            announce("From %d to %d events." % (oldlen, len(repo.events)))
     def help_graph(self):
         print(b"""
 Dump a graph representing selected events to standard output in DOT markup
