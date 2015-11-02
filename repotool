@@ -138,7 +138,7 @@ remote-clobber: local-clobber
 
 # Get the (empty) state of the author mapping from the first-stage stream
 stubmap: ${project}.${source_vcs}
-	\$(REPOSURGEON) "read <${project}.${source_vcs}" "authors write >${project}.map"
+	\$(REPOSURGEON) "read \$(READ_OPTIONS) <${project}.${source_vcs}" "authors write >${project}.map"
 
 # Compare the histories of the unconverted and converted repositories at head
 # and all tags.
