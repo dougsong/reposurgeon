@@ -401,11 +401,11 @@ compare)
 	exit 1
     fi
     here=$PWD
-    rm -fr /tmp/source /tmp/target
-    cd $repo1; repotool checkout /tmp/source $rev
-    cd $repo2; repotool checkout /tmp/target $rev
+    rm -fr ${TMPDIR:=/tmp}/source $TMPDIR/target
+    cd $repo1; repotool checkout $TMPDIR/source $rev
+    cd $repo2; repotool checkout $TMPDIR/target $rev
     cd $here
-    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' $diffopts -r /tmp/source /tmp/target| sed \
+    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' $diffopts -r $TMPDIR/source $TMPDIR/target| sed \
 			-e '/Only in .tmp./s//Only in /' \
 			-e '/: /s::/:' \
 			-e '/source./s//source: /' \
@@ -434,18 +434,22 @@ compare-tags)
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
+    if [ -z "$TMPDIR" ]
+    then
+        TMPDIR=/tmp
+    fi
     #echo "----------------------------------------------------------------"
     #echo "HEAD:"
     #repotool compare $exclude $repo1 $repo2
     here=$PWD
-    cd $repopath1; repotool tags | sort >/tmp/tags1
-    cd $repopath2; repotool tags | sort >/tmp/tags2
+    cd $repopath1; repotool tags | sort >$TMPDIR/tags1
+    cd $repopath2; repotool tags | sort >$TMPDIR/tags2
     echo "----------------------------------------------------------------"
-    echo "Tags only in $repo1:"; comm -23 /tmp/tags1 /tmp/tags2
+    echo "Tags only in $repo1:"; comm -23 $TMPDIR/tags1 $TMPDIR/tags2
     echo "----------------------------------------------------------------"
-    echo "Tags only in $repo2:"; comm -13 /tmp/tags1 /tmp/tags2
+    echo "Tags only in $repo2:"; comm -13 $TMPDIR/tags1 $TMPDIR/tags2
     cd $here
-    for tag in `comm -12 /tmp/tags1 /tmp/tags2`
+    for tag in `comm -12 $TMPDIR/tags1 $TMPDIR/tags2`
     do
 	echo "----------------------------------------------------------------"
 	echo "${tag}:"
@@ -475,15 +479,19 @@ compare-branches)
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
+    if [ -z "$TMPDIR" ]
+    then
+        TMPDIR=/tmp
+    fi
     here=$PWD
-    cd $repopath1; repotool branches | sort >/tmp/branches1
-    cd $repopath2; repotool branches | sort >/tmp/branches2
+    cd $repopath1; repotool branches | sort >$TMPDIR/branches1
+    cd $repopath2; repotool branches | sort >$TMPDIR/branches2
     echo "----------------------------------------------------------------"
-    echo "Branches only in $repo1:"; comm -23 /tmp/branches1 /tmp/branches2
+    echo "Branches only in $repo1:"; comm -23 $TMPDIR/branches1 $TMPDIR/branches2
     echo "----------------------------------------------------------------"
-    echo "Branches only in $repo2:"; comm -13 /tmp/branches1 /tmp/branches2
+    echo "Branches only in $repo2:"; comm -13 $TMPDIR/branches1 $TMPDIR/branches2
     cd $here
-    for branch in `comm -12 /tmp/branches1 /tmp/branches2`
+    for branch in `comm -12 $TMPDIR/branches1 $TMPDIR/branches2`
     do
 	echo "----------------------------------------------------------------"
 	echo "${branch}:"
@@ -513,20 +521,24 @@ compare-all)
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
+    if [ -z "$TMPDIR" ]
+    then
+        TMPDIR=/tmp
+    fi
     echo "----------------------------------------------------------------"
     echo "HEAD:"
     repotool compare $diffopts $exclude $repo1 $repo2
     here=$PWD
     # Does not distinguish branches from tags, as that is more useful for
     # testing converted CVS repositories.
-    (cd $repopath1; repotool tags; repotool branches) | sort >/tmp/tags1
-    (cd $repopath2; repotool tags; repotool branches) | sort >/tmp/tags2
+    (cd $repopath1; repotool tags; repotool branches) | sort >$TMPDIR/tags1
+    (cd $repopath2; repotool tags; repotool branches) | sort >$TMPDIR/tags2
     echo "----------------------------------------------------------------"
-    echo "Tags/branches only in $repo1:"; comm -23 /tmp/tags1 /tmp/tags2
+    echo "Tags/branches only in $repo1:"; comm -23 $TMPDIR/tags1 $TMPDIR/tags2
     echo "----------------------------------------------------------------"
-    echo "Tags/branches only in $repo2:"; comm -13 /tmp/tags1 /tmp/tags2
+    echo "Tags/branches only in $repo2:"; comm -13 $TMPDIR/tags1 $TMPDIR/tags2
     cd $here
-    for tag in `comm -12 /tmp/tags1 /tmp/tags2`
+    for tag in `comm -12 $TMPDIR/tags1 $TMPDIR/tags2`
     do
 	echo "----------------------------------------------------------------"
 	echo "${tag}:"
