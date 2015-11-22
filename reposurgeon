@@ -6,7 +6,7 @@
 #
 # Requires Python 2.7.2 or newer.
 #
-# SPDX-License-Identifier: BSD-2-clause
+# SPDX-License-Identifier: BSD-2-Clause
 from __future__ import print_function #unicode_literals
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile

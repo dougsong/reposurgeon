@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# SPDX-License-Identifier: BSD-2-clause
+# SPDX-License-Identifier: BSD-2-Clause
 
 """
 repomapper - update and manipulate contributor maps
