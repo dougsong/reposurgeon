@@ -218,10 +218,10 @@ mirror)
     shift
     mirrordir=$1
 
-    if [ `expr "$operand" : "svn://"` = 6 \
-	-o `expr "$operand" : "svn+ssh://"` = 10 \
-	-o `expr "$operand" : "https://"` = 8 \
-	-o `expr "$operand" : "http://"` = 7 ]
+    if case ${operand} in
+	   svn://*|svn+ssh://*|https://*|http://*) true;;
+	   *) false;;
+       esac
     then
 	if [ "$mirrordir" ]
 	then
