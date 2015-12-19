@@ -220,6 +220,7 @@ mirror)
 
     if case ${operand} in
 	   svn://*|svn+ssh://*|https://*|http://*) true;;
+	   file://*) [ -d "${operand#file://}"/locks ];;
 	   *) false;;
        esac
     then
