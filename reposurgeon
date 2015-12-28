@@ -7255,28 +7255,28 @@ into sections of the input stream instead).
             if c != '?':
                 break
             self.pop()
-            add_list = []
-            remove_list = []
+            add_set = set()
+            remove_set = set()
             for ei in value:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
                     for parent in event.parents():
-                        add_list.append(self.chosen().find(parent.mark))
+                        add_set.add(self.chosen().find(parent.mark))
                     for child in event.children():
-                        add_list.append(self.chosen().find(child.mark))
+                        add_set.add(self.chosen().find(child.mark))
                 elif isinstance(event, Blob):
-                    remove_list.append(ei) # Don't select the blob itself
+                    remove_set.add(ei) # Don't select the blob itself
                     for i in preselection:
                         event2 = self.chosen().events[i]
                         if isinstance(event2, Commit):
                             for fileop in event2.operations():
                                 if fileop.op == 'M' and fileop.ref==event.mark:
-                                    add_list.append(i)
+                                    add_set.add(i)
                 elif isinstance(event, (Tag, Reset)):
                     if event.target:
-                        add_list.append(event.target.index())
-            value |= set(add_list)
-            value -= set(remove_list)
+                        add_set.add(event.target.index())
+            value |= add_set
+            value -= remove_set
         self.line = self.line.lstrip()
         return value
     @debug_lexer
