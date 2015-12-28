@@ -437,7 +437,7 @@ _darcs
         preserve={b"hooks"},
         authormap=None,
         ignorename=None,
-        # Note dangerous hack here: the leadung slashes are there to mark
+        # Note dangerous hack here: the leading slashes are there to mark
         # lines whuch should *not* be anchored, and will be removed later
         # in processsing.
         dfltignores=b"""\
@@ -5606,7 +5606,7 @@ class Repository:
                 announce(b"sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
     def declare_sequence_mutation(self, warning=None):
-        "Mark the repo event sequence sequence modified."
+        "Mark the repo event sequence modified."
         self._commits = None
         self._mark_to_index = {}
         self._namecache = {}
