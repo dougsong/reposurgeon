@@ -14,6 +14,7 @@ import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
 import functools, filecmp, datetime, difflib, commands
 import email.message, email.parser
+import heapq
 
 # This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd.
@@ -6036,6 +6037,112 @@ class Repository:
         return [e for e in self.events \
                 if isinstance(e, Passthrough) \
                 and (e.text.startswith(b"option") or e.text.startswith(b"feature"))]
+
+    def resort(self):
+        """Topologically sort the events in this repository.
+
+        Reorder self.events so that objects referenced by other
+        objects appear first.  The sort is stable to avoid unnecessary
+        churn.
+        """
+
+        class dag_edges(object):
+            def __init__(self):
+                self.eout = set()
+                self.ein = set()
+
+        dag = {}
+        start = set(xrange(len(self.events)))
+
+        # helper for constructing the dag
+        def handle(x, ymark):
+            assert(ymark is not None)
+            if ymark == 'inline':
+                return
+            assert(ymark[0] == b':')
+            if ymark is not None and ymark[0] == b':':
+                y = self.find(ymark)
+                assert(y is not None)
+                assert(x != y)
+                start.discard(x)
+                dag.setdefault(x, dag_edges()).eout.add(y)
+                dag.setdefault(y, dag_edges()).ein.add(x)
+
+        # construct the dag
+        for n, node in enumerate(self.events):
+            edges = dag.setdefault(n, dag_edges())
+            if isinstance(node, Commit):
+                for parent in node.parents():
+                    p = self.index(parent)
+                    assert(n != p)
+                    start.discard(n)
+                    edges.eout.add(p)
+                    dag.setdefault(p, dag_edges()).ein.add(n)
+                for o in node.operations():
+                    if o.op == b'M':
+                        handle(n, o.ref)
+                    elif o.op == b'N':
+                        handle(n, o.ref)
+                        handle(n, o.committish)
+            elif isinstance(node, Blob):
+                pass
+            elif isinstance(node, Tag):
+                handle(n, node.committish)
+            elif isinstance(node, Reset):
+                if node.target is not None:
+                    t = self.index(node.target)
+                    assert(n != t)
+                    start.discard(n)
+                    edges.eout.add(t)
+                    dag.setdefault(t, dag_edges()).ein.add(n)
+            elif isinstance(node, Passthrough):
+                pass
+            else:
+                raise ValueError('unexpected event type')
+
+        # now topologically sort the dag, using a priority queue to
+        # provide a stable topological sort (each event's priority is
+        # its original index)
+        s = list(start)
+        heapq.heapify(s)
+        tsorted = []
+        old_index_to_new = {}
+        while len(s):
+            n = heapq.heappop(s)
+            assert n not in old_index_to_new
+            old_index_to_new[n] = len(tsorted)
+            tsorted.append(n)
+            ein = dag[n].ein
+            while len(ein):
+                m = ein.pop()
+                medges = dag[m]
+                medges.eout.remove(n)
+                if not len(medges.eout):
+                    heapq.heappush(s, m)
+
+        orig = range(len(self.events))
+        if tsorted != orig:
+            t = set(tsorted)
+            assert len(t) == len(tsorted)
+            o = set(orig)
+            assert len(t - o) == 0
+            leftout = o - t
+            if (len(leftout)):
+                complain('event re-sort failed due to one or more dependency' \
+                         + ' cycles involving the following events: ' \
+                         + ', '.join(str(x+1) for x in sorted(leftout)))
+                return
+            self.events = [self.events[i] for i in tsorted]
+            if verbose:
+                announce(b're-sorted events')
+            # assignments will be fixed so don't pass anything to
+            # declare_sequence_mutation() to tell it to warn about
+            # invalidated assignments
+            self.declare_sequence_mutation()
+            self.assignments = {
+                name:[old_index_to_new[i] for i in selection]
+                for name, selection in self.assignments.iteritems()}
+
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
         markmap = {}
