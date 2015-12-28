@@ -6966,6 +6966,31 @@ class RepositoryList:
         # At last, add the expunged repository to the loaded list.
         self.repolist.append(expunged)
 
+def debug_lexer(f):
+    """Function decorator to debug selection parsing RepoSurgeon methods."""
+    @functools.wraps(f)
+    def wrapper(self, preselection):
+        if not debug_enable(DEBUG_LEXER):
+            return f(self, preselection)
+        try:
+            stack = getattr(self, '_debug_lexer_stack')
+        except AttributeError:
+            stack = []
+            setattr(self, '_debug_lexer_stack', stack)
+        announce("{0}{1}({2}): {3}".format(
+            ' ' * len(stack), f.__name__, repr(preselection), repr(self.line)))
+        stack.append(f.__name__)
+        try:
+            ret = f(self, preselection)
+        except Exception as e:
+            ret = e
+            raise
+        finally:
+            announce("{0}{1} <- {2}(), left = {3}".format(
+                ' ' * len(stack), repr(ret), stack.pop(), repr(self.line)))
+        return ret
+    return wrapper
+
 class RepoSurgeon(cmd.Cmd, RepositoryList):
     "Repository surgeon command interpreter."
     OptionFlags = (
@@ -7174,9 +7199,15 @@ into sections of the input stream instead).
             c = self.line[0]
             self.line = self.line[1:]
             return c
-    def eval_expression(self, preselection):
+    # this should only be called from a @debug_lexer function (it
+    # depends on state set up by that decorator)
+    def _debug_lexer(self, msg):
+        """log a debug message from a lexer function"""
         if debug_enable(DEBUG_LEXER):
-            announce("eval_expression(%s)" % self.line)
+            stack = getattr(self, '_debug_lexer_stack')
+            announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+    @debug_lexer
+    def eval_expression(self, preselection):
         self.line = self.line.lstrip()
         value = self.eval_disjunct(preselection)
         c = self.peek()
@@ -7208,13 +7239,10 @@ into sections of the input stream instead).
             value |= set(add_list)
             value -= set(remove_list)
         self.line = self.line.lstrip()
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_expression(), left = %s" % (value, repr(self.line)))
         return value
+    @debug_lexer
     def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)"
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_disjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         unselected = set(preselection)
         while True:
@@ -7228,13 +7256,10 @@ into sections of the input stream instead).
                 self.pop()
             else:
                 break
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_disjunct(), left = %s" % (conjunct, repr(self.line)))
         return preselection - unselected
+    @debug_lexer
     def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)"
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_conjunct(%s)" % self.line)
         self.line = self.line.lstrip()
         conjunct = set(preselection)
         while True:
@@ -7248,12 +7273,9 @@ into sections of the input stream instead).
                 self.pop()
             else:
                 break
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_conjunct(), left = %s" % (conjunct, repr(self.line)))
         return conjunct
+    @debug_lexer
     def eval_term(self, preselection):
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_term(%s)" % self.line)
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
@@ -7277,8 +7299,6 @@ into sections of the input stream instead).
                         term = self.eval_pathset(preselection)
                         if term == None:
                             term = self.eval_funcall(preselection)
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_term(), left = %s" % (term, repr(self.line)))
         return term
     def has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
@@ -7295,10 +7315,9 @@ into sections of the input stream instead).
             if re.search(pattern, text):
                 return True
         return False
+    @debug_lexer
     def eval_visibility(self, preselection):
         "Parse a visibility spec."
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_visibility(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == "=":
             visibility = None
@@ -7332,22 +7351,19 @@ into sections of the input stream instead).
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
-            if debug_enable(DEBUG_LEXER):
-                announce("visibility set is %s with %s left" % ([x.__name__ for x in visible], repr(self.line)))
+            self._debug_lexer("visibility set is %s with %s left" % (
+                [x.__name__ for x in visible], repr(self.line)))
             visibility = set()
             for i in preselection:
                 event = self.chosen().events[i]
                 if any(predicate(event) for predicate in visible):
                     visibility.add(i)
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_visibility(), left = %s" % (visibility, repr(self.line)))
         return visibility
+    @debug_lexer
     def eval_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
         # preselection is not used since it is perfectly legal to have range
         # bounds be outside of the reduced set.
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_polyrange(%s)" % self.line)
         self.line = self.line.lstrip()
         polyrange_initials = (b":",b"0",b"1",b"2",b"3",b"4",b"5",b"6",b"7",b"8",b"9","$", "<")
         if not self.peek() in polyrange_initials:
@@ -7416,8 +7432,8 @@ into sections of the input stream instead).
                         selection += list(lookup)
                     else:
                         raise Recoverable("couldn't match a name at <%s>" % ref)
-            if debug_enable(DEBUG_LEXER):
-                announce("location list is %s with %s left" % (selection, repr(self.line)))
+            self._debug_lexer("location list is %s with %s left" % (
+                selection, repr(self.line)))
             # Resolve spans
             resolved = []
             spanning = last = 0
@@ -7432,8 +7448,8 @@ into sections of the input stream instead).
                         resolved.append(elt)
                     last = elt
             selection = resolved
-            if debug_enable(DEBUG_LEXER):
-                announce(b"resolved list is %s with %s left" % (selection, repr(self.line)))
+            self._debug_lexer(b"resolved list is %s with %s left" % (
+                selection, repr(self.line)))
             # Sanity checks
             if spanning:
                 raise Recoverable(b"incomplete range expression.")
@@ -7441,13 +7457,10 @@ into sections of the input stream instead).
                 if elt < 0 or elt > len(self.chosen())-1:
                     raise Recoverable("event number %s out of range" % (elt+1))
             polyrange = set(selection)
-        if debug_enable(DEBUG_LEXER):
-            announce("%s <- eval_polyrange(), left = %s" % (polyrange, repr(self.line)))
         return polyrange
+    @debug_lexer
     def eval_textsearch(self, preselection):
         "Parse a text search specification."
-        if debug_enable(DEBUG_LEXER):
-            announce("eval_textsearch(%s)" % self.line)
         self.line = self.line.lstrip()
         if not self.peek() == b'/':
             return None
@@ -7522,9 +7535,8 @@ into sections of the input stream instead).
                             break
                 if check_blobs and isinstance(e, Blob) and search(e.get_content()):
                     matchers.add(i)
-            if debug_enable(DEBUG_LEXER):
-                announce("%s <- eval_textsearch(), left = %s" % (matchers, repr(self.line)))
             return matchers
+    @debug_lexer
     def eval_pathset(self, preselection):
         "Resolve a path name to the set of commits that refer to it."
         chosen = self.chosen()
@@ -7610,6 +7622,7 @@ into sections of the input stream instead).
             if (not tree) == match_all:
                 result.add(i)
         return result
+    @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
         if self.peek() != b"@":
