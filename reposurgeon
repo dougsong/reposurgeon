@@ -5155,7 +5155,7 @@ class Repository:
                     self._namecache[key].append(i)
     def named(self, ref):
         "Resolve named reference in the context of this repository."
-        selection = set([])
+        selection = OrderedSet()
         # For matches that require iterating across the entire event
         # sequence, building an entire name lookup table is not much
         # more expensive in time than doing a single lookup. Avoid
@@ -5178,7 +5178,7 @@ class Repository:
                 if loc is None:
                     raise Recoverable(b"branch name %s points to hyperspace" % symbol)
                 else:
-                    return set([loc])
+                    return OrderedSet([loc])
         # Next, assignments
         lookup = self.assignments.get(ref)
         if lookup:
@@ -5234,7 +5234,7 @@ class Repository:
                 if ordinal is not None and ordinal <= len(matches):
                     selection.add(matches[ordinal-1])
                 else:
-                    selection |= set(matches)
+                    selection |= OrderedSet(matches)
             else:
                 selection.add(matches[0])
             if selection:
@@ -7222,12 +7222,10 @@ into sections of the input stream instead).
                 self.line = b"<" + self.line + b">"
         except Recoverable:
             pass
-        self.selection = list(self.eval_expression(set(self.chosen().all())))
+        self.selection = list(self.eval_expression(OrderedSet(
+            self.chosen().all())))
         if self.line.lstrip() == line.lstrip():
             self.selection = None
-        else:
-            # TODO: We probably want to stop doing this
-            self.selection.sort()
         return self.line.lstrip()
     def peek(self):
         return self.line and self.line[0]
@@ -7255,8 +7253,8 @@ into sections of the input stream instead).
             if c != '?':
                 break
             self.pop()
-            add_set = set()
-            remove_set = set()
+            add_set = OrderedSet()
+            remove_set = OrderedSet()
             for ei in value:
                 event = self.chosen().events[ei]
                 if isinstance(event, Commit):
@@ -7283,7 +7281,7 @@ into sections of the input stream instead).
     def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
-        selected = set()
+        selected = OrderedSet()
         while True:
             conjunct = self.eval_conjunct(preselection)
             if conjunct is None:
@@ -7300,11 +7298,20 @@ into sections of the input stream instead).
     def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)"
         self.line = self.line.lstrip()
-        conjunct = set(preselection)
+        conjunct = None
         while True:
             term = self.eval_term(preselection)
             if term is None:
                 break
+            elif conjunct is None:
+                # assign term before intersecting with preselection so
+                # that the order specified by the user's first term is
+                # preserved
+                conjunct = term
+                # this line is necessary if the user specified only
+                # polyranges because eval_polyrange() ignores the
+                # preselection
+                conjunct &= preselection
             else:
                 conjunct &= term
             self.line = self.line.lstrip()
@@ -7312,14 +7319,16 @@ into sections of the input stream instead).
                 self.pop()
             else:
                 break
+        if conjunct is None:
+            conjunct = preselection
         return conjunct
     @debug_lexer
     def eval_term(self, preselection):
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
-            allevents = set(self.chosen().all())
-            return allevents - set(self.eval_expression(allevents))
+            allevents = OrderedSet(self.chosen().all())
+            return allevents - OrderedSet(self.eval_expression(allevents))
         elif self.peek() == '(':
             self.pop()
             term = self.eval_expression(preselection)
@@ -7392,7 +7401,7 @@ into sections of the input stream instead).
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             self._debug_lexer("visibility set is %s with %s left" % (
                 [x.__name__ for x in visible], repr(self.line)))
-            visibility = set()
+            visibility = OrderedSet()
             for i in preselection:
                 event = self.chosen().events[i]
                 if any(predicate(event) for predicate in visible):
@@ -7495,7 +7504,7 @@ into sections of the input stream instead).
             for elt in selection:
                 if elt < 0 or elt > len(self.chosen())-1:
                     raise Recoverable("event number %s out of range" % (elt+1))
-            polyrange = set(selection)
+            polyrange = OrderedSet(selection)
         return polyrange
     @debug_lexer
     def eval_textsearch(self, preselection):
@@ -7513,7 +7522,7 @@ into sections of the input stream instead).
             except re.error:
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
-            matchers = set()
+            matchers = OrderedSet()
             searchable_attrs = {b"b":"branch",          # commit
                                 b"c":"comment",         # commit or tag
                                 b"C":"committer",       # commit
@@ -7614,16 +7623,17 @@ into sections of the input stream instead).
                 flags.remove("a")
             if "c" in flags:
                 flags.remove("c")
-            hits = set([])
+            hits = OrderedSet()
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
                 if all_or_any(itertools.imap(search, event.paths(flags))):
                     hits.add(i)
             return hits
         else:
-            return {i for (i, event) in chosen.iterevents(
-                                preselection, types=(Commit, Blob))
-                      if matcher in event.paths()}
+            return OrderedSet(
+                i for (i, event) in chosen.iterevents(
+                    preselection, types=(Commit, Blob))
+                if matcher in event.paths())
     def eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all):
@@ -7636,7 +7646,7 @@ into sections of the input stream instead).
         if match_all:
             match = lambda p: not match_condition(p)
         match_trees = {}
-        result = set()
+        result = OrderedSet()
         last_event = max(preselection)
         for (i, event) in self.chosen().iterevents(types=Commit):
             if i > last_event: break
@@ -7697,19 +7707,19 @@ into sections of the input stream instead).
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
-            return set([min(subarg)])
+            return OrderedSet([min(subarg)])
         except ValueError:
             raise Recoverable("cannot take minimum of empty set")
     def max_handler(self, subarg):
         "Maximum member of a selection set."
         try:
-            return set([max(subarg)])
+            return OrderedSet([max(subarg)])
         except ValueError:
             raise Recoverable("cannot take maximum of empty set")
     def amp_handler(self, subarg):
         "Amplify - map empty set to empty, nonempty set to all."
         if subarg:
-            return set(self.chosen().all())
+            return OrderedSet(self.chosen().all())
         else:
             return subarg
     def chn_handler(self, subarg):
@@ -7733,18 +7743,18 @@ into sections of the input stream instead).
     def pre_handler(self, subarg):
         "Predecessors function; all events previous to argument set."
         if not subarg or min(subarg) == 0:
-            return set()
+            return OrderedSet()
         else:
-            return set(range(0, min(subarg)))
+            return OrderedSet(range(0, min(subarg)))
     def suc_handler(self, subarg):
         "Successors function; all events following argument set."
         if not subarg or max(subarg) >= len(self.chosen().events) - 1:
-            return set()
+            return OrderedSet()
         else:
-            return set(range(max(subarg)+1, len(self.chosen().events)))
+            return OrderedSet(range(max(subarg)+1, len(self.chosen().events)))
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
-        result = set()
+        result = OrderedSet()
         subiter = repo.iterevents(subarg, types=Commit)
         if not recurse:
             for _, commit in subiter:
