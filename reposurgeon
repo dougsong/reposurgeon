@@ -2353,10 +2353,10 @@ class Commit(object):
         return False
     def blob_by_name(self, name):
         "Look up file content by name."
-        for fileop in self.operations():
-            if fileop.op == b'M' and fileop.path == name:
-                return self.repo.objfind(fileop.ref).get_content()
-        return False
+        mark = (self.manifest()[name] or (None, None, None))[1]
+        if mark is None:
+            return False
+        return self.repo.objfind(mark).get_content()
     def undecodable(self, codec=b"utf-8"):
         "Does this commit have undecodable i18n sequences in it?"
         try:
