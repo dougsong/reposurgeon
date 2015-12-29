@@ -54,7 +54,7 @@ roundtrip:
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$; \
-	    [ -s /tmp/r$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
+	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
 	    rm -f /tmp/rs$$$$; \
 	done
 	@echo "=== Testing stream-file round-tripping with compression:" 
