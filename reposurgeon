@@ -10982,7 +10982,7 @@ must resolve to exactly two commits. Supports > redirection.
         repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
-        bounds = tuple(repo.events[i] for i in sorted(self.selection))
+        bounds = tuple(repo.events[i] for i in self.selection)
         if len(self.selection) != 2 or \
                not isinstance(bounds[0], Commit) or \
                not isinstance(bounds[1], Commit):

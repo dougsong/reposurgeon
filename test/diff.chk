@@ -13,3 +13,10 @@ foo: added
  
 foo: added
 foo: removed
+--- README (:5)
++++ README (:2)
+@@ -1,2 +1,2 @@
+-0123456789012345678
++1234567890123456789
+ 
+foo: removed
