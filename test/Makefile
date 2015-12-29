@@ -167,7 +167,7 @@ svnload-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if $(ECHO) -n "  $${test}.svn" >&2; grep --text '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
+		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
 		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
