@@ -7633,9 +7633,23 @@ into sections of the input stream instead).
             funname += self.pop()
         if not funname or self.peek() != '(':
             return None
-        # Because the starting "(" is still there, eval_expression()
-        # will eat the ending ")" itself through eval_term().
+        # The '(' and ')' after the function name are different than
+        # the parentheses used to override operator precedence, so we
+        # must handle them here.  If we let eval_expression() handle
+        # the parentheses, it will process characters beyond the
+        # closing parenthesis as if they were part of the function's
+        # argument.  For example, if we let eval_expression() handle
+        # the parentheses, then the following expression:
+        #     @max(~$)|$
+        # would be processed as if this was the argument to max():
+        #     (~$)|$
+        # when the actual argument is:
+        #     ~$
+        self.pop()
         subarg = self.eval_expression(preselection)
+        if self.peek() != ')':
+            raise Recoverable("missing close parethesis for function call")
+        self.pop()
         try:
             func = getattr(self, funname + b"_handler")
         except AttributeError:
