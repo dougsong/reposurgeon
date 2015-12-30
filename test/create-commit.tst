@@ -8,5 +8,5 @@ Committer-Date: Sat 04 Mar 2006 17:44:41 +0000
 
 This is an example commit.
 EOF
-$|@max(=C) reparent rebase
+$|@max(=C&~$) reparent rebase
 write
