@@ -7306,7 +7306,7 @@ into sections of the input stream instead).
             if term is None:
                 break
             else:
-                conjunct = conjunct & term
+                conjunct &= term
             self.line = self.line.lstrip()
             if self.peek() == '&':
                 self.pop()
