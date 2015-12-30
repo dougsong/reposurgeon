@@ -11414,6 +11414,8 @@ class OrderedSet(collections.MutableSet):
     def __eq__(self, other):
         if isinstance(other, OrderedSet):
             return len(self) == len(other) and list(self) == list(other)
+        if other is None:
+            return False
         return set(self) == set(other)
 
 def main():
