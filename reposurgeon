@@ -7283,19 +7283,19 @@ into sections of the input stream instead).
     def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
-        unselected = set(preselection)
+        selected = set()
         while True:
             conjunct = self.eval_conjunct(preselection)
             if conjunct is None:
                 break
             else:
-                unselected -= conjunct
+                selected |= conjunct
             self.line = self.line.lstrip()
             if self.peek() == '|':
                 self.pop()
             else:
                 break
-        return preselection - unselected
+        return selected
     @debug_lexer
     def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)"
