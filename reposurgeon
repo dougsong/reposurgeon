@@ -11418,6 +11418,10 @@ class OrderedSet(collections.MutableSet):
             return False
         return set(self) == set(other)
 
+    def update(self, *others):
+        for other in others:
+            self |= other
+
 def main():
     # Increase max stack size from 8MB to 512MB
     # Needed to handle really large repositories.
