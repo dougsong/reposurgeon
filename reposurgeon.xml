@@ -1678,13 +1678,14 @@ an optional policy argument.</para>
 
 <variablelist>
 <varlistentry><term>Selection set:</term><listitem>
-<para>The selection set must resolve to exactly two commits.  The
+<para>The selection set must resolve to one or more commits.  The
 selected commit with the highest event number (not necessarily the
-last one selected) is the commit to modify.  Its first parent is set
-to the selected commit with the lowest event number (which is not
-necessarily the first one selected).  All original parent links are
-removed; if you want you can recreate them with the
-<command>merge</command> command.  Examples:</para>
+last one selected) is the commit to modify.  The remainder of the
+selected commits, if any, become its parents:  the selected commit
+with the lowest event number (which is not necessarily the first one
+selected) becomes the first parent, the selected commit with second
+lowest event number becomes the second parent, and so on.  All
+original parent links are removed.  Examples:</para>
 
 <programlisting>
 # this makes 17 the parent of 33
@@ -1692,6 +1693,13 @@ removed; if you want you can recreate them with the
 
 # this also makes 17 the parent of 33
 33,17 reparent
+
+# this makes 33 a root (parentless) commit
+33 reparent
+
+# this makes 33 an octopus merge commit.  its first parent
+# is commit 15, second parent is 17, and third parent is 22
+22,33,15,17 reparent
 </programlisting>
 
 <varlistentry><term>Policy:</term><listitem>

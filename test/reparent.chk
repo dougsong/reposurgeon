@@ -108,3 +108,10 @@ mark :128
 
 reposurgeon -> :127
 rs -> :1
+
+129 reparent
+@par(129) resolve parents of root commit
+parents of root commit: []
+129,127,3 reparent
+@par(129) resolve parents of octopus merge
+parents of octopus merge: [3, 127]
