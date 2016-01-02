@@ -2204,7 +2204,7 @@ class Commit(object):
         return self._child_nodes[0]
     def descended_from(self, other):
         "Is this commit a descendent of the specified other?"
-        if not self.has_parents() or self.committer.date < other.committer.date:
+        if not self.has_parents():
             return False
         elif other in self.parents():
             return True
