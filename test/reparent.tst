@@ -14,3 +14,17 @@ read <simple.fi
 @par(129) resolve parents of root commit
 129,127,3 reparent
 @par(129) resolve parents of octopus merge
+
+# this next one should fail because it would create a cycle
+:123,:121 reparent --use-order
+:121 inspect
+:121 manifest
+# swap the order of :123 and :121
+:119,:123 reparent --use-order
+:123 inspect
+:123 manifest
+(:119..:123)|(:119..:121) index
+:123,:121 reparent --use-order
+:121 inspect
+:121 manifest
+(:119..:123)|(:119..:121) index

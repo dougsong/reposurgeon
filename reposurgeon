@@ -10484,8 +10484,8 @@ commit's first parent, but doesn't need you to find the first parent yourself.
 
     def help_reparent(self):
         print(b"""
-Changes the parent list of a commit.  Takes a selection set and an
-optional policy argument.
+Changes the parent list of a commit.  Takes a selection set, zero or
+more option arguments, and an optional policy argument.
 
 Selection set:
 
@@ -10511,6 +10511,36 @@ Selection set:
         # is commit 15, second parent is 17, and third parent is 22
         22,33,15,17 reparent
 
+Options:
+
+    --use-order
+
+        Use the selection order to determine which selected commit is
+        the commit to modify and which are the parents (and if there
+        are multiple parents, their order).  The last selected commit
+        (not necessarily the one with the highest event number) is the
+        commit to modify, the first selected commit (not necessarily
+        the one with the lowest event number) becomes the first
+        parent, the second selected commit becomes the second parent,
+        and so on.  Examples:
+
+            # this makes 33 the parent of 17
+            33|17 reparent --use-order
+
+            # this makes 17 an octopus merge commit.  its first parent
+            # is commit 22, second parent is 33, and third parent is 15
+            22,33,15|17 reparent --use-order
+
+        Because ancestor commit events must appear before their
+        descendants, giving a commit with a low event number a parent
+        with a high event number triggers a re-sort of the events.  A
+        re-sort assigns different event numbers to some or all of the
+        events.  Re-sorting only works if the reparenting does not
+        introduce any cycles.  To swap the order of two commits that
+        have an ancestor-descendant relationship without introducing a
+        cycle during the process, you must reparent the descendant
+        commit first.
+
 Policy:
 
     By default, the manifest of the reparented commit is computed
@@ -10530,6 +10560,9 @@ Policy:
         if repo is None:
             complain(b"no repo has been chosen.")
             return
+        with RepoSurgeon.LineParse(line) as parse:
+            use_order = '--use-order' in parse.options
+            line = parse.line
         try:
             selected = list(self.selected(Commit))
             if not len(selected): raise ValueError()
@@ -10538,9 +10571,22 @@ Policy:
             raise Recoverable(b"reparent requires one or more selected commits")
         if line and line != "rebase":
             raise Recoverable(b"unknown policy for reparent")
-        selected.sort()
+        if not use_order:
+            selected.sort()
+        # determine whether an event resort might be needed.  it is
+        # assumed that ancestor commits already have a lower event
+        # index before this function is called, which should be true
+        # as long as every function that modifies the DAG calls
+        # Repository.resort() when needed.  thus, a call to resort()
+        # should only be necessary if --use-order is passed and a
+        # parent will have an index higher than the modified commit.
+        do_resort = use_order and not all(selected[-1][0] > x[0]
+                                          for x in selected[0:-1])
         parents = [x[1] for x in selected[0:-1]]
         child = selected[-1][1]
+        if do_resort and any(p.descended_from(child) for p in parents):
+            raise Recoverable(b'reparenting a commit to its own descendant' \
+                              + b' would introduce a cycle')
         if line != "rebase":
             # Recreate the state of the tree
             f = FileOp(repo)
@@ -10555,6 +10601,8 @@ Policy:
             newops.extend(child.operations())
             child.set_operations(newops)
         child.set_parents(parents)
+        if do_resort:
+            repo.resort()
 
     def help_branch(self):
         print(b"""

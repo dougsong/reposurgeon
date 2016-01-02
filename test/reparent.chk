@@ -115,3 +115,112 @@ parents of root commit: []
 129,127,3 reparent
 @par(129) resolve parents of octopus merge
 parents of octopus merge: [3, 127]
+
+# this next one should fail because it would create a cycle
+:123,:121 reparent --use-order
+reposurgeon: reparenting a commit to its own descendant would introduce a cycle
+:121 inspect
+Event 122 ===============================================================
+commit refs/heads/master
+mark :121
+author Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+data 27
+Document a failed attempt.
+from :119
+M 100755 :120 reposurgeon
+
+:121 manifest
+Event 122 ===============================================================
+commit refs/heads/master
+mark :121
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :120
+reposurgeon.xml -> :114
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+# swap the order of :123 and :121
+:119,:123 reparent --use-order
+:123 inspect
+Event 124 ===============================================================
+commit refs/heads/master
+mark :123
+author Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
+data 37
+Cut down on expensive input editing.
+from :119
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :122 reposurgeon
+M 100644 :114 reposurgeon.xml
+M 100644 :68 test/Makefile
+M 100644 :48 test/simple.dump
+M 100644 :50 theory.txt
+M 100755 :122 reposurgeon
+
+:123 manifest
+Event 124 ===============================================================
+commit refs/heads/master
+mark :123
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :122
+reposurgeon.xml -> :114
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+(:119..:123)|(:119..:121) index
+   120 commit   :119    refs/heads/master
+   121 blob     :120    reposurgeon
+   122 commit   :121    refs/heads/master
+   123 blob     :122    reposurgeon
+   124 commit   :123    refs/heads/master
+:123,:121 reparent --use-order
+:121 inspect
+Event 124 ===============================================================
+commit refs/heads/master
+mark :121
+author Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
+data 27
+Document a failed attempt.
+from :123
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :120 reposurgeon
+M 100644 :114 reposurgeon.xml
+M 100644 :68 test/Makefile
+M 100644 :48 test/simple.dump
+M 100644 :50 theory.txt
+M 100755 :120 reposurgeon
+
+:121 manifest
+Event 124 ===============================================================
+commit refs/heads/master
+mark :121
+
+.gitignore -> :62
+Makefile -> :76
+READ[ME].txt -> :45
+reposurgeon -> :120
+reposurgeon.xml -> :114
+test/Makefile -> :68
+test/simple.dump -> :48
+theory.txt -> :50
+(:119..:123)|(:119..:121) index
+   120 commit   :119    refs/heads/master
+   121 blob     :120    reposurgeon
+   122 blob     :122    reposurgeon
+   123 commit   :123    refs/heads/master
+   124 commit   :121    refs/heads/master

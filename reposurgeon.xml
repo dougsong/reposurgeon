@@ -1670,11 +1670,12 @@ stale.</para>
 </varlistentry>
 <varlistentry>
 <term><command>reparent</command>
+        [<emphasis>options</emphasis>...]
         [<emphasis>policy</emphasis>]
 </term>
 <listitem>
-<para>Changes the parent list of a commit.  Takes a selection set and
-an optional policy argument.</para>
+<para>Changes the parent list of a commit.  Takes a selection set,
+zero or more option arguments, and an optional policy argument.</para>
 
 <variablelist>
 <varlistentry><term>Selection set:</term><listitem>
@@ -1701,6 +1702,39 @@ original parent links are removed.  Examples:</para>
 # is commit 15, second parent is 17, and third parent is 22
 22,33,15,17 reparent
 </programlisting>
+
+</listitem></varlistentry>
+<varlistentry><term>Options:</term><listitem>
+<variablelist>
+<varlistentry><term><option>--use-order</option></term><listitem>
+<para>Use the selection order to determine which selected commit is
+the commit to modify and which are the parents (and if there are
+multiple parents, their order).  The last selected commit (not
+necessarily the one with the highest event number) is the commit to
+modify, the first selected commit (not necessarily the one with the
+lowest event number) becomes the first parent, the second selected
+commit becomes the second parent, and so on.  Examples:</para>
+
+<programlisting>
+# this makes 33 the parent of 17
+33|17 reparent --use-order
+
+# this makes 17 an octopus merge commit.  its first parent
+# is commit 22, second parent is 33, and third parent is 15
+22,33,15|17 reparent --use-order
+</programlisting>
+
+<para>Because ancestor commit events must appear before their
+descendants, giving a commit with a low event number a parent with a
+high event number triggers a re-sort of the events.  A re-sort assigns
+different event numbers to some or all of the events.  Re-sorting only
+works if the reparenting does not introduce any cycles.  To swap the
+order of two commits that have an ancestor–descendant relationship
+without introducing a cycle during the process, you must reparent the
+descendant commit first.</para>
+</listitem></varlistentry>
+</variablelist>
+</listitem></varlistentry>
 
 <varlistentry><term>Policy:</term><listitem>
 <para>By default, the manifest of the reparented commit is computed
