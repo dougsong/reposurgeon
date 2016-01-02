@@ -10367,18 +10367,38 @@ commit's first parent, but doesn't need you to find the first parent yourself.
 
     def help_reparent(self):
         print(b"""
-Changes the parent list of a commit. Takes a selection set argument and an
-optional policy argument. The selection set must resolve to exactly two
-commits, the latest of which is the commit to modify, and the earliest is the
-new first parent. All other parents links are cleared; if you want you can
-recreate them with the 'merge' command.
+Changes the parent list of a commit.  Takes a selection set and an
+optional policy argument.
 
-By default, the manifest of the reparented commit is computed before
-modifying it; a deleteall and fileops are prepended so that the
-manifest stays unchanged even when the first parent has been
-changed. Using the keyword 'rebase' as a third argument inhibits this
-behavior - no deleteall is issued and the tree contents of all
-descendents can be modified as a result.
+Selection set:
+
+    The selection set must resolve to exactly two commits.  The
+    selected commit with the highest event number (not necessarily the
+    last one selected) is the commit to modify.  Its first parent is
+    set to the selected commit with the lowest event number (which is
+    not necessarily the first one selected).  All original parent
+    links are removed; if you want you can recreate them with the
+    'merge' command.  Examples:
+
+        # this makes 17 the parent of 33
+        17,33 reparent
+
+        # this also makes 17 the parent of 33
+        33,17 reparent
+
+Policy:
+
+    By default, the manifest of the reparented commit is computed
+    before modifying it; a 'deleteall' and some fileops are prepended
+    so that the manifest stays unchanged even when the first parent
+    has been changed.  This behavior can be changed by specifying a
+    policy:
+
+    rebase
+
+        Inhibits the default behavior -- no 'deleteall' is issued and
+        the tree contents of all descendents can be modified as a
+        result.
 """)
     def do_reparent(self, line):
         repo = self.chosen()
