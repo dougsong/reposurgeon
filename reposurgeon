@@ -1481,7 +1481,8 @@ class Blob(object):
 class Tag(object):
     "Represents an annotated tag."
     __slots__ = ("repo", "name", "color", "committish",
-                 "target", "tagger", "comment", "deletehook")
+                 "target", "tagger", "comment", "deletehook",
+                 'legacy_id')
     __hash__ = None
     def __init__(self, repo=None,
                  name=None, committish=None, target=None, tagger=None, comment=None):
@@ -1494,6 +1495,7 @@ class Tag(object):
         self.tagger = tagger
         self.comment = comment
         self.deletehook = None
+        self.legacy_id = None
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
@@ -5313,11 +5315,13 @@ class Repository:
             pref = b""
         else:
             pref = commit.comment + b"\n"
-        self.addEvent(Tag(commit.repo,
-                          name=name,
-                          target=target,
-                          tagger=commit.committer,
-                          comment=pref + legend))
+        tag = Tag(commit.repo,
+                  name=name,
+                  target=target,
+                  tagger=commit.committer,
+                  comment=pref + legend)
+        tag.legacy_id = commit.legacy_id
+        self.addEvent(tag)
         if delete: commit.delete(["--tagback"])
     def tagify_empty(self, commits = None,
                            tipdeletes = False,
