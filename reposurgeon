@@ -974,8 +974,12 @@ def whoami():
 
 def screenwidth():
     "Return the current width of the terminal window."
-    with popen_or_die(b'stty size', b"rb") as tp:
-        return int(tp.read().split()[1])
+    if sys.stdin.isatty():
+        with popen_or_die(b'stty size', b"rb") as tp:
+            return int(tp.read().split()[1])
+    else:
+        # Return default width if no terminal is present
+        return 80
 
 def debug_enable(level):
     "Hook for debug filtering."
