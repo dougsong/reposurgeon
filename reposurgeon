@@ -1522,7 +1522,10 @@ class Tag(object):
         return self.repo.index(self)
     def id_me(self):
         "ID this tag for humans."
-        return "tag@%s (%s)" % (self.mark, self.name)
+        return "tag@%s%s (%s)" % (
+            self.mark,
+            ('=<%s>' % self.legacy_id) if self.legacy_id else '',
+            self.name)
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tags."
         return "%6d\ttag\t%s" % (eventnum+1, self.name)
