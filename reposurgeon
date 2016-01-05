@@ -1545,6 +1545,8 @@ class Tag(object):
         msg["Tag-Name"] = self.name
         if self.tagger:
             self.tagger.email_out(modifiers, msg, b"Tagger")
+        if self.legacy_id:
+            msg[b'Legacy-ID'] = self.legacy_id
         msg.set_payload(self.comment)
         if self.comment and not self.comment.endswith(b"\n"):
             complain(b"in tag %s, comment was not LF-terminated." % self.name)
@@ -1590,6 +1592,10 @@ class Tag(object):
                                 self.tagger.date.delta(date)))
                     self.tagger.date = date
                     modified = True
+        if b'Legacy-ID' in msg:
+            if msg[b'Legacy-ID'] != self.legacy_id:
+                modified = True
+                self.legacy_id = msg[b'Legacy-ID']
         newcomment = msg.get_payload()
         if global_options["canonicalize"]:
             newcomment = newcomment.strip().replace(b"\r\n", b"\n") + b'\n'
