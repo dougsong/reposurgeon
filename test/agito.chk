@@ -64,6 +64,7 @@ M 100644 :1 .gitignore
 M 100644 :2 hello.c
 
 tag proj-1.0
+#legacy-id 2
 from :3
 tagger fraggle <fraggle> 1254523027 +0000
 data 59

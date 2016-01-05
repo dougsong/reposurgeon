@@ -14092,6 +14092,7 @@ reset refs/tags/v2.0.3
 from :307
 
 tag INITIAL_IMPORT_AQ-root
+#legacy-id 3
 from :307
 tagger no-author <no-author> 1106836394 +0000
 data 79
@@ -14100,6 +14101,7 @@ This commit was manufactured by cvs2svn to create branch
 
 
 tag emptycommit-4
+#legacy-id 4
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1106836402 +0000
 data 105
@@ -14108,6 +14110,7 @@ Initial CVS import from nut testing release 2.0.1-pre4
 [[Tag from zero-fileop commit at Subversion r4]]
 
 tag INITIAL_IMPORT_V2_0_1_pre4
+#legacy-id 5
 from :307
 tagger no-author <no-author> 1106836402 +0000
 data 85
@@ -14116,6 +14119,7 @@ This commit was manufactured by cvs2svn to create tag
 
 
 tag emptycommit-22
+#legacy-id 22
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1113564272 +0000
 data 104
@@ -14124,6 +14128,7 @@ file mge-hid.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r22]]
 
 tag emptycommit-23
+#legacy-id 23
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1113564272 +0000
 data 104
@@ -14132,6 +14137,7 @@ file apc-hid.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r23]]
 
 tag emptycommit-27
+#legacy-id 27
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
 data 103
@@ -14140,6 +14146,7 @@ file bcmxcp.8 was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r27]]
 
 tag emptycommit-28
+#legacy-id 28
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
 data 103
@@ -14148,6 +14155,7 @@ file bcmxcp.c was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r28]]
 
 tag emptycommit-29
+#legacy-id 29
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
 data 103
@@ -14156,6 +14164,7 @@ file bcmxcp.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r29]]
 
 tag emptycommit-31
+#legacy-id 31
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1114168463 +0000
 data 109
@@ -14164,6 +14173,7 @@ file netvisionmib.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r31]]
 
 tag emptycommit-40
+#legacy-id 40
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115032949 +0000
 data 102
@@ -14172,6 +14182,7 @@ file pwmib.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r40]]
 
 tag emptycommit-46
+#legacy-id 46
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115114979 +0000
 data 105
@@ -14180,6 +14191,7 @@ file upscode2.8 was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r46]]
 
 tag emptycommit-47
+#legacy-id 47
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115114979 +0000
 data 105
@@ -14188,6 +14200,7 @@ file upscode2.c was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r47]]
 
 tag emptycommit-51
+#legacy-id 51
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
 data 102
@@ -14196,6 +14209,7 @@ file solis.c was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r51]]
 
 tag emptycommit-52
+#legacy-id 52
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
 data 102
@@ -14204,6 +14218,7 @@ file solis.h was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r52]]
 
 tag emptycommit-53
+#legacy-id 53
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
 data 102
@@ -14212,6 +14227,7 @@ file solis.8 was initially added on branch v2_1_0.
 [[Tag from zero-fileop commit at Subversion r53]]
 
 tag Development-root
+#legacy-id 65
 from :307
 tagger no-author <no-author> 1119553881 +0000
 data 73
@@ -14219,6 +14235,7 @@ This commit was manufactured by cvs2svn to create branch 'Development'.
 
 
 tag emptycommit-108
+#legacy-id 108
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
 data 113
@@ -14227,6 +14244,7 @@ file gamatronic.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r108]]
 
 tag emptycommit-109
+#legacy-id 109
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
 data 113
@@ -14235,6 +14253,7 @@ file gamatronic.8 was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r109]]
 
 tag emptycommit-110
+#legacy-id 110
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
 data 113
@@ -14243,6 +14262,7 @@ file gamatronic.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r110]]
 
 tag emptycommit-118
+#legacy-id 118
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
 data 110
@@ -14251,6 +14271,7 @@ file nut_usb.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r118]]
 
 tag emptycommit-119
+#legacy-id 119
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
 data 113
@@ -14259,6 +14280,7 @@ file bcmxcp_ser.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r119]]
 
 tag emptycommit-120
+#legacy-id 120
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
 data 112
@@ -14267,6 +14289,7 @@ file bcmxcp_io.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r120]]
 
 tag emptycommit-121
+#legacy-id 121
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
 data 113
@@ -14275,6 +14298,7 @@ file bcmxcp_usb.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r121]]
 
 tag emptycommit-122
+#legacy-id 122
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
 data 110
@@ -14283,6 +14307,7 @@ file nut_usb.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r122]]
 
 tag emptycommit-128
+#legacy-id 128
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1125769869 +0000
 data 120
@@ -14291,6 +14316,7 @@ file tripplite_usb.c was initially added on branch Tripp_Lite_Omni.
 [[Tag from zero-fileop commit at Subversion r128]]
 
 tag emptycommit-142
+#legacy-id 142
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1126270516 +0000
 data 120
@@ -14299,6 +14325,7 @@ file tripplite_usb.8 was initially added on branch Tripp_Lite_Omni.
 [[Tag from zero-fileop commit at Subversion r142]]
 
 tag emptycommit-149
+#legacy-id 149
 from :2
 tagger Charles Lepple <clepple+nut@gmail.com> 1126387008 +0000
 data 113
@@ -14307,6 +14334,7 @@ file Doxyfile was initially added on branch Tripp_Lite_Omni.
 [[Tag from zero-fileop commit at Subversion r149]]
 
 tag emptycommit-157
+#legacy-id 157
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1126530129 +0000
 data 113
@@ -14315,6 +14343,7 @@ file bcmxcp_usb.8 was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r157]]
 
 tag emptycommit-164
+#legacy-id 164
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1126645864 +0000
 data 113
@@ -14323,6 +14352,7 @@ file belkin-hid.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r164]]
 
 tag emptycommit-192
+#legacy-id 192
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
 data 110
@@ -14331,6 +14361,7 @@ file apc-hid.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r192]]
 
 tag emptycommit-193
+#legacy-id 193
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
 data 109
@@ -14339,6 +14370,7 @@ file libusb.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r193]]
 
 tag emptycommit-194
+#legacy-id 194
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
 data 110
@@ -14347,6 +14379,7 @@ file mge-hid.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r194]]
 
 tag emptycommit-195
+#legacy-id 195
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
 data 113
@@ -14355,6 +14388,7 @@ file belkin-hid.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r195]]
 
 tag emptycommit-199
+#legacy-id 199
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1127520982 +0000
 data 119
@@ -14363,6 +14397,7 @@ file hid-subdrivers.txt was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r199]]
 
 tag emptycommit-265
+#legacy-id 265
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
 data 118
@@ -14371,6 +14406,7 @@ file nut-usbups.hotplug.in was initially added on branch Testing.
 [[Tag from zero-fileop commit at Subversion r265]]
 
 tag emptycommit-266
+#legacy-id 266
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
 data 103
@@ -14379,6 +14415,7 @@ file README was initially added on branch Testing.
 [[Tag from zero-fileop commit at Subversion r266]]
 
 tag emptycommit-267
+#legacy-id 267
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
 data 116
@@ -14387,6 +14424,7 @@ file nut-usbups.rules.in was initially added on branch Testing.
 [[Tag from zero-fileop commit at Subversion r267]]
 
 tag emptycommit-295
+#legacy-id 295
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1137874342 +0000
 data 110
@@ -14395,6 +14433,7 @@ file optiups.c was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r295]]
 
 tag emptycommit-296
+#legacy-id 296
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1137874342 +0000
 data 110
@@ -14403,6 +14442,7 @@ file optiups.h was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r296]]
 
 tag emptycommit-297
+#legacy-id 297
 from :2
 tagger Arnaud Quette <arnaud.quette@free.fr> 1137874346 +0000
 data 110
@@ -14411,6 +14451,7 @@ file optiups.8 was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r297]]
 
 tag emptycommit-317
+#legacy-id 317
 from :2
 tagger Peter Selinger <selinger@users.sourceforge.net> 1138817815 +0000
 data 111
@@ -14419,6 +14460,7 @@ file .cvsignore was initially added on branch Development.
 [[Tag from zero-fileop commit at Subversion r317]]
 
 tag tipdelete-INITIAL_IMPORT_V2_0_1_pre4
+#legacy-id 354
 from :307
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
 data 49
@@ -14426,6 +14468,7 @@ Cleaning up repository after initial SVN import
 
 
 tag tipdelete-CFL_TL_pre_Dev_merge
+#legacy-id 354.1
 from :1200
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
 data 87
@@ -14435,6 +14478,7 @@ Cleaning up repository after initial SVN import
 
 
 tag tipdelete-alioth_SVN_migration
+#legacy-id 354.2
 from :763
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
 data 87
@@ -14444,6 +14488,7 @@ Cleaning up repository after initial SVN import
 
 
 tag tipdelete-Development
+#legacy-id 356.1
 from :1924
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
 data 79
@@ -14453,6 +14498,7 @@ Moving branches/Development into trunk.
 
 
 tag tipdelete-INITIAL_IMPORT_AQ
+#legacy-id 357
 from :307
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
 data 273
@@ -14463,6 +14509,7 @@ Obsolete branch names:
 
 
 tag tipdelete-r2.0.1
+#legacy-id 357.1
 from :331
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
 data 311
@@ -14475,6 +14522,7 @@ Obsolete branch names:
 
 
 tag tipdelete-v2.1.0
+#legacy-id 357.2
 from :490
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
 data 311
@@ -14487,6 +14535,7 @@ Obsolete branch names:
 
 
 tag tipdelete-regex_branch
+#legacy-id 366
 from :1112
 tagger Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
 data 66

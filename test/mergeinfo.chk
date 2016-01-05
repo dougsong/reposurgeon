@@ -349,6 +349,7 @@ M 100644 :40 VERSION
 M 100644 :41 src
 
 tag v1.0-root
+#legacy-id 4
 from :9
 tagger db48x <db48x> 1352206628 +0000
 data 33
@@ -356,6 +357,7 @@ create a release branch for 1.0
 
 
 tag v2.0-root
+#legacy-id 13
 from :33
 tagger db48x <db48x> 1352206645 +0000
 data 33

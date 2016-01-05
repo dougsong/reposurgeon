@@ -154,6 +154,7 @@ from :12
 M 100644 :13 .gitignore
 
 tag sample-tag
+#legacy-id 5
 from :4
 tagger esr <esr> 1322408285 +0000
 data 36
@@ -161,6 +162,7 @@ Create a sample tag at revision 2.
 
 
 tag sample-branch-root
+#legacy-id 6
 from :8
 tagger esr <esr> 1322509253 +0000
 data 26

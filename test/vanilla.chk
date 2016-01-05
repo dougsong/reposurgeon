@@ -79,6 +79,7 @@ from :6
 M 100644 :7 README
 
 tag emptycommit-5
+#legacy-id 5
 from :8
 tagger esr <esr> 1323084440 +0000
 data 149

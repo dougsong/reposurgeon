@@ -59,6 +59,7 @@ from :4
 M 100644 :5 README
 
 tag realbranch-root
+#legacy-id 3
 from :4
 tagger esr <esr> 1323170783 +0000
 data 54

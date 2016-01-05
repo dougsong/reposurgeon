@@ -103,6 +103,7 @@ D trunk/subdir/src1
 D trunk/subdir/src2
 
 tag emptycommit-2
+#legacy-id 2
 from :2
 tagger brooksd <brooksd> 1354779383 +0000
 data 118

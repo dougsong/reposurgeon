@@ -61,6 +61,7 @@ from :4
 M 100644 :5 README
 
 tag emptycommit-3
+#legacy-id 3
 from :2
 tagger jason <jason> 1441071261 +0000
 data 103
@@ -71,6 +72,7 @@ subdir
 ]]
 
 tag mybranch-root
+#legacy-id 4
 from :4
 tagger jason <jason> 1441071264 +0000
 data 10

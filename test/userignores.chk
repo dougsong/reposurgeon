@@ -96,6 +96,7 @@ from :7
 M 100644 :8 README
 
 tag root
+#legacy-id 1
 from :2
 tagger chungy <chungy> 1391603574 +0000
 data 70
@@ -104,6 +105,7 @@ Create standard SVN layout
 [[Tag from root commit at Subversion r1]]
 
 tag emptycommit-3
+#legacy-id 3
 from :2
 tagger chungy <chungy> 1391603677 +0000
 data 446
@@ -114,6 +116,7 @@ Ignore *.html
 ]]
 
 tag cool-feature-root
+#legacy-id 5
 from :4
 tagger chungy <chungy> 1391603866 +0000
 data 126

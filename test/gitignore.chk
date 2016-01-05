@@ -154,6 +154,7 @@ from :10
 M 100644 :11 README
 
 tag emptycommit-4
+#legacy-id 4
 from :6
 tagger chungy <chungy> 1391603792 +0000
 data 264

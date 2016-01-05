@@ -43,6 +43,7 @@ from :2
 M 100644 :3 hello
 
 tag emptycommit-3
+#legacy-id 3
 from :4
 tagger khan <khan> 1354595761 +0000
 data 284

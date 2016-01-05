@@ -1636,7 +1636,10 @@ class Tag(object):
         pacify_pylint(options)
         pacify_pylint(realized)
         pacify_pylint(internals)
-        parts = ["tag %s\nfrom %s\n" % (self.name, self.committish)]
+        parts = ["tag %s\n" % (self.name,)]
+        if self.legacy_id:
+            parts.append(b'#legacy-id {}\n'.format(self.legacy_id))
+        parts.append("from %s\n" % (self.committish,))
         if self.tagger:
             parts.append(b"tagger %s\n" % self.tagger)
         parts.append(b"data %d\n%s\n" % (len(self.comment or b""), self.comment or b""))
@@ -3421,6 +3424,13 @@ class StreamParser:
                             tagger = None
                             tagname = line[4:].strip()
                             line = self.fi_readline()
+                            legacy_id = None
+                            if line.startswith(b'#legacy-id '):
+                                # reposurgeon extension, expected to
+                                # be immediately after "tag" line if
+                                # present
+                                legacy_id = line.split()[1]
+                                line = self.fi_readline()
                             if line.startswith(b"from"):
                                 referent = line[5:].strip()
                             else:
@@ -3434,11 +3444,13 @@ class StreamParser:
                             else:
                                 self.warn(b"missing tagger after from in tag")
                                 self.pushback(line)
-                            self.repo.addEvent(Tag(repo = self.repo,
-                                                   name = tagname,
-                                                   committish = referent,
-                                                   tagger = tagger,
-                                                   comment = self.fi_read_data()[0]))
+                            tag = Tag(repo = self.repo,
+                                      name = tagname,
+                                      committish = referent,
+                                      tagger = tagger,
+                                      comment = self.fi_read_data()[0])
+                            tag.legacy_id = legacy_id
+                            self.repo.addEvent(tag)
                             baton.twirl()
                         else:
                             # Simply pass through any line we don't understand.

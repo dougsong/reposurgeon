@@ -43,6 +43,7 @@ from :2
 M 100644 :3 README
 
 tag emptybranch-root
+#legacy-id 3
 from :4
 tagger esr <esr> 1323167895 +0000
 data 74

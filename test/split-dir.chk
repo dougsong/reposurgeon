@@ -81,6 +81,7 @@ M 100644 :3 foo2/src
 
 Event 9 =================================================================
 tag root
+#legacy-id 1
 from :2
 tagger brooksd <brooksd> 1353813660 +0000
 data 59

@@ -47,6 +47,7 @@ from :2
 M 100644 :3 file
 
 tag 2.5.1
+#legacy-id 3
 from :4
 tagger iay <iay> 1436022529 +0000
 data 15

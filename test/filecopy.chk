@@ -97,6 +97,7 @@ from :9
 M 100644 :10 README
 
 tag testbranch-root
+#legacy-id 3
 from :4
 tagger esr <esr> 1323742103 +0000
 data 117

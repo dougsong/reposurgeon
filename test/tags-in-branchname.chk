@@ -55,6 +55,7 @@ D .gitignore
 M 100644 :3 branches/test/b
 
 tag stags-root
+#legacy-id 3
 from :4
 tagger frnchfrgg <frnchfrgg> 1360515905 +0000
 data 23

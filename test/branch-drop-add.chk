@@ -234,6 +234,7 @@ from :26
 M 100644 :27 src
 
 tag v1.0-root
+#legacy-id 4
 from :9
 tagger db48x <db48x> 1352540139 +0000
 data 33

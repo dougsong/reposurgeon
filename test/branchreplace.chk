@@ -285,6 +285,7 @@ M 100644 :29 .gitignore
 M 120000 :30 compile
 
 tag INITIAL_IMPORT_AQ-root
+#legacy-id 3
 from :8
 tagger no-author <no-author> 1106836394 +0000
 data 79
@@ -293,6 +294,7 @@ This commit was manufactured by cvs2svn to create branch
 
 
 tag emptycommit-4
+#legacy-id 4
 from :2
 tagger aquette <aquette> 1106836402 +0000
 data 105
@@ -301,6 +303,7 @@ Initial CVS import from nut testing release 2.0.1-pre4
 [[Tag from zero-fileop commit at Subversion r4]]
 
 tag Development-root
+#legacy-id 10
 from :8
 tagger no-author <no-author> 1119553881 +0000
 data 73
@@ -308,6 +311,7 @@ This commit was manufactured by cvs2svn to create branch 'Development'.
 
 
 tag tipdelete-Development
+#legacy-id 13.1
 from :22
 tagger clepple-guest <clepple-guest> 1140096703 +0000
 data 79
@@ -317,6 +321,7 @@ Moving branches/Development into trunk.
 
 
 tag automake-root
+#legacy-id 16
 from :28
 tagger selinger-guest <selinger-guest> 1160946576 +0000
 data 41

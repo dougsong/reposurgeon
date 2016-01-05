@@ -83,6 +83,7 @@ M 100644 :1 .gitignore
 M 100644 :6 test.txt
 
 tag emptycommit-2
+#legacy-id 2
 from :2
 tagger mike <mike> 1437858590 +0000
 data 107
@@ -93,6 +94,7 @@ Create tags directory
 ]]
 
 tag emptycommit-3
+#legacy-id 3
 from :2
 tagger mike <mike> 1437858590 +0000
 data 115
@@ -103,6 +105,7 @@ Create branches directory
 ]]
 
 tag 1.0
+#legacy-id 5
 from :4
 tagger mike <mike> 1437858607 +0000
 data 13
@@ -110,6 +113,7 @@ Release 1.0
 
 
 tag 1.0rc1
+#legacy-id 6
 from :4
 tagger mike <mike> 1437858613 +0000
 data 22
