@@ -1526,6 +1526,15 @@ class Tag(object):
             self.mark,
             ('=<%s>' % self.legacy_id) if self.legacy_id else '',
             self.name)
+    def showlegacy(self):
+        """Show a legacy ID in the expected form for the ancestral system."""
+        if not self.legacy_id:
+            return None
+        # Special case for Subversion
+        if self.repo and self.repo.vcs and self.repo.vcs.name == b"svn":
+            return b"r" + self.legacy_id
+        else:
+            return self.legacy_id
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tags."
         return "%6d\ttag\t%s" % (eventnum+1, self.name)
