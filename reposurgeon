@@ -1642,7 +1642,10 @@ class Tag(object):
         parts.append("from %s\n" % (self.committish,))
         if self.tagger:
             parts.append(b"tagger %s\n" % self.tagger)
-        parts.append(b"data %d\n%s\n" % (len(self.comment or b""), self.comment or b""))
+        comment = self.comment or b''
+        if comment and options and b'--legacy' in options and self.legacy_id:
+            comment += b'\nLegacy-ID: {}\n'.format(self.legacy_id)
+        parts.append(b"data %d\n%s\n" % (len(comment), comment))
         return b"".join(parts)
     def __str__(self):
         return self.dump()
