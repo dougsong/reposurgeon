@@ -1,4 +1,5 @@
-## Test diff (twice)
-read <min.fi
-:2,:4 diff
-:2,:4 diff
+## Test diff
+read <diff.fi
+:2,:5 diff
+:2,:5 diff
+:5,:6 diff
