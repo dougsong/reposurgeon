@@ -1301,8 +1301,8 @@ pathname match is done first).</para>
 <para>The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
 the child of the original, and replaces it as parent of the original's
-children. Commit metadata is duplicated; the mark of the new commit is
-then changed, with 'bis' added as a suffix.</para>
+children. Commit metadata is duplicated; the new commit then gets a
+new mark.</para>
 
 <para>Finally, some file operations - starting at the one matched or
 indexed by the split argument - are moved forward from the original

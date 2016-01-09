@@ -1850,7 +1850,7 @@ class Commit(object):
     "Generic commit object."
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
-                 "legacy_id", "common", "splits", "deletehook", "attachments",
+                 "legacy_id", "common", "deletehook", "attachments",
                  "_parent_nodes", "_child_nodes", "_pathset")
     __hash__ = None
     def __init__(self, repo=None):
@@ -1866,9 +1866,6 @@ class Commit(object):
         self.color = None
         self.legacy_id = None        # Commit's ID in an alien system
         self.common = None           # Used only by the Subversion parser
-        self.splits = None           # split command increments this
-                                     # to avoid creating multiple new commits
-                                     # with duplicate marks
         self.deletehook = None       # Hook used during deletion operations
         self.attachments = []        # Tags pointing at this commit
         self._parent_nodes = []      # list of parent nodes
@@ -6283,11 +6280,7 @@ class Repository:
             event2 = self.events[where+1]
             # need a new mark
             assert(event.mark == event2.mark)
-            if event.splits is None:
-                event.splits = 1
-            else:
-                event.splits += 1
-            event2.set_mark(b"%s.%s" % (event.mark, event.splits))
+            event2.set_mark(b":%s" % len(self.events))
             self.invalidate_object_map()
             # Fix up parent/child relationships
             for child in list(event.children()):
@@ -9917,7 +9910,7 @@ The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
 the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
-then changed, with 'bis' added as a suffix.
+then changed.
 
 Finally, some file operations - starting at the one matched or indexed
 by the split argument - are moved forward from the original commit

@@ -2,6 +2,7 @@
 
 Repository head:
      Added "when" command for timestamp conversions.
+     Fix GitHub issue #42: Repository.split_commit() produces invalid marks.
 
 3.29: 2015-09-02
      Now included: git aliases that allow git to work with action stamps.
