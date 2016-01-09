@@ -41,11 +41,11 @@ clean:
 
 # Show summary lines for all tests.
 testlist:
-	@grep '^##' *.tst
-	@grep '^ ##' *.svn
+	@grep --text '^##' *.tst
+	@grep --text '^ ##' *.svn
 listcheck:
 	@for f in *.tst *.svn; do \
-	    if ( head -3 $$f | grep -q '^ *##' ); then :; else echo "$$f needs a description"; fi; \
+	    if ( head -3 $$f | grep --text -q '^ *##' ); then :; else echo "$$f needs a description"; fi; \
 	done
 
 # Test that all stream files round-trip properly
@@ -87,7 +87,7 @@ fi-buildregress:
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
-	    $(ECHO) -n "  $${file} "; grep '##' $${file}.tst  || echo ' ## (no description)'; \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
 	    then diff --text -u $${file}.chk /tmp/regress; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
@@ -167,14 +167,14 @@ svnload-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if $(ECHO) -n "  $${test}.svn" >&2; grep '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
+		(if $(ECHO) -n "  $${test}.svn" >&2; grep --text '^ ##' $${test}.svn ||  echo ' ## (no description)'; >&2\
 		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		mkdir /tmp/reposurgeon$$$$ ; \
 		(cd /tmp/reposurgeon$$$$; \
 		    git init --quiet; \
-		    grep -v 'reposurgeon:' /tmp/regress | git fast-import --quiet); \
+		    grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet); \
 		rm -fr /tmp/reposurgeon$$$$) \
 	    fi \
 	done
@@ -253,7 +253,7 @@ repodiffer-buildregress:
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
-	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
@@ -269,7 +269,7 @@ repomapper-buildregress:
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
 	@-for file in $(REPOMAPPER); do \
-	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
 	done
 	@rm -f /tmp/regress
