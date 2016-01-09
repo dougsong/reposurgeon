@@ -1145,13 +1145,17 @@ class RepoSurgeonEmail(email.message.Message, object):
             line = fp.readline()
             if not line:
                 break
+            # Not impossible for this to get spoofed, but *highly* unlikely
+            if line == "\n." + RepoSurgeonEmail.Divider + "\n":
+                line = "\n" + RepoSurgeonEmail.Divider + "\n"
             if line.startswith(RepoSurgeonEmail.Divider):
                 break
             msg += line
         return msg
     def __str__(self):
         out = super(RepoSurgeonEmail, self).as_string(unixfrom=True)
-        out = out.replace(b"\n--", b"\n.--")
+        out = out.replace(b"\n" + RepoSurgeonEmail.Divider + "\n",
+                          b"\n." + RepoSurgeonEmail.Divider + "\n")
         out = out.replace(b"\n>From", b"\nFrom")
         return out
 
