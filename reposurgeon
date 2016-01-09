@@ -8119,7 +8119,11 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
     def help_unassign(self):
         print(b"""
 Unassign a symbolic name.  Throws an error if the name is not assigned.
+Tab-completes on the list of defined names.
 """)
+    def complete_unassign(self, text, _line, _begidx, _endidx):
+        repo = self.chosen()
+        return sorted([x for x in repo.assignments.keys() if x.startswith(text)])
     def do_unassign(self, line):
         repo = self.chosen()
         if not repo:
@@ -8514,9 +8518,9 @@ Supports > redirection.
     def help_prefer(self):
         print(b"""
 Report or set (with argument) the preferred type of repository. With
-no arguments, describe capabilities of all supported systems. With
-an argument (which must be the name of a supported system) this has
-two effects:
+no arguments, describe capabilities of all supported systems. With an
+argument (which must be the name of a supported version-control
+system, and tab-completes in that list) this has two effects:
 
 First, if there are multiple repositories in a directory you do a read
 on, reposurgeon will read the preferred one (otherwise it will
@@ -8530,6 +8534,8 @@ If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set reposurgeon's
 preference to the type of that repository.
 """)
+    def complete_prefer(self, text, _line, _begidx, _endidx):
+        return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
     def do_prefer(self, line):
         "Report or select the preferred repository type."
         if not line:
@@ -8559,7 +8565,7 @@ preference to the type of that repository.
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
 repository-read time, but may remain unset if the source was a stream
-file.
+file. The argument tab-completes in the list of supported systems.
 
 The source type affects the interpretation of legacy IDs (for
 purposes of the =N visibility set and the 'references' command) by
@@ -8570,6 +8576,8 @@ format of stream files made from the repository.
 The repository source type is reliably set when reading a Subversion
 stream.  
 """)
+    def complete_sourcetype(self, text, _line, _begidx, _endidx):
+        return sorted([x.name for x in vcstypes if x.exporter and x.name.startswith(text)])
     def do_sourcetype(self, line):
         "Report or select the current repository's source type."
         if not self.chosen():
@@ -8600,7 +8608,13 @@ same source.
 With no argument, lists the names of the currently stored repositories
 and their load times.  The second column is '*' for the currently selected
 repository, '-' for others.
+
+With an argument, the command tab-completes on the above list.
 """)
+    def complete_choose(self, text, _line, _begidx, _endidx):
+        if not self.repolist:
+            return None
+        return sorted([x.name for x in self.repolist if x.name.startswith(text)])
     def do_choose(self, line):
         "Choose a named repo on which to operate."
         if self.selection is not None:
@@ -8630,8 +8644,9 @@ repository, '-' for others.
         print(b"""
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
-currently chosen repo.
+currently chosen repo. Tab-completes on the list of loaded repositories.
 """)
+    complete_drop = complete_choose
     def do_drop(self, line):
         "Drop a repo from reposurgeon's list."
         if not self.reponames():
@@ -8852,6 +8867,8 @@ blobs. The 'reduce' mode always acts on the entire repository.
 
 This is intended for producing reduced test cases from large repositories.
 """)
+    def complete_strip(self, _text, _line, _begidx, _endidx):
+        return ["blobs", "reduce"]
     def do_strip(self, line):
         "Drop content to produce a reduced test case."
         repo = self.chosen()
@@ -11040,12 +11057,14 @@ to re-set it.
     #
     def help_set(self):
         print(b"""
-Set a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags and options. The following flags and
-options are defined:
+Set a (tab-completed) boolean option to control reposurgeon's
+behavior.  With no arguments, displays the state of all flags and
+options. The following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
+    def complete_set(self, text, _line, _begidx, _endidx):
+        return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
     def do_set(self, line):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
@@ -11058,11 +11077,13 @@ options are defined:
                     global_options[option] = True
     def help_clear(self):
         print(b"""
-Clear a boolean option to control reposurgeon's behavior.   With no arguments,
-displays the state of all flags. The following flags and options are defined:
+Clear a (tab-completed) boolean option to control reposurgeon's
+behavior.  With no arguments, displays the state of all flags. The
+following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
             print(opt + ":\n" + expl)
+    complete_clear = complete_set
     def do_clear(self, line):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
@@ -11151,6 +11172,8 @@ the command generated by the expansion.
         print(b"""
 Undefine the macro named in this command's first argument.
 """)
+    def complete_undefine(self, text, _line, _begidx, _endidx):
+        return sorted([x for x in self.definitions if x.startswith(text)])
     def do_undefine(self, line):
         try:
             name = line.split()[0]
