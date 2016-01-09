@@ -12,6 +12,7 @@ read <simple.fi
 (24..97?) & 20..40 resolve Conjunct
 (24..97?) & (20..40?) resolve Conjunct with grouping
 24..97 | 20..40 resolve Disjunct
+@max(=C)|@max(=C) resolve Disjunct overlapping relative position
 (24..97 | 20..40) & =C resolve Commit selection
 24..97 & =C | 20..40 & =C resolve Disjunct and conjunct
 24..97 & (=C | 20..40) resolve Parenthesis grouping
