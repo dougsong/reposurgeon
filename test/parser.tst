@@ -10,6 +10,7 @@ read <simple.fi
 24..97&=C resolve Range and conjunction
 24..97? resolve Neighborhood extension
 (24..97?) & 20..40 resolve Conjunct
+@min(=C)&@max(=C) resolve Conjunct non-overlapping relative position
 (24..97?) & (20..40?) resolve Conjunct with grouping
 24..97 | 20..40 resolve Disjunct
 @max(=C)|@max(=C) resolve Disjunct overlapping relative position
