@@ -53,16 +53,19 @@ roundtrip:
 	@echo "=== Testing stream-file round-tripping:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$; \
-	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
-	    rm -f /tmp/rs$$$$; \
+	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$ || exit 1; \
+	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
+		|| exit 1; \
+	    rm -f /tmp/rs$$$$ || exit 1; \
 	done
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    $(REPOSURGEON) "set compressblobs" "read -;write -" <$$file >/tmp/rs$$$$; \
-	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$; \
-	    rm -f /tmp/rs$$$$; \
+	    $(REPOSURGEON) "set compressblobs" "read -;write -" \
+		<$$file >/tmp/rs$$$$ || exit 1; \
+	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
+		|| exit 1; \
+	    rm -f /tmp/rs$$$$ || exit 1; \
 	done
 
 # Test that dumping metadata to mailbox form and updating from the mailbox
@@ -71,8 +74,10 @@ mailboxing:
 	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
-	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" >/tmp/regress; \
-	    [ -s /tmp/regress ] && diff --text -u $${file} /tmp/regress; \
+	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" \
+		>/tmp/regress || exit 1; \
+	    [ -s /tmp/regress ] && diff --text -u $${file} /tmp/regress \
+		|| exit 1; \
 	done
 	@rm -f /tmp/regress
 
@@ -82,14 +87,15 @@ TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
 fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(REPOSURGEON) "script $${file}.tst testing123" >$${file}.chk 2>&1; \
+	    $(REPOSURGEON) "script $${file}.tst testing123" >$${file}.chk \
+		2>&1 || exit 1; \
 	done
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
-	    then diff --text -u $${file}.chk /tmp/regress; \
+	    then diff --text -u $${file}.chk /tmp/regress || exit 1; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
@@ -99,15 +105,18 @@ COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" > $${file}.chk; \
+	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
+		>$${file}.chk || exit 1; \
 	done
 	@rm -f /tmp/regress
 coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
-	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" >/tmp/regress; \
-	    [ -s /tmp/regress ] && diff --text -u $${file}.chk /tmp/regress; \
+	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
+		>/tmp/regress || exit 1; \
+	    [ -s /tmp/regress ] && diff --text -u $${file}.chk /tmp/regress \
+		|| exit 1; \
 	done
 	@rm -f /tmp/regress
 
@@ -118,7 +127,7 @@ git-regress:
 	@for test in $(GITLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
 	    ./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-	    then diff --text -u $${test}.fi /tmp/regress; \
+	    then diff --text -u $${test}.fi /tmp/regress || exit 1; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
@@ -130,7 +139,7 @@ hg-regress:
 	@for test in $(HGLOADS); do \
 	    if (echo "  $${test}.fi" >&2; \
 	    ./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-	    then diff --text -u $${test}.fi /tmp/regress; \
+	    then diff --text -u $${test}.fi /tmp/regress || exit 1; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	done
 	@rm -f /tmp/regress
@@ -142,12 +151,14 @@ svn-flat: clean
 	svnadmin create test-repo
 	svn co file://${PWD}/test-repo test-checkout
 svn-branchy: svn-flat
-	@cd test-checkout; set -x; \
-		svn mkdir trunk; svn mkdir tags; svn mkdir branches; \
-		echo "Directory layout." | svn commit -F -; \
+	@cd test-checkout || exit 1; set -x; \
+		svn mkdir trunk || exit 1; \
+		svn mkdir tags || exit 1; \
+		svn mkdir branches || exit 1; \
+		echo "Directory layout." | svn commit -F - || exit 1; \
 		echo "This is a test Subversion repository" >trunk/README; \
-		svn add trunk/README; \
-		echo "Initial README content." | svn commit -F -
+		svn add trunk/README || exit 1; \
+		echo "Initial README content." | svn commit -F - || exit 1
 svn-dump:
 	@svnadmin dump test-repo 
 
@@ -158,7 +169,8 @@ svnload-buildregress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		    echo "Remaking $${test}.chk"; \
-		    rm -f $${test}.chk && make --quiet $${test}.chk; \
+		    rm -f $${test}.chk && make --quiet $${test}.chk \
+			|| exit 1; \
 	    fi \
 	done
 svnload-regress:
@@ -169,13 +181,14 @@ svnload-regress:
 	    then \
 		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
 		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
-		then diff --text -u $${test}.chk /tmp/regress; \
+		then diff --text -u $${test}.chk /tmp/regress || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
-		mkdir /tmp/reposurgeon$$$$ ; \
-		(cd /tmp/reposurgeon$$$$; \
-		    git init --quiet; \
-		    grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet); \
-		rm -fr /tmp/reposurgeon$$$$) \
+		mkdir /tmp/reposurgeon$$$$ || exit 1; \
+		(cd /tmp/reposurgeon$$$$ || exit 1; \
+		    git init --quiet || exit 1; \
+		    grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet) \
+			|| exit 1; \
+		rm -fr /tmp/reposurgeon$$$$) || exit 1; \
 	    fi \
 	done
 	@rm -f /tmp/regress
@@ -185,7 +198,8 @@ legacy-buildregress:
 	@for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
-	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null; \
+	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null \
+		|| exit 1; \
 	done
 legacy-regress:
 	@echo "=== Testing legacy-map generation:"
@@ -193,7 +207,7 @@ legacy-regress:
 	do \
 	    if echo "  $${test}.svn" >&2; \
 	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress 2>/dev/null; \
-	    then diff --text -u $${test}.map /tmp/regress; \
+	    then diff --text -u $${test}.map /tmp/regress || exit 1; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
 	@rm -f /tmp/regress
@@ -204,7 +218,8 @@ svndump-buildregress:
 	@for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
-	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk; \
+	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk \
+		|| exit 1; \
 	done
 	@make --quiet clean
 svndump-regress:
@@ -215,9 +230,9 @@ svndump-regress:
 	    then \
 		if echo "  $${test}.fi" >&2; \
 		$(REPOSURGEON) "read <$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff --text -u $${test}.chk /tmp/stripped$$$$; \
+		then diff --text -u $${test}.chk /tmp/stripped$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
-		svn-to-svn -n -q </tmp/prestripped$$$$; \
+		svn-to-svn -n -q </tmp/prestripped$$$$ || exit 1; \
 	    fi \
 	done
 	@make --quiet clean
@@ -232,10 +247,12 @@ svncheck:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1; \
+		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1 \
+		    || exit 1; \
 		if echo "  $${test}.svn" >&2; \
 		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$; \
+		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$ \
+		    || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
 	    fi \
 	done
@@ -248,13 +265,13 @@ REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
 repodiffer-buildregress:
 	@-for file in $(REPODIFFER); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@-for file in $(REPODIFFER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
 	@rm -f /tmp/regress
 
@@ -264,13 +281,13 @@ REPOMAPPER := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
 	@-for file in $(REPOMAPPER); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
 	@-for file in $(REPOMAPPER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
 	@rm -f /tmp/regress
 
