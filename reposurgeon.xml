@@ -650,7 +650,7 @@ curly brackets used in older versions of the syntax).</para>
 members' neighbors and referents.  This extends the set to include the
 parents and children of all commits in the set, and the referents of
 any tags and resets in the set. Each blob reference in the set is
-replaced by all commits that refer to it. The '?' can be repeated
+replaced by all commit events that refer to it. The '?' can be repeated
 to extend the neighborhood depth.</para>
 
 <para>Do set negation with prefix ~; it has higher precedence than
