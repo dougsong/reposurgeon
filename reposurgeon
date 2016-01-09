@@ -7302,7 +7302,7 @@ into sections of the input stream instead).
         self.line = self.line.lstrip()
         conjunct = set(preselection)
         while True:
-            term = self.eval_term(conjunct)
+            term = self.eval_term(preselection)
             if term is None:
                 break
             else:
