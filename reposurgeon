@@ -6279,7 +6279,7 @@ class Repository:
             event2 = self.events[where+1]
             # need a new mark
             assert(event.mark == event2.mark)
-            event2.set_mark(b":%s" % len(self.events))
+            event2.set_mark(event.repo.newmark())
             self.invalidate_object_map()
             # Fix up parent/child relationships
             for child in list(event.children()):
