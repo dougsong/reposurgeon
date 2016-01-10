@@ -20,13 +20,13 @@ identical revisions, and to pick out revisions that have been
 changed or deleted or inserted. It may be useful for comparing the
 output of different repository-conversion tools in detail.
 
-Another auxiliary program, `repotool`, assists in mirroring Subversion
-repositories.  Yet another, `repomapper`, assists in automatically preparing
+Another auxiliary program, `repotool`, performs cbarious useful
+operations such as checkouts and tag listing in a VCS-independent
+manner.  Yet another, `repomapper`, assists in automatically preparing
 contributor maps of CVS and SVN repositories.
 
-This distribution also includes a generic `Makefile` (named
-`conversion.mk`) describing a repeatable conversion workflow using these
-tools, and the DVCS Migration Guide that describes how to use it.
+This distribution supports a generic conversion workflow using these
+tools, and includes the DVCS Migration Guide that describes how to use it.
 
 The file 'reposurgeon-git-aliases` can be appended to your `~/.gitconfig' to
 support working directly with action stamps in git.
@@ -43,3 +43,7 @@ with `reposurgeon` and report bugs.
 
 The main `reposurgeon` website along with the documentation in HTML files
 lives at [www.catb.org/esr/reposurgeon/](http://www.catb.org/esr/reposurgeon/).
+
+The files Dockerfile, .dockerignore, requirements.txt, and .gitlab-ci.yml
+are not distributed; they are configuration for test builds on GitLab's
+CI machinery.
