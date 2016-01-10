@@ -915,7 +915,11 @@ class HgExtractor(Extractor):
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return a manifest."
         assert filemap is not None # pacify pylint
+        pwd = os.getcwd()
         self.hg_capture(b"update", b"-C", rev)
+        # 'hg update -C' can delete and recreate the current working
+        # directory, so cd to what should be the current directory
+        os.chdir(pwd)
         manifest = self.hg_capture(b"manifest").split()
         return manifest
     def get_comment(self, rev):
