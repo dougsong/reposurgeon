@@ -7861,10 +7861,7 @@ into sections of the input stream instead).
             return OrderedSet(range(max(subarg)+1, len(self.chosen().events)))
     def srt_handler(self, subarg):
         "Sort the argument set."
-        if not subarg or max(subarg) >= len(self.chosen().events) - 1:
-            return OrderedSet()
-        else:
-            return OrderedSet(sorted(subarg))
+        return OrderedSet(sorted(subarg))
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = OrderedSet()
@@ -11526,7 +11523,7 @@ Runs the unit tests and reports the results.
 # this class copied from https://code.activestate.com/recipes/576694/
 # created by Raymond Hettinger
 # revision 9, dated 2009-03-19
-# MIT license
+# SPDX-License-Identifier: MIT
 # linked from the documentation of Python's collections library
 # https://docs.python.org/2/library/collections.html
 class OrderedSet(collections.MutableSet):
