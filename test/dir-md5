@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# dir-md5 - list the structure and md5sum of every file in a directory
+#
+# Intended for repotool tests
+#
+# Pass the directory to list the contents of. All contents will be listed with relative paths.
+#
+
+if [ ! -d "$1" ] ; then
+  echo Directory "$1" does not exist!
+  exit 1
+fi
+
+cd "$1"
+echo
+echo Directory contents: 
+ls -1FR .
+
+echo
+echo Checksums to make sure file contents correct:
+md5sum $(find . -type f -not -path '*/\.*' | sort -k 2)

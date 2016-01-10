@@ -338,7 +338,7 @@ checkout)
 	then
 	    rev="-u $rev"
 	fi
-	hg clone $rev $outdir
+	hg clone $rev . $outdir
     elif [ -d _darcs ]
     then
 	echo "Not yet supported."

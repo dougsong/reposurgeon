@@ -1,0 +1,23 @@
+Return code: 0
+
+Directory contents:
+.:
+Makefile
+READ[ME].txt
+reposurgeon*
+reposurgeon.xml
+test/
+theory.txt
+
+./test:
+Makefile
+simple.dump
+
+Checksums to make sure file contents correct:
+447e36040bcbacd5ad1addda3d5953a5  ./Makefile
+3215c01629eafe13dc99e8d4243f6180  ./READ[ME].txt
+3d6349aa7c5474181d72f6a4c14653d3  ./reposurgeon
+43eddec51238a77e5ee19dcf4dcc0c9e  ./reposurgeon.xml
+4101de22b45a761a9ba128b039e67f63  ./test/Makefile
+174beb871368199fd232e1b499f5603d  ./test/simple.dump
+b80a5f3b8846e009fccae74420e58f79  ./theory.txt

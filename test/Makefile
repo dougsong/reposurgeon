@@ -3,7 +3,9 @@
 # By setting the REPOSURGEON environment variable and using -e
 # a different implementation can be plugged in to the tests.
 
-PATH := ..:.:${PATH}
+# Use absolute path so tests that change working directory still use 
+# scripts from parent directory
+PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON = reposurgeon 
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
@@ -21,7 +23,7 @@ default:
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
 		svndump-regress \
-		repodiffer-regress repomapper-regress
+		repodiffer-regress repomapper-regress repotool-regress
 	@echo "=== No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
@@ -290,5 +292,20 @@ repomapper-regress:
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
 	@rm -f /tmp/regress
+
+# Regression-testing of repotool; look at the *.sh and
+# corresponding *.chk files to see which tests this runs.
+REPOTOOL := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
+repotool-buildregress:
+	@-for file in $(REPOTOOL); do \
+	    echo "Remaking $${file}.chk"; \
+	    $(SHELL) $${file}.sh >$${file}.chk; \
+	done
+repotool-regress:
+	@echo "=== Running repotool tests:"
+	@-for file in $(REPOTOOL); do \
+	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk -; \
+	done
 
 # end
