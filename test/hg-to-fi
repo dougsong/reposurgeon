@@ -22,6 +22,12 @@ extract=True
 stream=True
 cleanup=True
 
+pecho() { printf %s\\n "$*"; }
+log() { pecho "$@"; }
+error() { log "ERROR: $@" >&2; }
+fatal() { error "$@"; exit 1; }
+try() { "$@" || fatal "'$@' failed"; }
+
 while getopts nr opt
 do
     case $opt in
@@ -38,20 +44,27 @@ testrepo=${1:-/tmp/test-repo}
 if [ $extract = True ]
 then
 	# Go via git, because hg convert is standard and hg fastimport isn't
-    rm -fr $testrepo.git $testrepo; mkdir $testrepo.git $testrepo
-    (cd $testrepo.git >/dev/null; git init --quiet; git fast-import --quiet; git checkout)
-    hg --config extensions.convert= convert $testrepo.git $testrepo > /dev/null
-    rm -fr $testrepo.git
+    try rm -fr $testrepo.git $testrepo
+    try mkdir $testrepo.git $testrepo
+    (
+        try cd $testrepo.git >/dev/null
+        try git init --quiet
+        try git fast-import --quiet
+        try git checkout
+    ) || exit 1
+    try hg --config extensions.convert= convert $testrepo.git $testrepo \
+        > /dev/null
+    try rm -fr $testrepo.git
 fi
 
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory
 if [ $cleanup = True ]
 then
-    rm -fr $testrepo test-checkout
+    try rm -fr $testrepo test-checkout
 fi
