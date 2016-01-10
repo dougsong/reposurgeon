@@ -3177,7 +3177,13 @@ class StreamParser:
                                             else:
                                                 node.blob.set_content(text, start)
                                         node.revision = revision
-                                        nodes.append(node)
+                                        # This guard filters out the empty
+                                        # notes produced by format 7 dumps.
+                                        if not (node.action == SD_CHANGE
+                                                and node.props is None
+                                                and node.blob is None
+                                                and node.from_rev is None):
+                                            nodes.append(node)
                                         in_header = False
                                 elif line.startswith(b"Revision-number: "):
                                     self.pushback(line)
