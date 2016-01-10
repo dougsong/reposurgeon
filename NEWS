@@ -5,6 +5,8 @@ Repository head:
      Fix GitHub issue #42: Repository.split_commit() produces invalid marks.
      Commands now tab-complete name arguments wherever that makes sense.
      Handle format 7 Subversion dumps with sporadic empty nodes.
+     Selection sets now remain ordered rather than being sorted.
+     There is a new @srt() function to explicitly sort selection sets.
 
 3.29: 2015-09-02
      Now included: git aliases that allow git to work with action stamps.

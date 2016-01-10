@@ -8,3 +8,5 @@ echo 1
 <1>,<2>,<3> resolve
 <1>..<2> resolve
 <3>..<7> resolve
+3,1 resolve
+@srt(3,1) resolve

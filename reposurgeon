@@ -7859,6 +7859,12 @@ into sections of the input stream instead).
             return OrderedSet()
         else:
             return OrderedSet(range(max(subarg)+1, len(self.chosen().events)))
+    def srt_handler(self, subarg):
+        "Sort the argument set."
+        if not subarg or max(subarg) >= len(self.chosen().events) - 1:
+            return OrderedSet()
+        else:
+            return OrderedSet(sorted(subarg))
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = OrderedSet()

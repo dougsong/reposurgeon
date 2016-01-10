@@ -632,6 +632,10 @@ functions are defined:</para>
         empty if the argument set includes the last
         event.</para></entry>
       </row>
+      <row>
+        <entry align='center'>srt</entry>
+        <entry align='center'><para>sort the argument set.</para></entry>
+      </row>
     </tbody>
   </tgroup>
 </informaltable>
