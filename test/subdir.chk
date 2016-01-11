@@ -1,6 +1,7 @@
 reposurgeon: branchify trunk branches/* branches/subdir/*
 reposurgeon: branchify_map, regex -> branch name:
 reposurgeon: 	branches/(.*)/ -> heads/\1
+     7 2015-09-01T02:32:51Z     :6    <5> add more text
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -71,7 +72,7 @@ subdir
 <NodeAction: r3 add dir 'branches/subdir/'>
 ]]
 
-tag mybranch-root
+tag subdir/mybranch-root
 #legacy-id 4
 from :4
 tagger jason <jason> 1441071264 +0000

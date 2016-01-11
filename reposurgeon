@@ -2529,6 +2529,13 @@ def capture(command):
         sys.stderr.write(content)
     return content
 
+def branchbase(branch):
+    "Return the branch minus refs/heads or refs/tags."
+    for p in [ b"refs/heads/", b"refs/tags/" ]:
+        if branch.startswith(p):
+            return branch[len(p):]
+    return os.path.basename(branch)
+
 class PathMap(object):
     """Represent the set of filenames visible in a Subversion
     revision, using copy-on-write to keep the size of the structure in
@@ -4533,17 +4540,18 @@ class StreamParser:
         def tagname(commit):
             # Give branch and tag roots a special name, except for "trunk" and
             # "root" which do not come from a regular branch copy.
-            if commit.mark in rootmarks and os.path.basename(commit.branch) not in rootskip:
-                name = os.path.basename(commit.branch)
-                if commit.branch.startswith(b"refs/tags"):
-                    return name
-                return name + b"-root"
+            if commit.mark in rootmarks:
+                name = branchbase (commit.branch)
+                if name not in rootskip:
+                    if commit.branch.startswith(b"refs/tags/"):
+                        return name
+                    return name + b"-root"
             # Fallback on standard rules.
             return None
         def taglegend(commit):
             # Tipdelete commits and branch roots don't get any legend.
             if commit.operations() or (commit.mark in rootmarks \
-                    and os.path.basename(commit.branch) not in rootskip):
+                    and branchbase(commit.branch) not in rootskip):
                 return b""
             # Otherwise, generate one for inspection.
             legend = [b"[[Tag from zero-fileop commit at Subversion r%s" \
@@ -5001,7 +5009,7 @@ class SubversionDumper:
                                 self.make_tag(fp,
                                               revision,
                                               event.head(),
-                                              name=os.path.basename(event.branch),
+                                              name=branchbase(event.branch),
                                               log=b"",
                                               author=event.committer)
                     fp.flush()
@@ -5169,7 +5177,7 @@ class Repository:
         # No hit in the cache? Then search branches.
         for symbol in sorted(self.branchset(),
                              key=len, reverse=True): # longest name first
-            if ref == os.path.basename(symbol):
+            if ref == branchbase(symbol):
                 loc = None
                 # Find the last commit with this branchname
                 for (i, event) in enumerate(self.events):
@@ -5387,7 +5395,7 @@ class Repository:
             if commit.operations():
                 branch = commit.branch
                 if branch[-1] == os.sep: branch = branch[:-1]
-                return b"tipdelete-" + os.path.basename(branch)
+                return b"tipdelete-" + branchbase(branch)
             if commit.legacy_id:
                 return b"emptycommit-" + commit.legacy_id
             elif commit.mark:

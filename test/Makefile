@@ -149,6 +149,7 @@ hg-regress:
 # Make a new repo and checkout directory to create a Subversion test load.
 # Reminder - a branch copy looks like this:
 # svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/foo
+# or, within test-checkout, svn copy ^/trunk ^/branches/foo
 svn-flat: clean
 	svnadmin create test-repo
 	svn co file://${PWD}/test-repo test-checkout
