@@ -250,11 +250,11 @@ EOF
 	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
         fi
 	mkdir $local
-	cvssync -o $local "$operand"
+	cvssync -c -o $local "$operand"
 	echo "$operand" >$local/.cvssync
     elif [ -f $operand/.cvssync ]
     then
-	cvssync -o $operand `cat $operand/.cvssync`
+	cvssync -c -o $operand `cat $operand/.cvssync`
     else
 	echo "repotool: $operand does not look like a repository mirror."
 	exit 1
