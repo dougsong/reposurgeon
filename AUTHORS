@@ -17,3 +17,8 @@ Chris Lemmons <alficles@gmail.com>
 
 Edward Cree <ec429@cantab.net>
    Wrote the Hg extractor class and its test.
+
+Richard Hansen <rhansen@rhansen.org>:
+   Selections as ordered rather than compulsorily sorted sets.
+   The generalized reparent command.
+   Improvements in regression-test infrastructure.
