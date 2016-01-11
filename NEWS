@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.30: 2016-01-10
      Added "when" command for timestamp conversions.
      Fix GitHub issue #42: Repository.split_commit() produces invalid marks.
      Commands now tab-complete name arguments wherever that makes sense.
