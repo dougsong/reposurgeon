@@ -20,7 +20,7 @@ identical revisions, and to pick out revisions that have been
 changed or deleted or inserted. It may be useful for comparing the
 output of different repository-conversion tools in detail.
 
-Another auxiliary program, `repotool`, performs cbarious useful
+Another auxiliary program, `repotool`, performs various useful
 operations such as checkouts and tag listing in a VCS-independent
 manner.  Yet another, `repomapper`, assists in automatically preparing
 contributor maps of CVS and SVN repositories.
