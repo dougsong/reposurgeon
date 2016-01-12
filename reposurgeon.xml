@@ -634,7 +634,8 @@ functions are defined:</para>
       </row>
       <row>
         <entry align='center'>srt</entry>
-        <entry align='center'><para>sort the argument set.</para></entry>
+        <entry align='center'><para>sort the argument set
+	by event number.</para></entry>
       </row>
     </tbody>
   </tgroup>
