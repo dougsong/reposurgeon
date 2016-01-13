@@ -192,7 +192,7 @@ export)
     done
     if [ "$cvs" = 'yes' ]
     then
-       find -name \*,v | cvs-fast-export --reposurgeon
+       find -name \*,v | cvs-fast-export -q --reposurgeon
     elif [ -d locks ]
     then
 	    svnadmin dump .
