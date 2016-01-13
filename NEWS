@@ -1,5 +1,9 @@
 			reposurgeon project news
 
+Repository head:
+     In repotool, a new 'branches' command lists branches (not tags).
+     In repotool, 'tags' now lists only tags.
+
 3.30: 2016-01-10
      Added "when" command for timestamp conversions.
      Fix GitHub issue #42: Repository.split_commit() produces invalid marks.
