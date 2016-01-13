@@ -1,4 +1,5 @@
 SVN-fs-dump-format-version: 2
+ ## Test napping of Subversion branches in subdirectories.
 
 UUID: 40e17f46-c76c-4b77-95dd-f987b66dad4a
 
