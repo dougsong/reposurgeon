@@ -188,12 +188,17 @@ EOF
     ;;
 export)
     cvs=no	
-    for file in *,v; do
-	    if [ -f "$file" ]; then
-		    cvs=yes
-		    break
-	    fi
-    done
+    if [ -d CVSROOT ]
+    then
+    	    cvs=yes
+    else
+	    for file in *,v; do
+		    if [ -f "$file" ]; then
+			    cvs=yes
+			    break
+		    fi
+	    done
+    fi
     if [ "$cvs" = 'yes' ]
     then
        find -name \*,v | cvs-fast-export -q --reposurgeon
@@ -268,12 +273,10 @@ EOF
     fi
     ;;
 tags)
-    set -- `echo *,v`
-    if [ -f $1 ]
+    if [ -d CVSROOT ]
     then
         # Will screw up if any tag is not common to all files
-	module=`basename ${PWD}`
-	cd ..
+	module=`ls -1 | grep -v CVSROOT`
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
 	| awk -F"[.:]" '/^\t/&&$(NF-1)!=0{print $1}' | awk '{print $1}' | sort -u
     elif [ -d locks ]
@@ -331,11 +334,9 @@ checkout)
     fi
     shift
     rev=$1
-    set -- `echo *,v`
-    if [ -f $1 ]
+    if [ -d CVSROOT ]
     then
-	module=`basename ${PWD}`
-	cd ..
+	module=`ls -1 | grep -v CVSROOT`
 	if [ "$rev" ]
 	then
 	    rev="-d $rev"

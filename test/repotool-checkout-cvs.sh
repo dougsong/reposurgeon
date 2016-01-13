@@ -7,7 +7,8 @@ trap "rm -rf /tmp/test-repo$$ /tmp/target$$" 0 12 2 15
 cp -r hack1.repo/ /tmp/test-repo$$
 cd /tmp/test-repo$$
 repotool checkout /tmp/target$$; echo Return code: $? >/tmp/out$$
-cd ~-
+cd - >/dev/null
+rm -rf /tmp/target$$/CVS/	# CVS internal use, and contents are different every time
 ./dir-md5 /tmp/target$$  >>/tmp/out$$
 
 case $1 in

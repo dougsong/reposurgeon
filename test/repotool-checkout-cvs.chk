@@ -1,0 +1,10 @@
+Return code: 0
+
+Directory contents:
+.:
+bar.c
+foo.c
+
+Checksums to make sure file contents correct:
+d15dcb77013298a206080cfa5c8148c4  ./bar.c
+afdb5d23b136f6a9061206acf8f22965  ./foo.c
