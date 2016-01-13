@@ -204,7 +204,8 @@ export)
 	    bzr fast-export --no-plain .
     elif [ -d .hg ]
     then
-	    hg-fast-export.py --marks /dev/null --mapping /dev/null --heads /dev/null --status /dev/null --repo .
+    	    # Use the extractor in reposurgeon itself.
+	    reposurgeon "read ." "prefer git" "write -"
     elif [ -d _darcs ]
     then
 	    darcs fastconvert export
