@@ -55,6 +55,10 @@ history file readable by reposurgeon.</para>
 (within a module directory for CVS), returns a list of the
 repository's release tags.</para>
 
+<para>The 'branches' option, run from within a repository directory
+(within a module directory for CVS), returns a list of the
+repository's branch names.</para>
+
 <para>The 'checkout' option checks out a working copy of the
 repository. It must be called from within the repository. It takes one
 required argument - the checkout directory location. It may take a
