@@ -2,7 +2,7 @@
 
 Repository head:
      In repotool, a new 'branches' command lists branches (not tags).
-     In repotool, 'tags' now lists only tags.
+     In repotool, 'tags' on a CVS repo now lists only tags.
 
 3.30: 2016-01-10
      Added "when" command for timestamp conversions.
