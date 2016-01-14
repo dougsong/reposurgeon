@@ -148,6 +148,8 @@ headcompare: ${project}-mirror ${project}-${target_vcs}
 	repotool compare \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
 tagscompare: ${project}-mirror ${project}-${target_vcs}
 	repotool compare-tags \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
+branchescompare: ${project}-mirror ${project}-${target_vcs}
+	repotool compare-branches \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
 
 # General cleanup and utility
 clean:
@@ -444,6 +446,44 @@ compare-tags)
 	echo "----------------------------------------------------------------"
 	echo "${tag}:"
 	repotool compare $diffopts $exclude $repo1 $repo2 $tag
+    done
+    ;;
+compare-branches)
+    exclude=
+    diffopts=-q
+    while getopts qux: opt
+    do
+	case $opt in
+	    x) exclude="$exclude -x $OPTARG" ;;
+	    u) diffopts=-u;;
+	    q) diffopts=-q;;
+	esac
+    done
+    shift $(($OPTIND - 1))
+    repo1=$1
+    repopath1=`realpath $1`
+    shift
+    repo2=$1
+    repopath2=`realpath $1`
+    shift
+    if [ -z "$repo1" -o -z "$repo2" ]
+    then
+	echo "repotool: two repositories are required for comparison."
+	exit 1
+    fi
+    here=$PWD
+    cd $repopath1; repotool branches | sort >/tmp/branches1
+    cd $repopath2; repotool branches | sort >/tmp/branches2
+    echo "----------------------------------------------------------------"
+    echo "Branches only in $repo1:"; comm -23 /tmp/branches1 /tmp/branches2
+    echo "----------------------------------------------------------------"
+    echo "Branches only in $repo2:"; comm -13 /tmp/branches1 /tmp/branches2
+    cd $here
+    for branch in `comm -12 /tmp/branches1 /tmp/branches2`
+    do
+	echo "----------------------------------------------------------------"
+	echo "${branch}:"
+	repotool compare $diffopts $exclude $repo1 $repo2 $branch
     done
     ;;
 *)
