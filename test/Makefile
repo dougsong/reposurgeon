@@ -300,13 +300,13 @@ REPOTOOL := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
 repotool-buildregress:
 	@-for file in $(REPOTOOL); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
+	    $(SHELL) $${file}.sh --rebuild $${file} >$${file}.chk || exit 1; \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
 	@-for file in $(REPOTOOL); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
+	    $(SHELL) $${file}.sh --regress $${file} || exit 1; \
 	done
 
 # end
