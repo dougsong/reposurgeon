@@ -70,7 +70,7 @@ done
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
-testrepo=${1:-test-repo}
+testrepo=`realpath ${1:-test-repo}`
 
 # Should we strip time-varying headers out of the input dump file?
 if [ $strip = T ]
@@ -97,7 +97,7 @@ then
     rm -fr $testrepo test-checkout
     svnadmin create $testrepo
     svnadmin load ${quiet} $testrepo
-    svn co file://${PWD}/$testrepo test-checkout >/dev/null
+    svn co file://$testrepo test-checkout >/dev/null
 fi
 
 # Should we edit the streamfile?
