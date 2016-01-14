@@ -1,5 +1,7 @@
 ## Test repotool export of CVS repo
 
+command -v cvs >/dev/null 2>&1 || { echo "    Skipped, cvs missing."; exit 0; }
+
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 cp -r hack1.repo/module/ /tmp/test-repo$$
@@ -9,7 +11,7 @@ case $1 in
     --regress)
         diff --text -u $2.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ ;;
+	cat /tmp/out$$ >$2.chk;;
 esac
 	      
 #end

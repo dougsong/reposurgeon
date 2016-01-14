@@ -1,4 +1,8 @@
-## Test repotool export of git repo
+## Test repotool export of hg repo
+
+command -v hg >/dev/null 2>&1 || { echo "    Skipped, hg missing."; exit 0; }
+
+hg >/dev/null 2>/dev/null || echo "    Skipped, hg missing." && exit 0
 
 trap "rm -rf /tmp/test-repo$$ /tmp/out$$" 0 12 2 15
 
@@ -9,7 +13,7 @@ case $1 in
     --regress)
         diff --text -u $2.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ ;;
+	cat /tmp/out$$ >$2.chk;;
 esac
 	      
 #end
