@@ -27,6 +27,9 @@
 # With the -e option, edit a Subversion dumpfile and rebuild it, fixing
 # the checksum headers.
 #
+# If an argument is specified after the options, it is used as the repository
+# directory name; otherwise 'test-repo' is used.
+#
 # To add complexity to a test load, do -n, then edit the test repo with
 # Subversion, then use -d. Note: you must commit to force the repo to
 # be up to date before streaming it. Also note that any embedded comments
@@ -66,6 +69,9 @@ do
 done
 shift $(($OPTIND - 1))
 
+# This lets us set the repo location 
+testrepo=${1:-test-repo}
+
 # Should we strip time-varying headers out of the input dump file?
 if [ $strip = T ]
 then
@@ -88,10 +94,10 @@ fi
 # Should we build a repo from a dump presented on standard input?
 if [ $extract = T ]
 then
-    rm -fr test-repo test-checkout
-    svnadmin create test-repo
-    svnadmin load ${quiet} test-repo
-    svn co file://${PWD}/test-repo test-checkout >/dev/null
+    rm -fr $testrepo test-checkout
+    svnadmin create $testrepo
+    svnadmin load ${quiet} $testrepo
+    svn co file://${PWD}/$testrepo test-checkout >/dev/null
 fi
 
 # Should we edit the streamfile?
@@ -104,36 +110,36 @@ then
 	exit 1
     elif $EDITOR $1
     then
-	rm -fr test-repo test-checkout
-	svnadmin create test-repo
+	rm -fr $testrepo test-checkout
+	svnadmin create $testrepo
 	sed  <$dump \
 	    -e '/Text-content-md5: /d' -e '/Text-content-sha1: /d' \
 	    -e '/Text-copy-source-md5: /d' -e '/Text-copy-source-sha1: /d' \
-	    | svnadmin load test-repo >/dev/null
-	svnadmin dump test-repo >$dump
+	    | svnadmin load $testrepo >/dev/null
+	svnadmin dump $testrepo >$dump
     fi
 fi
 
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd test-repo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo"; cd /tmp/testrepo; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo"; cd /tmp/testrepo; gitk --all --tags)
 fi
 
 # Should we stream the repo?
 if [ $stream = T ]
 then
-    reposurgeon "verbose $verbose" "read test-repo" "$streamopts" "write"
+    reposurgeon "verbose $verbose" "read $testrepo" "$streamopts" "write"
 fi
 
 # Should we undump the repo?
 if [ $undump = T ]
 then
-    svnadmin dump test-repo
+    svnadmin dump $testrepo
 fi
 
 # Should we clean up the test directory
 if [ $cleanup = T ]
 then
-    rm -fr test-repo test-checkout
+    rm -fr $testrepo test-checkout
 fi
