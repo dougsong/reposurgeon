@@ -348,7 +348,7 @@ checkout)
 	then
 	    rev="-d $rev"
 	fi
-	svn co $rev file://${PWD} $outdir
+	svn co -q $rev file://${PWD} $outdir
     elif [ -d .git ]
     then
 	git clone --quiet --shared --no-checkout . $outdir
