@@ -2,7 +2,9 @@
 
 Repository head:
      In repotool, a new 'branches' command lists branches (not tags).
-     In repotool, 'tags' on a CVS repo now lists only tags.
+     Fix repotool, 'tags' for CVS repo so it lists only tags, not branches.
+     In repotool, a new 'compare-branches' command compares all branches.
+     In repotool, a new 'compare-all' compares tip, tags, and branches.
 
 3.30: 2016-01-10
      Added "when" command for timestamp conversions.
