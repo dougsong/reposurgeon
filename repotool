@@ -150,6 +150,8 @@ tagscompare: ${project}-mirror ${project}-${target_vcs}
 	repotool compare-tags \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
 branchescompare: ${project}-mirror ${project}-${target_vcs}
 	repotool compare-branches \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
+allcompare: ${project}-mirror ${project}-${target_vcs}
+	repotool compare-all \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
 
 # General cleanup and utility
 clean:
@@ -484,6 +486,49 @@ compare-branches)
 	echo "----------------------------------------------------------------"
 	echo "${branch}:"
 	repotool compare $diffopts $exclude $repo1 $repo2 $branch
+    done
+    ;;
+compare-all)
+    exclude=
+    diffopts=-q
+    while getopts qux: opt
+    do
+	case $opt in
+	    x) exclude="$exclude -x $OPTARG" ;;
+	    u) diffopts=-u;;
+	    q) diffopts=-q;;
+	esac
+    done
+    shift $(($OPTIND - 1))
+    repo1=$1
+    repopath1=`realpath $1`
+    shift
+    repo2=$1
+    repopath2=`realpath $1`
+    shift
+    if [ -z "$repo1" -o -z "$repo2" ]
+    then
+	echo "repotool: two repositories are required for comparison."
+	exit 1
+    fi
+    echo "----------------------------------------------------------------"
+    echo "HEAD:"
+    repotool compare $diffopts $exclude $repo1 $repo2
+    here=$PWD
+    # Does not distinguish branches from tags, as that is more useful for
+    # testing converted CVS repositories.
+    (cd $repopath1; repotool tags; repotool branches) | sort >/tmp/tags1
+    (cd $repopath2; repotool tags; repotool branches) | sort >/tmp/tags2
+    echo "----------------------------------------------------------------"
+    echo "Tags/branches only in $repo1:"; comm -23 /tmp/tags1 /tmp/tags2
+    echo "----------------------------------------------------------------"
+    echo "Tags/branches only in $repo2:"; comm -13 /tmp/tags1 /tmp/tags2
+    cd $here
+    for tag in `comm -12 /tmp/tags1 /tmp/tags2`
+    do
+	echo "----------------------------------------------------------------"
+	echo "${tag}:"
+	repotool compare $diffopts $exclude $repo1 $repo2 $tag
     done
     ;;
 *)
