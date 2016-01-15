@@ -50,7 +50,7 @@ comment.</para>
 (within a module directory for CVS), dumps a copy of a CVS,
 Subversion, git, bzr, hg, or darcs repository to a flat
 history file readable by reposurgeon. The format is usually a
-git-fast-omport stream, except that Subversion repositories
+git-fast-import stream, except that Subversion repositories
 export as Subversion dump files; the point is to be a lossless
 erepresentation, or as close to one as possible.</para>
 
