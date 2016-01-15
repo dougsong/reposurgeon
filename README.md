@@ -25,6 +25,9 @@ operations such as checkouts and tag listing in a VCS-independent
 manner.  Yet another, `repomapper`, assists in automatically preparing
 contributor maps of CVS and SVN repositories.
 
+A 'patchpipe' program supports converting among version-control patch
+formats.
+
 This distribution supports a generic conversion workflow using these
 tools, and includes the DVCS Migration Guide that describes how to use it.
 

@@ -1,0 +1,41 @@
+#!/usr/bin/env python2
+#
+# patchpipe - convert betweeen VCS patch formats
+#
+# Presently only supports hg -> git.
+#
+# Input patch on stdin; conversion issued to stdout.
+
+import sys, time
+
+def rfc822(t):
+    "Format as an RFC822 timestamp."
+    return time.strftime(b"%a %d %b %Y %H:%M:%S", time.gmtime(t))
+
+state = "init"
+for line in sys.stdin:
+    if state == "init":
+        if line != "# HG changeset patch\n":
+            print >>sys.stderr, "patchpipe: unrecognized patch type\n"
+            raise SystemExit(1)
+        else:
+            state = "hg-patch-init"
+    elif state == "hg-patch-init":
+        if line.startswith("# User "):
+            sys.stdout.write("From patchpipe " + rfc822(time.time()) + "\n")
+            line = line.replace(' <', '" <')
+            sys.stdout.write('From: "' + line[7:])
+        elif line.startswith("# Date"):
+            state = "hg-expect-date"
+        elif line.startswith("#"):
+            continue
+        else:
+            sys.stdout.write("Subject: [PATCH] " + line)
+            state = "patch-body"
+    elif state == "hg-expect-date": 
+        sys.stdout.write("Date: " + line[1:].strip() + "\n")
+        state = "hg-patch-init"
+    elif state == "patch-body":
+        sys.stdout.write(line)
+
+#end
