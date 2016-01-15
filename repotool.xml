@@ -46,21 +46,18 @@ meant to be run in an empty work directory, and it is an error to do
 will need to set some variables in the Makefile; read its header
 comment.</para>
 
-<para>The 'export' action, run from within a repository directory
-(within a module directory for CVS), dumps a copy of a CVS,
-Subversion, git, bzr, hg, or darcs repository to a flat
-history file readable by reposurgeon. The format is usually a
-git-fast-import stream, except that Subversion repositories
-export as Subversion dump files; the point is to be a lossless
+<para>The 'export' action, run from within a repository directory,
+dumps a copy of a CVS, Subversion, git, bzr, hg, or darcs repository
+to a flat history file readable by reposurgeon. The format is usually
+a git-fast-import stream, except that Subversion repositories export
+as Subversion dump files; the point is to be a lossless
 erepresentation, or as close to one as possible.</para>
 
-<para>The 'tags' option, run from within a repository directory
-(within a module directory for CVS), returns a list of the
-repository's release tags.</para>
+<para>The 'tags' option, run from within a repository directory,
+returns a list of the repository's release tags.</para>
 
-<para>The 'branches' option, run from within a repository directory
-(within a module directory for CVS), returns a list of the
-repository's branch names.</para>
+<para>The 'branches' option, run from within a repository directory ,
+returns a list of the repository's branch names.</para>
 
 <para>The 'checkout' option checks out a working copy of the
 repository. It must be called from within the repository. It takes one
