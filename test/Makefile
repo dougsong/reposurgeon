@@ -266,13 +266,13 @@ svncheck:
 # corresponding *.chk files to see which tests this runs.
 REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
 repodiffer-buildregress:
-	@-for file in $(REPODIFFER); do \
+	@for file in $(REPODIFFER); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
-	@-for file in $(REPODIFFER); do \
+	@for file in $(REPODIFFER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
@@ -282,13 +282,13 @@ repodiffer-regress:
 # corresponding *.chk files to see which tests this runs.
 REPOMAPPER := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
-	@-for file in $(REPOMAPPER); do \
+	@for file in $(REPOMAPPER); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
-	@-for file in $(REPOMAPPER); do \
+	@for file in $(REPOMAPPER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
@@ -298,13 +298,13 @@ repomapper-regress:
 # corresponding *.chk files to see which tests this runs.
 REPOTOOL := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
 repotool-buildregress:
-	@-for file in $(REPOTOOL); do \
+	@for file in $(REPOTOOL); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh --rebuild $${file} || exit 1; \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
-	@-for file in $(REPOTOOL); do \
+	@for file in $(REPOTOOL); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh --regress $${file} || exit 1; \
 	done

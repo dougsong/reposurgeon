@@ -97,7 +97,7 @@ then
     rm -fr $testrepo test-checkout
     svnadmin create $testrepo
     svnadmin load ${quiet} $testrepo
-    svn co file://$testrepo test-checkout >/dev/null
+    #svn co ${quiet} file://$testrepo test-checkout >/dev/null
 fi
 
 # Should we edit the streamfile?
