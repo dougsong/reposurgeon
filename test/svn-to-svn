@@ -2,9 +2,12 @@
 #
 # svn-to-svn - Subversion dump on stdin to dump on stdout
 #
-# With the -n option, create a repo corresponding to the input file
-# and check out a working copy for editing, but do not stream the
-# result to stdout and do not delete the repo.
+# With the -n option, create a repo corresponding to the input stream;
+# do not stream the result to stdout and do not delete the repo.
+#
+# With the -c option, check out the repo to a working copy.  May
+# be combined with -n. The name of the working copy is the repo name suffixed
+# with '-checkout'.
 #
 # The -q option suppresses progress messages from svnadmin load. 
 #
@@ -37,13 +40,14 @@
 #
 PATH=$PATH:../..
 
-extract=T
+build=T
 view=F
 edit=F
 stream=F
 undump=T
 cleanup=T
 strip=F
+co=F
 verbose="0"
 quiet=""
 # Suppress legacy emission by default
@@ -56,12 +60,13 @@ ECHO=/bin/echo
 while getopts degnrstv:q opt
 do
     case $opt in
-        e) extract=F; view=F; edit=T; stream=F; undump=F; cleanup=T strip=F;;
-	n) extract=T; view=F; edit=F; stream=F; undump=F; cleanup=F strip=F;;
-        g) extract=F; view=T; edit=F; stream=F; undump=F; cleanup=F strip=F;;
-        r) extract=F; view=F; edit=F; stream=T; undump=F; cleanup=F strip=F;;
-        d) extract=F; view=F; edit=F; stream=F; undump=T; cleanup=F strip=F;;
-        s) extract=F; view=F; edit=F; stream=F; undump=F; cleanup=F strip=T;;
+        e) build=F; view=F; edit=T; stream=F; undump=F; cleanup=T strip=F co=F;;
+	c) build=F; view=F; edit=F; stream=F; undump=F; cleanup=F strip=F co=T;;
+	n) build=T; view=F; edit=F; stream=F; undump=F; cleanup=F strip=F co=F;;
+        g) build=F; view=T; edit=F; stream=F; undump=F; cleanup=F strip=F co=F;;
+        r) build=F; view=F; edit=F; stream=T; undump=F; cleanup=F strip=F co=F;;
+        d) build=F; view=F; edit=F; stream=F; undump=T; cleanup=F strip=F co=F;;
+        s) build=F; view=F; edit=F; stream=F; undump=F; cleanup=F strip=T co=F;;
 	t) streamopts="" ;;
 	q) quiet=-q ;;
 	v) verbose="$OPTARG" ;;
@@ -92,12 +97,16 @@ then
 fi
 
 # Should we build a repo from a dump presented on standard input?
-if [ $extract = T ]
+if [ $build = T ]
 then
     rm -fr $testrepo test-checkout
     svnadmin create $testrepo
     svnadmin load ${quiet} $testrepo
-    #svn co ${quiet} file://$testrepo test-checkout >/dev/null
+fi
+
+if [ $co = T ]
+then
+    svn co ${quiet} file://$testrepo ${testrepo}-checkout >/dev/null
 fi
 
 # Should we edit the streamfile?
