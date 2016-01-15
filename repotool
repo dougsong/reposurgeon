@@ -199,7 +199,9 @@ export)
        find -name \*,v | cvs-fast-export -q --reposurgeon
     elif [ -d locks ]
     then
-	    svnadmin -q dump .
+	# Subversion dump rather than the git conversion because the
+	# git conversion is lossy.
+	svnadmin -q dump .
     elif [ -d .git ]
     then
 	    git fast-export --all

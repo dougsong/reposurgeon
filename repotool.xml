@@ -49,7 +49,10 @@ comment.</para>
 <para>The 'export' action, run from within a repository directory
 (within a module directory for CVS), dumps a copy of a CVS,
 Subversion, git, bzr, hg, or darcs repository to a flat
-history file readable by reposurgeon.</para>
+history file readable by reposurgeon. The format is usually a
+git-fast-omport stream, except that Subversion repositories
+export as Subversion dump files; the point is to be a lossless
+erepresentation, or as close to one as possible.</para>
 
 <para>The 'tags' option, run from within a repository directory
 (within a module directory for CVS), returns a list of the
