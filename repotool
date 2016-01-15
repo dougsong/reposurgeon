@@ -199,7 +199,7 @@ export)
        find -name \*,v | cvs-fast-export -q --reposurgeon
     elif [ -d locks ]
     then
-	    svnadmin dump .
+	    svnadmin -q dump .
     elif [ -d .git ]
     then
 	    git fast-export --all

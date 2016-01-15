@@ -1,0 +1,17 @@
+Return code: 0
+
+Directory contents:
+.:
+branches/
+tags/
+trunk/
+
+./branches:
+
+./tags:
+
+./trunk:
+README
+
+Checksums to make sure file contents correct:
+6b367fede2aa8d872192cbe7f184b0ce  ./trunk/README
