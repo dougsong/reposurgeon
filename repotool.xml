@@ -108,8 +108,13 @@ doing an incremental fetch; just give the mirror directory
 name.</para>
 
 <para>Subversion URLs are as specified in the public
-documentation for those systems.  CVS URLs must specify a host and
+documentation for Subversion.  CVS URLs must specify a host and
 repository path, followed by a '#', followed by a module name.</para>
+</refsect1>
+<refsect1 id='environment'><title>ENVIRONMENT VARIABLES</title>
+
+<para>This program uses the $TMPDIR environment variable, defaulting
+to <filename>/tmp</filename> if it is not set.</para>
 </refsect1>
 
 <refsect1 id='requirements'><title>REQUIREMENTS</title>

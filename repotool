@@ -5,6 +5,8 @@
 operation=$1
 shift;
 
+TMPDIR=${TMPDIR:=/tmp}
+
 case $operation in
 initialize)
     project=$1
@@ -402,7 +404,7 @@ compare)
 	exit 1
     fi
     here=$PWD
-    rm -fr ${TMPDIR:=/tmp}/source $TMPDIR/target
+    rm -fr ${TMPDIR}/source $TMPDIR/target
     cd $repo1; repotool checkout $TMPDIR/source $rev
     cd $repo2; repotool checkout $TMPDIR/target $rev
     cd $here
@@ -434,10 +436,6 @@ compare-tags)
     then
 	echo "repotool: two repositories are required for comparison."
 	exit 1
-    fi
-    if [ -z "$TMPDIR" ]
-    then
-        TMPDIR=/tmp
     fi
     #echo "----------------------------------------------------------------"
     #echo "HEAD:"
@@ -480,10 +478,6 @@ compare-branches)
 	echo "repotool: two repositories are required for comparison."
 	exit 1
     fi
-    if [ -z "$TMPDIR" ]
-    then
-        TMPDIR=/tmp
-    fi
     here=$PWD
     cd $repopath1; repotool branches | sort >$TMPDIR/branches1
     cd $repopath2; repotool branches | sort >$TMPDIR/branches2
@@ -521,10 +515,6 @@ compare-all)
     then
 	echo "repotool: two repositories are required for comparison."
 	exit 1
-    fi
-    if [ -z "$TMPDIR" ]
-    then
-        TMPDIR=/tmp
     fi
     echo "----------------------------------------------------------------"
     echo "HEAD:"
