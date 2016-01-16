@@ -5,6 +5,12 @@ command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 trap "rm -rf /tmp/test-repo$$ /tmp/out$$" 0 12 2 15
 
 ./svn-to-svn -q -n /tmp/test-repo$$ <vanilla.svn
+# This test can fail spuriously due to format skew.  Kevin Caswick
+# explains:
+# > Note: Test repotool export of svn repo fails on svnadmin, version
+# > 1.6.11 as the dump is sorted differently, moving svn:log before
+# > svn:author instead of after svn:date. It works fine on svnadmin,
+# > version 1.8.10.
 (cd /tmp/test-repo$$ >/dev/null; repotool export) >/tmp/out$$
 
 case $1 in
