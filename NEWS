@@ -5,6 +5,8 @@ Repository head:
      Fix repotool, 'tags' for CVS repo so it lists only tags, not branches.
      In repotool, a new 'compare-branches' command compares all branches.
      In repotool, a new 'compare-all' compares tip, tags, and branches.
+     repotool no longer needs to run within a module directory for CVS.
+     Move from BSD-3-clause to BSD-2-clause, apply SPDX tag.
 
 3.30: 2016-01-10
      Added "when" command for timestamp conversions.
