@@ -115,7 +115,6 @@ ${project}.fi: ${project}.${source_vcs} ${project}.opts ${project}.lift ${projec
 
 # Build the first-stage stream dump from the local mirror
 ${project}.${source_vcs}: ${project}-mirror
-	repotool mirror ${project}-mirror
 	(cd ${project}-mirror/ >/dev/null; repotool export) >${project}.${source_vcs}
 
 # Build a local mirror of the remote repository

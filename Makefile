@@ -25,8 +25,10 @@ SOURCES += \
 	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
+SOURCES += Dockerfile ci/prepare.sh ci/Makefile
 
-.PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh
+.PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh \
+    docker-build docker-check docker-check-noscm
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
@@ -94,6 +96,27 @@ pylint:
 
 check:
 	cd test; $(MAKE) --quiet
+
+docker-build: $(SOURCES)
+	docker build -t reposurgeon .
+
+docker-check: docker-build
+	docker run --rm -i -e "MAKEFLAGS=$(MAKEFLAGS)" -e "MAKEOVERRIDES=$(MAKEOVERRIDES)" reposurgeon make check
+
+docker-check-only-%: docker-build
+	docker run --rm -i -e "MAKEFLAGS=$(MAKEFLAGS)" -e "MAKEOVERRIDES=$(MAKEOVERRIDES)" reposurgeon bash -c "make -C ci install-only-$(*) && make check"
+
+docker-check-no-%: docker-build
+	docker run --rm -i -e "MAKEFLAGS=$(MAKEFLAGS)" -e "MAKEOVERRIDES=$(MAKEOVERRIDES)" reposurgeon bash -c "make -C ci install-no-$(*) && make check"
+
+# Test that support for each VCS stands on its own and test without legacy
+# VCS installed
+docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
+    docker-check-only-git docker-check-only-mercurial \
+    docker-check-only-subversion docker-check-no-cvs 
+# Due to many tests depending on git, docker-check-only-mercurial is a very poor
+# test of Mercurial
+
 
 dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
 

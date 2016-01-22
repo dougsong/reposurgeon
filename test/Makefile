@@ -126,24 +126,32 @@ coalesce:
 GITLOADS = bs
 git-regress:
 	@echo "=== Testing git-extractor:"
-	@for test in $(GITLOADS); do \
-	    if (echo "  $${test}.fi" >&2; \
-	    ./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-	    then diff --text -u $${test}.fi /tmp/regress || exit 1; \
-	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
-	done
+	@if command -v git >/dev/null 2>&1 ; \
+	then \
+	    for test in $(GITLOADS); do \
+		if (echo "  $${test}.fi" >&2; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, git missing."; exit 0; \
+	fi
 	@rm -f /tmp/regress
 
 # Test the hg extractor
 HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
-	@for test in $(HGLOADS); do \
-	    if (echo "  $${test}.fi" >&2; \
-	    ./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-	    then diff --text -u $${test}.fi /tmp/regress || exit 1; \
-	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
-	done
+	@if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
+	then \
+	    for test in $(HGLOADS); do \
+		if (echo "  $${test}.fi" >&2; \
+		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, hg or git missing."; exit 0; \
+	fi
 	@rm -f /tmp/regress
 
 # Make a new repo and checkout directory to create a Subversion test load.
@@ -186,12 +194,17 @@ svnload-regress:
 		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
-		mkdir /tmp/reposurgeon$$$$ || exit 1; \
-		(cd /tmp/reposurgeon$$$$ || exit 1; \
-		    git init --quiet || exit 1; \
-		    grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet) \
-			|| exit 1; \
-		rm -fr /tmp/reposurgeon$$$$) || exit 1; \
+		if command -v git >/dev/null 2>&1 ; \
+		then \
+		    mkdir /tmp/reposurgeon$$$$ || exit 1; \
+		    (cd /tmp/reposurgeon$$$$ || exit 1; \
+			git init --quiet || exit 1; \
+			grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet) \
+			    || exit 1; \
+		    rm -fr /tmp/reposurgeon$$$$\
+		else echo "    Skipped, git missing."; \
+		fi \
+		) || exit 1; \
 	    fi \
 	done
 	@rm -f /tmp/regress
@@ -272,10 +285,14 @@ repodiffer-buildregress:
 	done
 repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
-	@for file in $(REPODIFFER); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
-	done
+	@if command -v git >/dev/null 2>&1 ; \
+	then \
+	    for file in $(REPODIFFER); do \
+		$(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+		$(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
+	    done; \
+	else echo "    Skipped, git missing."; exit 0; \
+	fi
 	@rm -f /tmp/regress
 
 # Regression-testing of repomapper; look at the *.sh and
