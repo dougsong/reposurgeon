@@ -1,6 +1,7 @@
 ## Test repotool checkout of Mercurial repo at tag
 
 command -v hg >/dev/null 2>&1 || { echo "    Skipped, hg missing."; exit 0; }
+command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
@@ -19,4 +20,3 @@ case $1 in
 esac
 	      
 #end
-
