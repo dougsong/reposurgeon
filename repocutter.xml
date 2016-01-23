@@ -13,7 +13,7 @@
 </refmeta>
 <refnamediv id='name'>
 <refname>repocutter</refname>
-<refpurpose>update and manipulate contributor maps</refpurpose>
+<refpurpose>surgical and filtering operations on Subversion dump files</refpurpose>
 </refnamediv>
 <refsynopsisdiv id='synopsis'>
 
@@ -27,8 +27,116 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 
+<para>This program does surgical and filtering operations on Subversion
+dump files.  While it is is not as flexible as
+<citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+it can perform Subversion-specific transformations that reposurgeon
+cannot, and can be useful for processing Subversion repositories into a
+form suitable for conversion.</para>
+
+<para>In all commands, the -r (or --range) option limits the selection
+of revisions over which an operation will be performed. A selection
+consists of one or more comma-separated ranges. A range may consist of
+an integer revision number or the special name HEAD for the head
+revision. Or it may be a colon-separated pair of integers, or an
+integer followed by a colon followed by HEAD.</para>
+
+<para>Normally, each subcommand produces a progress spinner on standard
+error; each turn means another revision has been filtered. The -q (or
+--quiet) option suppresses this.</para>
+
+<para>The following subcommands are available:</para>
+
+<variablelist>
+<varlistentry>
+<term>help</term>
+<listitem><para>Without arguments, list available commands. With a
+command-name argument, show detailed help for that subcommand.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>select</term>
+<listitem><para>The 'select' subcommand selects a range and permits
+only revisions in that range to pass to standard output.  A range
+beginning with 0 includes the dumpfile header.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>propset</term>
+<listitem><para>Set a property to a value. May be restricted by a
+revision selection. You may specify multiple property settings. See
+the embedded help for syntax details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>propdel</term>
+<listitem><para>Delete the named property. May be restricted by a revision
+selection. You may specify multiple properties to be deleted. See
+the embedded help for syntax details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>proprename</term>
+<listitem><para>Rename a property. May be restricted by a
+revision selection. You may specify multiple properties to be
+renamed. See the embedded help for syntax details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>log</term>
+<listitem><para>enerate a log report, same format as the output of svn
+log on a repository, to standard output.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>setlog</term>
+<listitem><para>Replace the log entries in the input dumpfile with the
+corresponding entries in a specified file, which should be in the
+format of an svn log output.  Replacements may be restricted to a
+specified range. See the embedded help for syntax
+details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>squash</term>
+<listitem><para>The 'squash' subcommand merges adjacent commits that
+have the same author and log text and were made within 5 minutes of
+each other.  This can be helpful in cleaning up after migrations from
+file-oriented revision control systems, or if a developer has been
+using a pre-2006 version of Emacs VC. See the embedded help for syntax
+details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>strip</term>
+<listitem><para>Replace content with unique generated cookies on all node paths
+matching the specified regular expressions; if no expressions are
+given, match all paths.  Useful when you need to examine a
+particularly complex node structure.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>expunge</term>
+<listitem><para>Delete all operations with Node-path headers matching
+specified Python regular expressions.  Any revision left with no Node
+records after this filtering has its Revision record removed as
+well.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>pathrename</term>
+<listitem><para>Modify Node-path headers matching a specified Python
+regular expression; replace with a given string.  The string may
+contain Pyton backreferences to parenthesized portions of the
+pattern. See the embedded help for syntax details.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>renumber</term>
+<listitem><para>Renumber all revisions, patching Node-copyfrom headers
+as required.  Any selection option is ignored. Takes no
+arguments.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>reduce</term>
+<listitem><para>Strip revisions out of a dump so the only parts left those likely to
+be relevant to a conversion problem. See the embedded help for syntax
+details and the relevance filter.</para></listitem>
+</varlistentry>
+</variablelist>
+
 <para>
 </para>
+
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>

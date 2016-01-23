@@ -140,9 +140,9 @@ particularly complex node structure.
     "expunge": """\
 expunge: usage: repocutter [-r SELECTION ] expunge PATTERN...
 
-Delete all operations with Node-path headers matching the specified
+Delete all operations with Node-path headers matching specified
 Python regular expressions.  Any revision left with no Node records
-after this filtering has its Revision record removed as well
+after this filtering has its Revision record removed as well.
 """,
     "pathrename": """\
 expunge: usage: repocutter [-r SELECTION ] pathrename FROM TO
