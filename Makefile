@@ -22,6 +22,7 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
+	svncutter svncutter.xml \
 	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
@@ -32,8 +33,8 @@ SOURCES += Dockerfile ci/prepare.sh ci/Makefile
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
-all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 \
-     reposurgeon.html repotool.html repodiffer.html repomapper.html \
+all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 svncutter.1 \
+     reposurgeon.html repotool.html repodiffer.html repomapper.html svncutter.html \
      dvcs-migration-guide.html features.html reporting-bugs.html
 
 %.1: %.xml
@@ -126,7 +127,7 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
-release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html reporting-bugs.html dvcs-migration-guide.html features.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html svncutter.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
 
 refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
