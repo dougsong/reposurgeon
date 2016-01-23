@@ -22,8 +22,8 @@ default:
 
 all: listcheck roundtrip mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
-		svndump-regress \
-		repodiffer-regress repomapper-regress repotool-regress
+		svndump-regress repodiffer-regress repomapper-regress \
+		repotool-regress repocutter-regress
 	@echo "=== No diff output is good news."
 
 .SUFFIXES: .svn .chk .fi .map
@@ -36,7 +36,8 @@ all: listcheck roundtrip mailboxing fi-regress coalesce \
 	$(REPOSURGEON) "read <$<" "legacy write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
-	svndump-buildregress repodiffer-buildregress repomapper-buildregress
+	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
+	repocutter-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -326,4 +327,19 @@ repotool-regress:
 	    $(SHELL) $${file}.sh --regress $${file} || exit 1; \
 	done
 
+# Regression-testing of repocutter; look at the *.sh and
+# corresponding *.chk files to see which tests this runs.
+REPOCUTTER := $(shell ls -1 repocutter*.sh | sed '/.sh/s///')
+repocutter-buildregress:
+	@for file in $(REPOCUTTER); do \
+	    echo "Remaking $${file}.chk"; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
+	done
+repocutter-regress:
+	@echo "=== Running repocutter tests:"
+	@for file in $(REPOCUTTER); do \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
+	done
+	@rm -f /tmp/regress
 # end

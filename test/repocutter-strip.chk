@@ -1,0 +1,179 @@
+SVN-fs-dump-format-version: 2
+ ## Standard layout. Linear. Simplest case, no tags or branches
+
+UUID: be5bedff-a577-4def-8afe-cf522686966a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-11-30T16:40:02.180831Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 177
+Content-length: 177
+
+K 7
+svn:log
+V 79
+A vanilla repository - standard layout, linear history, no tags, no branches. 
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:41:55.154754Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 114
+Content-length: 114
+
+K 7
+svn:log
+V 16
+First revision.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:43:52.297468Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 42
+Content-length: 52
+
+PROPS-END
+Revision is 2, file path is trunk/README.
+
+
+Revision-number: 3
+Prop-content-length: 115
+Content-length: 115
+
+K 7
+svn:log
+V 17
+Second revision.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:45:21.726591Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 42
+Content-length: 42
+
+Revision is 3, file path is trunk/README.
+
+
+Revision-number: 4
+Prop-content-length: 114
+Content-length: 114
+
+K 7
+svn:log
+V 16
+Third revision.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:46:05.627972Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-length: 42
+Content-length: 42
+
+Revision is 4, file path is trunk/README.
+
+
+Revision-number: 5
+Prop-content-length: 125
+Content-length: 125
+
+K 7
+svn:log
+V 27
+Adding a property setting.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-05T11:27:20.130826Z
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Prop-content-length: 26
+Content-length: 26
+
+K 3
+foo
+V 3
+bar
+PROPS-END
+
+
