@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC
+   "-//OASIS//DTD DocBook XML V4.1.2//EN"
+   "docbook/docbookx.dtd">
+<refentry id='repocutter.1'>
+<refmeta>
+<refentrytitle>repocutter</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='date'>2009-09-10</refmiscinfo>
+<refmiscinfo class='productname'>repocutter</refmiscinfo>
+<refmiscinfo class='source'>repocutter</refmiscinfo>
+<refmiscinfo class='manual'>Development Tools</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>repocutter</refname>
+<refpurpose>update and manipulate contributor maps</refpurpose>
+</refnamediv>
+<refsynopsisdiv id='synopsis'>
+
+<cmdsynopsis>
+  <command>repocutter</command>
+      <arg choice="opt">-q</arg>
+      <arg choice="opt">-r <replaceable>selection</replaceable></arg>
+      <arg choice='plain'><replaceable>subcommand</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+<para>
+</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+
+<para>Under the name <quote>snvcutter</quote>, an ancestor of this
+program traveled in the <filename>contrib/</filename> director of the
+Subversion distribution. It had functional overlap with
+<citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+because it was directly ancestral to that code. It was moved to the 
+<citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+distribution in January 1016.</para>
+
+<para>
+</para>
+</refsect1>
+
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+
+<para><citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+
+<para>Eric S. Raymond <email>esr@thyrsus.com</email>. This tool is
+distributed with reposurgeon; see the project page at <ulink
+url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon</ulink>.</para>
+</refsect1>
+</refentry>
