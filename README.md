@@ -25,7 +25,7 @@ operations such as checkouts and tag listing in a VCS-independent
 manner.  Yet another, `repomapper`, assists in automatically preparing
 contributor maps of CVS and SVN repositories.
 
-The 'svncutter' program is useful for some specialized operations om
+The 'repocutter' program is useful for some specialized operations om
 Subversion dumpfiles; it may be useful in extracting portions of
 particularly gnarly Subversion repositories for conversion witth
 reposurgeon.

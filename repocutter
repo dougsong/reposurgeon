@@ -5,8 +5,8 @@
 # under the prevailing license of their project.
 
 """
-svncutter - stream surgery on SVN dump files
-general usage: svncutter [-q] [-r SELECTION] SUBCOMMAND
+repocutter - stream surgery on SVN dump files
+general usage: repocutter [-q] [-r SELECTION] SUBCOMMAND
 
 In all commands, the -r (or --range) option limits the selection of revisions
 over which an operation will be performed. A selection consists of
@@ -19,7 +19,7 @@ Normally, each subcommand produces a progress spinner on standard
 error; each turn means another revision has been filtered. The -q (or
 --quiet) option suppresses this.
 
-Type 'svncutter help <subcommand>' for help on a specific subcommand.
+Type 'repocutter help <subcommand>' for help on a specific subcommand.
 
 Available subcommands:
    squash
@@ -53,7 +53,7 @@ oneliners = {
 
 helpdict = {
     "squash": """\
-squash: usage: svncutter [-q] [-r SELECTION] [-m mapfile] [-f] [-c] squash
+squash: usage: repocutter [-q] [-r SELECTION] [-m mapfile] [-f] [-c] squash
 
 The 'squash' subcommand merges adjacent commits that have the same
 author and log text and were made within 5 minutes of each other.
@@ -67,70 +67,70 @@ file showing how old revision numbers map into new ones.
 With the -e (or --excise) option, the specified set of revisions in
 unconditionally removed.  The tool will exit with an error if an
 excised remove is part of a clique eligible for squashing.  Note that
-svncutter does not perform any checks on whether the repository
+repocutter does not perform any checks on whether the repository
 history is afterwards valid; if you delete a node using this option,
 you won't find out you have a problem until you attempt to load the
 resulting dumpfile.
 
-svncutter attempts to fix up references to Subversion revisions in log
+repocutter attempts to fix up references to Subversion revisions in log
 entries so they will still be correct after squashing.  It considers
 anything that looks like the regular expression \\br[0-9]+\\b to be
 a comment reference (this is the same format that Subversion uses
 in log headers).
 
 Every revision in the file after the first omitted one gets the property
-'svncutter:original' set to the revision number it had before the
+'repocutter:original' set to the revision number it had before the
 squash operation.
 
-The option --f (or --flagrefs) causes svncutter to wrap its revision-reference
+The option --f (or --flagrefs) causes repocutter to wrap its revision-reference
 substitutions in curly braces ({}).  By doing this, then grepping for 'r{'
-in the output of 'svncutter log', you can check for false conversions.
+in the output of 'repocutter log', you can check for false conversions.
 
 The -c (or --compressmap) option changes the mapfile format to one
 that is easier for human browsing, though less well suited for
 interpretation by other programs.
 """,
     "select": """\
-select: usage: svncutter [-q] [-r SELECTION] select
+select: usage: repocutter [-q] [-r SELECTION] select
 
 The 'select' subcommand selects a range and permits only revisions in
 that range to pass to standard output.  A range beginning with 0
 includes the dumpfile header.
 """,
     "propdel": """\
-propdel: usage: svncutter [-r SELECTION] propdel PROPNAME...
+propdel: usage: repocutter [-r SELECTION] propdel PROPNAME...
 
 Delete the property PROPNAME. May be restricted by a revision
 selection. You may specify multiple properties to be deleted.
 
 """,
     "propset": """\
-propset: usage: svncutter [-r SELECTION] propset PROPNAME=PROPVAL...
+propset: usage: repocutter [-r SELECTION] propset PROPNAME=PROPVAL...
 
 Set the property PROPNAME to PROPVAL. May be restricted by a revision
 selection. You may specify multiple property settings.
 """,
     "proprename": """\
-proprename: usage: svncutter [-r SELECTION] proprename OLDNAME->NEWNAME...
+proprename: usage: repocutter [-r SELECTION] proprename OLDNAME->NEWNAME...
 
 Rename the property OLDNAME to NEWNAME. May be restricted by a
 revision selection. You may specify multiple properties to be renamed.
 """,
     "log": """\
-log: usage: svncutter [-r SELECTION] log
+log: usage: repocutter [-r SELECTION] log
 
 Generate a log report, same format as the output of svn log on a
 repository, to standard output.
 """,
     "setlog": """\
-setlog: usage: svncutter [-r SELECTION] --logentries=LOGFILE setlog
+setlog: usage: repocutter [-r SELECTION] --logentries=LOGFILE setlog
 
 Replace the log entries in the input dumpfile with the corresponding entries
 in the LOGFILE, which should be in the format of an svn log output.
 Replacements may be restricted to a specified range.
 """,
     "strip": """\
-strip: usage: svncutter [-r SELECTION] strip PATTERN...
+strip: usage: repocutter [-r SELECTION] strip PATTERN...
 
 Replace content with unique generated cookies on all node paths
 matching the specified regular expressions; if no expressions are
@@ -138,27 +138,27 @@ given, match all paths.  Useful when you need to examine a
 particularly complex node structure.
 """,
     "expunge": """\
-expunge: usage: svncutter [-r SELECTION ] expunge PATTERN...
+expunge: usage: repocutter [-r SELECTION ] expunge PATTERN...
 
 Delete all operations with Node-path headers matching the specified
 Python regular expressions.  Any revision left with no Node records
 after this filtering has its Revision record removed as well
 """,
     "pathrename": """\
-expunge: usage: svncutter [-r SELECTION ] pathrename FROM TO
+expunge: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
 Modify Node-path headers matching the specified Python regular
 expression FROM; replace with TO.  TO may contain Pyton
 backreferences to parenthesized portions of FROM.
 """,
     "renumber": """\
-renumber: usage: svncutter renumber
+renumber: usage: repocutter renumber
 
 Renumber all revisions, patching Node-copyfrom headers as required.
 Any selection option is ignored. Takes no arguments.
 """,
     "reduce": """\
-reduce: usage: svncutter reduce INPUT-FILE
+reduce: usage: repocutter reduce INPUT-FILE
 
 Strip revisions out of a dump so the only parts left those likely to
 be relevant to a conversion problem. A revision is interesting if it
@@ -229,7 +229,7 @@ class LineBufferedSource:
         "Read a line, require it to have a specified prefix."
         line = self.readline()
         if not line:
-            sys.stderr.write("svncutter: unexpected end of input while requiring '%s' input." % prefix + os.linesep)
+            sys.stderr.write("repocutter: unexpected end of input while requiring '%s' input." % prefix + os.linesep)
             sys.exit(1)
         assert(line.startswith(prefix))
         return line
@@ -414,7 +414,7 @@ class DumpfileSource(LineBufferedSource):
                         sys.stdout.write(emit)
                     continue
                 else:
-                    sys.stderr.write("svncutter: parse at %s doesn't look right (%s), aborting!\n" % (self.revision, repr(line)))
+                    sys.stderr.write("repocutter: parse at %s doesn't look right (%s), aborting!\n" % (self.revision, repr(line)))
                     sys.exit(1)
 
     def __del__(self):
@@ -438,7 +438,7 @@ class SubversionRange:
     def __contains__(self, rev):
         for (lower, upper) in self.intervals:
             if lower == "HEAD":
-                sys.stderr.write("svncutter: can't accept HEAD as lower bound of a range.\n")
+                sys.stderr.write("repocutter: can't accept HEAD as lower bound of a range.\n")
                 sys.exit(1)
             elif upper == "HEAD":
                 upper = sys.maxint-1
@@ -489,7 +489,7 @@ class Logfile:
                 else:
                     m = re.match("r[0-9]+", line)
                     if not m:
-                        sys.stderr.write('"%s", line %d: svncutter did not see a comment header where one was expected\n' % (readable.name, lineno))
+                        sys.stderr.write('"%s", line %d: repocutter did not see a comment header where one was expected\n' % (readable.name, lineno))
                         sys.exit(1)
                     else:
                         fields = line.split("|")
@@ -668,7 +668,7 @@ def squash(source, timefuzz,
                     elif type(a) == type([]) and len(a) == 2 and len(b) == 2:
                         print >>mapto, "%6d..%-6d <- %d..%d" % (a[0], a[1], b[0], b[1])
                         continue
-                sys.stderr.write("svncutter: Internal error on %s\n" % ((a, b),))
+                sys.stderr.write("repocutter: Internal error on %s\n" % ((a, b),))
                 sys.exit(1)
 
 def select(source, selection):
@@ -755,7 +755,7 @@ def setlog(source, logpatch, selection):
         if "svn:log" in propkeys and source.revision in logpatch:
             (author, _date, logentry) = logpatch[source.revision]
             if author != propdict.get("svn:author", "(no author)"):
-                sys.stderr.write("svncutter: author of revision %s doesn't look right, aborting!\n" % source.revision)
+                sys.stderr.write("repocutter: author of revision %s doesn't look right, aborting!\n" % source.revision)
                 sys.exit(1)
             propdict["svn:log"] = logentry
         return (propkeys, propdict)
@@ -899,7 +899,7 @@ if __name__ == '__main__':
             elif switch in ('-r', '--range'):
                 selection = SubversionRange(val)
         if len(arguments) == 0:
-            sys.stderr.write("Type 'svncutter help' for usage." + os.linesep)
+            sys.stderr.write("Type 'repocutter help' for usage." + os.linesep)
             sys.exit(1)
         baton = None
         if arguments[0] != 'help':
@@ -922,7 +922,7 @@ if __name__ == '__main__':
             log(DumpfileSource(sys.stdin, baton), selection)
         elif arguments[0] == "setlog":
             if not logpatch:
-                sys.stderr.write("svncutter: setlog requires a log entries file.\n")
+                sys.stderr.write("repocutter: setlog requires a log entries file.\n")
             setlog(DumpfileSource(sys.stdin, baton), logpatch, selection)
         elif arguments[0] == "strip":
             strip(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))

@@ -1,7 +1,7 @@
 			reposurgeon project news
 
 Repository head:
-     svncutter, a tool for preprocessing Subversion repos, is now included.
+     repocutter, a tool for preprocessing Subversion repos, is now included.
      In repotool, a new 'branches' command lists branches (not tags).
      Fix repotool, 'tags' for CVS repo so it lists only tags, not branches.
      In repotool, a new 'compare-branches' command compares all branches.

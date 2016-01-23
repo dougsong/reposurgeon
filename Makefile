@@ -22,7 +22,7 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
-	svncutter svncutter.xml \
+	repocutter repocutter.xml \
 	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
@@ -33,8 +33,8 @@ SOURCES += Dockerfile ci/prepare.sh ci/Makefile
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
-all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 svncutter.1 \
-     reposurgeon.html repotool.html repodiffer.html repomapper.html svncutter.html \
+all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1 \
+     reposurgeon.html repotool.html repodiffer.html repomapper.html repocutter.html \
      dvcs-migration-guide.html features.html reporting-bugs.html
 
 %.1: %.xml
@@ -95,7 +95,7 @@ pylint:
 	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
 	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS2) repodiffer
 	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS3) repomapper
-	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS4) svncutter
+	@pylint $(COMMON_PYLINT) --disable=$(PYLINTOPTS4) repocutter
 
 check:
 	cd test; $(MAKE) --quiet
@@ -129,7 +129,7 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 zip: $(SOURCES)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES)
 
-release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html svncutter.html reporting-bugs.html dvcs-migration-guide.html features.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html repocutter.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
 
 refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
