@@ -5,7 +5,7 @@
 # under the prevailing license of their project.
 
 """
-svncutter - stream surgery on SVN dump files 
+svncutter - stream surgery on SVN dump files
 general usage: svncutter [-q] [-r SELECTION] SUBCOMMAND
 
 In all commands, the -r (or --range) option limits the selection of revisions
@@ -231,12 +231,12 @@ class LineBufferedSource:
         if not line:
             sys.stderr.write("svncutter: unexpected end of input while requiring '%s' input." % prefix + os.linesep)
             sys.exit(1)
-        assert line.startswith(prefix)
+        assert(line.startswith(prefix))
         return line
-    def read(self, len):
+    def read(self, rlen):
         "Straight read from underlying file, no buffering."
-        assert(self.linebuffer is None)
-        text = self.file.read(len)
+        assert self.linebuffer is None
+        text = self.file.read(rlen)
         self.linenumber += text.count(os.linesep[0])
         return text
     def peek(self):
@@ -276,10 +276,10 @@ class Properties:
         st = ""
         for key in self.propkeys:
             if key in self.properties:
-                st += "K %d%s" % (len(key), os.linesep) 
-                st += "%s%s" % (key, os.linesep) 
-                st += "V %d%s" % (len(self.properties[key]), os.linesep) 
-                st += "%s%s" % (self.properties[key], os.linesep) 
+                st += "K %d%s" % (len(key), os.linesep)
+                st += "%s%s" % (key, os.linesep)
+                st += "V %d%s" % (len(self.properties[key]), os.linesep)
+                st += "%s%s" % (self.properties[key], os.linesep)
         st += "PROPS-END\n"
         return st
 
@@ -368,7 +368,7 @@ class DumpfileSource(LineBufferedSource):
                 # in its nodes!
                 if revmap and line.startswith("Node-copyfrom-rev:"):
                     oldrev = line.split()[1]
-                    line = line.replace(oldrev, `revmap[int(oldrev)]`) 
+                    line = line.replace(oldrev, repr(revmap[int(oldrev)]))
                 stash += line
     def report(self, selection, nodehook, prophook=None, passthrough=True):
         "Report a filtered portion of content."
@@ -376,7 +376,7 @@ class DumpfileSource(LineBufferedSource):
         stash = self.read_until_next("Revision-number:")
         if emit:
             sys.stdout.write(stash)
-        if not self.has_line_buffered():    
+        if not self.has_line_buffered():
             return
         while True:
             nodecount = 0
@@ -425,7 +425,7 @@ class SubversionRange:
     def __init__(self, txt):
         self.txt = txt
         self.intervals = []
-        for (i, item) in enumerate(txt.split(",")):
+        for (_, item) in enumerate(txt.split(",")):
             if ':' in item:
                 (lower, upper) = item.split(':')
             else:
@@ -463,6 +463,7 @@ class Logfile:
         author = date = None
         logentry = ""
         lineno = 0
+        rev = None
         while True:
             lineno += 1
             line = readable.readline()
@@ -492,10 +493,10 @@ class Logfile:
                         sys.exit(1)
                     else:
                         fields = line.split("|")
-                        (rev, author, date, linecount) = map(lambda x: x.strip(), fields)
+                        (rev, author, date, _linecount) = map(lambda x: x.strip(), fields)
                         rev = rev[1:]	# strip off leaing 'r'
                         state = 'in_logentry'
-                        
+
     def __contains__(self, key):
         return str(key) in self.comments
     def __getitem__(self, key):
@@ -511,7 +512,7 @@ def isotime(s):
     else:
         date = s
         msec = "0"
-    # Note: no leap-second correction! 
+    # Note: no leap-second correction!
     return calendar.timegm(time.strptime(date, "%Y-%m-%dT%H:%M:%S")) + float("0." + msec)
 
 def reference_mapper(value, mutator, flagrefs=False):
@@ -542,7 +543,7 @@ def squash(source, timefuzz,
     squash_map = {}	# Map clique bases revs to their squashed numbers
     skipcount = numbered = clique_base = 0
     outmap = []
-    def hacklog(propkeys, propdict, revision):
+    def hacklog(propkeys, propdict, _revision):
         # Hack references to revision levels in comments.
         for (key, value) in propdict.items():
             if key == "svn:log":
@@ -554,7 +555,7 @@ def squash(source, timefuzz,
         stash = source.read_until_next("Revision-number:", clique_map)
         if not omit:
             sys.stdout.write(stash)
-        if not source.has_line_buffered():    
+        if not source.has_line_buffered():
             if excise is not None and dupes and dupes[0] in excise:
                 outmap.append((None, dupes))
             elif numbered >= 1:
@@ -622,7 +623,7 @@ def squash(source, timefuzz,
             #     multiple elements, old range to new range.
             for (n, oldrevs) in outmap:
                 #print >>sys.stderr, "I see:", (n, oldrevs)
-                cliquebase = oldrevs[0]
+                #cliquebase = oldrevs[0]
                 if len(oldrevs) > 1:
                     compressed.append((n, oldrevs))
                     force_new_range = True
@@ -643,7 +644,7 @@ def squash(source, timefuzz,
                             compressed[-1] = [None, oldrevs]
                         elif type(lowerbound) == type(0):
                             compressed[-1] = [[lowerbound, n], oldrevs]
-                        else:                            
+                        else:
                             compressed[-1] = [lowerbound[:1] + [n], oldrevs]
                     force_new_range = False
                     last_n = n
@@ -664,7 +665,7 @@ def squash(source, timefuzz,
                     elif type(a) == type(0) and type(b) == type([]):
                         print >>mapto, "%6d         <- %d..%d" % (a, b[0], b[-1])
                         continue
-                    elif type(a) == type([]) and len(a)==2 and len(b)==2:
+                    elif type(a) == type([]) and len(a) == 2 and len(b) == 2:
                         print >>mapto, "%6d..%-6d <- %d..%d" % (a[0], a[1], b[0], b[1])
                         continue
                 sys.stderr.write("svncutter: Internal error on %s\n" % ((a, b),))
@@ -677,7 +678,7 @@ def select(source, selection):
         stash = source.read_until_next("Revision-number:")
         if emit:
             sys.stdout.write(stash)
-        if not source.has_line_buffered():    
+        if not source.has_line_buffered():
             return
         else:
             revision = int(source.linebuffer.split()[1])
@@ -726,14 +727,14 @@ def proprename(source, properties, selection):
         return header + properties + content
     source.report(selection, __nodehook, __revhook)
 
-def log(source, selection):
+def log(source, _selection):
     "Extract log entries."
     while True:
         source.read_until_next("Revision-number:")
-        if not source.has_line_buffered():    
+        if not source.has_line_buffered():
             return
         else:
-            (stash, props) = source.read_revision_header()
+            (_stash, props) = source.read_revision_header()
             logentry = props.get("svn:log")
             if logentry:
                 print "-" * 72
@@ -751,8 +752,8 @@ def setlog(source, logpatch, selection):
     "Mutate log entries."
     logpatch = Logfile(file(logpatch), selection)
     def loghook(propkeys, propdict):
-        if "svn:log" in propkeys and revision in logpatch:
-            (author, date, logentry) = logpatch[source.revision]
+        if "svn:log" in propkeys and source.revision in logpatch:
+            (author, _date, logentry) = logpatch[source.revision]
             if author != propdict.get("svn:author", "(no author)"):
                 sys.stderr.write("svncutter: author of revision %s doesn't look right, aborting!\n" % source.revision)
                 sys.exit(1)
@@ -804,7 +805,7 @@ def strip(source, selection, patterns):
 def doreduce(source):
     "Topologically reduce a dump, removing spans of plain file modifications."
     interesting = set([0])
-    def __reduce(header, properties, content):
+    def __reduce(header, properties, _content):
         def get_header(name):
             m = re.search(name + ": (.*)", header)
             return m and m.group(1)
