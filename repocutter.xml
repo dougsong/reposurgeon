@@ -45,6 +45,14 @@ integer followed by a colon followed by HEAD.</para>
 error; each turn means another revision has been filtered. The -q (or
 --quiet) option suppresses this.</para>
 
+<para>Generally, if you need to use this program at all, you will find
+that you need to pipe your dump file through multiple instances of it
+doing one kind of operation each.  This is not as expensive as it
+sounds; with the exception of the reduce subcommand, the working set
+of this program is bounded by the size of the largest commit metadata
+item.  It does not need to hold the entire repo metadata in
+memory.</para>
+
 <para>The following subcommands are available:</para>
 
 <variablelist>
