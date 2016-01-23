@@ -160,6 +160,49 @@ distribution in January 1016.</para>
 
 </refsect1>
 
+<refsect1 id='example'><title>EXAMPLE</title>
+
+<para>Suppose you have a Subversion repository with the following
+semi-pathological structure:</para>
+
+<literallayout>
+Directory1/ (with unrelated content)
+Directory2/ (with unrelated content)
+TheDirIWantToMigrate/
+                branches/
+                               crazy-feature/
+                                               UnrelatedApp1/
+                                               TheAppIWantToMigrate/
+                tags/
+                               v1.001/
+                                               UnrelatedApp1/
+                                               UnrelatedApp2/
+                                               TheAppIWantToMigrate/
+                trunk/
+                               UnrelatedApp1/
+                               UnrelatedApp2/
+                               TheAppIWantToMigrate/
+</literallayout>
+
+<para>You want to transform the dump file so that TheAppIWantToMigrate can be
+subject to a regular branchy lift. A way to dissect out the code of
+interest would be with the following series of filters applied:</para>
+
+<programlisting>
+repocutter expunge '^Directory1' '^Directory1'
+repocutter pathrename '^TheDirIWantToMigrate/' ''
+repocutter expunge '^branches/crazy-feature/UnrelatedApp1/
+repocutter pathrename 'branches/crazy-feature/TheAppIWantToMigrate/' ''
+repocutter expunge '^tags/v1.001/UnrelatedApp1/'
+repocutter expunge '^tags/v1.001/UnrelatedApp2/'
+repocutter pathrename '^tags/v1.001/TheAppIWantToMigrate/' 'tags/v1.001/'
+repocutter expunge '^trunk/UnrelatedApp1/'
+repocutter expunge '^trunk/UnrelatedApp2/'
+repocutter pathrename '^trunk/TheAppIWantToMigrate/' 'trunk/'
+</programlisting>
+
+</refsect1>
+
 <refsect1 id='author'><title>AUTHOR</title>
 
 <para>Eric S. Raymond <email>esr@thyrsus.com</email>. This tool is
