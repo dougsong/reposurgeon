@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.31: 2016-01-23
      repocutter, a tool for preprocessing Subversion repos, is now included.
      In repotool, a new 'branches' command lists branches (not tags).
      Fix repotool, 'tags' for CVS repo so it lists only tags, not branches.
