@@ -155,7 +155,7 @@ class Commit(object):
             elif line.startswith("committer "):
                 (self.committer, self.commitdate) = Commit.date_extract(line[10:])
             elif not line:
-                if self.comment == None:
+                if self.comment is None:
                     self.comment = ""
             else:
                 if self.comment is not None:
@@ -415,7 +415,7 @@ class Difference:
     def __init__(self, a, b):
         self.difference_types = a.difference(b)
         self.left_only = self.right_only = self.different = None
-        if 'tree' in self.difference_types and not 'tree' in ignores:
+        if 'tree' in self.difference_types and 'tree' not in ignores:
             a_files = a.manifest()
             b_files = b.manifest()
             a_fileset = set(a_files.keys())
