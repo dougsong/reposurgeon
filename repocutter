@@ -204,7 +204,7 @@ class Baton:
         return
 
     def end(self, msg=None):
-        if msg == None:
+        if msg is None:
             msg = self.endmsg
         if self.stream:
             self.stream.write(("...(%2.2f sec) %s." % (time.time() - self.time, msg)) + os.linesep)
