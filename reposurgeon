@@ -6441,7 +6441,7 @@ class Repository:
             withindices = list(enumerate(self.events))
         else:
             events = lambda: itertools.imap(self.events.__getitem__, indices)
-            withindices = itertools.izip(indices, events())
+            withindices = list(itertools.izip(indices, events()))
         if types is None: return withindices
         isinstances = itertools.imap(isinstance,
                                      events(), itertools.repeat(types))
@@ -9207,13 +9207,14 @@ redirection is supported).
                     blank.tagger = Attribution()
                     blank.email_in(message, fill=True)
                     blank.committish = [c for c in self.chosen().commits()][-1].mark
+                    self.chosen().events.append(blank)
                 else:
                     blank = Commit()
                     blank.committer = Attribution()
                     blank.email_in(message, fill=True)
                     blank.mark = ":" + str(len(self.chosen().events) + 1)
                     blank.repo = self.chosen()
-                self.chosen().events.append(blank)
+                    self.chosen().events.append(blank)
             return
         # Normal case - no --create
         for (i, message) in enumerate(update_list):
