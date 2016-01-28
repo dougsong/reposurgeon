@@ -45,7 +45,7 @@ class ContribMap:
                 obj.email += "@" + addr
     def write(self, fp, incomplete=False):
         "Write the current state of this contrib map."
-        keys = self.payload.keys()
+        keys = list(self.payload.keys())
         keys.sort()
         for name in keys:
             if incomplete and not self.payload[name].incomplete():
