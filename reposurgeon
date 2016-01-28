@@ -641,7 +641,7 @@ class Extractor(object):
     def __branch_color(self, rev, color):
         if rev.startswith("ref"):
             return
-        while not 'branch' in self.meta[rev]:
+        while 'branch' not in self.meta[rev]:
             self.meta[rev]['branch'] = color
             parents = self.get_parents(rev)
             if not parents:
