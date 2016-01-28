@@ -245,7 +245,7 @@ class Commit(object):
                     if a.matched is None or b.matched is None:
                         res.append("parents")
                         break
-                    elif not id(a.matched) == id(b) or not id(b.matched) == id(a):
+                    elif id(a.matched) != id(b) or id(b.matched) != id(a):
                         res.append("parents")
                         break
         return res

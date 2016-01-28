@@ -642,7 +642,7 @@ def squash(source, timefuzz,
                         lowerbound = compressed[-1][0]
                         if (last_n is None) and (n is None):
                             compressed[-1] = [None, oldrevs]
-                        elif type(lowerbound) == type(0):
+                        elif isinstance(lowerbound, int):
                             compressed[-1] = [[lowerbound, n], oldrevs]
                         else:
                             compressed[-1] = [lowerbound[:1] + [n], oldrevs]
@@ -662,7 +662,7 @@ def squash(source, timefuzz,
                     if isinstance(a, int) and len(b) == 1:
                         print >>mapto, "%6d         <- %d" % (a, b[0])
                         continue
-                    elif isinstance(a, int) and type(b) == type([]):
+                    elif isinstance(a, int) and isinstance(b, list):
                         print >>mapto, "%6d         <- %d..%d" % (a, b[0], b[-1])
                         continue
                     elif isinstance(a, list) and len(a) == 2 and len(b) == 2:
