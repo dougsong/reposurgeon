@@ -659,13 +659,13 @@ def squash(source, timefuzz,
                         print >>mapto, "  None         <- %d..%d" % (b[0], b[-1])
                         continue
                 else:
-                    if type(a) == type(0) and len(b) == 1:
+                    if isinstance(a, int) and len(b) == 1:
                         print >>mapto, "%6d         <- %d" % (a, b[0])
                         continue
-                    elif type(a) == type(0) and type(b) == type([]):
+                    elif isinstance(a, int) and type(b) == type([]):
                         print >>mapto, "%6d         <- %d..%d" % (a, b[0], b[-1])
                         continue
-                    elif type(a) == type([]) and len(a) == 2 and len(b) == 2:
+                    elif isinstance(a, list) and len(a) == 2 and len(b) == 2:
                         print >>mapto, "%6d..%-6d <- %d..%d" % (a[0], a[1], b[0], b[1])
                         continue
                 sys.stderr.write("repocutter: Internal error on %s\n" % ((a, b),))
