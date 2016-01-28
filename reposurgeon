@@ -6438,7 +6438,7 @@ class Repository:
         "Iterate over events matching conditions."
         if indices is None:
             events = lambda: self.events
-            withindices = enumerate(self.events)
+            withindices = list(enumerate(self.events))
         else:
             events = lambda: itertools.imap(self.events.__getitem__, indices)
             withindices = itertools.izip(indices, events())
@@ -6487,7 +6487,7 @@ def read_repo(source, options, preferred):
     if vcs:
         repo.hint(vcs.name, strong=True)
         repo.preserve_set = vcs.preserve
-        showprogress = (verbose > 0) and not "export-progress" in repo.export_style()
+        showprogress = (verbose > 0) and "export-progress" not in repo.export_style()
         context = {"basename": os.path.basename(repo.sourcedir)}
     try:
         here = os.getcwd()
@@ -7599,7 +7599,8 @@ into sections of the input stream instead).
                 selection, repr(self.line)))
             # Resolve spans
             resolved = []
-            spanning = last = 0
+            last = 0
+            spanning = False
             for elt in selection:
                 if elt == '..':
                     spanning = True
@@ -10635,7 +10636,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             return
         repo = self.chosen()
         (branchname, line) = RepoSurgeon.pop_token(line)
-        if not "/" in branchname:
+        if "/" not in branchname:
             branchname = 'refs/heads/' + branchname
         if branchname not in repo.branchset():
             raise Recoverable("no such branch as %s" % branchname)
@@ -10644,7 +10645,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new branch name must be nonempty.")
-            if not "/" in newname:
+            if "/" not in newname:
                 newname = 'refs/heads/' + newname
             if newname in repo.branchset():
                 raise Recoverable("there is already a branch named '%s'." \
@@ -10803,7 +10804,7 @@ moved, no branch fields are changed.
             return
         repo = self.chosen()
         (resetname, line) = RepoSurgeon.pop_token(line)
-        if not "/" in resetname:
+        if "/" not in resetname:
             resetname = "heads/" + resetname
         if not resetname.startswith("refs/"):
             resetname = "refs/" + resetname
