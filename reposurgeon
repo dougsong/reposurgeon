@@ -898,7 +898,7 @@ class HgExtractor(Extractor):
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
         self.hg_capture("update", "-C", "tip")
-        if not "refs/heads/master" in repo.branchset():
+        if "refs/heads/master" not in repo.branchset():
             for event in repo:
                 if isinstance(event, Commit):
                     if event.branch == "refs/heads/default":
@@ -1964,7 +1964,7 @@ class Commit(object):
         return report
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tag tip commits."
-        if not self.branch or not "/tags/" in self.branch:
+        if not self.branch or "/tags/" not in self.branch:
             return
         if self.has_children():
             successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
@@ -2456,7 +2456,7 @@ class Commit(object):
                 else:
                     parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
         parts.extend(op.dump(vcs) + "\n" for op in self.operations())
-        if not "no-nl-after-commit" in self.repo.export_style():
+        if "no-nl-after-commit" not in self.repo.export_style():
             parts.append("\n")
         return "".join(parts)
     def __str__(self):
@@ -5852,7 +5852,7 @@ class Repository:
                 if  isinstance(event, Commit):
                     if delete:
                         speak = "warning: commit %s to be deleted has " % event.mark
-                        if '/' in event.branch and not '/heads/' in event.branch:
+                        if '/' in event.branch and '/heads/' not in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
                             announce(speak + "non-delete fileops.")
@@ -6214,7 +6214,7 @@ class Repository:
                             newname = color + "-" + oldname
                         else:
                             newname = oldname + "-" + color
-                    elif not oldname in persist:
+                    elif oldname not in persist:
                         # record name as belonging to this repo
                         persist[oldname] = color
                         continue
@@ -6589,12 +6589,12 @@ class CriticalRegion:
         # Alas that we lack sigblock support
         self.handlers = [None]*(CriticalRegion.NSIG+1)
         for sig in range(1, CriticalRegion.NSIG):
-            if not sig in (signal.SIGKILL, signal.SIGSTOP):
+            if sig not in (signal.SIGKILL, signal.SIGSTOP):
                 self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
     def __exit__(self, extype_unused, value_unused, traceback_unused):
         "End critical region."
         for sig in range(1, CriticalRegion.NSIG):
-            if not sig in (signal.SIGKILL, signal.SIGSTOP):
+            if sig not in (signal.SIGKILL, signal.SIGSTOP):
                 signal.signal(sig, self.handlers[sig])
         if debug_enable(DEBUG_COMMANDS):
             complain("critical region ends.")
@@ -6615,7 +6615,7 @@ def rebuild_repo(repo, target, options, preferred):
         raise Recoverable("%s repositories are supported for read only." \
                           % preferred.name)
 
-    if not os.path.join("refs", "heads", "master") in repo.branchset():
+    if os.path.join("refs", "heads", "master") not in repo.branchset():
         complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
 
     # Create a new empty directory to do the rebuild in
@@ -7043,9 +7043,8 @@ class RepositoryList:
                     assert(fileop.sourcedelete or fileop.targetdelete)
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
-            deletia = set(deletia) # To speed up the following
             event.set_operations([op for (i, op) in enumerate(event.operations())
-                                  if i not in deletia])
+                                  if i not in set(deletia)])
             event.invalidate_pathset_cache()
             # If there are any keeper fileops, hang them them and
             # their blobs on keeps, cloning the commit() for them.
@@ -7482,7 +7481,7 @@ into sections of the input stream instead).
     def eval_visibility(self, preselection):
         "Parse a visibility spec."
         self.line = self.line.lstrip()
-        if not self.peek() == "=":
+        if self.peek() != "=":
             visibility = None
         else:
             # Available: AEGJKQSVWXY
@@ -7529,7 +7528,7 @@ into sections of the input stream instead).
         # bounds be outside of the reduced set.
         self.line = self.line.lstrip()
         polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
-        if not self.peek() in polyrange_initials:
+        if self.peek() not in polyrange_initials:
             polyrange = None
         # Avoid having an input redirect mistaken for the start of a literal.
         # This might break if a command can ever have both input and output
@@ -7626,7 +7625,7 @@ into sections of the input stream instead).
     def eval_textsearch(self, preselection):
         "Parse a text search specification."
         self.line = self.line.lstrip()
-        if not self.peek() == '/':
+        if self.peek() != '/':
             return None
         elif '/' not in self.line[1:]:
             raise Recoverable("malformed text search specifier")
@@ -9888,7 +9887,7 @@ an offset literal of +0 or -0.
         if not line:
             complain("a signed time offset argument is required.")
             return
-        elif not line[0] in ('-', '+'):
+        elif line[0] not in ('-', '+'):
             complain("time offset argument must begin with + or -.")
             return
         line = str(line)   # pacify pylint by forcing string type
@@ -10213,7 +10212,7 @@ source branch are removed.
                 target = args[1]
             repo = self.chosen()
             branches = repo.branchmap()
-            if not source in branches.iterkeys():
+            if source not in branches.iterkeys():
                 for candidate in branches.iterkeys():
                     if candidate.endswith(os.sep + source):
                         source = candidate
@@ -10221,7 +10220,7 @@ source branch are removed.
                 else:
                     complain("no branch matches source %s" % source)
                     return
-            if not target in branches.iterkeys():
+            if target not in branches.iterkeys():
                 for candidate in branches.iterkeys():
                     if candidate.endswith(os.sep + target):
                         target = candidate
