@@ -3524,15 +3524,15 @@ class StreamParser:
                     copynodes.append(node)
                     if debug_enable(DEBUG_EXTRACT):
                         announce("copynode at %s" % node)
-                if node.action == SD_ADD and node.kind == SD_DIR and not node.path+os.sep in self.branches and not nobranch:
+                if node.action == SD_ADD and node.kind == SD_DIR and node.path+os.sep not in self.branches and not nobranch:
                     for trial in global_options['svn_branchify']:
                         if '*' not in trial and trial == node.path:
                             self.branches[node.path+os.sep] = None
                         elif trial.endswith(os.sep + '*') \
                                  and os.path.dirname(trial) == os.path.dirname(node.path) \
-                                 and not node.path + os.sep + '*' in global_options['svn_branchify']:
+                                 and node.path + os.sep + '*' not in global_options['svn_branchify']:
                             self.branches[node.path+os.sep] = None
-                        elif trial == '*' and not node.path + os.sep + '*' in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
+                        elif trial == '*' and node.path + os.sep + '*' not in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
                         announce("%s recognized as a branch" % node.path+os.sep)
@@ -3707,7 +3707,7 @@ class StreamParser:
                             del node.props["svn:ignore"]
                         else:
                             node.props["svn:ignore"] = new_ignore
-                    if not "--ignore-properties" in options:
+                    if "--ignore-properties" not in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.iteritems() \
                                         if ((prop not in StreamParser.IgnoreProperties) and not (prop == "svn:mergeinfo" and node.kind == SD_DIR)))
@@ -4345,12 +4345,12 @@ class StreamParser:
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.itervalues())))
             for (child, parent) in self.branchlink.itervalues():
-                if not parent.repo is self.repo:
+                if parent.repo is not self.repo:
                     # The parent has been deleted since, don't add the link;
                     # it can only happen if parent was the now tagified root.
                     continue
                 if not child.has_parents() \
-                        and not child.branch in self.branchcopies:
+                        and child.branch not in self.branchcopies:
                     # The branch wasn't created by copying another branch and
                     # is instead populated by fileops. Prepend a deleteall to
                     # ensure that it starts with a clean tree instead of
