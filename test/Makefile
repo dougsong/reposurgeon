@@ -6,10 +6,10 @@
 # Use absolute path so tests that change working directory still use 
 # scripts from parent directory
 PATH := $(realpath ..):$(realpath .):${PATH}
-REPOSURGEON = reposurgeon 
+REPOSURGEON := reposurgeon 
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
-ECHO=/bin/echo
+ECHO := /bin/echo
 
 # Without this, under CentOS Python may emit invisible ANSI strings
 # that confuse diff

@@ -2727,7 +2727,7 @@ class RepoStreamer:
                 commit.comment = self.extractor.get_comment(revision)
                 if debug_enable(DEBUG_EXTRACT):
                     msg = commit.comment
-                    if msg == None:
+                    if msg is None:
                         msg = ""
                     announce("r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
@@ -4257,7 +4257,7 @@ class StreamParser:
             announce("at post-parsing time:")
             for commit in self.repo.commits():
                 msg = commit.comment
-                if msg == None:
+                if msg is None:
                     msg = ""
                 announce("r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
@@ -6828,7 +6828,7 @@ class RepositoryList:
             for event in self.repo.commits():
                 if event.color:
                     for neighbor in itertools.chain(event.parents(), event.children()):
-                        if neighbor.color == None:
+                        if neighbor.color is None:
                             do_color(neighbor, event.color)
                             keepgoing = True
                             break
@@ -7458,9 +7458,9 @@ into sections of the input stream instead).
                 term = self.eval_polyrange(preselection)
                 if term is None:
                     term = self.eval_textsearch(preselection)
-                    if term == None:
+                    if term is None:
                         term = self.eval_pathset(preselection)
-                        if term == None:
+                        if term is None:
                             term = self.eval_funcall(preselection)
         return term
     def has_reference(self, event):
@@ -8465,7 +8465,7 @@ in the currently-selected repo. Supports > redirection.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        elif self.selection == None:
+        elif self.selection is None:
             self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
             parse.stdout.write("%d\n" % len(self.selection))
