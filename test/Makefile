@@ -4,8 +4,9 @@
 # a different implementation can be plugged in to the tests.
 
 # Use absolute path so tests that change working directory still use 
-# scripts from parent directory
-PATH := ${PWD}/..):${PWD}:${PATH}
+# scripts from parent directory.  Note that using $PWD seems to fail
+# here under Gitlab's CI environment.
+PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON := reposurgeon 
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
