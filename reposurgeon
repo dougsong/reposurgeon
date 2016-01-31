@@ -3136,7 +3136,6 @@ class StreamParser:
                             # Parsing of the revision header is done
                             node = None # pacify pylint
                             nodes = []
-                            in_header = False
                             plen = tlen = -1
                             # Node list parsing begins
                             while True:
@@ -3147,7 +3146,7 @@ class StreamParser:
                                 if not line:
                                     break
                                 elif not line.strip():
-                                    if not in_header:
+                                    if node is None:
                                         continue
                                     else:
                                         if plen > -1:
@@ -3192,29 +3191,29 @@ class StreamParser:
                                                 and node.blob is None
                                                 and node.from_rev is None):
                                             nodes.append(node)
-                                        in_header = False
+                                        node = None
                                 elif line.startswith("Revision-number: "):
                                     self.pushback(line)
                                     break
                                 # Node processing begins
                                 elif line.startswith("Node-path: "):
                                     # Normal case
-                                    if not in_header:
-                                        in_header = True
+                                    if node is None:
                                         node = StreamParser.NodeAction()
                                     node.path = StreamParser.sd_body(line)
                                     plen = tlen = -1
                                 elif line.startswith("Node-kind: "):
                                     # svndumpfilter sometimes emits output
                                     # with the node kind first
-                                    if not in_header:
-                                        in_header = True
+                                    if node is None:
                                         node = StreamParser.NodeAction()
                                     node.kind = StreamParser.sd_body(line)
                                     node.kind = StreamParser.NodeAction.PathTypeValues.index(node.kind)
                                     if node.kind is None:
                                         self.error("unknown kind %s"%node.kind)
                                 elif line.startswith("Node-action: "):
+                                    if node is None:
+                                        node = StreamParser.NodeAction()
                                     node.action = StreamParser.sd_body(line)
                                     node.action = StreamParser.NodeAction.ActionValues.index(node.action)
 
@@ -3222,10 +3221,16 @@ class StreamParser:
                                         self.error("unknown action %s" \
                                                    % node.action)
                                 elif line.startswith("Node-copyfrom-rev: "):
+                                    if node is None:
+                                        node = StreamParser.NodeAction()
                                     node.from_rev = StreamParser.sd_body(line)
                                 elif line.startswith("Node-copyfrom-path: "):
+                                    if node is None:
+                                        node = StreamParser.NodeAction()
                                     node.from_path = StreamParser.sd_body(line)
                                 elif line.startswith("Text-copy-source-md5: "):
+                                    if node is None:
+                                        node = StreamParser.NodeAction()
                                     node.from_hash = StreamParser.sd_body(line)
                                 elif line.startswith("Text-content-md5: "):
                                     node.content_hash = StreamParser.sd_body(line)
