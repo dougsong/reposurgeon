@@ -6916,6 +6916,9 @@ class RepositoryList:
         return True
     def unite(self, factors, options):
         "Unite multiple repos into a union repo."
+        for x in factors:
+            if not list(x.commits()):
+                raise Recoverable("empty factor %s" % x.name)
         factors.sort(key=operator.methodcaller("earliest"))
         roots = [x.earliest_commit() for x in factors]
         union = Repository("+".join(r.name for r in factors))
