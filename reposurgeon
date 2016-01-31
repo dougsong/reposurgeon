@@ -514,7 +514,7 @@ core
         notes="Requires cvs-fast-export."),
     VCS(name="rcs",
         subdirectory="RCS",
-        exporter="find . -name '*,v' -print | cvs-fast-export -k --reposurgeon",
+        exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
         styleflags={"export-progress"},
         properties=False,
         initializer=None,
