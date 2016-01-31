@@ -156,25 +156,6 @@ hg-regress:
 	fi
 	@rm -f /tmp/regress
 
-# Make a new repo and checkout directory to create a Subversion test load.
-# Reminder - a branch copy looks like this:
-# svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/foo
-# or, within test-checkout, svn copy ^/trunk ^/branches/foo
-svn-flat: clean
-	svnadmin create test-repo
-	svn co file://${PWD}/test-repo test-checkout
-svn-branchy: svn-flat
-	@cd test-checkout || exit 1; set -x; \
-		svn mkdir trunk || exit 1; \
-		svn mkdir tags || exit 1; \
-		svn mkdir branches || exit 1; \
-		echo "Directory layout." | svn commit -F - || exit 1; \
-		echo "This is a test Subversion repository" >trunk/README; \
-		svn add trunk/README || exit 1; \
-		echo "Initial README content." | svn commit -F - || exit 1
-svn-dump:
-	@svnadmin dump test-repo 
-
 # Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
 svnload-buildregress:
@@ -343,4 +324,26 @@ repocutter-regress:
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
 	@rm -f /tmp/regress
+
+# Test productions end here.
+
+# Make a new repo and checkout directory to create a Subversion test load.
+# Reminder - a branch copy looks like this:
+# svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/foo
+# or, within test-checkout, svn copy ^/trunk ^/branches/foo
+svn-flat: clean
+	svnadmin create test-repo
+	svn co file://${PWD}/test-repo test-checkout
+svn-branchy: svn-flat
+	@cd test-checkout || exit 1; set -x; \
+		svn mkdir trunk || exit 1; \
+		svn mkdir tags || exit 1; \
+		svn mkdir branches || exit 1; \
+		echo "Directory layout." | svn commit -F - || exit 1; \
+		echo "This is a test Subversion repository" >trunk/README; \
+		svn add trunk/README || exit 1; \
+		echo "Initial README content." | svn commit -F - || exit 1
+svn-dump:
+	@svnadmin dump test-repo 
+
 # end
