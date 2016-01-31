@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.32: 2016-01-31
      Handle Subversion dumps as produced by svndumpfilter with Node-kind first.
 
 3.31: 2016-01-23
