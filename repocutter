@@ -231,7 +231,10 @@ class LineBufferedSource:
         if not line:
             sys.stderr.write("repocutter: unexpected end of input while requiring '%s' input." % prefix + os.linesep)
             sys.exit(1)
-        assert(line.startswith(prefix))
+        if isinstance(prefix, str):
+            assert(line.startswith(prefix))
+        else:
+            assert(prefix.match(line))
         return line
     def read(self, rlen):
         "Straight read from underlying file, no buffering."
@@ -285,6 +288,7 @@ class Properties:
 
 class DumpfileSource(LineBufferedSource):
     "This class knows about dumpfile format."
+    NodeLeader = re.compile("Node-")
     def __init__(self, infile, baton=None):
         LineBufferedSource.__init__(self, infile)
         self.baton = baton
@@ -313,7 +317,7 @@ class DumpfileSource(LineBufferedSource):
     def read_node(self, property_hook=None):
         "Read a node header and body."
         #print "READ NODE BEGINS"
-        header = self.require("Node-path:")
+        header = self.require(DumpfileSource.NodeLeader)
         while True:
             line = self.readline()
             #print "I see header line", repr(line)
