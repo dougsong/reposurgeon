@@ -27,15 +27,15 @@ SOURCES += \
 	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
-SOURCES += Dockerfile ci/prepare.sh ci/Makefile
+SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 
 .PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
-all: reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1 \
-     reposurgeon.html repotool.html repodiffer.html repomapper.html repocutter.html \
+MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
+all:  $(MANPAGES) $(MANPAGES:.1=.html) \
      dvcs-migration-guide.html features.html reporting-bugs.html
 
 %.1: %.xml
@@ -57,6 +57,10 @@ cy%.o: cy%.c
 cy%: cy%.o
 	${CC} ${CFLAGS} ${LDFLAGS} $^ $(pylib) -o $@
 
+#
+# Installation
+#
+
 install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
@@ -76,14 +80,12 @@ clean:
 	rm -f typescript test/typescript *.pyc
 	rm -f cyreposurgeon.c cyreposurgeon.o cyreposurgeon
 
-reposurgeon-$(VERS).tar.xz: $(SOURCES)
-	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
-	@(cd ..; ln -s reposurgeon reposurgeon-$(VERS))
-	(cd ..; tar -cJf reposurgeon/reposurgeon-$(VERS).tar.xz `cat reposurgeon/MANIFEST`)
-	@(cd ..; rm reposurgeon-$(VERS))
-
 version:
 	@echo $(VERS)
+
+#
+# Code validation
+#
 
 COMMON_PYLINT = --rcfile=/dev/null --reports=n \
 	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
@@ -100,6 +102,10 @@ pylint:
 
 check:
 	cd test; $(MAKE) --quiet
+
+#
+# Continuous integration.  More specifics are in the ci/ directory
+#
 
 docker-build: $(SOURCES)
 	docker build -t reposurgeon .
@@ -121,6 +127,15 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 # Due to many tests depending on git, docker-check-only-mercurial is a very poor
 # test of Mercurial
 
+#
+# Release shipping.
+#
+
+reposurgeon-$(VERS).tar.xz: $(SOURCES)
+	@ls $(SOURCES) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
+	@(cd ..; ln -s reposurgeon reposurgeon-$(VERS))
+	(cd ..; tar -cJf reposurgeon/reposurgeon-$(VERS).tar.xz `cat reposurgeon/MANIFEST`)
+	@(cd ..; rm reposurgeon-$(VERS))
 
 dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
 
