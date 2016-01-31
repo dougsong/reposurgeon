@@ -3198,11 +3198,18 @@ class StreamParser:
                                     break
                                 # Node processing begins
                                 elif line.startswith("Node-path: "):
-                                    node = StreamParser.NodeAction()
+                                    # Normal case
+                                    if not in_header:
+                                        in_header = True
+                                        node = StreamParser.NodeAction()
                                     node.path = StreamParser.sd_body(line)
                                     plen = tlen = -1
-                                    in_header = True
                                 elif line.startswith("Node-kind: "):
+                                    # svndumpfilter sometimes emits output
+                                    # with the node kind first
+                                    if not in_header:
+                                        in_header = True
+                                        node = StreamParser.NodeAction()
                                     node.kind = StreamParser.sd_body(line)
                                     node.kind = StreamParser.NodeAction.PathTypeValues.index(node.kind)
                                     if node.kind is None:

@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     Handle Subversion dumps as produced by svndumpfilter with Node-kind first.
+
 3.31: 2016-01-23
      repocutter, a tool for preprocessing Subversion repos, is now included.
      In repotool, a new 'branches' command lists branches (not tags).

@@ -1,0 +1,65 @@
+SVN-fs-dump-format-version: 2
+ ## Node-kind first, as sometimes produced by svndumpfilter
+
+UUID: 5a8661ba-08f9-4943-b091-09391931849b
+
+Revision-number: 0
+Prop-content-length: 227
+Content-length: 227
+
+K 8
+svn:date
+V 27
+2010-10-28T11:43:36.703012Z
+K 17
+svn:sync-from-url
+V 36
+https://svn.cssrd.local/Applications
+K 18
+svn:sync-from-uuid
+V 36
+5a8661ba-08f9-4943-b091-09391931849b
+K 24
+svn:sync-last-merged-rev
+V 5
+34310
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 117
+Content-length: 117
+
+K 8
+svn:date
+V 27
+2010-10-28T11:45:57.761945Z
+K 7
+svn:log
+V 14
+Initial Import
+K 10
+svn:author
+V 8
+afranzen
+PROPS-END
+
+Node-kind: dir
+Node-path: assemblies
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+K 8
+svn:date
+V 27
+2010-10-28T11:46:57.761945Z
+K 7
+svn:log
+V 18
+Directory creation
+K 10
+svn:author
+V 8
+afranzen
+PROPS-END
+

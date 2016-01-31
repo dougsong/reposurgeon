@@ -5,7 +5,7 @@
 
 # Use absolute path so tests that change working directory still use 
 # scripts from parent directory
-PATH := $(realpath ..):$(realpath .):${PATH}
+PATH := ${PWD}/..):${PWD}:${PATH}
 REPOSURGEON := reposurgeon 
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
