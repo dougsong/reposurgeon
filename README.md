@@ -52,6 +52,6 @@ with `reposurgeon` and report bugs.
 The main `reposurgeon` website along with the documentation in HTML files
 lives at [www.catb.org/esr/reposurgeon/](http://www.catb.org/esr/reposurgeon/).
 
-The files Dockerfile, .dockerignore, requirements.txt, and .gitlab-ci.yml
+The files Dockerfile, .dockerignore, .gitlab-ci.yml, and the contents of ci/
 are not distributed; they are configuration for test builds on GitLab's
 CI machinery.

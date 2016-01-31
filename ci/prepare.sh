@@ -24,7 +24,7 @@ git clone https://gitlab.com/esr/cvs-fast-export.git && \
 
 cd $REPOSURGEON_DIR
 
-pip install -r requirements.txt
+pip install -r ci/requirements.txt
 
 echo
 echo ============= Dependency install complete ============= 
