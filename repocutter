@@ -341,7 +341,7 @@ class DumpfileSource(LineBufferedSource):
                 #print "I see contents line", repr(line)
                 if not line:
                     break
-                if line.startswith(("Node-path:", "Revision-number")):
+                if line.startswith(("Node-", "Revision-number")):
                     self.push(line)
                     break
                 content_list.append(line)
@@ -776,8 +776,10 @@ def strip(source, selection, patterns):
 
         # first check against the pattern
         ok = True
-        if header.startswith("Node-path: "):
-            filepath = header[11:header.index("\n")]
+        offs = header.find("Node-path: ")
+        if offs > -1:
+            offs += 11
+            filepath = header[offs:header[offs:].index("\n")]
             for pattern in patterns:
                 if re.search(pattern, filepath):
                     #sys.stderr.write("strip skipping: %s\n" % filepath)
@@ -827,24 +829,29 @@ def doreduce(source):
 def expunge(source, selection, patterns):
     "Strip out ops defined by a revision selection and a path regexp."
     def __expunge(header, properties, content):
-        if header.startswith("Node-path: "):
-            filepath = header[11:header.index("\n")]
+        matched = False
+        offs = header.find("Node-path: ")
+        if offs > -1:
+            offs += 11
+            filepath = header[offs:header[offs:].index("\n")]
             for pattern in patterns:
                 if re.search(pattern, filepath):
                     #sys.stderr.write("expunge skipping: " + header[11:header.index("\n")] +"\n")
-                    return ""
-        else:
+                    matched = True
+                    break
+        if not matched:
             return header + properties + content
     source.report(selection, __expunge)
 
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
     def __pathrename(header, properties, content):
-        if header.startswith("Node-path: "):
-            oldpath = header[11:header.index("\n")]
+        offs = header.find("Node-path: ")
+        if offs > -1:
             #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
-            newpath = re.sub(patterns[0], patterns[1].pattern, oldpath)
-            header = "Node-path: " + newpath + header[header.index("\n"):]
+            header = re.sub(patterns[0].pattern,
+                            patterns[1].pattern,
+                            header)
         return header + properties + content
     source.report(selection, __pathrename)
 
