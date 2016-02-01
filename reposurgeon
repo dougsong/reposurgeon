@@ -10322,7 +10322,7 @@ in the ancestry of the commit, this command throws an error.  With the
                 if not target_re:
                     raise Recoverable("no target specified in rename")
                 actions = []
-                for _,commit in repo.iterevents(types=Commit):
+                for _,commit in self.selected(Commit):
                     drop = []
                     for fileop in commit.operations():
                         for attr in ("path", "source", "target"):
