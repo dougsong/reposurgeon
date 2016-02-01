@@ -7199,7 +7199,7 @@ into sections of the input stream instead).
                 self.infile = m.group(0)[1:]
                 if self.infile and self.infile != '-':
                     try:
-                        self.stdin = open(self.infile, "r")
+                        self.stdin = open(self.infile, "rb")
                         self.closem.append(self.stdin)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
@@ -8913,7 +8913,7 @@ For a list of supported types, invoke the 'prefer' command.
                             infilter = file_filters[vcs][0]
                             srcname = parse.stdin.name
                             parse.stdin.close()
-                            parse.stdin = os.popen(infilter % srcname, "r")
+                            parse.stdin = os.popen(infilter % srcname, "rb")
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
