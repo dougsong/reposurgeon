@@ -848,6 +848,7 @@ def pathrename(source, selection, patterns):
     def __pathrename(header, properties, content):
         offs = header.find("Node-path: ")
         if offs > -1:
+            offs += 11
             endoffs = offs + header[offs:].index("\n")
             before = header[:offs]
             pathline = header[offs:endoffs]
