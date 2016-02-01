@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+3.33: 2016-02-01
+     More work on header-order independence for both reposurgeon and repocutter.
+
 3.32: 2016-01-31
      Handle Subversion dumps as produced by svndumpfilter with Node-kind first.
 
