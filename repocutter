@@ -848,10 +848,15 @@ def pathrename(source, selection, patterns):
     def __pathrename(header, properties, content):
         offs = header.find("Node-path: ")
         if offs > -1:
+            endoffs = offs + header[offs:].index("\n")
+            before = header[:offs]
+            pathline = header[offs:endoffs]
+            after = header[endoffs:]
             #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
-            header = re.sub(patterns[0].pattern,
+            pathline = re.sub(patterns[0].pattern,
                             patterns[1].pattern,
-                            header)
+                            pathline)
+            header = before + pathline + after
         return header + properties + content
     source.report(selection, __pathrename)
 
