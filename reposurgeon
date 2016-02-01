@@ -7180,7 +7180,8 @@ into sections of the input stream instead).
     unclean = re.compile("[^\n]*\n[^\n]")
     class LineParse:
         "Parse a command line implementing shell-like syntax."
-        def __init__(self, line, capabilities=None):
+        def __init__(self, interpreter, line, capabilities=None):
+            self.interpreter = interpreter
             self.line = line
             self.capabilities = capabilities or []
             self.stdin = sys.stdin
@@ -7216,6 +7217,7 @@ into sections of the input stream instead).
                     if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable("not a plain file")
                     try:
+                        RepoSurgeon.write_notify(self.interpreter, self.outfile)
                         if m.group(0).count('>') > 1:
                             mode = "ab"
                         else:
@@ -7250,6 +7252,13 @@ into sections of the input stream instead).
         def tokens(self):
             "Return the argument token list after the parse for redirects."
             return self.line.split()
+    def write_notify(self, filename):
+        "Unstreamify any repo about to be written."
+        for repo in self.repolist:
+            if repo.name == filename or repo.name + "." in filename:
+                for event in repo.events:
+                    if isinstance(event, Blob):
+                        event.materialize()
     def __init__(self):
         cmd.Cmd.__init__(self)
         RepositoryList.__init__(self)
@@ -7915,7 +7924,7 @@ into sections of the input stream instead).
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
@@ -8297,7 +8306,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             branches = list(self.chosen().branchset())
             branches.sort()
             for branch in branches:
@@ -8385,7 +8394,7 @@ file in the blob.  Supports > redirection.
         # we can maintain columnation.
         if self.selection is None:
             self.selection = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             for i, event in self.selected():
                 if isinstance(event, Blob):
                     parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
@@ -8446,7 +8455,7 @@ currently chosen repository. Supports > redirection.
 """)
     def do_stats(self, line):
         "Report information on repositories."
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             if not parse.line:
                 if not self.chosen():
                     complain("no repo has been chosen.")
@@ -8482,7 +8491,7 @@ in the currently-selected repo. Supports > redirection.
             return
         elif self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             parse.stdout.write("%d\n" % len(self.selection))
 
     def help_list(self):
@@ -8551,7 +8560,7 @@ unwieldy. Supports > redirection.
         if self.selection is None:
             self.selection = self.chosen().all()
         sizes = {}
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             for _, event in self.selected():
                 if isinstance(event, Commit):
                     if event.branch not in sizes:
@@ -8595,7 +8604,7 @@ Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
             shortset = set()
             deletealls = set()
@@ -8903,7 +8912,7 @@ For a list of supported types, invoke the 'prefer' command.
         "Read in a repository for surgery."
         if self.selection is not None:
             raise Recoverable("read does not take a selection set")
-        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             if parse.redirected:
                 repo = Repository()
                 for option in parse.options:
@@ -8960,7 +8969,7 @@ For a list of supported types, invoke the 'prefer' command.
             self.selection = self.chosen().all()
         if line:
             line = os.path.expanduser(line)
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
             if parse.redirected or not parse.line:
@@ -8993,7 +9002,7 @@ before each event dump.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             elif self.selection is None:
@@ -9073,7 +9082,7 @@ for graphviz. Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             parse.stdout.write("digraph {\n")
             for _, event in self.selected():
                 if isinstance(event, Commit):
@@ -9118,7 +9127,7 @@ its contents are backed up to a save directory.
             return
         if self.selection is not None:
             raise Recoverable("rebuild does not take a selection set")
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
 
     #
@@ -9185,7 +9194,7 @@ redirection is supported).
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(line, capabilities=["stdin","stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
             while True:
                 msg = RepoSurgeonEmail.readmsg(parse.stdin)
@@ -9561,7 +9570,7 @@ the new text is appended.
             return
         if self.selection is None:
             raise Recoverable("no selection")
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             fields = shlex.split(parse.line)
             if not fields:
                 raise Recoverable("missing append line")
@@ -9588,7 +9597,7 @@ removal of fileops associated with commits requires this.
             return
         if self.selection is None:
             self.selection = []
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             self.chosen().squash(self.selection, parse.options)
     def help_delete(self):
         print("""
@@ -9608,7 +9617,7 @@ squash with the --delete flag.
             return
         if self.selection is None:
             self.selection = []
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
 
     def help_coalesce(self):
@@ -9640,7 +9649,7 @@ With  the --debug option, show messages about mismatches.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             timefuzz = 90
             changelog = "--changelog" in parse.options
             if parse.line:
@@ -9796,7 +9805,7 @@ used with the add command to patch data into a repository.
         blob = Blob(self.chosen())
         blob.set_mark(":1")
         self.chosen().addEvent(blob, where=0)
-        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             blob.set_content(parse.stdin.read())
 
     def help_remove(self):
@@ -10143,7 +10152,7 @@ branch being grafted on.
         "Unite repos together."
         self.unchoose()
         factors = []
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             for name in parse.line.split():
                 repo = self.repo_by_name(name)
                 if repo is None:
@@ -10183,7 +10192,7 @@ of the grafted repository.
             return
         if not self.repolist:
             raise Recoverable("no repositories are loaded.")
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             if parse.line in self.reponames():
                 graft_repo = self.repo_by_name(parse.line)
             else:
@@ -10306,7 +10315,7 @@ in the ancestry of the commit, this command throws an error.  With the
             self.selection = repo.all()
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             if verb == "rename":
                 force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
@@ -10354,7 +10363,7 @@ first directory component from every path.
         if self.selection is None:
             self.selection = self.chosen().all()
         if not line.startswith(("sub", "sup")):
-            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
                     allpaths.update(event.paths())
@@ -10391,7 +10400,7 @@ This command supports > redirection.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             filter_func = None
             line = parse.line.strip()
             if line:
@@ -10456,7 +10465,7 @@ merge link is moved to the tagified commit's parent.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = repo.all()
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             if parse.line:
                 raise Recoverable("too many arguments for tagify.")
             before = len([c for c in repo.commits()])
@@ -10587,7 +10596,7 @@ Policy:
         if repo is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(line) as parse:
+        with RepoSurgeon.LineParse(self, line) as parse:
             use_order = '--use-order' in parse.options
             line = parse.line
         try:
@@ -11015,14 +11024,14 @@ part to the right of an equals sign will need editing.
             self.selection = self.chosen().all()
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
                     raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
                 self.chosen().write_authormap(self.selection, parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
                 if parse.tokens():
                     raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
                 self.chosen().read_authormap(self.selection, parse.stdin)
@@ -11044,14 +11053,14 @@ output or a >-redirected filename.
             return
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
                 self.chosen().write_legacymap(parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+            with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().read_legacymap(parse.stdin)
@@ -11117,7 +11126,7 @@ map when the repo is written or rebuilt.
                 if line.startswith("edit"):
                     self.edit(self.selection, line[4:].strip())
                 else:
-                    with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+                    with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                         for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
@@ -11173,7 +11182,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir2 = set(bounds[1].manifest())
         allpaths = list(dir1 | dir2)
         allpaths.sort()
-        with RepoSurgeon.LineParse(line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -11428,7 +11437,7 @@ defined are accessible to later 'eval' calls.
 """)
     def do_exec(self, line):
         "Execute custom python code."
-        with RepoSurgeon.LineParse(line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             try:
                 # The additional args are required to make the function
                 # visible to a later eval.
