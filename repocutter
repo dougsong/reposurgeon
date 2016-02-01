@@ -855,8 +855,8 @@ def pathrename(source, selection, patterns):
             after = header[endoffs:]
             #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
             pathline = re.sub(patterns[0].pattern,
-                            patterns[1].pattern,
-                            pathline)
+                              patterns[1].pattern,
+                              pathline)
             header = before + pathline + after
         return header + properties + content
     source.report(selection, __pathrename)
