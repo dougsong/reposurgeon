@@ -406,7 +406,7 @@ class DumpfileSource(LineBufferedSource):
                         if passthrough:
                             sys.stdout.write(stash)
                     break
-                elif line.startswith("Node-path:"):
+                elif line.startswith("Node-"):
                     nodecount += 1
                     self.push(line)
                     (header, properties, content) = self.read_node(prophook)
@@ -414,7 +414,7 @@ class DumpfileSource(LineBufferedSource):
                     if emit and stash:
                         emit = stash + emit
                         stash = ""
-                    if passthrough:
+                    if passthrough and isinstance(emit, str):
                         sys.stdout.write(emit)
                     continue
                 else:
