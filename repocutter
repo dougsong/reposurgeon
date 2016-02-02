@@ -836,7 +836,7 @@ def expunge(source, selection, patterns):
             filepath = header[offs:header[offs:].index("\n")]
             for pattern in patterns:
                 if re.search(pattern, filepath):
-                    #sys.stderr.write("expunge skipping: " + header[11:header.index("\n")] +"\n")
+                    #sys.stderr.write("expunge skipping: " + filepath] +"\n")
                     matched = True
                     break
         if not matched:
