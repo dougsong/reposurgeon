@@ -293,6 +293,7 @@ class DumpfileSource(LineBufferedSource):
         LineBufferedSource.__init__(self, infile)
         self.baton = baton
         self.revision = None
+        self.emitted_revisions = set()
     @staticmethod
     def set_length(header, line, val):
         return re.sub("(?<=" + header + "-length: )[0-9]+", str(val), line)
@@ -320,10 +321,14 @@ class DumpfileSource(LineBufferedSource):
         header = self.require(DumpfileSource.NodeLeader)
         while True:
             line = self.readline()
-            #print "I see header line", repr(line)
+            #sys.stderr.write("I see header line %s\n" % repr(line))
             if not line:
                 sys.stderr.write('unexpected EOF in node header' + os.linesep)
                 sys.exit(1)
+            m = re.search(r"Node-copyfrom-rev: ([1-9][0-9]*)", line)
+            if m and int(m.group(1)) not in self.emitted_revisions:
+                self.require("Node-copyfrom-path")
+                continue
             header += line
             if line == '\n':
                 break
@@ -374,6 +379,11 @@ class DumpfileSource(LineBufferedSource):
                     oldrev = line.split()[1]
                     line = line.replace(oldrev, repr(revmap[int(oldrev)]))
                 stash += line
+    def __say(self, text):
+        m = re.search(r"Revision-number: \([0-9]\)", text)
+        if m:
+            self.emitted_revisions.add(int(m.group(1)))
+        sys.stdout.write(text)
     def report(self, selection, nodehook, prophook=None, passthrough=True):
         "Report a filtered portion of content."
         emit = passthrough and 0 in selection
@@ -398,13 +408,13 @@ class DumpfileSource(LineBufferedSource):
                     return
                 elif line == '\n':
                     if passthrough:
-                        sys.stdout.write(line)
+                        self.__say(line)
                     continue
                 elif line.startswith("Revision-number:"):
                     self.push(line)
                     if stash and nodecount == 0:
                         if passthrough:
-                            sys.stdout.write(stash)
+                            self.__say(stash)
                     break
                 elif line.startswith("Node-"):
                     nodecount += 1
@@ -415,7 +425,7 @@ class DumpfileSource(LineBufferedSource):
                         emit = stash + emit
                         stash = ""
                     if passthrough and isinstance(emit, str):
-                        sys.stdout.write(emit)
+                        self.__say(emit)
                     continue
                 else:
                     sys.stderr.write("repocutter: parse at %s doesn't look right (%s), aborting!\n" % (self.revision, repr(line)))
@@ -833,10 +843,10 @@ def expunge(source, selection, patterns):
         offs = header.find("Node-path: ")
         if offs > -1:
             offs += 11
-            filepath = header[offs:header[offs:].index("\n")]
+            filepath = header[offs:offs+header[offs:].index("\n")]
             for pattern in patterns:
                 if re.search(pattern, filepath):
-                    #sys.stderr.write("expunge skipping: " + filepath] +"\n")
+                    #sys.stderr.write("expunge skipping: " + filepath +"\n")
                     matched = True
                     break
         if not matched:

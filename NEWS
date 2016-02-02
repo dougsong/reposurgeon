@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     Make repocutter DTRT when copyfrom roots are removed by expunge,
+
 3.33: 2016-02-01
      More work on header-order independence for both reposurgeon and repocutter.
 
