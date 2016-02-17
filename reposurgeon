@@ -12,7 +12,7 @@ from __future__ import print_function #unicode_literals
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
-import functools, filecmp, datetime, difflib, commands
+import functools, filecmp, datetime, difflib
 import email.message, email.parser
 import heapq
 
@@ -959,8 +959,8 @@ global_options = {}
 def whoami():
     "Ask various programs that keep track of who you are who you are."
     # Git version-control system
-    (nameerr, nameout) = commands.getstatusoutput("git config user.name")
-    (emailerr, emailout) = commands.getstatusoutput("git config user.email")
+    (nameerr, nameout) = subprocess.getstatusoutput("git config user.name")
+    (emailerr, emailout) = subprocess.getstatusoutput("git config user.email")
     if nameerr == 0 and nameout and emailerr == 0 and emailout:
         return (nameout, emailout)
     # Various random configs
