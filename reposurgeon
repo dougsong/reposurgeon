@@ -628,7 +628,7 @@ class Extractor(object):
     def color_branches(self, baton):
         """Color branches in the order the tips occur.  Emulate the
         git-export order."""
-        for refname, refobj in sorted(self.refs.iteritems(),
+        for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
             self.__branch_color(refobj, refname)
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
@@ -673,7 +673,7 @@ class Extractor(object):
         return self.tags
     def iter_resets(self):
         "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in self.refs.iteritems() if "/tags/" not in item[0])
+        return (item for item in self.refs.items() if "/tags/" not in item[0])
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return a manifest."
         assert filemap is not None # pacify pylint
@@ -1366,7 +1366,7 @@ class Attribution(object):
         msg[hdr + "-Date"] = self.date.rfc822()
     def remap(self, authors):
         "Remap the attribution name."
-        for (local, (name, mail, timezone)) in authors.iteritems():
+        for (local, (name, mail, timezone)) in authors.items():
             if self.email.lower().startswith(local + "@") or self.email.lower() == local or (not self.email and self.name.lower() == local):
                 self.name = name
                 self.email = mail
@@ -1985,7 +1985,7 @@ class Commit(object):
         self.committer.email_out(modifiers, msg, "Committer")
         if self.legacy_id:
             msg["Legacy-ID"] = self.legacy_id
-        for (name, value) in self.properties.iteritems():
+        for (name, value) in self.properties.items():
             hdr = "-".join(s.capitalize() for s in name.split("-"))
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
@@ -2347,7 +2347,7 @@ class Commit(object):
         try:
             if not os.path.exists(directory):
                 os.mkdir(directory)
-            for (path, (_, mark, inline)) in self.manifest().iteritems():
+            for (path, (_, mark, inline)) in self.manifest().items():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -2449,7 +2449,7 @@ class Commit(object):
                 nugget = ancestor.callout()
             parts.append("merge %s\n" % nugget)
         if vcs and vcs.properties:
-            for (name, value) in self.properties.iteritems():
+            for (name, value) in self.properties.items():
                 if value in (True, False):
                     if value:
                         parts.append("property %s\n" % name)
@@ -2624,15 +2624,15 @@ class PathMap(object):
         "Return the number of files in the set."
         return sum(len(v) if isinstance(v, PathMap) else 1
                 for _, v in self._elts_items())
-    def iteritems(self):
+    def items(self):
         for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
-                for path, v in value.iteritems():
+                for path, v in value.items():
                     yield (os.path.join(name, path), v)
             elif value is not None:
                 yield (name, value)
     def __iter__(self):
-        return itertools.imap(operator.itemgetter(0), self.iteritems())
+        return itertools.imap(operator.itemgetter(0), self.items())
     def __str__(self):
         return '<PathMap: {}>'.format(' '.join(self))
     # Return the current value associated with the component in the store
@@ -2651,7 +2651,7 @@ class PathMap(object):
     # Iterate through (component, current values) pairs
     def _elts_items(self):
         snapid = self.snapid
-        for component, snaplist in self.store.iteritems():
+        for component, snaplist in self.store.items():
             if component is self._self_value: continue
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
@@ -2755,7 +2755,7 @@ class RepoStreamer:
                                 if debug_enable(DEBUG_EXTRACT):
                                     announce("r%s: update for %s" % (revision, path))
                                 # Iterating through dict items (with
-                                # iteritems() or itemsview() for
+                                # items() or itemsview() for
                                 # instance) while mutating the
                                 # underlying dict is not supported by
                                 # Python. The following loop thus uses
@@ -3530,7 +3530,7 @@ class StreamParser:
             announce("Pass 1")
         nobranch = '--nobranch' in options
         copynodes = []
-        for (revision, record) in self.revisions.iteritems():
+        for (revision, record) in self.revisions.items():
             for node in record.nodes:
                 if node.from_path is not None:
                     copynodes.append(node)
@@ -3558,7 +3558,7 @@ class StreamParser:
             announce("Pass 2")
         filemaps = {}
         filemap = PathMap()
-        for (revision, record) in self.revisions.iteritems():
+        for (revision, record) in self.revisions.items():
             for node in record.nodes:
                 # Mutate the filemap according to copies
                 if node.from_rev:
@@ -3651,7 +3651,7 @@ class StreamParser:
                          if branch and path.startswith(branch)),
                         None)
         previous = None
-        for (revision, record) in self.revisions.iteritems():
+        for (revision, record) in self.revisions.items():
             if debug_enable(DEBUG_EXTRACT):
                 announce("Revision %s:" % revision)
             for node in record.nodes:
@@ -3721,7 +3721,7 @@ class StreamParser:
                             node.props["svn:ignore"] = new_ignore
                     if "--ignore-properties" not in options:
                         prop_items = ((prop, val) \
-                                        for (prop,val) in node.props.iteritems() \
+                                        for (prop,val) in node.props.items() \
                                         if ((prop not in StreamParser.IgnoreProperties) and not (prop == "svn:mergeinfo" and node.kind == SD_DIR)))
                         try:
                             first = next(prop_items)
@@ -3822,7 +3822,7 @@ class StreamParser:
                         # get deleted during a future directory deletion.
                         l = len(node.from_path)
                         for sourcegi, value in list((gi,v) for (gi,v) in
-                                    self.active_gitignores.iteritems()
+                                    self.active_gitignores.items()
                                     if gi.startswith(node.from_path)):
                             destgi = node.path + sourcegi[l:]
                             self.active_gitignores[destgi] = value
@@ -3837,7 +3837,7 @@ class StreamParser:
                             if '--user-ignores' not in options:
                                 for gipath, ignore in list(
                                             (gi,v) for (gi,v) in
-                                            self.active_gitignores.iteritems()
+                                            self.active_gitignores.items()
                                             if gi.startswith(node.path)):
                                     blob = Blob(self.repo)
                                     blob.set_content(ignore)
@@ -4113,7 +4113,7 @@ class StreamParser:
             # containing only branch deletes from other cliques.
             deleteall_ops = []
             other_ops = []
-            for (branch, ops) in cliques.iteritems():
+            for (branch, ops) in cliques.items():
                 if len(ops) == 1 and ops[0].op == "deleteall":
                     deleteall_ops.append((branch, ops))
                 else:
@@ -4389,7 +4389,7 @@ class StreamParser:
             # Add links due to svn:mergeinfo properties
             mergeinfo = PathMap()
             mergeinfos = {}
-            for (revision, record) in self.revisions.iteritems():
+            for (revision, record) in self.revisions.items():
                 for node in record.nodes:
                     if node.kind != SD_DIR: continue
                     # Mutate the mergeinfo according to copies
@@ -4691,7 +4691,7 @@ class SubversionDumper:
     @staticmethod
     def svnprops(pdict):
         return "".join("K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
-                        for key, val in sorted(pdict.iteritems()) if val)
+                        for key, val in sorted(pdict.items()) if val)
     @staticmethod
     def dump_revprops(fp, revision, date, author=None, log=None, parents=None):
         "Emit a Revision-number record describing unversioned properties."
@@ -5310,7 +5310,7 @@ class Repository:
                     contributors[author.name] = author.who()
             elif isinstance(event, Tag):
                 contributors[event.tagger.name] = event.tagger.who()
-        for (name, cid) in contributors.iteritems():
+        for (name, cid) in contributors.items():
             fp.write("%s = %s\n" % (name, cid))
     def read_legacymap(self, fp):
         "Read a legacy-references dump and initialize the repo's legacy map."
@@ -5348,7 +5348,7 @@ class Repository:
     def write_legacymap(self, fp):
         "Dump legacy references."
         for cookie, commit in sorted(
-                self.legacy_map.iteritems(),
+                self.legacy_map.items(),
                 key=lambda f: (f[1].committer.date.timestamp, f[0])):
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
@@ -6010,7 +6010,7 @@ class Repository:
                 cliques = event.cliques()
                 if ("--coalesce" not in policy and not delete) \
                         or debug_enable(DEBUG_DELETE):
-                    for (path, oplist) in cliques.iteritems():
+                    for (path, oplist) in cliques.items():
                         if len(oplist) > 1:
                             complain("commit %s has multiple Ms for %s"
                                     % (event.mark, path))
@@ -6161,7 +6161,7 @@ class Repository:
             self.declare_sequence_mutation()
             self.assignments = {
                 name:[old_index_to_new[i] for i in selection]
-                for name, selection in self.assignments.iteritems()}
+                for name, selection in self.assignments.items()}
 
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
@@ -6570,7 +6570,7 @@ def read_repo(source, options, preferred):
                         for commit in repo.commits():
                             action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
                         # Pass 4: use it to set commit properties
-                        for ((path, rev), value) in pathrev_to_hash.iteritems():
+                        for ((path, rev), value) in pathrev_to_hash.items():
                             if value in hash_to_action:
                                 (ctime, cperson) = hash_to_action[value]
                                 action_to_mark[(ctime, cperson)].legacy_id = "CVS:%s:%s" % (path, rev)
@@ -10422,11 +10422,11 @@ This command supports > redirection.
                 if filter_func is None:
                     parse.stdout.write("\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
-                            in event.manifest().iteritems()))
+                            in event.manifest().items()))
                 else:
                     parse.stdout.write("\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
-                            in event.manifest().iteritems()
+                            in event.manifest().items()
                             if filter_func(path)))
                 parse.stdout.write("\n")
 
@@ -10628,7 +10628,7 @@ Policy:
             f = FileOp(repo)
             f.construct("deleteall")
             newops = [f]
-            for (path, (mode, mark, inline)) in child.manifest().iteritems():
+            for (path, (mode, mark, inline)) in child.manifest().items():
                 f = FileOp(repo)
                 f.construct("M", mode, mark, path)
                 if mark == "inline":
