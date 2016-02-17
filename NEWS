@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.34: 2016-02-16
      Make repocutter DTRT when copyfrom roots are removed by expunge.
 
 3.33: 2016-02-01
