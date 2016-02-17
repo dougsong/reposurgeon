@@ -71,27 +71,23 @@ in either direction.</para>
 
 <para>CVS is supported for read only, not write.  For CVS,
 <command>reposurgeon</command> must be run from within a repository
-directory.</para>
-
-<!--
-<para>In order to deal with version-control systems that do not have
-fast-export equivalents, <command>reposurgeon</command> can also host
-extractor code that reads repositories directly.  For each
-version-control system supported through an extractor,
-<command>reposurgeon</command> uses a small amount of knowledge about
-the system's command-line tools to (in effect) replay repository
-history into an input stream internally. Repositories under systems
-supported through extractors can be read by
-<command>reposurgeon</command>, but not modified by it.  In
-particular, <command>reposurgeon</command> can be used to move a
+directory.</para> <para>In order to deal with version-control systems
+that do not have fast-export equivalents,
+<command>reposurgeon</command> can also host extractor code that reads
+repositories directly.  For each version-control system supported
+through an extractor, <command>reposurgeon</command> uses a small
+amount of knowledge about the system's command-line tools to (in
+effect) replay repository history into an input stream
+internally. Repositories under systems supported through extractors
+can be read by <command>reposurgeon</command>, but not modified by it.
+In particular, <command>reposurgeon</command> can be used to move a
 repository history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.</para>
 
-A test extractor exists for git, but is normally disabled in favor of
-the regular exporter. A Subversion extractor existed in an unreleased
-version of <command>reposurgeon</command>, but due to extremely poor
-performance it was discarded in favor of parsing dumpfiles.
--->
+<para>Mercurial repository reading is implemented with an extractor
+class; writing is handled with the stock "hg fastimport" command.  A
+test extractor exists for git, but is normally disabled in favor of
+the regular exporter.</para>
 
 <para>For guidance on the pragmatics of repository conversion, see the
 <ulink url="http://www.catb.org/esr/dvcs-migration-guide.html">DVCS
