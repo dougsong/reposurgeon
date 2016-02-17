@@ -1893,8 +1893,8 @@ class Commit(object):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
     def set_branch(self, branch):
-        "Set the repo's branch field, optimizing for fast comparisons."
-        self.branch = intern(branch)
+        "Set the repo's branch field."
+        self.branch = branch
     def operations(self):
         "Fileops associated with this commit; hides how this is represented."
         return self.fileops
@@ -11441,7 +11441,7 @@ defined are accessible to later 'eval' calls.
             try:
                 # The additional args are required to make the function
                 # visible to a later eval.
-                execfile(parse.stdin.name, locals(), globals())
+                exec(compile(open(parse.stdin.name).read(), parse.stdin.name, 'exec'), locals(), globals())
             except SyntaxError as e:
                 raise Recoverable("extension function - %s\n%s" % (e, e.text))
             except IOError:
