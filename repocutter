@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Hacked together by ESR, October 2009. New BSD license applies.
 # The Subversion project is explicitly granted permission to redistribute
 # under the prevailing license of their project.
-
+#
 """
 repocutter - stream surgery on SVN dump files
 general usage: repocutter [-q] [-r SELECTION] SUBCOMMAND
@@ -35,6 +35,9 @@ Available subcommands:
    renumber
    reduce
 """
+
+# This code runs under both Python 2 and Python 3: preserve this property!
+from __future__ import print_function
 
 oneliners = {
     "squash":     "Squashing revisions",
@@ -317,7 +320,7 @@ class DumpfileSource(LineBufferedSource):
         return (stash, props.properties)
     def read_node(self, property_hook=None):
         "Read a node header and body."
-        #print "READ NODE BEGINS"
+        #print("READ NODE BEGINS")
         header = self.require(DumpfileSource.NodeLeader)
         while True:
             line = self.readline()
@@ -343,7 +346,7 @@ class DumpfileSource(LineBufferedSource):
         if "Text-content-length" in header:
             while True:
                 line = self.readline()
-                #print "I see contents line", repr(line)
+                #print("I see contents line", repr(line))
                 if not line:
                     break
                 if line.startswith(("Node-", "Revision-number")):
@@ -352,7 +355,7 @@ class DumpfileSource(LineBufferedSource):
                 content_list.append(line)
         content = "".join(content_list)
         del content_list
-        #print "READ NODE ENDS"
+        #print("READ NODE ENDS")
         if property_hook:
             header = DumpfileSource.set_length("Prop-content", header,
                                                len(properties))
@@ -455,7 +458,7 @@ class SubversionRange:
                 sys.stderr.write("repocutter: can't accept HEAD as lower bound of a range.\n")
                 sys.exit(1)
             elif upper == "HEAD":
-                upper = sys.maxint-1
+                upper = 9223372036854775807	# Python 2 maxint
             if rev >= lower and rev <= upper:
                 return True
         return False
@@ -667,20 +670,20 @@ def squash(source, timefuzz,
             for (a, b) in compressed:
                 if a is None:
                     if len(b) == 1:
-                        print >>mapto, "  None         <- %d" % b[0]
+                        mapto.write("  None         <- %d\n" % b[0])
                         continue
                     else:
-                        print >>mapto, "  None         <- %d..%d" % (b[0], b[-1])
+                        mapto.write("  None         <- %d..%d\n" % (b[0], b[-1]))
                         continue
                 else:
                     if isinstance(a, int) and len(b) == 1:
-                        print >>mapto, "%6d         <- %d" % (a, b[0])
+                        mapto.write("%6d         <- %d\n" % (a, b[0]))
                         continue
                     elif isinstance(a, int) and isinstance(b, list):
-                        print >>mapto, "%6d         <- %d..%d" % (a, b[0], b[-1])
+                        mapto.write("%6d         <- %d..%d\n" % (a, b[0], b[-1]))
                         continue
                     elif isinstance(a, list) and len(a) == 2 and len(b) == 2:
-                        print >>mapto, "%6d..%-6d <- %d..%d" % (a[0], a[1], b[0], b[1])
+                        mapto.write("%6d..%-6d <- %d..%d\n" % (a[0], a[1], b[0], b[1]))
                         continue
                 sys.stderr.write("repocutter: Internal error on %s\n" % ((a, b),))
                 sys.exit(1)
@@ -751,15 +754,15 @@ def log(source, _selection):
             (_stash, props) = source.read_revision_header()
             logentry = props.get("svn:log")
             if logentry:
-                print "-" * 72
+                print("-" * 72)
                 author = props.get("svn:author", "(no author)")
                 date = props["svn:date"].split(".")[0]
                 date = time.strptime(date, "%Y-%m-%dT%H:%M:%S")
                 date = time.strftime("%Y-%m-%d %H:%M:%S +0000 (%a, %d %b %Y)", date)
-                print "r%s | %s | %s | %d lines" % (source.revision,
+                print("r%s | %s | %s | %d lines" % (source.revision,
                                                     author,
                                                     date,
-                                                    logentry.count(os.linesep))
+                                                    logentry.count(os.linesep)))
                 sys.stdout.write("\n" + logentry + "\n")
 
 def setlog(source, logpatch, selection):

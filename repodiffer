@@ -339,13 +339,14 @@ class Repository:
         # Get a list of metadata and tree signatures for this repo
         with directory_context(self.directory):
             log = capture_or_die("git log --all --reverse --date-order --format=raw")
+            log = log.decode('ascii')
             stanzas = ["commit " + chunk for chunk in log.split("\ncommit ")]
             stanzas[0] = stanzas[0][7:]
             self.signature = [Commit(self, stanza) for stanza in stanzas]
             if verbose >= DEBUG_LOWLEVEL:
-                print "Commits in %s" % self.path
+                print("Commits in %s" % self.path)
                 for commit in self.signature:
-                    print commit.commit
+                    print(commit.commit)
             self.mark_to_sha1 = {}
             self.sha1_to_mark = {}
             try:
@@ -365,7 +366,7 @@ class Repository:
             # Get information about tags
             self.tags = {}
             for tagname in capture_or_die("git tag -l").split():
-                tagdata = capture_or_die("git show --format=raw " + tagname)
+                tagdata = capture_or_die("git show --format=raw %s" % tagname)
                 if tagdata.startswith("commit"):
                     refers_to = tagdata.split("\n")[0].split()[1]
                     self.tags[tagname] = Tag(self, tagname, refers_to)
@@ -698,7 +699,7 @@ if __name__ == '__main__':
             sys.exit(diff_single(single, alpha, beta, legacies))
         else:
             sys.exit(diff_all(alpha, beta, legacies))
-    except Fatal, err:
+    except Fatal as err:
         sys.stderr.write(err.msg + "\n")
         del alpha
         del beta

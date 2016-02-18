@@ -1,9 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # SPDX-License-Identifier: BSD-2-Clause
-
 """
 repomapper - update and manipulate contributor maps
 """
+
+# This code runs under both Python 2 and Python 3: preserve this property!
+from __future__ import print_function
 
 import sys, re, getopt
 
