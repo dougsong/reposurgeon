@@ -155,7 +155,7 @@ Subversion distribution. It had functional overlap with
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 because it was directly ancestral to that code. It was moved to the 
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-distribution in January 1016.</para>
+distribution in January 2016.</para>
 
 <para>
 </para>
@@ -197,7 +197,7 @@ subject to a regular branchy lift. A way to dissect out the code of
 interest would be with the following series of filters applied:</para>
 
 <programlisting>
-repocutter expunge '^Directory1' '^Directory1'
+repocutter expunge '^Directory1' '^Directory2'
 repocutter pathrename '^TheDirIWantToMigrate/' ''
 repocutter expunge '^branches/crazy-feature/UnrelatedApp1/
 repocutter pathrename 'branches/crazy-feature/TheAppIWantToMigrate/' ''
