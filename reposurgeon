@@ -9249,11 +9249,13 @@ redirection is supported).
                 except ValueError:
                     complain("event number garbled in update %d" % (i+1,))
                     errors += 1
-                if eventnum < 0 or eventnum >= len(self.chosen()):
-                    complain("event number %d out of range in update %d" \
-                                      % (eventnum, i+1))
-                    errors += 1
-                event = self.chosen()[eventnum]
+                else:
+                    if eventnum < 0 or eventnum >= len(self.chosen()):
+                        complain("event number %d out of range in update %d" \
+                                        % (eventnum, i+1))
+                        errors += 1
+                    else:
+                        event = self.chosen()[eventnum]
             elif "Legacy-ID" in message:
                 try:
                     event = legacy_map[message["Legacy-ID"]]
