@@ -21,7 +21,7 @@ default:
 	@$(REPOSURGEON) "runtests"
 	@make -e --quiet all
 
-all: listcheck roundtrip mailboxing fi-regress coalesce \
+all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
 		svndump-regress repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress
@@ -62,6 +62,9 @@ roundtrip:
 		|| exit 1; \
 	    rm -f /tmp/rs$$$$ || exit 1; \
 	done
+
+# Test that all stream files round-trip properly with compression
+roundtrip-compress:
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
