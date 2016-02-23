@@ -8641,25 +8641,25 @@ Supports > redirection.
 
             if not parse.options or "--deletealls" in parse.options \
                    or "-d" in parse.options:
-                for item in deletealls:
+                for item in sorted(deletealls):
                     parse.stdout.write("mid-branch delete: %s\n" % item)
             if not parse.options or "--connected" in parse.options \
                    or "-c" in parse.options:
-                for item in disconnected:
+                for item in sorted(disconnected):
                     parse.stdout.write("disconnected commit: %s\n" % item)
             if not parse.options or "--roots" in parse.options \
                    or "-r" in parse.options:
                 if len(roots) > 1:
-                    parse.stdout.write("multiple root commits: %s\n" % roots)
+                    parse.stdout.write("multiple root commits: %s\n" % sorted(roots))
             if not parse.options or "--names" in parse.options \
                    or "-n" in parse.options:
-                for item in shortset:
+                for item in sorted(shortset):
                     parse.stdout.write("unknown shortname: %s\n" % item)
-                for item in emptyaddr:
+                for item in sorted(emptyaddr):
                     parse.stdout.write("empty address: %s\n" % item)
-                for item in emptyname:
+                for item in sorted(emptyname):
                     parse.stdout.write("empty name: %s\n" % item)
-                for item in badaddress:
+                for item in sorted(badaddress):
                     parse.stdout.write("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
                    or "-u" in parse.options:

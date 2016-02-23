@@ -7,7 +7,7 @@ reposurgeon: mid-branch deleteall on refs/tags/proj-1.0 at <3>.
 lint
 mid-branch delete: on refs/tags/proj-1.0 at commit@:4=<3>
 unknown shortname: fraggle
+email address missing @: commit@:3=<1>
 email address missing @: commit@:4=<3>
 email address missing @: commit@:5=<4>
-email address missing @: commit@:3=<1>
 reposurgeon: All commit times in this repository are unique.
