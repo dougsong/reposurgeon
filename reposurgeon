@@ -10483,6 +10483,7 @@ merge link is moved to the tagified commit's parent.
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
+
 """ )
     def do_merge(self, _line):
         if self.chosen() is None:
@@ -10507,6 +10508,7 @@ single commit, and removes all its parents except for the first. It is
 equivalent to reparent {first parent},{commit} rebase, where {commit} is the
 selection set given to unmerge and {first parent} is a set resolving to that
 commit's first parent, but doesn't need you to find the first parent yourself.
+
 """ )
     def do_unmerge(self, _line):
         if self.chosen() is None:
@@ -11458,7 +11460,7 @@ Note that '_selection' will be a list of integers, not objects.
     def do_eval(self, line):
         "Call a function from custom python code."
         if self.selection is None:
-            print("no selection")
+            sys.stdout.write("no selection\n")
         else:
             _selection = self.selection
             _repository = self.chosen()
