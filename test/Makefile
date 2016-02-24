@@ -19,7 +19,11 @@ TERM := dumb
 default:
 	@(cd ..; make -e --quiet pylint)
 	@$(REPOSURGEON) "runtests"
+	@setpython python2
 	@make -e --quiet all
+	@setpython python3
+	@make -e --quiet all
+	@setpython
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
