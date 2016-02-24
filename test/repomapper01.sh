@@ -1,4 +1,4 @@
-## Test default mode of repomapper
+## Test default mode of ${REPOMAPPER:-repomapper}
 
 trap "rm -f /tmp/contrib$$" 0 12 2 15
 
@@ -8,6 +8,6 @@ foonly = foonly <foonly>
 EOF
 
 # Only the foonly line should be emitted
-repomapper -i /tmp/contrib$$
+${REPOMAPPER:-repomapper} -i /tmp/contrib$$
 
 #end

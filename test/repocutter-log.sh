@@ -1,2 +1,2 @@
 ## Test log subcommand
-repocutter -q log <vanilla.svn
+${REPOCUTTER:-repocutter} -q log <vanilla.svn

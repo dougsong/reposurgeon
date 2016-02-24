@@ -1,3 +1,3 @@
 ## Test path expunge with copyfrom excision
-repocutter -q expunge '^b' <expunge-copyfrom.svn
+${REPOCUTTER:-repocutter} -q expunge '^b' <expunge-copyfrom.svn
 

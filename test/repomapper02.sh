@@ -1,4 +1,4 @@
-## Test host suffixing in repomapper
+## Test host suffixing in ${REPOMAPPER:-repomapper}
 
 trap "rm -f /tmp/contrib$$" 0 12 2 15
 
@@ -8,6 +8,6 @@ foonly = foonly <foonly>
 EOF
 
 # Only the foonly line should be modified
-repomapper -h frobnitz.net /tmp/contrib$$
+${REPOMAPPER:-repomapper} -h frobnitz.net /tmp/contrib$$
 
 #end

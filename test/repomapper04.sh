@@ -1,4 +1,4 @@
-## Test update (-u) mode of repomapper
+## Test update (-u) mode of ${REPOMAPPER:-repomapper}
 
 trap "rm -f /tmp/contrib$$ /tmp/update$$" 0 12 2 15
 
@@ -12,6 +12,6 @@ foonly = Fred Foonly <fred@foonly.net>
 EOF
 
 # Only the foonly line should be merged.
-repomapper -u /tmp/update$$ /tmp/contrib$$
+${REPOMAPPER:-repomapper} -u /tmp/update$$ /tmp/contrib$$
 
 #end

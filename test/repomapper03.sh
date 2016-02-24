@@ -1,4 +1,4 @@
-## Test password-processing -p mode of repomapper
+## Test password-processing -p mode of ${REPOMAPPER:-repomapper}
 
 trap "rm -f /tmp/contrib$$ /tmp/passwd$$" 0 12 2 15
 
@@ -13,6 +13,6 @@ EOF
 
 
 # Only the foonly line should be modified
-repomapper -p /tmp/passwd$$ /tmp/contrib$$ 2>&1
+${REPOMAPPER:-repomapper} -p /tmp/passwd$$ /tmp/contrib$$ 2>&1
 
 #end

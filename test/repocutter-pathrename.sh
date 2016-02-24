@@ -1,3 +1,3 @@
 ## Test path rename
-repocutter -q pathrename README WIBBLE <vanilla.svn
+${REPOCUTTER:-repocutter} -q pathrename README WIBBLE <vanilla.svn
 

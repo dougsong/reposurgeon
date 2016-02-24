@@ -1,2 +1,2 @@
 ## A commit is inserted
-repodiffer --quiet sample4.fi sample1.fi
+${REPODIFFER:-repodiffer} --quiet sample4.fi sample1.fi
