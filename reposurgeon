@@ -2884,11 +2884,11 @@ class PathMap(object):
     @staticmethod
     def _split_path(path):
         if isinstance(path, str):
-            components = filter(None, os.path.normpath(path).split(os.sep))
+            components = [f for f in os.path.normpath(path).split(os.sep) if f]
             return (components.pop() if components else None, components)
         else:
             return (PathMap._self_value,
-                    filter(None, os.path.normpath(path[0]).split(os.sep)))
+                    [f for f in os.path.normpath(path[0]).split(os.sep) if f])
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
@@ -6745,9 +6745,10 @@ def read_repo(source, options, preferred):
                     announce("reading cvs-revisions map.")
                     pathrev_to_hash = {}
                     # Pass 1: Get git's path/revision to hash mapping
-                    for line in open(".git/cvs-revisions", "r"):
-                        (path, rev, hashv) = line.split()
-                        pathrev_to_hash[(path, rev)] = hashv
+                    with open(".git/cvs-revisions", "r") as fp:
+                        for line in fp:
+                            (path, rev, hashv) = line.split()
+                            pathrev_to_hash[(path, rev)] = hashv
                     # Pass 2: get git's hash to (time,person) mapping
                     hash_to_action = {}
                     stamp_set = set({})
@@ -7563,7 +7564,7 @@ into sections of the input stream instead).
     def do_EOF(self, unused):
         "Terminate reposurgeon."
         assert unused is not None   # pacify pylint
-        print("")
+        sys.stdout.write("\n")
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
@@ -10591,6 +10592,7 @@ variant does > redirection.
 With the 'sub' modifier, take a second argument that is a directory
 name and prepend it to every path. With the 'sup' modifier, strip the
 first directory component from every path.
+
 """ )
     def do_paths(self, line):
         if self.chosen() is None:
@@ -11525,7 +11527,7 @@ to re-set it.
                     raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
                 return match ,replace
             global_options['svn_branchify_mapping'] = \
-                    map(split_regex, line.split())
+                    list(map(split_regex, line.split()))
         if global_options['svn_branchify_mapping']:
             announce("branchify_map, regex -> branch name:")
             for match, replace in global_options['svn_branchify_mapping']:
