@@ -114,6 +114,11 @@ version="3.34"
 #   is done on data from/to the standard streams, as is done on binary
 #   data from/to files and subprocesses; the make_std_wrapper function
 #   does this
+#
+# There are also some other hacks to simplify the rest of the
+# code: forward-porting some Python 2 function names to Python 3,
+# and dealing with Python 3's email handling, which is much stricter
+# in enforcing RFC compliance (which we don't want)
 
 master_encoding = 'latin-1'
 
@@ -156,7 +161,6 @@ def string_escape(s):
         return s.decode('string_escape')
     return s.encode(master_encoding).decode('unicode_escape')
 
-
 def make_wrapper(fp):
     "Wrapper factory function to enforce master encoding"
     # This can be used to wrap normally binary streams for API
@@ -186,6 +190,14 @@ def make_std_wrapper(stream):
 sys.stdin = make_std_wrapper(sys.stdin)
 sys.stdout = make_std_wrapper(sys.stdout)
 sys.stderr = make_std_wrapper(sys.stderr)
+
+# Other hacks for Python 3
+if not hasattr(itertools, 'imap'):
+    itertools.imap = map
+if not hasattr(itertools, 'izip'):
+    itertools.izip = zip
+if not hasattr(itertools, 'ifilterfalse'):
+    itertools.ifilterfalse = itertools.filterfalse
 
 class VCS:
     "Class representing a version-control system."
@@ -2722,6 +2734,7 @@ class PathMap(object):
     def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
+    __bool__ = __nonzero__  # for Python 3
     def __len__(self):
         "Return the number of files in the set."
         return sum(len(v) if isinstance(v, PathMap) else 1
@@ -6657,7 +6670,7 @@ def read_repo(source, options, preferred):
                     stamp_set = set({})
                     with popen_or_die("git log --all --format='%H %ct %ce'", "rb") as fp:
                         for line in fp:
-                            (hashv, ctime, cperson) = polystr(line.split())
+                            (hashv, ctime, cperson) = polystr(line).split()
                             stamp = (int(ctime), cperson)
                             if stamp in stamp_set:
                                 complain("more than one commit matches %s!%s (%s)" \
@@ -11584,7 +11597,8 @@ defined are accessible to later 'eval' calls.
             try:
                 # The additional args are required to make the function
                 # visible to a later eval.
-                exec(compile(polystr(open(parse.stdin.name).read()), parse.stdin.name, 'exec'), locals(), globals())
+                with open(parse.stdin.name, 'rb') as fp:
+                    exec(compile(polystr(fp.read()), parse.stdin.name, 'exec'), locals(), globals())
             except SyntaxError as e:
                 raise Recoverable("extension function - %s\n%s" % (e, e.text))
             except IOError:
