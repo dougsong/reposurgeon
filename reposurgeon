@@ -1,13 +1,13 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # reposurgeon - a repository surgeon.
 #
 # By ESR, October 2010.
 #
-# Requires Python 2.7.2 or newer.
+# Requires Python 2.7.2 or newer.  Also runs under 3.x - preserve this property!
 #
 # SPDX-License-Identifier: BSD-2-Clause
-from __future__ import print_function #unicode_literals
+
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
@@ -252,14 +252,17 @@ if hasattr(email, 'message_from_bytes'):
             # Get rid of all the cruft and just pass through the string,
             # but force our chosen charset
             self._chunks.append((s, self._charset))
-        def encode(self, splitchars=';, \t', _maxlinelen=None, _linesep='\n'):
+        def encode(self, splitchars=';, \t', maxlinelen=None, linesep='\n'):
+            pacify_pylint(linesep)
+            pacify_pylint(maxlinelen)
             # Get rid of all the cruft and just join all the chunks;
             # we already know each one is in our chosen charset
             return ''.join(s for s, _ in self._chunks)
 
     class RSPolicy(email.policy.Compat32):
         max_line_length = None
-        def _fold(self, name, value, _sanitize):
+        def _fold(self, name, value, sanitize):
+            pacify_pylint(sanitize)
             parts = []
             parts.append('%s: ' % name)
             if isinstance(value, str):
