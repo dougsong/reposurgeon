@@ -192,6 +192,8 @@ sys.stdout = make_std_wrapper(sys.stdout)
 sys.stderr = make_std_wrapper(sys.stderr)
 
 # Other hacks for Python 3
+if not hasattr(sys, 'intern'):
+    sys.intern = intern
 if not hasattr(itertools, 'imap'):
     itertools.imap = map
 if not hasattr(itertools, 'izip'):
@@ -1375,13 +1377,14 @@ class Date(object):
     date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$".encode('ascii'))
     subsecond_re = re.compile(r"\.[0-9]+Z".encode('ascii'))
     offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$".encode('ascii'))
+    fast0000 = sys.intern("+0000")
     def __init__(self, text, error=Fatal):
         "Recognize date formats that exporters or email programs might emit."
         # Special case: we may want current time
         if text is None:
             self.timestamp = int(time.time())
             self.tz_offset = 0
-            self.orig_tz_string = "+0000"
+            self.orig_tz_string = Date.fast0000
             return
         # Otherwise, look for git's preferred format, which is a timestamp
         # in UTC followed by an offset to be used as a hint for what
@@ -1390,6 +1393,7 @@ class Date(object):
         text = text.strip()
         if Date.date_re.match(polybytes(text)):
             (self.timestamp, self.orig_tz_string) = text.split()
+            self.orig_tz_string = sys.intern(self.orig_tz_string)
             self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
             return
@@ -1400,7 +1404,7 @@ class Date(object):
             dt = email.utils.parsedate_tz(text)
             self.tz_offset = dt[9]
             self.timestamp = int(calendar.timegm(dt) - self.tz_offset)
-            self.orig_tz_string = text.split()[5]
+            self.orig_tz_string = sys.intern(text.split()[5])
             return
         except TypeError:
             # time.mktime throws this when it gets None:
@@ -1412,7 +1416,7 @@ class Date(object):
             text = polystr(re.sub(Date.subsecond_re, b"Z", polybytes(text)))
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(rfc3339date)
-            self.orig_tz_string = "+0000"
+            self.orig_tz_string = Date.fast0000
             self.tz_offset = 0
             return
         except ValueError:
@@ -1555,6 +1559,8 @@ class Attribution(object):
             # Deal with a cvs2svn artifact
             person = operson.replace("(no author)", "no-author")
             (self.name, self.email, self.date) = Attribution.parseaddr(person)
+            self.name = sys.intern(self.name)
+            self.email = sys.intern(self.email)
             try:
                 self.date = Date(self.date)
             except (ValueError, IndexError):
@@ -1568,8 +1574,8 @@ class Attribution(object):
         "Remap the attribution name."
         for (local, (name, mail, timezone)) in authors.items():
             if self.email.lower().startswith(local + "@") or self.email.lower() == local or (not self.email and self.name.lower() == local):
-                self.name = name
-                self.email = mail
+                self.name = sys.intern(name)
+                self.email = sys.intern(mail)
                 if timezone:
                     self.date.orig_tz_string = Date.tzresolve(timezone, self.date.timestamp)
                 break
@@ -2094,7 +2100,7 @@ class Commit(object):
         return self.committer.date.timestamp
     def set_branch(self, branch):
         "Set the repo's branch field."
-        self.branch = branch
+        self.branch = sys.intern(branch)
     def operations(self):
         "Fileops associated with this commit; hides how this is represented."
         return self.fileops
