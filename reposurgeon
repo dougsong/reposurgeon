@@ -9158,7 +9158,7 @@ For a list of supported types, invoke the 'prefer' command.
                             # parse is redirected so this must be something besides sys.stdin, so
                             # we can close it and substitute another redirect
                             parse.stdin.close()
-                            parse.stdin = make_wrapper(popen_or_die(infilter % srcname, mode="r"))
+                            parse.stdin = make_wrapper(popen_or_die(infilter % srcname, mode="r").open())
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
@@ -9215,10 +9215,11 @@ For a list of supported types, invoke the 'prefer' command.
                         try:
                             outfilter = file_filters[vcs][1]
                             dstname = parse.stdout.name
-                            # parse is redirected so this must be something besides sys.stdout, so
-                            # we can close it and substitute another redirect
+                            # parse is redirected so this must be
+                            # something besides sys.stdout, so we can
+                            # close it and substitute another redirect
                             parse.stdout.close()
-                            parse.stdout = make_wrapper(popen_or_die(outfilter % dstname, mode="w"))
+                            parse.stdout = make_wrapper(popen_or_die(outfilter % dstname, mode="w").open())
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
