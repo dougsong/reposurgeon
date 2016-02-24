@@ -1011,7 +1011,7 @@ class HgExtractor(Extractor):
             self.cmdline = cmdline
             if self.cmdline[0] == "hg":
                 self.cmdline.pop(0)
-            self.fp = hglib.util.BytesIO(self.client.rawcommand(self.cmdline))
+            self.fp = io.BytesIO(self.client.rawcommand(self.cmdline))
         def __enter__(self):
             return self.fp
         def __exit__(self, extype, value, traceback_unused):
@@ -2959,11 +2959,11 @@ class RepoStreamer:
                                 # items() or itemsview() for
                                 # instance) while mutating the
                                 # underlying dict is not supported by
-                                # Python. The following loop thus uses
-                                # items(), which returns a new
+                                # Python 2. The following loop thus uses
+                                # list(items()), which returns a new
                                 # independent list containing the
                                 # (key,value) pairs.
-                                for (oldpath, oldsig) in self.filemap[revision].items():
+                                for (oldpath, oldsig) in list(self.filemap[revision].items()):
                                     if oldsig == newsig:
                                         if oldpath in removed:
                                             op = FileOp(repo)
