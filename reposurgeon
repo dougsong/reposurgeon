@@ -89,6 +89,64 @@ version="3.34"
 # VCS instance.
 #
 
+# General notes on Python 2/3 compatibility:
+#
+# reposurgeon uses the following strategy to allow it to run on both Python 2
+# and Python 3:
+#
+# - Use binary I/O to read/write data from/to files and subprocesses;
+#   where the exact bytes are important (such as in checking for
+#   modified files), use the binary data directly
+#
+# - Use latin-1 encoding to transform binary data to/from Unicode when
+#   necessary for operations where Python 3 expects Unicode; the
+#   polystr and polybytes functions are used to do this so that
+#   when running on Python 2, the byte string data is used unchanged;
+#   also, the make_wrapper function constructs a text stream that can
+#   wrap a file opened in binary mode for cases where a file object
+#   that can be passed around from function to function is needed
+
+master_encoding = 'latin-1'
+
+def polystr(o):
+    "Polymorphic string factory function"
+    # This is something of a hack: on Python 2, bytes is an alias
+    # for str, so this ends up just giving a str back for all inputs;
+    # but on Python 3, if fed a byte string, it decodes it to Unicode
+    # using the specified master encoding, which should be either 'ascii'
+    # if you're sure all data being handled will be ASCII data, or
+    # 'latin-1' otherwise; this ensures that the original bytes can be
+    # recovered by re-encoding
+    if isinstance(o, str):
+        return o
+    if not isinstance(o, bytes):
+        return str(o)
+    return str(o, encoding=master_encoding)
+
+def polybytes(s):
+    "Polymorphic string encoding function"
+    # This is the reverse of the above hack; on Python 2 it returns
+    # all strings unchanged, but on Python 3 it encodes Unicode strings
+    # back to bytes using the specified master encoding
+    if isinstance(s, bytes):
+        return s
+    if not isinstance(s, str):
+        return bytes(s)
+    return bytes(s, encoding=master_encoding)
+
+def string_escape(s):
+    "Polymorphic string_escape/unicode_escape"
+    # This hack is necessary because Unicode strings in Python 3 don't
+    # have a decode method, so there's no simple way to ask it for the
+    # equivalent of decode('string_escape') in Python 2. This function
+    # assumes that it will be called with an object of the default
+    # string type, i.e., a `str` (Python 2 byte string, Python 3
+    # Unicode string)
+    if isinstance(s, bytes):
+        # Must be a Python 2 string
+        return s.decode('string_escape')
+    return s.encode(master_encoding).decode('unicode_escape')
+
 class VCS:
     "Class representing a version-control system."
     def __init__(self, name,
@@ -732,14 +790,14 @@ class GitExtractor(Extractor):
         assert baton is not None # pacify pylint
         with popen_or_die("git log --all --topo-order --reverse --format='%H %P'") as fp:
             for line in fp:
-                fields = line.strip().split()
+                fields = polystr(line).strip().split()
                 self.revlist.append(fields[0])
                 self.parents[fields[0]] = fields[1:]
     def find_commit_data(self, baton):
         assert baton is not None # pacify pylint
         with popen_or_die("git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'") as fp:
             for line in fp:
-                (h, ci, ai) = line.strip().split('|')
+                (h, ci, ai) = polystr(line).strip().split('|')
                 self.meta[h] = {'ci':ci, 'ai':ai}
     def find_all_references(self, baton):
         for root, dirs, files in os.walk(".git/refs"):
@@ -747,13 +805,13 @@ class GitExtractor(Extractor):
                 assert dirs is not None  # Pacify pylint
                 ref = os.path.join(root, leaf)
                 with open(ref, "rb") as fp:
-                    self.refs[ref[5:]] = fp.read().strip()
+                    self.refs[ref[5:]] = polystr(fp.read()).strip()
         baton.twirl()
         with popen_or_die("git tag -l") as fp:
             for line in fp:
-                tag = line.strip()
+                tag = polystr(line).strip()
                 with popen_or_die("git rev-parse %s" % tag) as fp:
-                    taghash = fp.read().strip()
+                    taghash = polystr(fp.read()).strip()
                 # Annotated tags are first-class objects with their
                 # own hashes.  The hash of a lightweight tag is just
                 # the commit it points to. Handle both cases.
@@ -762,7 +820,7 @@ class GitExtractor(Extractor):
                     comment = None
                     tagger = None
                     for line in fp:
-                        line = line.strip()
+                        line = polystr(line).strip()
                         if line.startswith("tagger "):
                             tagger = line[len("tagger "):]
                         elif line.startswith("object"):
@@ -781,7 +839,7 @@ class GitExtractor(Extractor):
                     self.refs["refs/tags/" + tag] = objecthash
     def __metadata(self, rev, fmt):
         with popen_or_die("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
-            return fp.read()[:-1]
+            return polystr(fp.read())[:-1]
     def post_extract(self, repo):
         super(GitExtractor, self).post_extract(repo)
         os.system("git checkout --quiet master")
@@ -792,7 +850,7 @@ class GitExtractor(Extractor):
         "Check the directory out to a specified revision."
         assert filemap is not None # pacify pylint
         os.system("git checkout --quiet %s" % rev)
-        manifest = capture("git ls-files").split()
+        manifest = list(map(polystr, capture("git ls-files").split()))
         return manifest
     def get_comment(self, rev):
         "Return a commit's change comment as a string."
@@ -840,7 +898,7 @@ class HgExtractor(Extractor):
             return popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
     def hg_capture(self, *cmdline):
         with self.hg_or_die(*cmdline) as fp:
-            output = fp.read()
+            output = polystr(fp.read())
         return output
     def analyze(self, baton):
         if hglib is not None:
@@ -854,7 +912,7 @@ class HgExtractor(Extractor):
         # and "hg branches" give us.  Hg's CLI is rubbish
         with self.hg_or_die("log", "--template", "{node|short} {p1node|short} {p2node|short}\\n") as fp:
             for line in fp:
-                fields = line.strip().split()
+                fields = polystr(line).strip().split()
                 self.revlist.append(fields[0])
                 # non-existent parents are given all-0s hashes.
                 # Did I mention that Hg's CLI is rubbish?
@@ -865,7 +923,7 @@ class HgExtractor(Extractor):
         assert baton is not None # pacify pylint
         with self.hg_or_die("log", "--template", "{node|short}|{author} {date|rfc822date}\\n") as fp:
             for line in fp:
-                (h, ci) = line.strip().split('|')
+                (h, ci) = polystr(line).strip().split('|')
                 # Because hg doesn't store separate author and committer info,
                 # we just use the committer for both.
                 self.meta[h] = {'ci':ci, 'ai':ci}
@@ -880,14 +938,14 @@ class HgExtractor(Extractor):
                 m = ref_re.match(line)
                 if m is None:
                     raise Recoverable("Unreadable 'hg branches' line: %r" % line)
-                n, h = m.groups()
+                n, h = tuple(map(polystr, m.groups()))
                 self.refs['refs/heads/%s'%n] = h
         with self.hg_or_die("tags") as fp:
             for line in fp:
                 m = ref_re.match(line)
                 if m is None:
                     raise Recoverable("Unreadable 'hg tags' line: %r" % line)
-                n, h = m.groups()
+                n, h = tuple(map(polystr, m.groups()))
                 if n == 'tip': # pseudo-tag for most recent commit
                     continue # We don't want it
                 self.refs['refs/tags/%s'%n] = h
@@ -970,10 +1028,11 @@ def whoami():
         ):
         fn = os.path.expanduser(fn)
         if os.path.exists(fn):
-            for line in open(fn):
-                m = re.search(mine, line)
-                if m:
-                    return (m.group(1), m.group(2))
+            with open(fn, "rb") as fp:
+                for line in fp:
+                    m = re.search(mine, line)
+                    if m:
+                        return tuple(map(polystr, (m.group(1), m.group(2))))
     # Out of alternatives
     raise Fatal("can't deduce user identity!")
 
@@ -1188,7 +1247,7 @@ class Date(object):
         # timezone to display the date in when converting to other
         # formats
         text = text.strip()
-        if Date.date_re.match(text):
+        if Date.date_re.match(polybytes(text)):
             (self.timestamp, self.orig_tz_string) = text.split()
             self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
             self.timestamp = int(self.timestamp)
@@ -1209,7 +1268,7 @@ class Date(object):
         # Also accept RFC3339 dates in Zulu time, just because I like them.
         try:
             # Discard subsecond precision, import-stream format can't use it.
-            text = re.sub(Date.subsecond_re, "Z", text)
+            text = polystr(re.sub(Date.subsecond_re, b"Z", polybytes(text)))
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(rfc3339date)
             self.orig_tz_string = "+0000"
@@ -1223,9 +1282,9 @@ class Date(object):
         raise error("'%s' is not a valid timestamp" % text)
     @staticmethod
     def secondsFromOffsetString(text):
-        m = re.match(Date.offset_re, text)
+        m = re.match(Date.offset_re, polybytes(text))
         if m is not None:
-            sign = -1 if m.group(1) == "-" else 1
+            sign = -1 if m.group(1) == b"-" else 1
             hours = int(m.group(2))
             mins = int(m.group(3))
             if hours < -14 or hours > 13 or mins > 59:
@@ -1344,9 +1403,9 @@ class Attribution(object):
     attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s*.*)")
     @staticmethod
     def parseaddr(line):
-        m = Attribution.attribution_re.match(line)
+        m = Attribution.attribution_re.match(polybytes(line))
         if m:
-            return (m.group(1).strip(), m.group(2), m.group(3).strip())
+            return (polystr(m.group(1).strip()), polystr(m.group(2)), polystr(m.group(3).strip()))
         else:
             raise Fatal("malformed attribution '%s'" % line)
     def __init__(self, operson=None):
@@ -1430,10 +1489,10 @@ class Blob(object):
             return self.repo.seekstream.read(self.size)
         elif global_options["compressblobs"]:
             with bz2.BZ2File(self.blobfile(), "rb") as rfp:
-                return rfp.read()
+                return polystr(rfp.read())
         else:
             with open(self.blobfile(), "rb") as rfp:
-                return rfp.read()
+                return polystr(rfp.read())
     def set_mark(self, mark):
         "Set the blob's mark."
         self.mark = mark
@@ -1449,10 +1508,10 @@ class Blob(object):
         if self.hasfile():
             if global_options["compressblobs"]:
                 with bz2.BZ2File(self.blobfile(create=True), "wb") as wfp:
-                    return wfp.write(text)
+                    return wfp.write(polybytes(text))
             else:
                 with open(self.blobfile(create=True), "wb") as wfp:
-                    wfp.write(text)
+                    wfp.write(polybytes(text))
     def moveto(self, repo):
         "Change the repo this blob is associated with."
         if self.hasfile():
@@ -1561,7 +1620,7 @@ class Tag(object):
             complain("in tag %s, comment was not LF-terminated." % self.name)
         if filter_regexp:
             for key in msg.keys():
-                if not filter_regexp.match(key + ":"):
+                if not filter_regexp.match(polybytes(key + ":")):
                     del msg[key]
         return str(msg)
     def email_in(self, msg, fill=False):
@@ -1624,9 +1683,9 @@ class Tag(object):
     def undecodable(self, codec="utf-8"):
         "Does this tag have undecodable i18n sequences in it?"
         try:
-            self.name.decode(codec, "strict")
-            self.tagger.name.decode(codec, "strict")
-            self.comment.decode(codec, "strict")
+            polybytes(self.name).decode(codec, "strict")
+            polybytes(self.tagger.name).decode(codec, "strict")
+            polybytes(self.comment).decode(codec, "strict")
             return False
         except UnicodeError:
             return True
@@ -1764,10 +1823,10 @@ class FileOp(object):
         return self
     def parse(self, opline):
         if opline.startswith("M"):
-            m = FileOp.modify_re.match(opline)
+            m = FileOp.modify_re.match(polybytes(opline))
             if not m:
                 raise Fatal("bad format of M line: %s" % repr(opline))
-            (self.op, self.mode, self.ref, self.path) = m.groups()
+            (self.op, self.mode, self.ref, self.path) = map(polystr, m.groups())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
         elif opline[0] == "N":
@@ -1995,7 +2054,7 @@ class Commit(object):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
         if filter_regexp:
             for key in msg.keys():
-                if not filter_regexp.match(key + ":"):
+                if not filter_regexp.match(polybytes(key + ":")):
                     del msg[key]
         return str(msg)
     def action_stamp(self):
@@ -2043,11 +2102,11 @@ class Commit(object):
                 self.committer.date = date
                 modified = True
         if "Author" in msg:
-            author_re = re.compile("Author[0-9]*$")
+            author_re = re.compile(r"Author[0-9]*$")
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
             # msg is *not* a dict so the .keys() is correct
-            authorkeys = sorted(filter(author_re.match, msg.keys()))
+            authorkeys = sorted(map(polystr, filter(author_re.match, map(polybytes, msg.keys()))))
             for i in range(len(authorkeys) - len(self.authors)):
                 self.authors.append(Attribution())
             # Another potential minor bug: permuting the set of authors
@@ -2355,14 +2414,14 @@ class Commit(object):
 
                 if mark == "inline":
                     with open(fullpath, "wb") as wfp:
-                        wfp.write(inline)
+                        wfp.write(polybytes(inline))
                 else:
                     blob = self.repo.objfind(mark)
                     if blob.hasfile():
                         os.link(blob.blobfile(), fullpath)
                     else:
                         with open(fullpath, "wb") as wfp:
-                            wfp.write(blob.get_content())
+                            wfp.write(polybytes(blob.get_content()))
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
         return directory
@@ -2392,10 +2451,10 @@ class Commit(object):
     def undecodable(self, codec="utf-8"):
         "Does this commit have undecodable i18n sequences in it?"
         try:
-            self.committer.name.decode(codec, "strict")
+            polybytes(str(self.committer)).decode(codec, "strict")
             for author in self.authors:
-                author.name.decode(codec, "strict")
-            self.comment.decode(codec, "strict")
+                polybytes(author.name).decode(codec, "strict")
+            polybytes(self.comment).decode(codec, "strict")
             return False
         except UnicodeError:
             return True
@@ -2918,8 +2977,8 @@ class StreamParser:
         "svn:needs-lock",
         "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         }
-    cvs2svn_tag_re = re.compile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
-    cvs2svn_branch_re = re.compile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+    cvs2svn_tag_re = re.compile(r"This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
+    cvs2svn_branch_re = re.compile(r"This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
     SplitSep = '.'
     def __init__(self, repo):
         self.repo = repo
@@ -3103,7 +3162,7 @@ class StreamParser:
                 # leads to bad results when fast_import is called
                 # within a with clause.  Alas, this is a potential
                 # resource leak.
-                self.repo.seekstream = open(self.fp.name)
+                self.repo.seekstream = open(self.fp.name, "rb")
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = self.repo.legacy_count = 0
                 self.linebuffers = []
@@ -3281,8 +3340,8 @@ class StreamParser:
                                 # Parse CVS and Subversion $-headers
                                 # There'd better not be more than one of these.
                                 for m in re.finditer(r"\$Id *:[^$]+\$",
-                                                     blobcontent):
-                                    fields = m.group(0).split()
+                                                     polybytes(blobcontent)):
+                                    fields = tuple(map(polystr, m.group(0).split()))
                                     if len(fields) < 2:
                                         self.gripe("malformed $-cookie '%s'" % m.group(0))
                                     else:
@@ -3297,8 +3356,8 @@ class StreamParser:
                                             if self.repo.hint(("$Id$", "svn")):
                                                 announce("$Id$ header hints at svn.")
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$",
-                                                     blobcontent):
-                                    rev = m.group(0).strip()
+                                                     polybytes(blobcontent)):
+                                    rev = polystr(m.group(0).strip())
                                     if '.' not in rev:
                                         # Subversion revision
                                         blob.cookie = rev
@@ -3848,7 +3907,7 @@ class StreamParser:
                                     subnode.kind = SD_FILE
                                     subnode.blob = blob
                                     subnode.content_hash = \
-                                            hashlib.md5(ignore).hexdigest()
+                                            hashlib.md5(polybytes(ignore)).hexdigest()
                                     subnode.generated = True
                                     expanded_nodes.append(subnode)
                             # Now generate copies for all files in the source
@@ -3900,7 +3959,7 @@ class StreamParser:
                                 # if dibe naively this clobbers the branch-root
                                 # defaults, so we need to have orotected thise
                                 # with a leading slash and reverse the transform.
-                                ignore = re.sub("\n(?!#)", "\n/", "\n" + ignore)
+                                ignore = polystr(re.sub("\n(?!#)", "\n/", polybytes("\n" + ignore)))
                                 ignore = ignore.replace("\n//", "\n")
                                 ignore = ignore[1:]
                                 if ignore.endswith("/"):
@@ -3914,7 +3973,7 @@ class StreamParser:
                                 newnode.kind = SD_FILE
                                 newnode.blob = blob
                                 newnode.content_hash = \
-                                        hashlib.md5(ignore).hexdigest()
+                                        hashlib.md5(polybytes(ignore)).hexdigest()
                                 if debug_enable(DEBUG_IGNORES):
                                     announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
@@ -4517,15 +4576,15 @@ class StreamParser:
                 continue
             # Things that cvs2svn created as tag surrogates
             # get turned into actual tags.
-            m = StreamParser.cvs2svn_tag_re.search(commit.comment)
+            m = StreamParser.cvs2svn_tag_re.search(polybytes(commit.comment))
             if m and not commit.has_children():
-                fulltag = os.path.join("refs", "tags", m.group(1))
+                fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
                 self.repo.events.append(Reset(self.repo, ref=fulltag,
                                               target=commit.parents()[0]))
                 commit.delete(["--tagback"])
             # Childless generated branch commits carry no informationn,
             # and just get removed.
-            m = StreamParser.cvs2svn_branch_re.search(commit.comment)
+            m = StreamParser.cvs2svn_branch_re.search(polybytes(commit.comment))
             if m and not commit.has_children():
                 commit.delete(["--tagback"])
             baton.twirl()
@@ -4579,16 +4638,16 @@ class StreamParser:
         #Pre compile the regex mappings for the next step
         def compile_regex (mapping):
             regex, replace = mapping
-            return re.compile(regex), replace
-        compiled_mapping = map(compile_regex, global_options["svn_branchify_mapping"])
+            return re.compile(regex), polybytes(replace)
+        compiled_mapping = list(map(compile_regex, global_options["svn_branchify_mapping"]))
         # Now pretty up the branch names
         for commit in self.repo.commits():
             matched = False
             for regex, replace in compiled_mapping:
-                result, substitutions = regex.subn(replace,commit.branch)
+                result, substitutions = regex.subn(replace,polybytes(commit.branch))
                 if substitutions == 1:
                     matched = True
-                    commit.set_branch(os.path.join("refs",result))
+                    commit.set_branch(os.path.join("refs",polystr(result)))
                     break
             if matched:
                 continue
@@ -4736,8 +4795,8 @@ class SubversionDumper:
             # Checksum validation in svnload works if we do sha1 but
             # not if we try md5.  It's unknown why - possibly svn load
             # is simply ignoring sha1.
-            #fp.write("Text-content-md5: %s\n" % hashlib.md5(content).hexdigest())
-            fp.write("Text-content-sha1: %s\n" % hashlib.sha1(content).hexdigest())
+            #fp.write("Text-content-md5: %s\n" % hashlib.md5(polybytes(content)).hexdigest())
+            fp.write("Text-content-sha1: %s\n" % hashlib.sha1(polybytes(content)).hexdigest())
         fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
         fp.write(nodeprops)
         if content:
@@ -5090,7 +5149,7 @@ class Repository:
                               % (clue, self.hintlist[-1]))
             return False
         if not self.stronghint:
-            if isinstance(clue, basestring):
+            if isinstance(clue, str):
                 self.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == clue)
             if newhint:
                 self.hintlist.append(clue)
@@ -5207,11 +5266,11 @@ class Repository:
         # Might be a date or action stamp (though action stamps should
         # be in the name cache already)
         ordinal = None
-        m = re.search("#[0-9]+$", ref)
+        m = re.search("#[0-9]+$", polybytes(ref))
         if m:
             try:
                 ordinal = int(m.group(0)[1:])
-                ref = ref[:-len(m.group(0))]
+                ref = polystr(polybytes(ref)[:-len(m.group(0))])
             except ValueError:
                 raise Recoverable("ill-formed date")
         bang = ref.find('!')
@@ -5427,7 +5486,7 @@ class Repository:
             is_tipdelete = lambda _: False
         deletia = []
         for index, commit in self.iterevents(commits, types=Commit):
-            #print("Examining: %s (%s), %s %s" % (commit.mark, commit.comment,
+            #sys.stdout.write("Examining: %s (%s), %s %s\n" % (commit.mark, commit.comment,
             #                                      commit.operations(), is_tipdelete(commit)))
             if (not commit.operations()) or is_tipdelete(commit):
                 if commit.has_parents():
@@ -5966,8 +6025,8 @@ class Repository:
                                 # then all others
                                 itertools.ifilterfalse(swap_indices.__contains__,
                                          range(earliest, last+1)) )
-                        self.events[earliest:last+1] = map(
-                                self.events.__getitem__, neworder)
+                        self.events[earliest:last+1] = list(map(
+                                self.events.__getitem__, neworder))
                         self.declare_sequence_mutation("squash pushback")
                 # Move tags and attachments
                 if filter_only:
@@ -6538,7 +6597,7 @@ def read_repo(source, options, preferred):
                                 dirs.remove(exdir)
                     return set(allfiles)
                 with popen_or_die(vcs.lister) as fp:
-                    repofiles = set(fp.read().split())
+                    repofiles = set(polystr(fp.read()).split())
                 allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
                 repo.preserve_set |= (allfiles - repofiles)
             # kluge: git-specific hook
@@ -6547,7 +6606,7 @@ def read_repo(source, options, preferred):
                     announce("reading cvs-revisions map.")
                     pathrev_to_hash = {}
                     # Pass 1: Get git's path/revision to hash mapping
-                    for line in open(".git/cvs-revisions", "rb"):
+                    for line in open(".git/cvs-revisions", "r"):
                         (path, rev, hashv) = line.split()
                         pathrev_to_hash[(path, rev)] = hashv
                     # Pass 2: get git's hash to (time,person) mapping
@@ -6555,7 +6614,7 @@ def read_repo(source, options, preferred):
                     stamp_set = set({})
                     with popen_or_die("git log --all --format='%H %ct %ce'", "rb") as fp:
                         for line in fp:
-                            (hashv, ctime, cperson) = line.split()
+                            (hashv, ctime, cperson) = polystr(line.split())
                             stamp = (int(ctime), cperson)
                             if stamp in stamp_set:
                                 complain("more than one commit matches %s!%s (%s)" \
@@ -7028,13 +7087,13 @@ class RepositoryList:
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.operations()):
                         if debug_enable(DEBUG_DELETE):
-                            print(str(fileop))
+                            sys.stdout.write(polystr(fileop) + "\n")
                         if fileop.op in "DM":
-                            if expunge.search(fileop.path):
+                            if expunge.search(polybytes(fileop.path)):
                                 deletia.append(i)
                         elif fileop.op in "RC":
-                            fileop.sourcedelete = expunge.search(fileop.source)
-                            fileop.targetdelete = expunge.search(fileop.target)
+                            fileop.sourcedelete = expunge.search(polybytes(fileop.source))
+                            fileop.targetdelete = expunge.search(polybytes(fileop.target))
                             if fileop.sourcedelete:
                                 deletia.append(i)
                                 announce("following %s of %s to %s" %
@@ -7224,11 +7283,11 @@ into sections of the input stream instead).
             self.closem = []
         def __enter__(self):
             # Input redirection
-            m = re.search(r"<\S+", self.line)
+            m = re.search(r"<\S+", polybytes(self.line))
             if m:
                 if "stdin" not in self.capabilities:
                     raise Recoverable("no support for < redirection")
-                self.infile = m.group(0)[1:]
+                self.infile = polystr(m.group(0)[1:])
                 if self.infile and self.infile != '-':
                     try:
                         self.stdin = open(self.infile, "rb")
@@ -7239,17 +7298,17 @@ into sections of the input stream instead).
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
             # Output redirection
-            m = re.search(r">>?\S+", self.line)
+            m = re.search(r">>?\S+", polybytes(self.line))
             if m:
                 if "stdout" not in self.capabilities:
                     raise Recoverable("no support for > redirection")
-                self.outfile = m.group(0)[m.group(0).count('>'):]
+                self.outfile = polystr(m.group(0)[m.group(0).count(b'>'):])
                 if self.outfile and self.outfile != '-':
                     if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
                         raise Recoverable("not a plain file")
                     try:
                         RepoSurgeon.write_notify(self.interpreter, self.outfile)
-                        if m.group(0).count('>') > 1:
+                        if m.group(0).count(b'>') > 1:
                             mode = "ab"
                         else:
                             mode = "wb"
@@ -7262,12 +7321,12 @@ into sections of the input stream instead).
                 self.redirected = True
             # Options
             while True:
-                m = re.search(r"--\S+", self.line)
+                m = re.search(r"--\S+", polybytes(self.line))
                 if not m:
                     break
                 else:
-                    self.options.add(m.group(0).strip())
-                    self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
+                    self.options.add(polystr(m.group(0).strip()))
+                    self.line = polystr(polybytes(self.line)[:m.start(0)] + polybytes(self.line)[m.end(0)+1:])
             # Dash redirection
             if not self.redirected and self.line.strip() == '-':
                 if "stdin" not in self.capabilities and "stdout" not in self.capabilities:
@@ -7346,7 +7405,7 @@ into sections of the input stream instead).
             return ""
         m = re.compile(r"\s+#")
         if m:
-            line = m.split(line)[0]
+            line = polystr(m.split(polybytes(line))[0])
         # This is the only place in the implementation that knows
         # whether the syntax is VSO or SVO.
         if self.chosen():
@@ -7529,7 +7588,7 @@ into sections of the input stream instead).
         if self.chosen().vcs is None or not self.chosen().vcs.cookies:
             return False
         for pattern in self.chosen().vcs.cookies:
-            if re.search(pattern, text):
+            if re.search(pattern, polybytes(text)):
                 return True
         return False
     @debug_lexer
@@ -7552,7 +7611,7 @@ into sections of the input stream instead).
                 "Z" : lambda e: isinstance(e, Commit) and not e.operations(),
                 "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
                 "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
-                "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(e.comment),
+                "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(polybytes(e.comment)),
                 "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
                 "D" : lambda e: hasattr(e, 'alldeletes') and e.alldeletes(),
                 "N" : lambda e: self.has_reference(e)
@@ -7594,16 +7653,16 @@ into sections of the input stream instead).
             selection = []
             while self.peek() in polyrange_initials + (".", ","):
                 # First, literal command numbers (1-origin)
-                match = re.match("[0-9]+", self.line)
+                match = re.match(r"[0-9]+", polybytes(self.line))
                 if match:
-                    number = match.group()
+                    number = polystr(match.group())
                     selection.append(int(number)-1)
                     self.line = self.line[len(number):]
                     continue
                 # Next, mark references
-                match = re.match(":[0-9]+", self.line)
+                match = re.match(r":[0-9]+", polybytes(self.line))
                 if match:
-                    markref = match.group()
+                    markref = polystr(match.group())
                     self.line = self.line[len(markref):]
                     for (i, event) in enumerate(self.chosen()):
                         if hasattr(event, "mark") and event.mark == markref:
@@ -7744,14 +7803,14 @@ into sections of the input stream instead).
                 for searchable in search_in:
                     if hasattr(e, searchable):
                         key = extractor_lambdas[searchable](e)
-                        if key is not None and search(key):
+                        if key is not None and search(polybytes(key)):
                             matchers.add(i)
                 if check_authors and isinstance(e, Commit):
                     for ai in range(len(e.authors)):
-                        if search(str(e.authors[ai])):
+                        if search(polybytes(str(e.authors[ai]))):
                             matchers.add(i)
                             break
-                if check_blobs and isinstance(e, Blob) and search(e.get_content()):
+                if check_blobs and isinstance(e, Blob) and search(polybytes(e.get_content())):
                     matchers.add(i)
             return matchers
     @debug_lexer
@@ -7796,7 +7855,7 @@ into sections of the input stream instead).
             hits = OrderedSet()
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
-                if all_or_any(itertools.imap(search, event.paths(flags))):
+                if all_or_any(itertools.imap(search, itertools.imap(polybytes, event.paths(flags)))):
                     hits.add(i)
             return hits
         else:
@@ -7827,13 +7886,13 @@ into sections of the input stream instead).
             else:
                 tree = match_trees[parent.mark].snapshot()
             for fileop in event.operations():
-                if fileop.op == 'M' and match(fileop.path):
+                if fileop.op == 'M' and match(polybytes(fileop.path)):
                     tree[fileop.path] = True
-                elif fileop.op in ('C', 'R') and match(fileop.target):
+                elif fileop.op in ('C', 'R') and match(polybytes(fileop.target)):
                     tree[fileop.target] = True
-                elif fileop.op == 'D' and match(fileop.path):
+                elif fileop.op == 'D' and match(polybytes(fileop.path)):
                     del tree[fileop.path]
-                elif fileop.op == 'R' and match(fileop.source):
+                elif fileop.op == 'R' and match(polybytes(fileop.source)):
                     del tree[fileop.source]
                 elif fileop.op == 'deleteall':
                     tree = PathMap()
@@ -8013,7 +8072,7 @@ into sections of the input stream instead).
                 for i in selection:
                     event = self.chosen()[i]
                     if hasattr(event, "email_out"):
-                        tfp.write(event.email_out([], i))
+                        tfp.write(polybytes(event.email_out([], i)))
         except IOError:
             raise Recoverable("write of editor tempfile failed")
         if os.system(editor + " " + tfname):
@@ -8375,7 +8434,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                             elif nextline == terminator:
                                 break
                             else:
-                                heredoc.write(nextline)
+                                heredoc.write(polybytes(nextline))
                         heredoc.close()
                         # Note: the command must accept < redirection!
                         scriptline += "<" + heredoc.name
@@ -8509,7 +8568,7 @@ currently chosen repository. Supports > redirection.
                     if repo.sourcedir:
                         parse.stdout.write("  Loaded from %s\n" % repo.sourcedir)
                     #if repo.vcs:
-                    #    parse.stdout.write(str(repo.vcs) + "\n")
+                    #    parse.stdout.write(polystr(repo.vcs) + "\n")
 
     def help_count(self):
         sys.stdout.write("""
@@ -8653,7 +8712,7 @@ Supports > redirection.
                     roots.add(event.id_me())
                 if unmapped:
                     for person in [event.committer] + event.authors:
-                        if unmapped.match(person.email):
+                        if unmapped.match(polybytes(person.email)):
                             shortset.add(person.email)
                 if not event.committer.email:
                     emptyaddr.add(event.id_me())
@@ -9455,7 +9514,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                         raise Recoverable("malformed filter specification")
                     elif parts[0]:
                         raise Recoverable("bad prefix '%s' on filter specification" % parts[0])
-                    elif subflags and not re.match("[0-9]*g?", subflags):
+                    elif subflags and not re.match(r"[0-9]*g?", polybytes(subflags)):
                         raise Recoverable("unrecognized filter flags")
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
@@ -9480,9 +9539,9 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                                 self.regex = re.compile(parts[1])
                             except sre_constants.error as e:
                                 raise Recoverable("filter compilation error - %s" % e)
-                            self.sub = lambda s: self.regex.sub(parts[2],
-                                                            s,
-                                                            len(s) if subcount == 0 else subcount)
+                            self.sub = lambda s: polystr(self.regex.sub(polybytes(parts[2]),
+                                                                        polybytes(s),
+                                                                        len(polybytes(s)) if subcount == 0 else subcount))
                         elif filtercmd.startswith('--replace'):
                             self.sub = lambda s: s.replace(parts[1],
                                                            parts[2],
@@ -9505,8 +9564,8 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                     try:
                         assert indesc > -1 and outdesc > -1    # pacify pylint
                         with open(intmp, "wb") as wfp:
-                            wfp.write(content)
-                        return capture("%s <%s" % (filtercmd, intmp))
+                            wfp.write(polybytes(content))
+                        return polystr(capture("%s <%s" % (filtercmd, intmp)))
                     finally:
                         os.remove(intmp)
                         os.close(indesc)
@@ -9549,7 +9608,7 @@ repository objects in a damaged state.
             self.selection = self.chosen().all()
         (codec, line) = RepoSurgeon.pop_token(line)
         def transcode(txt, _paths=None):
-            return codecs.encode(codecs.decode(txt, codec), "utf-8")
+            return polystr(codecs.encode(codecs.decode(polybytes(txt), codec), "utf-8"))
         try:
             self.data_traverse(prompt="Transcoding",
                                hook=transcode,
@@ -9581,7 +9640,7 @@ for other interesting values.
         if not fields or len(fields) != 2:
             raise Recoverable("missing or malformed setfield line")
         field = fields[0]
-        value = fields[1].decode("string_escape")
+        value = string_escape(fields[1])
         for _, event in self.selected():
             if hasattr(event, field):
                 setattr(event, field, value)
@@ -9607,7 +9666,7 @@ the new text is appended.
             fields = shlex.split(parse.line)
             if not fields:
                 raise Recoverable("missing append line")
-            line = fields[0].decode("string_escape")
+            line = string_escape(fields[0])
             for _, event in self.selected((Tag, Commit)):
                 if '--rstrip' in parse.options:
                     event.comment = event.comment.rstrip()
@@ -9871,7 +9930,7 @@ change in a future release.
         (opindex, line) = RepoSurgeon.pop_token(line)
         # FIXME: This needs more general parsing
         optypes = "DMRCN"
-        if re.match("[DMRCN]+$", opindex):
+        if re.match(r"[DMRCN]+$", polybytes(opindex)):
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
@@ -9966,7 +10025,7 @@ an offset literal of +0 or -0.
             complain("expected numeric literals in date format")
             return
         if len(args) > 1:
-            if not re.match("[+-][0-9][0-9][0-9][0-9]", args[1]):
+            if not re.match(r"[+-][0-9][0-9][0-9][0-9]", polybytes(args[1])):
                 complain("expected timezone literal to be [+-]hhmm")
         for _, event in self.selected():
             if isinstance(event, Tag):
@@ -9997,9 +10056,9 @@ date format and converts to RFC3339.
             return
         d = Date(line, Recoverable)
         if 'Z' in line:
-            print(str(d))
+            sys.stdout.write(polystr(d) + "\n")
         else:
-            print(d.rfc3339())
+            sys.stdout.write(d.rfc3339() + "\n")
 
     def help_divide(self):
         sys.stdout.write("""
@@ -10361,8 +10420,8 @@ in the ancestry of the commit, this command throws an error.  With the
                         for attr in ("path", "source", "target"):
                             if hasattr(fileop, attr):
                                 oldpath = getattr(fileop, attr)
-                                if oldpath and re.search(source_re, oldpath):
-                                    newpath = re.sub(source_re, target_re, oldpath)
+                                if oldpath and re.search(polybytes(source_re), polybytes(oldpath)):
+                                    newpath = polystr(re.sub(polybytes(source_re), polybytes(target_re), polybytes(oldpath)))
                                     if not force and commit.visible(newpath):
                                         raise Recoverable("rename at %s failed, %s visible in ancestry" % (commit.id_me(), newpath))
                                     elif not force and newpath in commit.paths():
@@ -10460,7 +10519,7 @@ This command supports > redirection.
                     parse.stdout.write("\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
                             in event.manifest().items()
-                            if filter_func(path)))
+                            if filter_func(polybytes(path))))
                 parse.stdout.write("\n")
 
     def help_tagify(self):
@@ -11127,14 +11186,14 @@ map when the repo is written or rebuilt.
         if "lift" in line:
             hits = 0
             def substitute(getter, matchobj):
-                payload = matchobj.group(0)[2:-2]
+                payload = polystr(matchobj.group(0)[2:-2])
                 commit = getter(payload)
                 if commit is None:
                     complain("no commit matches " + repr(payload))
                     return matchobj.group(0) # no replacement
                 elif commit:
                     text = commit.action_stamp()
-                    return text
+                    return polybytes(text)
                 else:
                     complain("cannot resolve %s" % payload)
                     return matchobj.group(0) # no replacement
@@ -11146,12 +11205,13 @@ map when the repo is written or rebuilt.
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
-                match_re = re.compile(re.escape("[[")+regexp+re.escape("]]"))
+                match_re = re.compile((re.escape("[[")+regexp+re.escape("]]")))
                 for _, event in self.selected():
                     if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
                             lambda m: substitute(getter, m),
-                            event.comment)
+                            polybytes(event.comment))
+                        event.comment = polystr(event.comment)
                         hits += new_hits
             announce("%d references resolved." % hits)
             repo.write_legacy = True
@@ -11476,7 +11536,7 @@ defined are accessible to later 'eval' calls.
             try:
                 # The additional args are required to make the function
                 # visible to a later eval.
-                exec(compile(open(parse.stdin.name).read(), parse.stdin.name, 'exec'), locals(), globals())
+                exec(compile(polystr(open(parse.stdin.name).read()), parse.stdin.name, 'exec'), locals(), globals())
             except SyntaxError as e:
                 raise Recoverable("extension function - %s\n%s" % (e, e.text))
             except IOError:
