@@ -75,7 +75,9 @@ in either direction.</para>
 
 <para>CVS is supported for read only, not write.  For CVS,
 <command>reposurgeon</command> must be run from within a repository
-directory.</para>
+directory (one with a CVSROOT subdirectory). Each module becomes
+a subdirectory in the the <command>reposurgeon</command>
+representation of the change history.</para>
 
 <para>In order to deal with version-control systems that do not have
 fast-export equivalents, <command>reposurgeon</command> can also host

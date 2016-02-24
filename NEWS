@@ -2,6 +2,7 @@
 
 Repository head:
      Reposurgeon now runs under either Python 2 or 3.
+     CVS repos are recognized by CVSROOT, not a (possibly missing) Attic.
 
 3.34: 2016-02-16
      Make repocutter DTRT when copyfrom roots are removed by expunge.

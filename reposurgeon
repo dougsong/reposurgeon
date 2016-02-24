@@ -660,7 +660,7 @@ _darcs
         project="http://subversion.apache.org/",
         notes="Run from the repository, not a checkout directory."),
     VCS(name="cvs",
-        subdirectory="Attic",
+        subdirectory="CVSROOT",	# Can't be Attic, that doesn't always exist.
         exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
         styleflags={"import-defaults", "export-progress"},
         properties=False,
