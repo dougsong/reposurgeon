@@ -4263,7 +4263,7 @@ class StreamParser:
         # Warn about dubious branch links
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
-            self.gripe("branch links detected by file ops only: %s" % " ".join(self.fileop_branchlinks - self.directory_branchlinks))
+            self.gripe("branch links detected by file ops only: %s" % " ".join(sorted(self.fileop_branchlinks - self.directory_branchlinks)))
         self.repo.timings.append(["commits", time.time()])
         if debug_enable(DEBUG_EXTRACT):
             announce("at post-parsing time:")
