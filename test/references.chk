@@ -14497,9 +14497,9 @@ Moving branches/Development into trunk.
 [[Split portion of a mixed commit.]]
 
 
-tag tipdelete-INITIAL_IMPORT_AQ
+tag tipdelete-r2.0.1
 #legacy-id 357
-from :307
+from :331
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
 data 273
 Obsolete branch names:
@@ -14508,9 +14508,9 @@ Obsolete branch names:
  * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
 
 
-tag tipdelete-r2.0.1
+tag tipdelete-INITIAL_IMPORT_AQ
 #legacy-id 357.1
-from :331
+from :307
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
 data 311
 Obsolete branch names:

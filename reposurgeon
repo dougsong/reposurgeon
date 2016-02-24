@@ -598,7 +598,7 @@ class Extractor(object):
         self.revlist = [] # commit identifiers, oldest first
         self.parents = {} # commit -> [parent-commit, ...]
         self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
-        self.refs = {} # 'refs/class/name' -> commit
+        self.refs = collections.OrderedDict() # 'refs/class/name' -> commit
         self.tags = [] # Tag objects (annotated tags only)
     def analyze(self, baton):
         "Analyze a repository for streaming."
@@ -2214,9 +2214,9 @@ class Commit(object):
                         for parent in self.parents())
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
-        cliques = collections.defaultdict(list)
+        cliques = collections.OrderedDict()
         for (i, fileop) in enumerate(self.operations()):
-            if fileop.op == "M": cliques[fileop.path].append(i)
+            if fileop.op == "M": cliques.setdefault(fileop.path, []).append(i)
         return cliques
     def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
@@ -4095,20 +4095,20 @@ class StreamParser:
             if debug_enable(DEBUG_EXTRACT):
                 announce("r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
-            cliques = collections.defaultdict(list)
+            cliques = collections.OrderedDict()
             lastbranch = None
             for (node, fileop) in actions:
                 # Try last seen branch first
                 if lastbranch and node.path.startswith(lastbranch):
-                    cliques[lastbranch].append(fileop)
+                    cliques.setdefault(lastbranch, []).append(fileop)
                     continue
                 for branch in self.branches:
                     if node.path.startswith(branch):
-                        cliques[branch].append(fileop)
+                        cliques.setdefault(branch, []).append(fileop)
                         lastbranch = branch
                         break
                 else:
-                    cliques[""].append(fileop)
+                    cliques.setdefault("", []).append(fileop)
             # Make two operation lists from the cliques, sorting cliques
             # containing only branch deletes from other cliques.
             deleteall_ops = []
