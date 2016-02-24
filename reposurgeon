@@ -199,6 +199,86 @@ if not hasattr(itertools, 'izip'):
 if not hasattr(itertools, 'ifilterfalse'):
     itertools.ifilterfalse = itertools.filterfalse
 
+# This hack is more complicated because there is no Python 3 email
+# function that works like Python 2's email.message_from_string
+
+if hasattr(email, 'message_from_bytes'):
+    # Python 3, need to customize email handling
+
+    import email.charset
+    import email.generator
+    import email.header
+    import email.policy
+
+    # Customize email string output; this is an evil hack,
+    # but we have no choice because there is no API to
+    # control how line endings are handled (this is particularly
+    # aggravating because the Python 3 docs go out of their way
+    # to say how the email package is supposed to support a
+    # wider range of use cases than just RFC-compliant email)
+
+    _old_gen = email.generator.Generator
+
+    class RSGenerator(_old_gen):
+        def _write_lines(self, lines):
+            # Override Python 3's line end stripping and just
+            # write out the lines unmodified (this is the
+            # Python 2 behavior, and was apparently changed
+            # when someone realized it isn't compliant with
+            # the email RFCs, but we don't give a rat's ass
+            # about the RFCs here, we just want our data to
+            # be unmangled)
+            if not lines:
+                return
+            lines = lines.splitlines(True)
+            for line in lines:
+                self.write(line)
+
+    # Monkeypatch with our modified generator
+    email.generator.Generator = RSGenerator
+
+    # We also need to customize header parsing; Python 3's default
+    # forces any header containing non-ASCII data into the
+    # "unknown-8-bit" encoding; also we can ignore all the gyrations
+    # about formatting since we know we're just dealing with one
+    # encoding and no fancy stuff (again, with all the policy options
+    # to control formatting and processing, if the email package is
+    # supposed to support a wider range of use cases than just
+    # RFC compliant email, it would be nice if there were a way to
+    # tell it to just leave header values the heck alone)
+
+    class RSHeader(email.header.Header):
+        def append(self, s, charset=None, errors='strict'):
+            # Get rid of all the cruft and just pass through the string,
+            # but force our chosen charset
+            self._chunks.append((s, self._charset))
+        def encode(self, splitchars=';, \t', maxlinelen=None, linesep='\n'):
+            # Get rid of all the cruft and just join all the chunks;
+            # we already know each one is in our chosen charset
+            return ''.join(s for s, _ in self._chunks)
+
+    class RSPolicy(email.policy.Compat32):
+        max_line_length = None
+        def _fold(self, name, value, sanitize):
+            parts = []
+            parts.append('%s: ' % name)
+            if isinstance(value, str):
+                # Use our custom header class and leave out any "sanitizing"
+                h = RSHeader(value, charset=master_encoding, header_name=name)
+            else:
+                # Assume it is a Header-like object.
+                h = value
+            if h is not None:
+                parts.append(h.encode(linesep=self.linesep,
+                                      maxlinelen=self.max_line_length))
+            parts.append(self.linesep)
+            return ''.join(parts)
+
+    rspolicy = RSPolicy()  # RepoSurgeonEmail will use this
+
+else:
+    rspolicy = None  # so RepoSurgeonEmail knows not to activate the Python 3 hack above
+
 class VCS:
     "Class representing a version-control system."
     def __init__(self, name,
@@ -1254,6 +1334,9 @@ class RepoSurgeonEmail(email.message.Message, object):
     Divider = 78 * "-"
     __hash__ = None
     def __init__(self, **kwargs):
+        if rspolicy:
+            # This activates the Python 3 email header handling hack
+            kwargs['policy'] = rspolicy
         email.message.Message.__init__(self, **kwargs)
         self.set_unixfrom(RepoSurgeonEmail.Divider)
     @staticmethod
