@@ -252,14 +252,14 @@ if hasattr(email, 'message_from_bytes'):
             # Get rid of all the cruft and just pass through the string,
             # but force our chosen charset
             self._chunks.append((s, self._charset))
-        def encode(self, splitchars=';, \t', maxlinelen=None, linesep='\n'):
+        def encode(self, splitchars=';, \t', _maxlinelen=None, _linesep='\n'):
             # Get rid of all the cruft and just join all the chunks;
             # we already know each one is in our chosen charset
             return ''.join(s for s, _ in self._chunks)
 
     class RSPolicy(email.policy.Compat32):
         max_line_length = None
-        def _fold(self, name, value, sanitize):
+        def _fold(self, name, value, _sanitize):
             parts = []
             parts.append('%s: ' % name)
             if isinstance(value, str):
