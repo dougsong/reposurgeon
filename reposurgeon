@@ -972,7 +972,10 @@ class HgExtractor(Extractor):
         assert baton is not None # pacify pylint
         # both branches and tags output "name      num:hash" lines
         # branches may also append " (inactive)"
-        ref_re = re.compile(r'(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?')
+        # NOTE: All regular expression matching must be done on byte strings,
+        # not Unicode, to avoid errors in handling non-ASCII data; the ascii
+        # encode of the match string ensures this
+        ref_re = re.compile(r'(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?'.encode('ascii'))
         with self.hg_or_die("branches") as fp:
             for line in fp:
                 m = ref_re.match(line)
@@ -1063,8 +1066,8 @@ def whoami():
         return (nameout, emailout)
     # Various random configs
     for (fn, mine) in (
-        ("~/.hgrc", r"username\s*=\s*(.*)\s<([^>]*)>"),                # Mercurial
-        ("~/.lynxrc", r"personal_mail_address\s*=\s*(.*)\s<([^>]*)>")  # Lynx
+        ("~/.hgrc", r"username\s*=\s*(.*)\s<([^>]*)>".encode('ascii')),                # Mercurial
+        ("~/.lynxrc", r"personal_mail_address\s*=\s*(.*)\s<([^>]*)>".encode('ascii'))  # Lynx
         ):
         fn = os.path.expanduser(fn)
         if os.path.exists(fn):
@@ -1271,9 +1274,9 @@ class Date(object):
     "A time/date in UTC. Preserves the original TZ information and uses it to convert back when formatting."
     __slots__ = ("timestamp", "tz_offset", "orig_tz_string")
     __hash__ = None
-    date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$")
-    subsecond_re = re.compile(r"\.[0-9]+Z")
-    offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$")
+    date_re = re.compile(r"[0-9]+\s*[+-][0-9]+$".encode('ascii'))
+    subsecond_re = re.compile(r"\.[0-9]+Z".encode('ascii'))
+    offset_re = re.compile(r"^([-+]?)([0-9]{2})([0-9]{2})$".encode('ascii'))
     def __init__(self, text, error=Fatal):
         "Recognize date formats that exporters or email programs might emit."
         # Special case: we may want current time
@@ -1440,7 +1443,7 @@ class Attribution(object):
     "Represents an attribution of a repo action to a person and time."
     __slots__ = ("name", "email", "date")
     __hash__ = None
-    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s*.*)")
+    attribution_re = re.compile(r"([^<]*\s*)<([^>]*)>(\s*.*)".encode('ascii'))
     @staticmethod
     def parseaddr(line):
         m = Attribution.attribution_re.match(polybytes(line))
@@ -1821,7 +1824,7 @@ class FileOp(object):
                  "mode", "path", "ref", "inline",
                  "sourcedelete", "targetdelete")
     __hash__ = None
-    modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)")
+    modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)".encode('ascii'))
     sortkey_sentinel = chr(ord("/") + 1)
     def __init__(self, repo):
         self.repo = repo
@@ -2142,7 +2145,7 @@ class Commit(object):
                 self.committer.date = date
                 modified = True
         if "Author" in msg:
-            author_re = re.compile(r"Author[0-9]*$")
+            author_re = re.compile(r"Author[0-9]*$".encode('ascii'))
             # Potential minor bug here if > 10 authors;
             # lexicographic sort order doesn't match numeric
             # msg is *not* a dict so the .keys() is correct
@@ -3017,8 +3020,8 @@ class StreamParser:
         "svn:needs-lock",
         "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
         }
-    cvs2svn_tag_re = re.compile(r"This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
-    cvs2svn_branch_re = re.compile(r"This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+    cvs2svn_tag_re = re.compile(r"This commit was manufactured by cvs2svn to create tag.*'([^']*)'".encode('ascii'))
+    cvs2svn_branch_re = re.compile(r"This commit was manufactured by cvs2svn to create branch.*'([^']*)'".encode('ascii'))
     SplitSep = '.'
     def __init__(self, repo):
         self.repo = repo
@@ -3379,7 +3382,7 @@ class StreamParser:
                                 (blobcontent, blobstart) = self.fi_read_data()
                                 # Parse CVS and Subversion $-headers
                                 # There'd better not be more than one of these.
-                                for m in re.finditer(r"\$Id *:[^$]+\$",
+                                for m in re.finditer(r"\$Id *:[^$]+\$".encode('ascii'),
                                                      polybytes(blobcontent)):
                                     fields = tuple(map(polystr, m.group(0).split()))
                                     if len(fields) < 2:
@@ -3395,7 +3398,7 @@ class StreamParser:
                                             blob.cookie = fields[1]
                                             if self.repo.hint(("$Id$", "svn")):
                                                 announce("$Id$ header hints at svn.")
-                                for m in re.finditer(r"\$Revision *: *([^$]*)\$",
+                                for m in re.finditer(r"\$Revision *: *([^$]*)\$".encode('ascii'),
                                                      polybytes(blobcontent)):
                                     rev = polystr(m.group(0).strip())
                                     if '.' not in rev:
@@ -3999,7 +4002,7 @@ class StreamParser:
                                 # if dibe naively this clobbers the branch-root
                                 # defaults, so we need to have orotected thise
                                 # with a leading slash and reverse the transform.
-                                ignore = polystr(re.sub("\n(?!#)", "\n/", polybytes("\n" + ignore)))
+                                ignore = polystr(re.sub("\n(?!#)".encode('ascii'), "\n/".encode('ascii'), polybytes("\n" + ignore)))
                                 ignore = ignore.replace("\n//", "\n")
                                 ignore = ignore[1:]
                                 if ignore.endswith("/"):
@@ -4678,7 +4681,7 @@ class StreamParser:
         #Pre compile the regex mappings for the next step
         def compile_regex (mapping):
             regex, replace = mapping
-            return re.compile(regex), polybytes(replace)
+            return re.compile(regex.encode('ascii')), polybytes(replace)
         compiled_mapping = list(map(compile_regex, global_options["svn_branchify_mapping"]))
         # Now pretty up the branch names
         for commit in self.repo.commits():
@@ -5306,7 +5309,7 @@ class Repository:
         # Might be a date or action stamp (though action stamps should
         # be in the name cache already)
         ordinal = None
-        m = re.search("#[0-9]+$", polybytes(ref))
+        m = re.search("#[0-9]+$".encode('ascii'), polybytes(ref))
         if m:
             try:
                 ordinal = int(m.group(0)[1:])
@@ -7116,7 +7119,7 @@ class RepositoryList:
                     digested.append("(?:" + s[1:-1] + ")")
                 else:
                     digested.append("^" + re.escape(s) + "$")
-            return re.compile("|".join(digested))
+            return re.compile("|".join(digested).encode('ascii'))
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -7307,7 +7310,7 @@ case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 """),
         )
-    unclean = re.compile("[^\n]*\n[^\n]")
+    unclean = re.compile(r"[^\n]*\n[^\n]".encode('ascii'))
     class LineParse:
         "Parse a command line implementing shell-like syntax."
         def __init__(self, interpreter, line, capabilities=None):
@@ -7323,7 +7326,7 @@ into sections of the input stream instead).
             self.closem = []
         def __enter__(self):
             # Input redirection
-            m = re.search(r"<\S+", polybytes(self.line))
+            m = re.search(r"<\S+".encode('ascii'), polybytes(self.line))
             if m:
                 if "stdin" not in self.capabilities:
                     raise Recoverable("no support for < redirection")
@@ -7338,7 +7341,7 @@ into sections of the input stream instead).
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
                 self.redirected = True
             # Output redirection
-            m = re.search(r">>?\S+", polybytes(self.line))
+            m = re.search(r">>?\S+".encode('ascii'), polybytes(self.line))
             if m:
                 if "stdout" not in self.capabilities:
                     raise Recoverable("no support for > redirection")
@@ -7361,7 +7364,7 @@ into sections of the input stream instead).
                 self.redirected = True
             # Options
             while True:
-                m = re.search(r"--\S+", polybytes(self.line))
+                m = re.search(r"--\S+".encode('ascii'), polybytes(self.line))
                 if not m:
                     break
                 else:
@@ -7443,7 +7446,7 @@ into sections of the input stream instead).
         self.selection = None
         if line.startswith("#"):
             return ""
-        m = re.compile(r"\s+#")
+        m = re.compile(r"\s+#".encode('ascii'))
         if m:
             line = polystr(m.split(polybytes(line))[0])
         # This is the only place in the implementation that knows
@@ -7628,7 +7631,7 @@ into sections of the input stream instead).
         if self.chosen().vcs is None or not self.chosen().vcs.cookies:
             return False
         for pattern in self.chosen().vcs.cookies:
-            if re.search(pattern, polybytes(text)):
+            if re.search(pattern.encode('ascii'), polybytes(text)):
                 return True
         return False
     @debug_lexer
@@ -7693,14 +7696,14 @@ into sections of the input stream instead).
             selection = []
             while self.peek() in polyrange_initials + (".", ","):
                 # First, literal command numbers (1-origin)
-                match = re.match(r"[0-9]+", polybytes(self.line))
+                match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
                 if match:
                     number = polystr(match.group())
                     selection.append(int(number)-1)
                     self.line = self.line[len(number):]
                     continue
                 # Next, mark references
-                match = re.match(r":[0-9]+", polybytes(self.line))
+                match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
                 if match:
                     markref = polystr(match.group())
                     self.line = self.line[len(markref):]
@@ -7787,7 +7790,7 @@ into sections of the input stream instead).
             assert(self.pop() == '/')
             endat = self.line.index('/')
             try:
-                search = re.compile(self.line[:endat]).search
+                search = re.compile(self.line[:endat].encode('ascii')).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
@@ -7880,7 +7883,7 @@ into sections of the input stream instead).
             if matcher[-1] != '/':
                 raise Recoverable("regexp matcher missing trailing /")
             try:
-                search = re.compile(matcher[1:-1]).search
+                search = re.compile(matcher[1:-1].encode('ascii')).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             if "c" in flags:
@@ -8736,7 +8739,7 @@ Supports > redirection.
         if self.selection is None:
             self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
-            unmapped = re.compile("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$")
+            unmapped = re.compile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
             disconnected = set()
@@ -9289,7 +9292,7 @@ context the name of the header includes its trailing colon.
                 if len(token) < 2 or token[0] != '/' or token[-1] != '/':
                     raise Recoverable("malformed filter option in mailbox_out")
                 try:
-                    filter_regexp = re.compile(token[1:-1])
+                    filter_regexp = re.compile(token[1:-1].encode('ascii'))
                 except sre_constants.error as e:
                     raise Recoverable("filter compilation error - %s" % e)
             elif token.startswith(">"):
@@ -9559,7 +9562,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                         raise Recoverable("malformed filter specification")
                     elif parts[0]:
                         raise Recoverable("bad prefix '%s' on filter specification" % parts[0])
-                    elif subflags and not re.match(r"[0-9]*g?", polybytes(subflags)):
+                    elif subflags and not re.match(r"[0-9]*g?".encode('ascii'), polybytes(subflags)):
                         raise Recoverable("unrecognized filter flags")
                     elif "%PATHS%" in filtercmd:
                         raise Recoverable("%PATHS% is not yet supported in regex filters")
@@ -9581,7 +9584,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                         # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
                             try:
-                                self.regex = re.compile(parts[1])
+                                self.regex = re.compile(parts[1].encode('ascii'))
                             except sre_constants.error as e:
                                 raise Recoverable("filter compilation error - %s" % e)
                             self.sub = lambda s: polystr(self.regex.sub(polybytes(parts[2]),
@@ -9975,7 +9978,7 @@ change in a future release.
         (opindex, line) = RepoSurgeon.pop_token(line)
         # FIXME: This needs more general parsing
         optypes = "DMRCN"
-        if re.match(r"[DMRCN]+$", polybytes(opindex)):
+        if re.match(r"[DMRCN]+$".encode('ascii'), polybytes(opindex)):
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
         for _, event in self.selected(Commit):
@@ -10070,7 +10073,7 @@ an offset literal of +0 or -0.
             complain("expected numeric literals in date format")
             return
         if len(args) > 1:
-            if not re.match(r"[+-][0-9][0-9][0-9][0-9]", polybytes(args[1])):
+            if not re.match(r"[+-][0-9][0-9][0-9][0-9]".encode('ascii'), polybytes(args[1])):
                 complain("expected timezone literal to be [+-]hhmm")
         for _, event in self.selected():
             if isinstance(event, Tag):
@@ -10542,7 +10545,7 @@ This command supports > redirection.
             line = parse.line.strip()
             if line:
                 try:
-                    filter_func = re.compile(line).search
+                    filter_func = re.compile(line.encode('ascii')).search
                 except re.error:
                     raise Recoverable("invalid regular expression")
             for ei, event in self.selected(Commit):
@@ -11250,7 +11253,7 @@ map when the repo is written or rebuilt.
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
-                match_re = re.compile((re.escape("[[")+regexp+re.escape("]]")))
+                match_re = re.compile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
                 for _, event in self.selected():
                     if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
