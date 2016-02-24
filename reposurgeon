@@ -6745,34 +6745,66 @@ def do_or_die(dcmd, legend=""):
     except (OSError, IOError) as e:
         raise Fatal("execution of %s%s failed: %s" % (dcmd, legend, e))
 
-class popen_or_die:
+class popen_or_die(object):
     "Read or write from a subordinate process."
-    def __init__(self, command, legend="", mode="rb"):
-        assert mode in ("rb", "wb")
+    # The immediate parameter, if True, causes the process to be
+    # immediately run and the pipe to it opened, instead of waiting
+    # for the context manager protocol; for this use case, some other
+    # context manager (e.g., LineParse) must explicitly close this
+    # object to ensure that the subprocess shuts down cleanly
+    def __init__(self, command, legend="", mode="r"):
+        assert mode in ("r", "w")
         self.command = command
         self.legend = legend
         self.mode = mode
+        self.stdin = (subprocess.PIPE if mode == "w" else None)
+        self.stdout = (subprocess.PIPE if mode == "r" else None)
+        self.stderr = (subprocess.STDOUT if mode == "r" else None)
         if self.legend:
             self.legend = " "  + self.legend
         self.fp = None
-    def __enter__(self):
+    def open(self):
         if debug_enable(DEBUG_COMMANDS):
-            if self.mode == "rb":
-                announce("%s: reading from '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
+            if self.mode == "r":
+                sys.stderr.write("%s: reading from '%s'%s\n" % (rfc3339(time.time()), self.command, self.legend))
             else:
-                announce("%s: writing to '%s'%s" % (rfc3339(time.time()), self.command, self.legend))
+                sys.stderr.write("%s: writing to '%s'%s\n" % (rfc3339(time.time()), self.command, self.legend))
         try:
-            self.fp = os.popen(self.command, self.mode)
-            return self.fp
+            # NOTE: the I/O streams for the subprocess are always
+            # bytes; this is what we want for some operations, but we
+            # will need to decode to Unicode for others to work in
+            # Python 3; the polystr and make_wrapper functions handle
+            # this
+            self.fp = subprocess.Popen(self.command, shell=True,
+                                       stdin=self.stdin, stdout=self.stdout, stderr=self.stderr)
+            # The Python documentation recommends using communicate()
+            # to avoid deadlocks, but this doesn't allow fine control
+            # over reading the data; since we are not trying to both
+            # read from and write to the same process, this should be
+            # OK
+            return self.fp.stdout if self.mode == "r" else self.fp.stdin
         except (OSError, IOError) as oe:
             raise Fatal("execution of %s%s failed: %s" \
-                                 % (self.command, self.legend, oe))
+                                % (self.command, self.legend, oe))
+    def close(self):
+        if self.fp.stdout is not None:
+            # This avoids a deadlock in wait() below if the OS pipe
+            # buffer was filled because we didn't read all of the data
+            # before exiting the context mgr (shouldn't happen but
+            # this makes sure)
+            self.fp.stdout.read()
+        self.fp.wait()
+        if self.fp.returncode != 0:
+            raise Fatal("%s%s returned error." % (self.command, self.legend))
+        self.fp = None
+    def __enter__(self):
+        return self.open()
     def __exit__(self, extype, value, traceback_unused):
         if extype:
             if verbose:
-                complain("fatal exception in popen_or_die.")
-        if self.fp.close() is not None and not extype:
-            raise Fatal("%s%s returned error." % (self.command, self.legend))
+                raise extype(value)
+            raise Fatal("fatal exception in popen_or_die.")
+        self.close()
         return False
 
 class Recoverable(Exception):
