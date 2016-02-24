@@ -15,6 +15,7 @@ import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
 import functools, filecmp, datetime, difflib
 import email.message, email.parser
 import heapq
+import io
 
 # This import only works on Unixes.  The intention is to enable
 # Ctrl-P, Ctrl-N, and friends in Cmd.
@@ -105,6 +106,14 @@ version="3.34"
 #   also, the make_wrapper function constructs a text stream that can
 #   wrap a file opened in binary mode for cases where a file object
 #   that can be passed around from function to function is needed
+#
+# - Construct custom stdin, stdout, and stderr streams when running
+#   on Python 3 that force latin-1 encoding, and wrap them around the
+#   underlying binary buffers (in Python 2, the streams are binary
+#   and are used unchanged); this ensures that the same transformation
+#   is done on data from/to the standard streams, as is done on binary
+#   data from/to files and subprocesses; the make_std_wrapper function
+#   does this
 
 master_encoding = 'latin-1'
 
@@ -146,6 +155,37 @@ def string_escape(s):
         # Must be a Python 2 string
         return s.decode('string_escape')
     return s.encode(master_encoding).decode('unicode_escape')
+
+
+def make_wrapper(fp):
+    "Wrapper factory function to enforce master encoding"
+    # This can be used to wrap normally binary streams for API
+    # compatibility with functions that need a text stream in
+    # Python 3; it ensures that the binary bytes are decoded using
+    # the master encoding we use to turn bytes to Unicode in
+    # polystr above; on Python 2 this just returns the stream
+    # unchanged (the standard I/O streams are checked to see
+    # whether we are on Python 2 or 3, the same as the check used
+    # in make_std_wrapper below, for consistency)
+    if any(isinstance(s, io.TextIOWrapper) for s in (sys.stdin, sys.stdout, sys.stderr)):
+        # newline="\n" ensures that Python 3 won't mangle line breaks
+        return io.TextIOWrapper(fp, encoding=master_encoding, newline="\n")
+    return fp
+
+def make_std_wrapper(stream):
+    "Standard input/output wrapper factory function"
+    # This ensures that the encoding of standard output and standard
+    # error on Python 3 matches the master encoding we use to turn
+    # bytes to Unicode in polystr above; it has no effect on Python 2
+    # since the output streams are binary
+    if isinstance(stream, io.TextIOWrapper):
+        # line_buffering=True ensures that interactive command sessions work as expected
+        return io.TextIOWrapper(stream.buffer, encoding=master_encoding, newline="\n", line_buffering=True)
+    return stream
+
+sys.stdin = make_std_wrapper(sys.stdin)
+sys.stdout = make_std_wrapper(sys.stdout)
+sys.stderr = make_std_wrapper(sys.stderr)
 
 class VCS:
     "Class representing a version-control system."
@@ -3162,7 +3202,7 @@ class StreamParser:
                 # leads to bad results when fast_import is called
                 # within a with clause.  Alas, this is a potential
                 # resource leak.
-                self.repo.seekstream = open(self.fp.name, "rb")
+                self.repo.seekstream = make_wrapper(open(self.fp.name, "rb"))
             with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
                 self.import_line = self.repo.legacy_count = 0
                 self.linebuffers = []
@@ -6578,15 +6618,15 @@ def read_repo(source, options, preferred):
                     os.close(tfdesc)
             else:
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(tp, options, progress=showprogress)
+                    repo.fast_import(make_wrapper(tp), options, progress=showprogress)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap, "rb") as fp:
-                    repo.read_authormap(range(len(repo.events)),fp)
+                    repo.read_authormap(range(len(repo.events)), make_wrapper(fp))
             legacy_map = os.path.join(vcs.subdirectory, "legacy_map")
             if os.path.exists(legacy_map):
                 with open(legacy_map, "rb") as rfp:
-                    repo.read_legacymap(rfp)
+                    repo.read_legacymap(make_wrapper(rfp))
             if vcs.lister:
                 def fileset(exclude):
                     allfiles = []
@@ -6716,7 +6756,7 @@ def rebuild_repo(repo, target, options, preferred):
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
                 with open(tfname, "wb") as tp:
-                    repo.fast_export(range(len(repo)), tp, options, progress=verbose>0, target=preferred)
+                    repo.fast_export(range(len(repo)), make_wrapper(tp), options, progress=verbose>0, target=preferred)
                 parameters["tempfile"] = tfname
                 do_or_die(vcs.importer % parameters, "import")
             finally:
@@ -6724,14 +6764,14 @@ def rebuild_repo(repo, target, options, preferred):
                 os.close(tfdesc)
         else:
             with popen_or_die(vcs.importer % parameters, "import", mode="wb") as tp:
-                repo.fast_export(range(len(repo)), tp, options,
+                repo.fast_export(range(len(repo)), make_wrapper(tp), options,
                                  target=preferred,
                                  progress=verbose>0)
         if repo.write_legacy:
             try:
                 legacyfile = os.path.join(vcs.subdirectory, "legacy-map")
                 with open(legacyfile, "wb") as wfp:
-                    repo.write_legacymap(wfp)
+                    repo.write_legacymap(make_wrapper(wfp))
             except IOError:
                 raise Recoverable("legacy-map file %s could not be written." \
                                   % legacyfile)
@@ -7290,7 +7330,7 @@ into sections of the input stream instead).
                 self.infile = polystr(m.group(0)[1:])
                 if self.infile and self.infile != '-':
                     try:
-                        self.stdin = open(self.infile, "rb")
+                        self.stdin = make_wrapper(open(self.infile, "rb"))
                         self.closem.append(self.stdin)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for read" \
@@ -7312,7 +7352,7 @@ into sections of the input stream instead).
                             mode = "ab"
                         else:
                             mode = "wb"
-                        self.stdout = open(self.outfile, mode)
+                        self.stdout = make_wrapper(open(self.outfile, mode))
                         self.closem.append(self.stdout)
                     except (IOError, OSError):
                         raise Recoverable("can't open %s for write" \
@@ -8412,7 +8452,8 @@ List all known symbolic names of branches and tags. Supports > redirection.
             return
         try:
             self.callstack.append(line.split())
-            with open(self.callstack[-1][0], "r") as scriptfp:
+            with open(self.callstack[-1][0], "rb") as scriptfp:
+                scriptfp = make_wrapper(scriptfp)
                 while True:
                     scriptline = scriptfp.readline()
                     if not scriptline:
@@ -9011,8 +9052,10 @@ For a list of supported types, invoke the 'prefer' command.
                         try:
                             infilter = file_filters[vcs][0]
                             srcname = parse.stdin.name
+                            # parse is redirected so this must be something besides sys.stdin, so
+                            # we can close it and substitute another redirect
                             parse.stdin.close()
-                            parse.stdin = os.popen(infilter % srcname, "rb")
+                            parse.stdin = make_wrapper(popen_or_die(infilter % srcname, mode="r"))
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
@@ -9069,8 +9112,10 @@ For a list of supported types, invoke the 'prefer' command.
                         try:
                             outfilter = file_filters[vcs][1]
                             dstname = parse.stdout.name
+                            # parse is redirected so this must be something besides sys.stdout, so
+                            # we can close it and substitute another redirect
                             parse.stdout.close()
-                            parse.stdout = os.popen(outfilter % dstname, "wb")
+                            parse.stdout = make_wrapper(popen_or_die(outfilter % dstname, mode="w"))
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
