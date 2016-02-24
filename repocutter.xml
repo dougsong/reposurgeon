@@ -200,7 +200,7 @@ interest would be with the following series of filters applied:</para>
 repocutter expunge '^Directory1' '^Directory2'
 repocutter pathrename '^TheDirIWantToMigrate/' ''
 repocutter expunge '^branches/crazy-feature/UnrelatedApp1/
-repocutter pathrename 'branches/crazy-feature/TheAppIWantToMigrate/' ''
+repocutter pathrename 'branches/crazy-feature/TheAppIWantToMigrate/' 'branches/crazy-feature/'
 repocutter expunge '^tags/v1.001/UnrelatedApp1/'
 repocutter expunge '^tags/v1.001/UnrelatedApp2/'
 repocutter pathrename '^tags/v1.001/TheAppIWantToMigrate/' 'tags/v1.001/'
