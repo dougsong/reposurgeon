@@ -4802,11 +4802,11 @@ class SubversionDumper:
                 from_rev = self.mark_to_revision[parents[0].mark],
                 from_branch = SubversionDumper.svnbranch(parents[0].branch)
                 creations.append((svnout, from_rev, from_branch))
-                # Iterating through dict keys while mutating the dict
-                # is not supported by Python. The following thus uses
-                # keys() which returns a new list of the dict keys to
-                # loop over.
-                for key in self.pathmap.keys():
+                # Careful about the following - the path map gets mutated in
+                # this loop, you need to get a list of the keys up front or
+                # Python will barf.  Thinh is, in Python 2 keys() returns an
+                # iterator...
+                for key in list(self.pathmap.keys()):
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
