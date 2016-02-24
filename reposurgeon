@@ -4355,8 +4355,8 @@ class StreamParser:
                 announce("branch roots: [{roots}], links {{{links}}}".format(
                     roots = ", ".join(c.mark for c in branchroots),
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
-                                      for l in self.branchlink.itervalues())))
-            for (child, parent) in self.branchlink.itervalues():
+                                      for l in self.branchlink.values())))
+            for (child, parent) in self.branchlink.values():
                 if parent.repo is not self.repo:
                     # The parent has been deleted since, don't add the link;
                     # it can only happen if parent was the now tagified root.
@@ -6072,7 +6072,7 @@ class Repository:
                 self.ein = set()
 
         dag = {}
-        start = set(xrange(len(self.events)))
+        start = set(range(len(self.events)))
 
         # helper for constructing the dag
         def handle(x, ymark):
@@ -7684,7 +7684,7 @@ into sections of the input stream instead).
             check_branch = False
             if self.line and self.line[0].isalpha():
                 search_in = []
-                while self.line and (self.line[0] in searchable_attrs.iterkeys() or self.line[0] in ('a', 'B')):
+                while self.line and (self.line[0] in searchable_attrs.keys() or self.line[0] in ('a', 'B')):
                     if self.line[0] == 'a':
                         check_authors = True
                     elif self.line[0] == 'B':
@@ -8577,11 +8577,11 @@ unwieldy. Supports > redirection.
                         sizes[commit.branch] = 0
                     sizes[commit.branch] += len(str(event.tagger))
                     sizes[commit.branch] += len(event.comment)
-            total = sum(sizes.itervalues())
+            total = sum(sizes.values())
             def sz(n, s):
                 parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
-            for key in sorted(sizes.iterkeys()):
+            for key in sorted(sizes.keys()):
                 sz(sizes[key], key)
             sz(total, "")
     def help_lint(self):
@@ -10238,16 +10238,16 @@ source branch are removed.
                 target = args[1]
             repo = self.chosen()
             branches = repo.branchmap()
-            if source not in branches.iterkeys():
-                for candidate in branches.iterkeys():
+            if source not in branches.keys():
+                for candidate in branches.keys():
                     if candidate.endswith(os.sep + source):
                         source = candidate
                         break
                 else:
                     complain("no branch matches source %s" % source)
                     return
-            if target not in branches.iterkeys():
-                for candidate in branches.iterkeys():
+            if target not in branches.keys():
+                for candidate in branches.keys():
                     if candidate.endswith(os.sep + target):
                         target = candidate
                         break
