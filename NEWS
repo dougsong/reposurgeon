@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.35: 2016-02-15
      Reposurgeon now runs under either Python 2 or 3.
      CVS repos are recognized by CVSROOT, not a (possibly missing) Attic.
 
