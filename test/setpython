@@ -13,10 +13,9 @@ then
 	set -- `whereis $1`
 	shift
 	case $1 in
-	*/bin/*) ln -sf $1 ./python; echo "python -> $1";;
-	*) echo "setpython: no python binary" >&2;;
+		*/bin/*) ln -sf $1 ./python; echo "python -> $1";;
+		*) echo "setpython: no python binary" >&2;;
 	esac
-
 else
 	echo "setpython: unrecognized python version" >&2
 fi
