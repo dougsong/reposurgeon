@@ -1,4 +1,4 @@
-## Test default mode of ${REPOMAPPER:-repomapper}
+## Test default mode of repomapper
 
 trap "rm -f /tmp/contrib$$" 0 12 2 15
 

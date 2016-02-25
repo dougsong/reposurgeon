@@ -1,4 +1,4 @@
-## Test host suffixing in ${REPOMAPPER:-repomapper}
+## Test host suffixing in repomapper
 
 trap "rm -f /tmp/contrib$$" 0 12 2 15
 

@@ -1,4 +1,4 @@
-## Test update (-u) mode of ${REPOMAPPER:-repomapper}
+## Test update (-u) mode of repomapper
 
 trap "rm -f /tmp/contrib$$ /tmp/update$$" 0 12 2 15
 

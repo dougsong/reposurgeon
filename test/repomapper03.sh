@@ -1,4 +1,4 @@
-## Test password-processing -p mode of ${REPOMAPPER:-repomapper}
+## Test password-processing -p mode of repomapper
 
 trap "rm -f /tmp/contrib$$ /tmp/passwd$$" 0 12 2 15
 
