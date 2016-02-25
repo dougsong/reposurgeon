@@ -178,7 +178,25 @@ The reduced dump is emitted to standard output.
 """,
     }
 
-import os, sys, calendar, time, getopt, re
+import os, sys, calendar, time, getopt, re, io
+
+binary_encoding = 'latin-1'
+
+def make_std_wrapper(stream):
+    "Standard input/output wrapper factory function"
+    # This ensures that the encoding of standard output and standard
+    # error on Python 3 matches the binary encoding we use to turn
+    # bytes to Unicode in polystr above; it has no effect on Python 2
+    # since the output streams are binary
+    if isinstance(stream, io.TextIOWrapper):
+        # newline="\n" ensures that Python 3 won't mangle line breaks
+        # line_buffering=True ensures that interactive command sessions work as expected
+        return io.TextIOWrapper(stream.buffer, encoding=binary_encoding, newline="\n", line_buffering=True)
+    return stream
+
+sys.stdin = make_std_wrapper(sys.stdin)
+sys.stdout = make_std_wrapper(sys.stdout)
+sys.stderr = make_std_wrapper(sys.stderr)
 
 class Baton:
     "Ship progress indications to stderr."
