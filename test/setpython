@@ -1,8 +1,8 @@
-#/bin/sh
+#!/bin/sh
 #
 # setpython - create a local link from 'python' to a specified version
 #
-# This script ids used to to redirect the 'python' in reposurgeon's
+# This script is used to to redirect the 'python' in reposurgeon's
 # shebang line to a specified version when running regression tests.
 
 if [ -z "$1" ]
