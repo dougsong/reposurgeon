@@ -23,7 +23,7 @@ default:
 	@make -e --quiet all
 	@setpython python3
 	@make -e --quiet all
-	@setpython
+	@setpython python
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress hg-regress svnload-regress legacy-regress \
