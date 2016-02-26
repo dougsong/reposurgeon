@@ -22,3 +22,6 @@ Richard Hansen <rhansen@rhansen.org>:
    Selections as ordered rather than compulsorily sorted sets.
    The generalized reparent command.
    Improvements in regression-test infrastructure.
+
+Peter Donis <peterdonis@alum.mit.edu>
+   Python 3 port and Python2/3 interoperability.
