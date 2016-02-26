@@ -7,7 +7,25 @@ repomapper - update and manipulate contributor maps
 # This code runs under both Python 2 and Python 3: preserve this property!
 from __future__ import print_function
 
-import sys, re, getopt
+import sys, re, getopt, io
+
+binary_encoding = 'latin-1'
+
+def make_std_wrapper(stream):
+    "Standard input/output wrapper factory function"
+    # This ensures that the encoding of standard output and standard
+    # error on Python 3 matches the binary encoding we use to turn
+    # bytes to Unicode in polystr above; it has no effect on Python 2
+    # since the output streams are binary
+    if isinstance(stream, io.TextIOWrapper):
+        # newline="\n" ensures that Python 3 won't mangle line breaks
+        # line_buffering=True ensures that interactive command sessions work as expected
+        return io.TextIOWrapper(stream.buffer, encoding=binary_encoding, newline="\n", line_buffering=True)
+    return stream
+
+#sys.stdin = make_std_wrapper(sys.stdin)
+sys.stdout = make_std_wrapper(sys.stdout)
+#sys.stderr = make_std_wrapper(sys.stderr)
 
 class Contributor:
     "Associate a usename with a DVCS-style ID."
@@ -30,7 +48,8 @@ class ContribMap:
     "A map of contributors."
     def __init__(self, fn):
         self.payload = {}
-        for line in open(fn):
+        for line in open(fn, "rb"):
+            line = line.decode(binary_encoding)
             m = re.match(r"([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)", line)
             if m is None:
                 sys.stderr.write("repomapper: malformed attribution line %s.\n" % repr(line))
@@ -84,7 +103,8 @@ if __name__ == '__main__':
     # With -p, read the password data
     if passwdfile:
         passwd = {}
-        for line in open(passwdfile):
+        for line in open(passwdfile, "rb"):
+            line = line.decode(binary_encoding)
             try:
                 (name, _hash, _uid, _gid, gecos, _home, _dir) = line.split(":")
                 if "," in gecos:
