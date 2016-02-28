@@ -3,7 +3,7 @@
 Repository head:
      The repocutter and repomapper utilities are now 8-bit clean under Python 3.
 
-3.35: 2016-02-15
+3.35: 2016-02-25
      Reposurgeon now runs under either Python 2 or 3.
      CVS repos are recognized by CVSROOT, not a (possibly missing) Attic.
 
