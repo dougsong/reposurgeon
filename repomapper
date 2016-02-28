@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-2-Clause
 """
 repomapper - update and manipulate contributor maps
@@ -42,6 +42,8 @@ class Contributor:
         if self.tz:
             out += " " + self.tz
         out += "\n"
+        if "x" == b"x":
+            return out.encode('latin-1')
         return out
 
 class ContribMap:

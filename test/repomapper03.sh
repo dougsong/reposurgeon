@@ -8,7 +8,7 @@ foonly = foonly <foonly>
 EOF
 
 cat >/tmp/passwd$$ <<EOF
-foonly:x:1000:1000:Fred Foonly,,,:/home/foonly:/bin/bash
+foonly:x:1000:1000:Fred Föonly,,,:/home/foonly:/bin/bash
 EOF
 
 
