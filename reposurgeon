@@ -8941,7 +8941,7 @@ preference to the type of that repository.
         "Report or select the preferred repository type."
         if not line:
             for vcs in vcstypes:
-                sys.stdout.write(vcs + "\n")
+                sys.stdout.write(str(vcs) + "\n")
             for option in file_filters:
                 sys.stdout.write("read and write have a --format=%s option that supports %s files.\n"
                       % (option, option.capitalize()))
