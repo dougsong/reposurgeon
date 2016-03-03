@@ -147,7 +147,7 @@ git-regress:
 	fi
 	@rm -f /tmp/regress
 
-# Test the hg extractor
+# Test the hg extractor (the "be" test covers the case with hg bookmarks)
 HGLOADS = testrepo2 be
 hg-regress:
 	@echo "=== Testing hg-extractor:"
@@ -160,6 +160,22 @@ hg-regress:
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg or git missing."; exit 0; \
+	fi
+	@rm -f /tmp/regress
+
+# Test the hg extractor with multiple hg branches
+HGBRANCHES = be
+hg-regress-branches:
+	@echo "=== Testing hg-extractor with multiple hg branches:"
+	@if command -v hg >/dev/null 2>&1 ; \
+	then \
+	    for test in $(HGBRANCHES); do \
+		if (echo "  $${test}" >&2; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, hg missing."; exit 0; \
 	fi
 	@rm -f /tmp/regress
 
