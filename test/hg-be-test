@@ -38,6 +38,11 @@ then
     try rm -fr $testrepo
     try hg init $testrepo || exit 1
     try cd $testrepo >/dev/null
+    # The weird --date incantation in the hg commits is to ensure that the commit
+    # timestamps match those in the .fi file; the 18000 is because hg wants the time zone
+    # offset in seconds west of UTC, for what reason I know not--I know there are weird
+    # time zones in the world but I didn't think any of them got down to one-second
+    # granularity in offsets...
     (
         try echo "Test file 1." > testfile1
         try hg add testfile1 >/dev/null
