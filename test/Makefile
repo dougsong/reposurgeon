@@ -132,7 +132,7 @@ coalesce:
 	@rm -f /tmp/regress
 
 # Test the git extractor
-GITLOADS = bs
+GITLOADS = bs be
 git-regress:
 	@echo "=== Testing git-extractor:"
 	@if command -v git >/dev/null 2>&1 ; \
@@ -148,7 +148,7 @@ git-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor
-HGLOADS = testrepo2
+HGLOADS = testrepo2 be
 hg-regress:
 	@echo "=== Testing hg-extractor:"
 	@if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
