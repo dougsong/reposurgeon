@@ -40,6 +40,9 @@ Commit test file 3.
 from :2
 M 100644 :5 testfile3
 
+reset refs/heads/test
+from :4
+
 reset refs/heads/master
 from :6
 
