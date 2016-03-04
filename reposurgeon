@@ -3039,7 +3039,7 @@ class RepoStreamer:
                         commit.append_operation(op)
                         del self.filemap[revision][tbd]
                 self.extractor.cleanup(revision, True)
-                if not parents and commit.branch != "refs/heads/master":
+                if not parents: #and commit.branch != "refs/heads/master":
                     reset = Reset(repo)
                     reset.ref = commit.branch
                     repo.addEvent(reset)
