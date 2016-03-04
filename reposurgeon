@@ -981,6 +981,17 @@ class GitExtractor(Extractor):
                                                      comment=comment,
                                                      committish=objecthash))
                     self.refs["refs/tags/" + tag] = objecthash
+    def _color_branches(self):
+        # Git will give us branch info with this incantation
+        with popen_or_die("git name-rev --all") as fp:
+            for line in fp:
+                h, branch = polystr(line).strip().split()
+                branch = branch.split('~')[0].split('^')[0]
+                if not "/" in branch:
+                    branch = "heads/" + branch
+                self.meta[h]['branch'] = "refs/" + branch
+        # This should not be needed, but do it for completeness
+        Extractor._color_branches(self)
     def __metadata(self, rev, fmt):
         with popen_or_die("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
             return polystr(fp.read())[:-1]
