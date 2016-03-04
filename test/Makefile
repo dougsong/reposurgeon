@@ -147,15 +147,15 @@ git-regress:
 	fi
 	@rm -f /tmp/regress
 
-# Test the hg extractor (the "be" test covers the case with hg bookmarks)
-HGLOADS = testrepo2 be
+# Test the hg extractor
+HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
 	@if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e 1d -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
+		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
