@@ -26,7 +26,7 @@ default:
 	@setpython python
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
-		git-regress hg-regress svnload-regress legacy-regress \
+		git-regress hg-regress hg-regress-branches svnload-regress legacy-regress \
 		svndump-regress repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress
 	@echo "=== No diff output is good news."
