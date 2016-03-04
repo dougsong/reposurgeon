@@ -155,7 +155,7 @@ hg-regress:
 	then \
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e 1d -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
