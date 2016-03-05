@@ -19,8 +19,8 @@ Test file 2.
 
 commit refs/heads/test
 mark :4
-author Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
+author Peter Donis <peterdonis@alum.mit.edu> 1456976408 -0500
+committer Peter Donis <peterdonis@alum.mit.edu> 1456976408 -0500
 data 20
 Commit test file 2.
 from :2
@@ -28,8 +28,8 @@ M 100644 :3 testfile2
 
 commit refs/heads/master
 mark :5
-author Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
+author Peter Donis <peterdonis@alum.mit.edu> 1456976475 -0500
+committer Peter Donis <peterdonis@alum.mit.edu> 1456976475 -0500
 data 19
 Merge test branch.
 from :2
@@ -42,8 +42,8 @@ Test file 3.
 
 commit refs/heads/master
 mark :7
-author Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
+author Peter Donis <peterdonis@alum.mit.edu> 1456976606 -0500
+committer Peter Donis <peterdonis@alum.mit.edu> 1456976606 -0500
 data 20
 Commit test file 3.
 from :5
@@ -56,16 +56,16 @@ Test file 4.
 
 commit refs/heads/test
 mark :9
-author Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
+author Peter Donis <peterdonis@alum.mit.edu> 1456976715 -0500
+committer Peter Donis <peterdonis@alum.mit.edu> 1456976715 -0500
 data 20
 Commit test file 4.
 from :4
 M 100644 :8 testfile4
 
-reset refs/heads/master
-from :7
-
 reset refs/heads/test
 from :9
+
+reset refs/heads/master
+from :7
 
