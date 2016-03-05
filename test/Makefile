@@ -132,7 +132,7 @@ coalesce:
 	@rm -f /tmp/regress
 
 # Test the git extractor
-GITLOADS = bs be
+GITLOADS = bs be be2
 git-regress:
 	@echo "=== Testing git-extractor:"
 	@if command -v git >/dev/null 2>&1 ; \
@@ -164,7 +164,13 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
-HGBRANCHES = be
+HGBRANCHES = be be2
+hg-buildregress-branches:
+	@for file in $(HGBRANCHES); do \
+	    echo "Remaking $${file}.fi"; \
+	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
+		2>&1 || exit 1; \
+	done
 hg-regress-branches:
 	@echo "=== Testing hg-extractor with multiple hg branches:"
 	@if command -v hg >/dev/null 2>&1 ; \
