@@ -995,7 +995,7 @@ class GitExtractor(Extractor):
                 # written and closed
                 data = fp.read()
             with open(fname, "rb") as fp:
-                marks = dict(polystr(line).split() for line in fp)
+                marks = dict(polystr(line).strip().split() for line in fp)
         finally:
             os.remove(fname)
         if not (marks and data):
