@@ -982,14 +982,43 @@ class GitExtractor(Extractor):
                                                      committish=objecthash))
                     self.refs["refs/tags/" + tag] = objecthash
     def _color_branches(self):
-        # Git will give us branch info with this incantation
-        with popen_or_die("git name-rev --all") as fp:
-            for line in fp:
-                h, branch = polystr(line).strip().split()
-                branch = branch.split('~')[0].split('^')[0]
-                if not "/" in branch:
-                    branch = "heads/" + branch
-                self.meta[h]['branch'] = "refs/" + branch
+        # This is really cheating since fast-export could give us the
+        # whole repo, but it's the only way I've found to get the correct
+        # mapping of commits to branches, and we still want to test the
+        # rest of the extractor logic independently, so here goes
+        data = marks = None
+        _, fname = tempfile.mkstemp()
+        try:
+            with popen_or_die("git fast-export --all --export-marks=%s" % fname) as fp:
+                # We can't iterate line by line here because we need to be sure that
+                # the entire fast-export process is complete so the marks file is
+                # written and closed
+                data = fp.read()
+            with open(fname, "rb") as fp:
+                marks = dict(polystr(line).split() for line in fp)
+        finally:
+            os.remove(fname)
+        if not (marks and data):
+            raise Fatal("could not get branch information")
+        branch = None
+        for line in data.splitlines():
+            fields = polystr(line).strip().split()
+            if len(fields) != 2:
+                # The lines we're interested in will always have exactly 2 fields:
+                # commit <ref> or mark <id>; so all other lines can be ignored
+                continue
+            elif fields[0] == "commit":
+                assert branch is None
+                branch = fields[1]
+            elif (fields[0] == "mark") and (branch is not None):
+                h = marks[fields[1]]
+                self.meta[h]['branch'] = branch
+                branch = None
+            elif branch is not None:
+                # The mark line for a commit should always be the next line after
+                # the commit line, so this should never happen, but we put it in
+                # just in case
+                raise Fatal("could not parse branch information")
         # This should not be needed, but do it for completeness
         Extractor._color_branches(self)
     def __metadata(self, rev, fmt):
