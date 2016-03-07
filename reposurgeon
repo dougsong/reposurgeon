@@ -932,7 +932,7 @@ class GitExtractor(Extractor):
     ignorename = ".gitignore"
     def find_revision_ids(self, baton):
         assert baton is not None # pacify pylint
-        with popen_or_die("git log --all --topo-order --reverse --format='%H %P'") as fp:
+        with popen_or_die("git log --all --date-order --reverse --format='%H %P'") as fp:
             for line in fp:
                 fields = polystr(line).strip().split()
                 self.revlist.append(fields[0])
