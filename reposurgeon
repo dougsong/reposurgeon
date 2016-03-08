@@ -7055,6 +7055,8 @@ class popen_or_die(object):
             raise Fatal("execution of %s%s failed: %s" \
                                 % (self.command, self.legend, oe))
     def close(self):
+        if self.fp.stdin is not None:
+            self.fp.stdin.close()
         if self.fp.stdout is not None:
             # This avoids a deadlock in wait() below if the OS pipe
             # buffer was filled because we didn't read all of the data
