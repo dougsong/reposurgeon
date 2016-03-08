@@ -2994,7 +2994,10 @@ class RepoStreamer:
                         msg = ""
                     announce("r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
-                for rev in parents:
+                # Git fast-import constructs the tree from the first parent only
+                # for a merge commit; fileops from all other parents have to be
+                # added explicitly
+                for rev in parents[:1]:
                     self.filemap[revision].update(self.filemap[rev])
                 if present:
                     removed = set(self.filemap[revision]) - set(present)

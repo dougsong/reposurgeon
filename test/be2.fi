@@ -48,6 +48,7 @@ data 19
 Merge test branch.
 from :6
 merge :4
+M 100644 :3 testfile2
 
 blob
 mark :8
