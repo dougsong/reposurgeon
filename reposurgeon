@@ -987,7 +987,7 @@ class GitExtractor(Extractor):
         # mapping of commits to branches, and we still want to test the
         # rest of the extractor logic independently, so here goes
         data = marks = None
-        _, fname = tempfile.mkstemp()
+        tfp, fname = tempfile.mkstemp()
         try:
             with popen_or_die("git fast-export --all --export-marks=%s" % fname) as fp:
                 # We can't iterate line by line here because we need to be sure that
@@ -997,6 +997,7 @@ class GitExtractor(Extractor):
             with open(fname, "rb") as fp:
                 marks = dict(polystr(line).strip().split() for line in fp)
         finally:
+            os.close(tfp)
             os.remove(fname)
         if not (marks and data):
             raise Fatal("could not get branch information")
