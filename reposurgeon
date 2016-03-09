@@ -1778,8 +1778,8 @@ class Tag(object):
         newname = msg["Tag-Name"]
         if self.name != newname:
             if debug_enable(DEBUG_EMAILIN):
-                announce("in tag %d, Tag-Name is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), repr(self.name), repr(newname)))
+                announce("in tag %s, Tag-Name is modified %s -> %s" \
+                      % (msg["Event-Number"], repr(self.name), repr(newname)))
             self.name = newname
             modified = True
         if "Tagger" in msg:
@@ -1793,8 +1793,8 @@ class Tag(object):
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
                     if debug_enable(DEBUG_EMAILIN):
-                        announce("in tag %d, Tagger is modified" \
-                              % (int(msg["Event-Number"])))
+                        announce("in tag %s, Tagger is modified" \
+                              % (msg["Event-Number"]))
                     modified = True
             if "Tagger-Date" in msg:
                 date = Date(msg["Tagger-Date"])
@@ -2728,7 +2728,7 @@ def capture(command):
     if debug_enable(DEBUG_COMMANDS):
         announce("%s: capturing %s" % (rfc3339(time.time()), command))
     try:
-        content = subprocess.check_output(command, shell=True)
+        content = subprocess.check_output(command, shell=True, stderr=sys.stderr)
     except (subprocess.CalledProcessError, OSError) as oe:
         raise Fatal("execution of '%s' failed: %s" % (command, oe))
     if debug_enable(DEBUG_COMMANDS):
@@ -6945,7 +6945,7 @@ def do_or_die(dcmd, legend=""):
     if debug_enable(DEBUG_COMMANDS):
         announce("executing '%s'%s" % (dcmd, legend))
     try:
-        retcode = subprocess.call(dcmd, shell=True)
+        retcode = subprocess.call(dcmd, shell=True, stderr=sys.stderr)
         if retcode < 0:
             raise Fatal("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
