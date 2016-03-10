@@ -6,8 +6,8 @@ Test file 1.
 reset refs/heads/master
 commit refs/heads/master
 mark :2
-author Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976347 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976347 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976347 -0500
 data 20
 Commit test file 1.
 M 100644 :1 testfile1
@@ -19,8 +19,8 @@ Test file 2.
 
 commit refs/heads/test
 mark :4
-author Peter Donis <peterdonis@alum.mit.edu> 1456976408 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976408 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976408 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976408 -0500
 data 20
 Commit test file 2.
 from :2
@@ -33,8 +33,8 @@ Test file 3.
 
 commit refs/heads/master
 mark :6
-author Peter Donis <peterdonis@alum.mit.edu> 1456976475 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976475 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976475 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976475 -0500
 data 20
 Commit test file 3.
 from :2
@@ -42,8 +42,8 @@ M 100644 :5 testfile3
 
 commit refs/heads/master
 mark :7
-author Peter Donis <peterdonis@alum.mit.edu> 1456976606 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976606 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976606 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976606 -0500
 data 19
 Merge test branch.
 from :6
@@ -57,8 +57,8 @@ Test file 4.
 
 commit refs/heads/test
 mark :9
-author Peter Donis <peterdonis@alum.mit.edu> 1456976715 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976715 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976715 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976715 -0500
 data 20
 Commit test file 4.
 from :4
@@ -71,16 +71,16 @@ Test file 5.
 
 commit refs/heads/master
 mark :11
-author Peter Donis <peterdonis@alum.mit.edu> 1456976798 -0500
-committer Peter Donis <peterdonis@alum.mit.edu> 1456976798 -0500
+author Eric S. Raymond <esr@thyrsus.com> 1456976798 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1456976798 -0500
 data 20
 Commit test file 5.
 from :7
 M 100644 :10 testfile5
 
-reset refs/heads/test
-from :9
-
 reset refs/heads/master
 from :11
+
+reset refs/heads/test
+from :9
 
