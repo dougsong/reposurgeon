@@ -31,6 +31,8 @@ shift $(($OPTIND - 1))
 
 testrepo=${1:-/tmp/test-repo}
 
+USER='"J. Random Hacker" <jrh@foobar.com>'
+
 # Should we build the repo?
 if [ $build = True ]
 then
@@ -46,25 +48,25 @@ then
     (
         try echo "Test file 1." > testfile1
         try hg add testfile1 >/dev/null
-        try hg commit --date "1456976347 18000" -m "Commit test file 1." >/dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m "Commit test file 1." >/dev/null
         try hg branch test >/dev/null
         try echo "Test file 2." > testfile2
         try hg add testfile2 >/dev/null
-        try hg commit --date "1456976408 18000" -m "Commit test file 2." >/dev/null
+        try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 2." >/dev/null
         try hg update default >/dev/null
         try echo "Test file 3." > testfile3
         try hg add testfile3 >/dev/null
-        try hg commit --date "1456976475 18000" -m "Commit test file 3." >/dev/null
+        try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 3." >/dev/null
         try hg merge test >/dev/null
-        try hg commit --date "1456976606 18000" -m "Merge test branch." >/dev/null
+        try hg commit --user "$USER" --date "1456976606 18000" -m "Merge test branch." >/dev/null
         try hg update test >/dev/null
         try echo "Test file 4." > testfile4
         try hg add testfile4 >/dev/null
-        try hg commit --date "1456976715 18000" -m "Commit test file 4." >/dev/null
+        try hg commit --user "$USER" --date "1456976715 18000" -m "Commit test file 4." >/dev/null
         try hg update default >/dev/null
         try echo "Test file 5." > testfile5
         try hg add testfile5 >/dev/null
-        try hg commit --date "1456976798 18000" -m "Commit test file 5." >/dev/null
+        try hg commit --user "$USER" --date "1456976798 18000" -m "Commit test file 5." >/dev/null
     ) || exit 1
     try cd - >/dev/null
 fi
