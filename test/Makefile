@@ -133,8 +133,7 @@ coalesce:
 	@rm -f /tmp/regress
 
 # Test the git extractor
-# FIXME: be2 should work here too - might be git's nondeterminism problem again.
-GITLOADS = bs be 
+GITLOADS = bs be be2
 git-regress:
 	@echo "=== Testing git-extractor:"
 	@if command -v git >/dev/null 2>&1 ; \
