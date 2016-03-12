@@ -290,7 +290,7 @@ class VCS:
                  subdirectory,
                  exporter,
                  styleflags,
-                 properties,
+                 extensions,
                  initializer,
                  lister,
                  importer,
@@ -306,7 +306,7 @@ class VCS:
         self.subdirectory = subdirectory
         self.exporter = exporter
         self.styleflags = styleflags
-        self.properties = properties
+        self.extensions = extensions
         self.initializer = initializer
         self.lister = lister
         self.importer = importer
@@ -327,7 +327,7 @@ class VCS:
                " Subdirectory: {self.subdirectory}\n" \
                "     Exporter: {self.exporter}\n" \
                " Export-Style: {{{styleflags}}}\n" \
-               "   Properties: {self.properties!r}\n" \
+               "   Extensions: {self.extensions}\n" \
                "  Initializer: {self.initializer}\n" \
                "       Lister: {self.lister}\n" \
                "     Importer: {self.importer}\n" \
@@ -385,7 +385,7 @@ vcstypes = [
         subdirectory=".git",
         exporter="git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
         styleflags={},
-        properties=False,
+        extensions={},
         initializer="git init --quiet",
         importer="git fast-import --quiet",
         checkout="git checkout",
@@ -402,7 +402,7 @@ vcstypes = [
         subdirectory=".bzr",
         exporter="bzr fast-export --no-plain %(basename)s",
         styleflags={"export-progress", "no-nl-after-commit", "nl-after-comment"},
-        properties=True,
+        extensions={"empty-directories","multiple-authors","commit-properties"},
         initializer=None,
         lister=None,
         importer="bzr fast-import -",
@@ -431,7 +431,7 @@ bzr-orphans
         subdirectory=".hg",
         exporter=None,
         styleflags={"import-defaults", "nl-after-comment", "export-progress"},
-        properties=False,
+        extensions={},
         initializer="hg init",
         lister="hg status -macn",
         importer="hg fastimport %(tempfile)s",
@@ -455,7 +455,7 @@ library is installed.  See <https://mercurial.selenic.com/wiki/PythonHglib>.
         subdirectory="_darcs",
         exporter="darcs fastconvert export",
         styleflags=set(),
-        properties=False,
+        extensions={},
         initializer=None,
         lister="darcs show files",
         importer="darcs fastconvert import",
@@ -571,7 +571,7 @@ core
         subdirectory="_MTN",
         exporter="mtn git_export",
         styleflags=set(),
-        properties=False,
+        extensions={},
         initializer=None,
         lister="mtn list known",
         importer=None,
@@ -625,7 +625,7 @@ _darcs
         subdirectory="locks",
         exporter="svnadmin dump .",
         styleflags={"import-defaults", "export-progress"},
-        properties=False,
+        extensions={},
         initializer="svnadmin create .",
         importer="svnadmin load .",
         checkout=None,
@@ -665,7 +665,7 @@ _darcs
         subdirectory="CVSROOT",	# Can't be Attic, that doesn't always exist.
         exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
         styleflags={"import-defaults", "export-progress"},
-        properties=False,
+        extensions={},
         initializer=None,
         importer=None,
         checkout=None,
@@ -711,7 +711,7 @@ core
         subdirectory="RCS",
         exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
         styleflags={"export-progress"},
-        properties=False,
+        extensions={},
         initializer=None,
         importer=None,
         checkout=None,
@@ -728,7 +728,7 @@ core
         subdirectory=".src",
         exporter="src fast-export",
         styleflags={},
-        properties=False,
+        extensions={},
         initializer="src init",
         importer=None,
         checkout=None,
@@ -2711,7 +2711,7 @@ class Commit(object):
             else:
                 nugget = ancestor.callout()
             parts.append("merge %s\n" % nugget)
-        if vcs and vcs.properties:
+        if vcs and "commit-properties" in vcs.extensions:
             for (name, value) in self.properties.items():
                 if value in (True, False):
                     if value:
@@ -5838,6 +5838,13 @@ class Repository:
                 for ei in selection:
                     baton.twirl()
                     event = self.events[ei]
+                    if isinstance(event, Passthrough):
+                        # Support writing bzr repos to plain git if they don't
+                        # actually have the extension features their export
+                        # streams declare.  Without this check git fast-import
+                        # barfs on declarations for unused features.
+                        if event.text.startswith("feature") and event.text.split()[1] not in target.extensions:
+                            continue
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
                             announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
@@ -5918,6 +5925,7 @@ class Repository:
                 trail.append(efrom)
                 ei = efrom
         return trail
+
     #
     # Delete machinery begins here
     #
@@ -6932,7 +6940,7 @@ def rebuild_repo(repo, target, options, preferred):
                 os.remove(tfname)
                 os.close(tfdesc)
         else:
-            with popen_or_die(vcs.importer % parameters, "import", mode="wb") as tp:
+            with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), make_wrapper(tp), options,
                                  target=preferred,
                                  progress=verbose>0)
