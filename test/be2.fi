@@ -78,9 +78,9 @@ Commit test file 5.
 from :7
 M 100644 :10 testfile5
 
-reset refs/heads/master
-from :11
-
 reset refs/heads/test
 from :9
+
+reset refs/heads/master
+from :11
 

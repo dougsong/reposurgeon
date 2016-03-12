@@ -3086,7 +3086,7 @@ class RepoStreamer:
                 repo.addEvent(commit)
             # Now append reset objects
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
-                                                key=operator.itemgetter(1)):
+                                                key=lambda item: int(self.commit_map[item[1]].mark[1:])):
                 # FIXME: what if revision is unknown ? keep previous behavior for now
                 reset = Reset(repo, target=self.commit_map[revision])
                 reset.ref = resetname
