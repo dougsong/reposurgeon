@@ -10,6 +10,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     cvs \
     flex \
     python2.7 \
+    python3 \
     python-pip \
     xmlto \
  && apt-get clean \
