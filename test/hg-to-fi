@@ -16,7 +16,9 @@
 # To add complexity to a test load, do -n, then edit the test repo with
 # hg, then use -d.
 #
-BIN=${PWD}/..
+
+# Required because $PWD seems to be undefined in Gitlab's CI environment
+BIN=`realpath ..`
 
 extract=True
 stream=True
