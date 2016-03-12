@@ -5880,6 +5880,8 @@ class Repository:
     def addEvent(self, event, where=None):
         if where is not None:
             self.events.insert(where, event)
+        elif self.events and isinstance(self.events[-1], Passthrough) and self.events[-1].text == "done":
+            self.events.insert(-1, event)
         else:
             self.events.append(event)
         self.declare_sequence_mutation()
@@ -9546,14 +9548,14 @@ redirection is supported).
                     blank.tagger = Attribution()
                     blank.email_in(message, fill=True)
                     blank.committish = [c for c in self.chosen().commits()][-1].mark
-                    self.chosen().events.append(blank)
+                    self.chosen().addEvent(blank)
                 else:
                     blank = Commit()
                     blank.committer = Attribution()
                     blank.email_in(message, fill=True)
                     blank.mark = ":" + str(len(self.chosen().events) + 1)
                     blank.repo = self.chosen()
-                    self.chosen().events.append(blank)
+                    self.chosen().addEvent(blank)
             return
         # Normal case - no --create
         for (i, message) in enumerate(update_list):
