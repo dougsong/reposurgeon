@@ -8,7 +8,8 @@
 # stream to hg bookmarks, so the hg-regress test target only
 # tests correct handling of hg bookmarks, not hg branches
 
-BIN=${PWD}/..
+# Required because $PWD seems to be undefined in Gitlab's CI environment
+BIN=`realpath ..`
 
 build=True
 stream=True
