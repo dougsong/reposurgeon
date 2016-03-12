@@ -3085,6 +3085,8 @@ class RepoStreamer:
                     announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
                 repo.addEvent(commit)
             # Now append reset objects
+            # Note: we sort the resets by the mark number of their associated revisions; this
+            # is to ensure that the ordering is (a) deterministic, and (b) easily understood.
             for (resetname, revision) in sorted(self.extractor.iter_resets(),
                                                 key=lambda item: int(self.commit_map[item[1]].mark[1:])):
                 # FIXME: what if revision is unknown ? keep previous behavior for now
