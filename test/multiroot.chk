@@ -1,0 +1,55 @@
+feature commit-properties
+feature empty-directories
+feature multiple-authors
+feature commit-properties
+feature empty-directories
+feature multiple-authors
+commit refs/heads/master-foo
+mark :1
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+property branch-nick 12 bzr-testrepo
+M 644 inline foo/README
+data 41
+This is a test file in a dummy bzr repo.
+
+
+commit refs/heads/master-foo
+mark :2
+committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
+data 32
+Second commit, tasting editing.
+from :1
+property branch-nick 12 bzr-testrepo
+M 644 inline foo/README
+data 43
+This is a modification of that test file.
+
+
+
+commit refs/heads/master
+mark :3
+committer Eric S. Raymond <esr@thyrsus.com> 1289147634 -0500
+data 14
+First commit.
+from :1
+property branch-nick 12 bzr-testrepo
+M 644 inline bar/README
+data 41
+This is a test file in a dummy bzr repo.
+
+
+commit refs/heads/master
+mark :4
+committer Eric S. Raymond <esr@thyrsus.com> 1289147718 -0500
+data 32
+Second commit, tasting editing.
+from :3
+property branch-nick 12 bzr-testrepo
+M 644 inline bar/README
+data 43
+This is a modification of that test file.
+
+
+

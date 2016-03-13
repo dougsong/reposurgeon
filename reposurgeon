@@ -7261,17 +7261,23 @@ class RepositoryList:
         # with a date prior to it.  This method gives less intuitive
         # results, but at least means we never need to reorder
         # commits.
+        most_recent = None
         for root in roots[1:]:
-            most_recent = None
             def predicate(event):
                 return root.when() > event.when() \
                         or (most_recent and event.when() > most_recent.when())
             # Get last commit such that it and all before satisfy predicate()
             # Never raises IndexError since union.earliest_commit() is root[0]
             # which satisfies predicate() thanks to factors sorting.
-            most_recent = collections.deque(
+            eligible = collections.deque(
                     itertools.takewhile(predicate, union.commits()),
-                    maxlen = 1).pop()
+                    maxlen = 1)
+            if eligible:
+                most_recent = eligible.pop()
+            else:
+                # Weird case - can arize if you unite two or more copies
+                # of the same commit.
+                most_recent = union.earliest_commit()
             if most_recent.mark is None:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
