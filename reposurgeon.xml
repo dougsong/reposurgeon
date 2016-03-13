@@ -1378,6 +1378,11 @@ used with the add command to patch synthetic data into a repository.</para>
 <para>Renumber the marks in a repository, from :1 up to :&lt;n&gt;
 where &lt;n&gt; is the count of the last mark. Just in case an importer
 ever cares about mark ordering or gaps in the sequence.</para>
+
+<para>A side effect of this comment is to clean up stray "done"
+passthroughs that may have ntered the repository via graft
+operations.  After a renumber, the repository will have at most
+one "done" and it will be at the end of the events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

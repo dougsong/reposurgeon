@@ -6486,6 +6486,13 @@ class Repository:
                     fileop.ref = new
             if baton:
                 baton.bumpcounter()
+        # Prevent result from having multiple 'done' trailers.
+        orig_len = len(self)
+        self.events = [x for x in self.events if not (isinstance(x, Passthrough) and x.text == "done\n")]
+        if len(self.events) != orig_len:
+            self.events.append(Passthrough("done\n"))
+            self.declare_sequence_mutation()
+        # Previous maps won't be valid
         self.invalidate_object_map()
         self._mark_to_index = {}
         if baton:
