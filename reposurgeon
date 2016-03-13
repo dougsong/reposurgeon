@@ -1236,7 +1236,7 @@ def whoami():
 def screenwidth():
     "Return the current width of the terminal window."
     if sys.stdin.isatty():
-        with popen_or_die('stty size', "rb") as tp:
+        with popen_or_die('stty size', "r") as tp:
             return int(tp.read().split()[1])
     else:
         # Return default width if no terminal is present
@@ -6833,7 +6833,7 @@ def read_repo(source, options, preferred):
                     # Pass 2: get git's hash to (time,person) mapping
                     hash_to_action = {}
                     stamp_set = set({})
-                    with popen_or_die("git log --all --format='%H %ct %ce'", "rb") as fp:
+                    with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
                         for line in fp:
                             (hashv, ctime, cperson) = polystr(line).split()
                             stamp = (int(ctime), cperson)
