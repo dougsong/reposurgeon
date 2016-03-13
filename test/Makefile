@@ -165,7 +165,7 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
-HGBRANCHES = be be2
+HGBRANCHES = be be2 be3
 hg-buildregress-branches:
 	@for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
