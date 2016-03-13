@@ -839,8 +839,8 @@ class Extractor(object):
         # are, for whatever reason, not caught
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
-            self.__branch_color(refobj, refname)
-    def __branch_color(self, rev, color):
+            self._branch_color(refobj, refname)
+    def _branch_color(self, rev, color):
         if rev.startswith("ref"):
             return
         while 'branch' not in self.meta[rev]:
@@ -854,7 +854,7 @@ class Extractor(object):
                 rev = parents[0]
             else:
                 for parent in parents:
-                    self.__branch_color(parent, color)
+                    self._branch_color(parent, color)
                 break
     def pre_extract(self, repo):
         "Hook for any setup actions required before streaming."
@@ -1142,13 +1142,37 @@ class HgExtractor(Extractor):
         # creates the tag as an annotation, but that's a job for the surgeon
         # later, not the extractor now.
     def _color_branches(self):
-        # Hg stores branch info in the metadata for each commit,
-        # so we just need to get it using hg log
-        with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
+        # Hg stores branch and tag info in the metadata for each commit,
+        # so we just need to get it using hg log; to match the behavior of
+        # git fast-export, tags take precedence over branches, and we don't
+        # color branches here because they should only appear for the branch
+        # tip commits and their ancestors back to the first tag, which will
+        # be taken care of by
+        tags_found = []
+        with self.hg_or_die("log", "--template", "{node|short} {tags}\\n") as fp:
             for line in fp:
-                h, branch = polystr(line).strip().split()
-                self.meta[h]['branch'] = "refs/heads/" + branch
-        # This should not be needed, but do it for completeness
+                fields = polystr(line).strip().split()
+                if (len(fields) > 1) and (fields[1] != "tip"):
+                    h = fields[0]
+                    tag = fields[1]
+                    self.meta[h]['branch'] = "refs/tags/" + tag
+                    tags_found.append((h, tag))
+        if tags_found:
+            # If we found tags, we need to color the commits in between them, which
+            # won't be labeled with a tag in the hg log output above
+            for h, tag in tags_found:
+                for parent in self.get_parents(h):
+                    self._branch_color(parent, "refs/tags/" + tag)
+        else:
+            # If we didn't find any tags, we need to go back and color the commits
+            # using branch names; we can't depend on the superclass algorithm to
+            # do this correctly
+            with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
+                for line in fp:
+                    h, branch = polystr(line).strip().split()
+                    self.meta[h]['branch'] = "refs/heads/" + branch
+        # This will take care of branch tip commits and their ancestors back
+        # to the first tag, if we found tags above; otherwise it should be a no-op
         Extractor._color_branches(self)
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
