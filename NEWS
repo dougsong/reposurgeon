@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+3.37: 2016-03-14
+     Prevent two potential crash bug introduced by Python 3 porting.
+
 3.36: 2016-03-13
      The repocutter and repomapper utilities are now 8-bit clean under Python 3.
      Reorder 'done' stream terminator after tag and commit creates.
