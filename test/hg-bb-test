@@ -53,7 +53,7 @@ then
         try echo "Test file 3." > testfile3
         try hg add testfile3 >/dev/null
         try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 3." >/dev/null
-        try hg update -r 1 >/dev/null
+        try hg update -r 0 >/dev/null
         try hg branch test >/dev/null
         try echo "Test file 2." > testfile2
         try hg add testfile2 >/dev/null
