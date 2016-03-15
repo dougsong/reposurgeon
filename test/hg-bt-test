@@ -2,11 +2,9 @@
 #
 # Test reposurgeon branch naming issue with hg repo
 #
-# This test cannot use the usual hg-to-fi script because it
-# needs an hg repo with actual hg branches, not hg bookmarks;
-# the hg convert utility converts git branches in a fast-import
-# stream to hg bookmarks, so the hg-regress test target only
-# tests correct handling of hg bookmarks, not hg branches
+# This test cannot use the usual hg-to-fi script because we
+# want to test the behavior of the actual hg tag command and
+# how its results appear to the hg extractor
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
 BIN=`realpath ..`
