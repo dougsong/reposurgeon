@@ -1,0 +1,60 @@
+blob
+mark :1
+data 13
+Test file 1.
+
+reset refs/tags/before
+commit refs/tags/before
+mark :2
+author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+data 20
+Commit test file 1.
+M 100644 :1 testfile1
+
+blob
+mark :3
+data 13
+Test file 3.
+
+commit refs/tags/before
+mark :4
+author "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
+data 20
+Commit test file 3.
+from :2
+M 100644 :3 testfile3
+
+blob
+mark :5
+data 13
+Test file 2.
+
+commit refs/tags/after
+mark :6
+author "J. Random Hacker" <jrh@foobar.com> 1456976475 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976475 -0500
+data 20
+Commit test file 2.
+from :2
+M 100644 :5 testfile2
+
+blob
+mark :7
+data 26
+Test file 3.
+Second line.
+
+commit refs/heads/master
+mark :8
+author "J. Random Hacker" <jrh@foobar.com> 1456976542 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976542 -0500
+data 25
+Add line to test file 3.
+from :4
+M 100644 :7 testfile3
+
+reset refs/heads/master
+from :8
+

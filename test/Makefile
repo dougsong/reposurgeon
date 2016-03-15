@@ -133,7 +133,7 @@ coalesce:
 	@rm -f /tmp/regress
 
 # Test the git extractor
-GITLOADS = bs be be2 be3 be4 bt
+GITLOADS = bs be be2 be3 be4 bt bt2
 git-regress:
 	@echo "=== Testing git-extractor:"
 	@if command -v git >/dev/null 2>&1 ; \
