@@ -1,0 +1,116 @@
+blob
+mark :1
+data 13
+Test file 1.
+
+reset refs/tags/1.0
+commit refs/tags/1.0
+mark :2
+author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+data 20
+Commit test file 1.
+M 100644 :1 testfile1
+
+blob
+mark :3
+data 13
+Test file 3.
+
+commit refs/tags/1.0
+mark :4
+author "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
+data 20
+Commit test file 3.
+from :2
+M 100644 :3 testfile3
+
+blob
+mark :5
+data 13
+Test file 2.
+
+commit refs/tags/1.0a
+mark :6
+author "J. Random Hacker" <jrh@foobar.com> 1456976475 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976475 -0500
+data 20
+Commit test file 2.
+from :2
+M 100644 :5 testfile2
+
+commit refs/tags/1.0
+mark :7
+author "J. Random Hacker" <jrh@foobar.com> 1456976606 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976606 -0500
+data 19
+Merge test branch.
+from :4
+merge :6
+M 100644 :5 testfile2
+
+blob
+mark :8
+data 13
+Test file 4.
+
+commit refs/tags/1.0a
+mark :9
+author "J. Random Hacker" <jrh@foobar.com> 1456976715 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976715 -0500
+data 20
+Commit test file 4.
+from :6
+M 100644 :8 testfile4
+
+blob
+mark :10
+data 13
+Test file 5.
+
+commit refs/tags/1.0
+mark :11
+author "J. Random Hacker" <jrh@foobar.com> 1456976798 -0500
+committer "J. Random Hacker" <jrh@foobar.com> 1456976798 -0500
+data 20
+Commit test file 5.
+from :7
+M 100644 :10 testfile5
+
+blob
+mark :12
+data 26
+Test file 5.
+Second line.
+
+commit refs/heads/master
+mark :13
+author "J. Random Hacker" <jrh@foobar.com> 1457895329 -0400
+committer "J. Random Hacker" <jrh@foobar.com> 1457895329 -0400
+data 25
+Add line to test file 5.
+from :11
+M 100644 :12 testfile5
+
+blob
+mark :14
+data 26
+Test file 4.
+Second line.
+
+commit refs/heads/test
+mark :15
+author "J. Random Hacker" <jrh@foobar.com> 1457895350 -0400
+committer "J. Random Hacker" <jrh@foobar.com> 1457895350 -0400
+data 25
+Add line to test file 4.
+from :9
+M 100644 :14 testfile4
+
+reset refs/heads/master
+from :13
+
+reset refs/heads/test
+from :15
+

@@ -26,8 +26,8 @@ default:
 	@setpython python
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
-		git-regress git-regress-branches git-regress-tags \
-		hg-regress hg-regress-branches hg-regress-tags \
+		git-regress git-regress-branches git-regress-merges git-regress-tags \
+		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
 		svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress
@@ -151,12 +151,29 @@ git-regress:
 
 # Test the git extractor with multiple git branches
 # FIXME: bb fails (note that it passes with the hg extractor)
-GITBRANCHES = be be2 be3 be4 bb
+GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
 	@if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITBRANCHES); do \
+		if (echo "  $${test}.fi" >&2; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, git missing."; exit 0; \
+	fi
+	@rm -f /tmp/regress
+
+# Test the git extractor with merges
+# FIXME: be5 fails
+GITMERGES = be2 be3 be4 be5
+git-regress-merges:
+	@echo "=== Testing git-extractor with merges:"
+	@if command -v git >/dev/null 2>&1 ; \
+	then \
+	    for test in $(GITMERGES); do \
 		if (echo "  $${test}.fi" >&2; \
 		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
@@ -200,8 +217,8 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
-# FIXME: be4 fails (note that it passes with the git extractor)
-HGBRANCHES = be be2 be3 bb be4
+# FIXME: be5 fails (NOTE: be5 really belongs in hg-regress-merges below)
+HGBRANCHES = be bb be5
 hg-buildregress-branches:
 	@for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
@@ -213,6 +230,29 @@ hg-regress-branches:
 	@if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGBRANCHES); do \
+		if (echo "  $${test}" >&2; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, hg missing."; exit 0; \
+	fi
+	@rm -f /tmp/regress
+
+# Test the hg extractor with merges
+# FIXME: be4 fails (note that it passes with the git extractor)
+HGMERGES = be2 be3 be4
+hg-buildregress-merges:
+	@for file in $(HGMERGES); do \
+	    echo "Remaking $${file}.fi"; \
+	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
+		2>&1 || exit 1; \
+	done
+hg-regress-merges:
+	@echo "=== Testing hg-extractor with merges:"
+	@if command -v hg >/dev/null 2>&1 ; \
+	then \
+	    for test in $(HGMERGES); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
