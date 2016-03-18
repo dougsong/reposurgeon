@@ -2698,6 +2698,31 @@ since start.</para>
 </refsect2>
 </refsect1>
 
+<refsect1 id='mercurial'><title>WORKING WITH MERCURIAL</title>
+<para><application>reposurgeon</application> uses a built-in extractor
+class to perform extractions from Mercurial repositories.</para>
+
+<para>Mercurial branches are exported as branches in the exported
+repository and tags are exported as tags. By default, bookmarks are
+ignored. You can specify explicit handling for bookmarks by setting
+<parameter>reposurgeon.bookmarks</parameter> in your
+<filename>.hg/hgrc</filename>. Set the value to the prefix that
+<application>reposurgeon</application> should use for
+bookmarks.</para>
+
+<para>For example, if your bookmarks represent branches, put this at
+the bottom of your <filename>.hg/hgrc</filename>:</para>
+
+<programlisting>[reposurgeon]
+bookmarks=heads/
+</programlisting>
+
+<para>If you do that, it's your responsibility to ensure that branch
+names do not conflict with bookmark names. You can add a prefix like
+<computeroutput>bookmarks=heads/feature-</computeroutput> to
+disambiguate as necessary.</para>
+</refsect1>
+
 <refsect1 id='subversion'><title>WORKING WITH SUBVERSION</title>
 
 <para><application>reposurgeon</application> can read Subversion

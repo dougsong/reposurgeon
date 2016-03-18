@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+# Test reposurgeon branch naming issue with hg repo including merge and tags
+#
+# This test cannot use the usual hg-to-fi script because it
+# needs an hg repo with actual hg branches, not hg bookmarks;
+# the hg convert utility converts git branches in a fast-import
+# stream to hg bookmarks, so the hg-regress test target only
+# tests correct handling of hg bookmarks, not hg branches
+
+# Required because $PWD seems to be undefined in Gitlab's CI environment
+BIN=`realpath ..`
+
+build=True
+stream=True
+cleanup=True
+
+pecho() { printf %s\\n "$*"; }
+log() { pecho "$@"; }
+error() { log "ERROR: $@" >&2; }
+fatal() { error "$@"; exit 1; }
+try() { "$@" || fatal "'$@' failed"; }
+
+while getopts nr opt
+do
+    case $opt in
+    n) build=True; stream=False ; cleanup=False ;;
+    r) build=False; stream=True  ; cleanup=False ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+testrepo=${1:-/tmp/test-repo}
+
+USER='"J. Random Hacker" <jrh@foobar.com>'
+
+# Should we build the repo?
+if [ $build = True ]
+then
+    # Build hg test repo with multiple hg branches
+    try rm -fr $testrepo
+    try hg init $testrepo || exit 1
+    try cd $testrepo >/dev/null
+    # The weird --date incantation in the hg commits is to ensure that the commit
+    # timestamps match those in the .fi file; the 18000 is because hg wants the time zone
+    # offset in seconds west of UTC, for what reason I know not--I know there are weird
+    # time zones in the world but I didn't think any of them got down to one-second
+    # granularity in offsets...
+    (
+        try echo tail > tail
+        try hg add tail
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail' > /dev/null
+        try echo a > a
+        try hg add a > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of A' > /dev/null
+        try echo aa > aa
+        try hg add aa > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of A' > /dev/null
+	try hg bookmark A > /dev/null
+        try hg up -r '.^^' > /dev/null
+        try echo b > b
+        try hg add b > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of B' > /dev/null
+        try echo bb > bb
+        try hg add bb > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of B' > /dev/null
+	try hg bookmark B > /dev/null
+        try hg up -r '.^^' > /dev/null
+        try echo c > c
+        try hg add c > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 1 of C' > /dev/null
+        try hg up -r '.^' > /dev/null
+        try echo cc > cc
+        try hg add cc > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 2 of C' > /dev/null
+        try hg merge -r 'first(reverse(children(.^)-.))' > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Merge of C' > /dev/null
+	try hg bookmark C > /dev/null
+        try hg up -r '.^^' > /dev/null
+        try echo master > master
+        try hg add master > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of Master' > /dev/null
+        try echo master1 > master1
+        try hg add master1 > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of Master' > /dev/null
+	try hg bookmark master
+        try hg up -r '.^' > /dev/null
+        try echo d > d
+        try hg add d > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of D' > /dev/null
+        try hg merge -r 'children(.^)-.' > /dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m 'Merge to D from Master' > /dev/null
+	try hg bookmark D > /dev/null
+	try echo '[reposurgeon]' >> .hg/hgrc
+	try echo 'bookmarks=heads/' >> .hg/hgrc
+    ) || exit 1
+    try cd - >/dev/null
+fi
+
+# Should we stream the repo?
+if [ $stream = True ]
+then
+    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+fi
+
+# Should we clean up the test directory
+if [ $cleanup = True ]
+then
+    try rm -fr $testrepo
+fi

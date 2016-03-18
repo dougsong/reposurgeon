@@ -1175,12 +1175,18 @@ class HgExtractor(Extractor):
     def find_all_references(self, baton):
         "Find all branch heads and tags"
         assert baton is not None # pacify pylint
+
+        bookmark_ref = ""
+        with self.hg_or_die("showconfig", "reposurgeon.bookmarks") as fp:
+            for line in fp:
+                bookmark_ref = line.strip()
+
         # both branches and tags output "name      num:hash" lines
         # branches may also append " (inactive)"
         # NOTE: All regular expression matching must be done on byte strings,
         # not Unicode, to avoid errors in handling non-ASCII data; the ascii
         # encode of the match string ensures this
-        ref_re = re.compile(r'(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?'.encode('ascii'))
+        ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?'.encode('ascii'))
         with self.hg_or_die("branches") as fp:
             for line in fp:
                 m = ref_re.match(line)
@@ -1188,6 +1194,14 @@ class HgExtractor(Extractor):
                     raise Recoverable("Unreadable 'hg branches' line: %r" % line)
                 n, h = tuple(map(polystr, m.groups()))
                 self.refs['refs/heads/%s'%n] = h
+        if bookmark_ref != "":
+            with self.hg_or_die("bookmarks") as fp:
+                for line in fp:
+                    m = ref_re.match(line)
+                    if m is None:
+                        raise Recoverable("Unreadable 'hg bookmarks' line: %r" % line)
+                    n, h = tuple(map(polystr, m.groups()))
+                    self.refs['refs/%s%s' % (bookmark_ref, n)] = h
         with self.hg_or_die("tags") as fp:
             for line in fp:
                 m = ref_re.match(line)
