@@ -1292,7 +1292,7 @@ class HgExtractor(Extractor):
         # 'hg update -C' can delete and recreate the current working
         # directory, so cd to what should be the current directory
         os.chdir(pwd)
-        manifest = self.hg_capture("manifest").split()
+        manifest = self.hg_capture("manifest").rstrip("\n").split("\n")
         return manifest
     def get_comment(self, rev):
         "Return a commit's change comment as a string."
