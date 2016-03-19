@@ -6,8 +6,8 @@ tail
 reset refs/heads/default
 commit refs/heads/default
 mark :2
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 5
 Tail
 M 100644 :1 tail
@@ -19,8 +19,8 @@ a
 
 commit refs/heads/default
 mark :4
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 10
 Tail of A
 from :2
@@ -33,8 +33,8 @@ aa
 
 commit refs/heads/default
 mark :6
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 10
 Head of A
 from :4
@@ -47,8 +47,8 @@ b
 
 commit refs/heads/default
 mark :8
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 10
 Tail of B
 from :2
@@ -61,8 +61,8 @@ bb
 
 commit refs/heads/default
 mark :10
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 10
 Head of B
 from :8
@@ -75,8 +75,8 @@ c
 
 commit refs/heads/default
 mark :12
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 12
 Tail 1 of C
 from :2
@@ -89,8 +89,8 @@ cc
 
 commit refs/heads/default
 mark :14
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 12
 Tail 2 of C
 from :2
@@ -98,8 +98,8 @@ M 100644 :13 cc
 
 commit refs/heads/default
 mark :15
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 11
 Merge of C
 from :14
@@ -113,8 +113,8 @@ master
 
 commit refs/heads/default
 mark :17
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 15
 Tail of Master
 from :2
@@ -127,8 +127,8 @@ master1
 
 commit refs/heads/default
 mark :19
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 15
 Head of Master
 from :17
@@ -141,8 +141,8 @@ d
 
 commit refs/heads/default
 mark :21
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 10
 Tail of D
 from :17
@@ -150,8 +150,8 @@ M 100644 :20 d
 
 commit refs/heads/default
 mark :22
-author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
-committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
+author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
+committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 23
 Merge to D from Master
 from :21
