@@ -1186,8 +1186,8 @@ class HgExtractor(Extractor):
         # NOTE: All regular expression matching must be done on byte strings,
         # not Unicode, to avoid errors in handling non-ASCII data; the ascii
         # encode of the match string ensures this
-        ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive\))?'.encode('ascii'))
-        with self.hg_or_die("branches") as fp:
+        ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive|closed\))?'.encode('ascii'))
+        with self.hg_or_die("branches", "--closed") as fp:
             for line in fp:
                 m = ref_re.match(line)
                 if m is None:
