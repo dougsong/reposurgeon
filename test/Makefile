@@ -167,8 +167,8 @@ git-regress-branches:
 	@rm -f /tmp/regress
 
 # Test the git extractor with merges
-# FIXME: be5 fails
-GITMERGES = be2 be3 be4 be5
+# FIXME: be6 and be5 fail
+GITMERGES = be2 be3 be4 be6 be5
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
 	@if command -v git >/dev/null 2>&1 ; \
