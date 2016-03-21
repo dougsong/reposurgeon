@@ -75,7 +75,7 @@ done
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
-testrepo=`realpath ${1:-test-repo}`
+testrepo=`realpath \`dirname ${1:-test-repo}\``/`basename ${1:-test-repo}`
 
 # Should we strip time-varying headers out of the input dump file?
 if [ $strip = T ]
