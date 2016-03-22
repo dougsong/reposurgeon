@@ -150,7 +150,7 @@ git-regress:
 	@rm -f /tmp/regress
 
 # Test the git extractor with multiple git branches
-# FIXME: bb fails (note that it passes with the hg extractor)
+# FIXME: bb fails
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
@@ -217,6 +217,7 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
+# FIXME: bb fails (same as git extractor)
 # FIXME: be5 fails (NOTE: be5 really belongs in hg-regress-merges below)
 HGBRANCHES = be bb be5
 hg-buildregress-branches:
