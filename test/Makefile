@@ -150,7 +150,6 @@ git-regress:
 	@rm -f /tmp/regress
 
 # Test the git extractor with multiple git branches
-# FIXME: bb fails
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
@@ -167,8 +166,7 @@ git-regress-branches:
 	@rm -f /tmp/regress
 
 # Test the git extractor with merges
-# FIXME: be6 and be5 fail
-GITMERGES = be2 be3 be4 be6 be5
+GITMERGES = be2 be3 be4 be5 be6
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
 	@if command -v git >/dev/null 2>&1 ; \
@@ -184,7 +182,6 @@ git-regress-merges:
 	@rm -f /tmp/regress
 
 # Test the git extractor with tags
-# FIXME: bt2 fails
 GITTAGS = bt bt2
 git-regress-tags:
 	@echo "=== Testing git-extractor with tags:"
@@ -217,9 +214,7 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
-# FIXME: bb fails (same as git extractor)
-# FIXME: be5 fails (NOTE: be5 really belongs in hg-regress-merges below)
-HGBRANCHES = be bb be5
+HGBRANCHES = be bb
 hg-buildregress-branches:
 	@for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
@@ -241,8 +236,7 @@ hg-regress-branches:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with merges
-# FIXME: be4 fails (note that it passes with the git extractor)
-HGMERGES = be2 be3 be4
+HGMERGES = be2 be3 be4 be5 be6
 hg-buildregress-merges:
 	@for file in $(HGMERGES); do \
 	    echo "Remaking $${file}.fi"; \
@@ -264,7 +258,6 @@ hg-regress-merges:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with tags
-# FIXME: bt2 fails
 HGTAGS = bt bt2
 hg-buildregress-tags:
 	@for file in $(HGTAGS); do \
