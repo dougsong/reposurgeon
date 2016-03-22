@@ -795,6 +795,8 @@ class Extractor(object):
         self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
         self.refs = collections.OrderedDict() # 'refs/class/name' -> commit
         self.tags = [] # Tag objects (annotated tags only)
+        self.timestamps = {} # commit -> Unix timestamp
+        self.child_timestamps = {} # commit -> timestamp of latest child (used for coloring)
     def analyze(self, baton):
         "Analyze a repository for streaming."
         self.find_revision_ids(baton)
@@ -824,9 +826,12 @@ class Extractor(object):
         "Color all commits with their branch name."
         color_items = self._branch_color_items()
         if color_items:
+            # If the repo will give us a complete list of (commit hash, branch name) pairs,
+            # use that to do the coloring (this will be the case for git)
             for h, color in color_items:
                 self.meta[h]['branch'] = color
         else:
+            # Otherwise we have to emulate the git coloring algorithm
             self._color_branches()
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
         if uncolored:
@@ -843,28 +848,58 @@ class Extractor(object):
         return None
     def _color_branches(self):
         """Color branches in the order the tips occur."""
-        # Note: this algorithm by itself is not correct. It is included
-        # on the assumption that subclasses will override this method
-        # to first extract all branch information possible from the repo,
-        # and then use this algorithm only for coloring of commits that
-        # are, for whatever reason, not caught
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
             self._branch_color(refobj, refname)
+    def get_commit_timestamps(self):
+        """Return mapping of commit hash -> Unix timestamp"""
+        return None
     def _branch_color(self, rev, color):
         if rev.startswith("ref"):
             return
-        while 'branch' not in self.meta[rev]:
+        # Get the commit timestamps if not already there
+        if not self.timestamps:
+            self.timestamps = self.get_commit_timestamps()
+            if not self.timestamps:
+                raise Fatal("Could not retrieve commit timestamps.")
+        # This ensures that a branch tip rev never gets colored over
+        self.child_timestamps[rev] = sys.maxsize
+        # This is used below to ensure that a branch color is never colored
+        # back to a tag
+        is_branch = color.startswith('refs/heads/')
+        # No need for a condition here because we will only be starting
+        # this while loop from an initial call with a branch tip or from
+        # a recursive call with a parent we know we want to color; the
+        # loop exit is controlled by filtering out the parents that are
+        # already colored properly
+        while True:
+            timestamp = self.timestamps[rev]
             self.meta[rev]['branch'] = color
-            parents = self.get_parents(rev)
+            # We only want to color back to parents that don't have a branch
+            # assigned or whose assigned branch was from an earlier commit
+            # than the one we're coloring from now; this emulates the git
+            # algorithm that assigns the color of the latest child commit to
+            # a parent that has multiple children; note also that tags take
+            # precedence over branches, so we never color back to a tag with
+            # a branch color
+            parents = [p for p in self.get_parents(rev)
+                       if ('branch' not in self.meta[p])
+                       or ((not (is_branch and self.meta[p]['branch'].startswith('refs/tags/')))
+                           and (self.child_timestamps.get(p, 0) < timestamp))]
             if not parents:
                 break
             elif len(parents) == 1:
                 # This case avoids blowing Python's stack by recursing
                 # too deep on large repos.
                 rev = parents[0]
+                # Mark the parent with the timestamp of the child it is
+                # being colored from
+                self.child_timestamps[rev] = timestamp
             else:
                 for parent in parents:
+                    # Mark each parent with the timestamp of the child it is
+                    # being colored from
+                    self.child_timestamps[parent] = timestamp
                     self._branch_color(parent, color)
                 break
     def pre_extract(self, repo):
@@ -1065,6 +1100,7 @@ class HgExtractor(Extractor):
     def __init__(self):
         super(HgExtractor, self).__init__()
         self.hgclient = None
+        self.tags_found = False
     class _hg_or_die:
         def __init__(self, client, *cmdline):
             self.client = client
@@ -1147,43 +1183,32 @@ class HgExtractor(Extractor):
                 if n == 'tip': # pseudo-tag for most recent commit
                     continue # We don't want it
                 self.refs['refs/tags/%s'%n] = h
+                self.tags_found = True
         # We have no annotated tags, so self.tags = []
         # Conceivably it might be better to treat the commit message that
         # creates the tag as an annotation, but that's a job for the surgeon
         # later, not the extractor now.
-    def _color_branches(self):
-        # Hg stores branch and tag info in the metadata for each commit,
-        # so we just need to get it using hg log; to match the behavior of
-        # git fast-export, tags take precedence over branches, and we don't
-        # color branches here because they should only appear for the branch
-        # tip commits and their ancestors back to the first tag, which will
-        # be taken care of by
-        tags_found = []
-        with self.hg_or_die("log", "--template", "{node|short} {tags}\\n") as fp:
+    def _hg_branch_items(self):
+        with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
+            for line in fp:
+                h, branch = polystr(line).strip().split()
+                yield (h, "refs/heads/" + branch)
+    def _branch_color_items(self):
+        if not self.tags_found:
+            # If we didn't find any tags, we can safely color commits using
+            # hg branch names, since hg stores them with commit metadata
+            return self._hg_branch_items()
+        # Otherwise we have to use the emulated git algorithm since git
+        # prioritizes tags over branches when coloring
+        return None
+    def get_commit_timestamps(self):
+        """Return mapping of commit hash -> Unix timestamp"""
+        timestamps = {}
+        with self.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
             for line in fp:
                 fields = polystr(line).strip().split()
-                if (len(fields) > 1) and (fields[1] != "tip"):
-                    h = fields[0]
-                    tag = fields[1]
-                    self.meta[h]['branch'] = "refs/tags/" + tag
-                    tags_found.append((h, tag))
-        if tags_found:
-            # If we found tags, we need to color the commits in between them, which
-            # won't be labeled with a tag in the hg log output above
-            for h, tag in tags_found:
-                for parent in self.get_parents(h):
-                    self._branch_color(parent, "refs/tags/" + tag)
-        else:
-            # If we didn't find any tags, we need to go back and color the commits
-            # using branch names; we can't depend on the superclass algorithm to
-            # do this correctly
-            with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
-                for line in fp:
-                    h, branch = polystr(line).strip().split()
-                    self.meta[h]['branch'] = "refs/heads/" + branch
-        # This will take care of branch tip commits and their ancestors back
-        # to the first tag, if we found tags above; otherwise it should be a no-op
-        Extractor._color_branches(self)
+                timestamps[fields[0]] = int(fields[1])
+        return timestamps
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
         self.hg_capture("update", "-C", "tip")
