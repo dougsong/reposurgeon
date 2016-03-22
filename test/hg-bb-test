@@ -47,14 +47,16 @@ then
     # time zones in the world but I didn't think any of them got down to one-second
     # granularity in offsets...
     (
+        try hg branch test >/dev/null
         try echo "Test file 1." > testfile1
         try hg add testfile1 >/dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m "Commit test file 1." >/dev/null
+        try hg update -r 0 >/dev/null
+        try hg branch default >/dev/null
         try echo "Test file 3." > testfile3
         try hg add testfile3 >/dev/null
         try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 3." >/dev/null
-        try hg update -r 0 >/dev/null
-        try hg branch test >/dev/null
+        try hg update test >/dev/null
         try echo "Test file 2." > testfile2
         try hg add testfile2 >/dev/null
         try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 2." >/dev/null
