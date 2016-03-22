@@ -3,8 +3,8 @@ mark :1
 data 13
 Test file 1.
 
-reset refs/tags/1.0
-commit refs/tags/1.0
+reset refs/tags/1.0a
+commit refs/tags/1.0a
 mark :2
 author "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
 committer "J. Random Hacker" <jrh@foobar.com> 1456976347 -0500
