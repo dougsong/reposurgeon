@@ -822,7 +822,12 @@ class Extractor(object):
         assert baton is not None # pacify pylint
     def color_branches(self, baton):
         "Color all commits with their branch name."
-        self._color_branches()
+        color_items = self._branch_color_items()
+        if color_items:
+            for h, color in color_items:
+                self.meta[h]['branch'] = color
+        else:
+            self._color_branches()
         uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
         if uncolored:
             if verbose >= 1:
@@ -830,6 +835,12 @@ class Extractor(object):
             else:
                 raise Fatal("some branches do not have local ref names.")
         assert baton is not None # pacify pylint
+    def _branch_color_items(self):
+        """Return iterable of (commit hash, branch name) pairs"""
+        # The default is that this information is not retrievable directly
+        # from the repo; if it is (e.g., for git), this method should be
+        # overridden to retrieve it
+        return None
     def _color_branches(self):
         """Color branches in the order the tips occur."""
         # Note: this algorithm by itself is not correct. It is included
@@ -981,7 +992,7 @@ class GitExtractor(Extractor):
                                                      comment=comment,
                                                      committish=objecthash))
                     self.refs["refs/tags/" + tag] = objecthash
-    def _color_branches(self):
+    def _branch_color_items(self):
         # This is really cheating since fast-export could give us the
         # whole repo, but it's the only way I've found to get the correct
         # mapping of commits to branches, and we still want to test the
@@ -1013,15 +1024,14 @@ class GitExtractor(Extractor):
                 branch = fields[1]
             elif (fields[0] == "mark") and (branch is not None):
                 h = marks[fields[1]]
-                self.meta[h]['branch'] = branch
+                # This is a valid (commit hash, branch name) pair
+                yield (h, branch)
                 branch = None
             elif branch is not None:
                 # The mark line for a commit should always be the next line after
                 # the commit line, so this should never happen, but we put it in
                 # just in case
                 raise Fatal("could not parse branch information")
-        # This should not be needed, but do it for completeness
-        Extractor._color_branches(self)
     def __metadata(self, rev, fmt):
         with popen_or_die("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
             return polystr(fp.read())[:-1]
