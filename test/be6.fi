@@ -17,7 +17,7 @@ mark :3
 data 13
 Test file 2.
 
-commit refs/tags/1.0a
+commit refs/tags/1.0
 mark :4
 author "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
 committer "J. Random Hacker" <jrh@foobar.com> 1456976408 -0500
