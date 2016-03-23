@@ -214,7 +214,8 @@ hg-regress:
 	@rm -f /tmp/regress
 
 # Test the hg extractor with multiple hg branches
-HGBRANCHES = be bb
+# NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
+HGBRANCHES = be bb bb-alt
 hg-buildregress-branches:
 	@for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
