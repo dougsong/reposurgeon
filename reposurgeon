@@ -848,6 +848,11 @@ class Extractor(object):
         return None
     def _color_branches(self):
         """Color branches in the order the tips occur."""
+        # This algorithm is intended to emulate git's coloring algorithm;
+        # note that this includes emulating the fact that git's algorithm
+        # is not lossless--that is, it is possible to construct a git
+        # fast-import stream that git cannot reproduce on output with
+        # git fast-export
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
             self._branch_color(refobj, refname)
