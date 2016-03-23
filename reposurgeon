@@ -795,8 +795,8 @@ class Extractor(object):
         self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
         self.refs = collections.OrderedDict() # 'refs/class/name' -> commit
         self.tags = [] # Tag objects (annotated tags only)
-        self.timestamps = {} # commit -> Unix timestamp
-        self.child_timestamps = {} # commit -> timestamp of latest child (used for coloring)
+        self.timestamps = None # if used, commit -> Unix timestamp
+        self.child_timestamps = None # if used, commit -> timestamp of latest child (used for coloring)
     def analyze(self, baton):
         "Analyze a repository for streaming."
         self.find_revision_ids(baton)
@@ -853,10 +853,12 @@ class Extractor(object):
         # is not lossless--that is, it is possible to construct a git
         # fast-import stream that git cannot reproduce on output with
         # git fast-export
-        # First retrieve the commit timestamps
+        # First retrieve the commit timestamps, they are used in _branch_color below
         self.timestamps = self.get_commit_timestamps()
         if not self.timestamps:
             raise Fatal("Could not retrieve commit timestamps.")
+        # This will be used in _branch_color below
+        self.child_timestamps = {}
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
             self._branch_color(refobj, refname)
