@@ -853,6 +853,10 @@ class Extractor(object):
         # is not lossless--that is, it is possible to construct a git
         # fast-import stream that git cannot reproduce on output with
         # git fast-export
+        # First retrieve the commit timestamps
+        self.timestamps = self.get_commit_timestamps()
+        if not self.timestamps:
+            raise Fatal("Could not retrieve commit timestamps.")
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
             self._branch_color(refobj, refname)
@@ -860,11 +864,6 @@ class Extractor(object):
         """Return mapping of commit hash -> Unix timestamp"""
         return None
     def _branch_color(self, rev, color):
-        # Get the commit timestamps if not already there
-        if not self.timestamps:
-            self.timestamps = self.get_commit_timestamps()
-            if not self.timestamps:
-                raise Fatal("Could not retrieve commit timestamps.")
         # This ensures that a branch tip rev never gets colored over
         if rev not in self.child_timestamps:
             self.child_timestamps[rev] = sys.maxsize
