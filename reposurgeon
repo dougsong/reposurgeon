@@ -844,7 +844,8 @@ class Extractor(object):
         """Return iterable of (commit hash, branch name) pairs"""
         # The default is that this information is not retrievable directly
         # from the repo; if it is (e.g., for git), this method should be
-        # overridden to retrieve it
+        # overridden to retrieve it--note that every commit in the repo must
+        # be included
         return None
     def _color_branches(self):
         """Color branches in the order the tips occur."""
