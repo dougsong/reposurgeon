@@ -864,6 +864,8 @@ class Extractor(object):
             self._branch_color(refobj, refname)
     def get_commit_timestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
+        # If _branch_color_items above is not overridden, this method
+        # must be (e.g., for hg)
         return None
     def _branch_color(self, rev, color):
         # This ensures that a branch tip rev never gets colored over
