@@ -860,8 +860,6 @@ class Extractor(object):
         """Return mapping of commit hash -> Unix timestamp"""
         return None
     def _branch_color(self, rev, color):
-        if rev.startswith("ref"):
-            return
         # Get the commit timestamps if not already there
         if not self.timestamps:
             self.timestamps = self.get_commit_timestamps()
