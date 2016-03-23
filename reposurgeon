@@ -1204,7 +1204,11 @@ class HgExtractor(Extractor):
     def _branch_color_items(self):
         if not self.tags_found:
             # If we didn't find any tags, we can safely color commits using
-            # hg branch names, since hg stores them with commit metadata
+            # hg branch names, since hg stores them with commit metadata;
+            # note, however, that the coloring this will produce might not
+            # be reproducible if the repo is written to a fast-import stream
+            # and used to construct a git repo, because hg branches can store
+            # colorings that do not match the git coloring algorithm
             return self._hg_branch_items()
         # Otherwise we have to use the emulated git algorithm since git
         # prioritizes tags over branches when coloring
