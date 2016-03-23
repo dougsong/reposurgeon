@@ -1209,15 +1209,18 @@ class HgExtractor(Extractor):
                 yield (h, "refs/heads/" + branch)
     def _branch_color_items(self):
         if not self.tags_found:
-            # If we didn't find any tags, we can safely color commits using
+            # If we didn't find any tags, we can safely color all commits using
             # hg branch names, since hg stores them with commit metadata;
             # note, however, that the coloring this will produce might not
             # be reproducible if the repo is written to a fast-import stream
             # and used to construct a git repo, because hg branches can store
             # colorings that do not match the git coloring algorithm
             return self._hg_branch_items()
-        # Otherwise we have to use the emulated git algorithm since git
-        # prioritizes tags over branches when coloring
+        # Otherwise we have to use the emulated git algorithm to color
+        # any commits that are tags or the ancestors of tags, since git
+        # prioritizes tags over branches when coloring; we will color
+        # commits that are not in the ancestor tree of any tag in
+        # _init_child_timestamps below, using the hg branch names
         return None
     def get_commit_timestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
@@ -1234,7 +1237,7 @@ class HgExtractor(Extractor):
             # Fill in the branch as a default
             self.meta[h]['branch'] = branch
             # Branch tips can't be colored, but ancestors can be if tags are present,
-            # so we only fill in the branch tips here
+            # so we only fill in the branch tips with child timestamps here
             if self.refs[branch] == h:
                 results[h] = sys.maxsize
         return results
