@@ -863,7 +863,8 @@ class Extractor(object):
             if not self.timestamps:
                 raise Fatal("Could not retrieve commit timestamps.")
         # This ensures that a branch tip rev never gets colored over
-        self.child_timestamps[rev] = sys.maxsize
+        if rev not in self.child_timestamps:
+            self.child_timestamps[rev] = sys.maxsize
         # This is used below to ensure that a branch color is never colored
         # back to a tag
         is_branch = color.startswith('refs/heads/')
