@@ -1,0 +1,79 @@
+#!/bin/sh
+# Demonstration of information loss in hg to git transition
+
+# This script constructs an hg repo that, when written to a git
+# fast-import stream by reposurgeon and used to initialize a git
+# repository, cannot be reproduced by git fast-export. This is
+# because git does not store explicit branch information for
+# every commit the way hg does; instead, it computes refs for
+# each commit using a coloring algorithm that cannot properly
+# reconstruct refs for a parent commit that has more than one
+# child and does not have the same ref as its latest child. That
+# is the case for the first commit in this repo.
+
+# Required because $PWD seems to be undefined in Gitlab's CI environment
+BIN=`realpath ..`
+
+build=True
+stream=True
+cleanup=True
+
+pecho() { printf %s\\n "$*"; }
+log() { pecho "$@"; }
+error() { log "ERROR: $@" >&2; }
+fatal() { error "$@"; exit 1; }
+try() { "$@" || fatal "'$@' failed"; }
+
+while getopts nr opt
+do
+    case $opt in
+    n) build=True; stream=False ; cleanup=False ;;
+    r) build=False; stream=True  ; cleanup=False ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+testrepo=${1:-/tmp/test-repo}
+
+USER='"J. Random Hacker" <jrh@foobar.com>'
+
+# Should we build the repo?
+if [ $build = True ]
+then
+    # Build hg test repo with multiple hg branches
+    try rm -fr $testrepo
+    try hg init $testrepo || exit 1
+    try cd $testrepo >/dev/null
+    # The weird --date incantation in the hg commits is to ensure that the commit
+    # timestamps match those in the .fi file; the 18000 is because hg wants the time zone
+    # offset in seconds west of UTC, for what reason I know not--I know there are weird
+    # time zones in the world but I didn't think any of them got down to one-second
+    # granularity in offsets...
+    (
+        try echo "Test file 1." > testfile1
+        try hg add testfile1 >/dev/null
+        try hg commit --user "$USER" --date "1456976347 18000" -m "Commit test file 1." >/dev/null
+        try echo "Test file 3." > testfile3
+        try hg add testfile3 >/dev/null
+        try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 3." >/dev/null
+        try hg update -r 0 >/dev/null
+        try hg branch test >/dev/null
+        try echo "Test file 2." > testfile2
+        try hg add testfile2 >/dev/null
+        try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 2." >/dev/null
+        try hg update default >/dev/null
+    ) || exit 1
+    try cd - >/dev/null
+fi
+
+# Should we stream the repo?
+if [ $stream = True ]
+then
+    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+fi
+
+# Should we clean up the test directory
+if [ $cleanup = True ]
+then
+    try rm -fr $testrepo
+fi
