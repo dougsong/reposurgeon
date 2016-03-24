@@ -10510,7 +10510,7 @@ file path matches.
 
     def help_split(self):
         sys.stdout.write("""
-Split a specified commit in two, the opposite of join.
+Split a specified commit in two, the opposite of squash.
 
     split at M
     split by PREFIX
