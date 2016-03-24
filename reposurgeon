@@ -2004,6 +2004,12 @@ class Tag(object):
         if not fulltagname.startswith("refs/"):
             fulltagname = "refs/" + fulltagname
         return fulltagname
+    def stamp(self, _modifiers, _eventnum, cols):
+        "Enable do_stamp() to report action stamps."
+        report = "<" + self.tagger.action_stamp() + "> " + self.comment.split("\n")[0]
+        if cols:
+            report = report[:cols]
+        return report
     def dump(self, vcs=None, options=None, realized=None, internals=None):
         "Dump this tag in import-stream format."
         pacify_pylint(vcs)
