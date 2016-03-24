@@ -44,7 +44,7 @@ all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
-	repocutter-buildregress hg-branches-buildregress
+	repocutter-buildregress hg-buildregress-branches
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
