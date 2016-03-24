@@ -53,11 +53,13 @@ then
         try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 3." >/dev/null
         try hg tag --local before >/dev/null
         try hg update -r 0 >/dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo "Test file 2." > testfile2
         try hg add testfile2 >/dev/null
         try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 2." >/dev/null
         try hg tag --local after >/dev/null
         try hg update before >/dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo "Second line." >> testfile3
         try hg commit --user "$USER" --date "1456976542 18000" -m "Add line to test file 3." >/dev/null
     ) || exit 1

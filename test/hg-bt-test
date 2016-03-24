@@ -53,6 +53,7 @@ then
         try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 2." >/dev/null
         try hg tag --local after >/dev/null
         try hg update -r 0 >/dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo "Test file 3." > testfile3
         try hg add testfile3 >/dev/null
         try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 3." >/dev/null
