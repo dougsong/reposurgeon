@@ -58,6 +58,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of A' > /dev/null
 	try hg bookmark A > /dev/null
         try hg up -r '.^^' > /dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo b > b
         try hg add b > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of B' > /dev/null
@@ -66,10 +67,12 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of B' > /dev/null
 	try hg bookmark B > /dev/null
         try hg up -r '.^^' > /dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo c > c
         try hg add c > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 1 of C' > /dev/null
         try hg up -r '.^' > /dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo cc > cc
         try hg add cc > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 2 of C' > /dev/null
@@ -77,6 +80,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Merge of C' > /dev/null
 	try hg bookmark C > /dev/null
         try hg up -r '.^^' > /dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo master > master
         try hg add master > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of Master' > /dev/null
@@ -85,6 +89,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of Master' > /dev/null
 	try hg bookmark master
         try hg up -r '.^' > /dev/null
+        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
         try echo d > d
         try hg add d > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of D' > /dev/null
