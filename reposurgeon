@@ -1115,6 +1115,7 @@ class HgExtractor(Extractor):
         super(HgExtractor, self).__init__()
         self.hgclient = None
         self.tags_found = False
+        self.bookmarks_found = False
     class _hg_or_die:
         def __init__(self, client, *cmdline):
             self.client = client
@@ -1202,6 +1203,7 @@ class HgExtractor(Extractor):
                         raise Recoverable("Unreadable 'hg bookmarks' line: %r" % line)
                     n, h = tuple(map(polystr, m.groups()))
                     self.refs['refs/%s%s' % (bookmark_ref, n)] = h
+                    self.bookmarks_found = True
         with self.hg_or_die("tags") as fp:
             for line in fp:
                 m = ref_re.match(line)
@@ -1222,13 +1224,13 @@ class HgExtractor(Extractor):
                 h, branch = polystr(line).strip().split()
                 yield (h, "refs/heads/" + branch)
     def _branch_color_items(self):
-        if not self.tags_found:
-            # If we didn't find any tags, we can safely color all commits using
-            # hg branch names, since hg stores them with commit metadata;
-            # note, however, that the coloring this will produce might not
-            # be reproducible if the repo is written to a fast-import stream
-            # and used to construct a git repo, because hg branches can store
-            # colorings that do not match the git coloring algorithm
+        if not self.tags_found and not self.bookmarks_found:
+            # If we didn't find any tags or bookmarks, we can safely color all
+            # commits using hg branch names, since hg stores them with commit
+            # metadata; note, however, that the coloring this will produce
+            # might not be reproducible if the repo is written to a fast-import
+            # stream and used to construct a git repo, because hg branches can
+            # store colorings that do not match the git coloring algorithm
             return self._hg_branch_items()
         # Otherwise we have to use the emulated git algorithm to color
         # any commits that are tags or the ancestors of tags, since git
