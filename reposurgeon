@@ -1301,11 +1301,11 @@ class HgExtractor(Extractor):
         "Check the directory out to a specified revision, return a manifest."
         assert filemap is not None # pacify pylint
         pwd = os.getcwd()
-        update_output, errcode = self.hg_with_err("update", "-C", rev)
+        errcode = self.hg_with_err("update", "-C", rev)[1]
         # 'hg update -C' can delete and recreate the current working
         # directory, so cd to what should be the current directory
         os.chdir(pwd)
-        
+
         # Sometimes, hg update can fail because of missing subrepos. When that
         # happens, try really hard to fake it. This is safe because subrepos
         # don't work in any case, so it's always safe to ignore them.
@@ -1338,8 +1338,8 @@ class HgExtractor(Extractor):
                 if dirpath == pwd:
                     while ".hg" in dirnames:
                         dirnames.remove(".hg") # Don't remove the very first .hg
-                for file in filenames:
-                    os.remove(os.path.join(dirpath,file))
+                for filename in filenames:
+                    os.remove(os.path.join(dirpath,filename))
                 if len(dirnames) == 0:
                     os.removedirs(dirpath)
 
