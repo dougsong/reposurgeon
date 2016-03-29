@@ -27,7 +27,7 @@ default:
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
-		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
+		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags hg-regress-patho \
 		svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress
@@ -44,7 +44,7 @@ all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
-	repocutter-buildregress hg-buildregress-branches
+	repocutter-buildregress hg-buildregress-branches hg-buildregress-patho
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -271,6 +271,28 @@ hg-regress-tags:
 	@if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGTAGS); do \
+		if (echo "  $${test}" >&2; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+	    done; \
+	else echo "    Skipped, hg missing."; exit 0; \
+	fi
+	@rm -f /tmp/regress
+
+# Test the hg extractor with pathological loads
+HGPATHO = be-subrepo be-subrepo2
+hg-buildregress-patho:
+	@for file in $(HGPATHO); do \
+	    echo "Remaking $${file}.fi"; \
+	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
+		2>&1 || exit 1; \
+	done
+hg-regress-patho:
+	@echo "=== Testing hg-extractor with pathological loads:"
+	@if command -v hg >/dev/null 2>&1 ; \
+	then \
+	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \

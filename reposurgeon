@@ -1142,6 +1142,17 @@ class HgExtractor(Extractor):
             # pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
             # until 3.3.
             return popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
+    def hg_with_err(self, *cmdline):
+        "Call hg and collect the error code. Returns the data directly, not a stream."
+        errcode = []
+        output = ""
+        # Since we must read the entire data before we know the error return,
+        # read it all into memory and return the block.
+        with popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]),
+                                         errhandler=lambda e: [errcode.append(e), True][1]
+                                         ) as fp:
+            output = polystr(fp.read())
+        return (output, errcode[0] if len(errcode) > 0 else 0)
     def hg_capture(self, *cmdline):
         with self.hg_or_die(*cmdline) as fp:
             output = polystr(fp.read())
@@ -1270,7 +1281,7 @@ class HgExtractor(Extractor):
         Extractor._branch_color(self, rev, color)
     def post_extract(self, repo):
         super(HgExtractor, self).post_extract(repo)
-        self.hg_capture("update", "-C", "tip")
+        self.checkout("tip", {})
         if "refs/heads/master" not in repo.branchset():
             for event in repo:
                 if isinstance(event, Commit):
@@ -1290,10 +1301,60 @@ class HgExtractor(Extractor):
         "Check the directory out to a specified revision, return a manifest."
         assert filemap is not None # pacify pylint
         pwd = os.getcwd()
-        self.hg_capture("update", "-C", rev)
+        update_output, errcode = self.hg_with_err("update", "-C", rev)
         # 'hg update -C' can delete and recreate the current working
         # directory, so cd to what should be the current directory
         os.chdir(pwd)
+        
+        # Sometimes, hg update can fail because of missing subrepos. When that
+        # happens, try really hard to fake it. This is safe because subrepos
+        # don't work in any case, so it's always safe to ignore them.
+        #
+        # There are tons of problems with this parsing. It doesn't safely
+        # handle subrepositories with special chars like spaces, quotes or that
+        # sort of thing. It also doesn't handle comments or other rarely used
+        # stuff in .hgsub files. This is documented poorly at best so it's
+        # unclear how things should work ideally.
+        if errcode != 0:
+            subrepo_txt, subcat_err = self.hg_with_err("cat", "-r", rev, ".hgsub")
+
+            subrepo_args = []
+            if subcat_err == 0:
+                # If there's a subrepository file, try to parse the names from it.
+                for subrepo_line in subrepo_txt.splitlines():
+                    parsed = subrepo_line.split("=", 1)
+                    if len(parsed) > 1:
+                        subrepo_args.append("--exclude")
+                        subrepo_args.append(parsed[0].strip())
+
+            # Since all is not well, clear everything and try from zero. This
+            # sidesteps some issues with problematic checkins.
+            self.hg_capture("update", "-C", "null") # Remove checked in files.
+            os.chdir(pwd)
+            self.hg_capture("purge", "--config", "extensions.purge=", "--all") # Remove extraneous files.
+
+            # Remove everything else. Purge is supposed to do this, but doesn't.
+            for (dirpath, dirnames, filenames) in os.walk(pwd):
+                if dirpath == pwd:
+                    while ".hg" in dirnames:
+                        dirnames.remove(".hg") # Don't remove the very first .hg
+                for file in filenames:
+                    os.remove(os.path.join(dirpath,file))
+                if len(dirnames) == 0:
+                    os.removedirs(dirpath)
+
+            # If there are subrepos, use revert to fake an update, but exclude
+            # the subrepo paths, which are proably borken.
+            if len(subrepo_args) > 0:
+                self.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
+                self.hg_capture("debugsetparents", rev)
+                self.hg_capture("debugrebuilddirstate")
+            else:
+                reup_txt, reup_err = self.hg_with_err("update", "-C", rev)
+                if reup_err != 0:
+                    raise Fatal("Failed to update to revision %s: %s" % (rev, reup_txt))
+                os.chdir(pwd)
+
         manifest = self.hg_capture("manifest").rstrip("\n").split("\n")
         return manifest
     def get_comment(self, rev):
@@ -7163,11 +7224,12 @@ class popen_or_die(object):
     # for the context manager protocol; for this use case, some other
     # context manager (e.g., LineParse) must explicitly close this
     # object to ensure that the subprocess shuts down cleanly
-    def __init__(self, command, legend="", mode="r"):
+    def __init__(self, command, legend="", mode="r", errhandler=None):
         assert mode in ("r", "w")
         self.command = command
         self.legend = legend
         self.mode = mode
+        self.errhandler = errhandler
         self.stdin = (subprocess.PIPE if mode == "w" else None)
         self.stdout = (subprocess.PIPE if mode == "r" else None)
         self.stderr = (subprocess.STDOUT if mode == "r" else None)
@@ -7208,7 +7270,8 @@ class popen_or_die(object):
             self.fp.stdout.read()
         self.fp.wait()
         if self.fp.returncode != 0:
-            raise Fatal("%s%s returned error." % (self.command, self.legend))
+            if self.errhandler is not None and not self.errhandler(self.fp.returncode):
+                raise Fatal("%s%s returned error." % (self.command, self.legend))
         self.fp = None
     def __enter__(self):
         return self.open()
