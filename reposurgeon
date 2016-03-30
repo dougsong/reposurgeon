@@ -1332,6 +1332,7 @@ class HgExtractor(Extractor):
             self.hg_capture("update", "-C", "null") # Remove checked in files.
             os.chdir(pwd)
             self.hg_capture("purge", "--config", "extensions.purge=", "--all") # Remove extraneous files.
+            os.chdir(pwd)
 
             # Remove everything else. Purge is supposed to do this, but doesn't.
             for (dirpath, dirnames, filenames) in os.walk(pwd):
