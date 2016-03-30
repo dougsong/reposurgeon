@@ -1344,11 +1344,12 @@ class HgExtractor(Extractor):
                     os.removedirs(dirpath)
 
             # If there are subrepos, use revert to fake an update, but exclude
-            # the subrepo paths, which are proably borken.
+            # the subrepo paths, which are probably borken.
             if len(subrepo_args) > 0:
                 self.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
                 self.hg_capture("debugsetparents", rev)
                 self.hg_capture("debugrebuilddirstate")
+                os.chdir(pwd)
             else:
                 reup_txt, reup_err = self.hg_with_err("update", "-C", rev)
                 if reup_err != 0:
