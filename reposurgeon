@@ -1347,6 +1347,7 @@ class HgExtractor(Extractor):
             # the subrepo paths, which are probably borken.
             if len(subrepo_args) > 0:
                 self.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
+                os.chdir(pwd)
                 self.hg_capture("debugsetparents", rev)
                 self.hg_capture("debugrebuilddirstate")
                 os.chdir(pwd)
