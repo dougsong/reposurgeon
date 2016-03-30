@@ -294,7 +294,7 @@ hg-regress-patho:
 	then \
 	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
+		./hg-$${test}-test) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
 		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
