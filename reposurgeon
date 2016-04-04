@@ -122,44 +122,39 @@ version="3.37"
 
 master_encoding = 'latin-1'
 
-def polystr(o):
-    "Polymorphic string factory function"
-    # This is something of a hack: on Python 2, bytes is an alias
-    # for str, so this ends up just giving a str back for all inputs;
-    # but on Python 3, if fed a byte string, it decodes it to Unicode
-    # using the specified master encoding, which should be either 'ascii'
-    # if you're sure all data being handled will be ASCII data, or
-    # 'latin-1' otherwise; this ensures that the original bytes can be
-    # recovered by re-encoding
-    if isinstance(o, str):
-        return o
-    if not isinstance(o, bytes):
-        return str(o)
-    return str(o, encoding=master_encoding)
-
-def polybytes(s):
-    "Polymorphic string encoding function"
-    # This is the reverse of the above hack; on Python 2 it returns
-    # all strings unchanged, but on Python 3 it encodes Unicode strings
-    # back to bytes using the specified master encoding
-    if isinstance(s, bytes):
-        return s
-    if not isinstance(s, str):
-        return bytes(s)
-    return bytes(s, encoding=master_encoding)
-
-def string_escape(s):
-    "Polymorphic string_escape/unicode_escape"
-    # This hack is necessary because Unicode strings in Python 3 don't
-    # have a decode method, so there's no simple way to ask it for the
-    # equivalent of decode('string_escape') in Python 2. This function
-    # assumes that it will be called with an object of the default
-    # string type, i.e., a `str` (Python 2 byte string, Python 3
-    # Unicode string)
-    if isinstance(s, bytes):
-        # Must be a Python 2 string
+if str is bytes:  # Python 2
+    
+    polystr = str
+    polybytes = bytes
+    
+    def string_escape(s):
         return s.decode('string_escape')
-    return s.encode(master_encoding).decode('unicode_escape')
+
+else:  # Python 3
+    
+    def polystr(o):
+        "Polymorphic string factory function"
+        if isinstance(o, str):
+            return o
+        if not isinstance(o, bytes):
+            return str(o)
+        return str(o, encoding=master_encoding)
+
+    def polybytes(s):
+        "Polymorphic string encoding function"
+        if isinstance(s, bytes):
+            return s
+        if not isinstance(s, str):
+            return bytes(s)
+        return bytes(s, encoding=master_encoding)
+
+    def string_escape(s):
+        "Polymorphic string_escape/unicode_escape"
+        # This hack is necessary because Unicode strings in Python 3 don't
+        # have a decode method, so there's no simple way to ask it for the
+        # equivalent of decode('string_escape') in Python 2. This function
+        # assumes that it will be called with a Python 3 'str' instance
+        return s.encode(master_encoding).decode('unicode_escape')
 
 def make_wrapper(fp):
     "Wrapper factory function to enforce master encoding"
