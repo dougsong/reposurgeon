@@ -129,6 +129,9 @@ if str is bytes:  # Python 2
     
     def string_escape(s):
         return s.decode('string_escape')
+    
+    def make_wrapper(fp):
+        return fp
 
 else:  # Python 3
     
@@ -156,35 +159,27 @@ else:  # Python 3
         # assumes that it will be called with a Python 3 'str' instance
         return s.encode(master_encoding).decode('unicode_escape')
 
-def make_wrapper(fp):
-    "Wrapper factory function to enforce master encoding"
-    # This can be used to wrap normally binary streams for API
-    # compatibility with functions that need a text stream in
-    # Python 3; it ensures that the binary bytes are decoded using
-    # the master encoding we use to turn bytes to Unicode in
-    # polystr above; on Python 2 this just returns the stream
-    # unchanged (the standard I/O streams are checked to see
-    # whether we are on Python 2 or 3, the same as the check used
-    # in make_std_wrapper below, for consistency)
-    if any(isinstance(s, io.TextIOWrapper) for s in (sys.stdin, sys.stdout, sys.stderr)):
+    def make_wrapper(fp):
+        "Wrapper factory function to enforce master encoding"
+        # This can be used to wrap normally binary streams for API
+        # compatibility with functions that need a text stream in
+        # Python 3; it ensures that the binary bytes are decoded using
+        # the master encoding we use to turn bytes to Unicode in
+        # polystr above
         # newline="\n" ensures that Python 3 won't mangle line breaks
         return io.TextIOWrapper(fp, encoding=master_encoding, newline="\n")
-    return fp
 
-def make_std_wrapper(stream):
-    "Standard input/output wrapper factory function"
-    # This ensures that the encoding of standard output and standard
-    # error on Python 3 matches the master encoding we use to turn
-    # bytes to Unicode in polystr above; it has no effect on Python 2
-    # since the output streams are binary
-    if isinstance(stream, io.TextIOWrapper):
+    def make_std_wrapper(stream):
+        "Standard input/output wrapper factory function"
+        # This ensures that the encoding of standard output and standard
+        # error on Python 3 matches the master encoding we use to turn
+        # bytes to Unicode in polystr above
         # line_buffering=True ensures that interactive command sessions work as expected
         return io.TextIOWrapper(stream.buffer, encoding=master_encoding, newline="\n", line_buffering=True)
-    return stream
 
-sys.stdin = make_std_wrapper(sys.stdin)
-sys.stdout = make_std_wrapper(sys.stdout)
-sys.stderr = make_std_wrapper(sys.stderr)
+    sys.stdin = make_std_wrapper(sys.stdin)
+    sys.stdout = make_std_wrapper(sys.stdout)
+    sys.stderr = make_std_wrapper(sys.stderr)
 
 # Other hacks for Python 3
 if not hasattr(sys, 'intern'):
