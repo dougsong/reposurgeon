@@ -123,18 +123,17 @@ version="3.37"
 master_encoding = 'latin-1'
 
 if str is bytes:  # Python 2
-    
     polystr = str
     polybytes = bytes
-    
+
     def string_escape(s):
         return s.decode('string_escape')
-    
+
     def make_wrapper(fp):
         return fp
 
 else:  # Python 3
-    
+
     def polystr(o):
         "Polymorphic string factory function"
         if isinstance(o, str):
