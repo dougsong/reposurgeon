@@ -1188,10 +1188,13 @@ class HgExtractor(Extractor):
         "Find all branch heads and tags"
         assert baton is not None # pacify pylint
 
-        bookmark_ref = ""
-        with self.hg_or_die("showconfig", "reposurgeon.bookmarks") as fp:
-            for line in fp:
-                bookmark_ref = line.strip()
+        # Some versions of mercurial can return an error for showconfig
+        # when the config is not present. This isn't an error.
+        bookmark_ref, code = self.hg_with_err("showconfig", "reposurgeon.bookmarks")
+        if code != 0:
+            bookmark_ref = ""
+        else:
+            bookmark_ref = bookmark_ref.strip()
 
         # both branches and tags output "name      num:hash" lines
         # branches may also append " (inactive)"
@@ -7274,7 +7277,7 @@ class popen_or_die(object):
             self.fp.stdout.read()
         self.fp.wait()
         if self.fp.returncode != 0:
-            if self.errhandler is not None and not self.errhandler(self.fp.returncode):
+            if self.errhandler is None and not self.errhandler(self.fp.returncode):
                 raise Fatal("%s%s returned error." % (self.command, self.legend))
         self.fp = None
     def __enter__(self):
@@ -8639,7 +8642,7 @@ More ways to construct event sets:
 @min()     create singleton set of the least element in the argument
 @max()     create singleton set of the greatest element in the argument
 
-Other special functions are available: do 'help functions; for more. 
+Other special functions are available: do 'help functions; for more.
 
 You can compose sets as follows:
 
