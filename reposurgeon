@@ -7277,7 +7277,7 @@ class popen_or_die(object):
             self.fp.stdout.read()
         self.fp.wait()
         if self.fp.returncode != 0:
-            if self.errhandler is None and not self.errhandler(self.fp.returncode):
+            if self.errhandler is None or not self.errhandler(self.fp.returncode):
                 raise Fatal("%s%s returned error." % (self.command, self.legend))
         self.fp = None
     def __enter__(self):
