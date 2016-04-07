@@ -50,19 +50,19 @@ then
         try echo tail > tail
         try hg add tail
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail' > /dev/null
-	try hg init nest
-	try echo nest = this/should/never/be/a/valid/path > .hgsub
-	try hg add .hgsub
+        try hg init nest
+        try echo nest = this/should/never/be/a/valid/path > .hgsub
+        try hg add .hgsub
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Add Subrepo' > /dev/null
-	try echo subfile > nest/subfile
-	try hg add -R nest nest/subfile
+        try echo subfile > nest/subfile
+        try hg add -R nest nest/subfile
         try hg commit -S --user "$USER" --date "1456976347 18000" -m 'Subrepo Commit' > /dev/null
-	try hg rm .hgsub
+        try hg rm .hgsub
         try hg commit -S --user "$USER" --date "1456976347 18000" -m 'Subrepo Remove' > /dev/null
-	try rm -rf nest >/dev/null
-	try mkdir nest >/dev/null
-	try echo realfile > nest/subfile
-	try hg add nest/subfile >/dev/null
+        try rm -rf nest >/dev/null
+        try mkdir nest >/dev/null
+        try echo realfile > nest/subfile
+        try hg add nest/subfile >/dev/null
         try hg commit -S --user "$USER" --date "1456976347 18000" -m 'Subdir Create' > /dev/null
     ) || exit 1
     try cd - >/dev/null
