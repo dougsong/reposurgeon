@@ -3443,6 +3443,15 @@ when the commit was originally made under hg.  Unfortunately, this is
 a real ontological mismatch, not a problem that can be fixed by
 cleverness in <command>reposurgeon</command>.</para>
 
+<para>Limitation: Converting an hg repo that uses branches to git can
+lose information because git does not store an explicit branch as part
+of commit metadata, but colors commits with branch or tag names on the
+fly using a specific coloring algorithm, which might not match the explicit
+branch assignments to commits in the original hg repo. Reposurgeon
+preserves the hg branch information when reading an hg repo, so it is
+available from within reposurgeon itself, but there is no way to preserve
+it if the repo is written to git.</para>
+
 <para>Limitation: While the Subversion read-side support is in good shape,
 the write-side support is more of a sketch or proof-of-concept than a
 robust implementation;  it only works on very simple cases and does
