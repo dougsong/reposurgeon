@@ -190,6 +190,14 @@ if not hasattr(itertools, 'izip'):
 if not hasattr(itertools, 'ifilterfalse'):
     itertools.ifilterfalse = itertools.filterfalse
 
+# Warning: In some Python 3 versions getstatusoutput() returns
+# status incorrectly so that a nonzero exit looks like the subprocess
+# was signaled!  (Observed under 3.4.3; Debian bug #764848)
+try:
+    from subprocess import getstatusoutput
+except ImportError:
+    from commands import getstatusoutput
+
 # This hack is more complicated because there is no Python 3 email
 # function that works like Python 2's email.message_from_string
 
@@ -1389,8 +1397,8 @@ global_options = {}
 def whoami():
     "Ask various programs that keep track of who you are who you are."
     # Git version-control system
-    (nameerr, nameout) = subprocess.getstatusoutput("git config user.name")
-    (emailerr, emailout) = subprocess.getstatusoutput("git config user.email")
+    (nameerr, nameout) = getstatusoutput("git config user.name")
+    (emailerr, emailout) = getstatusoutput("git config user.email")
     if nameerr == 0 and nameout and emailerr == 0 and emailout:
         return (nameout, emailout)
     # Various random configs
