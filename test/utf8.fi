@@ -1,0 +1,31 @@
+blob
+mark :1
+data 6
+file1
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Sergio Baldoví <sergio@no-domain.com> 1461097177 +0200
+committer Sergio Baldoví <sergio@no-domain.com> 1461097177 +0200
+data 33
+First commit. Thanks to György.
+M 100644 :1 file1.txt
+
+blob
+mark :3
+data 6
+file2
+
+commit refs/heads/master
+mark :4
+author Javier Peña <javier@no-domain.com> 1461097177 +0200
+committer Sergio Baldoví <sergio@no-domain.com> 1461097177 +0200
+data 70
+Second commit. Thanks to Alexander (Александр) and Li (李).
+from :2
+M 100644 :3 file2.txt
+
+reset refs/heads/master
+from :4
+

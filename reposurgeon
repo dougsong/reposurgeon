@@ -8174,7 +8174,10 @@ into sections of the input stream instead).
             assert(self.pop() == '/')
             endat = self.line.index('/')
             try:
-                search = re.compile(self.line[:endat].encode(binary_encoding)).search
+                match =  self.line[:endat]
+                if str is not bytes:
+                    match = match.encode(master_encoding)
+                search = re.compile(match).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
