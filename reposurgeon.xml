@@ -1327,6 +1327,7 @@ of file operations in the original commit.</para>
      <emphasis>mark</emphasis> <emphasis>path</emphasis>
      |
      <emphasis>R</emphasis> <emphasis>source</emphasis> <emphasis>target</emphasis>
+     |
      <emphasis>C</emphasis> <emphasis>source</emphasis> <emphasis>target</emphasis>}
 </term>
 <listitem>

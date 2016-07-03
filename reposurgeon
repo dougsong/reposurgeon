@@ -10281,13 +10281,13 @@ in the commit's ancestry.
             except ValueError:
                 raise Recoverable("non-numeric mark %s in add command" % mark)
             if not isinstance(repo.objfind(mark), Blob):
-                raise Recoverable("mark %s in add command does not refer to a blo" % mark)
+                raise Recoverable("mark %s in add command does not refer to a blob" % mark)
             elif markval >= min(self.selection):
                 raise Recoverable("mark %s in add command is after add location" % mark)
             path = fields[3]
             for _, event in self.selected(Commit):
                 if path in event.paths():
-                    raise Recoverable("%s already has on op for %s" \
+                    raise Recoverable("%s already has an op for %s" \
                                       % (event.mark, path))
         elif optype in ("R", "C"):
             try:
@@ -10297,7 +10297,7 @@ in the commit's ancestry.
                 raise Recoverable("too few arguments in add %s" % optype)
             for _, event in self.selected(Commit):
                 if source in event.paths() or target in event.paths():
-                    raise Recoverable("%s already has on op for %s or %s" \
+                    raise Recoverable("%s already has an op for %s or %s" \
                                       % (event.mark, source, target))
                 if repo.ancestor_count(event, source) == 0:
                     raise Recoverable("no previous M for %s" % source)
