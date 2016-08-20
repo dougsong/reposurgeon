@@ -885,8 +885,8 @@ def pathrename(source, selection, patterns):
             pathline = header[offs:endoffs]
             after = header[endoffs:]
             #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
-            pathline = re.sub(patterns[0].pattern,
-                              patterns[1].pattern,
+            pathline = re.sub(patterns[0],
+                              patterns[1],
                               pathline)
             header = before + pathline + after
         return header + properties + content
@@ -975,7 +975,7 @@ if __name__ == '__main__':
         elif arguments[0] == "strip":
             strip(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))
         elif arguments[0] == "pathrename":
-            pathrename(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))
+            pathrename(DumpfileSource(sys.stdin, baton), selection, arguments[1:])
         elif arguments[0] == "expunge":
             expunge(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))
         elif arguments[0] == "renumber":
