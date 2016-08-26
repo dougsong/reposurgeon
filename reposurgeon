@@ -10475,7 +10475,7 @@ an offset literal of +0 or -0.
             elif isinstance(event, Commit):
                 event.committer.date.timestamp += offset
                 if len(args) > 1:
-                    event.committer.date,orig_tz_string = args[1]
+                    event.committer.date.orig_tz_string = args[1]
                 for author in event.authors:
                     author.date.timestamp += offset
                     if len(args) > 1:
