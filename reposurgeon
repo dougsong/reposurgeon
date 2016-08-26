@@ -10613,7 +10613,7 @@ Split a specified commit in two, the opposite of squash.
 The selection set is required to be a commit location; the modifier is
 a preposition which indicates which splitting method to use. If the
 preposition is 'at', then the third argument must be an integer
-1-origin index of a file operation within the commit. If it is 'in',
+1-origin index of a file operation within the commit. If it is 'by',
 then the third argument must be a pathname to be matched.
 
 The commit is copied and inserted into a new position in the
@@ -10649,7 +10649,7 @@ file operations in the original commit.
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
                 raise Recoverable("expected integer fileop index (1-origin)")
-        elif prep == 'in':
+        elif prep == 'by':
             split = self.chosen().split_commit_by_prefix(where, obj)
             if not split:
                 raise Recoverable("couldn't find '%s' in a fileop path." \
