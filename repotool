@@ -202,7 +202,7 @@ export)
     fi
     if [ "$cvs" = 'yes' ]
     then
-       find -name \*,v | cvs-fast-export -q --reposurgeon
+       find . -name \*,v | cvs-fast-export -q --reposurgeon
     elif [ -d locks ]
     then
 	# Subversion dump rather than the git conversion because the
