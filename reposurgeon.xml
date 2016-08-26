@@ -109,7 +109,7 @@ you.  It takes care not to ever write a repository in an actually
 inconsistent state, and will terminate with an error message rather
 than proceed when its internal data structures are confused.  However,
 there are lots of things you can do with it - like altering stored
-commit timestamps to they no longer match the commit sequence - that
+commit timestamps so they no longer match the commit sequence - that
 are likely to cause havoc after you're done.  Proceed with caution and
 check your work.</para>
 
@@ -1497,7 +1497,9 @@ substitution is performed; putting 'g' after the slash replaces
 globally, and a numeric literal gives the maximum number
 of substitutions to perform. Other flags available restrict substitution
 scope - 'c' for comment text only, 'C' for committer name only, 'a'
-for author names only.</para>
+for author names only.  Note that parsing of a --regex argument will
+be confused by ant substring consisting of whitespace followed by #;
+use "\s" rather than whitespace to avoid this.</para>
 
 <para>With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slightly
@@ -3464,6 +3466,10 @@ filesystem node (Mac OS X behaves like this by default).  Problems
 will arise if any two paths in a repo differ by case only. To avoid
 the problem on a Mac, do all your surgery on an HFS+ file system
 formatted with case sensitivity specifically enabled.</para>
+
+<para>Limitation: If whitespace followed by # appears in a string or
+regexp command argument, it will be misinterpreted as the beginning of
+a line-ending comment and screw up parsing.</para>
 
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
