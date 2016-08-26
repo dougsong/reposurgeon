@@ -10479,7 +10479,7 @@ an offset literal of +0 or -0.
                 for author in event.authors:
                     author.date.timestamp += offset
                     if len(args) > 1:
-                        author.date,orig_tz_string = args[1]
+                        author.date.orig_tz_string = args[1]
 
     def help_when(self):
         sys.stdout.write("""
