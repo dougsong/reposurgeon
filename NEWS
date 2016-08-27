@@ -1,5 +1,11 @@
 			reposurgeon project news
 
+3.38: 2016-08-27
+     Fix handling of second argument of timeoffset.
+     Allow full find/replace with UTF-8.
+     Make the syntax of the 'split' command consistent with the manual.
+     Fix buggy 'authors write' command, and add a regression test for it.
+
 3.37: 2016-03-14
      Prevent two potential crash bug introduced by Python 3 porting.
 
