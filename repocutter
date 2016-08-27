@@ -348,7 +348,8 @@ class DumpfileSource(LineBufferedSource):
                 sys.exit(1)
             m = re.search(r"Node-copyfrom-rev: ([1-9][0-9]*)", line)
             if m and int(m.group(1)) not in self.emitted_revisions:
-                self.require("Node-copyfrom-path")
+                header += line
+                header += self.require("Node-copyfrom-path")
                 continue
             header += line
             if line == '\n':
