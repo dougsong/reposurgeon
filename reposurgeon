@@ -1826,6 +1826,8 @@ class Attribution(object):
         return (self.name == other.name
                 and self.email == other.email
                 and self.date == other.date)
+    def userid(self):
+        return self.email.split("@")[0]
     def who(self):
         return self.name + " <" + self.email + ">"
     def __str__(self):
@@ -5763,13 +5765,13 @@ class Repository:
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
-                contributors[event.committer.name] = event.committer.who()
+                contributors[event.committer.userid()] = event.committer.who()
                 for author in event.authors:
-                    contributors[author.name] = author.who()
+                    contributors[author.userid()] = author.who()
             elif isinstance(event, Tag):
-                contributors[event.tagger.name] = event.tagger.who()
-        for (name, cid) in contributors.items():
-            fp.write("%s = %s\n" % (name, cid))
+                contributors[event.tagger.userid()] = event.tagger.who()
+        for (userid, cid) in contributors.items():
+            fp.write("%s = %s\n" % (userid, cid))
     def read_legacymap(self, fp):
         "Read a legacy-references dump and initialize the repo's legacy map."
         commit_map = {}

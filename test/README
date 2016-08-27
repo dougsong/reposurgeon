@@ -177,7 +177,7 @@ svn commit -m 'commit two'
 svn copy $REPO/trunk $REPO/tags/1.0 -m 'Fixed release 1.0'
 ------------------------------------------------------
 
-He then converted ut with these commands:
+He then converted it with these commands:
 
 ------------------------------------------------------
 branchify_map :tags/(.*)/:tags/\1:
