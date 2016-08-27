@@ -63,5 +63,7 @@ PROPS-END
 Node-path: c
 Node-kind: dir
 Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: a
 
 
