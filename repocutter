@@ -648,8 +648,8 @@ def squash(source, timefuzz,
             force_new_range = True
             last_n = -1
             last_oldrevs = []
-            # Process the raw outmap into a form that compressees ranges.
-            # Squash cliques are left alone.  Ranger between
+            # Process the raw outmap into a form that compresses ranges.
+            # Squash cliques are left alone.  Ranges between
             # them map to either
             # (1) None followed by a singleton list (single deleted rev)
             # (2) None followed by a two-element list (range of deletions)
