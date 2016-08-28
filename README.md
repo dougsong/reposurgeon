@@ -30,9 +30,6 @@ Subversion dumpfiles; it may be useful in extracting portions of
 particularly gnarly Subversion repositories for conversion witth
 reposurgeon.
 
-A 'patchpipe' program supports converting among version-control patch
-formats.
-
 This distribution supports a generic conversion workflow using these
 tools, and includes the DVCS Migration Guide that describes how to use it.
 
