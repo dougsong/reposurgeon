@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 #
-# Hacked together by ESR, October 2009. New BSD license applies.
-# The Subversion project is explicitly granted permission to redistribute
-# under the prevailing license of their project.
+# Hacked together by ESR, October 2009.
 #
+# SPDX-License-Identifier: BSD-2-Clause
 """
 repocutter - stream surgery on SVN dump files
 general usage: repocutter [-q] [-r SELECTION] SUBCOMMAND
