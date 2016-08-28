@@ -123,10 +123,11 @@ well.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>pathrename</term>
-<listitem><para>Modify Node-path headers matching a specified Python
-regular expression; replace with a given string.  The string may
-contain Pyton backreferences to parenthesized portions of the
-pattern. See the embedded help for syntax details.</para></listitem>
+<listitem><para>Modify Node-path and Node-copyfrom-path headers
+matching a specified Python regular expression; replace with a given
+string.  The string may contain Python backreferences to parenthesized
+portions of the pattern. See the embedded help for syntax
+details.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>renumber</term>

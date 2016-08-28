@@ -48,7 +48,7 @@ oneliners = {
     "setlog":     "Mutating log entries",
     "strip":      "Replace content with unique cookies, preserving structure",
     "expunge":    "Expunge operations by Node-path header",
-    "pathrename": "Transform Node-path headers with a regexp replace",
+    "pathrename": "Transform path headers with a regexp replace",
     "renumber":   "Renumber revisions so they're contiguous",
     "reduce":     "Topologically reduce a dump.",
     }
@@ -149,8 +149,8 @@ after this filtering has its Revision record removed as well.
     "pathrename": """\
 expunge: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
-Modify Node-path headers matching the specified Python regular
-expression FROM; replace with TO.  TO may contain Pyton
+Modify Node-path and Node-copyfrom-path headers matching the specified
+Python regular expression FROM; replace with TO.  TO may contain Pyton
 backreferences to parenthesized portions of FROM.
 """,
     "renumber": """\
@@ -877,18 +877,19 @@ def expunge(source, selection, patterns):
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
     def __pathrename(header, properties, content):
-        offs = header.find("Node-path: ")
-        if offs > -1:
-            offs += 11
-            endoffs = offs + header[offs:].index("\n")
-            before = header[:offs]
-            pathline = header[offs:endoffs]
-            after = header[endoffs:]
-            #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
-            pathline = re.sub(patterns[0],
-                              patterns[1],
-                              pathline)
-            header = before + pathline + after
+        for htype in ("Node-path: ", "Node-copyfrom-path: "):
+            offs = header.find(htype)
+            if offs > -1:
+                offs += len(htype)
+                endoffs = offs + header[offs:].index("\n")
+                before = header[:offs]
+                pathline = header[offs:endoffs]
+                after = header[endoffs:]
+                #sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
+                pathline = re.sub(patterns[0],
+                                  patterns[1],
+                                  pathline)
+                header = before + pathline + after
         return header + properties + content
     source.report(selection, __pathrename)
 
