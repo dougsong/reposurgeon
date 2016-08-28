@@ -822,9 +822,10 @@ class Extractor(object):
     def color_branches(self, baton):
         "Color all commits with their branch name."
         color_items = self._branch_color_items()
-        if color_items:
-            # If the repo will give us a complete list of (commit hash, branch name) pairs,
-            # use that to do the coloring (this will be the case for git)
+        if color_items is not None:
+            # If the repo will give us a complete list of (commit
+            # hash, branch name) pairs, use that to do the coloring
+            # (this will be the case for git)
             for h, color in color_items:
                 self.meta[h]['branch'] = color
         else:
