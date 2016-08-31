@@ -309,6 +309,7 @@ class Properties:
 class DumpfileSource(LineBufferedSource):
     "This class knows about dumpfile format."
     NodeLeader = re.compile("Node-")
+    TextContentLength = re.compile("Text-content-length: ([0-9]*)")
     def __init__(self, infile, baton=None):
         LineBufferedSource.__init__(self, infile)
         self.baton = baton
@@ -359,20 +360,11 @@ class DumpfileSource(LineBufferedSource):
             if property_hook:
                 (props.propkeys, props.properties) = property_hook(props.propkeys, props.properties)
             properties = str(props)
-        # use a list since extending the string gets slow
-        content_list = []
-        if "Text-content-length" in header:
-            while True:
-                line = self.readline()
-                #print("I see contents line", repr(line))
-                if not line:
-                    break
-                if line.startswith(("Node-", "Revision-number")):
-                    self.push(line)
-                    break
-                content_list.append(line)
-        content = "".join(content_list)
-        del content_list
+        # Using a read() here allows us to handle binary content
+        content = ""
+        cl = DumpfileSource.TextContentLength.search(header)
+        if cl:
+            content = self.read(int(cl.group(1)))
         #print("READ NODE ENDS")
         if property_hook:
             header = DumpfileSource.set_length("Prop-content", header,
