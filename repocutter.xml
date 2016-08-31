@@ -38,8 +38,9 @@ form suitable for conversion.</para>
 partial functional overlap between repocutter and reposurgeon is that
 repocutter was first written earlier and became a testbed for some of
 the design concepts in reposurgeon. After reposurgeon was written, the
-author that it could not naturally support some useful operations very
-specific to Subversion, and enhanced repocutter to do those.)
+author learned that it could not naturally support some useful
+operations very specific to Subversion, and enhanced repocutter to do
+those.)</para>
 
 <para>In all commands, the -r (or --range) option limits the selection
 of revisions over which an operation will be performed. A selection
