@@ -1580,11 +1580,13 @@ an offset literal of +0 or -0.</para>
 be united into one union repo and removed from the load list.  The
 union repo will be selected.</para>
 
-<para>The root of each repo (other than the oldest repo) will be grafted as
-a child to the last commit in the dump with a preceding commit date.
-Running last to first, duplicate names will be disambiguated using the
-source repository name (thus, recent duplicates will get priority over
-older ones). After all grafts, marks will be renumbered.</para>
+<para>The root of each repo (other than the oldest repo) will be
+grafted as a child to the last commit in the dump with a preceding
+commit date.  This will produce a union repository with one branch for
+each part.  Running last to first, duplicate tag and branch names will
+be disambiguated using the source repository name (thus, recent
+duplicates will get priority over older ones). After all grafts, marks
+will be renumbered.</para>
 
 <para>The name of the new repo will be the names of all parts concatenated,
 separated by '+'. It will have no source directory or preferred system
