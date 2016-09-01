@@ -132,7 +132,7 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 #
 
 reposurgeon-$(VERS).tar.xz: $(SOURCES)
-	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES)
+	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) test
 
 dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
 
