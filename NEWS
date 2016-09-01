@@ -1,8 +1,10 @@
 			reposurgeon project news
 
 Repository head:
-     Make repocutter pathrename and expunge preseve Node-copyfrom-* headers.
+     Make repocutter pathrename and expunge preserve Node-copyfrom-* headers.
      Make pathrename hack Node-copyfrom-path headers as well as Node-path.
+     Enable repocutter to handle binary content in blobs.
+     Improved documentation for the unite command.
 
 3.38: 2016-08-27
      Fix handling of second argument of timeoffset.
