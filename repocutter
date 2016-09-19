@@ -51,6 +51,7 @@ oneliners = {
     "pathrename": "Transform path headers with a regexp replace",
     "renumber":   "Renumber revisions so they're contiguous",
     "reduce":     "Topologically reduce a dump.",
+    "see":        "Report only essential topological information",
     }
 
 helpdict = {
@@ -175,6 +176,15 @@ until all future commits have been checked for copy operations, this
 command requires an input file.  It cannot operate on standard input.
 The reduced dump is emitted to standard output.
 """,
+    "see": """\
+see: usage: repocutter [-r SELECTION] see
+
+Render a very condensed report on the repository node structure, mainly
+useful for examining strange and pathological repositories,  File content
+is ignored.  You get one line per repository operation, reporting the
+revision, operation type, file path, and the copy source (if any).
+Directory paths are distinguished by a trailing slash.
+"""
     }
 
 import os, sys, calendar, time, getopt, re, io
@@ -906,6 +916,31 @@ def renumber(source):
         else:
             sys.stdout.write(line)
 
+def header_extract(hd, header):
+    "Extract content of  a specified header"
+    offs = header.find(hd + ": ")
+    if offs == -1:
+        return None
+    else:
+        offs += len(hd) + 2
+        return header[offs:offs+header[offs:].index("\n")]
+
+def see(source, selection):
+    "Strip out ops defined by a revision selection and a path regexp."
+    def __seenode(header, properties, content):
+        path = header_extract("Node-path", header)
+        kind = header_extract("Node-kind", header)
+        if kind == "dir":
+            path += "/"
+        frompath = header_extract("Node-copyfrom-path", header)
+        fromrev = header_extract("Node-copyfrom-rev", header)
+        if frompath and fromrev:
+            path += " from %s:%s" % (fromrev, frompath)
+        action = header_extract("Node-action", header)
+        print("%-5s %-8s %s" % (source.revision, action, path))
+    source.report(selection,
+                  nodehook=__seenode, passthrough=False)
+
 def patterns_compile(patterns):
     return [re.compile(pattern) for pattern in patterns]
 
@@ -942,7 +977,7 @@ if __name__ == '__main__':
             elif switch in ('-r', '--range'):
                 selection = SubversionRange(val)
         if len(arguments) == 0:
-            sys.stderr.write("Type 'repocutter help' for usage." + os.linesep)
+            sys.stderr.write("Type 'repocutter help' for usage.\n")
             sys.exit(1)
         baton = None
         if arguments[0] != 'help':
@@ -980,6 +1015,8 @@ if __name__ == '__main__':
             renumber(DumpfileSource(sys.stdin, baton))
         elif arguments[0] == "reduce":
             doreduce(DumpfileSource(open(arguments[1]), baton))
+        elif arguments[0] == "see":
+            see(DumpfileSource(sys.stdin, baton), selection)
         elif arguments[0] == "help":
             if len(arguments) == 1:
                 sys.stdout.write(__doc__)
