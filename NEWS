@@ -1,5 +1,8 @@
 			reposurgeon project news
 
+Repository head:
+     In repocutter, repair fatal bugs in log and setlog commands.
+
 3.39: 2016-09-01
      Make repocutter pathrename and expunge preserve Node-copyfrom-* headers.
      Make pathrename hack Node-copyfrom-path headers as well as Node-path.

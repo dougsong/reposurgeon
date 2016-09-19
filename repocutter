@@ -778,6 +778,8 @@ def log(source, _selection):
 def setlog(source, logpatch, selection):
     "Mutate log entries."
     logpatch = Logfile(file(logpatch), selection)
+    def __nodehook(header, properties, content):
+        return header + properties + content
     def loghook(propkeys, propdict):
         if "svn:log" in propkeys and source.revision in logpatch:
             (author, _date, logentry) = logpatch[source.revision]
@@ -786,7 +788,7 @@ def setlog(source, logpatch, selection):
                 sys.exit(1)
             propdict["svn:log"] = logentry
         return (propkeys, propdict)
-    source.apply_property_hook(selection, loghook)
+    source.report(selection, __nodehook, prophook=loghook)
 
 def strip(source, selection, patterns):
     "Strip a portion of the dump file defined by a revision selection."
@@ -945,7 +947,10 @@ if __name__ == '__main__':
         baton = None
         if arguments[0] != 'help':
             if progress:
-                baton = Baton(oneliners[arguments[0]], "done")
+                try:
+                    baton = Baton(oneliners[arguments[0]], "done")
+                except KeyError:
+                    pass
             else:
                 baton = None
         if arguments[0] == "squash":
@@ -981,7 +986,7 @@ if __name__ == '__main__':
             else:
                 sys.stdout.write(helpdict.get(arguments[1], arguments[1] + ": no such subcommand.\n"))
         else:
-            sys.stderr.write(('"%s": unknown subcommand\n' % arguments[0])+os.linesep)
+            sys.stderr.write(('"%s": unknown subcommand\n' % arguments[0]))
             sys.exit(1)
     except KeyboardInterrupt:
         pass
