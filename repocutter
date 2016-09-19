@@ -911,7 +911,7 @@ if __name__ == '__main__':
     try:
         (options, arguments) = getopt.getopt(sys.argv[1:], "ce:fl:m:p:qr:s",
                                              ["excise", "flagrefs", "revprop=",
-                                              "logpatch=", "map=",
+                                              "logentries=", "map=",
                                               "quiet", "range="])
         selection = SubversionRange("0:HEAD")
         timefuzz = 300	# 5 minute fuzz
