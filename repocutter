@@ -927,7 +927,7 @@ def header_extract(hd, header):
 
 def see(source, selection):
     "Strip out ops defined by a revision selection and a path regexp."
-    def __seenode(header, properties, content):
+    def __seenode(header, _properties, _content):
         path = header_extract("Node-path", header)
         kind = header_extract("Node-kind", header)
         if kind == "dir":
