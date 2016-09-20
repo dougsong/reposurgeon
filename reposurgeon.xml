@@ -2996,16 +2996,6 @@ branch creation but couldn't deduce a history for. Use the --nobranch
 option.</para>
 </listitem>
 </varlistentry>
-<varlistentry>
-<term>inconsistently empty from set</term>
-<listitem>
-<para>This message means means <command>reposurgeon</command> has
-failed an internal sanity check; the directory structure implied by
-its internally-built filemaps is not consistent with what's in the
-parsed Subversion nodes.  This should never happen; if you see it,
-report a bug in <command>reposurgeon</command>.</para>
-</listitem>
-</varlistentry>
 </variablelist>
 
 </refsect2>
