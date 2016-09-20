@@ -505,7 +505,7 @@ class Logfile:
             lineno += 1
             line = readable.readline()
             if state == 'in_logentry':
-                if not line or line.startswith("-----------"):
+                if not line or line.startswith("-" * 72):
                     if rev:
                         logentry = logentry.strip()
                         if restriction is None or rev in restriction:
