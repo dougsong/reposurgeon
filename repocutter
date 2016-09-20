@@ -148,7 +148,7 @@ Python regular expressions.  Any revision left with no Node records
 after this filtering has its Revision record removed as well.
 """,
     "pathrename": """\
-expunge: usage: repocutter [-r SELECTION ] pathrename FROM TO
+pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
 Modify Node-path and Node-copyfrom-path headers matching the specified
 Python regular expression FROM; replace with TO.  TO may contain Pyton
