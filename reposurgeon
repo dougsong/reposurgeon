@@ -11774,8 +11774,8 @@ to re-set it.
     def help_branchify_map(self):
         sys.stdout.write("""
 Specify the list of regular expressions used for mapping the svn branches that
-are detected by branchify. If non of the expressions match the default behaviour
-applies. Which maps a branch to the name of the last directory, except for trunk
+are detected by branchify. If none of the expressions match, the default behavior
+applies. This maps a branch to the name of the last directory, except for trunk
 and '*' which are mapped to master and root.
 
 With no arguments the current regex replacement pairs are shown. Passing 'reset'

@@ -2350,19 +2350,19 @@ forget to re-set it.</para>
 <listitem>
 <para>Specify the list of regular expressions used for mapping the svn
 branches that are detected by branchify. If none of the expressions
-match the default behaviour applies, which maps a branch to the name
+match the default behaviour applies. This maps a branch to the name
 of the last directory, except for trunk and <quote>*</quote> which are
 mapped to master and root.</para>
 
 <para>With no arguments the current regex replacement pairs are
-shown. Passing 'reset' will clear the reset mapping.</para>
+shown. Passing 'reset' will clear the mapping.</para>
 
-<para>Will match each branch name against regex1 and if it matches
-rewrite its branch name to branch1. If not it will try regex2 and so
-forth until it either found a matching regex or there are no regexs
-left. The regular expressions should be in <ulink
+<para>The branchify command will match each branch name against regex1
+and if it matches rewrite its branch name to branch1. If not it will
+try regex2 and so forth until it either found a matching regex or
+there are no regexs left. The regular expressions should be in <ulink
 url="http://docs.python.org/2/library/re.html">Python's</ulink>. format. The
-branch name can use backreferences (see the sub function in the Python
+branch name can use backreferences (see the re.sub function in the Python
 documentation).</para>
 
 <para>Note that the regular expressions are appended to 'refs/'
