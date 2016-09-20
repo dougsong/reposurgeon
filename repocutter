@@ -30,6 +30,7 @@ Available subcommands:
    setlog
    strip
    expunge
+   sift
    pathrename
    renumber
    reduce
@@ -48,6 +49,7 @@ oneliners = {
     "setlog":     "Mutating log entries",
     "strip":      "Replace content with unique cookies, preserving structure",
     "expunge":    "Expunge operations by Node-path header",
+    "sift":       "Sift for operations by Node-path header",
     "pathrename": "Transform path headers with a regexp replace",
     "renumber":   "Renumber revisions so they're contiguous",
     "reduce":     "Topologically reduce a dump.",
@@ -144,8 +146,17 @@ particularly complex node structure.
 expunge: usage: repocutter [-r SELECTION ] expunge PATTERN...
 
 Delete all operations with Node-path headers matching specified
-Python regular expressions.  Any revision left with no Node records
-after this filtering has its Revision record removed as well.
+Python regular expressions (opposite of 'sift').  Any revision
+left with no Node records after this filtering has its Revision
+record removed as well.
+""",
+    "sift": """\
+sift: usage: repocutter [-r SELECTION ] sift PATTERN...
+
+Delete all operations with Node-path headers *not* matching specified
+Python regular expressions (opposite of 'expunge').  Any revision left
+with no Node records after this filtering has its Revision record
+removed as well.
 """,
     "pathrename": """\
 pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
@@ -878,6 +889,23 @@ def expunge(source, selection, patterns):
             return header + properties + content
     source.report(selection, __expunge)
 
+def sift(source, selection, patterns):
+    "Sift for ops defined by a revision selection and a path regexp."
+    def __sift(header, properties, content):
+        matched = False
+        offs = header.find("Node-path: ")
+        if offs > -1:
+            offs += 11
+            filepath = header[offs:offs+header[offs:].index("\n")]
+            for pattern in patterns:
+                if re.search(pattern, filepath):
+                    #sys.stderr.write("sift skipping: " + filepath +"\n")
+                    matched = True
+                    break
+        if matched:
+            return header + properties + content
+    source.report(selection, __sift)
+
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
     def __pathrename(header, properties, content):
@@ -1011,6 +1039,8 @@ if __name__ == '__main__':
             pathrename(DumpfileSource(sys.stdin, baton), selection, arguments[1:])
         elif arguments[0] == "expunge":
             expunge(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))
+        elif arguments[0] == "sift":
+            sift(DumpfileSource(sys.stdin, baton), selection, patterns_compile(arguments[1:]))
         elif arguments[0] == "renumber":
             renumber(DumpfileSource(sys.stdin, baton))
         elif arguments[0] == "reduce":

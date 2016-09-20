@@ -2,7 +2,8 @@
 
 Repository head:
      In repocutter, repair fatal bugs in log and setlog commands.
-     Added "see" commnd for reporting repository structure.
+     In repocutter, added "see" command for reporting repository structure.
+     In repocutter, added "sift" command inverting "expunge".
 
 3.39: 2016-09-01
      Make repocutter pathrename and expunge preserve Node-copyfrom-* headers.
