@@ -195,7 +195,7 @@ useful for examining strange and pathological repositories,  File content
 is ignored.  You get one line per repository operation, reporting the
 revision, operation type, file path, and the copy source (if any).
 Directory paths are distinguished by a trailing slash.  The 'copy'
-operation is really an 'add' with a directoty source and target;
+operation is really an 'add' with a directory source and target;
 the display name is changed to make them easier to see.
 """
     }
