@@ -194,7 +194,9 @@ Render a very condensed report on the repository node structure, mainly
 useful for examining strange and pathological repositories,  File content
 is ignored.  You get one line per repository operation, reporting the
 revision, operation type, file path, and the copy source (if any).
-Directory paths are distinguished by a trailing slash.
+Directory paths are distinguished by a trailing slash.  The 'copy'
+operation is really an 'add' with a directoty source and target;
+the display name is changed to make them easier to see.
 """
     }
 
@@ -962,9 +964,12 @@ def see(source, selection):
             path += "/"
         frompath = header_extract("Node-copyfrom-path", header)
         fromrev = header_extract("Node-copyfrom-rev", header)
-        if frompath and fromrev:
-            path += " from %s:%s" % (fromrev, frompath)
         action = header_extract("Node-action", header)
+        if frompath and fromrev:
+            if kind == "dir":
+                frompath += "/"
+            path += " from %s:%s" % (fromrev, frompath)
+            action = "copy"
         print("%-5s %-8s %s" % (source.revision, action, path))
     source.report(selection,
                   nodehook=__seenode, passthrough=False)
