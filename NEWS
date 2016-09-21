@@ -1,6 +1,6 @@
 			reposurgeon project news
 
-Repository head:
+3.40: 2016-09-20
      In repocutter, repair fatal bugs in log and setlog commands.
      In repocutter, added "see" command for reporting repository structure.
      In repocutter, added "sift" command inverting "expunge".
