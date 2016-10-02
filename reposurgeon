@@ -31,7 +31,7 @@ try:
 except ImportError:
     hglib = None
 
-version=3.40
+version="3.40"
 
 #
 # This code is intended to be hackable to support for special-purpose or
@@ -12012,7 +12012,7 @@ means the surgical language is not backwards compatible).
 """)
     def do_version(self, line):
         if not line:
-            announce("reposurgeon " + str(version) + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
+            announce("reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
         else:
             (vmajor, _) = version.split(".")
             if '.' in line:
