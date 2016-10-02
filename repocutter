@@ -161,9 +161,10 @@ removed as well.
     "pathrename": """\
 pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
-Modify Node-path and Node-copyfrom-path headers matching the specified
-Python regular expression FROM; replace with TO.  TO may contain Pyton
-backreferences to parenthesized portions of FROM.
+Modify Node-path headers, Node-copyfrom-path headers, and
+svn:mergeinfo properies matching the specified Python regular
+expression FROM; replace with TO.  TO may contain Pyton backreferences
+to parenthesized portions of FROM.
 """,
     "renumber": """\
 renumber: usage: repocutter renumber
@@ -910,7 +911,13 @@ def sift(source, selection, patterns):
 
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
-    def __pathrename(header, properties, content):
+    def __revhook(propkeys, propdict):
+        if "svn:merginfo" in propdict:
+            propdict["svn:merginfo"] = re.sub(patterns[0],
+                                              patterns[1],
+                                              propdict["svn:merginfo"])
+        return (propkeys, propdict)
+    def __nodehook(header, properties, content):
         for htype in ("Node-path: ", "Node-copyfrom-path: "):
             offs = header.find(htype)
             if offs > -1:
@@ -925,7 +932,7 @@ def pathrename(source, selection, patterns):
                                   pathline)
                 header = before + pathline + after
         return header + properties + content
-    source.report(selection, __pathrename)
+    source.report(selection, __nodehook, __revhook)
 
 def renumber(source):
     "Renumber all revisions."
