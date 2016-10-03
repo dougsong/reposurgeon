@@ -912,7 +912,7 @@ def sift(source, selection, patterns):
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
     def __revhook(propkeys, propdict):
-        if "svn:merginfo" in propdict:
+        if "svn:mergeinfo" in propdict:
             propdict["svn:merginfo"] = re.sub(patterns[0],
                                               patterns[1],
                                               propdict["svn:merginfo"])
