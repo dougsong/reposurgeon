@@ -7160,7 +7160,11 @@ def rebuild_repo(repo, target, options, preferred):
                 raise Recoverable("legacy-map file %s could not be written." \
                                   % legacyfile)
 
-        do_or_die(vcs.checkout, "repository_checkout")
+        if vcs.checkout:
+            do_or_die(vcs.checkout, "repository_checkout")
+        else:
+            complain("checkout not supported for %s skipping" % vcs.name)
+
         if verbose:
             announce("rebuild is complete.")
 
