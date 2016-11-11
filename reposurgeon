@@ -5273,8 +5273,8 @@ class SubversionDumper:
             parents = [os.sep.join(parts[:i+1])
                                    for i in range(len(parts))]
             for parentdir in parents:
-                if parentdir not in self.pathmap:
-                    fullpath = os.path.join(svnout, parentdir)
+                fullpath = os.path.join(svnout, parentdir)
+                if fullpath not in self.pathmap:
                     creations.append((fullpath, None, None))
         for (path, from_rev, from_path) in creations:
             SubversionDumper.dump_node(fp,
