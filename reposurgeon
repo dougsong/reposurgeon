@@ -5416,6 +5416,10 @@ class SubversionDumper:
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = self.svnize(event.head(),
                                                       os.path.dirname(fileop.path))
+                                self.directory_create(fp, revision,
+                                                      branch=event.head(),
+                                                      path=os.path.dirname(svnpath),
+                                                      parents=event.parents())
                                 blob = self.repo.objfind(fileop.ref)
                                 if svnpath not in self.pathmap:
                                     self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
