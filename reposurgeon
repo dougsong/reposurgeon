@@ -5285,7 +5285,9 @@ class SubversionDumper:
                                        from_path=from_path)
             self.pathmap[path] = SubversionDumper.FlowState(revision)
             self.pathmap[path].is_directory = True
-            self.pathmap[path].subfiles += 1
+            parentdir = os.path.dirname(path)
+            if parentdir in self.pathmap:
+                self.pathmap[parentdir].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, parents):
         "Emit the dump-stream records required to add or modify a file."
         if debug_enable(DEBUG_SVNDUMP):
@@ -5300,6 +5302,7 @@ class SubversionDumper:
             self.pathmap[svnpath].rev = revision
         else:
             svnop = "add"
+            self.pathmap[os.path.dirname(svnpath)].subfiles += 1
             self.pathmap[svnpath] = SubversionDumper.FlowState(revision)
         if debug_enable(DEBUG_SVNDUMP):
             announce("Generating %s %s" % (svnpath, svnop))
@@ -5334,6 +5337,7 @@ class SubversionDumper:
             raise Fatal("couldn't retrieve flow information for %s" % source)
         self.directory_create(fp, revision, branch, target)
         svntarget = self.svnize(branch, target)
+        self.pathmap[os.path.dirname(svntarget)].subfiles += 1
         self.pathmap[svntarget] = self.pathmap[svnsource]
         SubversionDumper.dump_node(fp,
                                    path=svntarget,
