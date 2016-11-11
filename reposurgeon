@@ -5240,6 +5240,8 @@ class SubversionDumper:
                 fp.write("Node-path: %s\n" % svnpath)
                 fp.write("Node-action: delete\n\n\n")
                 del self.pathmap[svnpath]
+            else:
+                break # Don't consider parents of directories we keep
     def directory_create(self, fp, revision, branch, path, parents=None):
         if debug_enable(DEBUG_SVNDUMP):
             announce("directory_create%s" % repr((revision, branch, path)))
