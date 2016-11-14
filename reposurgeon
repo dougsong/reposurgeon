@@ -5265,6 +5265,8 @@ class SubversionDumper:
                     if key.startswith(from_branch + os.sep) and key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[counterpart] = SubversionDumper.FlowState(revision)
+                        self.pathmap[counterpart].subfiles = self.pathmap[key].subfiles
+                        self.pathmap[counterpart].is_directory = self.pathmap[key].is_directory
             else:
                 creations.append((svnout, None, None))
         # Create all directory segments required
