@@ -5475,20 +5475,20 @@ class SubversionDumper:
                                           log=tag.comment,
                                           author=tag.tagger)
                             break
-                    else:
-                        # Preserve lightweight tags, too.  Ugh, O(n**2).
-                        if event.has_children():
-                            for child in event.children():
-                                if child.branch == event.branch:
-                                    break
-                            else:
-                                revision += 1
-                                self.make_tag(fp,
-                                              revision,
-                                              event.head(),
-                                              name=branchbase(event.branch),
-                                              log="",
-                                              author=event.committer)
+                        else:
+                            # Preserve lightweight tags, too.  Ugh, O(n**2).
+                            if event.has_children():
+                                for child in event.children():
+                                    if child.branch == event.branch:
+                                        break
+                                    else:
+                                        revision += 1
+                                        self.make_tag(fp,
+                                                      revision,
+                                                      event.head(),
+                                                      name=branchbase(event.branch),
+                                                      log="",
+                                                      author=event.committer)
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
