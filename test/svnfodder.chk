@@ -699,31 +699,6 @@ Second commit on the alternate branch.
 
 
 Revision-number: 19
-Prop-content-length: 80
-Content-length: 80
-
-K 10
-svn:author
-V 3
-esr
-K 8
-svn:date
-V 27
-2012-12-02T06:12:55.000000Z
-PROPS-END
-
-Node-path: tags/alternate
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 18
-Node-copyfrom-path: branches/alternate/
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
-Revision-number: 20
 Prop-content-length: 169
 Content-length: 169
 

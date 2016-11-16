@@ -5196,6 +5196,23 @@ class SubversionDumper:
             fp.write(content)
         fp.write("\n\n")
     @staticmethod
+    def commitbranch(commit):
+        "The branch that a commit belongs to prefering master and branches rather than tags"
+        #FIXME: This logic should be improved to match the logic in branch_color more closely
+        if commit.branch.startswith("refs/heads/") or not commit.has_children():
+            return commit.branch
+        candidatebranch = None
+        for child in commit.children():
+            childbranch = SubversionDumper.commitbranch(child)
+            if childbranch == "refs/heads/master":
+                return "refs/heads/master"
+            elif childbranch.startswith("refs/heads/") and not candidatebranch:
+                candidatebranch = childbranch
+        if candidatebranch and not commit.branch.startswith("refs/heads/"):
+            return candidatebranch
+        else:
+            return commit.branch
+    @staticmethod
     def svnbranch(branch):
         "The branch directory corresponding to a specified git branch."
         segments = branch.split(os.sep)
@@ -5257,7 +5274,7 @@ class SubversionDumper:
             self.branches_created.append(svnout)
             if parents:
                 from_rev = self.mark_to_revision[parents[0].mark],
-                from_branch = SubversionDumper.svnbranch(parents[0].branch)
+                from_branch = SubversionDumper.svnbranch(parents[0].color)
                 creations.append((svnout, from_rev, from_branch))
                 # Careful about the following - the path map gets mutated in
                 # this loop, you need to get a list of the keys up front or
@@ -5377,6 +5394,11 @@ class SubversionDumper:
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
+        # Fast-export prefers tags to branches as commit parents but SVN prefers branches
+        for i in selection:
+            event = self.repo.events[i]
+            if isinstance(event, Commit):
+                event.color = SubversionDumper.commitbranch(event)
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
                 fp.write("SVN-fs-dump-format-version: 2\n\n")
@@ -5408,7 +5430,7 @@ class SubversionDumper:
                     for fileop in event.operations():
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = self.svnize(event.head(), fileop.path)
+                                svnpath = self.svnize(event.color, fileop.path)
                                 self.pathmap[svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
@@ -5416,13 +5438,13 @@ class SubversionDumper:
                                           action="change",
                                           props = self.pathmap[svnpath].props)
                             else:
-                                self.filedelete(fp, event.head(), fileop.path)
+                                self.filedelete(fp, event.color, fileop.path)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = self.svnize(event.head(),
+                                svnpath = self.svnize(event.color,
                                                       os.path.dirname(fileop.path))
                                 self.directory_create(fp, revision,
-                                                      branch=event.head(),
+                                                      branch=event.color,
                                                       path=os.path.dirname(svnpath),
                                                       parents=event.parents())
                                 blob = self.repo.objfind(fileop.ref)
@@ -5439,7 +5461,7 @@ class SubversionDumper:
                             else:
                                 self.filemodify(fp,
                                                 revision,
-                                                event.head(),
+                                                event.color,
                                                 fileop.mode,
                                                 fileop.ref,
                                                 fileop.path,
@@ -5447,18 +5469,18 @@ class SubversionDumper:
                         elif fileop.op == "R":
                             self.filecopy(fp,
                                           revision,
-                                          event.head(),
+                                          event.color,
                                           fileop.source,
                                           fileop.target)
                             self.filedelete(fp, event.branch, fileop.source)
                         elif fileop.op == "C":
                             self.filecopy(fp,
                                           revision,
-                                          event.head(),
+                                          event.color,
                                           fileop.source,
                                           fileop.target)
                         elif fileop.op == "deleteall":
-                            branchdir = self.svnbranch(event.head())
+                            branchdir = self.svnbranch(event.color)
                             # Here again the object is mutated, so a copy list must be used.
                             for path in self.pathmap.keys():
                                 if path.startswith(branchdir + os.sep):
@@ -5475,7 +5497,7 @@ class SubversionDumper:
                             revision += 1
                             self.make_tag(fp,
                                           revision,
-                                          event.head(),
+                                          event.color,
                                           name=tag.name,
                                           log=tag.comment,
                                           author=tag.tagger)
@@ -5494,7 +5516,7 @@ class SubversionDumper:
                             revision += 1
                             self.make_tag(fp,
                                           revision,
-                                          event.head(),
+                                          event.color,
                                           name=branchbase(event.branch),
                                           log="",
                                           author=event.committer)
