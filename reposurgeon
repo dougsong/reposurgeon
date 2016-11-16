@@ -5134,7 +5134,6 @@ class SubversionDumper:
         self.pathmap = {}
         self.mark_to_revision = {}
         self.branches_created = []
-        self.tag_latch = False
     class FlowState:
         def __init__(self, rev, props=None):
             self.rev = rev
@@ -5252,6 +5251,9 @@ class SubversionDumper:
             if not svnout.startswith("tags") and "branches" not in self.branches_created:
                 self.branches_created.append("branches")
                 creations.append(("branches", None, None))
+            elif svnout.startswith("tags") and "tags" not in self.branches_created:
+                self.branches_created.append("tags")
+                creations.append(("tags", None, None))
             self.branches_created.append(svnout)
             if parents:
                 from_rev = self.mark_to_revision[parents[0].mark],
@@ -5358,21 +5360,22 @@ class SubversionDumper:
                                        log=log,
                                        author=author.email.split("@")[0],
                                        date=author.date)
-        if not self.tag_latch:
-            self.tag_latch = True
+        if "tags" not in self.branches_created:
+            self.branches_created.append("tags")
             SubversionDumper.dump_node(fp,
                                    path="tags",
                                    kind="dir",
                                    action="add")
-        SubversionDumper.dump_node(fp,
-                                   path=svntarget,
-                                   kind="dir",
-                                   action="add",
-                                   from_path=svnsource,
-                                   from_rev=revision-1)
+        if svntarget not in self.branches_created:
+            self.branches_created.append(svntarget)
+            SubversionDumper.dump_node(fp,
+                                       path=svntarget,
+                                       kind="dir",
+                                       action="add",
+                                       from_path=svnsource,
+                                       from_rev=revision-1)
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
-        self.tag_latch = False
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
