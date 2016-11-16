@@ -5431,6 +5431,8 @@ class SubversionDumper:
                                           kind="dir",
                                           action="change",
                                           props = self.pathmap[svnpath].props)
+                            elif fileop.mode == "160000":
+                                complain("skipping submodule link reference %s" % fileop.ref)
                             else:
                                 self.filemodify(fp,
                                                 revision,
