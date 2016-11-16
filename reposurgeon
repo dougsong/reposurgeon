@@ -5430,7 +5430,7 @@ class SubversionDumper:
                     for fileop in event.operations():
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
-                                svnpath = self.svnize(event.color, fileop.path)
+                                svnpath = self.svnize(event.color, os.path.dirname(fileop.path))
                                 self.pathmap[svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
