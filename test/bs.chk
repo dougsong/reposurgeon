@@ -29,15 +29,6 @@ V 27
 1993-11-15T17:25:16.000000Z
 PROPS-END
 
-Node-path: branches
-Node-kind: dir
-Node-action: add
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
 Node-path: trunk
 Node-kind: dir
 Node-action: add

@@ -29,15 +29,6 @@ V 27
 2012-12-02T05:37:55.000000Z
 PROPS-END
 
-Node-path: branches
-Node-kind: dir
-Node-action: add
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
 Node-path: trunk
 Node-kind: dir
 Node-action: add
@@ -627,6 +618,15 @@ svn:date
 V 27
 2012-12-02T06:06:53.000000Z
 PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
 
 Node-path: branches/alternate
 Node-kind: dir
