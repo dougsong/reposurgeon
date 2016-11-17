@@ -5272,7 +5272,7 @@ class SubversionDumper:
                 self.branches_created.append("tags")
                 creations.append(("tags", None, None))
             self.branches_created.append(svnout)
-            if parents:
+            if parents and branch != parents[0].color: # Handle empty initial commit(s)
                 from_rev = self.mark_to_revision[parents[0].mark]
                 from_branch = SubversionDumper.svnbranch(parents[0].color)
                 creations.append((svnout, from_rev, from_branch))
