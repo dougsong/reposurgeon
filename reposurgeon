@@ -5415,6 +5415,12 @@ class SubversionDumper:
                     # in Subversion's ontology.
                     if not isinstance(event, Commit):
                         continue
+                    if event.branch.startswith("refs/notes"):
+                        complain("skipping note as unsupported")
+                        continue
+                    if event.branch == "refs/stash":
+                        complain("skipping stash as unsupported")
+                        continue
                     revision += 1
                     parents = event.parents()
                     # Need a deep copy iff the parent commit is a branching point
