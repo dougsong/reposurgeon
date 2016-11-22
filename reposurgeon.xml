@@ -1197,7 +1197,7 @@ the repo is not divided.</para>
 </varlistentry>
 <varlistentry>
 <term><command>expunge</command>
-        <emphasis>[path | /regexp/]...</emphasis>
+        <emphasis>[--notagify] [path | /regexp/]...</emphasis>
 </term>
 <listitem>
 <para>Expunge files from the selected portion of the repo history; the
@@ -1216,8 +1216,11 @@ deleted and a warning issued.</para>
 
 <para>After file expunges have been performed, any commits with no
 remaining file operations will be removed, and any tags pointing to
-them. Commits with deleted fileops pointing both in and outside the
-path set are not deleted, but are cloned into the removal set.</para>
+them. By default each deleted commit is replaced with a tag of the form
+'emptycommit-<emphasis>ident</emphasis>' on the preceding commit unless
+--notagify is specified as an argument. Commits with deleted fileops
+pointing both in and outside the path set are not deleted, but are
+cloned into the removal set.</para>
 
 <para>The removal set is not discarded. It is assembled into a new
 repository named after the old one with the suffix "-expunges" added.

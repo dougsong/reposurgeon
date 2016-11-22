@@ -5929,6 +5929,7 @@ class Repository:
                            canonicalize = True,
                            name_func = lambda _: None,
                            legend_func = lambda _: "",
+                           create_tags = True,
                            gripe = complain
                           ):
         """Turn into tags commits without (meaningful) fileops.
@@ -5941,7 +5942,8 @@ class Repository:
                                         None, a default scheme is used
                        * legend_func:   custom function for choosing the legend
                                         of a tag; no fallback is provided. By
-                                        default it always returns ""."""
+                                        default it always returns "".
+                       * create_tags    whether to create tags."""
         # Default scheme for tag names
         def default_name(commit):
             if commit.operations():
@@ -5981,11 +5983,12 @@ class Repository:
                     legend = legend_func(commit)
                     if commit.operations():
                         commit.set_operations([])
-                    self.tagify(commit,
-                                name + suffix,
-                                commit.parents()[0],
-                                legend,
-                                delete = False)
+                    if create_tags:
+                        self.tagify(commit,
+                                    name + suffix,
+                                    commit.parents()[0],
+                                    legend,
+                                    delete = False)
                     deletia.append(index)
                 else:
                     msg = []
@@ -7590,16 +7593,19 @@ class RepositoryList:
         "Expunge a set of files from the commits in the selection set."
         def digest(toklist):
             digested = []
+            notagify = False
             for s in toklist:
                 if s.startswith('/') and s.endswith('/'):
                     digested.append("(?:" + s[1:-1] + ")")
+                elif s == '--notagify':
+                    notagify = True
                 else:
                     digested.append("^" + re.escape(s) + "$")
-            return re.compile("|".join(digested).encode('ascii'))
+            return re.compile("|".join(digested).encode('ascii')), notagify
         try:
             # First pass: compute fileop deletions
             alterations = []
-            expunge = digest(matchers)
+            expunge, notagify = digest(matchers)
             for ei in selection:
                 event = self.repo[ei]
                 deletia = []
@@ -7625,14 +7631,14 @@ class RepositoryList:
                                     except ValueError:
                                         pass
                                 matchers.append("^" + fileop.target + "$")
-                                expunge = digest(matchers)
+                                expunge, notagify = digest(matchers)
                             elif fileop.targetdelete:
                                 if fileop.op == "R":
                                     fileop.op = "D"
                                 elif fileop.op == "C":
                                     deletia.append(i)
                                 matchers.append("^" + fileop.target + "$")
-                                expunge = digest(matchers)
+                                expunge, notagify = digest(matchers)
                 alterations.append(deletia)
         except re.error:
             raise Recoverable("you confused the regexp processor!")
@@ -7737,7 +7743,7 @@ class RepositoryList:
                               if (not isinstance(e, Blob))
                               or backreferences[e.mark]]
         # Then tagify empty commits.
-        self.repo.tagify_empty(canonicalize = False)
+        self.repo.tagify_empty(canonicalize = False, create_tags = not notagify)
         # And tell we changed the manifests and the event sequence.
         self.repo.invalidate_manifests()
         self.repo.declare_sequence_mutation("expunge cleanup")
@@ -10678,8 +10684,11 @@ issued.
 
 After file expunges have been performed, any commits with no
 remaining file operations will be deleted, and any tags pointing to
-them. Commits with deleted fileops pointing both in and outside the
-path set are not deleted, but are cloned into the removal set.
+them. By default each deleted commit is replaced with a tag of the form
+emptycommit-<ident> on the preceding commit unless --notagify is
+specified as an argument.  Commits with deleted fileops pointing both
+in and outside the path set are not deleted, but are cloned into the
+removal set.
 
 The removal set is not discarded. It is assembled into a new
 repository named after the old one with the suffix "-expunges" added.
