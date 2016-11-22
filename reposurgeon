@@ -10980,8 +10980,9 @@ variant does > redirection.
 
 With the 'sub' modifier, take a second argument that is a directory
 name and prepend it to every path. With the 'sup' modifier, strip the
-first directory component from every path.
-
+first directory component from every path unless a second argument is
+supplied. In this case only directory component supplied in the argument is
+stripped from the start of the path (where it appears).
 """ )
     def do_paths(self, line):
         if self.chosen() is None:
@@ -10998,17 +10999,27 @@ first directory component from every path.
                 return
         fields = line.split()
         if fields[0] == "sub":
+            if len(fields) < 2:
+                raise Fatal("Error paths sub needs a directory name argument")
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
             sys.stdout.write("\n".join(modified) + "\n")
         elif fields[0] == "sup":
-            try:
+            if len(fields) == 1:
+                try:
+                    modified = self.chosen().path_walk(self.selection,
+                                                   lambda f: f[f.find(os.sep)+1:])
+                    sys.stdout.write("\n".join(modified) + "\n")
+                except IndexError:
+                    raise Recoverable("no / in sup path.")
+            else:
+                prefix = fields[1]
+                if not prefix.endswith(os.sep):
+                    prefix = prefix + os.sep
                 modified = self.chosen().path_walk(self.selection,
-                                               lambda f: f[f.find(os.sep)+1:])
+                                               lambda f: f[len(prefix):] if f.startswith(prefix) else f)
                 sys.stdout.write("\n".join(modified) + "\n")
-            except IndexError:
-                raise Recoverable("no / in sup path.")
         self.chosen().invalidate_manifests()
 
     def help_manifest(self):
