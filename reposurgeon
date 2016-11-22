@@ -7193,6 +7193,9 @@ def rebuild_repo(repo, target, options, preferred):
                         if os.path.isdir(src):
                             shutil.copytree(src, dst)
                         else:
+                            dstdir = os.path.dirname(dst)
+                            if not os.path.exists(dstdir):
+                                os.makedirs(dstdir)
                             shutil.copy2(src, dst)
                 if verbose:
                     announce("preserved files restored.")
