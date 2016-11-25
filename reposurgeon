@@ -5233,10 +5233,13 @@ class SubversionDumper:
         if self.nobranch:
             return path
         return os.path.join(SubversionDumper.svnbranch(branch), path)
-    def filedelete(self, fp, revision, branch, path):
+    def filedelete(self, fp, revision, branch, path, parents):
         "Emit the dump-stream records required to delete a file."
         if debug_enable(DEBUG_SVNDUMP):
             announce("filedelete%s" % repr((branch, path)))
+        # Branch and directory creation may be required.
+        # This has to be called early so copy can update the filemap.
+        self.directory_create(fp, revision, branch, path, parents)
         svnpath = self.svnize(branch, path)
         fp.write("Node-path: %s\n" % svnpath)
         fp.write("Node-action: delete\n\n\n")
@@ -5350,15 +5353,17 @@ class SubversionDumper:
                   action=svnop,
                   props=changeprops,
                   content=content)
-    def filecopy(self, fp, revision, branch, source, target):
+    def filecopy(self, fp, revision, branch, source, target, parents):
         if debug_enable(DEBUG_SVNDUMP):
             announce("filecopy%s" % repr((revision, branch, source, target)))
+        # Branch and directory creation may be required.
+        # This has to be called early so copy can update the filemap.
+        self.directory_create(fp, revision, branch, target, parents)
         svnsource = self.svnize(branch, source)
         try:
             flow = self.pathmap[revision][svnsource]
         except:
             raise Fatal("couldn't retrieve flow information for %s" % source)
-        self.directory_create(fp, revision, branch, target)
         svntarget = self.svnize(branch, target)
         self.pathmap[revision][os.path.dirname(svntarget)].subfiles += 1
         self.pathmap[revision][svntarget] = self.pathmap[revision][svnsource]
@@ -5451,7 +5456,7 @@ class SubversionDumper:
                                           action="change",
                                           props = self.pathmap[revision][svnpath].props)
                             else:
-                                self.filedelete(fp, revision, event.color, fileop.path)
+                                self.filedelete(fp, revision, event.color, fileop.path, event.parents())
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = self.svnize(event.color,
@@ -5484,14 +5489,16 @@ class SubversionDumper:
                                           revision,
                                           event.color,
                                           fileop.source,
-                                          fileop.target)
-                            self.filedelete(fp, revision, event.branch, fileop.source)
+                                          fileop.target,
+                                          event.parents())
+                            self.filedelete(fp, revision, event.branch, fileop.source, event.parents())
                         elif fileop.op == "C":
                             self.filecopy(fp,
                                           revision,
                                           event.color,
                                           fileop.source,
-                                          fileop.target)
+                                          fileop.target,
+                                          event.parents())
                         elif fileop.op == "deleteall":
                             branchdir = self.svnbranch(event.color)
                             # Here again the object is mutated, so a copy list must be used.
