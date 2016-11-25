@@ -5429,6 +5429,9 @@ class SubversionDumper:
                     if event.branch == "refs/stash":
                         complain("skipping stash as unsupported")
                         continue
+                    if event.color.startswith("refs/remotes"):
+                        complain("skipping remote as unsupported %s" % event.color)
+                        continue
                     revision += 1
                     parents = event.parents()
                     # Need a deep copy iff the parent commit is a branching point
