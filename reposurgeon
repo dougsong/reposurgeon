@@ -5450,6 +5450,10 @@ class SubversionDumper:
                     for fileop in event.operations():
                         if fileop.op == "D":
                             if fileop.path.endswith(".gitignore"):
+                                self.directory_create(fp, revision,
+                                                      branch=event.color,
+                                                      path=fileop.path,
+                                                      parents=event.parents())
                                 svnpath = self.svnize(event.color, os.path.dirname(fileop.path))
                                 self.pathmap[revision][svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
@@ -5465,7 +5469,7 @@ class SubversionDumper:
                                                       os.path.dirname(fileop.path))
                                 self.directory_create(fp, revision,
                                                       branch=event.color,
-                                                      path=os.path.dirname(svnpath),
+                                                      path=fileop.path,
                                                       parents=event.parents())
                                 if fileop.ref == "inline":
                                     content = fileop.inline
