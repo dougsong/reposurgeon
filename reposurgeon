@@ -5316,7 +5316,7 @@ class SubversionDumper:
             parentdir = os.path.dirname(path)
             if parentdir in self.pathmap[revision]:
                 self.pathmap[revision][parentdir].subfiles += 1
-    def filemodify(self, fp, revision, branch, mode, ref, path, parents):
+    def filemodify(self, fp, revision, branch, mode, ref, path, inline, parents):
         "Emit the dump-stream records required to add or modify a file."
         if debug_enable(DEBUG_SVNDUMP):
             announce("filemodify%s" % repr((revision, branch, mode, ref, path,
@@ -5334,7 +5334,10 @@ class SubversionDumper:
             self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
         if debug_enable(DEBUG_SVNDUMP):
             announce("Generating %s %s" % (svnpath, svnop))
-        content = self.repo.objfind(ref).get_content()
+        if ref == "inline":
+            content = inline
+        else:
+            content = self.repo.objfind(ref).get_content()
         changeprops = None
         if svnpath in self.pathmap[revision]:
             if mode == '100755':
@@ -5467,10 +5470,13 @@ class SubversionDumper:
                                                       branch=event.color,
                                                       path=os.path.dirname(svnpath),
                                                       parents=event.parents())
-                                blob = self.repo.objfind(fileop.ref)
+                                if fileop.ref == "inline":
+                                    content = fileop.inline
+                                else:
+                                    content = self.repo.objfind(fileop.ref).get_content()
                                 if svnpath not in self.pathmap[revision]:
                                     self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
-                                self.pathmap[revision][svnpath].props["svn:ignore"] = blob.get_content()
+                                self.pathmap[revision][svnpath].props["svn:ignore"] = content
                                 SubversionDumper.dump_node(fp,
                                           path=os.path.dirname(svnpath),
                                           kind="dir",
@@ -5485,6 +5491,7 @@ class SubversionDumper:
                                                 fileop.mode,
                                                 fileop.ref,
                                                 fileop.path,
+                                                fileop.inline,
                                                 event.parents())
                         elif fileop.op == "R":
                             self.filecopy(fp,
