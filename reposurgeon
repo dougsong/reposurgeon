@@ -5457,7 +5457,7 @@ class SubversionDumper:
                     backlinks = [self.mark_to_revision[mark]
                                  for mark in event.parent_marks()]
                     SubversionDumper.dump_revprops(fp, revision,
-                                                   log=event.comment,
+                                                   log=event.comment.replace("\r\n", "\n"),
                                                    author=event.committer.email.split("@")[0],
                                                    date=event.committer.date,
                                                    parents=backlinks)
@@ -5536,7 +5536,7 @@ class SubversionDumper:
                                           revision,
                                           event.color,
                                           name=tag.name,
-                                          log=tag.comment,
+                                          log=tag.comment.replace("\r\n", "\n"),
                                           author=tag.tagger)
                             break
 
