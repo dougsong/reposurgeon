@@ -413,7 +413,7 @@ Node-path: tags/annotated
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 10
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 

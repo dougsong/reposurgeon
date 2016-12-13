@@ -2852,7 +2852,7 @@ Node-path: tags/2.0
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 3
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -8626,7 +8626,7 @@ Node-path: tags/2.1
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 14
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -11782,7 +11782,7 @@ Node-path: tags/2.2
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 26
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -13403,7 +13403,7 @@ Node-path: tags/2.3
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 31
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -14587,7 +14587,7 @@ Node-path: tags/2.4
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 44
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -16339,7 +16339,7 @@ Node-path: tags/2.5
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 50
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -16646,7 +16646,7 @@ Node-path: tags/2.6
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 53
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -16849,7 +16849,7 @@ Node-path: tags/2.7
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 55
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 
@@ -18896,7 +18896,7 @@ Node-path: tags/2.8
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 63
-Node-copyfrom-path: trunk/
+Node-copyfrom-path: trunk
 Prop-content-length: 10
 Content-length: 10
 

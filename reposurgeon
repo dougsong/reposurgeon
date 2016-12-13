@@ -5389,29 +5389,15 @@ class SubversionDumper:
                                    action="add",
                                    from_path=svnsource,
                                    from_rev=flow.rev)
-    def make_tag(self, fp, revision, branch, name, log, author):
+    def make_tag(self, fp, revision, name, log, author, parents):
         if debug_enable(DEBUG_SVNDUMP):
-            announce("make_tag%s" % repr((revision, branch, name, log, str(author))))
-        svnsource = self.svnize(branch)
-        svntarget = os.path.join("tags", name)
+            announce("make_tag%s" % repr((revision, name, log, str(author))))
+        tagrefpath = os.path.join("refs/tags", name)
         SubversionDumper.dump_revprops(fp, revision,
                                        log=log,
                                        author=author.email.split("@")[0],
                                        date=author.date)
-        if "tags" not in self.branches_created:
-            self.branches_created.append("tags")
-            SubversionDumper.dump_node(fp,
-                                   path="tags",
-                                   kind="dir",
-                                   action="add")
-        if svntarget not in self.branches_created:
-            self.branches_created.append(svntarget)
-            SubversionDumper.dump_node(fp,
-                                       path=svntarget,
-                                       kind="dir",
-                                       action="add",
-                                       from_path=svnsource,
-                                       from_rev=revision-1)
+        self.directory_create(fp, revision, tagrefpath, "", parents)
     def dump(self, selection, fp, progress=False):
         "Export the repository as a Subversion dumpfile."
         tags = [event for event in self.repo.events if isinstance(event, Tag)]
@@ -5533,12 +5519,15 @@ class SubversionDumper:
                             if event.operations():
                                 revision += 1
                                 self.pathmap[revision] = self.pathmap[revision-1]
+                                tagparents = [event]
+                            else:
+                                tagparents = parents
                             self.make_tag(fp,
                                           revision,
-                                          event.color,
                                           name=tag.name,
                                           log=tag.comment.replace("\r\n", "\n"),
-                                          author=tag.tagger)
+                                          author=tag.tagger,
+                                          parents=tagparents)
                             break
 
                     # Preserve lightweight tags, too.  Ugh, O(n**2).
@@ -5554,12 +5543,15 @@ class SubversionDumper:
                             if event.operations():
                                 revision += 1
                                 self.pathmap[revision] = self.pathmap[revision-1]
+                                tagparents = [event]
+                            else:
+                                tagparents = parents
                             self.make_tag(fp,
                                           revision,
-                                          event.color,
                                           name=branchbase(event.branch),
                                           log="",
-                                          author=event.committer)
+                                          author=event.committer,
+                                          parents=tagparents)
                     fp.flush()
             except IOError as e:
                 raise Fatal("export error: %s" % e)
