@@ -5216,6 +5216,8 @@ class SubversionDumper:
     def svnbranch(branch):
         "The branch directory corresponding to a specified git branch."
         segments = branch.split(os.sep)
+        if segments[0] == "HEAD":
+            return "trunk"
         assert segments[0] == "refs"
         if tuple(segments) == ("refs", "heads", "master"):
             return "trunk"
