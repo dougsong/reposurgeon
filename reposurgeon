@@ -5453,7 +5453,7 @@ class SubversionDumper:
                                 self.directory_create(fp, revision,
                                                       branch=event.color,
                                                       path=fileop.path,
-                                                      parents=event.parents())
+                                                      parents=parents)
                                 svnpath = self.svnize(event.color, os.path.dirname(fileop.path))
                                 self.pathmap[revision][svnpath].props["svn:ignore"] = ""
                                 SubversionDumper.dump_node(fp,
@@ -5462,7 +5462,7 @@ class SubversionDumper:
                                           action="change",
                                           props = self.pathmap[revision][svnpath].props)
                             else:
-                                self.filedelete(fp, revision, event.color, fileop.path, event.parents())
+                                self.filedelete(fp, revision, event.color, fileop.path, parents)
                         elif fileop.op == "M":
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = self.svnize(event.color,
@@ -5470,7 +5470,7 @@ class SubversionDumper:
                                 self.directory_create(fp, revision,
                                                       branch=event.color,
                                                       path=fileop.path,
-                                                      parents=event.parents())
+                                                      parents=parents)
                                 if fileop.ref == "inline":
                                     content = fileop.inline
                                 else:
@@ -5493,14 +5493,14 @@ class SubversionDumper:
                                                 fileop.ref,
                                                 fileop.path,
                                                 fileop.inline,
-                                                event.parents())
+                                                parents)
                         elif fileop.op == "R":
                             self.filecopy(fp,
                                           revision,
                                           event.color,
                                           fileop.source,
                                           fileop.target,
-                                          event.parents())
+                                          parents)
                             self.filedelete(fp, revision, event.branch, fileop.source, event.parents())
                         elif fileop.op == "C":
                             self.filecopy(fp,
@@ -5508,7 +5508,7 @@ class SubversionDumper:
                                           event.color,
                                           fileop.source,
                                           fileop.target,
-                                          event.parents())
+                                          parents)
                         elif fileop.op == "deleteall":
                             self.filedeleteall(fp,
                                                revision,
