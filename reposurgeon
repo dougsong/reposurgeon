@@ -5140,6 +5140,7 @@ class SubversionDumper:
             self.props = props or {}
             self.is_directory = False
             self.subfiles = 0
+    dfltignores = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn").replace("\n/", "\n")
     @staticmethod
     def svnprops(pdict):
         return "".join("K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
@@ -5475,14 +5476,16 @@ class SubversionDumper:
                                     content = fileop.inline
                                 else:
                                     content = self.repo.objfind(fileop.ref).get_content()
+                                content = content.replace(SubversionDumper.dfltignores,"") # Strip out default SVN ignores
                                 if svnpath not in self.pathmap[revision]:
                                     self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
-                                self.pathmap[revision][svnpath].props["svn:ignore"] = content
-                                SubversionDumper.dump_node(fp,
-                                          path=os.path.dirname(svnpath),
-                                          kind="dir",
-                                          action="change",
-                                          props = self.pathmap[revision][svnpath].props)
+                                if len(content) > 0 or "svn:ignore" in self.pathmap[revision][svnpath].props:
+                                    self.pathmap[revision][svnpath].props["svn:ignore"] = content
+                                    SubversionDumper.dump_node(fp,
+                                              path=os.path.dirname(svnpath),
+                                              kind="dir",
+                                              action="change",
+                                              props = self.pathmap[revision][svnpath].props)
                             elif fileop.mode == "160000":
                                 complain("skipping submodule link reference %s" % fileop.ref)
                             else:
