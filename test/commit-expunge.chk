@@ -43,7 +43,6 @@ M 100755 :7 gitpacker
 tag emptycommit-mark6
 from :5
 tagger Eric S. Raymond <esr@thyrsus.com> 1352732153 -0600
-data 35
+data 34
 Remove rroneously committed file.
-
 

@@ -62,7 +62,6 @@ tag realbranch-root
 #legacy-id 3
 from :4
 tagger esr <esr> 1323170783 +0000
-data 54
+data 53
 We're going to put some real content on this branch.
-
 

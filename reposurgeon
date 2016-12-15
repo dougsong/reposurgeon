@@ -5827,7 +5827,9 @@ class Repository:
         if not commit.comment:
             pref = ""
         else:
-            pref = commit.comment + "\n"
+            pref = commit.comment
+            if legend or not pref.endswith("\n"):
+                pref += "\n"
         tag = Tag(commit.repo,
                   name=name,
                   target=target,

@@ -288,10 +288,9 @@ tag INITIAL_IMPORT_AQ-root
 #legacy-id 3
 from :8
 tagger no-author <no-author> 1106836394 +0000
-data 79
+data 78
 This commit was manufactured by cvs2svn to create branch
 'INITIAL_IMPORT_AQ'.
-
 
 tag emptycommit-4
 #legacy-id 4
@@ -306,25 +305,22 @@ tag Development-root
 #legacy-id 10
 from :8
 tagger no-author <no-author> 1119553881 +0000
-data 73
+data 72
 This commit was manufactured by cvs2svn to create branch 'Development'.
-
 
 tag tipdelete-Development
 #legacy-id 13.1
 from :22
 tagger clepple-guest <clepple-guest> 1140096703 +0000
-data 79
+data 78
 Moving branches/Development into trunk.
 
 [[Split portion of a mixed commit.]]
-
 
 tag automake-root
 #legacy-id 16
 from :28
 tagger selinger-guest <selinger-guest> 1160946576 +0000
-data 41
+data 40
 * creating a branch "automake" of trunk
-
 

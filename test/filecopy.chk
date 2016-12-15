@@ -100,9 +100,8 @@ tag testbranch-root
 #legacy-id 3
 from :4
 tagger esr <esr> 1323742103 +0000
-data 117
+data 116
 Create testbranch. The command was:
 
 svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch
-
 

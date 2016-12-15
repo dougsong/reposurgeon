@@ -150,9 +150,8 @@ tag silver
 #legacy-id 3
 from :2
 tagger thuang <thuang> 1438190959 +0000
-data 4
+data 3
 r3
-
 
 tag emptycommit-11
 #legacy-id 11

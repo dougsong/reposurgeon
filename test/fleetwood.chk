@@ -106,15 +106,13 @@ tag 1.0
 #legacy-id 5
 from :4
 tagger mike <mike> 1437858607 +0000
-data 13
+data 12
 Release 1.0
-
 
 tag 1.0rc1
 #legacy-id 6
 from :4
 tagger mike <mike> 1437858613 +0000
-data 22
+data 21
 No release ready yet
-
 

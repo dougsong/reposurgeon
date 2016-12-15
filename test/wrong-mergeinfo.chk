@@ -59,8 +59,7 @@ tag test-root
 #legacy-id 2
 from :3
 tagger frnchfrgg <frnchfrgg> 1360157278 +0000
-data 23
+data 22
 Create branch "test"
-
 
 

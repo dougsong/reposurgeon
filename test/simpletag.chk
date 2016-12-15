@@ -91,15 +91,13 @@ tag tag1
 #legacy-id 4
 from :6
 tagger esr <esr> 1322672941 +0000
-data 25
+data 24
 This is an example tag.
-
 
 tag tag2
 #legacy-id 7
 from :10
 tagger esr <esr> 1322673346 +0000
-data 21
+data 20
 Create a second tag
-
 

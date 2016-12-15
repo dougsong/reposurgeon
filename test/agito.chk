@@ -67,7 +67,6 @@ tag proj-1.0
 #legacy-id 2
 from :3
 tagger fraggle <fraggle> 1254523027 +0000
-data 59
+data 58
 Creating a tag in a BROKEN way, like how cvs2svn does it.
-
 

@@ -119,10 +119,9 @@ tag cool-feature-root
 #legacy-id 5
 from :4
 tagger chungy <chungy> 1391603866 +0000
-data 126
+data 125
 Branch trunk to cool-feature
 
 This causes reposurgeon to replace the custom .gitignore with only the
 contents of svn:ignore.
-
 

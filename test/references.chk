@@ -14095,10 +14095,9 @@ tag INITIAL_IMPORT_AQ-root
 #legacy-id 3
 from :307
 tagger no-author <no-author> 1106836394 +0000
-data 79
+data 78
 This commit was manufactured by cvs2svn to create branch
 'INITIAL_IMPORT_AQ'.
-
 
 tag emptycommit-4
 #legacy-id 4
@@ -14113,10 +14112,9 @@ tag INITIAL_IMPORT_V2_0_1_pre4
 #legacy-id 5
 from :307
 tagger no-author <no-author> 1106836402 +0000
-data 85
+data 84
 This commit was manufactured by cvs2svn to create tag
 'INITIAL_IMPORT_V2_0_1_pre4'.
-
 
 tag emptycommit-22
 #legacy-id 22
@@ -14230,9 +14228,8 @@ tag Development-root
 #legacy-id 65
 from :307
 tagger no-author <no-author> 1119553881 +0000
-data 73
+data 72
 This commit was manufactured by cvs2svn to create branch 'Development'.
-
 
 tag emptycommit-108
 #legacy-id 108
@@ -14463,69 +14460,63 @@ tag tipdelete-INITIAL_IMPORT_V2_0_1_pre4
 #legacy-id 354
 from :307
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 49
+data 48
 Cleaning up repository after initial SVN import
-
 
 tag tipdelete-CFL_TL_pre_Dev_merge
 #legacy-id 354.1
 from :1200
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 87
+data 86
 Cleaning up repository after initial SVN import
 
 [[Split portion of a mixed commit.]]
-
 
 tag tipdelete-alioth_SVN_migration
 #legacy-id 354.2
 from :763
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 87
+data 86
 Cleaning up repository after initial SVN import
 
 [[Split portion of a mixed commit.]]
-
 
 tag tipdelete-Development
 #legacy-id 356.1
 from :1924
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 79
+data 78
 Moving branches/Development into trunk.
 
 [[Split portion of a mixed commit.]]
-
 
 tag tipdelete-r2.0.1
 #legacy-id 357
 from :331
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 273
+data 272
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
  * r2.0.1: Not sure why this is a branch tag.
  * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
-
 
 tag tipdelete-INITIAL_IMPORT_AQ
 #legacy-id 357.1
 from :307
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 311
+data 310
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
  * r2.0.1: Not sure why this is a branch tag.
  * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
 
 [[Split portion of a mixed commit.]]
-
 
 tag tipdelete-v2.1.0
 #legacy-id 357.2
 from :490
 tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 311
+data 310
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
  * r2.0.1: Not sure why this is a branch tag.
@@ -14533,12 +14524,10 @@ Obsolete branch names:
 
 [[Split portion of a mixed commit.]]
 
-
 tag tipdelete-regex_branch
 #legacy-id 366
 from :1112
 tagger Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
-data 66
+data 65
 Removing regex_branch, because it was merged into trunk in r197.
-
 

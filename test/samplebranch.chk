@@ -105,15 +105,13 @@ tag samplebranch-root
 #legacy-id 3
 from :4
 tagger esr <esr> 1322682540 +0000
-data 45
+data 44
 A branch created for illustrative purposes.
-
 
 tag tipdelete-samplebranch
 #legacy-id 8
 from :12
 tagger esr <esr> 1324127616 +0000
-data 76
+data 75
 This is an example of a branch tip delete which should become a deleteall.
-
 

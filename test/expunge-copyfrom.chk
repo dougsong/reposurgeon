@@ -40,7 +40,6 @@ tag c-root
 #legacy-id 3
 from :2
 tagger sivachenko <sivachenko> 1454366588 +0000
-data 72
+data 71
 Directory A copied to C. So, directory C is a copy of A at revision 2.
-
 

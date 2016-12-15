@@ -82,9 +82,8 @@ merge :8
 tag emptycommit-mark5
 from :4
 tagger esr <esr> 1322671565 +0000
-data 34
+data 33
 Third revision, without fileops.
-
 
 1..:6 tagify --tipdeletes
 reposurgeon: 0 commits tagified.
@@ -169,9 +168,8 @@ merge :8
 tag emptycommit-mark5
 from :4
 tagger esr <esr> 1322671565 +0000
-data 34
+data 33
 Third revision, without fileops.
-
 
 1..$ tagify --tipdeletes
 reposurgeon: 1 commits tagified.
@@ -248,16 +246,14 @@ merge :8
 tag emptycommit-mark5
 from :4
 tagger esr <esr> 1322671565 +0000
-data 34
+data 33
 Third revision, without fileops.
-
 
 tag tipdelete-master
 from :8
 tagger esr <esr> 1322671521 +0000
-data 17
+data 16
 Sixth revision.
-
 
 tagify --canonicalize --tipdeletes
 reposurgeon: 1 commits tagified.
@@ -326,23 +322,20 @@ merge :8
 tag emptycommit-mark5
 from :4
 tagger esr <esr> 1322671565 +0000
-data 34
+data 33
 Third revision, without fileops.
-
 
 tag tipdelete-master
 from :8
 tagger esr <esr> 1322671521 +0000
-data 17
+data 16
 Sixth revision.
-
 
 tag emptycommit-mark6
 from :4
 tagger esr <esr> 1322671565 +0000
-data 47
+data 46
 Fourth revision, with a fileop doing nothing.
-
 
 tagify --tagify-merges
 reposurgeon: 1 commits tagified.
@@ -403,28 +396,24 @@ M 100644 :1 README
 tag emptycommit-mark5
 from :4
 tagger esr <esr> 1322671565 +0000
-data 34
+data 33
 Third revision, without fileops.
-
 
 tag tipdelete-master
 from :8
 tagger esr <esr> 1322671521 +0000
-data 17
+data 16
 Sixth revision.
-
 
 tag emptycommit-mark6
 from :4
 tagger esr <esr> 1322671565 +0000
-data 47
+data 46
 Fourth revision, with a fileop doing nothing.
-
 
 tag emptycommit-mark11
 from :10
 tagger esr <esr> 1322671521 +0000
-data 49
+data 48
 A merge commit with no fileops (ours strategy).
-
 

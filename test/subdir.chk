@@ -76,7 +76,6 @@ tag subdir/mybranch-root
 #legacy-id 4
 from :4
 tagger jason <jason> 1441071264 +0000
-data 10
+data 9
 mybranch
-
 
