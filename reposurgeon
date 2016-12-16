@@ -8673,7 +8673,7 @@ remaining arguments are available to the command logic.
 
     def help_functions(self):
         sys.stdout.write("The following special selection functions are available:\n")
-        for attr in sorted(RepoSurgeon.__dict__.keys()):
+        for attr in sorted(RepoSurgeon.__dict__):
             if attr.endswith("_handler"):
                 sys.stdout.write("@%s()\t%s\n" % (attr[:-8], getattr(RepoSurgeon, attr).__doc__))
     ##
@@ -9100,7 +9100,7 @@ unwieldy. Supports > redirection.
             def sz(n, s):
                 parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
-            for key in sorted(sizes.keys()):
+            for key in sorted(sizes):
                 sz(sizes[key], key)
             sz(total, "")
     def help_lint(self):
