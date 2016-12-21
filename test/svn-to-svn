@@ -75,7 +75,7 @@ done
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
-testrepo=`realpath \`dirname ${1:-test-repo}\``/`basename ${1:-test-repo}`
+testrepo=`realpath \`dirname ${1:-test-repo$$}\``/`basename ${1:-test-repo$$}`
 
 # Should we strip time-varying headers out of the input dump file?
 if [ $strip = T ]
@@ -132,7 +132,7 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo"; cd /tmp/testrepo; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
 fi
 
 # Should we stream the repo?

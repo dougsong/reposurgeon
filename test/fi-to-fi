@@ -38,7 +38,7 @@ done
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
-testrepo=${1:-/tmp/test-repo}
+testrepo=${1:-/tmp/test-repo$$}
 
 # Should we build a repo from the input file?
 if [ $extract = True ]

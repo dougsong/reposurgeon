@@ -28,7 +28,7 @@ do
 done
 shift $(($OPTIND - 1))
 
-testrepo=${1:-/tmp/test-repo}
+testrepo=${1:-/tmp/test-repo$$}
 
 USER='"J. Random Hacker" <jrh@foobar.com>'
 

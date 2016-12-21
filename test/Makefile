@@ -88,11 +88,11 @@ mailboxing:
 	@for file in *.fi; do \
 	    echo "  $${file}";\
 	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" \
-		>/tmp/regress || exit 1; \
-	    [ -s /tmp/regress ] && diff --text -u $${file} /tmp/regress \
+		>/tmp/regress$$$$ || exit 1; \
+	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file} /tmp/regress$$$$ \
 		|| exit 1; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
@@ -107,11 +107,11 @@ fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress 2>&1; \
-	    then diff --text -u $${file}.chk /tmp/regress || exit 1; \
+	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
+	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit 1; \
 	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test coalescence operation.
 COALESCE=uncoalesced
@@ -121,17 +121,17 @@ buildcoalesce:
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
 		>$${file}.chk || exit 1; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
-		>/tmp/regress || exit 1; \
-	    [ -s /tmp/regress ] && diff --text -u $${file}.chk /tmp/regress \
+		>/tmp/regress$$$$ || exit 1; \
+	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file}.chk /tmp/regress$$$$ \
 		|| exit 1; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the git extractor
 GITLOADS = bs
@@ -141,13 +141,13 @@ git-regress:
 	then \
 	    for test in $(GITLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with multiple git branches
 GITBRANCHES = be bb
@@ -157,13 +157,13 @@ git-regress-branches:
 	then \
 	    for test in $(GITBRANCHES); do \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with merges
 GITMERGES = be2 be3 be4 be5 be6
@@ -173,13 +173,13 @@ git-regress-merges:
 	then \
 	    for test in $(GITMERGES); do \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with tags
 GITTAGS = bt bt2
@@ -189,13 +189,13 @@ git-regress-tags:
 	then \
 	    for test in $(GITTAGS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the hg extractor
 HGLOADS = testrepo2
@@ -205,13 +205,13 @@ hg-regress:
 	then \
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg or git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the hg extractor with multiple hg branches
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
@@ -228,13 +228,13 @@ hg-regress-branches:
 	then \
 	    for test in $(HGBRANCHES); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the hg extractor with merges
 HGMERGES = be2 be3 be4 be5 be6
@@ -250,13 +250,13 @@ hg-regress-merges:
 	then \
 	    for test in $(HGMERGES); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the hg extractor with tags
 HGTAGS = bt bt2
@@ -272,13 +272,13 @@ hg-regress-tags:
 	then \
 	    for test in $(HGTAGS); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
@@ -294,13 +294,13 @@ hg-regress-patho:
 	then \
 	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress; \
-		then diff --text -u $${test}.fi /tmp/regress || exit 1; \
+		./hg-$${test}-test) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
@@ -320,15 +320,15 @@ svnload-regress:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
-		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress 2>&1; \
-		then diff --text -u $${test}.chk /tmp/regress || exit 1; \
+		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
+		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 		if command -v git >/dev/null 2>&1 ; \
 		then \
 		    mkdir /tmp/reposurgeon$$$$ || exit 1; \
 		    (cd /tmp/reposurgeon$$$$ || exit 1; \
 			git init --quiet || exit 1; \
-			grep --text -v 'reposurgeon:' /tmp/regress | git fast-import --quiet) \
+			grep --text -v 'reposurgeon:' /tmp/regress$$$$ | git fast-import --quiet) \
 			    || exit 1; \
 		    rm -fr /tmp/reposurgeon$$$$\
 		else echo "    Skipped, git missing."; \
@@ -336,7 +336,7 @@ svnload-regress:
 		) || exit 1; \
 	    fi \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
@@ -351,11 +351,11 @@ legacy-regress:
 	@for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress 2>/dev/null; \
-	    then diff --text -u $${test}.map /tmp/regress || exit 1; \
+	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
+	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit 1; \
 	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test dumping to Subversion
 DUMPLOADS=bs svnfodder
@@ -422,7 +422,7 @@ repodiffer-regress:
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Regression-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -438,7 +438,7 @@ repomapper-regress:
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Regression-testing of repotool; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -469,7 +469,7 @@ repocutter-regress:
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
-	@rm -f /tmp/regress
+	@rm -f /tmp/regress$$$$
 
 # Test productions end here.
 
