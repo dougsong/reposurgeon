@@ -1,50 +1,50 @@
-			reposurgeon project news
+= reposurgeon project news =
 
-Repository head:
+Repository head::
      Fix fatal error in reposurgeon version command (introduced in 3.40).
      In repocutter, the pathrename command now hacks svn:mergeinfo properties.
      'split' adds a ".split" suffix to any legacy ID in the new commit.
      More control over prefix stripping in the "path sup" command.
 
-3.40: 2016-09-20
+3.40: 2016-09-20::
      In repocutter, repair fatal bugs in log and setlog commands.
      In repocutter, added "see" command for reporting repository structure.
      In repocutter, added "sift" command inverting "expunge".
 
-3.39: 2016-09-01
+3.39: 2016-09-01::
      Make repocutter pathrename and expunge preserve Node-copyfrom-* headers.
      Make pathrename hack Node-copyfrom-path headers as well as Node-path.
      Enable repocutter to handle binary content in blobs.
      Improved documentation for the unite command.
 
-3.38: 2016-08-27
+3.38: 2016-08-27::
      Fix handling of second argument of timeoffset.
      Allow full find/replace with UTF-8.
      Make the syntax of the 'split' command consistent with the manual.
      Fix buggy 'authors write' command, and add a regression test for it.
 
-3.37: 2016-03-14
+3.37: 2016-03-14::
      Prevent two potential crash bug introduced by Python 3 porting.
 
-3.36: 2016-03-13
+3.36: 2016-03-13::
      The repocutter and repomapper utilities are now 8-bit clean under Python 3.
      Reorder 'done' stream terminator after tag and commit creates.
      Fix for GitLab issue #52, crash on a weird unite case. 
 
-3.35: 2016-02-25
+3.35: 2016-02-25::
      Reposurgeon now runs under either Python 2 or 3.
      CVS repos are recognized by CVSROOT, not a (possibly missing) Attic.
 
-3.34: 2016-02-16
+3.34: 2016-02-16::
      Make repocutter DTRT when copyfrom roots are removed by expunge.
 
-3.33: 2016-02-01
+3.33: 2016-02-01::
      More work on header-order independence for both reposurgeon and repocutter.
 
-3.32: 2016-01-31
+3.32: 2016-01-31::
      Handle Subversion dumps as produced by svndumpfilter with Node-kind first.
 
-3.31: 2016-01-23
+3.31: 2016-01-23::
      repocutter, a tool for preprocessing Subversion repos, is now included.
      In repotool, a new 'branches' command lists branches (not tags).
      Fix repotool, 'tags' for CVS repo so it lists only tags, not branches.
@@ -53,7 +53,7 @@ Repository head:
      repotool no longer needs to run within a module directory for CVS.
      Move from BSD-3-clause to BSD-2-clause, apply SPDX tag.
 
-3.30: 2016-01-10
+3.30: 2016-01-10::
      Added "when" command for timestamp conversions.
      Fix GitHub issue #42: Repository.split_commit() produces invalid marks.
      Commands now tab-complete name arguments wherever that makes sense.
@@ -63,7 +63,7 @@ Repository head:
      The reparent command can now specify multiple ancestors.
      In SVN repositories, a tag's subdirectory is now part of its name. 
 
-3.29: 2015-09-02
+3.29: 2015-09-02::
      Now included: git aliases that allow git to work with action stamps.
      The new repomapper tool helps prepare contributor maps.
      Use of branchify/branchify_map is now less likely to produce invalid resets.
@@ -74,7 +74,7 @@ Repository head:
      New --user-ignores option on Subversion reads passes through .gitignores.
      'repotool initialize' now generates an easier-to-read conversion makefile.
 
-3.28: 2015-07-05
+3.28: 2015-07-05::
      Make repotool honor the mirror directory argument for CVS.
      Fix gitlab issue 4: even successful CVS export returns error code.
      Fix some name lookup issues from the cache needing invalidation.
@@ -82,28 +82,28 @@ Repository head:
      New --filter option to mailbox_out for selective emission of headers.
      Fix gitlab issue #9: blank lines in svn:ignore misinterpreted.
 
-3.27: 2015-06-22
+3.27: 2015-06-22::
      Per-repo-type preserves aren't clobbered when there's a lister.
      Git repository hooks are preserved.
      Read support for Monotone, not yet very well tested.
 
-3.26: 2015-06-10
+3.26: 2015-06-10::
      Output redirect with '>>' appends to the output file.
      The strip blob command can take a selection set.
      Repo source type is now kept inline in stream files and emitted on write.
      Legacy IDs are now kept inline in stream files and emitted on write.
      The selection syntax <#nnn> now names commit nnn, 1-origin numbering.
 
-3.25: 2015-06-03
+3.25: 2015-06-03::
      Reading hg is now supported through an extractor class, no plugin required.
      Now 'blob' command allows creating new content from lift scripts.
 
-3.24: 2015-05-31
+3.24: 2015-05-31::
      Fix repository-type detection bug introduced in 3.23.
      DVCS Migration HOWTO is now merged into this distribution.
      Legacy-ID detection is now more discriminating, based on sourcetype.
 
-3.23: 2015-05-29
+3.23: 2015-05-29::
      The 'prefer' command no longer changes the repo type, but 'sourcetype' does.
      The =N set is all commits and tags with text matching a legacy ID.
      Legacy-ID recognition is more intelligent, depending on the source type.
@@ -111,7 +111,7 @@ Repository head:
      Exporters can now embed a repository type declaration in an import stream.
      Fast-import syntax extensions are documented.
 
-3.22: 2015-05-20
+3.22: 2015-05-20::
      The path rename --relax option has been removed as too confusing.
      In selection expressions, =Z is the set of all commits with no fileops.
      repopuller has been replaced by the more general repotool.
@@ -124,65 +124,65 @@ Repository head:
      DMRCN suffix flags on restrict path regexp matches to specified op types.
      The 'remove' command can now be told to look for specific fileop types.
 
-3.21: 2015-04-02
+3.21: 2015-04-02::
      In selection expressions, =U is the set of all commits with callouts.
 
-3.20: 2015-02-22
+3.20: 2015-02-22::
      Code is now fully functional, all regression tests passing, on Mac OS X.
      Warn in the docs about the consequences of case-smashing filesystems.
      diff command no longer relies on external diff(1).
      Bugfix for writing callouts in partial dumps.
 
-3.19: 2015-01-06
+3.19: 2015-01-06::
      Minor bugfix for handling of indexed action stamps.
 
-3.18: 2014-11-28
+3.18: 2014-11-28::
      The graft command now has a --prune option like unite.
 
-3.17: 2014-11-17
+3.17: 2014-11-17::
      Export support for SRC and RCS.
      Bug fix for automated preservation under hg.
      Bug fix for reparenting and checkout of commits with inline data.
 
-3.16: 1014-11-08
+3.16: 1014-11-08::
      Import support for SRC.
 
-3.15: 1014-11-05
+3.15: 1014-11-05::
      New 'add' command to insert new fileops in commits.
 
-3.14: 2014-10-29
+3.14: 2014-10-29::
      Assignments are preserved across squashes (including deletions).
      Name lookups are, after the first one, significantly faster.
 
-3.13: 2014-10-24
+3.13: 2014-10-24::
      Read/write support for the Fossil system.
      Fixes for timezone handling.
 
-3.12: 2014-09-11
+3.12: 2014-09-11::
      Explicit svn:ignore patterns aren't recursive to lower directories; cope.
      A new 'ignores' command has options for translation of ignore files.
      The --noignores option has been retired.
 
-3.11: 2014-08-12
+3.11: 2014-08-12::
      When converting SVN, ignore explicit .gitignores created by git-svn.
      (Better than letting them collide with translated svn:ignore properties.)
 
-3.10: 2014-04-19
+3.10: 2014-04-19::
      Finer control over filtering with caC flags.
      New setfield command for tweaking object attributes from lift scripts.
 
-3.9: 2014-04-12
+3.9: 2014-04-12::
      The attribution-parsing code handles odd characters in names better now. 
      The filter command can operate on email addresses as well as names.
      New 'stamp' command to report action stamps of commits.
      New 'count' comment reports selection-set counts.
      New branchify_mapping option for renaming Subversion branches on analysis.
 
-3.8: 2014-03-28
+3.8: 2014-03-28::
      New transcode command for moving metadata to UTF-8.
      New @dsc() function for selecting all descendants of a selection set.
 
-3.7: 2014-03-15
+3.7: 2014-03-15::
      New --dedos option for filter command, to change \r\n line endings to \n.
      New append command for annotating comments.
      The 'b' search code has been changed to appropriately match non-commits.
@@ -191,15 +191,15 @@ Repository head:
      Import stream comments led with # are preserved as passthroughs.
      Buggy text search of authors fields has been fixed.
 
-3.6: 2014-02-19
+3.6: 2014-02-19::
      Major rewrite of the generic conversion makefile.
      Fixed a bug in the graft and unite commands, thanks to Ralf Schlatterbeck.
 
-3.5: 2014-02-16
+3.5: 2014-02-16::
      Single fossil or tag names now select as if surrounded by <>.
      Fixed more bugs in debranch.
 
-3.4: 2014-02-14
+3.4: 2014-02-14::
      @amp() function useful for logic-gating in conjunctive expressions.
      New 'assign' command allows precomputation of expensive selections.
      There's an 'unassign' as well.
@@ -207,13 +207,13 @@ Repository head:
      path rename has a --relax and --force options to deal with path collisions
      New --changelog option of coalesce can recognize FSF-style ChangeLog files.
 
-3.3: 2014-02-11
+3.3: 2014-02-11::
      Set negation in selections with ~.
      @min() and @max() in selections.
      'define' by itself lists macros.
      New 'deletes' option in the remove command.
 
-3.2: 2014-02-03
+3.2: 2014-02-03::
      New path rename command.
      List and inspect now take either a leading or following selection.
      Text search selections can now have a B suffix to search blobs.
@@ -221,12 +221,12 @@ Repository head:
      A date of the form <YYYY-mm-dd> selects all commits and tags that day.
      Macros can now be multiline.
 
-3.1: 2014-01-27
+3.1: 2014-01-27::
      The filter command now has a --replace modifier to avoid regex overhead.
      Associated branches are renamed when a reset or tag is moved or deleted.
      Bug fix for off-by-one error in tags reporting.
 
-3.0: 2014-01-05
+3.0: 2014-01-05::
      Many syntactic features of the language have changed incompatibly.
      Backward-incompatible language changes are documented on the manual page.
      'expunge' and 'unite' commands have been incompatibly improved.
@@ -236,154 +236,154 @@ Repository head:
      Selecting a date or action stamp matching multiple commits now matches all.
      The surgical language now has a macro facility.
 
-2.43: 2013-12-01
+2.43: 2013-12-01::
      "set canonicalize" is now effective during import stream reads.
      Introduced =O, =M, =F selectors for parentless, merge, and fork commits.
      The "multiline" modifier on edit is replaced by the =L selector.
      Selection-set evaluation now short-circuits predicates and is faster.
      Fixed a buggy test that caused the reader to choke on submodule links.
 
-2.42: 2013-11-21
+2.42: 2013-11-21::
      Prevented crash when tagifying a mixed-branch commit.
      svn_no_autoignores -> svn_noautoignores
      Ignore single-rev mergeinfos in Subversion, they're cherry-picks.
 
-2.41: 2013-11-07
+2.41: 2013-11-07::
      Fixed a fatal bug when reading any symlink from a live Subversion repo.
      Added svn_no_autoignores option.
 
-2.40: 2013-08-04
+2.40: 2013-08-04::
      Improvements in .gitignore processing.
 
-2.39: 2013-05-23
+2.39: 2013-05-23::
      New 'tagify' command for tagifying empty commits.
      Correctness fixes for deletion edge cases.
 
-2.38: 2013-05-10
+2.38: 2013-05-10::
      Significant improvements to Subversion branch link detection.
      New 'reparent' command for modifying the DAG.
      Fixes for two minor crash bugs in handling of malformed commands.
 
-2.37: 2013-04-25
+2.37: 2013-04-25::
      No more tree pollution on branches deduced from file copies.
 
-2.36: 2013-04-22
+2.36: 2013-04-22::
      Optimizations, and fixes for some subtle bugs in the deletion logic.
 
-2.35: 2013-04-20
+2.35: 2013-04-20::
      New "manifest" command.
      Path-matching now has @ to require all paths in a commit to match.
 
-2.34: 2013-04-15
+2.34: 2013-04-15::
      More performance improvements. Large deletions are much faster now.
      Path matches with [] now have a regexp variant
 
-2.33: 2013-04-14
+2.33: 2013-04-14::
      "from COMMIT remove OP" for removing botched renames etc.
      Event-Mark can be be used as a commit identifier in mailbox format.
      Line continuation with \ works in scripts.
      There is now a regular expression matching syntax for paths.
 
-2.32: 2013-04-03
+2.32: 2013-04-03::
      Fix bug introduced in expunges when blobfile path generation changed.
 
-2.31: 2013-04-03
+2.31: 2013-04-03::
      New 'filter' command supports content filtering with a batch command.
      Yet more speed tuning - now 17K commits/min under cpython, 22K under pypy.
 
-2.30: 2013-03-28
+2.30: 2013-03-28::
      Fossil map dumps are pruned appropriately after an expunge.
      More speed tuning.
      An AUTHORS file now credits some significant collaborators
 
-2.29: 2013-03-24 
+2.29: 2013-03-24::
      Extreme speed tuning in SVN analysis - measured at over 11K commits/sec. 
      canonicalize option changes CR-LF to LF in commit comments.
 
-2.28: 2013-03-22
+2.28: 2013-03-22::
      There is now a 'reset' command like the tag command.
      Fix for buggy debranch command.
      More speed tuning.
 
-2.27: 2013-03-18
+2.27: 2013-03-18::
      More speed tuning.
      Simplify the baton display in SVN processing, its overhead was high.
 
-2.26: 2013-03-13
+2.26: 2013-03-13::
      Enable Subversion dump reader to handle yet another pathological case.
      Code has been tested and verified with PyPy.
      Prefer author date for action stamps when it is available.
      More speed tuning.
 
-2.25: 2013-03-07
+2.25: 2013-03-07::
      More speed tuning in repository analysis.
      O(n**2) cost for renumbering has been eliminated, svn_no_renumber is gone.
      New 'timings' command displays phase timings for repo analysis.
      Improved packaging for distributions (thanks, Mike Swanson).
 
-2.24: 2013-03-03
+2.24: 2013-03-03::
      Fix a crash bug in the new blob handling, and more performance tweaks.
 
-2.23: 2013-03-01
+2.23: 2013-03-01::
      Drastically cut the amount of disk storage and I/O required for surgery.
      Add svn_ignore_properties option.
      The .svn extension is now stripped from repo names on load.
 
-2.22: 2013-02-26
+2.22: 2013-02-26::
      New debranch feature for merging branches that should be subdirectories.
      Minor speed tuning via memoization.
 
-2.21: 2013-02-21
+2.21: 2013-02-21::
      Added "compressblobs" and "svn_no_renumber" option for very large repos. 
      Added the "sizes" and "lint" commands.
      Interpretation of timezone field in author maps was buggy, is now fixed.
      Experimental Emacs Lisp mode for editing comment mailboxes.
 
-2.20: 2013-02-08
+2.20: 2013-02-08::
      Teach repodiffer how not to choke on revisions with empty manifests.
      Make repodiffer more explicit when a revision's parent set changes.
      Improvements to the graph command's output of branches.
 
-2.19: 2013-02-06
+2.19: 2013-02-06::
      Serious tuning of internals for reduced memory usage.
 
-2.18: 2013-02-02
+2.18: 2013-02-02::
      Translation of symlinks in Subversion repos was buggy, is now fixed.
      repodiffer now has a useful and documented return value.
      New --tree-diff option of repodiffer shows context diffs of mismatches.
 
-2.17: 2013-01-26
+2.17: 2013-01-26::
      repodiffer can now take a map file and show fossil IDs with diff reports.
      The '?' selection-set modifier can be repeated for effect.
 
-2.16: 2013-01-25
+2.16: 2013-01-25::
      Fix a memoization bug that resulted in misbehavior after branch cuts.
 
-2.15: 2013-01-22
+2.15: 2013-01-22::
      Switch to cvs-fast-export for reading RCS and CVS collections.
      Efficiency and code-cleanup improvements by Julien Rivaud.
 
-2.14: 2013-01-19
+2.14: 2013-01-19::
      Dramatic decrease in memory footprint on large repositories.
      Improvements in DAG visualization via 'graph'.
 
-2.13: 2013-01-08
+2.13: 2013-01-08::
      The new 'graph' command supports making commit graphs in the DOT language.
      On read of an import stream, interpret a "cvs-revisions" property.
 
-2.12: 2012-12-30
+2.12: 2012-12-30::
      Support for reading RCS repositories.
      Now handling three-field authormap files with timezone offsets.
      Dump fileops in the stype of the output VCS, not the input.
      Synchronized with cvsps 3.3 release.
 
-2.11: 2012-12-20
+2.11: 2012-12-20::
      CVS repositories can now be read using cvsps --fast-export as a front end.
      Ignore pathnames are mapped properly when writing to non-git VCSes.
      cvs/svn/git ignore patterns are properly translated on output to hg.
      repodiffer now has a twirly-baton progress meter.
 
-2.10: 2012-12-16
+2.10: 2012-12-16::
      svnpull renamed to repopuller in anticipation of pulling CVS repositories.
      Introducing repodiffer, a tool to report diffs between histories.
      Fossil-IDs are now dumped in pre-commit comments.
@@ -391,44 +391,44 @@ Repository head:
      When reading svn repositories, .cvsignore files are lifted to .gitignores.
      svn's default ignore-pattern behavior is emulated in translations.
 
-2.9: 2012-12-06
+2.9: 2012-12-06::
      Syntax of "authors", "fossils", "list", and "mailbox_{in|out}" has changed.
      Many commands can now redirect output to a named file prefixed with '>'.
      The list command now displays fossil IDs if the repo has them.
      A subtle bug affecting generated directory copies has been fixed.
 
-2.8: 2012-12-04
+2.8: 2012-12-04::
      Fix for a nasty optimizer bug that could cause file loss.
      split now uses a different preposition when matching against pathnames.
 
-2.7: 2012-12-01
+2.7: 2012-12-01::
      Full (read-write) support for darcs.
      The expunge command now treats deletes correctly.
      New 'tip' command deduces if a commit is associated with a unique branch.
      Support for writing Subversion repositories, but they don't round-trip.
 
-2.6: 2012-11-22
+2.6: 2012-11-22::
      divide now cuts unconditionally, renaming branches or repos as required.
      The split command can take a path to be matched instead of an index.
 
-2.5: 2012-11-19
+2.5: 2012-11-19::
      git sometimes doesn't quote filenames with embedded spaces properly; cope.
      Correctly handle combination of SVN directory copy with a file change.
      More careful sanity checking in the workflow makefile.
      Prevent erroneous shlex interpretation of single quotes in R/C/N fileops.
      Fix and regression test for expunge when it implies removal of a commit.
 
-2.4: 2012-11-18
+2.4: 2012-11-18::
      In SVN conversion, user is warned about mid-branch deletealls.
      'version' command allows a script to be pinned to a major version.
      There is now a branch {rename,delete} command.
      More speedups and test loads.
 
-2.3: 2012-11-13
+2.3: 2012-11-13::
      SVN dump analysis now completes much faster on large examples.
      The format of action stamps has changed to fully support split commits.
 
-2.2: 2012-11-06
+2.2: 2012-11-06::
      Unit testing for the date parsing/formatting code
      'branchify' declares a non-default set of svn paths to be branchified.
      Interpretation of svn:mergeinfo properties.
@@ -437,12 +437,12 @@ Repository head:
      The 'merge' command now unconditionally creates a merge link.
      Reference syntax now allows references to be fossil-IDs.
 
-2.1: 2012-11-04
+2.1: 2012-11-04::
      Ignores are moved among git/hg/bzr ignore files (but not yet translated).
      Added conversion.mk to the distribution, describing a typical workflow.
      Fixed a bug that could result in incorrect timezone handling in git dates.
 
-2.0: 2011-11-02
+2.0: 2011-11-02::
      reposurgeon can now read Subversion dump files and repositories directly.
      New major commands 'tag' and 'merge' (old 'merge is now 'unite'). 
      The 'sort', 'cvspurge' and 'gitsvnparse' commands have been removed.
@@ -452,7 +452,7 @@ Repository head:
      Scripts can now consume multiline here-documents, as in shell.
      Reference-name syntax is documented, and can select commits by date.
 
-1.9: 2011-11-14
+1.9: 2011-11-14::
      'prefer' command now sets the type for the selected repo.
      Added 'paths' command to list/modify pathnames touched by a selection set.
      In selection-set syntax, what was @foo for tag reference is now <foo>.
@@ -460,7 +460,7 @@ Repository head:
      Under git and bzr, automatic file preservation of anything untracked.
      My belief that git handled properties was due to a test error...
 
-1.8: 2011-11-10
+1.8: 2011-11-10::
      Added "sort" command.
      Added "multiline" modifier to edit command.
      gitsvnparse now creates R ops from properly matched D/M pairs.
@@ -468,18 +468,18 @@ Repository head:
      gitsvnparse strip is no more, since git handles properties now.
      Added =H visibility set - childless commits.
 
-1.7: 2011-11-07
+1.7: 2011-11-07::
      authormap -> authors; the command syntax has changed, read the man page.
      authors handles git-cvsimport/cvs2git style: "localname <localname>"
      authors with no arguments prints a list of committer/author/taggers
      Automatic use of .git/cvs-authors for ID mapping.
      gitsvnparse modifiers are gone; instead there's a new 'fossils' command.
 
-1.6: 2011-11-03
+1.6: 2011-11-03::
      Fix Python 3.2 compatibility problem pointed out by Mike Swanson.
      gitsvnparse moves remote branches/tags to local ones (like svn2git).
 
-1.5: 2011-11-02
+1.5: 2011-11-02::
      Suppress writing out properties if the importer won't handle them.
      'references' lists events with possible SVN or CVS rev IDs in comments.
      'references lift' turns CVS & SVN reference cookies into action stamps.
@@ -489,14 +489,14 @@ Repository head:
      'diff' command allows examining diffs between commits.
      New [ ] syntax for selecting commits containing a specified path.
 
-1.4: 2011-10-28
+1.4: 2011-10-28::
      Code is pylint clean.
      Fixed a bug in the cut coloring algorithm.
      Added 'graft', 'authormap', and 'gitsvnlift' commands.
      Merge operation is no longer confused by out-of-timestamp-order commits.
      Restore capability to coalesce empty log messages
 
-1.3: 2011-10-25
+1.3: 2011-10-25::
      Code moved to Python 3 compatibility with 2to3.
      cvspreen -> cvslift
      cvslift generates tag objects corresponding to cvs2svn-generated tags.
@@ -504,7 +504,7 @@ Repository head:
      Various bug fixes, including for a crash bug in rebuild after expunge.
      Default preserve set is repository-type-dependent.
 
-1.2: 2011-10-19
+1.2: 2011-10-19::
      Cope better with "(no author)" attribution generated by cvs2svn.
      Preserve .git/config and .git/hooks by default.
      Slightly more relaxed parsing of Committer/Author/Tagger headers.
@@ -517,22 +517,22 @@ Repository head:
      New 'cvslift' operation for nuking junk commits from cvs2svn conversions.
      Make the branch attribute of commits editable.
 
-1.1: 2011-08-24
+1.1: 2011-08-24::
      Fix a mis-coded notification message that would have crashed the 
      program if it were ever issued, from Edward Z. Yang. Some typo
      fixes and documentation improvements. 
 
-1.0: 2011-02-11
+1.0: 2011-02-11::
      Pylint cleanup and release for production.
 
-0.9: 2010-11-30
+0.9: 2010-11-30::
      Can now handle 'N' file operations; they're passed through.
      The 'stats' command can now take a list of repo names as arguments.
      The file extension ".fi" is now removed from the in-core names of
      repositories read from plain files
      Fixed an embarrassing bug in the rebuild code
 
-0.8: 2010-11-19
+0.8: 2010-11-19::
      This is a beta. It is likely the next release will be 1.0.
      Expunge now saves deleted material into a new repository, so it can
      be used to carve up repositories by file path match.
@@ -543,25 +543,25 @@ Repository head:
      repo will be duplicated onto the late fragment as well as remaing
      on the early one.
 
-0.7: 2010-11-15
+0.7: 2010-11-15::
      Added 'merge' command that merges repositories.
 
-0.6: 2010-11-10
+0.6: 2010-11-10::
      Tweaked to pass through git submodules without failing.
      Also contains a fix for a subtle bug in error handling.
 
-0.5: 2010-11-09
+0.5: 2010-11-09::
      We can round-trip bzr dumps with commit properties.
      New 'split' operation, opposite of coalesce/delete.
      Multiple author headers per commit are handled (helps with bzr).
 
-0.4: 2010-11-08
+0.4: 2010-11-08::
      Handling of inline data, previously extremely buggy, has been fixed.
      Can now handle streams produced by bzr-fast-export, which uses inline.
      Unfortunately, bzr-fast-import is buggy enough to make rebuilds fail.
      First cut at hg support, by Phil Roberts.
 
-0.3: 2010-11-07
+0.3: 2010-11-07::
      'split' operation renamed to 'cut'.
      New 'inspect' command for looking at commits in raw form.
      'list' command adapts to current width of terminal window.
@@ -569,7 +569,7 @@ Repository head:
      Multiple instances can now run in the same directory.
      Some speedup on import and export.
 
-0.2: 2010-11-04
+0.2: 2010-11-04::
      Filenames with embedded whitespace are handled. 
      The 'expunge' operation to remove files from the history is working.
      The 'split' operation (topological cut) is now working.
@@ -580,8 +580,10 @@ Repository head:
      A bug that caused spurious date modifications when editing events
      with a non-local timezone has been fixed.
 
-0.1: 2010-11-01
+0.1: 2010-11-01::
      First public release. Working with git, untested with hg and bzr
 
-0.0: 2010-10-22
+0.0: 2010-10-22::
      Project launched
+
+// end
