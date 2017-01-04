@@ -10979,10 +10979,9 @@ the selection set (which defaults to the entire repo). This
 variant does > redirection.
 
 With the 'sub' modifier, take a second argument that is a directory
-name and prepend it to every path. With the 'sup' modifier, strip the
-first directory component from every path unless a second argument is
-supplied. In this case only directory component supplied in the argument is
-stripped from the start of the path (where it appears).
+name and prepend it to every path. With the 'sup' modifier, strip 
+any directory argument from the start of the path if it appears there;
+with no argument, strip the first directory component from every path.
 """ )
     def do_paths(self, line):
         if self.chosen() is None:

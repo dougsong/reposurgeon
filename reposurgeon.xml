@@ -1657,7 +1657,8 @@ repo). This reporting variant does &gt;-redirection.</para>
 
 <para>With the 'sub' modifier, take a second argument that is a
 directory name and prepend it to every path. With the 'sup' modifier,
-strip the first directory component from every path.</para>
+strip the first directory component from every path; strip any
+directory argument from the start of the path if it appears there.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
