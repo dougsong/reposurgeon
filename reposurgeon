@@ -6984,6 +6984,9 @@ class Repository:
             event2.invalidate_pathset_cache()
             event.set_operations(fileops)
             event.invalidate_pathset_cache()
+            # Avoid duplicates in the legacy-ID map
+            if event2.legacy_id:
+                event2.legacy_id += ".split"
             return True
         return False
     def split_commit_by_index(self, where, splitpoint):
@@ -10709,7 +10712,8 @@ The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
 the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the mark of the new commit is
-then changed.
+then changed.  If the new commit has a legacy ID, the suffix '.split' is
+appended to it.
 
 Finally, some file operations - starting at the one matched or indexed
 by the split argument - are moved forward from the original commit

@@ -31,7 +31,7 @@ M 100644 :1 foo/src
 
 Event 4 =================================================================
 commit refs/heads/master
-#legacy-id 2
+#legacy-id 2.split
 mark :7
 committer brooksd <brooksd> 1353813663 +0000
 data 33
@@ -71,7 +71,7 @@ M 100644 :3 baz2/src
 
 Event 8 =================================================================
 commit refs/heads/master
-#legacy-id 4
+#legacy-id 4.split
 mark :8
 committer brooksd <brooksd> 1353813667 +0000
 data 27
