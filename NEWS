@@ -6,6 +6,7 @@ Repository head::
      'split' adds a ".split" suffix to any legacy ID in the new commit.
      More control over prefix stripping in the "path sup" command.
      Add --notagify option to expunge command.
+     Repair implementation of "split at".
 
 3.40: 2016-09-20::
      In repocutter, repair fatal bugs in log and setlog commands.

@@ -6994,8 +6994,8 @@ class Repository:
         return False
     def split_commit_by_index(self, where, splitpoint):
         return self.split_commit(where,
-                                 lambda ops: (ops[splitpoint:],
-                                              ops[:splitpoint]))
+                                 lambda ops: (ops[:splitpoint],
+                                              ops[splitpoint:]))
     def split_commit_by_prefix(self, where, prefix):
         return self.split_commit(where,
                                  lambda ops: ([op for op in ops if not op.path.startswith(prefix)],
@@ -10742,12 +10742,15 @@ file operations in the original commit.
         if not isinstance(event, Commit):
             raise Recoverable("fileop argument doesn't point at a commit")
         line = str(line)   # pacify pylint by forcing string type
-        (prep, obj) = line.split()
+        try:
+            (prep, obj) = line.split()
+        except ValueError:
+            raise Recoverable("ill-formed split command")
         if prep == 'at':
             try:
                 splitpoint = int(obj) - 1
                 if splitpoint not in range(1, len(event.operations())):
-                    raise Recoverable("fileop index out of range")
+                    raise Recoverable("fileop index %d out of range" % splitpoint)
                 self.chosen().split_commit_by_index(where, splitpoint)
             except ValueError:
                 raise Recoverable("expected integer fileop index (1-origin)")
