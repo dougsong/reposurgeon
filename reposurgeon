@@ -8,7 +8,6 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
-
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
 import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
 import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
@@ -1666,6 +1665,8 @@ class Date(object):
             pass
         # Date format not recognized
         raise error("'%s' is not a valid timestamp" % text)
+    def clone(self):
+        return Date(self.rfc3339())
     @staticmethod
     def secondsFromOffsetString(text):
         m = re.match(Date.offset_re, polybytes(text))
@@ -1807,6 +1808,12 @@ class Attribution(object):
             except (ValueError, IndexError):
                 raise Fatal("malformed attribution date '%s' in '%s'" \
                             % (self.date, operson))
+    def clone(self):
+        mycopy = Attribution()
+        mycopy.name = self.name
+        mycopy.email = self.email
+        mycopy.date = self.date.clone()
+        return mycopy
     def email_out(self, _modifiers, msg, hdr):
         "Update an RC822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
@@ -6153,14 +6160,15 @@ class Repository:
         except OSError as e:
             raise Fatal("repo rename %s -> %s failed: %s"
                                        % (self.subdir(), self.subdir(newname), e))
-    def addEvent(self, event, where=None):
+    def addEvent(self, event, where=None, legend=""):
+        "Insert an event just before the specified index."
         if where is not None:
             self.events.insert(where, event)
         elif self.events and isinstance(self.events[-1], Passthrough) and self.events[-1].text == "done":
             self.events.insert(-1, event)
         else:
             self.events.append(event)
-        self.declare_sequence_mutation()
+        self.declare_sequence_mutation(legend)
     @memoized_iterator("_commits")
     def commits(self):
         "Iterate through the repository commit objects."
@@ -11342,9 +11350,19 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 
     def help_tag(self):
         sys.stdout.write("""
-Move, rename, or delete a tag.  First argument must be an existing
-name referring to a tag object, lightweight tag, or reset; second
-argument must be one of the verbs 'move', 'rename', or 'delete'.
+Create, move, rename, or delete a tag.
+
+Creation is a special case.  First argument is a nane, which must not
+be an existing tag. Takes a singleton event second argument which must
+point to a commit.  A tag object pointing to the commit is created and
+inserted just after the last tag in the repo (or just after the last
+commit if there are no tags).  The tagger, committish, and comment
+fields are copied from the commit's committer, mark, and comment
+fields.
+
+Otherwise, the first argument must be an existing name referring to a
+tag object, lightweight tag, or reset; second argument must be one of
+the verbs 'move', 'rename', or 'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that is a
@@ -11377,7 +11395,7 @@ fields are changed and a warning is issued.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        # A tag name can erfere to one of the following things:
+        # A tag name can refer to one of the following things:
         # (1) A tag object, by name
         # (2) A reset object having a name in the tags/ namespace
         # (3) The tip commit of a branch with branch fields
@@ -11385,20 +11403,46 @@ fields are changed and a warning is issued.
         # generates for each tag object corresponding branch labels on
         # some ancestor commmits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
-        tag = None
-        resets = []
-        commits = []
-        fulltagname = Tag.branchname(tagname)
-        for event in repo.events:
-            if isinstance(event, Tag) and event.name == tagname:
-                tag = event
-            elif isinstance(event, Reset) and event.ref == fulltagname:
-                resets.append(event)
-            elif isinstance(event, Commit) and event.branch == fulltagname:
-                commits.append(event)
-        if not tag and not resets and not commits:
-            raise Recoverable("no such tag as %s" % tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
+        if verb == 'create':
+            if repo.named(tagname):
+                raise Recoverable("something is already named %s" % tagname)
+            self.set_selection_set(line)
+            try:
+                if len(self.selection) != 1: raise ValueError()
+                (_, target), = self.selected(Commit)
+            except (TypeError, ValueError):
+                raise Recoverable("tag create requires a singleton commit set.")
+            tag = Tag(name=tagname,
+                      committish=target.mark,
+                      target=target,
+                      tagger=target.committer.clone(),
+                      comment=target.comment)
+            lasttag = None
+            lastcommit = None
+            for (i, event) in enumerate(repo.events):
+                if isinstance(event, Tag):
+                    lasttag = i
+                elif isinstance(event, Commit):
+                    lastcommit = i
+            if lasttag is None:
+                lasttag = lastcommit
+            repo.addEvent(tag, lasttag+1, "tag creation")
+            return
+        else:
+            tag = None
+            resets = []
+            commits = []
+            fulltagname = Tag.branchname(tagname)
+            for event in repo.events:
+                if isinstance(event, Tag) and event.name == tagname:
+                    tag = event
+                elif isinstance(event, Reset) and event.ref == fulltagname:
+                    resets.append(event)
+                elif isinstance(event, Commit) and event.branch == fulltagname:
+                    commits.append(event)
+            if not tag and not resets and not commits:
+                raise Recoverable("no such tag as %s" % tagname)
         if verb == "move":
             self.set_selection_set(line)
             try:

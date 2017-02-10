@@ -1803,10 +1803,19 @@ is prepended.</para>
         <command>[arg]</command>.
 </term>
 <listitem>
-<para>Move, rename, or delete a tag.  First argument must be an
-existing tag name; second argument must be one of the verbs
-<quote>move</quote>, <quote>rename</quote>, or
-<quote>delete</quote>.</para>
+<para>Create, move, rename, or delete a tag.</para>
+
+<para>Creation is a special case.  First argument is a nane, which
+must not be an existing tag. Takes a singleton event second argument
+which must point to a commit.  A tag object pointing to the commit is
+created and inserted just after the last tag in the repo (or just
+after the last commit if there are no tags).  The tagger, committish,
+and comment fields are copied from the commit's committer, mark, and
+comment fields.</para>
+
+<para>Otherwise, first argument must be an existing tag name; second
+argument must be one of the verbs <quote>move</quote>,
+<quote>rename</quote>, or <quote>delete</quote>.</para>
 
 <para>For a <quote>move</quote>, a third argument must be a singleton
 selection set. For a <quote>rename</quote>, the third argument may be
