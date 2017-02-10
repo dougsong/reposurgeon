@@ -914,8 +914,8 @@ def pathrename(source, selection, patterns):
     def __revhook(propkeys, propdict):
         if "svn:mergeinfo" in propdict:
             propdict["svn:mergeinfo"] = re.sub(patterns[0],
-                                              patterns[1],
-                                              propdict["svn:mergeinfo"])
+                                               patterns[1],
+                                               propdict["svn:mergeinfo"])
         return (propkeys, propdict)
     def __nodehook(header, properties, content):
         for htype in ("Node-path: ", "Node-copyfrom-path: "):
