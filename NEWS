@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head::
+3.41: 2016-02-10::
      Fix fatal error in reposurgeon version command (introduced in 3.40).
      In repocutter, the pathrename command now hacks svn:mergeinfo properties.
      'split' adds a ".split" suffix to any legacy ID in the new commit.
