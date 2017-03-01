@@ -249,7 +249,7 @@ Subversion revision numbers.</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>commit numbers</firstterm></term>
-<listitem><para>Anumeric literal within  name brackets (&lt; &gt;)
+<listitem><para>A numeric literal within  name brackets (&lt; &gt;)
 preceded by # is interpreted as a 1-origin
 commit-sequence number.</para></listitem>
 </varlistentry>
@@ -1265,7 +1265,7 @@ yagified commit's parent.</para>
 </varlistentry>
 <varlistentry>
 <term><command>coalesce</command>
-        [<command>--debug</command>}|<command>--changelog</command>]
+        [<command>--debug</command>|<command>--changelog</command>]
         [<emphasis>timefuzz</emphasis>]
 </term>
 <listitem>
@@ -1632,7 +1632,7 @@ of the grafted repository.</para>
 <term><command>path</command>
         [<emphasis>source</emphasis>]
         <command>rename</command>
-        [<command>--force</command>}]
+        [<command>--force</command>]
         [<emphasis>target</emphasis>]
 </term>
 <listitem>
