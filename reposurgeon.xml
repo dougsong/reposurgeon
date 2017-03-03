@@ -53,7 +53,7 @@ defines a common language of primitive operations for
 
 <para>Fully supported systems (those for which
 <command>reposurgeon</command> can both read and write repositories)
-include git, hg, bzr, svn, darcs, RCS, and SRC.  For a complete list, with
+include git, hg, bzr, svn, darcs, bk, RCS, and SRC.  For a complete list, with
 dependencies and technical notes, type <command>prefer</command> to
 the <command>reposurgeon</command> prompt.</para>
 
@@ -3116,7 +3116,8 @@ included in the table.</para>
     <colspec colname='c5'/>
     <colspec colname='c6'/>
     <colspec colname='c7'/>
-    <spanspec spanname="all" namest="c2" nameend="c7" align="center"/>
+    <colspec colname='c8'/>
+    <spanspec spanname="all" namest="c2" nameend="c8" align="center"/>
     <thead>
       <row>
         <entry></entry>
@@ -3127,6 +3128,7 @@ included in the table.</para>
         <entry align='center'>from bzr</entry>
         <entry align='center'>from darcs</entry>
         <entry align='center'>from SRC</entry>
+        <entry align='center'>from bk</entry>
       </row>
     </thead>
     <tbody>
@@ -3139,6 +3141,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to svn</emphasis></para></entry>
@@ -3149,6 +3152,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to git</emphasis></para></entry>
@@ -3159,6 +3163,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all except RE:-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to hg</emphasis></para></entry>
@@ -3169,6 +3174,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to bzr</emphasis></para></entry>
@@ -3179,6 +3185,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to darcs</emphasis></para></entry>
@@ -3189,6 +3196,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>plain</para></entry>
         <!--darcs--><entry><para>all</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
       <row>
         <entry><para><emphasis role="strong">to SRC</emphasis></para></entry>
@@ -3199,6 +3207,7 @@ included in the table.</para>
         <!-- bzr --><entry><para>all except RE:- and !-prefixed</para></entry>
         <!--darcs--><entry><para>plain</para></entry>
         <!-- SRC --><entry><para>all</para></entry>
+        <!-- bk  --><entry><para>all</para></entry>
       </row>
     </tbody>
   </tgroup>
@@ -3213,7 +3222,7 @@ When writing to an hg repository from any other kind,
 
 <refsect1 id='style'><title>TRANSLATION STYLE</title>
 
-<para>After converting a CVS or SVN repository, check for and remove
+<para>After converting a CVS, SVN, or BitKeeper repository, check for and remove
 $-cookies in the head revision(s) of the files. The full Subversion
 set is $Date:, $Revision:, $Author:, $HeadURL and $Id:. CVS uses
 $Author:, $Date:, $Header:, $Id:, $Log:, $Revision:, also (rarely)
@@ -3464,6 +3473,10 @@ it if the repo is written to git.</para>
 the write-side support is more of a sketch or proof-of-concept than a
 robust implementation;  it only works on very simple cases and does
 not round-trip. It may improve in future releases.</para>
+
+<para>Limitation: Not all BitKeeper versions have the fast-import and
+fast-export commands that <command>reposurgeon</command> requires.
+They are present back to the 7.3 opensource version.</para>
 
 <para>Limitation: <command>reposurgeon</command> may misbehave under a
 filesystem which smashes case in filenames, or which nominally
@@ -3720,6 +3733,7 @@ are fatal.</para>
 <citerefentry><refentrytitle>hg</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>rcs</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>svn</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>bk</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 </para>
 </refsect1>
 <refsect1 id='author'><title>AUTHOR</title>
