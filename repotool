@@ -39,7 +39,7 @@ initialize)
 	source_vcs=$1
     fi
     case $source_vcs in
-	cvs|svn|git|bzr|hg|darcs) ;;
+	cvs|svn|git|bzr|hg|darcs|bk) ;;
 	*) echo "repotool: unknown source VCS type ${source_vcs}"; exit 1 ;;
     esac
     shift
@@ -51,7 +51,7 @@ initialize)
 	target_vcs=$1
     fi
     case $target_vcs in
-	cvs|svn|git|bzr|hg|darcs) ;;
+	cvs|svn|git|bzr|hg|darcs|bk) ;;
 	*) echo "repotool: unknown target VCS type ${target_vcs}"; exit 1 ;;
     esac 
     echo "repotool: generating Makefile, some variables in it need to be set."
@@ -221,6 +221,9 @@ export)
     elif [ -d _darcs ]
     then
 	    darcs fastconvert export
+    elif [ -d .bk ]
+    then
+	    bk fast-export -q
     else
 	echo "repotool: does not look like a repository directory of known type."
 	exit 1
@@ -295,6 +298,9 @@ tags)
     elif [ -d _darcs ]
     then
 	    darcs show tags
+    elif [ -d .bk ]
+    then
+	    bk tags | sed -n 's/ *TAG: *//p'
     else
         echo "repotool: tags listing not supported for this repository type."
         exit 1
@@ -377,7 +383,7 @@ checkout)
 	echo "Not yet supported."
 	exit 1
     else
-        echo "repotool: tags listing not supported for this repository type."
+        echo "repotool: checkout not supported for this repository type."
         exit 1
     fi
     ;;
