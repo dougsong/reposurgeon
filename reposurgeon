@@ -11366,7 +11366,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
         sys.stdout.write("""
 Create, move, rename, or delete a tag.
 
-Creation is a special case.  First argument is a nane, which must not
+Creation is a special case.  First argument is a name, which must not
 be an existing tag. Takes a singleton event second argument which must
 point to a commit.  A tag object pointing to the commit is created and
 inserted just after the last tag in the repo (or just after the last

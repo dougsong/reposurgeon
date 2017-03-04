@@ -1805,7 +1805,7 @@ is prepended.</para>
 <listitem>
 <para>Create, move, rename, or delete a tag.</para>
 
-<para>Creation is a special case.  First argument is a nane, which
+<para>Creation is a special case.  First argument is a name, which
 must not be an existing tag. Takes a singleton event second argument
 which must point to a commit.  A tag object pointing to the commit is
 created and inserted just after the last tag in the repo (or just
