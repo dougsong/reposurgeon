@@ -10059,6 +10059,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
                     self.filtercmd = filtercmd[7:].lstrip()
+                    self.attributes = {"c", "a", "C"}
                 elif filtercmd.startswith('--regex') or filtercmd.startswith('--replace'):
                     firstspace = filtercmd.find(' ')
                     if firstspace == -1:
