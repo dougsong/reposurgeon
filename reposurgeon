@@ -2551,7 +2551,7 @@ class Commit(object):
                         modified = True
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
-                    if date != self.authors[i].date:
+                    if self.authors[i].date is None or date != self.authors[i].date:
                         # Yes, display this unconditionally
                         if self.repo:
                             announce("in event %s, %s-Date #%d is modified" \
