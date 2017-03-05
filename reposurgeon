@@ -8240,6 +8240,8 @@ into sections of the input stream instead).
                         continue
                     else:
                         raise Recoverable("start of span is missing")
+                elif self.peek() == ".":
+                    raise Recoverable("malformed span")
                 if self.peek() == "<":
                     self.pop()
                     closer = self.line.find('>')
