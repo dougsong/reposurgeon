@@ -100,9 +100,24 @@ and headers so it's in the same format as the rest of the mailbox."
   )
 
 (defun svn-index ()
-     "Show Subversion dump structure by eliding most lines."
-     (interactive)
-     (grep (format "egrep -nH -e \"Node-path|Revision-number|Node-copyfrom\" %s " (buffer-file-name))))
+  "Show Subversion dump structure by eliding most lines."
+  (interactive)
+  (grep (format "egrep -nH -e \"Node-path|Revision-number|Node-copyfrom\" %s " (buffer-file-name))))
+
+(defun strip-mailbox-headers ()
+  "Strip all headers from a mailbox comment dump except Event-Mark."
+  (interactive)
+  (goto-char (point-min))
+  (let ((seen-state nil))
+    (while (not (eobp))
+      (cond ((looking-at reposurgeon-mail-delimiter) (setq seen-state "header"))
+	    ((string= seen-state "header")
+	     (cond ((looking-at "\n")
+		    (setq seen-state "text"))
+		   ((not (looking-at "Event-Mark:"))
+		    (progn (kill-whole-line) (forward-line -1))))))
+      (forward-line 1))))
+      
 
 (defvar reposurgeon-mode-map nil "Keymap for reposurgeon-mode")
 
