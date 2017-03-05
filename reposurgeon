@@ -8597,7 +8597,10 @@ into sections of the input stream instead).
                 if hasattr(event, method):
                     summary = getattr(event, method)(*((parse, i,)+optargs))
                     if summary:
-                        parse.stdout.write(summary + "\n")
+                        if summary.endswith("\n"):
+                            parse.stdout.write(summary)
+                        else:
+                            parse.stdout.write(summary + "\n")
     @staticmethod
     def pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
