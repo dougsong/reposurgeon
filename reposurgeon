@@ -752,7 +752,7 @@ core
         dfltignores="",        # Has none
         cookies=(VCS.nobug + VCS.bare_numeric,),	# Same as SCCS
         project="https://www.bitkeeper.com/",
-        # No tag support, and a tendency to core-dump 
+        # No tag support, and a tendency to core-dump
         notes="Bitkeeper's importer is flaky and incomplete as of 7.3.1ce."),
     ]
 
