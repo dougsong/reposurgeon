@@ -3385,6 +3385,7 @@ class StreamParser:
                     generated = " generated" if self.generated else "",
                     props = " properties=%s" % fmt(self.props)
                                     if self.props else "")
+        __repr__ = __str__
     class RevisionRecord(object):
         __slots__ = ("nodes", "props")
         def __init__(self, nodes, props):
