@@ -3007,7 +3007,7 @@ and (b) it will not be immediately obvious which is right.</para>
 <para>Branch analysis failed, probably due to a set of file copies that
 <command>reposurgeon</command> thought it should interpret as a botched
 branch creation but couldn't deduce a history for.  This is a warning;
-check how the directory XX is converted, it may need post-editing
+check how the directory XXX is converted, it may need post-editing
 into a branch.</para>
 </listitem>
 </varlistentry>
