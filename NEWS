@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-3.42: 2016-03-06:
+3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
 
 3.41: 2016-02-10::
