@@ -3,16 +3,16 @@
 echo 1
 read <testrepo.fi
 coverage
-squash :7,:8
+:7,:8 squash
 coverage       # Expect this to show case 1 covered.
-squash :10,:11
+:10,:11 squash
 coverage       # Expect this to show case 3 covered.
-squash :17,:18
+:17,:18 squash
 coverage       # Expect this to show case 2 covered.
-squash :25,:26
+:25,:26 squash
 coverage       # Expect this to show case 4 covered.
-squash :29,:30
+:29,:30 squash
 coverage       # Expect this to show case 6 covered.
-resolve 1..$
-delete :34	# Test the code that checks for non-D fileops present.
-resolve 1..$
+1..$ resolve
+:34 delete     # Test the code that checks for non-D fileops present.
+1..$ resolve

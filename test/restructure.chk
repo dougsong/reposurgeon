@@ -44,233 +44,186 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README 
 Case coverage: []
-squash :7,:8
+:7,:8 squash
 coverage       # Expect this to show case 1 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
 commit 5, mark :4:
 0: M 100644 :3 README  
-commit 8, mark :7:
+commit 9, mark :10:
 0: M 100644 :5 README  
-1: M 100644 :6 doomed1 
-commit 9, mark :8:
-0: D doomed1           
-commit 11, mark :10:
-0: M 100644 :9 doomed2 
-commit 12, mark :11:
+1: M 100644 :9 doomed2 
+commit 10, mark :11:
 0: R "doomed2" "renamed1"
-commit 14, mark :13:
+commit 12, mark :13:
 0: M 100644 :12 doomed3
-commit 16, mark :15:
+commit 14, mark :15:
 0: M 100644 :14 doomed3
-commit 18, mark :17:
+commit 16, mark :17:
 0: M 100644 :16 doomed3
-commit 19, mark :18:
+commit 17, mark :18:
 0: D doomed3           
-commit 20, mark :19:
+commit 18, mark :19:
 0: M 100644 :3 README  
-commit 22, mark :21:
+commit 20, mark :21:
 0: M 100644 :20 foo    
-commit 24, mark :23:
+commit 22, mark :23:
 0: M 100644 :22 foo    
-commit 26, mark :25:
+commit 24, mark :25:
 0: M 100644 :24 foo    
-commit 27, mark :26:
+commit 25, mark :26:
 0: R "foo" "bar"       
-commit 29, mark :28:
+commit 27, mark :28:
 0: M 100644 :27 README 
-commit 30, mark :29:
+commit 28, mark :29:
 0: D bar               
 1: M 100644 :24 renamed1
-commit 31, mark :30:
+commit 29, mark :30:
 0: M 100644 :24 copy1  
-commit 33, mark :32:
+commit 31, mark :32:
 0: M 100644 :31 bar    
-commit 35, mark :34:
+commit 33, mark :34:
 0: M 100644 :33 README 
-Case coverage: []
-squash :10,:11
+Case coverage: [1]
+:10,:11 squash
 coverage       # Expect this to show case 3 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
 commit 5, mark :4:
 0: M 100644 :3 README  
-commit 8, mark :7:
+commit 10, mark :13:
 0: M 100644 :5 README  
-1: M 100644 :6 doomed1 
-commit 9, mark :8:
-0: D doomed1           
-commit 11, mark :10:
-0: M 100644 :9 doomed2 
-commit 12, mark :11:
-0: R "doomed2" "renamed1"
-commit 14, mark :13:
-0: M 100644 :12 doomed3
-commit 16, mark :15:
+1: M 100644 :9 renamed1
+2: M 100644 :12 doomed3
+commit 12, mark :15:
 0: M 100644 :14 doomed3
-commit 18, mark :17:
+commit 14, mark :17:
 0: M 100644 :16 doomed3
-commit 19, mark :18:
+commit 15, mark :18:
 0: D doomed3           
-commit 20, mark :19:
+commit 16, mark :19:
 0: M 100644 :3 README  
-commit 22, mark :21:
+commit 18, mark :21:
 0: M 100644 :20 foo    
-commit 24, mark :23:
+commit 20, mark :23:
 0: M 100644 :22 foo    
-commit 26, mark :25:
+commit 22, mark :25:
 0: M 100644 :24 foo    
-commit 27, mark :26:
+commit 23, mark :26:
 0: R "foo" "bar"       
-commit 29, mark :28:
+commit 25, mark :28:
 0: M 100644 :27 README 
-commit 30, mark :29:
+commit 26, mark :29:
 0: D bar               
 1: M 100644 :24 renamed1
-commit 31, mark :30:
+commit 27, mark :30:
 0: M 100644 :24 copy1  
-commit 33, mark :32:
+commit 29, mark :32:
 0: M 100644 :31 bar    
-commit 35, mark :34:
+commit 31, mark :34:
 0: M 100644 :33 README 
-Case coverage: []
-squash :17,:18
+Case coverage: [1, 3]
+:17,:18 squash
 coverage       # Expect this to show case 2 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
 commit 5, mark :4:
 0: M 100644 :3 README  
-commit 8, mark :7:
+commit 10, mark :13:
 0: M 100644 :5 README  
-1: M 100644 :6 doomed1 
-commit 9, mark :8:
-0: D doomed1           
-commit 11, mark :10:
-0: M 100644 :9 doomed2 
-commit 12, mark :11:
-0: R "doomed2" "renamed1"
-commit 14, mark :13:
-0: M 100644 :12 doomed3
-commit 16, mark :15:
+1: M 100644 :9 renamed1
+2: M 100644 :12 doomed3
+commit 12, mark :15:
 0: M 100644 :14 doomed3
-commit 18, mark :17:
-0: M 100644 :16 doomed3
-commit 19, mark :18:
+commit 14, mark :19:
 0: D doomed3           
-commit 20, mark :19:
-0: M 100644 :3 README  
-commit 22, mark :21:
+1: M 100644 :3 README  
+commit 16, mark :21:
 0: M 100644 :20 foo    
-commit 24, mark :23:
+commit 18, mark :23:
 0: M 100644 :22 foo    
-commit 26, mark :25:
+commit 20, mark :25:
 0: M 100644 :24 foo    
-commit 27, mark :26:
+commit 21, mark :26:
 0: R "foo" "bar"       
-commit 29, mark :28:
+commit 23, mark :28:
 0: M 100644 :27 README 
-commit 30, mark :29:
+commit 24, mark :29:
 0: D bar               
 1: M 100644 :24 renamed1
-commit 31, mark :30:
+commit 25, mark :30:
 0: M 100644 :24 copy1  
-commit 33, mark :32:
+commit 27, mark :32:
 0: M 100644 :31 bar    
-commit 35, mark :34:
+commit 29, mark :34:
 0: M 100644 :33 README 
-Case coverage: []
-squash :25,:26
+Case coverage: [1, 2, 3]
+:25,:26 squash
 coverage       # Expect this to show case 4 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
 commit 5, mark :4:
 0: M 100644 :3 README  
-commit 8, mark :7:
+commit 10, mark :13:
 0: M 100644 :5 README  
-1: M 100644 :6 doomed1 
-commit 9, mark :8:
-0: D doomed1           
-commit 11, mark :10:
-0: M 100644 :9 doomed2 
-commit 12, mark :11:
-0: R "doomed2" "renamed1"
-commit 14, mark :13:
-0: M 100644 :12 doomed3
-commit 16, mark :15:
+1: M 100644 :9 renamed1
+2: M 100644 :12 doomed3
+commit 12, mark :15:
 0: M 100644 :14 doomed3
-commit 18, mark :17:
-0: M 100644 :16 doomed3
-commit 19, mark :18:
+commit 14, mark :19:
 0: D doomed3           
-commit 20, mark :19:
-0: M 100644 :3 README  
-commit 22, mark :21:
+1: M 100644 :3 README  
+commit 16, mark :21:
 0: M 100644 :20 foo    
-commit 24, mark :23:
+commit 18, mark :23:
 0: M 100644 :22 foo    
-commit 26, mark :25:
-0: M 100644 :24 foo    
-commit 27, mark :26:
+commit 21, mark :28:
 0: R "foo" "bar"       
-commit 29, mark :28:
-0: M 100644 :27 README 
-commit 30, mark :29:
+1: M 100644 :24 bar    
+2: M 100644 :27 README 
+commit 22, mark :29:
 0: D bar               
 1: M 100644 :24 renamed1
-commit 31, mark :30:
+commit 23, mark :30:
 0: M 100644 :24 copy1  
-commit 33, mark :32:
+commit 25, mark :32:
 0: M 100644 :31 bar    
-commit 35, mark :34:
+commit 27, mark :34:
 0: M 100644 :33 README 
-Case coverage: []
-squash :29,:30
+Case coverage: [1, 2, 3, 4]
+:29,:30 squash
 coverage       # Expect this to show case 6 covered.
 commit 3, mark :2:
 0: M 100644 :1 README  
 commit 5, mark :4:
 0: M 100644 :3 README  
-commit 8, mark :7:
+commit 10, mark :13:
 0: M 100644 :5 README  
-1: M 100644 :6 doomed1 
-commit 9, mark :8:
-0: D doomed1           
-commit 11, mark :10:
-0: M 100644 :9 doomed2 
-commit 12, mark :11:
-0: R "doomed2" "renamed1"
-commit 14, mark :13:
-0: M 100644 :12 doomed3
-commit 16, mark :15:
+1: M 100644 :9 renamed1
+2: M 100644 :12 doomed3
+commit 12, mark :15:
 0: M 100644 :14 doomed3
-commit 18, mark :17:
-0: M 100644 :16 doomed3
-commit 19, mark :18:
+commit 14, mark :19:
 0: D doomed3           
-commit 20, mark :19:
-0: M 100644 :3 README  
-commit 22, mark :21:
+1: M 100644 :3 README  
+commit 16, mark :21:
 0: M 100644 :20 foo    
-commit 24, mark :23:
+commit 18, mark :23:
 0: M 100644 :22 foo    
-commit 26, mark :25:
-0: M 100644 :24 foo    
-commit 27, mark :26:
+commit 21, mark :28:
 0: R "foo" "bar"       
-commit 29, mark :28:
-0: M 100644 :27 README 
-commit 30, mark :29:
-0: D bar               
-1: M 100644 :24 renamed1
-commit 31, mark :30:
-0: M 100644 :24 copy1  
-commit 33, mark :32:
-0: M 100644 :31 bar    
-commit 35, mark :34:
+1: M 100644 :24 bar    
+2: M 100644 :27 README 
+commit 23, mark :32:
+0: M 100644 :24 renamed1
+1: M 100644 :24 copy1  
+2: M 100644 :31 bar    
+commit 25, mark :34:
 0: M 100644 :33 README 
-Case coverage: []
-resolve 1..$
-No selection
-delete :34	# Test the code that checks for non-D fileops present.
-resolve 1..$
-No selection
+Case coverage: [1, 2, 3, 4, 6]
+1..$ resolve
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+:34 delete     # Test the code that checks for non-D fileops present.
+reposurgeon: warning: commit :34 to be deleted has non-delete fileops.
+1..$ resolve
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
