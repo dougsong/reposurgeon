@@ -4000,15 +4000,6 @@ class StreamParser:
                 # Blob contents is the path the link should resolve to.
                 return 0o120000
         return 0o100644
-    def branchpath(self, path):
-        "Strip the branch prefix from a path."
-        if not self.branches or path.count(os.sep) == 0:
-            return path
-        for branch in self.branches:
-            if path.startswith(branch):
-                return path[len(branch):]
-        raise Fatal("couldn't assign %s to a branch in %s" \
-                    % (path, self.branches.keys()))
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
