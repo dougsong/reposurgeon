@@ -3574,6 +3574,9 @@ class StreamParser:
                     announce("readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
         return props
+    def branchlist(self):
+        "The branch list in deterministic order, most specific branches first."
+        return sorted(self.branches, key=lambda x: (-len(x), x))
     #
     # The main event
     #
@@ -4572,7 +4575,8 @@ class StreamParser:
                 if lastbranch and node.path.startswith(lastbranch):
                     cliques.setdefault(lastbranch, []).append(fileop)
                     continue
-                for branch in self.branches:
+                # Preferentially match longest branches
+                for branch in self.branchlist():
                     if node.path.startswith(branch):
                         cliques.setdefault(branch, []).append(fileop)
                         lastbranch = branch
@@ -4774,7 +4778,8 @@ class StreamParser:
                         and commit.common.startswith(lastbranch):
                     branch = lastbranch
                 else:
-                    branch = next((b for b in self.branches
+                    # Prefer the longest possible branch
+                    branch = next((b for b in self.branchlist()
                                   if commit.common.startswith(b)),
                                   None)
                 if branch is not None:
