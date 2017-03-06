@@ -4702,10 +4702,6 @@ class StreamParser:
                     # through that.
                     elif len(copies) > 1 \
                              and newcommit.common not in self.directory_branchlinks:
-                        self.fileop_branchlinks.add(newcommit.common)
-                        if debug_enable(DEBUG_TOPOLOGY):
-                            announce("r%s: making branch link %s" %
-                                     (newcommit.legacy_id, newcommit.common))
                         # Use max() on the reversed iterator since max returns
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
@@ -4714,7 +4710,14 @@ class StreamParser:
                         prev = last_relevant_commit(
                                 latest.from_rev, latest.from_path,
                                 operator.attrgetter("common"))
-                        if prev is not None:
+                        if prev is None:
+                            if debug_enable(DEBUG_TOPOLOGY):
+                                complain("lookback for %s failed, not making branch link" % latest)
+                        else:
+                            self.fileop_branchlinks.add(newcommit.common)
+                            if debug_enable(DEBUG_TOPOLOGY):
+                                announce("r%s: making branch link %s" %
+                                         (newcommit.legacy_id, newcommit.common))
                             self.branchlink[newcommit.mark] = (newcommit, prev)
                             if debug_enable(DEBUG_TOPOLOGY):
                                 announce("r%s: link %s (%s) back to %s (%s, %s)" % \
@@ -4725,10 +4728,6 @@ class StreamParser:
                                           prev.mark,
                                           prev.common
                                           ))
-                        else:
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                complain("lookback for %s failed" % latest)
-                            raise Fatal("couldn't find a branch root for the copy of %s at r%s." % (latest.path, latest.revision))
             # We're done, add all the new commits
             self.repo.events += newcommits
             self.repo.declare_sequence_mutation()
