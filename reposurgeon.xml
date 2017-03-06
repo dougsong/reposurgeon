@@ -3006,8 +3006,9 @@ and (b) it will not be immediately obvious which is right.</para>
 <listitem>
 <para>Branch analysis failed, probably due to a set of file copies that
 <command>reposurgeon</command> thought it should interpret as a botched
-branch creation but couldn't deduce a history for. Use the --nobranch
-option.</para>
+branch creation but couldn't deduce a history for. Try using the the --nobranch
+option, it will prevent the logic that attempts to detect and patch up such
+botches from getting in your way.</para>
 </listitem>
 </varlistentry>
 </variablelist>
