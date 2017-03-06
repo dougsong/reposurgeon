@@ -9463,7 +9463,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
                 return
             line = self.chosen().name
         if line in self.reponames():
-            if line == self.chosen().name:
+            if self.chosen() and line == self.chosen().name:
                 self.unchoose()
             holdrepo = self.repo_by_name(line)
             holdrepo.cleanup()

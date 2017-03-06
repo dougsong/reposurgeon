@@ -13,3 +13,8 @@ drop
 drop
 choose min
 drop
+
+read <min.fi
+read <min.fi
+drop min2
+drop min
