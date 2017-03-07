@@ -1,6 +1,6 @@
-reposurgeon: warning: commit :13 to be deleted has non-delete fileops.
-reposurgeon: warning: commit :11 to be deleted has non-delete fileops.
 reposurgeon: warning: commit :9 to be deleted has non-delete fileops.
+reposurgeon: warning: commit :11 to be deleted has non-delete fileops.
+reposurgeon: warning: commit :13 to be deleted has non-delete fileops.
 blob
 mark :1
 data 5

@@ -6423,8 +6423,15 @@ class Repository:
                                  "--tagforward",
                                  "--quiet"]:
                 raise Recoverable("no such deletion modifier as " + qualifier)
-        # Make sure we do deletions from greatest commit number to least
-        selected = sorted(selected, reverse=True)
+        # For --pushback, it is critical that deletions take place from lowest
+        # event number to highest since --pushback often involves re-ordering
+        # events even as it is iterating over the 'selected' list (see
+        # 'swap_indices' below). Only events earlier than the event currently
+        # being processed are re-ordered, however, so the operation is safe as
+        # long as events are visited lowest to highest. (For --pushforward,
+        # iteration order is immaterial since it does no event re-ordering and
+        # actual deletion is delayed until after iteration is finished.)
+        selected = sorted(selected)
         dquiet = "--quiet" in policy
         delete = "--delete" in policy
         tagify = "--tagify" in policy

@@ -16,3 +16,11 @@ coverage       # Expect this to show case 6 covered.
 1..$ resolve
 :34 delete     # Test the code that checks for non-D fileops present.
 1..$ resolve
+
+drop testrepo
+read <testrepo.fi
+coverage
+:4,:7 squash --pushback --coalesce
+coverage
+:23..:25 squash --pushback --coalesce
+coverage

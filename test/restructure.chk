@@ -227,3 +227,128 @@ Case coverage: [1, 2, 3, 4, 6]
 reposurgeon: warning: commit :34 to be deleted has non-delete fileops.
 1..$ resolve
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+
+drop testrepo
+read <testrepo.fi
+coverage
+commit 3, mark :2:
+0: M 100644 :1 README  
+commit 5, mark :4:
+0: M 100644 :3 README  
+commit 8, mark :7:
+0: M 100644 :5 README  
+1: M 100644 :6 doomed1 
+commit 9, mark :8:
+0: D doomed1           
+commit 11, mark :10:
+0: M 100644 :9 doomed2 
+commit 12, mark :11:
+0: R "doomed2" "renamed1"
+commit 14, mark :13:
+0: M 100644 :12 doomed3
+commit 16, mark :15:
+0: M 100644 :14 doomed3
+commit 18, mark :17:
+0: M 100644 :16 doomed3
+commit 19, mark :18:
+0: D doomed3           
+commit 20, mark :19:
+0: M 100644 :3 README  
+commit 22, mark :21:
+0: M 100644 :20 foo    
+commit 24, mark :23:
+0: M 100644 :22 foo    
+commit 26, mark :25:
+0: M 100644 :24 foo    
+commit 27, mark :26:
+0: R "foo" "bar"       
+commit 29, mark :28:
+0: M 100644 :27 README 
+commit 30, mark :29:
+0: D bar               
+1: M 100644 :24 renamed1
+commit 31, mark :30:
+0: M 100644 :24 copy1  
+commit 33, mark :32:
+0: M 100644 :31 bar    
+commit 35, mark :34:
+0: M 100644 :33 README 
+Case coverage: []
+:4,:7 squash --pushback --coalesce
+coverage
+commit 6, mark :2:
+0: M 100644 :5 README  
+1: M 100644 :6 doomed1 
+commit 7, mark :8:
+0: D doomed1           
+commit 9, mark :10:
+0: M 100644 :9 doomed2 
+commit 10, mark :11:
+0: R "doomed2" "renamed1"
+commit 12, mark :13:
+0: M 100644 :12 doomed3
+commit 14, mark :15:
+0: M 100644 :14 doomed3
+commit 16, mark :17:
+0: M 100644 :16 doomed3
+commit 17, mark :18:
+0: D doomed3           
+commit 18, mark :19:
+0: M 100644 :3 README  
+commit 20, mark :21:
+0: M 100644 :20 foo    
+commit 22, mark :23:
+0: M 100644 :22 foo    
+commit 24, mark :25:
+0: M 100644 :24 foo    
+commit 25, mark :26:
+0: R "foo" "bar"       
+commit 27, mark :28:
+0: M 100644 :27 README 
+commit 28, mark :29:
+0: D bar               
+1: M 100644 :24 renamed1
+commit 29, mark :30:
+0: M 100644 :24 copy1  
+commit 31, mark :32:
+0: M 100644 :31 bar    
+commit 33, mark :34:
+0: M 100644 :33 README 
+Case coverage: []
+:23..:25 squash --pushback --coalesce
+coverage
+commit 6, mark :2:
+0: M 100644 :5 README  
+1: M 100644 :6 doomed1 
+commit 7, mark :8:
+0: D doomed1           
+commit 9, mark :10:
+0: M 100644 :9 doomed2 
+commit 10, mark :11:
+0: R "doomed2" "renamed1"
+commit 12, mark :13:
+0: M 100644 :12 doomed3
+commit 14, mark :15:
+0: M 100644 :14 doomed3
+commit 16, mark :17:
+0: M 100644 :16 doomed3
+commit 17, mark :18:
+0: D doomed3           
+commit 18, mark :19:
+0: M 100644 :3 README  
+commit 22, mark :21:
+0: M 100644 :24 foo    
+commit 23, mark :26:
+0: R "foo" "bar"       
+commit 25, mark :28:
+0: M 100644 :27 README 
+commit 26, mark :29:
+0: D bar               
+1: M 100644 :24 renamed1
+commit 27, mark :30:
+0: M 100644 :24 copy1  
+commit 29, mark :32:
+0: M 100644 :31 bar    
+commit 31, mark :34:
+0: M 100644 :33 README 
+Case coverage: []

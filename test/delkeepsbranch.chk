@@ -36,10 +36,10 @@ This is another modification of that test file.
 
 
 :2,:3 delete --tagback
-reposurgeon: warning: commit :3 to be deleted has non-head branch attribute refs/tags/v2
-reposurgeon: warning: commit :3 to be deleted has non-delete fileops.
 reposurgeon: warning: commit :2 to be deleted has non-head branch attribute refs/tags/v1
 reposurgeon: warning: commit :2 to be deleted has non-delete fileops.
+reposurgeon: warning: commit :3 to be deleted has non-head branch attribute refs/tags/v2
+reposurgeon: warning: commit :3 to be deleted has non-delete fileops.
 inspect
 Event 1 =================================================================
 commit refs/heads/master
