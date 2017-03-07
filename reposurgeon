@@ -1132,20 +1132,25 @@ class HgExtractor(Extractor):
         self.tags_found = False
         self.bookmarks_found = False
     class _hg_or_die:
-        def __init__(self, client, *cmdline):
+        def __init__(self, client, *cmdline, **kwargs):
             self.client = client
             self.cmdline = cmdline
             if self.cmdline[0] == "hg":
                 self.cmdline.pop(0)
             self.fp = io.BytesIO(self.client.rawcommand(self.cmdline))
+            self.errhandler = kwargs.get('errhandler')
         def __enter__(self):
             return self.fp
         def __exit__(self, extype, value, traceback_unused):
             if extype:
                 if verbose:
                     complain("fatal exception in _hg_or_die.")
-            if self.fp.close() is not None and not extype:
-                raise Fatal("%s returned error." % (self.cmdline,))
+            rc = self.fp.close()
+            if rc is not None:
+                if self.errhandler:
+                    self.errhandler(rc)
+                elif not extype:
+                    raise Fatal("%s returned error." % (self.cmdline,))
             return False
     def hg_or_die(self, *cmdline):
         if hglib is not None and self.hgclient is not None:
@@ -1157,7 +1162,7 @@ class HgExtractor(Extractor):
             # pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
             # until 3.3.
             return popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
-    def hg_with_err(self, *cmdline):
+    def _hg_with_err(self, *cmdline):
         "Call hg and collect the error code. Returns the data directly, not a stream."
         errcode = []
         output = ""
@@ -1168,6 +1173,16 @@ class HgExtractor(Extractor):
                                          ) as fp:
             output = polystr(fp.read())
         return (output, errcode[0] if len(errcode) > 0 else 0)
+    def hg_with_err(self, *cmdline):
+        if hglib is not None and self.hgclient is not None:
+            errcode = []
+            with self._hg_or_die(self.hgclient, *cmdline,
+                                 errhandler=lambda e: errcode.append(e)
+                                 ) as fp:
+                output = polystr(fp.read())
+            return (output, errcode[0] if len(errcode) > 0 else 0)
+        else:
+            return self._hg_with_err(*cmdline)
     def hg_capture(self, *cmdline):
         with self.hg_or_die(*cmdline) as fp:
             output = polystr(fp.read())
