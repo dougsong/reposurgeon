@@ -377,7 +377,7 @@ svndump-regress:
 		$(REPOSURGEON) "read <$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff --text -u $${test}.chk /tmp/stripped$$$$ || exit 1; \
 		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
-		svn-to-svn -n -q </tmp/prestripped$$$$ || exit 1; \
+		#svn-to-svn -n -q </tmp/prestripped$$$$ || exit 1; \
 	    fi \
 	done
 	@make --quiet clean
