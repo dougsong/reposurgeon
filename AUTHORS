@@ -25,3 +25,6 @@ Richard Hansen <rhansen@rhansen.org>:
 
 Peter Donis <peterdonis@alum.mit.edu>
    Python 3 port and Python2/3 interoperability.
+
+Eric Sunshine <sunshine@sunshineco.com>
+   Review of seldom-used features, test improvements, bug-fixing.
