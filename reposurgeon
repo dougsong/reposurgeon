@@ -5325,13 +5325,13 @@ class SubversionDumper:
                 self.branches_created.append("tags")
                 creations.append(("tags", None, None))
             self.branches_created.append(svnout)
-            if parents and branch != parents[0].color: # Handle empty initial commit(s)
+            if parents and parents[0].mark in self.mark_to_revision and branch != parents[0].color: # Handle empty initial commit(s)
                 from_rev = self.mark_to_revision[parents[0].mark]
                 from_branch = SubversionDumper.svnbranch(parents[0].color)
                 creations.append((svnout, from_rev, from_branch))
                 # Careful about the following - the path map gets mutated in
                 # this loop, you need to get a list of the keys up front or
-                # Python will barf.  Thinh is, in Python 2 keys() returns an
+                # Python will barf.  Thing is, in Python 3 keys() returns an
                 # iterator...
                 for key in list(self.pathmap[from_rev].keys()):
                     if key.startswith(from_branch + os.sep) and key != from_branch:
@@ -5481,7 +5481,7 @@ class SubversionDumper:
                     # lost.  So is everything but the local part of
                     # the committer name.
                     backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parent_marks()]
+                                 for mark in event.parent_marks() if mark in self.mark_to_revision]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment.replace("\r\n", "\n"),
                                                    author=event.committer.email.split("@")[0],
