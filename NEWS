@@ -1,5 +1,9 @@
 = reposurgeon project news =
 
+Repository head:
+     Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
+     Rsychronize embedded help with XML docs.
+
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
 
