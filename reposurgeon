@@ -6623,8 +6623,7 @@ class Repository:
         # Cleanup
         for e in self.events:
             del e.deletehook
-        if '--delete' in policy:
-            self.gc_blobs()
+        self.gc_blobs()
     def delete(self, selected, policy=None):
         "Delete a set of events."
         policy = policy or []
