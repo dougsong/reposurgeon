@@ -17,14 +17,11 @@ ECHO := /bin/echo
 TERM := dumb
 
 default:
-	@echo "=== Running pylint"
-	@(cd ..; make -e --quiet pylint)
+	@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
 	@echo "=== Running built-in tests"
 	@$(REPOSURGEON) "runtests"
-	@./setpython python2
-	@make -e --quiet all
-	@./setpython python3
-	@make -e --quiet all
+	@if ./setpython python2; then make -e --quiet all; else echo "python2 missing; skipping tests"; fi
+	@if ./setpython python3; then make -e --quiet all; else echo "python3 missing; skipping tests"; fi
 	@./setpython python
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
