@@ -22,7 +22,17 @@ then
 	p=`command -v $1`
 	case $p in
 		*/bin/*) ln -sf $p ./python; echo "python -> $p";;
-		*) echo "setpython: no python binary" >&2; exit 1;;
+		*)
+			# Python2 prints version on stderr; Python3 on stdout.
+			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
+			if [ $1 = "$v" ]
+			then
+				rm -f ./python
+				echo "python -> `command -v python`"
+			else
+				echo "setpython: no python binary" >&2; exit 1
+			fi
+			;;
 	esac
 else
 	echo "setpython: unrecognized python version" >&2
