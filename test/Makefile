@@ -17,7 +17,9 @@ ECHO := /bin/echo
 TERM := dumb
 
 default:
+	@echo "=== Running pylint"
 	@(cd ..; make -e --quiet pylint)
+	@echo "=== Running built-in tests"
 	@$(REPOSURGEON) "runtests"
 	@./setpython python2
 	@make -e --quiet all
