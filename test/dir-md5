@@ -15,7 +15,7 @@ fi
 cd "$1"
 echo
 echo Directory contents: 
-ls -1FR .
+ls -1FR . | sed '/^\.:$/d'
 
 echo
 echo Checksums to make sure file contents correct:
