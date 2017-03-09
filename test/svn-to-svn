@@ -38,6 +38,8 @@
 # be up to date before streaming it. Also note that any embedded comments
 # will be lost.
 #
+. common-setup.sh
+
 PATH=$PATH:../..
 
 build=T

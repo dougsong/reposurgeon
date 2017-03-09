@@ -6,6 +6,8 @@
 # want to test the behavior of the actual hg tag command and
 # how its results appear to the hg extractor
 
+. common-setup.sh
+
 # Required because $PWD seems to be undefined in Gitlab's CI environment
 BIN=`realpath ..`
 

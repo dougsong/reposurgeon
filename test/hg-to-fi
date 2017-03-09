@@ -17,6 +17,8 @@
 # hg, then use -d.
 #
 
+. common-setup.sh
+
 # Required because $PWD seems to be undefined in Gitlab's CI environment
 BIN=`realpath ..`
 
