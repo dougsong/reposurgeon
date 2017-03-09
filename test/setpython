@@ -22,8 +22,11 @@ then
 	set -- `command -v $1`
 	case $1 in
 		*/bin/*) ln -sf $1 ./python; echo "python -> $1";;
-		*) echo "setpython: no python binary" >&2;;
+		*) echo "setpython: no python binary" >&2; exit 1;;
 	esac
 else
 	echo "setpython: unrecognized python version" >&2
+	exit 1
 fi
+
+exit 0
