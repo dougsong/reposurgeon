@@ -7,7 +7,12 @@
 
 if [ -z "$1" ]
 then
-	ls -l python
+	if [ -e python ]
+	then
+		readlink python
+	else
+		command -v python
+	fi
 elif [ $1 = "python" ]
 then
 	rm -f ./python
