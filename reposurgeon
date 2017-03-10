@@ -8518,12 +8518,9 @@ and the ID of the invoking user. Use in regression-test loads.
                     continue
                 # Following ".." means a span
                 if self.line[:2] == "..":
-                    if selection:
-                        selection.append("..")
-                        self.line = self.line[2:]
-                        continue
-                    else:
-                        raise Recoverable("start of span is missing")
+                    selection.append("..")
+                    self.line = self.line[2:]
+                    continue
                 elif self.peek() == ".":
                     raise Recoverable("malformed span")
                 if self.peek() == "<":
@@ -8545,10 +8542,12 @@ and the ID of the invoking user. Use in regression-test loads.
                 selection, repr(self.line)))
             # Resolve spans
             resolved = []
-            last = 0
+            last = None
             spanning = False
             for elt in selection:
                 if elt == '..':
+                    if last is None:
+                        raise Recoverable("start of span is missing")
                     spanning = True
                 else:
                     if spanning:
