@@ -8005,6 +8005,34 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
+    def eval_conjunct(self, preselection):
+        "Evaluate a conjunctive expression (& has higher precedence)"
+        self.line = self.line.lstrip()
+        conjunct = None
+        while True:
+            term = self.eval_term(preselection)
+            if term is None:
+                break
+            elif conjunct is None:
+                # assign term before intersecting with preselection so
+                # that the order specified by the user's first term is
+                # preserved
+                conjunct = term
+                # this line is necessary if the user specified only
+                # polyranges because eval_polyrange() ignores the
+                # preselection
+                conjunct &= preselection
+            else:
+                conjunct &= term
+            self.line = self.line.lstrip()
+            if self.peek() == '&':
+                self.pop()
+            else:
+                break
+        if conjunct is None:
+            conjunct = preselection
+        return conjunct
+    @debug_lexer
     def eval_term(self, preselection):
         self.line = self.line.lstrip()
         if self.peek() == '~':
@@ -8492,34 +8520,6 @@ and the ID of the invoking user. Use in regression-test loads.
             else:
                 break
         return selected
-    @debug_lexer
-    def eval_conjunct(self, preselection):
-        "Evaluate a conjunctive expression (& has higher precedence)"
-        self.line = self.line.lstrip()
-        conjunct = None
-        while True:
-            term = self.eval_term(preselection)
-            if term is None:
-                break
-            elif conjunct is None:
-                # assign term before intersecting with preselection so
-                # that the order specified by the user's first term is
-                # preserved
-                conjunct = term
-                # this line is necessary if the user specified only
-                # polyranges because eval_polyrange() ignores the
-                # preselection
-                conjunct &= preselection
-            else:
-                conjunct &= term
-            self.line = self.line.lstrip()
-            if self.peek() == '&':
-                self.pop()
-            else:
-                break
-        if conjunct is None:
-            conjunct = preselection
-        return conjunct
     @debug_lexer
     def eval_term(self, preselection):
         term = super(RepoSurgeon, self).eval_term(preselection)
