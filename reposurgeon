@@ -8247,7 +8247,6 @@ and the ID of the invoking user. Use in regression-test loads.
             value = list(value)
             value.sort()
             value = OrderedSet(value)
-        self.line = self.line.lstrip()
         return value
     @debug_lexer
     def eval_disjunct(self, preselection):
@@ -8567,6 +8566,7 @@ and the ID of the invoking user. Use in regression-test loads.
     def eval_pathset(self, preselection):
         "Resolve a path name to the set of commits that refer to it."
         chosen = self.chosen()
+        self.line = self.line.lstrip()
         if self.peek() != "[":
             return None
         self.pop()
@@ -8651,6 +8651,7 @@ and the ID of the invoking user. Use in regression-test loads.
     @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
+        self.line = self.line.lstrip()
         if self.peek() != "@":
             return None
         self.pop()
@@ -8673,6 +8674,7 @@ and the ID of the invoking user. Use in regression-test loads.
         #     ~$
         self.pop()
         subarg = self.eval_expression(preselection)
+        self.line = self.line.lstrip()
         if self.peek() != ')':
             raise Recoverable("missing close parenthesis for function call")
         self.pop()
