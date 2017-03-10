@@ -8511,39 +8511,6 @@ and the ID of the invoking user. Use in regression-test loads.
                 sel = self.eval_atom(_preselection)
                 if sel is not None:
                     selection.extend(sel)
-                    continue
-                # Mark references
-                match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
-                if match:
-                    markref = polystr(match.group())
-                    self.line = self.line[len(markref):]
-                    for (i, event) in enumerate(self.chosen()):
-                        if hasattr(event, "mark") and event.mark == markref:
-                            selection.append(i)
-                            break
-                        elif hasattr(event, "committish") and event.committish == markref:
-                            selection.append(i)
-                            break
-                    else:
-                        raise Recoverable("mark %s not found." % markref)
-                    continue
-                elif self.peek() == ':':
-                    raise Recoverable("malformed mark")
-                if self.peek() == "<":
-                    self.pop()
-                    closer = self.line.find('>')
-                    if closer == -1:
-                        raise Recoverable("reference improperly terminated. '%s'" % self.line)
-                    ref = self.line[:closer]
-                    self.line = self.line[closer+1:]
-                    lookup = self.chosen().named(ref)
-                    if lookup:
-                        # Choose to include *all* commits matching the date.
-                        # Alas, results in unfortunate behavior when a date
-                        # with multiple commits ends a span.
-                        selection += list(lookup)
-                    else:
-                        raise Recoverable("couldn't match a name at <%s>" % ref)
             self._debug_lexer("location list is %s with %s left" % (
                 selection, repr(self.line)))
             # Resolve spans
@@ -8573,6 +8540,45 @@ and the ID of the invoking user. Use in regression-test loads.
                     raise Recoverable("element %s out of range" % (elt+1))
             polyrange = OrderedSet(selection)
         return polyrange
+    @debug_lexer
+    def eval_atom(self, preselection):
+        selection = super(RepoSurgeon, self).eval_atom(preselection)
+        if selection is None:
+            selection = []
+            # Mark references
+            match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
+            if match:
+                markref = polystr(match.group())
+                self.line = self.line[len(markref):]
+                for (i, event) in enumerate(self.chosen()):
+                    if hasattr(event, "mark") and event.mark == markref:
+                        selection.append(i)
+                        break
+                    elif hasattr(event, "committish") and event.committish == markref:
+                        selection.append(i)
+                        break
+                else:
+                    raise Recoverable("mark %s not found." % markref)
+            elif self.peek() == ':':
+                raise Recoverable("malformed mark")
+            elif self.peek() == "<":
+                self.pop()
+                closer = self.line.find('>')
+                if closer == -1:
+                    raise Recoverable("reference improperly terminated. '%s'" % self.line)
+                ref = self.line[:closer]
+                self.line = self.line[closer+1:]
+                lookup = self.chosen().named(ref)
+                if lookup:
+                    # Choose to include *all* commits matching the date.
+                    # Alas, results in unfortunate behavior when a date
+                    # with multiple commits ends a span.
+                    selection += list(lookup)
+                else:
+                    raise Recoverable("couldn't match a name at <%s>" % ref)
+            if not selection:
+                selection = None
+        return selection
     @debug_lexer
     def eval_textsearch(self, preselection):
         "Parse a text search specification."
