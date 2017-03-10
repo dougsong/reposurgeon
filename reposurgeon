@@ -8005,6 +8005,23 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
+    def eval_disjunct(self, preselection):
+        "Evaluate a disjunctive expression (| has lowest precedence)"
+        self.line = self.line.lstrip()
+        selected = OrderedSet()
+        while True:
+            conjunct = self.eval_conjunct(preselection)
+            if conjunct is None:
+                break
+            else:
+                selected |= conjunct
+            self.line = self.line.lstrip()
+            if self.peek() == '|':
+                self.pop()
+            else:
+                break
+        return selected
+    @debug_lexer
     def eval_conjunct(self, preselection):
         "Evaluate a conjunctive expression (& has higher precedence)"
         self.line = self.line.lstrip()
@@ -8503,23 +8520,6 @@ and the ID of the invoking user. Use in regression-test loads.
             value.sort()
             value = OrderedSet(value)
         return value
-    @debug_lexer
-    def eval_disjunct(self, preselection):
-        "Evaluate a disjunctive expression (| has lowest precedence)"
-        self.line = self.line.lstrip()
-        selected = OrderedSet()
-        while True:
-            conjunct = self.eval_conjunct(preselection)
-            if conjunct is None:
-                break
-            else:
-                selected |= conjunct
-            self.line = self.line.lstrip()
-            if self.peek() == '|':
-                self.pop()
-            else:
-                break
-        return selected
     @debug_lexer
     def eval_term(self, preselection):
         term = super(RepoSurgeon, self).eval_term(preselection)
