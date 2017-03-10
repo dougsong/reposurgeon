@@ -8598,6 +8598,10 @@ and the ID of the invoking user. Use in regression-test loads.
             except re.error:
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
+            modifiers = set()
+            while self.line and self.line[0].isalpha():
+                modifiers.add(self.line[0])
+                self.line = self.line[1:]
             matchers = OrderedSet()
             searchable_attrs = {"a":"author",          # commit
                                 "b":"branch",          # commit
@@ -8622,20 +8626,19 @@ and the ID of the invoking user. Use in regression-test loads.
             check_authors = False
             check_blobs = False
             check_branch = False
-            if self.line and self.line[0].isalpha():
+            if modifiers:
                 search_in = []
-                while self.line and (self.line[0] in searchable_attrs.keys() or self.line[0] in ('a', 'B')):
-                    if self.line[0] == 'a':
+                for m in modifiers:
+                    if m == 'a':
                         check_authors = True
-                    elif self.line[0] == 'B':
+                    elif m == 'B':
                         check_blobs = True
-                    elif self.line[0] in searchable_attrs.keys():
-                        search_in.append(searchable_attrs[self.line[0]])
-                        if self.line[0] == 'b':
+                    elif m in searchable_attrs.keys():
+                        search_in.append(searchable_attrs[m])
+                        if m == 'b':
                             check_branch = True
                     else:
                         raise Recoverable("unknown textsearch flag")
-                    self.line = self.line[1:]
             for i in preselection:
                 e = self.chosen().events[i]
                 if check_branch:
