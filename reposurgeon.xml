@@ -2326,7 +2326,9 @@ are ignored.</para>
 metadata for which the local ID matches between &lt; and @ are replaced
 according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
-(this handles what git-cvsimport and cvs2git do) </para>
+(this handles what git-cvsimport and cvs2git do). If a timezone was
+specified in the map entry, that person's author and committer dates
+are mapped to it.</para>
 
 <para>With the 'read' modifier, or no modifier, apply author mapping
 data (from standard input or a &lt;-redirected file).  May be useful

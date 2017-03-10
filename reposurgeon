@@ -1859,6 +1859,7 @@ class Attribution(object):
                 self.email = sys.intern(mail)
                 if timezone:
                     self.date.orig_tz_string = Date.tzresolve(timezone, self.date.timestamp)
+                    self.date.tz_offset = Date.secondsFromOffsetString(self.date.orig_tz_string)
                 break
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
@@ -11740,7 +11741,9 @@ When an authors file is applied, email addresses in committer and author
 metdata for which the local ID matches between &lt; and @ are replaced
 according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
-(this handles what git-cvsimport and cvs2git do)
+(this handles what git-cvsimport and cvs2git do). If a timezone was
+specified in the map entry, that person's author and committer dates
+are mapped to it.
 
 With the 'read' modifier, or no modifier, apply author mapping data
 (from standard input or a <-redirected input file).  May be useful if
