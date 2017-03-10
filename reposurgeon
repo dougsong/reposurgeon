@@ -7959,7 +7959,7 @@ class RepositoryList:
         self.repolist.append(expunged)
 
 def debug_lexer(f):
-    """Function decorator to debug selection parsing RepoSurgeon methods."""
+    """Function decorator to debug SelectionParser selection parsing methods."""
     @functools.wraps(f)
     def wrapper(self, preselection):
         if not debug_enable(DEBUG_LEXER):
@@ -7983,7 +7983,28 @@ def debug_lexer(f):
         return ret
     return wrapper
 
-class RepoSurgeon(cmd.Cmd, RepositoryList):
+class SelectionParser(object):
+    """Selection set parser."""
+    def __init__(self):
+        self.line = None
+    def peek(self):
+        return self.line and self.line[0]
+    def pop(self):
+        if not self.line:
+            return ''
+        else:
+            c = self.line[0]
+            self.line = self.line[1:]
+            return c
+    # this should only be called from a @debug_lexer function (it
+    # depends on state set up by that decorator)
+    def _debug_lexer(self, msg):
+        """log a debug message from a lexer function"""
+        if debug_enable(DEBUG_LEXER):
+            stack = getattr(self, '_debug_lexer_stack')
+            announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+
+class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
     OptionFlags = (
         ("canonicalize", """\
@@ -8094,6 +8115,7 @@ and the ID of the invoking user. Use in regression-test loads.
     def __init__(self):
         cmd.Cmd.__init__(self)
         RepositoryList.__init__(self)
+        SelectionParser.__init__(self)
         self.use_rawinput = True
         self.echo = 0
         self.prompt = "reposurgeon% "
@@ -8101,7 +8123,6 @@ and the ID of the invoking user. Use in regression-test loads.
         self.preferred = None
         self.ignorename = None
         self.selection = []
-        self.line = ""
         self.history = []
         self.callstack = []
         self.definitions = {}
@@ -8197,22 +8218,6 @@ and the ID of the invoking user. Use in regression-test loads.
         if self.line.lstrip() == line.lstrip():
             self.selection = None
         return self.line.lstrip()
-    def peek(self):
-        return self.line and self.line[0]
-    def pop(self):
-        if not self.line:
-            return ''
-        else:
-            c = self.line[0]
-            self.line = self.line[1:]
-            return c
-    # this should only be called from a @debug_lexer function (it
-    # depends on state set up by that decorator)
-    def _debug_lexer(self, msg):
-        """log a debug message from a lexer function"""
-        if debug_enable(DEBUG_LEXER):
-            stack = getattr(self, '_debug_lexer_stack')
-            announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
     def eval_expression(self, preselection):
         self.line = self.line.lstrip()
