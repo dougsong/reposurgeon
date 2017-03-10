@@ -8004,6 +8004,8 @@ class SelectionParser(object):
         if debug_enable(DEBUG_LEXER):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+    def polyrange_initials(self):
+        return ("0","1","2","3","4","5","6","7","8","9","$")
     @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
@@ -8455,14 +8457,15 @@ and the ID of the invoking user. Use in regression-test loads.
                 if any(predicate(event) for predicate in visible):
                     visibility.add(i)
         return visibility
+    def polyrange_initials(self):
+        return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
     @debug_lexer
     def eval_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
         # preselection is not used since it is perfectly legal to have range
         # bounds be outside of the reduced set.
         self.line = self.line.lstrip()
-        polyrange_initials = (":","0","1","2","3","4","5","6","7","8","9","$", "<")
-        if self.peek() not in polyrange_initials:
+        if self.peek() not in self.polyrange_initials():
             polyrange = None
         # Avoid having an input redirect mistaken for the start of a literal.
         # This might break if a command can ever have both input and output
@@ -8471,7 +8474,7 @@ and the ID of the invoking user. Use in regression-test loads.
             polyrange = None
         else:
             selection = []
-            while self.peek() in polyrange_initials + (".", ","):
+            while self.peek() in self.polyrange_initials() + (".", ","):
                 # First, literal command numbers (1-origin)
                 match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
                 if match:
