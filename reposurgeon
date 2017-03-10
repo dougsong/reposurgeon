@@ -8217,7 +8217,6 @@ and the ID of the invoking user. Use in regression-test loads.
     def eval_expression(self, preselection):
         self.line = self.line.lstrip()
         value = self.eval_disjunct(preselection)
-        c = self.peek()
         while True:
             c = self.peek()
             if c != '?':
