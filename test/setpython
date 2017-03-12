@@ -23,13 +23,15 @@ then
 	case $p in
 		*/bin/*) ln -sf $p ./python; echo "python -> $p";;
 		*)
+			saved=`readlink ./python 2>/dev/null`
+			rm -f ./python
 			# Python2 prints version on stderr; Python3 on stdout.
 			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
 			if [ $1 = "$v" ]
 			then
-				rm -f ./python
 				echo "python -> `command -v python`"
 			else
+				[ -n "$saved" ] && ln -sf $saved ./python
 				echo "setpython: no python binary" >&2; exit 1
 			fi
 			;;
