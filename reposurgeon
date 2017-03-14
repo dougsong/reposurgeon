@@ -8534,28 +8534,29 @@ and the ID of the invoking user. Use in regression-test loads.
             visible = [typeletters[c] for c in visible]
             visibility = OrderedSet()
             for i in preselection:
-                event = self.chosen().events[i]
-                if any(predicate(event) for predicate in visible):
+                if any(predicate(self.allitems[i]) for predicate in visible):
                     visibility.add(i)
         return visibility
     def visibility_typeletters(self):
+        def e(i):
+            return self.chosen().events[i]
         # Available: AEGJKQSVWXY
         return {
-            "B" : lambda e: isinstance(e, Blob),
-            "C" : lambda e: isinstance(e, Commit),
-            "T" : lambda e: isinstance(e, Tag),
-            "R" : lambda e: isinstance(e, Reset),
-            "P" : lambda e: isinstance(e, Passthrough),
-            "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
-            "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
-            "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
-            "Z" : lambda e: isinstance(e, Commit) and not e.operations(),
-            "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
-            "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
-            "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(polybytes(e.comment)),
-            "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
-            "D" : lambda e: hasattr(e, 'alldeletes') and e.alldeletes(),
-            "N" : lambda e: self.has_reference(e)
+            "B" : lambda i: isinstance(e(i), Blob),
+            "C" : lambda i: isinstance(e(i), Commit),
+            "T" : lambda i: isinstance(e(i), Tag),
+            "R" : lambda i: isinstance(e(i), Reset),
+            "P" : lambda i: isinstance(e(i), Passthrough),
+            "H" : lambda i: isinstance(e(i), Commit) and not e(i).has_children(),
+            "O" : lambda i: isinstance(e(i), Commit) and not e(i).has_parents(),
+            "U" : lambda i: isinstance(e(i), Commit) and e(i).has_callouts(),
+            "Z" : lambda i: isinstance(e(i), Commit) and not e(i).operations(),
+            "M" : lambda i: isinstance(e(i), Commit) and len(e(i).parents()) > 1,
+            "F" : lambda i: isinstance(e(i), Commit) and len(e(i).children()) > 1,
+            "L" : lambda i: isinstance(e(i), Commit) and RepoSurgeon.unclean.match(polybytes(e(i).comment)),
+            "I" : lambda i: hasattr(e(i), 'undecodable') and e(i).undecodable(),
+            "D" : lambda i: hasattr(e(i), 'alldeletes') and e(i).alldeletes(),
+            "N" : lambda i: self.has_reference(e(i))
             }
     def polyrange_initials(self):
         return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
