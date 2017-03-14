@@ -8006,6 +8006,9 @@ class SelectionParser(object):
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     def polyrange_initials(self):
         return ("0","1","2","3","4","5","6","7","8","9","$")
+    def possible_polyrange(self):
+        "Does the input look like a possible polyrange?"
+        return self.peek() in self.polyrange_initials()
     @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
@@ -8459,18 +8462,23 @@ and the ID of the invoking user. Use in regression-test loads.
         return visibility
     def polyrange_initials(self):
         return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
+    def possible_polyrange(self):
+        "Does the input look like a possible polyrange?"
+        if not super(RepoSurgeon, self).possible_polyrange():
+            return False
+        # Avoid having an input redirect mistaken for the start of a literal.
+        # This might break if a command can ever have both input and output
+        # redirects.
+        if self.peek() == "<" and ">" not in self.line:
+            return False
+        return True
     @debug_lexer
     def eval_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
         # preselection is not used since it is perfectly legal to have range
         # bounds be outside of the reduced set.
         self.line = self.line.lstrip()
-        if self.peek() not in self.polyrange_initials():
-            polyrange = None
-        # Avoid having an input redirect mistaken for the start of a literal.
-        # This might break if a command can ever have both input and output
-        # redirects.
-        elif self.peek() == "<" and ">" not in self.line:
+        if not self.possible_polyrange():
             polyrange = None
         else:
             selection = []
