@@ -8515,28 +8515,12 @@ and the ID of the invoking user. Use in regression-test loads.
     def eval_visibility(self, preselection):
         "Parse a visibility spec."
         self.line = self.line.lstrip()
-        if self.peek() != "=":
+        if not hasattr(self, 'visibility_typeletters'):
+            visibility = None
+        elif self.peek() != "=":
             visibility = None
         else:
-            # Available: AEGJKQSVWXY
-            typeletters = {
-                "B" : lambda e: isinstance(e, Blob),
-                "C" : lambda e: isinstance(e, Commit),
-                "T" : lambda e: isinstance(e, Tag),
-                "R" : lambda e: isinstance(e, Reset),
-                "P" : lambda e: isinstance(e, Passthrough),
-                "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
-                "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
-                "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
-                "Z" : lambda e: isinstance(e, Commit) and not e.operations(),
-                "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
-                "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
-                "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(polybytes(e.comment)),
-                "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
-                "D" : lambda e: hasattr(e, 'alldeletes') and e.alldeletes(),
-                "N" : lambda e: self.has_reference(e)
-                }
-
+            typeletters = self.visibility_typeletters()
             visible = set()
             self.pop()
             while self.peek() in typeletters:
@@ -8554,6 +8538,25 @@ and the ID of the invoking user. Use in regression-test loads.
                 if any(predicate(event) for predicate in visible):
                     visibility.add(i)
         return visibility
+    def visibility_typeletters(self):
+        # Available: AEGJKQSVWXY
+        return {
+            "B" : lambda e: isinstance(e, Blob),
+            "C" : lambda e: isinstance(e, Commit),
+            "T" : lambda e: isinstance(e, Tag),
+            "R" : lambda e: isinstance(e, Reset),
+            "P" : lambda e: isinstance(e, Passthrough),
+            "H" : lambda e: isinstance(e, Commit) and not e.has_children(),
+            "O" : lambda e: isinstance(e, Commit) and not e.has_parents(),
+            "U" : lambda e: isinstance(e, Commit) and e.has_callouts(),
+            "Z" : lambda e: isinstance(e, Commit) and not e.operations(),
+            "M" : lambda e: isinstance(e, Commit) and len(e.parents()) > 1,
+            "F" : lambda e: isinstance(e, Commit) and len(e.children()) > 1,
+            "L" : lambda e: isinstance(e, Commit) and RepoSurgeon.unclean.match(polybytes(e.comment)),
+            "I" : lambda e: hasattr(e, 'undecodable') and e.undecodable(),
+            "D" : lambda e: hasattr(e, 'alldeletes') and e.alldeletes(),
+            "N" : lambda e: self.has_reference(e)
+            }
     def polyrange_initials(self):
         return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
     def possible_polyrange(self):
