@@ -8010,6 +8010,31 @@ class SelectionParser(object):
         "Does the input look like a possible polyrange?"
         return self.peek() in self.polyrange_initials()
     @debug_lexer
+    def eval_atom(self, preselection):
+        pacify_pylint(preselection)
+        self.line = self.line.lstrip()
+        selection = None
+        # First, literal command numbers (1-origin)
+        match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
+        if match:
+            number = polystr(match.group())
+            selection = [int(number)-1]
+            self.line = self.line[len(number):]
+        # $ means last commit, a la ed(1).
+        elif self.peek() == "$":
+            selection = [len(self.allitems)-1]
+            self.pop()
+        # Comma just delimits a location spec
+        elif self.peek() == ",":
+            self.pop()
+        # Following ".." means a span
+        elif self.line[:2] == "..":
+            selection = [".."]
+            self.line = self.line[2:]
+        elif self.peek() == ".":
+            raise Recoverable("malformed span")
+        return selection
+    @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
         self.line = self.line.lstrip()
@@ -8483,14 +8508,11 @@ and the ID of the invoking user. Use in regression-test loads.
         else:
             selection = []
             while self.peek() in self.polyrange_initials() + (".", ","):
-                # First, literal command numbers (1-origin)
-                match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
-                if match:
-                    number = polystr(match.group())
-                    selection.append(int(number)-1)
-                    self.line = self.line[len(number):]
+                sel = self.eval_atom(_preselection)
+                if sel is not None:
+                    selection.extend(sel)
                     continue
-                # Next, mark references
+                # Mark references
                 match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
                 if match:
                     markref = polystr(match.group())
@@ -8507,22 +8529,6 @@ and the ID of the invoking user. Use in regression-test loads.
                     continue
                 elif self.peek() == ':':
                     raise Recoverable("malformed mark")
-                # $ means last commit, a la ed(1).
-                if self.peek() == "$":
-                    selection.append(len(self.allitems)-1)
-                    self.pop()
-                    continue
-                # Comma just delimits a location spec
-                if self.peek() == ",":
-                    self.pop()
-                    continue
-                # Following ".." means a span
-                if self.line[:2] == "..":
-                    selection.append("..")
-                    self.line = self.line[2:]
-                    continue
-                elif self.peek() == ".":
-                    raise Recoverable("malformed span")
                 if self.peek() == "<":
                     self.pop()
                     closer = self.line.find('>')
