@@ -8005,6 +8005,10 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
+    def eval_expression(self, preselection):
+        self.line = self.line.lstrip()
+        return self.eval_disjunct(preselection)
+    @debug_lexer
     def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
@@ -8487,8 +8491,7 @@ and the ID of the invoking user. Use in regression-test loads.
         return self.line.lstrip()
     @debug_lexer
     def eval_expression(self, preselection):
-        self.line = self.line.lstrip()
-        value = self.eval_disjunct(preselection)
+        value = super(RepoSurgeon, self).eval_expression(preselection)
         while True:
             c = self.peek()
             if c != '?':
