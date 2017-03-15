@@ -8004,6 +8004,41 @@ class SelectionParser(object):
         if debug_enable(DEBUG_LEXER):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+    @debug_lexer
+    def eval_funcall(self, preselection):
+        "Parse and evaluate a function call."
+        self.line = self.line.lstrip()
+        if self.peek() != "@":
+            return None
+        self.pop()
+        funname = ""
+        while self.peek().isalpha() or self.peek() == '_':
+            funname += self.pop()
+        if not funname or self.peek() != '(':
+            return None
+        # The '(' and ')' after the function name are different than
+        # the parentheses used to override operator precedence, so we
+        # must handle them here.  If we let eval_expression() handle
+        # the parentheses, it will process characters beyond the
+        # closing parenthesis as if they were part of the function's
+        # argument.  For example, if we let eval_expression() handle
+        # the parentheses, then the following expression:
+        #     @max(~$)|$
+        # would be processed as if this was the argument to max():
+        #     (~$)|$
+        # when the actual argument is:
+        #     ~$
+        self.pop()
+        subarg = self.eval_expression(preselection)
+        self.line = self.line.lstrip()
+        if self.peek() != ')':
+            raise Recoverable("missing close parenthesis for function call")
+        self.pop()
+        try:
+            func = getattr(self, funname + "_handler")
+        except AttributeError:
+            raise Recoverable("no such function as @%s()" % funname)
+        return func(subarg)
 
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
@@ -8655,41 +8690,6 @@ and the ID of the invoking user. Use in regression-test loads.
             if (not tree) == match_all:
                 result.add(i)
         return result
-    @debug_lexer
-    def eval_funcall(self, preselection):
-        "Parse and evaluate a function call."
-        self.line = self.line.lstrip()
-        if self.peek() != "@":
-            return None
-        self.pop()
-        funname = ""
-        while self.peek().isalpha() or self.peek() == '_':
-            funname += self.pop()
-        if not funname or self.peek() != '(':
-            return None
-        # The '(' and ')' after the function name are different than
-        # the parentheses used to override operator precedence, so we
-        # must handle them here.  If we let eval_expression() handle
-        # the parentheses, it will process characters beyond the
-        # closing parenthesis as if they were part of the function's
-        # argument.  For example, if we let eval_expression() handle
-        # the parentheses, then the following expression:
-        #     @max(~$)|$
-        # would be processed as if this was the argument to max():
-        #     (~$)|$
-        # when the actual argument is:
-        #     ~$
-        self.pop()
-        subarg = self.eval_expression(preselection)
-        self.line = self.line.lstrip()
-        if self.peek() != ')':
-            raise Recoverable("missing close parenthesis for function call")
-        self.pop()
-        try:
-            func = getattr(self, funname + "_handler")
-        except AttributeError:
-            raise Recoverable("no such function as @%s()" % funname)
-        return func(subarg)
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
