@@ -8745,10 +8745,15 @@ and the ID of the invoking user. Use in regression-test loads.
                     hits.add(i)
             return hits
         else:
-            return OrderedSet(
-                i for (i, event) in chosen.iterevents(
-                    preselection, types=(Commit, Blob))
-                if matcher in event.paths())
+            return self.eval_pathset_1(preselection, matcher)
+    @debug_lexer
+    def eval_pathset_1(self, preselection, matcher):
+        "Resolve a path name to the set of commits that refer to it."
+        chosen = self.chosen()
+        return OrderedSet(
+            i for (i, event) in chosen.iterevents(
+                preselection, types=(Commit, Blob))
+            if matcher in event.paths())
     def eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all):
