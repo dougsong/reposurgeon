@@ -8091,7 +8091,7 @@ class SelectionParser(object):
             if term is None:
                 term = self.eval_polyrange(preselection)
                 if term is None:
-                    term = self.eval_textsearch(preselection)
+                    term = self.parse_textsearch()
                     if term is None:
                         term = self.parse_funcall(preselection)
             if callable(term):            # TEMPORARY
@@ -8197,10 +8197,10 @@ class SelectionParser(object):
             raise Recoverable("malformed span")
         return selection
     @debug_lexer
-    def eval_textsearch(self, preselection):
+    def parse_textsearch(self):
         "Parse a text search specification."
         self.line = self.line.lstrip()
-        if not hasattr(self, 'textsearch_items'):
+        if not hasattr(self, 'eval_textsearch'):
             return None
         if self.peek() != '/':
             return None
@@ -8221,7 +8221,7 @@ class SelectionParser(object):
             while self.line and self.line[0].isalpha():
                 modifiers.add(self.line[0])
                 self.line = self.line[1:]
-            return self.textsearch_items(preselection, search, modifiers)
+            return lambda p: self.eval_textsearch(p, search, modifiers)
     @debug_lexer
     def parse_funcall(self, preselection):
         "Parse a function call."
@@ -8645,7 +8645,8 @@ and the ID of the invoking user. Use in regression-test loads.
             if not selection:
                 selection = None
         return selection
-    def textsearch_items(self, preselection, search, modifiers):
+    @debug_lexer
+    def eval_textsearch(self, preselection, search, modifiers):
         "Perform a text search of items."
         matchers = OrderedSet()
         searchable_attrs = {"a":"author",          # commit
