@@ -8093,7 +8093,9 @@ class SelectionParser(object):
                 if term is None:
                     term = self.eval_textsearch(preselection)
                     if term is None:
-                        term = self.eval_funcall(preselection)
+                        term = self.parse_funcall(preselection)
+            if callable(term):            # TEMPORARY
+                term = term(preselection) # TEMPORARY
         return term
     @debug_lexer
     def eval_visibility(self, preselection):
@@ -8221,8 +8223,8 @@ class SelectionParser(object):
                 self.line = self.line[1:]
             return self.textsearch_items(preselection, search, modifiers)
     @debug_lexer
-    def eval_funcall(self, preselection):
-        "Parse and evaluate a function call."
+    def parse_funcall(self, preselection):
+        "Parse a function call."
         self.line = self.line.lstrip()
         if self.peek() != "@":
             return None
@@ -8255,7 +8257,7 @@ class SelectionParser(object):
             func = getattr(self, funname + "_handler")
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
-        return func(subarg)
+        return lambda p: func(subarg)
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
