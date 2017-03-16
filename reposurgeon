@@ -7961,25 +7961,28 @@ class RepositoryList:
 def debug_lexer(f):
     """Function decorator to debug SelectionParser selection parsing methods."""
     @functools.wraps(f)
-    def wrapper(self, preselection):
+    def wrapper(self, *args):
         if not debug_enable(DEBUG_LEXER):
-            return f(self, preselection)
+            return f(self, *args)
         try:
             stack = getattr(self, '_debug_lexer_stack')
         except AttributeError:
             stack = []
             setattr(self, '_debug_lexer_stack', stack)
-        announce("{0}{1}({2}): {3}".format(
-            ' ' * len(stack), f.__name__, repr(preselection), repr(self.line)))
+        v = args[0] if self.line is None else ''
+        s = ": {0}".format(repr(self.line)) if self.line is not None else ''
+        announce("{0}{1}({2}){3}".format(' ' * len(stack), f.__name__, v, s))
         stack.append(f.__name__)
         try:
-            ret = f(self, preselection)
+            ret = f(self, *args)
         except Exception as e:
             ret = e
             raise
         finally:
-            announce("{0}{1} <- {2}(), left = {3}".format(
-                ' ' * len(stack), repr(ret), stack.pop(), repr(self.line)))
+            x = "lambda" if callable(ret) else repr(ret)
+            s = ", left = {0}".format(repr(self.line)) if self.line is not None else ''
+            announce("{0}{1} <- {2}(){3}".format(
+                ' ' * len(stack), x, stack.pop(), s))
         return ret
     return wrapper
 
