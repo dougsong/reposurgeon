@@ -8078,6 +8078,32 @@ class SelectionParser(object):
             raise Recoverable("malformed span")
         return selection
     @debug_lexer
+    def eval_textsearch(self, preselection):
+        "Parse a text search specification."
+        self.line = self.line.lstrip()
+        if not hasattr(self, 'textsearch_items'):
+            return None
+        if self.peek() != '/':
+            return None
+        elif '/' not in self.line[1:]:
+            raise Recoverable("malformed text search specifier")
+        else:
+            assert(self.pop() == '/')
+            endat = self.line.index('/')
+            try:
+                match =  self.line[:endat]
+                if str is not bytes:
+                    match = match.encode(master_encoding)
+                search = re.compile(match).search
+            except re.error:
+                raise Recoverable("invalid regular expression")
+            self.line = self.line[endat+1:]
+            modifiers = set()
+            while self.line and self.line[0].isalpha():
+                modifiers.add(self.line[0])
+                self.line = self.line[1:]
+            return self.textsearch_items(preselection, search, modifiers)
+    @debug_lexer
     def eval_funcall(self, preselection):
         "Parse and evaluate a function call."
         self.line = self.line.lstrip()
@@ -8579,32 +8605,6 @@ and the ID of the invoking user. Use in regression-test loads.
             if not selection:
                 selection = None
         return selection
-    @debug_lexer
-    def eval_textsearch(self, preselection):
-        "Parse a text search specification."
-        self.line = self.line.lstrip()
-        if not hasattr(self, 'textsearch_items'):
-            return None
-        if self.peek() != '/':
-            return None
-        elif '/' not in self.line[1:]:
-            raise Recoverable("malformed text search specifier")
-        else:
-            assert(self.pop() == '/')
-            endat = self.line.index('/')
-            try:
-                match =  self.line[:endat]
-                if str is not bytes:
-                    match = match.encode(master_encoding)
-                search = re.compile(match).search
-            except re.error:
-                raise Recoverable("invalid regular expression")
-            self.line = self.line[endat+1:]
-            modifiers = set()
-            while self.line and self.line[0].isalpha():
-                modifiers.add(self.line[0])
-                self.line = self.line[1:]
-            return self.textsearch_items(preselection, search, modifiers)
     def textsearch_items(self, preselection, search, modifiers):
         "Perform a text search of items."
         matchers = OrderedSet()
