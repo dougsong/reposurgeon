@@ -8507,31 +8507,35 @@ and the ID of the invoking user. Use in regression-test loads.
             if c != '?':
                 break
             self.pop()
-            add_set = OrderedSet()
-            remove_set = OrderedSet()
-            for ei in value:
-                event = self.chosen().events[ei]
-                if isinstance(event, Commit):
-                    for parent in event.parents():
-                        add_set.add(self.chosen().find(parent.mark))
-                    for child in event.children():
-                        add_set.add(self.chosen().find(child.mark))
-                elif isinstance(event, Blob):
-                    remove_set.add(ei) # Don't select the blob itself
-                    for i in preselection:
-                        event2 = self.chosen().events[i]
-                        if isinstance(event2, Commit):
-                            for fileop in event2.operations():
-                                if fileop.op == 'M' and fileop.ref==event.mark:
-                                    add_set.add(i)
-                elif isinstance(event, (Tag, Reset)):
-                    if event.target:
-                        add_set.add(event.target.index())
-            value |= add_set
-            value -= remove_set
-            value = list(value)
-            value.sort()
-            value = OrderedSet(value)
+            value = self.eval_neighborhood(preselection, value)
+        return value
+    @debug_lexer
+    def eval_neighborhood(self, preselection, value):
+        add_set = OrderedSet()
+        remove_set = OrderedSet()
+        for ei in value:
+            event = self.chosen().events[ei]
+            if isinstance(event, Commit):
+                for parent in event.parents():
+                    add_set.add(self.chosen().find(parent.mark))
+                for child in event.children():
+                    add_set.add(self.chosen().find(child.mark))
+            elif isinstance(event, Blob):
+                remove_set.add(ei) # Don't select the blob itself
+                for i in preselection:
+                    event2 = self.chosen().events[i]
+                    if isinstance(event2, Commit):
+                        for fileop in event2.operations():
+                            if fileop.op == 'M' and fileop.ref==event.mark:
+                                add_set.add(i)
+            elif isinstance(event, (Tag, Reset)):
+                if event.target:
+                    add_set.add(event.target.index())
+        value |= add_set
+        value -= remove_set
+        value = list(value)
+        value.sort()
+        value = OrderedSet(value)
         return value
     @debug_lexer
     def eval_term(self, preselection):
