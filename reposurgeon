@@ -8075,8 +8075,7 @@ class SelectionParser(object):
         if self.peek() == '~':
             self.pop()
             op = self.parse_expression(preselection)
-            allitems = OrderedSet(self.allitems)
-            return allitems - OrderedSet(op(allitems))
+            term = self.eval_term_negate(preselection, op)
         elif self.peek() == '(':
             self.pop()
             term = self.parse_expression(preselection)
@@ -8097,6 +8096,11 @@ class SelectionParser(object):
             if callable(term):            # TEMPORARY
                 term = term(preselection) # TEMPORARY
         return term
+    @debug_lexer
+    def eval_term_negate(self, preselection, op):
+        pacify_pylint(preselection)
+        allitems = OrderedSet(self.allitems)
+        return allitems - OrderedSet(op(allitems))
     @debug_lexer
     def parse_visibility(self):
         "Parse a visibility spec."
