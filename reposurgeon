@@ -8365,13 +8365,14 @@ and the ID of the invoking user. Use in regression-test loads.
             visible = set()
             self.pop()
             while self.peek() in typeletters:
-                visible.add(typeletters[self.pop()])
+                visible.add(self.pop())
             # We need a special check here because these expressions
             # could otherwise run onto the text part of the command.
             if self.peek() not in "()|& ":
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             self._debug_lexer("visibility set is %s with %s left" % (
-                [x.__name__ for x in visible], repr(self.line)))
+                visible, repr(self.line)))
+            visible = [typeletters[c] for c in visible]
             visibility = OrderedSet()
             for i in preselection:
                 event = self.chosen().events[i]
