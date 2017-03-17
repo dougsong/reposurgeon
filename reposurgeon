@@ -7991,19 +7991,28 @@ class SelectionParser(object):
     def __init__(self):
         self.line = None
         self.allitems = []
-    def parse(self, line, allitems):
-        """Parse selection; return remainder of line with selection removed."""
+    def compile(self, line):
+        "Compile expression; return remainder of line with expression removed."
         orig_line = line
         self.line = line
-        self.allitems = allitems
         machine = self.parse_expression()
-        selection = list(machine(OrderedSet(self.allitems)))
         line = self.line.lstrip()
-        self.allitems = None
         self.line = None
         if line == orig_line.lstrip():
-            selection = None
-        return (selection, line)
+            machine = None
+        return (machine, line)
+    def evaluate(self, machine, allitems):
+        """Evaluate a pre-compiled selection query against item list."""
+        if machine is not None:
+            self.allitems = allitems
+            selection = list(machine(OrderedSet(self.allitems)))
+            self.allitems = None
+            return selection
+        return None
+    def parse(self, line, allitems):
+        """Parse selection; return remainder of line with selection removed."""
+        machine, rest = self.compile(line)
+        return (self.evaluate(machine, allitems), rest)
     def peek(self):
         return self.line and self.line[0]
     def pop(self):
