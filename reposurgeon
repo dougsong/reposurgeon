@@ -8004,6 +8004,32 @@ class SelectionParser(object):
         if debug_enable(DEBUG_LEXER):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+    @debug_lexer
+    def eval_visibility(self, preselection):
+        "Parse a visibility spec."
+        self.line = self.line.lstrip()
+        if not hasattr(self, 'visibility_typeletters'):
+            visibility = None
+        elif self.peek() != "=":
+            visibility = None
+        else:
+            typeletters = self.visibility_typeletters()
+            visible = set()
+            self.pop()
+            while self.peek() in typeletters:
+                visible.add(self.pop())
+            # We need a special check here because these expressions
+            # could otherwise run onto the text part of the command.
+            if self.peek() not in "()|& ":
+                raise Recoverable("garbled type mask at %s" % repr(self.line))
+            self._debug_lexer("visibility set is %s with %s left" % (
+                visible, repr(self.line)))
+            visible = [typeletters[c] for c in visible]
+            visibility = OrderedSet()
+            for i in preselection:
+                if any(predicate(self.allitems[i]) for predicate in visible):
+                    visibility.add(i)
+        return visibility
     def polyrange_initials(self):
         return ("0","1","2","3","4","5","6","7","8","9","$")
     def possible_polyrange(self):
@@ -8511,32 +8537,6 @@ and the ID of the invoking user. Use in regression-test loads.
             if re.search(pattern.encode('ascii'), polybytes(text)):
                 return True
         return False
-    @debug_lexer
-    def eval_visibility(self, preselection):
-        "Parse a visibility spec."
-        self.line = self.line.lstrip()
-        if not hasattr(self, 'visibility_typeletters'):
-            visibility = None
-        elif self.peek() != "=":
-            visibility = None
-        else:
-            typeletters = self.visibility_typeletters()
-            visible = set()
-            self.pop()
-            while self.peek() in typeletters:
-                visible.add(self.pop())
-            # We need a special check here because these expressions
-            # could otherwise run onto the text part of the command.
-            if self.peek() not in "()|& ":
-                raise Recoverable("garbled type mask at %s" % repr(self.line))
-            self._debug_lexer("visibility set is %s with %s left" % (
-                visible, repr(self.line)))
-            visible = [typeletters[c] for c in visible]
-            visibility = OrderedSet()
-            for i in preselection:
-                if any(predicate(self.allitems[i]) for predicate in visible):
-                    visibility.add(i)
-        return visibility
     def visibility_typeletters(self):
         def e(i):
             return self.chosen().events[i]
