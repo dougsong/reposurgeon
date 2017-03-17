@@ -8600,8 +8600,6 @@ and the ID of the invoking user. Use in regression-test loads.
             all_or_any = all if "a" in flags else any
             if "a" in flags:
                 flags.remove("a")
-            if "c" in flags:
-                flags.remove("c")
             hits = OrderedSet()
             for (i, event) in chosen.iterevents(
                             preselection, types=(Commit, Blob)):
