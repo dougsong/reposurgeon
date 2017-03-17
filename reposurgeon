@@ -8005,6 +8005,30 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
+    def eval_term(self, preselection):
+        self.line = self.line.lstrip()
+        if self.peek() == '~':
+            self.pop()
+            allitems = OrderedSet(self.allitems)
+            return allitems - OrderedSet(self.eval_expression(allitems))
+        elif self.peek() == '(':
+            self.pop()
+            term = self.eval_expression(preselection)
+            self.line = self.line.lstrip()
+            if self.peek() != ')':
+                raise Recoverable("trailing junk on inner expression")
+            else:
+                self.pop()
+        else:
+            term = self.eval_visibility(preselection)
+            if term is None:
+                term = self.eval_polyrange(preselection)
+                if term is None:
+                    term = self.eval_textsearch(preselection)
+                    if term is None:
+                        term = self.eval_funcall(preselection)
+        return term
+    @debug_lexer
     def eval_visibility(self, preselection):
         "Parse a visibility spec."
         self.line = self.line.lstrip()
@@ -8498,29 +8522,9 @@ and the ID of the invoking user. Use in regression-test loads.
         return conjunct
     @debug_lexer
     def eval_term(self, preselection):
-        self.line = self.line.lstrip()
-        if self.peek() == '~':
-            self.pop()
-            allitems = OrderedSet(self.allitems)
-            return allitems - OrderedSet(self.eval_expression(allitems))
-        elif self.peek() == '(':
-            self.pop()
-            term = self.eval_expression(preselection)
-            self.line = self.line.lstrip()
-            if self.peek() != ')':
-                raise Recoverable("trailing junk on inner expression")
-            else:
-                self.pop()
-        else:
-            term = self.eval_visibility(preselection)
-            if term is None:
-                term = self.eval_polyrange(preselection)
-                if term is None:
-                    term = self.eval_textsearch(preselection)
-                    if term is None:
-                        term = self.eval_pathset(preselection)
-                        if term is None:
-                            term = self.eval_funcall(preselection)
+        term = super(RepoSurgeon, self).eval_term(preselection)
+        if term is None:
+            term = self.eval_pathset(preselection)
         return term
     def has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
