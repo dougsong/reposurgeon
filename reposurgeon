@@ -8023,24 +8023,33 @@ class SelectionParser(object):
     @debug_lexer
     def parse_expression(self, preselection):
         self.line = self.line.lstrip()
-        return lambda p: self.eval_disjunct(p)
+        return self.parse_disjunct(preselection)
     @debug_lexer
-    def eval_disjunct(self, preselection):
-        "Evaluate a disjunctive expression (| has lowest precedence)"
+    def parse_disjunct(self, preselection):
+        "Parse a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
-        selected = OrderedSet()
+        op = self.parse_conjunct(preselection)
         while True:
-            conjunct = self.parse_conjunct(preselection)
-            if conjunct is None:
-                break
-            else:
-                conjunct = conjunct(preselection) # TEMPORARY
-                selected |= conjunct
             self.line = self.line.lstrip()
-            if self.peek() == '|':
-                self.pop()
-            else:
+            if self.peek() != '|':
                 break
+            self.pop()
+            op2 = self.parse_conjunct(preselection)
+            if op2 is None:
+                break
+            op1 = op
+            op = lambda p: self.eval_disjunct(p, op1, op2)
+        return op
+    @debug_lexer
+    def eval_disjunct(self, preselection, op1, op2):
+        "Evaluate a disjunctive expression"
+        selected = OrderedSet()
+        conjunct = op1(preselection)
+        if conjunct is not None:
+            selected |= conjunct
+            conjunct = op2(preselection)
+            if conjunct is not None:
+                selected |= conjunct
         return selected
     @debug_lexer
     def parse_conjunct(self, preselection):
