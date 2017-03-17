@@ -8131,8 +8131,6 @@ class SelectionParser(object):
     @debug_lexer
     def eval_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
-        # preselection is not used since it is perfectly legal to have range
-        # bounds be outside of the reduced set.
         self.line = self.line.lstrip()
         if not self.possible_polyrange():
             polyrange = None
@@ -8144,35 +8142,40 @@ class SelectionParser(object):
                     sel = sel(_preselection) # TEMPORARY
                     if sel is not None:      # TEMPORARY
                         selection.extend(sel)
-            self._debug_lexer("location list is %s with %s left" % (
-                selection, repr(self.line)))
-            # Resolve spans
-            resolved = []
-            last = None
-            spanning = False
-            for elt in selection:
-                if elt == '..':
-                    if last is None:
-                        raise Recoverable("start of span is missing")
-                    spanning = True
-                else:
-                    if spanning:
-                        resolved.extend(range(last+1, elt+1))
-                        spanning = False
-                    else:
-                        resolved.append(elt)
-                    last = elt
-            selection = resolved
-            self._debug_lexer("resolved list is %s with %s left" % (
-                selection, repr(self.line)))
-            # Sanity checks
-            if spanning:
-                raise Recoverable("incomplete range expression.")
-            for elt in selection:
-                if elt < 0 or elt > len(self.allitems)-1:
-                    raise Recoverable("element %s out of range" % (elt+1))
-            polyrange = OrderedSet(selection)
+            polyrange = self.eval_polyrange_1(_preselection, selection)
         return polyrange
+    @debug_lexer
+    def eval_polyrange_1(self, _preselection, selection):
+        # preselection is not used since it is perfectly legal to have range
+        # bounds be outside of the reduced set.
+        self._debug_lexer("location list is %s with %s left" % (
+            selection, repr(self.line)))
+        # Resolve spans
+        resolved = []
+        last = None
+        spanning = False
+        for elt in selection:
+            if elt == '..':
+                if last is None:
+                    raise Recoverable("start of span is missing")
+                spanning = True
+            else:
+                if spanning:
+                    resolved.extend(range(last+1, elt+1))
+                    spanning = False
+                else:
+                    resolved.append(elt)
+                last = elt
+        selection = resolved
+        self._debug_lexer("resolved list is %s with %s left" % (
+            selection, repr(self.line)))
+        # Sanity checks
+        if spanning:
+            raise Recoverable("incomplete range expression.")
+        for elt in selection:
+            if elt < 0 or elt > len(self.allitems)-1:
+                raise Recoverable("element %s out of range" % (elt+1))
+        return OrderedSet(selection)
     @debug_lexer
     def parse_atom(self, preselection):
         pacify_pylint(preselection)
