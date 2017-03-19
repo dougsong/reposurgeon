@@ -8139,9 +8139,11 @@ class SelectionParser(object):
         else:
             selection = []
             while self.peek() in self.polyrange_initials() + (".", ","):
-                sel = self.eval_atom(_preselection)
+                sel = self.parse_atom(_preselection)
                 if sel is not None:
-                    selection.extend(sel)
+                    sel = sel(_preselection) # TEMPORARY
+                    if sel is not None:      # TEMPORARY
+                        selection.extend(sel)
             self._debug_lexer("location list is %s with %s left" % (
                 selection, repr(self.line)))
             # Resolve spans
@@ -8172,7 +8174,7 @@ class SelectionParser(object):
             polyrange = OrderedSet(selection)
         return polyrange
     @debug_lexer
-    def eval_atom(self, preselection):
+    def parse_atom(self, preselection):
         pacify_pylint(preselection)
         self.line = self.line.lstrip()
         selection = None
@@ -8180,18 +8182,18 @@ class SelectionParser(object):
         match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
         if match:
             number = polystr(match.group())
-            selection = [int(number)-1]
+            selection = lambda p: [int(number)-1]
             self.line = self.line[len(number):]
         # $ means last commit, a la ed(1).
         elif self.peek() == "$":
-            selection = [len(self.allitems)-1]
+            selection = lambda p: [len(self.allitems)-1]
             self.pop()
         # Comma just delimits a location spec
         elif self.peek() == ",":
             self.pop()
         # Following ".." means a span
         elif self.line[:2] == "..":
-            selection = [".."]
+            selection = lambda p: [".."]
             self.line = self.line[2:]
         elif self.peek() == ".":
             raise Recoverable("malformed span")
@@ -8607,16 +8609,15 @@ and the ID of the invoking user. Use in regression-test loads.
             return False
         return True
     @debug_lexer
-    def eval_atom(self, preselection):
-        selection = super(RepoSurgeon, self).eval_atom(preselection)
+    def parse_atom(self, preselection):
+        selection = super(RepoSurgeon, self).parse_atom(preselection)
         if selection is None:
-            selection = []
             # Mark references
             match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
             if match:
                 markref = polystr(match.group())
                 self.line = self.line[len(markref):]
-                selection = self.eval_atom_mark(preselection, markref)
+                selection = lambda p: self.eval_atom_mark(p, markref)
             elif self.peek() == ':':
                 raise Recoverable("malformed mark")
             elif self.peek() == "<":
@@ -8626,9 +8627,7 @@ and the ID of the invoking user. Use in regression-test loads.
                     raise Recoverable("reference improperly terminated. '%s'" % self.line)
                 ref = self.line[:closer]
                 self.line = self.line[closer+1:]
-                selection = self.eval_atom_ref(preselection, ref)
-            if not selection:
-                selection = None
+                selection = lambda p: self.eval_atom_ref(p, ref)
         return selection
     @debug_lexer
     def eval_atom_mark(self, preselection, markref):
