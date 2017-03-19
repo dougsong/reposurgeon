@@ -8634,16 +8634,22 @@ and the ID of the invoking user. Use in regression-test loads.
                     raise Recoverable("reference improperly terminated. '%s'" % self.line)
                 ref = self.line[:closer]
                 self.line = self.line[closer+1:]
-                lookup = self.chosen().named(ref)
-                if lookup:
-                    # Choose to include *all* commits matching the date.
-                    # Alas, results in unfortunate behavior when a date
-                    # with multiple commits ends a span.
-                    selection += list(lookup)
-                else:
-                    raise Recoverable("couldn't match a name at <%s>" % ref)
+                selection = self.eval_atom_ref(preselection, ref)
             if not selection:
                 selection = None
+        return selection
+    @debug_lexer
+    def eval_atom_ref(self, preselection, ref):
+        pacify_pylint(preselection)
+        selection = []
+        lookup = self.chosen().named(ref)
+        if lookup:
+            # Choose to include *all* commits matching the date.
+            # Alas, results in unfortunate behavior when a date
+            # with multiple commits ends a span.
+            selection += list(lookup)
+        else:
+            raise Recoverable("couldn't match a name at <%s>" % ref)
         return selection
     @debug_lexer
     def eval_textsearch(self, preselection, search, modifiers):
