@@ -8140,6 +8140,12 @@ class SelectionParser(object):
                 sel = self.parse_atom(_preselection)
                 if sel is not None:
                     selection.append(sel)
+            # Sanity checks
+            if selection:
+                if selection[0] == '..':
+                    raise Recoverable("start of span is missing")
+                if selection[-1] == '..':
+                    raise Recoverable("incomplete range expression.")
             polyrange = lambda p: self.eval_polyrange(p, selection)
         return polyrange
     @debug_lexer
