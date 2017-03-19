@@ -8047,19 +8047,21 @@ class SelectionParser(object):
         self.line = self.line.lstrip()
         conjunct = None
         while True:
-            term = self.eval_term(preselection)
+            term = self.parse_term(preselection)
             if term is None:
                 break
             elif conjunct is None:
                 # assign term before intersecting with preselection so
                 # that the order specified by the user's first term is
                 # preserved
+                term = term(preselection) # TEMPORARY
                 conjunct = term
                 # this line is necessary if the user specified only
                 # polyranges because eval_polyrange() ignores the
                 # preselection
                 conjunct &= preselection
             else:
+                term = term(preselection) # TEMPORARY
                 conjunct &= term
             self.line = self.line.lstrip()
             if self.peek() == '&':
@@ -8070,16 +8072,15 @@ class SelectionParser(object):
             conjunct = preselection
         return conjunct
     @debug_lexer
-    def eval_term(self, preselection):
+    def parse_term(self, preselection):
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
             op = self.parse_expression(preselection)
-            term = self.eval_term_negate(preselection, op)
+            term = lambda p: self.eval_term_negate(p, op)
         elif self.peek() == '(':
             self.pop()
             term = self.parse_expression(preselection)
-            term = term(preselection) # TEMPORARY
             self.line = self.line.lstrip()
             if self.peek() != ')':
                 raise Recoverable("trailing junk on inner expression")
@@ -8093,8 +8094,6 @@ class SelectionParser(object):
                     term = self.parse_textsearch()
                     if term is None:
                         term = self.parse_funcall(preselection)
-            if callable(term):            # TEMPORARY
-                term = term(preselection) # TEMPORARY
         return term
     @debug_lexer
     def eval_term_negate(self, preselection, op):
@@ -8575,12 +8574,10 @@ and the ID of the invoking user. Use in regression-test loads.
         value = OrderedSet(value)
         return value
     @debug_lexer
-    def eval_term(self, preselection):
-        term = super(RepoSurgeon, self).eval_term(preselection)
+    def parse_term(self, preselection):
+        term = super(RepoSurgeon, self).parse_term(preselection)
         if term is None:
             term = self.parse_pathset()
-            if term is not None:          # TEMPORARY
-                term = term(preselection) # TEMPORARY
         return term
     def has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
