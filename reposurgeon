@@ -7996,7 +7996,8 @@ class SelectionParser(object):
         orig_line = line
         self.line = line
         self.allitems = allitems
-        selection = list(self.eval_expression(OrderedSet(self.allitems)))
+        machine = self.parse_expression(OrderedSet(self.allitems))
+        selection = list(machine(OrderedSet(self.allitems)))
         line = self.line.lstrip()
         self.allitems = None
         self.line = None
@@ -8020,9 +8021,9 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
-    def eval_expression(self, preselection):
+    def parse_expression(self, preselection):
         self.line = self.line.lstrip()
-        return self.eval_disjunct(preselection)
+        return lambda p: self.eval_disjunct(p)
     @debug_lexer
     def eval_disjunct(self, preselection):
         "Evaluate a disjunctive expression (| has lowest precedence)"
@@ -8073,11 +8074,13 @@ class SelectionParser(object):
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
+            op = self.parse_expression(preselection)
             allitems = OrderedSet(self.allitems)
-            return allitems - OrderedSet(self.eval_expression(allitems))
+            return allitems - OrderedSet(op(allitems))
         elif self.peek() == '(':
             self.pop()
-            term = self.eval_expression(preselection)
+            term = self.parse_expression(preselection)
+            term = term(preselection) # TEMPORARY
             self.line = self.line.lstrip()
             if self.peek() != ')':
                 raise Recoverable("trailing junk on inner expression")
@@ -8231,10 +8234,10 @@ class SelectionParser(object):
             return None
         # The '(' and ')' after the function name are different than
         # the parentheses used to override operator precedence, so we
-        # must handle them here.  If we let eval_expression() handle
+        # must handle them here.  If we let parse_expression() handle
         # the parentheses, it will process characters beyond the
         # closing parenthesis as if they were part of the function's
-        # argument.  For example, if we let eval_expression() handle
+        # argument.  For example, if we let parse_expression() handle
         # the parentheses, then the following expression:
         #     @max(~$)|$
         # would be processed as if this was the argument to max():
@@ -8242,7 +8245,8 @@ class SelectionParser(object):
         # when the actual argument is:
         #     ~$
         self.pop()
-        subarg = self.eval_expression(preselection)
+        subarg = self.parse_expression(preselection)
+        subarg = subarg(preselection) # TEMPORARY
         self.line = self.line.lstrip()
         if self.peek() != ')':
             raise Recoverable("missing close parenthesis for function call")
@@ -8500,15 +8504,16 @@ and the ID of the invoking user. Use in regression-test loads.
         self.selection, line = self.parse(line, self.chosen().all())
         return line
     @debug_lexer
-    def eval_expression(self, preselection):
-        value = super(RepoSurgeon, self).eval_expression(preselection)
+    def parse_expression(self, preselection):
+        value = super(RepoSurgeon, self).parse_expression(preselection)
+        value = value(preselection) # TEMPORARY
         while True:
             c = self.peek()
             if c != '?':
                 break
             self.pop()
             value = self.eval_neighborhood(preselection, value)
-        return value
+        return lambda p: value
     @debug_lexer
     def eval_neighborhood(self, preselection, value):
         add_set = OrderedSet()
