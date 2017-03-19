@@ -8087,7 +8087,7 @@ class SelectionParser(object):
             else:
                 self.pop()
         else:
-            term = self.eval_visibility(preselection)
+            term = self.parse_visibility()
             if term is None:
                 term = self.parse_polyrange(preselection)
                 if term is None:
@@ -8098,7 +8098,7 @@ class SelectionParser(object):
                 term = term(preselection) # TEMPORARY
         return term
     @debug_lexer
-    def eval_visibility(self, preselection):
+    def parse_visibility(self):
         "Parse a visibility spec."
         self.line = self.line.lstrip()
         if not hasattr(self, 'visibility_typeletters'):
@@ -8117,12 +8117,12 @@ class SelectionParser(object):
                 raise Recoverable("garbled type mask at %s" % repr(self.line))
             self._debug_lexer("visibility set is %s with %s left" % (
                 visible, repr(self.line)))
-            visibility = self.eval_visibility_1(preselection, visible)
+            visibility = lambda p: self.eval_visibility(p, visible)
         return visibility
     @debug_lexer
-    def eval_visibility_1(self, preselection, visible):
-        self._debug_lexer("visibility set is %s with %s left" % (
-            visible, repr(self.line)))
+    def eval_visibility(self, preselection, visible):
+        "Evaluate a visibility spec."
+        self._debug_lexer("visibility set is %s" % visible)
         typeletters = self.visibility_typeletters()
         visible = [typeletters[c] for c in visible]
         visibility = OrderedSet()
