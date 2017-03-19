@@ -8546,7 +8546,9 @@ and the ID of the invoking user. Use in regression-test loads.
     def eval_term(self, preselection):
         term = super(RepoSurgeon, self).eval_term(preselection)
         if term is None:
-            term = self.eval_pathset(preselection)
+            term = self.parse_pathset()
+            if term is not None:          # TEMPORARY
+                term = term(preselection) # TEMPORARY
         return term
     def has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
@@ -8701,8 +8703,8 @@ and the ID of the invoking user. Use in regression-test loads.
                 matchers.add(i)
         return matchers
     @debug_lexer
-    def eval_pathset(self, preselection):
-        "Resolve a path name to the set of commits that refer to it."
+    def parse_pathset(self):
+        "Parse a path name to evaluate the set of commits that refer to it."
         self.line = self.line.lstrip()
         if self.peek() != "[":
             return None
@@ -8730,9 +8732,9 @@ and the ID of the invoking user. Use in regression-test loads.
                 search = re.compile(matcher[1:-1].encode('ascii')).search
             except re.error:
                 raise Recoverable("invalid regular expression")
-            return self.eval_pathset_regex(preselection, search, flags)
+            return lambda p: self.eval_pathset_regex(p, search, flags)
         else:
-            return self.eval_pathset_1(preselection, matcher)
+            return lambda p: self.eval_pathset(p, matcher)
     @debug_lexer
     def eval_pathset_regex(self, preselection, search, flags):
         "Resolve a path regex to the set of commits that refer to it."
@@ -8751,7 +8753,7 @@ and the ID of the invoking user. Use in regression-test loads.
                 hits.add(i)
         return hits
     @debug_lexer
-    def eval_pathset_1(self, preselection, matcher):
+    def eval_pathset(self, preselection, matcher):
         "Resolve a path name to the set of commits that refer to it."
         chosen = self.chosen()
         return OrderedSet(
