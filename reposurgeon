@@ -8477,13 +8477,13 @@ and the ID of the invoking user. Use in regression-test loads.
         self.selection = None
         if not self.chosen():
             return line
-        orig_line = line
-        self.line = line
         try:
-            if self.chosen().named(self.line):
-                self.line = "<" + self.line + ">"
+            if self.chosen().named(line):
+                line = "<" + line + ">"
         except Recoverable:
             pass
+        orig_line = line
+        self.line = line
         self.allitems = self.chosen().all()
         self.selection = list(self.eval_expression(OrderedSet(self.allitems)))
         self.allitems = None
