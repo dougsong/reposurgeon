@@ -8089,7 +8089,7 @@ class SelectionParser(object):
         else:
             term = self.eval_visibility(preselection)
             if term is None:
-                term = self.eval_polyrange(preselection)
+                term = self.parse_polyrange(preselection)
                 if term is None:
                     term = self.parse_textsearch()
                     if term is None:
@@ -8129,7 +8129,7 @@ class SelectionParser(object):
         "Does the input look like a possible polyrange?"
         return self.peek() in self.polyrange_initials()
     @debug_lexer
-    def eval_polyrange(self, _preselection):
+    def parse_polyrange(self, _preselection):
         "Parse a polyrange specification (list of intervals)."
         self.line = self.line.lstrip()
         if not self.possible_polyrange():
@@ -8139,17 +8139,20 @@ class SelectionParser(object):
             while self.peek() in self.polyrange_initials() + (".", ","):
                 sel = self.parse_atom(_preselection)
                 if sel is not None:
-                    sel = sel(_preselection) # TEMPORARY
-                    if sel is not None:      # TEMPORARY
-                        selection.extend(sel)
-            polyrange = self.eval_polyrange_1(_preselection, selection)
+                    selection.append(sel)
+            polyrange = lambda p: self.eval_polyrange(p, selection)
         return polyrange
     @debug_lexer
-    def eval_polyrange_1(self, _preselection, selection):
+    def eval_polyrange(self, _preselection, ops):
+        "Evaluate a polyrange specification (list of intervals)."
         # preselection is not used since it is perfectly legal to have range
         # bounds be outside of the reduced set.
-        self._debug_lexer("location list is %s with %s left" % (
-            selection, repr(self.line)))
+        selection = []
+        for op in ops:
+            sel = op(_preselection)
+            if sel is not None:
+                selection.extend(sel)
+        self._debug_lexer("location list is %s" % selection)
         # Resolve spans
         resolved = []
         last = None
@@ -8167,8 +8170,7 @@ class SelectionParser(object):
                     resolved.append(elt)
                 last = elt
         selection = resolved
-        self._debug_lexer("resolved list is %s with %s left" % (
-            selection, repr(self.line)))
+        self._debug_lexer("resolved list is %s" % selection)
         # Sanity checks
         if spanning:
             raise Recoverable("incomplete range expression.")
