@@ -8616,15 +8616,7 @@ and the ID of the invoking user. Use in regression-test loads.
             if match:
                 markref = polystr(match.group())
                 self.line = self.line[len(markref):]
-                for (i, event) in enumerate(self.chosen()):
-                    if hasattr(event, "mark") and event.mark == markref:
-                        selection.append(i)
-                        break
-                    elif hasattr(event, "committish") and event.committish == markref:
-                        selection.append(i)
-                        break
-                else:
-                    raise Recoverable("mark %s not found." % markref)
+                selection = self.eval_atom_mark(preselection, markref)
             elif self.peek() == ':':
                 raise Recoverable("malformed mark")
             elif self.peek() == "<":
@@ -8637,6 +8629,20 @@ and the ID of the invoking user. Use in regression-test loads.
                 selection = self.eval_atom_ref(preselection, ref)
             if not selection:
                 selection = None
+        return selection
+    @debug_lexer
+    def eval_atom_mark(self, preselection, markref):
+        pacify_pylint(preselection)
+        selection = []
+        for (i, event) in enumerate(self.chosen()):
+            if hasattr(event, "mark") and event.mark == markref:
+                selection.append(i)
+                break
+            elif hasattr(event, "committish") and event.committish == markref:
+                selection.append(i)
+                break
+        else:
+            raise Recoverable("mark %s not found." % markref)
         return selection
     @debug_lexer
     def eval_atom_ref(self, preselection, ref):
