@@ -8477,6 +8477,7 @@ and the ID of the invoking user. Use in regression-test loads.
         self.selection = None
         if not self.chosen():
             return line
+        orig_line = line
         self.line = line
         try:
             if self.chosen().named(self.line):
@@ -8486,7 +8487,7 @@ and the ID of the invoking user. Use in regression-test loads.
         self.allitems = self.chosen().all()
         self.selection = list(self.eval_expression(OrderedSet(self.allitems)))
         self.allitems = None
-        if self.line.lstrip() == line.lstrip():
+        if self.line.lstrip() == orig_line.lstrip():
             self.selection = None
         return self.line.lstrip()
     @debug_lexer
