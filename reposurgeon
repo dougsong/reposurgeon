@@ -8258,36 +8258,42 @@ class SelectionParser(object):
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
         return lambda p: func(subarg)
+    @debug_lexer
     def min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
             return OrderedSet([min(subarg)])
         except ValueError:
             raise Recoverable("cannot take minimum of empty set")
+    @debug_lexer
     def max_handler(self, subarg):
         "Maximum member of a selection set."
         try:
             return OrderedSet([max(subarg)])
         except ValueError:
             raise Recoverable("cannot take maximum of empty set")
+    @debug_lexer
     def amp_handler(self, subarg):
         "Amplify - map empty set to empty, nonempty set to all."
         if subarg:
             return OrderedSet(self.allitems)
         else:
             return subarg
+    @debug_lexer
     def pre_handler(self, subarg):
         "Predecessors function; all elements previous to argument set."
         if not subarg or min(subarg) == 0:
             return OrderedSet()
         else:
             return OrderedSet(range(0, min(subarg)))
+    @debug_lexer
     def suc_handler(self, subarg):
         "Successors function; all elements following argument set."
         if not subarg or max(subarg) >= len(self.allitems) - 1:
             return OrderedSet()
         else:
             return OrderedSet(range(max(subarg)+1, len(self.allitems)))
+    @debug_lexer
     def srt_handler(self, subarg):
         "Sort the argument set."
         return OrderedSet(sorted(subarg))
@@ -8799,20 +8805,24 @@ and the ID of the invoking user. Use in regression-test loads.
             if (not tree) == match_all:
                 result.add(i)
         return result
+    @debug_lexer
     def chn_handler(self, subarg):
         "All children of commits in the selection set."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("children"),
                                         recurse=False)
+    @debug_lexer
     def dsc_handler(self, subarg):
         "All descendants of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("children"))
+    @debug_lexer
     def par_handler(self, subarg):
         "All parents of a selection set."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"),
                                         recurse=False)
+    @debug_lexer
     def anc_handler(self, subarg):
         "All ancestors of a selection set, recursively."
         return self._accumulate_commits(subarg,
