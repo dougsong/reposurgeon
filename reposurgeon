@@ -7996,7 +7996,7 @@ class SelectionParser(object):
         orig_line = line
         self.line = line
         self.allitems = allitems
-        machine = self.parse_expression(OrderedSet(self.allitems))
+        machine = self.parse_expression()
         selection = list(machine(OrderedSet(self.allitems)))
         line = self.line.lstrip()
         self.allitems = None
@@ -8021,20 +8021,20 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
-    def parse_expression(self, preselection):
+    def parse_expression(self):
         self.line = self.line.lstrip()
-        return self.parse_disjunct(preselection)
+        return self.parse_disjunct()
     @debug_lexer
-    def parse_disjunct(self, preselection):
+    def parse_disjunct(self):
         "Parse a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
-        op = self.parse_conjunct(preselection)
+        op = self.parse_conjunct()
         while True:
             self.line = self.line.lstrip()
             if self.peek() != '|':
                 break
             self.pop()
-            op2 = self.parse_conjunct(preselection)
+            op2 = self.parse_conjunct()
             if op2 is None:
                 break
             op1 = op
@@ -8052,10 +8052,10 @@ class SelectionParser(object):
                 selected |= conjunct
         return selected
     @debug_lexer
-    def parse_conjunct(self, preselection):
+    def parse_conjunct(self):
         "Parse a conjunctive expression (& has higher precedence)"
         self.line = self.line.lstrip()
-        op = self.parse_term(preselection)
+        op = self.parse_term()
         if op is None:
             return lambda p: self.eval_conjunct(p, lambda q: None, None)
         while True:
@@ -8063,7 +8063,7 @@ class SelectionParser(object):
             if self.peek() != '&':
                 break
             self.pop()
-            op2 = self.parse_term(preselection)
+            op2 = self.parse_term()
             if op2 is None:
                 break
             op1 = op
@@ -8088,15 +8088,15 @@ class SelectionParser(object):
                 conjunct &= term
         return conjunct
     @debug_lexer
-    def parse_term(self, preselection):
+    def parse_term(self):
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
-            op = self.parse_expression(preselection)
+            op = self.parse_expression()
             term = lambda p: self.eval_term_negate(p, op)
         elif self.peek() == '(':
             self.pop()
-            term = self.parse_expression(preselection)
+            term = self.parse_expression()
             self.line = self.line.lstrip()
             if self.peek() != ')':
                 raise Recoverable("trailing junk on inner expression")
@@ -8105,11 +8105,11 @@ class SelectionParser(object):
         else:
             term = self.parse_visibility()
             if term is None:
-                term = self.parse_polyrange(preselection)
+                term = self.parse_polyrange()
                 if term is None:
                     term = self.parse_textsearch()
                     if term is None:
-                        term = self.parse_funcall(preselection)
+                        term = self.parse_funcall()
         return term
     @debug_lexer
     def eval_term_negate(self, preselection, op):
@@ -8155,7 +8155,7 @@ class SelectionParser(object):
         "Does the input look like a possible polyrange?"
         return self.peek() in self.polyrange_initials()
     @debug_lexer
-    def parse_polyrange(self, _preselection):
+    def parse_polyrange(self):
         "Parse a polyrange specification (list of intervals)."
         self.line = self.line.lstrip()
         if not self.possible_polyrange():
@@ -8163,7 +8163,7 @@ class SelectionParser(object):
         else:
             selection = []
             while self.peek() in self.polyrange_initials() + (".", ","):
-                sel = self.parse_atom(_preselection)
+                sel = self.parse_atom()
                 if sel is not None:
                     selection.append(sel)
             # Sanity checks
@@ -8211,8 +8211,7 @@ class SelectionParser(object):
                 raise Recoverable("element %s out of range" % (elt+1))
         return OrderedSet(selection)
     @debug_lexer
-    def parse_atom(self, preselection):
-        pacify_pylint(preselection)
+    def parse_atom(self):
         self.line = self.line.lstrip()
         selection = None
         # First, literal command numbers (1-origin)
@@ -8262,7 +8261,7 @@ class SelectionParser(object):
                 self.line = self.line[1:]
             return lambda p: self.eval_textsearch(p, search, modifiers)
     @debug_lexer
-    def parse_funcall(self, preselection):
+    def parse_funcall(self):
         "Parse a function call."
         self.line = self.line.lstrip()
         if self.peek() != "@":
@@ -8286,7 +8285,7 @@ class SelectionParser(object):
         # when the actual argument is:
         #     ~$
         self.pop()
-        subarg = self.parse_expression(preselection)
+        subarg = self.parse_expression()
         self.line = self.line.lstrip()
         if self.peek() != ')':
             raise Recoverable("missing close parenthesis for function call")
@@ -8550,8 +8549,8 @@ and the ID of the invoking user. Use in regression-test loads.
         self.selection, line = self.parse(line, self.chosen().all())
         return line
     @debug_lexer
-    def parse_expression(self, preselection):
-        value = super(RepoSurgeon, self).parse_expression(preselection)
+    def parse_expression(self):
+        value = super(RepoSurgeon, self).parse_expression()
         while True:
             c = self.peek()
             if c != '?':
@@ -8590,8 +8589,8 @@ and the ID of the invoking user. Use in regression-test loads.
         value = OrderedSet(value)
         return value
     @debug_lexer
-    def parse_term(self, preselection):
-        term = super(RepoSurgeon, self).parse_term(preselection)
+    def parse_term(self):
+        term = super(RepoSurgeon, self).parse_term()
         if term is None:
             term = self.parse_pathset()
         return term
@@ -8644,8 +8643,8 @@ and the ID of the invoking user. Use in regression-test loads.
             return False
         return True
     @debug_lexer
-    def parse_atom(self, preselection):
-        selection = super(RepoSurgeon, self).parse_atom(preselection)
+    def parse_atom(self):
+        selection = super(RepoSurgeon, self).parse_atom()
         if selection is None:
             # Mark references
             match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
