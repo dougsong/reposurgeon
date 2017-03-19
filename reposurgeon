@@ -8287,7 +8287,6 @@ class SelectionParser(object):
         #     ~$
         self.pop()
         subarg = self.parse_expression(preselection)
-        subarg = subarg(preselection) # TEMPORARY
         self.line = self.line.lstrip()
         if self.peek() != ')':
             raise Recoverable("missing close parenthesis for function call")
@@ -8296,7 +8295,7 @@ class SelectionParser(object):
             func = getattr(self, funname + "_handler")
         except AttributeError:
             raise Recoverable("no such function as @%s()" % funname)
-        return lambda p: func(subarg)
+        return lambda p: func(subarg(p))
     @debug_lexer
     def min_handler(self, subarg):
         "Minimum member of a selection set."
@@ -8553,16 +8552,17 @@ and the ID of the invoking user. Use in regression-test loads.
     @debug_lexer
     def parse_expression(self, preselection):
         value = super(RepoSurgeon, self).parse_expression(preselection)
-        value = value(preselection) # TEMPORARY
         while True:
             c = self.peek()
             if c != '?':
                 break
             self.pop()
-            value = self.eval_neighborhood(preselection, value)
-        return lambda p: value
+            orig = value
+            value = lambda p: self.eval_neighborhood(p, orig)
+        return value
     @debug_lexer
-    def eval_neighborhood(self, preselection, value):
+    def eval_neighborhood(self, preselection, subject):
+        value = subject(preselection)
         add_set = OrderedSet()
         remove_set = OrderedSet()
         for ei in value:
