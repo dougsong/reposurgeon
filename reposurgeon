@@ -8703,7 +8703,6 @@ and the ID of the invoking user. Use in regression-test loads.
     @debug_lexer
     def eval_pathset(self, preselection):
         "Resolve a path name to the set of commits that refer to it."
-        chosen = self.chosen()
         self.line = self.line.lstrip()
         if self.peek() != "[":
             return None
@@ -8731,21 +8730,26 @@ and the ID of the invoking user. Use in regression-test loads.
                 search = re.compile(matcher[1:-1].encode('ascii')).search
             except re.error:
                 raise Recoverable("invalid regular expression")
-            if "c" in flags:
-                return self.eval_pathset_full(search,
-                                              preselection,
-                                              "a" in flags)
-            all_or_any = all if "a" in flags else any
-            if "a" in flags:
-                flags.remove("a")
-            hits = OrderedSet()
-            for (i, event) in chosen.iterevents(
-                            preselection, types=(Commit, Blob)):
-                if all_or_any(itertools.imap(search, itertools.imap(polybytes, event.paths(flags)))):
-                    hits.add(i)
-            return hits
+            return self.eval_pathset_regex(preselection, search, flags)
         else:
             return self.eval_pathset_1(preselection, matcher)
+    @debug_lexer
+    def eval_pathset_regex(self, preselection, search, flags):
+        "Resolve a path regex to the set of commits that refer to it."
+        chosen = self.chosen()
+        if "c" in flags:
+            return self.eval_pathset_full(search,
+                                          preselection,
+                                          "a" in flags)
+        all_or_any = all if "a" in flags else any
+        if "a" in flags:
+            flags.remove("a")
+        hits = OrderedSet()
+        for (i, event) in chosen.iterevents(
+                        preselection, types=(Commit, Blob)):
+            if all_or_any(itertools.imap(search, itertools.imap(polybytes, event.paths(flags)))):
+                hits.add(i)
+        return hits
     @debug_lexer
     def eval_pathset_1(self, preselection, matcher):
         "Resolve a path name to the set of commits that refer to it."
