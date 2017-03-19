@@ -7987,6 +7987,7 @@ class SelectionParser(object):
     """Selection set parser."""
     def __init__(self):
         self.line = None
+        self.allitems = None
     def peek(self):
         return self.line and self.line[0]
     def pop(self):
@@ -8213,8 +8214,9 @@ and the ID of the invoking user. Use in regression-test loads.
                 self.line = "<" + self.line + ">"
         except Recoverable:
             pass
-        self.selection = list(self.eval_expression(OrderedSet(
-            self.chosen().all())))
+        self.allitems = self.chosen().all()
+        self.selection = list(self.eval_expression(OrderedSet(self.allitems)))
+        self.allitems = None
         if self.line.lstrip() == line.lstrip():
             self.selection = None
         return self.line.lstrip()
@@ -8303,8 +8305,8 @@ and the ID of the invoking user. Use in regression-test loads.
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
-            allevents = OrderedSet(self.chosen().all())
-            return allevents - OrderedSet(self.eval_expression(allevents))
+            allitems = OrderedSet(self.allitems)
+            return allitems - OrderedSet(self.eval_expression(allitems))
         elif self.peek() == '(':
             self.pop()
             term = self.eval_expression(preselection)
@@ -8425,7 +8427,7 @@ and the ID of the invoking user. Use in regression-test loads.
                     raise Recoverable("malformed mark")
                 # $ means last commit, a la ed(1).
                 if self.peek() == "$":
-                    selection.append(len(self.chosen())-1)
+                    selection.append(len(self.allitems)-1)
                     self.pop()
                     continue
                 # Comma just delimits a location spec
@@ -8480,8 +8482,8 @@ and the ID of the invoking user. Use in regression-test loads.
             if spanning:
                 raise Recoverable("incomplete range expression.")
             for elt in selection:
-                if elt < 0 or elt > len(self.chosen())-1:
-                    raise Recoverable("event number %s out of range" % (elt+1))
+                if elt < 0 or elt > len(self.allitems)-1:
+                    raise Recoverable("element %s out of range" % (elt+1))
             polyrange = OrderedSet(selection)
         return polyrange
     @debug_lexer
@@ -8703,7 +8705,7 @@ and the ID of the invoking user. Use in regression-test loads.
     def amp_handler(self, subarg):
         "Amplify - map empty set to empty, nonempty set to all."
         if subarg:
-            return OrderedSet(self.chosen().all())
+            return OrderedSet(self.allitems)
         else:
             return subarg
     def chn_handler(self, subarg):
@@ -8725,17 +8727,17 @@ and the ID of the invoking user. Use in regression-test loads.
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"))
     def pre_handler(self, subarg):
-        "Predecessors function; all events previous to argument set."
+        "Predecessors function; all elements previous to argument set."
         if not subarg or min(subarg) == 0:
             return OrderedSet()
         else:
             return OrderedSet(range(0, min(subarg)))
     def suc_handler(self, subarg):
-        "Successors function; all events following argument set."
-        if not subarg or max(subarg) >= len(self.chosen().events) - 1:
+        "Successors function; all elements following argument set."
+        if not subarg or max(subarg) >= len(self.allitems) - 1:
             return OrderedSet()
         else:
-            return OrderedSet(range(max(subarg)+1, len(self.chosen().events)))
+            return OrderedSet(range(max(subarg)+1, len(self.allitems)))
     def srt_handler(self, subarg):
         "Sort the argument set."
         return OrderedSet(sorted(subarg))
