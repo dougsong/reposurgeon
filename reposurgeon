@@ -7988,6 +7988,18 @@ class SelectionParser(object):
     def __init__(self):
         self.line = None
         self.allitems = []
+    def parse(self, line, allitems):
+        """Parse selection; return remainder of line with selection removed."""
+        orig_line = line
+        self.line = line
+        self.allitems = allitems
+        selection = list(self.eval_expression(OrderedSet(self.allitems)))
+        line = self.line.lstrip()
+        self.allitems = None
+        self.line = None
+        if line == orig_line.lstrip():
+            selection = None
+        return (selection, line)
     def peek(self):
         return self.line and self.line[0]
     def pop(self):
@@ -8482,14 +8494,8 @@ and the ID of the invoking user. Use in regression-test loads.
                 line = "<" + line + ">"
         except Recoverable:
             pass
-        orig_line = line
-        self.line = line
-        self.allitems = self.chosen().all()
-        self.selection = list(self.eval_expression(OrderedSet(self.allitems)))
-        self.allitems = None
-        if self.line.lstrip() == orig_line.lstrip():
-            self.selection = None
-        return self.line.lstrip()
+        self.selection, line = self.parse(line, self.chosen().all())
+        return line
     @debug_lexer
     def eval_expression(self, preselection):
         value = super(RepoSurgeon, self).eval_expression(preselection)
