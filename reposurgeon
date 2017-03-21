@@ -8617,45 +8617,47 @@ into sections of the input stream instead).
     def edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
         # Assumes that self.chosen() and selection are not None
-        editor = line.strip() or os.getenv("EDITOR")
-        if not editor:
-            complain("you have not specified an editor and $EDITOR is not set")
-            return
-        # Special case: user selected a single blob
-        if len(selection) == 1:
-            singleton = self.chosen()[selection[0]]
-            if isinstance(singleton, Blob):
-                def find_successor(event, path):
-                    here = []
-                    for child in event.children():
-                        for fileop in child.operations():
-                            if fileop.op == "M" and fileop.path == path:
-                                here.append(child.mark)
-                        here += find_successor(child, path)
-                    return here
-                for event in self.chosen().commits():
-                    for fileop in event.operations():
-                        if fileop.op == 'M' and fileop.ref == singleton.mark:
-                            if len(find_successor(event, fileop.path)) > 0:
-                                complain("beware: not the last 'M %s' on its branch" % fileop.path)
-                            break
-                os.system(editor + " " + singleton.materialize())
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdin", "stdout"]) as parse:
+            editor = parse.line or os.getenv("EDITOR")
+            if not editor:
+                complain("you have not specified an editor and $EDITOR is not set")
                 return
-            # Fall through
-        (tfdesc, tfname) = tempfile.mkstemp()
-        assert tfdesc > -1    # pacify pylint
-        try:
-            with open(tfname, "wb") as tfp:
-                for i in selection:
-                    event = self.chosen()[i]
-                    if hasattr(event, "email_out"):
-                        tfp.write(polybytes(event.email_out([], i)))
-        except IOError:
-            raise Recoverable("write of editor tempfile failed")
-        if os.system(editor + " " + tfname):
-            raise Recoverable("%s returned a failure status" % editor)
-        else:
-            self.do_mailbox_in("<" + tfname)
+            # Special case: user selected a single blob
+            if len(selection) == 1:
+                singleton = self.chosen()[selection[0]]
+                if isinstance(singleton, Blob):
+                    def find_successor(event, path):
+                        here = []
+                        for child in event.children():
+                            for fileop in child.operations():
+                                if fileop.op == "M" and fileop.path == path:
+                                    here.append(child.mark)
+                            here += find_successor(child, path)
+                        return here
+                    for event in self.chosen().commits():
+                        for fileop in event.operations():
+                            if fileop.op == 'M' and fileop.ref == singleton.mark:
+                                if len(find_successor(event, fileop.path)) > 0:
+                                    complain("beware: not the last 'M %s' on its branch" % fileop.path)
+                                break
+                    os.system(editor + " " + singleton.materialize())
+                    return
+                # Fall through
+            (tfdesc, tfname) = tempfile.mkstemp()
+            assert tfdesc > -1    # pacify pylint
+            try:
+                with open(tfname, "wb") as tfp:
+                    for i in selection:
+                        event = self.chosen()[i]
+                        if hasattr(event, "email_out"):
+                            tfp.write(polybytes(event.email_out([], i)))
+            except IOError:
+                raise Recoverable("write of editor tempfile failed")
+            fp = subprocess.Popen([editor, tfname], stdin=parse.stdin, stdout=parse.stdout)
+            if fp.wait():
+                raise Recoverable("%s returned a failure status" % editor)
+            else:
+                self.do_mailbox_in("<" + tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
@@ -10017,6 +10019,8 @@ taken from the $EDITOR variable in your environment.
 Normally this command ignores blobs because mailbox_out does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
+
+Supports < and > redirection.
 """)
     def do_edit(self, line):
         "Edit metadata interactively."
@@ -11812,7 +11816,8 @@ With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
 of the command supports >-redirection.  Equivalent to '=N list'.
 
-With the modifier 'edit', edit this set. Equivalent to '=N edit'.
+With the modifier 'edit', edit this set.  This version of the command
+supports < and > redirection.  Equivalent to '=N edit'.
 
 With the modifier 'lift', transform commit-reference cookies from CVS
 and Subversion into action stamps.  This command expects cookies

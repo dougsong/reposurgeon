@@ -1565,6 +1565,8 @@ taken from the $EDITOR variable in your environment.</para>
 <command>mailbox_out</command> does.  However, if you specify a
 selection set consisting of a single blob, your editor will be called
 directly on the blob file.</para>
+
+<para>Supports &lt; and &gt; redirection.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
@@ -2081,7 +2083,8 @@ stamps. This reporting command supports &gt;-redirection.
 It is equivalent to '=N list'.</para>
 
 <para>With the modifier 'edit', edit the set where revision IDs are
-found.  This is equivalent to '=N edit'.</para>
+found.  This version of the command supports &lt; and &gt; redirection.
+This is equivalent to '=N edit'.</para>
 
 <para>With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the legacy map. An action
