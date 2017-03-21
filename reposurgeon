@@ -11854,6 +11854,8 @@ map when the repo is written or rebuilt.
                       lambda p: repo.legacy_map.get(p) or repo.dollar_map.get(p)),
                      ("SVN:[0-9]+",
                       lambda p: repo.legacy_map.get(p) or repo.dollar_map.get(p)),
+                     ("HG:[0-9a-f]+",
+                      lambda p: repo.legacy_map.get(p)),
                      (":[0-9]+",
                       lambda p: repo.objfind(p)),
                      ):
