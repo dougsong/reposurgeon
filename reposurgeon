@@ -5625,7 +5625,7 @@ class Repository:
         self.basedir = os.getcwd()
         self.uuid = None
         self.write_legacy = False
-        self.dollar_map = {}        # From dollar cookies in files
+        self.dollar_map = None        # From dollar cookies in files
         self.legacy_map = {}    # From anything that doesn't survive rebuild
         self.legacy_count = None
         self.timings = []
@@ -6047,7 +6047,7 @@ class Repository:
         self.readtime = time.time()
     def parse_dollar_cookies(self):
         "Extract info about legacy references from CVS/SVN header cookies."
-        if self.dollar_map:
+        if self.dollar_map is not None:
             return
         # The goal here is to throw away CVS and Subversion header
         # information still fossilized into $Id$ and $Subversion$
@@ -6056,6 +6056,7 @@ class Repository:
         # as a fossil which should be removed.  Then, the earliest
         # commit referencing that blob gets a legacy property set;
         # later references will be branching artifacts.
+        self.dollar_map = {}
         seen = set()
         for event in self.events:
             if isinstance(event, Blob) and event.cookie:
@@ -11836,6 +11837,7 @@ map when the repo is written or rebuilt.
         if self.selection is None:
             self.selection = self.chosen().all()
         if "lift" in line:
+            self.chosen().parse_dollar_cookies()
             hits = 0
             def substitute(getter, matchobj):
                 payload = polystr(matchobj.group(0)[2:-2])
