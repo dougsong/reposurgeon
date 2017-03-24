@@ -11018,7 +11018,6 @@ in the ancestry of the commit, this command throws an error.  With the
                     raise Recoverable("no target specified in rename")
                 actions = []
                 for _,commit in self.selected(Commit):
-                    drop = []
                     touched = False
                     for fileop in commit.operations():
                         for attr in ("path", "source", "target"):
@@ -11033,9 +11032,7 @@ in the ancestry of the commit, this command throws an error.  With the
                                     else:
                                         actions.append((fileop, attr, newpath))
                                         touched = True
-                    for fileop in drop:
-                        commit.operations().remove(fileop)
-                    if drop or touched:
+                    if touched:
                         commit.invalidate_pathset_cache()
                 # All checks must pass before any renames
                 for (fileop, attr, newpath) in actions:
