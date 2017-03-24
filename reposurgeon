@@ -11019,6 +11019,7 @@ in the ancestry of the commit, this command throws an error.  With the
                 actions = []
                 for _,commit in self.selected(Commit):
                     drop = []
+                    touched = False
                     for fileop in commit.operations():
                         for attr in ("path", "source", "target"):
                             if hasattr(fileop, attr):
@@ -11031,9 +11032,10 @@ in the ancestry of the commit, this command throws an error.  With the
                                         raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
                                     else:
                                         actions.append((fileop, attr, newpath))
+                                        touched = True
                     for fileop in drop:
                         commit.operations().remove(fileop)
-                    if drop:
+                    if drop or touched:
                         commit.invalidate_pathset_cache()
                 # All checks must pass before any renames
                 for (fileop, attr, newpath) in actions:
