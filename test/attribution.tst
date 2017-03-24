@@ -43,3 +43,13 @@ attribution delete
 
 # error: bogus visibility flag
 1..$ attribution =X resolve
+
+@min(=C) attribution /Julien/ resolve match any
+@min(=C) attribution /Julien/n resolve match name
+@min(=C) attribution /frnchfrgg/e resolve match email
+@min(=C) attribution /Julien/e resolve name not match email
+@min(=C) attribution /frnchfrgg/n resolve email not match name
+@min(=C) attribution /nomatch/ resolve no match
+
+# error bogus regex match flag
+@min(=C) attribution /Julien/x resolve

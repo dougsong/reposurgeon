@@ -99,3 +99,20 @@ all:     10      - [1]
 # error: bogus visibility flag
 1..$ attribution =X resolve
 reposurgeon: garbled type mask at 'X resolve'
+
+@min(=C) attribution /Julien/ resolve match any
+match any:      3     :2 [1, 2]
+@min(=C) attribution /Julien/n resolve match name
+match name:      3     :2 [1, 2]
+@min(=C) attribution /frnchfrgg/e resolve match email
+match email:      3     :2 [1, 2]
+@min(=C) attribution /Julien/e resolve name not match email
+name not match email:      3     :2 []
+@min(=C) attribution /frnchfrgg/n resolve email not match name
+email not match name:      3     :2 []
+@min(=C) attribution /nomatch/ resolve no match
+no match:      3     :2 []
+
+# error bogus regex match flag
+@min(=C) attribution /Julien/x resolve
+reposurgeon: unknown textsearch flag (event 3, mark :2)

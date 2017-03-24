@@ -2106,6 +2106,10 @@ intersection, and '~' negation, and function calls @min(), @max(), @amp(),
 @pre(), @suc(), @srt().
 Attributions can also be selected by visibility set '=C' for committers, '=A'
 for authors, and '=T' for taggers.
+Finally, /<emphasis>regex</emphasis>/ will attempt to match the Python regular
+expression <emphasis>regex</emphasis> against an attribution name and email
+address; '/n' limits the match to only the name, and '/e' to only the email
+address.
 </para>
 </listitem>
 </varlistentry>

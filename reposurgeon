@@ -8382,6 +8382,26 @@ class AttributionEditor(object):
                 "A" : lambda i: isinstance(self.attributions[i], AttributionEditor.Author),
                 "T" : lambda i: isinstance(self.attributions[i], AttributionEditor.Tagger)
             }
+        @debug_lexer
+        def eval_textsearch(self, preselection, search, modifiers):
+            if not modifiers:
+                check_name = check_email = True
+            else:
+                check_name = check_email = False
+                for m in modifiers:
+                    if m == 'n':
+                        check_name = True
+                    elif m == 'e':
+                        check_email = True
+                    else:
+                        raise Recoverable("unknown textsearch flag")
+            found = OrderedSet()
+            for i in preselection:
+                a = self.attributions[i]
+                if ((check_name and search(polybytes(a.name))) or
+                    (check_email and search(polybytes(a.email)))):
+                    found.add(i)
+            return found
     def __init__(self, events, machine):
         self.events = events
         self.machine = machine
@@ -12285,6 +12305,10 @@ union, '&' intersection, and '~' negation, and function calls @min(), @max(),
 
 Attributions can also be selected by visibility set '=C' for committers, '=A'
 for authors, and '=T' for taggers.
+
+Finally, /regex/ will attempt to match the Python regular expression regex
+against an attribution name and email address; '/n' limits the match to only
+the name, and '/e' to only the email address.
 
 Available actions are:
 
