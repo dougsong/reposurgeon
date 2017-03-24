@@ -8388,6 +8388,21 @@ class AttributionEditor(object):
         except AttributeError:
             v = [AttributionEditor.Tagger(event.tagger)]
         return v
+    def mark(self, event):
+        try:
+            mark = event.mark or '-'
+        except AttributeError:
+            mark = '-'
+        return mark
+    def apply(self, f, **extra):
+        for i, event in self.events:
+            attributions = self.attributions(event)
+            try:
+                sel = self.machine(attributions)
+            except Recoverable as e:
+                raise Recoverable("%s (event %d, mark %s)" %
+                                  (e.msg, i+1, self.mark(event)))
+            f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
 
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
