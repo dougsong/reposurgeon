@@ -8347,6 +8347,11 @@ class SelectionParser(object):
         "Reverse the argument set."
         return list(reversed(subarg))
 
+class AttributionEditor(object):
+    "Inspect and edit committer, author, tagger attributions."
+    def __init__(self, events):
+        self.events = events
+
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
     OptionFlags = (
@@ -12198,6 +12203,33 @@ default patterns.
                 announce("%d %s blobs modified." % (changecount, self.ignorename))
             else:
                 raise Recoverable("unknown verb %s in ignores line" % verb)
+
+    def help_attribution(self):
+        sys.stdout.write("""
+Inspect, modify, add, and remove commit and tag attributions.
+""")
+    def do_attribution(self, line):
+        "Inspect, modify, add, and remove commit and tag attributions."
+        repo = self.chosen()
+        if repo is None:
+            raise Recoverable("no repo has been chosen")
+        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+            try:
+                fields = shlex.split(parse.line)
+            except ValueError as e:
+                raise Recoverable("attribution parse failed: %s" % e)
+            action = fields[0] if fields else ''
+            args = fields[1:]
+            pacify_pylint(args)
+            if self.selection is None:
+                raise Recoverable("no selection")
+            sel = list(self.selected((Commit, Tag)))
+            if not sel:
+                raise Recoverable("no commits or tags in selection")
+            ed = AttributionEditor(sel)
+            pacify_pylint(ed)
+            raise Recoverable("unrecognized action: %s" % action)
+
     #
     # Artifact removal
     #

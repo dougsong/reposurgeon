@@ -2090,6 +2090,13 @@ will also error out when it knows the import tool has already set
 default patterns.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><command>attribution</command>
+</term>
+<listitem>
+<para>Inspect, modify, add, and remove commit and tag attributions.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect2>
 
