@@ -8454,6 +8454,31 @@ class AttributionEditor(object):
                 raise Recoverable("%s (event %d, mark %s)" %
                                   (e.msg, i+1, self.mark(event)))
             f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
+    def infer(self, attributions, preferred, name, emailaddr, date):
+        if name is None and emailaddr is None:
+            raise Recoverable("unable to infer missing name and email")
+        if preferred is not None:
+            attributions = [attributions[preferred]] + attributions
+        if name is None:
+            for a in attributions:
+                if a.email == emailaddr:
+                    name = a.name
+                    break
+            if name is None:
+                raise Recoverable("unable to infer name for %s" % emailaddr)
+        if emailaddr is None:
+            for a in attributions:
+                if a.name == name:
+                    emailaddr = a.email
+                    break
+            if emailaddr is None:
+                raise Recoverable("unable to infer email for %s" % name)
+        if date is None:
+            if attributions:
+                date = attributions[0].date
+            else:
+                raise Recoverable("unable to infer date")
+        return name, emailaddr, date
     def glean(self, args):
         name = emailaddr = date = None
         for x in args:
@@ -8509,7 +8534,8 @@ class AttributionEditor(object):
             sel = self.indices(attributions, AttributionEditor.Author)
         basis = sel[-1 if after else 0] if sel else None
         a = Attribution()
-        a.name, a.email, a.date = name, emailaddr, date
+        a.name, a.email, a.date = self.infer(
+            attributions, basis, name, emailaddr, date)
         if basis is not None:
             attributions[basis].insert(after, event, a)
         else:
@@ -12423,11 +12449,18 @@ Available actions are:
     <selection> is not given. It is an error to delete the mandatory committer
     and tagger attributions of commit and tag events, respectively.
 
-[<selection>] prepend <name> <email> <date>
+[<selection>] prepend <name> [<email>] [<date>]
+[<selection>] prepend [<name>] <email> [<date>]
     Insert a new attribution before the first attribution named by <selection>.
     The new attribution has the same type ('committer', 'author', or 'tagger')
     as the one before which it is being inserted. Arguments <name>, <email>,
     and <date> can be given in any order.
+
+    If <name> is omitted, an attempt is made to infer it from <email> by
+    trying to match <email> against an existing attribution of the event, with
+    preference given to the attribution before which the new attribution is
+    being inserted. Similarly, <email> is inferred from an existing matching
+    <name>. Likewise, for <date>.
 
     As a convenience, if <selection> is empty or not specified a new author is
     prepended to the author list.
@@ -12435,11 +12468,18 @@ Available actions are:
     It is presently an error to insert a new committer or tagger attribution.
     To change a committer or tagger, use 'set' instead.
 
-[<selection>] append <name> <email> <date>
+[<selection>] append <name> [<email>] [<date>]
+[<selection>] append [<name>] <email> [<date>]
     Insert a new attribution after the last attribution named by <selection>.
     The new attribution has the same type ('committer', 'author', or 'tagger')
     as the one after which it is being inserted. Arguments <name>, <email>,
     and <date> can be given in any order.
+
+    If <name> is omitted, an attempt is made to infer it from <email> by
+    trying to match <email> against an existing attribution of the event, with
+    preference given to the attribution after which the new attribution is
+    being inserted. Similarly, <email> is inferred from an existing matching
+    <name>. Likewise, for <date>.
 
     As a convenience, if <selection> is empty or not specified a new author is
     appended to the author list.
@@ -12492,8 +12532,8 @@ Available actions are:
                     raise Recoverable("'set' requires at least one of: name, email, date")
                 ed.assign(args)
             elif action in ('prepend', 'append'):
-                if len(args) != 3:
-                    raise Recoverable("'%s' requires: name, email, date" % action)
+                if len(args) < 1 or len(args) > 3:
+                    raise Recoverable("'%s' requires at least one of: name, email; date is optional" % action)
                 if action == 'prepend':
                     ed.insert(args, False)
                 elif action == 'append':

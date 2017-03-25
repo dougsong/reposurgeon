@@ -2189,8 +2189,15 @@ respectively.</para>
         [<emphasis>selection</emphasis>]
         <command>prepend</command>
         <emphasis>name</emphasis>
+        [<emphasis>email</emphasis>]
+        [<emphasis>date</emphasis>]
+</term>
+<term>
+        [<emphasis>selection</emphasis>]
+        <command>prepend</command>
+        [<emphasis>name</emphasis>]
         <emphasis>email</emphasis>
-        <emphasis>date</emphasis>
+        [<emphasis>date</emphasis>]
 </term>
 
 <listitem>
@@ -2200,6 +2207,13 @@ respectively.</para>
 <emphasis>tagger</emphasis>) as the one before which it is being inserted.
 Arguments <emphasis>name</emphasis>, <emphasis>email</emphasis>, and
 <emphasis>date</emphasis> can be given in any order.</para>
+
+<para>If <emphasis>name</emphasis> is omitted, an attempt is made to infer it
+from <emphasis>email</emphasis> by trying to match <emphasis>email</emphasis>
+against an existing attribution of the event, with preference given to the
+attribution before which the new attribution is being inserted.  Similarly,
+<emphasis>email</emphasis> is inferred from an existing matching
+<emphasis>name</emphasis>.  Likewise, for <emphasis>date</emphasis>.</para>
 
 <para>As a convenience, if <emphasis>selection</emphasis> is empty or not
 specified a new author is prepended to the author list.</para>
@@ -2215,8 +2229,15 @@ instead.</para>
         [<emphasis>selection</emphasis>]
         <command>append</command>
         <emphasis>name</emphasis>
+        [<emphasis>email</emphasis>]
+        [<emphasis>date</emphasis>]
+</term>
+<term>
+        [<emphasis>selection</emphasis>]
+        <command>append</command>
+        [<emphasis>name</emphasis>]
         <emphasis>email</emphasis>
-        <emphasis>date</emphasis>
+        [<emphasis>date</emphasis>]
 </term>
 
 <listitem>
@@ -2226,6 +2247,13 @@ instead.</para>
 <emphasis>tagger</emphasis>) as the one after which it is being inserted.
 Arguments <emphasis>name</emphasis>, <emphasis>email</emphasis>, and
 <emphasis>date</emphasis> can be given in any order.</para>
+
+<para>If <emphasis>name</emphasis> is omitted, an attempt is made to infer it
+from <emphasis>email</emphasis> by trying to match <emphasis>email</emphasis>
+against an existing attribution of the event, with preference given to the
+attribution after which the new attribution is being inserted.  Similarly,
+<emphasis>email</emphasis> is inferred from an existing matching
+<emphasis>name</emphasis>.  Likewise, for <emphasis>date</emphasis>.</para>
 
 <para>As a convenience, if <emphasis>selection</emphasis> is empty or not
 specified a new author is appended to the author list.</para>

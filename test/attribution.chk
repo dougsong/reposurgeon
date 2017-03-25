@@ -268,9 +268,9 @@ reposurgeon: unable to delete tagger (1 needed)
 
 # error: incorrect number of arguments
 1..$ attribution prepend
-reposurgeon: 'prepend' requires: name, email, date
+reposurgeon: 'prepend' requires at least one of: name, email; date is optional
 1..$ attribution append Name email@example.com "1234567890 +0500" junk
-reposurgeon: 'append' requires: name, email, date
+reposurgeon: 'append' requires at least one of: name, email; date is optional
 # error: no event selection
 attribution =A prepend
 reposurgeon: no selection
@@ -282,3 +282,53 @@ reposurgeon: unable to add tagger (only 1 allowed)
 # error: cannot add author to tag
 @max(=T) attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
 reposurgeon: unable to add author to tag
+
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Example <example@example.com> 1234567890 +0500
+     3     :2  3:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  4:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  5:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+:2 attribution =A prepend "Eric Sunshine"
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric Sunshine <sunshine@sunshineco.com> 1234567890 +0500
+     3     :2  3:author    Example <example@example.com> 1234567890 +0500
+     3     :2  4:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  5:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  6:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+:2 attribution =A append esr@thyrsus.com
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric Sunshine <sunshine@sunshineco.com> 1234567890 +0500
+     3     :2  3:author    Example <example@example.com> 1234567890 +0500
+     3     :2  4:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  5:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  6:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  7:author    Eric S. Raymond <esr@thyrsus.com> 1490059425 +0000
+:2 attribution /disney/e append Pluto othertoon@disney.com
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric Sunshine <sunshine@sunshineco.com> 1234567890 +0500
+     3     :2  3:author    Example <example@example.com> 1234567890 +0500
+     3     :2  4:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  5:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  6:author    Pluto <othertoon@disney.com> 291816732 +0000
+     3     :2  7:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  8:author    Eric S. Raymond <esr@thyrsus.com> 1490059425 +0000
+
+# infer author name and date from committer
+:4 attribution show
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+:4 attribution append frnchfrgg@free.fr
+:4 attribution show
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+
+# error: unable to infer name, email
+:4 attribution append 2017-03-21T01:23:45Z
+reposurgeon: unable to infer missing name and email
+:4 attribution prepend Nobody
+reposurgeon: unable to infer email for Nobody
+:4 attribution append nobody@nowhere.com
+reposurgeon: unable to infer name for nobody@nowhere.com

@@ -127,3 +127,21 @@ attribution =A prepend
 @max(=T) attribution =T append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
 # error: cannot add author to tag
 @max(=T) attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+
+:2 attribution show
+:2 attribution =A prepend "Eric Sunshine"
+:2 attribution show
+:2 attribution =A append esr@thyrsus.com
+:2 attribution show
+:2 attribution /disney/e append Pluto othertoon@disney.com
+:2 attribution show
+
+# infer author name and date from committer
+:4 attribution show
+:4 attribution append frnchfrgg@free.fr
+:4 attribution show
+
+# error: unable to infer name, email
+:4 attribution append 2017-03-21T01:23:45Z
+:4 attribution prepend Nobody
+:4 attribution append nobody@nowhere.com
