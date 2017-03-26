@@ -8366,8 +8366,19 @@ class AttributionEditor(object):
             self.pos = pos
     class Tagger(A):
         pass
-    def __init__(self, events):
+    class SelParser(SelectionParser):
+        def __init__(self):
+            SelectionParser.__init__(self)
+            self.attributions = None
+        def evaluate(self, machine, attributions):
+            self.attributions = attributions
+            sel = super(AttributionEditor.SelParser, self).evaluate(
+                machine, range(len(self.attributions)))
+            self.attributions = None
+            return sel
+    def __init__(self, events, machine):
         self.events = events
+        self.machine = machine
     def attributions(self, event):
         try:
             v = [AttributionEditor.Committer(event.committer)]
@@ -12233,13 +12244,22 @@ default patterns.
     def help_attribution(self):
         sys.stdout.write("""
 Inspect, modify, add, and remove commit and tag attributions.
+
+Attributions upon which to operate are selected in much the same way as events
+are selected. The <selection> argument of each action is an expression
+composed of 1-origin attribution-sequence numbers, '$' for last attribution,
+'..' ranges, comma-separated items, '(...)' grouping, set operations '|'
+union, '&' intersection, and '~' negation, and function calls @min(), @max(),
+@amp(), @pre(), @suc(), @srt().
 """)
     def do_attribution(self, line):
         "Inspect, modify, add, and remove commit and tag attributions."
         repo = self.chosen()
         if repo is None:
             raise Recoverable("no repo has been chosen")
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        selparser = AttributionEditor.SelParser()
+        machine, rest = selparser.compile(line)
+        with RepoSurgeon.LineParse(self, rest, capabilities=["stdout"]) as parse:
             try:
                 fields = shlex.split(parse.line)
             except ValueError as e:
@@ -12252,7 +12272,7 @@ Inspect, modify, add, and remove commit and tag attributions.
             sel = list(self.selected((Commit, Tag)))
             if not sel:
                 raise Recoverable("no commits or tags in selection")
-            ed = AttributionEditor(sel)
+            ed = AttributionEditor(sel, lambda a: selparser.evaluate(machine, a))
             pacify_pylint(ed)
             raise Recoverable("unrecognized action: %s" % action)
 

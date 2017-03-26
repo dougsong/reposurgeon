@@ -2092,9 +2092,19 @@ default patterns.</para>
 </varlistentry>
 <varlistentry>
 <term><command>attribution</command>
+        [<emphasis>selection</emphasis>]
 </term>
 <listitem>
 <para>Inspect, modify, add, and remove commit and tag attributions.</para>
+
+<para>Attributions upon which to operate are selected in much the same way as
+events are selected, as described in <link linkend='selections'>SELECTION
+SYNTAX</link>.  <emphasis>selection</emphasis> is an expression composed of
+1-origin attribution-sequence numbers, '$' for last attribution, '..' ranges,
+comma-separated items, '(...)' grouping, set operations '|' union, '&amp;'
+intersection, and '~' negation, and function calls @min(), @max(), @amp(),
+@pre(), @suc(), @srt().
+</para>
 </listitem>
 </varlistentry>
 </variablelist>
