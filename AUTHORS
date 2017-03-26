@@ -28,3 +28,8 @@ Peter Donis <peterdonis@alum.mit.edu>
 
 Eric Sunshine <sunshine@sunshineco.com>
    Review of seldom-used features, test improvements, bug-fixing.
+   Generalized selection expression parser for use-cases other than events.
+   Converted selection parser, which evaluated an expression while parsing it,
+   to a compile/evaluate paradigm in which a selection expression can be
+   compiled once and evaluated many times.
+   Added 'attribution' command.
