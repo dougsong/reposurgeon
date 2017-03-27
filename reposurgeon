@@ -7873,8 +7873,8 @@ into sections of the input stream instead).
                     raise Recoverable("no support for > redirection")
                 self.outfile = polystr(m.group(0)[m.group(0).count(b'>'):])
                 if self.outfile and self.outfile != '-':
-                    if os.path.exists(self.outfile) and not os.path.isfile(self.outfile):
-                        raise Recoverable("not a plain file")
+                    if os.path.exists(self.outfile) and os.path.isdir(self.outfile):
+                        raise Recoverable("can't redirect output to directory")
                     try:
                         RepoSurgeon.write_notify(self.interpreter, self.outfile)
                         if m.group(0).count(b'>') > 1:
