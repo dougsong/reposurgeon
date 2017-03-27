@@ -1137,8 +1137,8 @@ class HgExtractor(Extractor):
             self.cmdline = cmdline
             if self.cmdline[0] == "hg":
                 self.cmdline.pop(0)
-            self.fp = io.BytesIO(self.client.rawcommand(self.cmdline))
             self.errhandler = kwargs.get('errhandler')
+            self.fp = io.BytesIO(self.client.rawcommand(self.cmdline, eh=lambda rc, out, err: self.errhandler(rc)))
         def __enter__(self):
             return self.fp
         def __exit__(self, extype, value, traceback_unused):
