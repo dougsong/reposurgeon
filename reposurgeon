@@ -8367,12 +8367,19 @@ class AttributionEditor(object):
                 self.attribution.email = emailaddr
             if date is not None:
                 self.attribution.date = date
+        def delete(self, event):
+            pacify_pylint(event)
+            raise Recoverable("unable to delete %s (1 needed)" % self.desc())
     class Committer(A):
         pass
     class Author(A):
         def __init__(self, attribution, pos):
             AttributionEditor.A.__init__(self, attribution)
             self.pos = pos
+        def delete(self, event):
+            del event.authors[self.pos]
+            if not event.authors:
+                event.authors = None
     class Tagger(A):
         pass
     class SelParser(SelectionParser):
@@ -8423,6 +8430,8 @@ class AttributionEditor(object):
         except AttributeError:
             v = [AttributionEditor.Tagger(event.tagger)]
         return v
+    def indices(self, v, types):
+        return [i for i,x in enumerate(v) if isinstance(x, types)]
     def mark(self, event):
         try:
             mark = event.mark or '-'
@@ -8476,6 +8485,14 @@ class AttributionEditor(object):
             raise Recoverable("no attribution selected")
         for i in sel:
             attributions[i].assign(name, emailaddr, date)
+    def delete(self):
+        self.apply(self.do_delete)
+    def do_delete(self, event, attributions, sel, **extra):
+        pacify_pylint(extra)
+        if sel is None:
+            sel = self.indices(attributions, AttributionEditor.Author)
+        for i in sorted(sel, reverse=True):
+            attributions[i].delete(event)
     def resolve(self, stdout, label):
         self.apply(self.do_resolve, stdout=stdout, label=label)
     def do_resolve(self, eventno, event, sel, stdout, label, **extra):
@@ -12375,6 +12392,11 @@ Available actions are:
     convenience, if only some fields need to be changed, the others can be
     omitted. Arguments <name>, <email>, and <date> can be given in any order.
 
+[<selection>] delete
+    Delete the selected attributions. As a convenience, deletes all authors if
+    <selection> is not given. It is an error to delete the mandatory committer
+    and tagger attributions of commit and tag events, respectively.
+
 <selection> resolve [>file] [label-text...]
     Does nothing but resolve an attribution selection-set expression for the
     selected events and echo the resulting attribution-number set to standard
@@ -12411,6 +12433,10 @@ Available actions are:
                 if len(args) > 0:
                     raise Recoverable("'show' takes no arguments")
                 ed.inspect(parse.stdout)
+            elif action == 'delete':
+                if len(args) > 0:
+                    raise Recoverable("'delete' takes no arguments")
+                ed.delete()
             elif action == 'set':
                 if len(args) < 1 or len(args) > 3:
                     raise Recoverable("'set' requires at least one of: name, email, date")

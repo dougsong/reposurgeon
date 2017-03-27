@@ -2094,7 +2094,8 @@ default patterns.</para>
 <term><command>attribution</command>
         [<emphasis>selection</emphasis>]
         {<command>show</command> |
-        <command>set</command>}
+        <command>set</command> |
+        <command>delete</command>}
         [<emphasis>args</emphasis>]
 </term>
 <listitem>
@@ -2164,6 +2165,20 @@ selection is specified, defaults to all events.  Supports &gt; redirection.
 only some fields need to be changed, the others can be omitted.  Arguments
 <emphasis>name</emphasis>, <emphasis>email</emphasis>, and
 <emphasis>date</emphasis> can be given in any order.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        [<emphasis>selection</emphasis>]
+        <command>delete</command>
+</term>
+
+<listitem>
+<para>Delete the selected attributions.  As a convenience, deletes all authors
+if <emphasis>selection</emphasis> is not given.  It is an error to delete the
+mandatory committer and tagger attributions of commit and tag events,
+respectively.</para>
 </listitem>
 </varlistentry>
 </variablelist>

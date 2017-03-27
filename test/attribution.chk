@@ -199,3 +199,44 @@ reposurgeon: extra name: Name2
 reposurgeon: extra email: email2@example.com
 1..$ attribution set "1234567890 +0500" Name 2017-03-21T01:23:45Z
 reposurgeon: extra timestamp: 2017-03-21T01:23:45Z
+
+:5 attribution show
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+:5 attribution =A delete
+:5 attribution show
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+# no attribution selection: delete all authors
+:4 attribution show
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+:4 attribution delete
+:4 attribution show
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+# multiple events
+1..$ attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <sunshine@sunshineco.com> 1490059425 +0000
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+1..$ attribution =A delete
+1..$ attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+
+# error: incorrect number of arguments
+1..$ attribution delete bogus
+reposurgeon: 'delete' takes no arguments
+# error: no event selection
+attribution =A delete
+reposurgeon: no selection
+# error: cannot delete mandatory committer or tagger
+@max(=C) attribution =C delete
+reposurgeon: unable to delete committer (1 needed)
+@max(=T) attribution =T delete
+reposurgeon: unable to delete tagger (1 needed)

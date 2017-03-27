@@ -86,3 +86,23 @@ attribution show bogus
 1..$ attribution set Name1 email@example.com Name2
 1..$ attribution set email1@example.com Name email2@example.com
 1..$ attribution set "1234567890 +0500" Name 2017-03-21T01:23:45Z
+
+:5 attribution show
+:5 attribution =A delete
+:5 attribution show
+# no attribution selection: delete all authors
+:4 attribution show
+:4 attribution delete
+:4 attribution show
+# multiple events
+1..$ attribution show
+1..$ attribution =A delete
+1..$ attribution show
+
+# error: incorrect number of arguments
+1..$ attribution delete bogus
+# error: no event selection
+attribution =A delete
+# error: cannot delete mandatory committer or tagger
+@max(=C) attribution =C delete
+@max(=T) attribution =T delete
