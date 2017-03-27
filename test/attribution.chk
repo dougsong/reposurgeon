@@ -116,3 +116,46 @@ no match:      3     :2 []
 # error bogus regex match flag
 @min(=C) attribution /Julien/x resolve
 reposurgeon: unknown textsearch flag (event 3, mark :2)
+
+attribution
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+attribution show
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+1..$ attribution show
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     5     :4  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+=C attribution 2 show
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     5     :4  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253523 +0100
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+=T attribution 1 show
+     9      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253847 +0100
+    10      -  1:tagger    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253834 +0100
+@max(=C) attribution =A show
+     6     :5  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
+# empty attribution selection
+@max(=T) attribution =A show
+
+#error: incorrect number of arguments
+attribution show bogus
+reposurgeon: 'show' takes no arguments

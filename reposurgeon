@@ -8358,6 +8358,8 @@ class AttributionEditor(object):
             return getattr(self.attribution, name)
         def __str__(self):
             return self.attribution.__str__()
+        def desc(self):
+            return self.__class__.__name__.lower()
     class Committer(A):
         pass
     class Author(A):
@@ -8429,6 +8431,15 @@ class AttributionEditor(object):
                 raise Recoverable("%s (event %d, mark %s)" %
                                   (e.msg, i+1, self.mark(event)))
             f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
+    def inspect(self, stdout):
+        self.apply(self.do_inspect, stdout=stdout)
+    def do_inspect(self, eventno, event, attributions, sel, stdout):
+        mark = self.mark(event)
+        if sel is None:
+            sel = range(len(attributions))
+        for i in sel:
+            a = attributions[i]
+            stdout.write("%6d %6s %2d:%-9s %s\n" % (eventno+1, mark, i+1, a.desc(), a))
     def resolve(self, stdout, label):
         self.apply(self.do_resolve, stdout=stdout, label=label)
     def do_resolve(self, eventno, event, sel, stdout, label, **extra):
@@ -12312,6 +12323,12 @@ the name, and '/e' to only the email address.
 
 Available actions are:
 
+[<selection>] [show] [>file]
+    Inspect the selected attributions of the specified events (commits and
+    tags). The 'show' keyword is optional. If no attribution selection
+    expression is given, defaults to all attributions. If no event selection
+    is specified, defaults to all events. Supports > redirection.
+
 <selection> resolve [>file] [label-text...]
     Does nothing but resolve an attribution selection-set expression for the
     selected events and echo the resulting attribution-number set to standard
@@ -12333,15 +12350,22 @@ Available actions are:
                 fields = shlex.split(parse.line)
             except ValueError as e:
                 raise Recoverable("attribution parse failed: %s" % e)
-            action = fields[0] if fields else ''
+            action = fields[0] if fields else 'show'
             args = fields[1:]
             if self.selection is None:
-                raise Recoverable("no selection")
+                if action == 'show':
+                    self.selection = repo.all()
+                else:
+                    raise Recoverable("no selection")
             sel = list(self.selected((Commit, Tag)))
             if not sel:
                 raise Recoverable("no commits or tags in selection")
             ed = AttributionEditor(sel, lambda a: selparser.evaluate(machine, a))
-            if action == 'resolve':
+            if action == 'show':
+                if len(args) > 0:
+                    raise Recoverable("'show' takes no arguments")
+                ed.inspect(parse.stdout)
+            elif action == 'resolve':
                 ed.resolve(parse.stdout, ' '.join(args) if args else None)
             else:
                 raise Recoverable("unrecognized action: %s" % action)

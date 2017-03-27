@@ -2093,6 +2093,7 @@ default patterns.</para>
 <varlistentry>
 <term><command>attribution</command>
         [<emphasis>selection</emphasis>]
+        <command>show</command>
 </term>
 <listitem>
 <para>Inspect, modify, add, and remove commit and tag attributions.</para>
@@ -2111,6 +2112,26 @@ expression <emphasis>regex</emphasis> against an attribution name and email
 address; '/n' limits the match to only the name, and '/e' to only the email
 address.
 </para>
+
+<para>Available actions are:</para>
+
+<variablelist>
+<varlistentry>
+<term>
+        [<emphasis>selection</emphasis>]
+        [<command>show</command>]
+        [&gt;<emphasis>file</emphasis>]
+</term>
+
+<listitem>
+<para>Inspect the selected attributions of the specified events (commits and
+tags).  The <command>show</command> keyword is optional.  If no attribution
+selection expression is given, defaults to all attributions. If no event
+selection is specified, defaults to all events.  Supports &gt; redirection.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
 </listitem>
 </varlistentry>
 </variablelist>

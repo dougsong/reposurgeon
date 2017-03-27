@@ -53,3 +53,15 @@ attribution delete
 
 # error bogus regex match flag
 @min(=C) attribution /Julien/x resolve
+
+attribution
+attribution show
+1..$ attribution show
+=C attribution 2 show
+=T attribution 1 show
+@max(=C) attribution =A show
+# empty attribution selection
+@max(=T) attribution =A show
+
+#error: incorrect number of arguments
+attribution show bogus
