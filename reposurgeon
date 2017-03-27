@@ -8403,6 +8403,16 @@ class AttributionEditor(object):
                 raise Recoverable("%s (event %d, mark %s)" %
                                   (e.msg, i+1, self.mark(event)))
             f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
+    def resolve(self, stdout, label):
+        self.apply(self.do_resolve, stdout=stdout, label=label)
+    def do_resolve(self, eventno, event, sel, stdout, label, **extra):
+        pacify_pylint(extra)
+        if sel is None:
+            raise Recoverable("no attribution selected")
+        if label:
+            stdout.write("%s: " % label)
+        stdout.write("%6d %6s %s\n" %
+                     (eventno+1, self.mark(event), [x+1 for x in sel]))
 
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
@@ -12266,6 +12276,17 @@ composed of 1-origin attribution-sequence numbers, '$' for last attribution,
 '..' ranges, comma-separated items, '(...)' grouping, set operations '|'
 union, '&' intersection, and '~' negation, and function calls @min(), @max(),
 @amp(), @pre(), @suc(), @srt().
+
+Available actions are:
+
+<selection> resolve [>file] [label-text...]
+    Does nothing but resolve an attribution selection-set expression for the
+    selected events and echo the resulting attribution-number set to standard
+    output. The remainder of the line after the command is used as a label for
+    the output.
+
+    Implemented mainly for regression testing, but may be useful for exploring
+    the selection-set language.
 """)
     def do_attribution(self, line):
         "Inspect, modify, add, and remove commit and tag attributions."
@@ -12281,15 +12302,16 @@ union, '&' intersection, and '~' negation, and function calls @min(), @max(),
                 raise Recoverable("attribution parse failed: %s" % e)
             action = fields[0] if fields else ''
             args = fields[1:]
-            pacify_pylint(args)
             if self.selection is None:
                 raise Recoverable("no selection")
             sel = list(self.selected((Commit, Tag)))
             if not sel:
                 raise Recoverable("no commits or tags in selection")
             ed = AttributionEditor(sel, lambda a: selparser.evaluate(machine, a))
-            pacify_pylint(ed)
-            raise Recoverable("unrecognized action: %s" % action)
+            if action == 'resolve':
+                ed.resolve(parse.stdout, ' '.join(args) if args else None)
+            else:
+                raise Recoverable("unrecognized action: %s" % action)
 
     #
     # Artifact removal

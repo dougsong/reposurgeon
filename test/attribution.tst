@@ -17,3 +17,21 @@ attribution delete
 
 # error: unrecognized action
 1..$ attribution bogus
+
+:2..:4 attribution 2 resolve
+:2..:4 attribution $ resolve
+:2..:4 attribution 1..$ resolve
+:2..:4 attribution 1,$ resolve
+:2..:4 attribution 1 | 2 resolve
+:2..:4 attribution 1 & (2) resolve
+:2..:4 attribution ~2 resolve
+:2..:4 attribution @min(1..$) resolve
+:2..:4 attribution @max(1..$) resolve
+:2..:4 attribution @amp(1) resolve
+:2..:4 attribution @pre(2) resolve
+:2..:4 attribution @suc(1) resolve
+:2..:4 attribution @srt(2,1) resolve
+1..$ attribution @amp(~1) resolve label
+
+# error: bogus selection (tag has only "tagger" attribution at index 1)
+10 attribution 2 resolve

@@ -20,3 +20,53 @@ reposurgeon: no commits or tags in selection
 # error: unrecognized action
 1..$ attribution bogus
 reposurgeon: unrecognized action: bogus
+
+:2..:4 attribution 2 resolve
+     3     :2 [2]
+     5     :4 [2]
+:2..:4 attribution $ resolve
+     3     :2 [2]
+     5     :4 [2]
+:2..:4 attribution 1..$ resolve
+     3     :2 [1, 2]
+     5     :4 [1, 2]
+:2..:4 attribution 1,$ resolve
+     3     :2 [1, 2]
+     5     :4 [1, 2]
+:2..:4 attribution 1 | 2 resolve
+     3     :2 [1, 2]
+     5     :4 [1, 2]
+:2..:4 attribution 1 & (2) resolve
+     3     :2 []
+     5     :4 []
+:2..:4 attribution ~2 resolve
+     3     :2 [1]
+     5     :4 [1]
+:2..:4 attribution @min(1..$) resolve
+     3     :2 [1]
+     5     :4 [1]
+:2..:4 attribution @max(1..$) resolve
+     3     :2 [2]
+     5     :4 [2]
+:2..:4 attribution @amp(1) resolve
+     3     :2 [1, 2]
+     5     :4 [1, 2]
+:2..:4 attribution @pre(2) resolve
+     3     :2 [1]
+     5     :4 [1]
+:2..:4 attribution @suc(1) resolve
+     3     :2 [2]
+     5     :4 [2]
+:2..:4 attribution @srt(2,1) resolve
+     3     :2 [1, 2]
+     5     :4 [1, 2]
+1..$ attribution @amp(~1) resolve label
+label:      3     :2 [1, 2]
+label:      5     :4 [1, 2]
+label:      6     :5 [1, 2]
+label:      9      - []
+label:     10      - []
+
+# error: bogus selection (tag has only "tagger" attribution at index 1)
+10 attribution 2 resolve
+reposurgeon: element 2 out of range (event 10, mark -)

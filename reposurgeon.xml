@@ -2780,6 +2780,21 @@ as a label for the output.</para>
 for exploring the selection-set language.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term><command>attribution</command>
+        <emphasis>selection</emphasis>
+        <command>resolve</command>
+        [&gt;<emphasis>outfile</emphasis>]
+        [<emphasis>label-text...</emphasis>]
+</term>
+<listitem><para>Does nothing but resolve an attribution selection-set
+expression for the selected events and echo the resulting attribution-number
+set to standard output. The remainder of the line after the command is used as
+a label for the output.</para>
+
+<para>Implemented mainly for regression testing, but may be useful
+for exploring the selection-set language.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><command>verbose</command>
         [<emphasis>n</emphasis>]
 </term>
