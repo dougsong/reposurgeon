@@ -24,3 +24,5 @@ install-only-%:
 install-no-%:
 	apt-get -qy autoremove $*
 
+install-hglib:
+	pip install 'python-hglib>=1.9'

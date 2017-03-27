@@ -29,6 +29,12 @@ test-only-mercurial:
   - make -C ci install-only-mercurial
   - make -k check
 
+# Test with hglib installed (for hg command server)
+test-with-hglib:
+  script:
+  - make -C ci install-hglib
+  - make -C test hg-extractor
+
 test-only-subversion:
   script:
   - make -C ci install-only-subversion

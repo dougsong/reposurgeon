@@ -26,11 +26,13 @@ default:
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
-		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags hg-regress-patho \
-		svnload-regress legacy-regress svndump-regress \
+		hg-extractor svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress
 	@echo "=== No diff output is good news."
+
+hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
+		hg-regress-tags hg-regress-patho
 
 .SUFFIXES: .svn .chk .fi .map
 
