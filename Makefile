@@ -4,6 +4,7 @@
 
 INSTALL=install
 XMLTO=xmlto
+XMLTOOPTS=-m docbook-extra.xml
 ASCIIDOC=asciidoc
 PYLINT=pylint
 prefix?=/usr/local
@@ -43,10 +44,10 @@ SHARED    = README.md NEWS TODO reposurgeon-git-aliases $(HTMLFILES)
 all:  $(MANPAGES) $(HTMLFILES)
 
 %.1: %.xml
-	$(XMLTO) man $<
+	$(XMLTO) $(XMLTOOPTS) man $<
 
 %.html: %.xml
-	$(XMLTO) html-nochunks $<
+	$(XMLTO) $(XMLTOOPTS) html-nochunks $<
 
 dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc
 %.html: %.asc
