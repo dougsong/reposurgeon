@@ -106,3 +106,24 @@ attribution =A delete
 # error: cannot delete mandatory committer or tagger
 @max(=C) attribution =C delete
 @max(=T) attribution =T delete
+
+:2 attribution show
+:2 attribution append "Eric S. Raymond" esr@thyrsus.com "1234567890 +0500"
+:2 attribution show
+:2 attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+:2 attribution show
+:2 attribution /sunshine/ & =A prepend "Micky Mouse" toon@disney.com 1979-04-01T12:12:12Z
+:2 attribution show
+:2 attribution /esr/e prepend Example example@example.com "1234567890 +0500"
+:2 attribution show
+
+# error: incorrect number of arguments
+1..$ attribution prepend
+1..$ attribution append Name email@example.com "1234567890 +0500" junk
+# error: no event selection
+attribution =A prepend
+# error: cannot add committer or tagger (only 1 allowed)
+@max(=C) attribution =C prepend "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+@max(=T) attribution =T append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+# error: cannot add author to tag
+@max(=T) attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z

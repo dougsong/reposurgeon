@@ -2095,7 +2095,9 @@ default patterns.</para>
         [<emphasis>selection</emphasis>]
         {<command>show</command> |
         <command>set</command> |
-        <command>delete</command>}
+        <command>delete</command> |
+        <command>prepend</command> |
+        <command>append</command>}
         [<emphasis>args</emphasis>]
 </term>
 <listitem>
@@ -2179,6 +2181,58 @@ only some fields need to be changed, the others can be omitted.  Arguments
 if <emphasis>selection</emphasis> is not given.  It is an error to delete the
 mandatory committer and tagger attributions of commit and tag events,
 respectively.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        [<emphasis>selection</emphasis>]
+        <command>prepend</command>
+        <emphasis>name</emphasis>
+        <emphasis>email</emphasis>
+        <emphasis>date</emphasis>
+</term>
+
+<listitem>
+<para>Insert a new attribution before the first attribution named by
+<emphasis>selection</emphasis>.  The new attribution has the same type
+(<emphasis>committer</emphasis>, <emphasis>author</emphasis>, or
+<emphasis>tagger</emphasis>) as the one before which it is being inserted.
+Arguments <emphasis>name</emphasis>, <emphasis>email</emphasis>, and
+<emphasis>date</emphasis> can be given in any order.</para>
+
+<para>As a convenience, if <emphasis>selection</emphasis> is empty or not
+specified a new author is prepended to the author list.</para>
+
+<para>It is presently an error to insert a new committer or tagger
+attribution.  To change a committer or tagger, use <command>set</command>
+instead.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        [<emphasis>selection</emphasis>]
+        <command>append</command>
+        <emphasis>name</emphasis>
+        <emphasis>email</emphasis>
+        <emphasis>date</emphasis>
+</term>
+
+<listitem>
+<para>Insert a new attribution after the last attribution named by
+<emphasis>selection</emphasis>.  The new attribution has the same type
+(<emphasis>committer</emphasis>, <emphasis>author</emphasis>, or
+<emphasis>tagger</emphasis>) as the one after which it is being inserted.
+Arguments <emphasis>name</emphasis>, <emphasis>email</emphasis>, and
+<emphasis>date</emphasis> can be given in any order.</para>
+
+<para>As a convenience, if <emphasis>selection</emphasis> is empty or not
+specified a new author is appended to the author list.</para>
+
+<para>It is presently an error to insert a new committer or tagger
+attribution.  To change a committer or tagger, use <command>set</command>
+instead.</para>
 </listitem>
 </varlistentry>
 </variablelist>

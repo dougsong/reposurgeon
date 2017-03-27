@@ -240,3 +240,45 @@ reposurgeon: no selection
 reposurgeon: unable to delete committer (1 needed)
 @max(=T) attribution =T delete
 reposurgeon: unable to delete tagger (1 needed)
+
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+:2 attribution append "Eric S. Raymond" esr@thyrsus.com "1234567890 +0500"
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+:2 attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  3:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+:2 attribution /sunshine/ & =A prepend "Micky Mouse" toon@disney.com 1979-04-01T12:12:12Z
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  3:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  4:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+:2 attribution /esr/e prepend Example example@example.com "1234567890 +0500"
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Example <example@example.com> 1234567890 +0500
+     3     :2  3:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+     3     :2  4:author    Micky Mouse <toon@disney.com> 291816732 +0000
+     3     :2  5:author    Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+
+# error: incorrect number of arguments
+1..$ attribution prepend
+reposurgeon: 'prepend' requires: name, email, date
+1..$ attribution append Name email@example.com "1234567890 +0500" junk
+reposurgeon: 'append' requires: name, email, date
+# error: no event selection
+attribution =A prepend
+reposurgeon: no selection
+# error: cannot add committer or tagger (only 1 allowed)
+@max(=C) attribution =C prepend "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+reposurgeon: unable to add committer (only 1 allowed)
+@max(=T) attribution =T append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+reposurgeon: unable to add tagger (only 1 allowed)
+# error: cannot add author to tag
+@max(=T) attribution append "Eric Sunshine" sunshine@sunshineco.com 2017-03-21T01:23:45Z
+reposurgeon: unable to add author to tag

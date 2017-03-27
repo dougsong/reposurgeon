@@ -8370,6 +8370,11 @@ class AttributionEditor(object):
         def delete(self, event):
             pacify_pylint(event)
             raise Recoverable("unable to delete %s (1 needed)" % self.desc())
+        def insert(self, after, event, newattr):
+            pacify_pylint(after)
+            pacify_pylint(event)
+            pacify_pylint(newattr)
+            raise Recoverable("unable to add %s (only 1 allowed)" % self.desc())
     class Committer(A):
         pass
     class Author(A):
@@ -8380,6 +8385,8 @@ class AttributionEditor(object):
             del event.authors[self.pos]
             if not event.authors:
                 event.authors = None
+        def insert(self, after, event, newattr):
+            event.authors.insert(self.pos + (1 if after else 0), newattr)
     class Tagger(A):
         pass
     class SelParser(SelectionParser):
@@ -8493,6 +8500,25 @@ class AttributionEditor(object):
             sel = self.indices(attributions, AttributionEditor.Author)
         for i in sorted(sel, reverse=True):
             attributions[i].delete(event)
+    def insert(self, args, after):
+        name, emailaddr, date = self.glean(args)
+        self.apply(self.do_insert, after=after, name=name, emailaddr=emailaddr, date=date)
+    def do_insert(self, event, attributions, sel, after, name, emailaddr, date, **extra):
+        pacify_pylint(extra)
+        if not sel:
+            sel = self.indices(attributions, AttributionEditor.Author)
+        basis = sel[-1 if after else 0] if sel else None
+        a = Attribution()
+        a.name, a.email, a.date = name, emailaddr, date
+        if basis is not None:
+            attributions[basis].insert(after, event, a)
+        else:
+            try:
+                assert(event.authors is None)
+                event.authors = [a]
+            except AttributeError:
+                raise Recoverable("unable to add author to %s" %
+                                  event.__class__.__name__.lower())
     def resolve(self, stdout, label):
         self.apply(self.do_resolve, stdout=stdout, label=label)
     def do_resolve(self, eventno, event, sel, stdout, label, **extra):
@@ -12397,6 +12423,30 @@ Available actions are:
     <selection> is not given. It is an error to delete the mandatory committer
     and tagger attributions of commit and tag events, respectively.
 
+[<selection>] prepend <name> <email> <date>
+    Insert a new attribution before the first attribution named by <selection>.
+    The new attribution has the same type ('committer', 'author', or 'tagger')
+    as the one before which it is being inserted. Arguments <name>, <email>,
+    and <date> can be given in any order.
+
+    As a convenience, if <selection> is empty or not specified a new author is
+    prepended to the author list.
+
+    It is presently an error to insert a new committer or tagger attribution.
+    To change a committer or tagger, use 'set' instead.
+
+[<selection>] append <name> <email> <date>
+    Insert a new attribution after the last attribution named by <selection>.
+    The new attribution has the same type ('committer', 'author', or 'tagger')
+    as the one after which it is being inserted. Arguments <name>, <email>,
+    and <date> can be given in any order.
+
+    As a convenience, if <selection> is empty or not specified a new author is
+    appended to the author list.
+
+    It is presently an error to insert a new committer or tagger attribution.
+    To change a committer or tagger, use 'set' instead.
+
 <selection> resolve [>file] [label-text...]
     Does nothing but resolve an attribution selection-set expression for the
     selected events and echo the resulting attribution-number set to standard
@@ -12441,6 +12491,13 @@ Available actions are:
                 if len(args) < 1 or len(args) > 3:
                     raise Recoverable("'set' requires at least one of: name, email, date")
                 ed.assign(args)
+            elif action in ('prepend', 'append'):
+                if len(args) != 3:
+                    raise Recoverable("'%s' requires: name, email, date" % action)
+                if action == 'prepend':
+                    ed.insert(args, False)
+                elif action == 'append':
+                    ed.insert(args, True)
             elif action == 'resolve':
                 ed.resolve(parse.stdout, ' '.join(args) if args else None)
             else:
