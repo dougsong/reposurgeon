@@ -2093,7 +2093,9 @@ default patterns.</para>
 <varlistentry>
 <term><command>attribution</command>
         [<emphasis>selection</emphasis>]
-        <command>show</command>
+        {<command>show</command> |
+        <command>set</command>}
+        [<emphasis>args</emphasis>]
 </term>
 <listitem>
 <para>Inspect, modify, add, and remove commit and tag attributions.</para>
@@ -2113,7 +2115,8 @@ address; '/n' limits the match to only the name, and '/e' to only the email
 address.
 </para>
 
-<para>Available actions are:</para>
+<para>With the exception of <command>show</command>, all actions require an
+explicit event selection upon which to operate. Available actions are:</para>
 
 <variablelist>
 <varlistentry>
@@ -2129,6 +2132,38 @@ tags).  The <command>show</command> keyword is optional.  If no attribution
 selection expression is given, defaults to all attributions. If no event
 selection is specified, defaults to all events.  Supports &gt; redirection.
 </para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+        <emphasis>selection</emphasis>
+        <command>set</command>
+        <emphasis>name</emphasis>
+        [<emphasis>email</emphasis>]
+        [<emphasis>date</emphasis>]
+</term>
+<term>
+        <emphasis>selection</emphasis>
+        <command>set</command>
+        [<emphasis>name</emphasis>]
+        <emphasis>email</emphasis>
+        [<emphasis>date</emphasis>]
+</term>
+<term>
+        <emphasis>selection</emphasis>
+        <command>set</command>
+        [<emphasis>name</emphasis>]
+        [<emphasis>email</emphasis>]
+        <emphasis>date</emphasis>
+</term>
+
+<listitem>
+<para>Assign <emphasis>name</emphasis>, <emphasis>email</emphasis>,
+<emphasis>date</emphasis> to the selected attributions.  As a convenience, if
+only some fields need to be changed, the others can be omitted.  Arguments
+<emphasis>name</emphasis>, <emphasis>email</emphasis>, and
+<emphasis>date</emphasis> can be given in any order.</para>
 </listitem>
 </varlistentry>
 </variablelist>

@@ -65,3 +65,24 @@ attribution show
 
 #error: incorrect number of arguments
 attribution show bogus
+
+:2 attribution show
+:2 attribution =C set 2017-03-21T01:23:45Z
+:2 attribution show
+:2 attribution =C set sunshine@sunshineco.com
+:2 attribution show
+:2 attribution =C set "Eric Sunshine"
+:2 attribution show
+:2 attribution @min(=A) set "1234567890 +0500" sunshine@sunshineco.com "Eric Sunshine"
+:2 attribution show
+:2 attribution =A set "Eric S. Raymond" esr@thyrsus.com
+:2 attribution show
+:2 attribution =A set sunshine@sunshineco.com 2017-03-21T01:23:45Z
+:2 attribution show
+
+# error: incorrect number of arguments or repeated arguments
+1..$ attribution set
+1..$ attribution set Name email@example.com "1234567890 +0500" junk
+1..$ attribution set Name1 email@example.com Name2
+1..$ attribution set email1@example.com Name email2@example.com
+1..$ attribution set "1234567890 +0500" Name 2017-03-21T01:23:45Z

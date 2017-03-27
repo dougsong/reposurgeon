@@ -159,3 +159,43 @@ attribution show
 #error: incorrect number of arguments
 attribution show bogus
 reposurgeon: 'show' takes no arguments
+
+:2 attribution show
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+:2 attribution =C set 2017-03-21T01:23:45Z
+:2 attribution show
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1490059425 +0000
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+:2 attribution =C set sunshine@sunshineco.com
+:2 attribution show
+     3     :2  1:committer Julien _FrnchFrgg_ RIVAUD <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+:2 attribution =C set "Eric Sunshine"
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253480 +0100
+:2 attribution @min(=A) set "1234567890 +0500" sunshine@sunshineco.com "Eric Sunshine"
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric Sunshine <sunshine@sunshineco.com> 1234567890 +0500
+:2 attribution =A set "Eric S. Raymond" esr@thyrsus.com
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <esr@thyrsus.com> 1234567890 +0500
+:2 attribution =A set sunshine@sunshineco.com 2017-03-21T01:23:45Z
+:2 attribution show
+     3     :2  1:committer Eric Sunshine <sunshine@sunshineco.com> 1490059425 +0000
+     3     :2  2:author    Eric S. Raymond <sunshine@sunshineco.com> 1490059425 +0000
+
+# error: incorrect number of arguments or repeated arguments
+1..$ attribution set
+reposurgeon: 'set' requires at least one of: name, email, date
+1..$ attribution set Name email@example.com "1234567890 +0500" junk
+reposurgeon: 'set' requires at least one of: name, email, date
+1..$ attribution set Name1 email@example.com Name2
+reposurgeon: extra name: Name2
+1..$ attribution set email1@example.com Name email2@example.com
+reposurgeon: extra email: email2@example.com
+1..$ attribution set "1234567890 +0500" Name 2017-03-21T01:23:45Z
+reposurgeon: extra timestamp: 2017-03-21T01:23:45Z

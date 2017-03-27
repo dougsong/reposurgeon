@@ -8360,6 +8360,13 @@ class AttributionEditor(object):
             return self.attribution.__str__()
         def desc(self):
             return self.__class__.__name__.lower()
+        def assign(self, name, emailaddr, date):
+            if name is not None:
+                self.attribution.name = name
+            if emailaddr is not None:
+                self.attribution.email = emailaddr
+            if date is not None:
+                self.attribution.date = date
     class Committer(A):
         pass
     class Author(A):
@@ -8431,6 +8438,26 @@ class AttributionEditor(object):
                 raise Recoverable("%s (event %d, mark %s)" %
                                   (e.msg, i+1, self.mark(event)))
             f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
+    def glean(self, args):
+        name = emailaddr = date = None
+        for x in args:
+            try:
+                d = Date(x)
+                if date is not None:
+                    raise Recoverable("extra timestamp: %s" % x)
+                date = d
+                continue
+            except Fatal:
+                pass
+            if '@' in x:
+                if emailaddr is not None:
+                    raise Recoverable("extra email: %s" % x)
+                emailaddr = x
+            else:
+                if name is not None:
+                    raise Recoverable("extra name: %s" % x)
+                name = x
+        return name, emailaddr, date
     def inspect(self, stdout):
         self.apply(self.do_inspect, stdout=stdout)
     def do_inspect(self, eventno, event, attributions, sel, stdout):
@@ -8440,6 +8467,15 @@ class AttributionEditor(object):
         for i in sel:
             a = attributions[i]
             stdout.write("%6d %6s %2d:%-9s %s\n" % (eventno+1, mark, i+1, a.desc(), a))
+    def assign(self, args):
+        name, emailaddr, date = self.glean(args)
+        self.apply(self.do_assign, name=name, emailaddr=emailaddr, date=date)
+    def do_assign(self, attributions, sel, name, emailaddr, date, **extra):
+        pacify_pylint(extra)
+        if sel is None:
+            raise Recoverable("no attribution selected")
+        for i in sel:
+            attributions[i].assign(name, emailaddr, date)
     def resolve(self, stdout, label):
         self.apply(self.do_resolve, stdout=stdout, label=label)
     def do_resolve(self, eventno, event, sel, stdout, label, **extra):
@@ -12321,6 +12357,9 @@ Finally, /regex/ will attempt to match the Python regular expression regex
 against an attribution name and email address; '/n' limits the match to only
 the name, and '/e' to only the email address.
 
+With the exception of 'show', all actions require an explicit event selection
+upon which to operate.
+
 Available actions are:
 
 [<selection>] [show] [>file]
@@ -12328,6 +12367,13 @@ Available actions are:
     tags). The 'show' keyword is optional. If no attribution selection
     expression is given, defaults to all attributions. If no event selection
     is specified, defaults to all events. Supports > redirection.
+
+<selection> set <name> [<email>] [<date>]
+<selection> set [<name>] <email> [<date>]
+<selection> set [<name>] [<email>] <date>
+    Assign <name>, <email>, <date> to the selected attributions. As a
+    convenience, if only some fields need to be changed, the others can be
+    omitted. Arguments <name>, <email>, and <date> can be given in any order.
 
 <selection> resolve [>file] [label-text...]
     Does nothing but resolve an attribution selection-set expression for the
@@ -12365,6 +12411,10 @@ Available actions are:
                 if len(args) > 0:
                     raise Recoverable("'show' takes no arguments")
                 ed.inspect(parse.stdout)
+            elif action == 'set':
+                if len(args) < 1 or len(args) > 3:
+                    raise Recoverable("'set' requires at least one of: name, email, date")
+                ed.assign(args)
             elif action == 'resolve':
                 ed.resolve(parse.stdout, ' '.join(args) if args else None)
             else:
