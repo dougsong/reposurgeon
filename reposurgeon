@@ -1924,6 +1924,9 @@ class Blob(object):
         else:
             with open(self.blobfile(), "rb") as rfp:
                 return polystr(rfp.read())
+    def sha(self):
+        """Return SHA-1 hash of the blob content"""
+        return hashlib.sha1(self.get_content()).hexdigest()
     def set_mark(self, mark):
         "Set the blob's mark."
         self.mark = mark
@@ -6630,6 +6633,15 @@ class Repository:
         "Delete a set of events."
         policy = policy or []
         self.squash(selected, ["--delete", "--quiet"] + policy)
+    def dedup(self, dup_map):
+        """Replace references to duplicate blobs according to the given dup_map,
+        which maps marks of duplicate blobs to canonical marks"""
+        for event in self.events:
+            if isinstance(event, Commit):
+                for fileop in event.operations():
+                    if fileop.op == 'M' and fileop.ref in dup_map:
+                        fileop.ref = dup_map[fileop.ref]
+        self.gc_blobs()
     def gc_blobs(self):
         "Garbage-collect blobs that no longer have references."
         backreferences = collections.Counter()
@@ -10577,6 +10589,32 @@ ordering or gaps in the sequence.
             complain("no repo has been chosen.")
             return
         self.repo.renumber()
+
+    def help_dedup(self):
+        sys.stdout.write("""
+Deduplicate blobs in the selection set.  If multiple blobs in the selection
+set have the same SHA1, throw away all but the first, and change fileops
+referencing them to instead reference the (kept) first blob.
+""")
+    def do_dedup(self, line):
+        "Deduplicate identical (up to SHA1) blobs within the selection set"
+        pacify_pylint(line)
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        if self.selection is None:
+            self.selection = self.chosen().all()
+        blob_map = {} # hash -> mark
+        dup_map = {} # duplicate mark -> canonical mark
+        for _, event in self.selected():
+            if isinstance(event, Blob):
+                sha = event.sha()
+                if sha in blob_map:
+                    dup_map[event.mark] = blob_map[sha]
+                else:
+                    blob_map[sha] = event.mark
+        self.chosen().dedup(dup_map)
+        return
 
     def help_timeoffset(self):
         sys.stdout.write("""

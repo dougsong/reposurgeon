@@ -1391,6 +1391,15 @@ one "done" and it will be at the end of the events.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>dedup</command>
+</term>
+<listitem>
+<para>Deduplicate blobs in the selection set.  If multiple blobs in the
+selection set have the same SHA1, throw away all but the first, and change
+fileops referencing them to instead reference the (kept) first blob.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>mailbox_out</command>
         [&gt;<emphasis>outfile</emphasis>]
 </term>
