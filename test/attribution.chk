@@ -70,3 +70,32 @@ label:     10      - []
 # error: bogus selection (tag has only "tagger" attribution at index 1)
 10 attribution 2 resolve
 reposurgeon: element 2 out of range (event 10, mark -)
+
+1..$ attribution =C resolve committer only
+committer only:      3     :2 [1]
+committer only:      5     :4 [1]
+committer only:      6     :5 [1]
+committer only:      9      - []
+committer only:     10      - []
+1..$ attribution =A resolve author only
+author only:      3     :2 [2]
+author only:      5     :4 [2]
+author only:      6     :5 [2]
+author only:      9      - []
+author only:     10      - []
+1..$ attribution =T resolve tagger only
+tagger only:      3     :2 []
+tagger only:      5     :4 []
+tagger only:      6     :5 []
+tagger only:      9      - [1]
+tagger only:     10      - [1]
+1..$ attribution =CAT resolve all
+all:      3     :2 [1, 2]
+all:      5     :4 [1, 2]
+all:      6     :5 [1, 2]
+all:      9      - [1]
+all:     10      - [1]
+
+# error: bogus visibility flag
+1..$ attribution =X resolve
+reposurgeon: garbled type mask at 'X resolve'

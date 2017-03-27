@@ -2104,6 +2104,8 @@ SYNTAX</link>.  <emphasis>selection</emphasis> is an expression composed of
 comma-separated items, '(...)' grouping, set operations '|' union, '&amp;'
 intersection, and '~' negation, and function calls @min(), @max(), @amp(),
 @pre(), @suc(), @srt().
+Attributions can also be selected by visibility set '=C' for committers, '=A'
+for authors, and '=T' for taggers.
 </para>
 </listitem>
 </varlistentry>

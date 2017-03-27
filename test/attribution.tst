@@ -35,3 +35,11 @@ attribution delete
 
 # error: bogus selection (tag has only "tagger" attribution at index 1)
 10 attribution 2 resolve
+
+1..$ attribution =C resolve committer only
+1..$ attribution =A resolve author only
+1..$ attribution =T resolve tagger only
+1..$ attribution =CAT resolve all
+
+# error: bogus visibility flag
+1..$ attribution =X resolve

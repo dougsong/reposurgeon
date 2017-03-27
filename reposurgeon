@@ -8376,6 +8376,12 @@ class AttributionEditor(object):
                 machine, range(len(self.attributions)))
             self.attributions = None
             return sel
+        def visibility_typeletters(self):
+            return {
+                "C" : lambda i: isinstance(self.attributions[i], AttributionEditor.Committer),
+                "A" : lambda i: isinstance(self.attributions[i], AttributionEditor.Author),
+                "T" : lambda i: isinstance(self.attributions[i], AttributionEditor.Tagger)
+            }
     def __init__(self, events, machine):
         self.events = events
         self.machine = machine
@@ -12276,6 +12282,9 @@ composed of 1-origin attribution-sequence numbers, '$' for last attribution,
 '..' ranges, comma-separated items, '(...)' grouping, set operations '|'
 union, '&' intersection, and '~' negation, and function calls @min(), @max(),
 @amp(), @pre(), @suc(), @srt().
+
+Attributions can also be selected by visibility set '=C' for committers, '=A'
+for authors, and '=T' for taggers.
 
 Available actions are:
 
