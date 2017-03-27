@@ -8349,8 +8349,34 @@ class SelectionParser(object):
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
+    class A(object):
+        def __init__(self, attribution):
+            self.attribution = attribution
+        def __getattr__(self, name):
+            if name in self.__dict__:
+                return super(AttributionEditor.A, self).__getattr__(name)
+            return getattr(self.attribution, name)
+        def __str__(self):
+            return self.attribution.__str__()
+    class Committer(A):
+        pass
+    class Author(A):
+        def __init__(self, attribution, pos):
+            AttributionEditor.A.__init__(self, attribution)
+            self.pos = pos
+    class Tagger(A):
+        pass
     def __init__(self, events):
         self.events = events
+    def attributions(self, event):
+        try:
+            v = [AttributionEditor.Committer(event.committer)]
+            if event.authors is not None:
+                v.extend([AttributionEditor.Author(a,i)
+                          for i,a in enumerate(event.authors)])
+        except AttributeError:
+            v = [AttributionEditor.Tagger(event.tagger)]
+        return v
 
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
