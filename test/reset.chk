@@ -1,0 +1,38 @@
+read <be-bookmarks.fi
+=R index
+     2 branch      -    refs/heads/default
+    24 branch     :6    refs/heads/A
+    25 branch    :10    refs/heads/B
+    26 branch    :15    refs/heads/C
+    27 branch    :19    refs/heads/master
+    28 branch    :22    refs/heads/default
+    29 branch    :22    refs/heads/D
+reset D move :6
+reset A delete
+reset B rename Z
+=R index
+     2 branch      -    refs/heads/default
+    24 branch    :10    refs/heads/Z
+    25 branch    :15    refs/heads/C
+    26 branch    :19    refs/heads/master
+    27 branch    :22    refs/heads/default
+    28 branch     :6    refs/heads/D
+
+# error: unknown reset name
+reset X delete
+reposurgeon: no such reset as refs/heads/X
+# error: move multiple resets
+reset default move :15
+reposurgeon: can't move multiple resets
+# error: non-singleton target
+reset D move :6,:10,:15
+reposurgeon: reset move requires a singleton commit set.
+# error: empty new name
+reset C rename
+reposurgeon: new reset name must be nonempty.
+# error: reference collision
+reset C rename D
+reposurgeon: reset reference collision, not renaming.
+# error: bogus verb
+reset C fizzle
+reposurgeon: unknown verb 'fizzle' in reset command.

@@ -12379,7 +12379,7 @@ moved, no branch fields are changed.
             reset.forget()
             try:
                 if len(self.selection) != 1: raise ValueError()
-                target, = self.selected(Commit)
+                (_, target), = self.selected(Commit)
             except (TypeError, ValueError):
                 raise Recoverable("reset move requires a singleton commit set.")
             reset.forget()
