@@ -1932,7 +1932,8 @@ affected commits and beyond; for instance, moving a commit which renames a
 file ahead of a commit which references the original name. Such anomalies can
 be discovered via manual inspection and repaired with the
 <command>add</command> and <command>remove</command> (and possibly
-<command>path</command>) commands.</para>
+<command>path</command>) commands. Warnings can be suppressed with
+<command>--quiet</command>.</para>
 <para>In addition to adjusting their parent/child relationships, re-ordering
 commits also re-orders the underlying events since ancestors must appear
 before descendants, and blobs must appear before commits which reference them.

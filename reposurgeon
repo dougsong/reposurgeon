@@ -6903,9 +6903,9 @@ class Repository:
                 name:[old_index_to_new[i] for i in selection]
                 for name, selection in self.assignments.items()}
 
-    def reorder_commits(self, v):
+    def reorder_commits(self, v, bequiet):
         "Re-order a contiguous range of commits."
-        def validate_operations(events):
+        def validate_operations(events, bequiet):
             "Check if fileops still make sense after re-ordering events."
             # Also check events one level beyond re-ordered range; anything
             # beyond that is the user's responsibility.
@@ -6918,14 +6918,15 @@ class Repository:
                     elif op.op in ('R', 'C'):
                         path = op.source
                     if path is not None and not x.visible(path):
-                        complain("%s '%s' fileop references non-existent '%s' after re-order" %
-                                 (x.id_me(), op.op, path))
+                        if not bequiet:
+                            complain("%s '%s' fileop references non-existent '%s' after re-order" %
+                                     (x.id_me(), op.op, path))
                         continue
                     ops.append(op)
                 if ops != x.operations():
                     x.set_operations(ops)
                     x.invalidate_pathset_cache()
-                    if len(ops) == 0:
+                    if not bequiet and len(ops) == 0:
                         complain("%s no fileops remain after re-order" % x.id_me())
 
         if len(v) <= 1:
@@ -6950,7 +6951,7 @@ class Repository:
             x.replace_parent(sorted_events[-1], events[-1])
         for i,e in enumerate(events[:-1]):
             events[i+1].set_parents([e])
-        validate_operations(events)
+        validate_operations(events, bequiet)
         self.resort()
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
@@ -12080,7 +12081,7 @@ fileops inconsistencies may arise from re-ordering, both within the range of
 affected commits and beyond; for instance, moving a commit which renames a
 file ahead of a commit which references the original name. Such anomalies can
 be discovered via manual inspection and repaired with the 'add' and 'remove'
-(and possibly 'path') commands.
+(and possibly 'path') commands. Warnings can be suppressed with '--quiet'.
 
 In addition to adjusting their parent/child relationships, re-ordering commits
 also re-orders the underlying events since ancestors must appear before
@@ -12104,7 +12105,8 @@ after the operation.
         with RepoSurgeon.LineParse(self, line) as parse:
             if parse.line:
                 raise Recoverable("'reorder' takes no arguments")
-            repo.reorder_commits(sel)
+            repo.reorder_commits(sel, '--quiet' in parse.options)
+
     def help_branch(self):
         sys.stdout.write("""
 Rename or delete a branch (and any associated resets).  First argument

@@ -307,6 +307,11 @@ reposurgeon: commits already in desired order
 :26,:24 reorder
 reposurgeon: commit@:26 'D' fileop references non-existent 'hello.c' after re-order
 
+# suppress warnings
+drop reorder
+read <reorder.fi
+:26,:24 reorder --quiet
+
 # warning: no fileops after re-order
 :32,:30,:31:28 reorder
 reposurgeon: commit@:32 'C' fileop references non-existent 'STRATEGY.txt' after re-order

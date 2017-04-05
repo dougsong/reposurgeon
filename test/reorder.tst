@@ -59,5 +59,10 @@ reorder
 # warning: fileop references non-existent path
 :26,:24 reorder
 
+# suppress warnings
+drop reorder
+read <reorder.fi
+:26,:24 reorder --quiet
+
 # warning: no fileops after re-order
 :32,:30,:31:28 reorder
