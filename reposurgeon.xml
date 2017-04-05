@@ -1896,6 +1896,25 @@ result.</para>
 </term>
 <listitem>
 <para>Re-order a contiguous range of commits.</para>
+<para>Older revision control systems tracked change history on a per-file
+basis, rather than as a series of atomic <emphasis>changesets</emphasis>,
+which often made it difficult to determine the relationships between changes.
+Some tools which convert a history from one revision control system to another
+attempt to infer changesets by comparing file commit comment and time-stamp
+against those of other nearby commits, but such inference is a heuristic and
+can easily fail.  In the best case, when inference fails, a range of commits
+in the resulting conversion which should have been coalesced into a single
+changeset instead end up as a contiguous range of separate commits.  This
+situation typically can be repaired easily enough with the
+<command>coalesce</command> or <command>squash</command> commands.  However,
+in the worst case, numerous commits from several different
+<emphasis>topics</emphasis>, each of which should have been one or more
+distinct changesets, may end up interleaved in an apparently chaotic fashion.
+To deal with such cases, the commits need to be re-ordered, so that those
+pertaining to each particular topic are clumped together, and then possibly
+squashed into one or more changesets pertaining to each topic.  This command,
+<command>reorder</command>, can help with the first task; the
+<command>squash</command> command with the second.</para>
 <para>Selected commits are re-arranged in the order specified; for instance:
 "<command>:7,:5,:9,:3 reorder</command>".  The specified commit range must be
 contiguous; each commit must be accounted for after re-ordering.  Thus, for
