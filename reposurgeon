@@ -12319,8 +12319,8 @@ reset, takes as a first argument the name of the reset (which must not
 exist), and ends with the keyword create.
 
 In the other modes, the first argument must match an existing reset
-name; second argument must be one of the verbs 'move', 'rename', or
-'delete'.
+name with the selection; second argument must be one of the verbs
+'move', 'rename', or 'delete'. The default selection is all events.
 
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that can be interpreted
@@ -12347,13 +12347,15 @@ moved, no branch fields are changed.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
+        if self.selection is None:
+            self.selection = repo.all()
         (resetname, line) = RepoSurgeon.pop_token(line)
         resetname = string_escape(resetname)
         if "/" not in resetname:
             resetname = "heads/" + resetname
         if not resetname.startswith("refs/"):
             resetname = "refs/" + resetname
-        resets = [e for _,e in repo.iterevents(types=Reset)
+        resets = [e for _,e in repo.iterevents(indices=self.selection, types=Reset)
                       if e.ref == resetname]
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == "create":

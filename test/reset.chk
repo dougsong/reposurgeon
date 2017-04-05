@@ -10,12 +10,13 @@ read <be-bookmarks.fi
 reset D move :6
 reset A delete
 reset B rename Z
+27 reset default move :10
 =R index
      2 branch      -    refs/heads/default
     24 branch    :10    refs/heads/Z
     25 branch    :15    refs/heads/C
     26 branch    :19    refs/heads/master
-    27 branch    :22    refs/heads/default
+    27 branch    :10    refs/heads/default
     28 branch     :6    refs/heads/D
 
 # error: unknown reset name

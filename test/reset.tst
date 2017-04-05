@@ -5,6 +5,7 @@ read <be-bookmarks.fi
 reset D move :6
 reset A delete
 reset B rename Z
+27 reset default move :10
 =R index
 
 # error: unknown reset name
