@@ -1,0 +1,272 @@
+blob
+mark :1
+data 15
+Banana Project
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+M 100644 :1 README
+
+blob
+mark :3
+data 52
+Banana Project
+
+The banana.sh script makes bananas.
+
+blob
+mark :4
+data 24
+#!/bin/sh
+echo "banana"
+
+commit refs/heads/master
+mark :5
+author Eric Sunshine <sunshine@sunshineco.com> 1491184036 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184036 -0400
+data 34
+banana: commence banana synthesis
+from :2
+M 100644 :3 README
+M 100755 :4 banana.sh
+
+blob
+mark :6
+data 83
+Bananas can be synthesized from thin air by utilizing the banana-vivication
+spell.
+
+commit refs/heads/master
+mark :7
+author Eric Sunshine <sunshine@sunshineco.com> 1491184183 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184183 -0400
+data 49
+theory: rudimentary banana synthesis explanation
+from :5
+M 100644 :6 THEORY.txt
+
+blob
+mark :8
+data 30
+#!/bin/sh
+echo "hello, world"
+
+commit refs/heads/master
+mark :9
+author Eric Sunshine <sunshine@sunshineco.com> 1491184707 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184707 -0400
+data 40
+hello: canonical "hello, world" example
+from :7
+M 100755 :8 hello.sh
+
+blob
+mark :10
+data 81
+Banana Project
+
+The banana.sh script makes bananas with peanut butter and jelly.
+
+blob
+mark :11
+data 53
+#!/bin/sh
+echo "banana with peanut butter and jelly"
+
+commit refs/heads/pbj
+mark :12
+author Eric Sunshine <sunshine@sunshineco.com> 1491184386 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184386 -0400
+data 58
+banana: introduce the peanut butter and jelly enhancement
+from :7
+M 100644 :10 README
+M 100755 :11 banana.sh
+
+blob
+mark :13
+data 40
+#!/bin/sh
+echo "add a cup of ice cream"
+
+commit refs/heads/pbj
+mark :14
+author Eric Sunshine <sunshine@sunshineco.com> 1491184517 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184517 -0400
+data 27
+icecream: add some dessert
+from :12
+M 100755 :13 icecream.sh
+
+blob
+mark :15
+data 116
+Bananas can be synthesized from thin air by utilizing the banana-vivication
+spell.
+
+Ice cream makes a nice dessert.
+
+commit refs/heads/pbj
+mark :16
+author Eric Sunshine <sunshine@sunshineco.com> 1491184596 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184596 -0400
+data 42
+theory: explain significance of ice cream
+from :14
+M 100644 :15 THEORY.txt
+
+commit refs/heads/master
+mark :17
+author Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
+data 47
+pbj: merge peanut butter and jelly enhancement
+from :9
+merge :16
+M 100644 :10 README
+M 100644 :15 THEORY.txt
+M 100755 :11 banana.sh
+M 100755 :13 icecream.sh
+
+blob
+mark :18
+data 113
+Banana Project
+
+The banana.sh script makes bananas with peanut butter and jelly.
+Ice cream makes a nice dessert.
+
+commit refs/heads/master
+mark :19
+author Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
+data 38
+readme: finalize ice cream experiment
+from :17
+M 100644 :18 README
+
+blob
+mark :20
+data 140
+Banana Project (shout out "hello, world")
+
+The banana.sh script makes bananas with peanut butter and jelly.
+Ice cream makes a nice dessert.
+
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :19
+M 100644 :20 README
+
+commit refs/heads/master
+mark :22
+author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
+data 37
+hello: retire this failed experiment
+from :21
+D hello.sh
+
+blob
+mark :23
+data 70
+#include <stdio.h>
+int main() { printf("hello, world\n"); return 0; }
+
+commit refs/heads/master
+mark :24
+author Eric Sunshine <sunshine@sunshineco.com> 1491185031 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185031 -0400
+data 63
+hello: revive as compiled program in place of old shell script
+from :22
+M 100644 :23 hello.c
+
+blob
+mark :25
+data 31
+#!/bin/sh
+echo "hello, world!"
+
+commit refs/heads/master
+mark :26
+author Eric Sunshine <sunshine@sunshineco.com> 1491185187 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185187 -0400
+data 65
+hello: revert mistake; keep shell script but add "!" to greeting
+from :24
+D hello.c
+M 100644 :25 hello.sh
+
+blob
+mark :27
+data 43
+Don't play ping pong while eating spinach.
+
+commit refs/heads/master
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :26
+M 100644 :27 STRATEGY.txt
+
+blob
+mark :29
+data 167
+Banana Project (shout out "hello, world")
+
+The banana.sh script makes bananas with peanut butter and jelly.
+Ice cream makes a nice dessert.
+
+Ping pong is your friend.
+
+commit refs/heads/master
+mark :30
+author Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
+data 31
+readme: make the game official
+from :28
+M 100644 :29 README
+
+commit refs/heads/master
+mark :31
+author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+data 38
+readme: standardize on .txt extension
+from :30
+R "README" "README.txt"
+
+commit refs/heads/master
+mark :32
+author Eric Sunshine <sunshine@sunshineco.com> 1491353475 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491354742 -0400
+data 38
+strategy: duplicate for Windows folks
+from :31
+C "STRATEGY.txt" "STRATEGY"
+
+commit refs/heads/master
+mark :33
+author Eric Sunshine <sunshine@sunshineco.com> 1491353531 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491354773 -0400
+data 33
+strategy: retire Windows support
+from :32
+D STRATEGY
+
+reset refs/heads/master
+from :33
+
