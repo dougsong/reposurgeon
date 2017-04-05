@@ -55,3 +55,9 @@ reorder
 
 # warning: commits already in desired order
 :2,:5,:7 reorder
+
+# warning: fileop references non-existent path
+:26,:24 reorder
+
+# warning: no fileops after re-order
+:32,:30,:31:28 reorder

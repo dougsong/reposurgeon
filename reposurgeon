@@ -6905,6 +6905,29 @@ class Repository:
 
     def reorder_commits(self, v):
         "Re-order a contiguous range of commits."
+        def validate_operations(events):
+            "Check if fileops still make sense after re-ordering events."
+            # Also check events one level beyond re-ordered range; anything
+            # beyond that is the user's responsibility.
+            for x in events + events[-1].children():
+                ops = []
+                for op in x.operations():
+                    path = None
+                    if op.op == 'D':
+                        path = op.path
+                    elif op.op in ('R', 'C'):
+                        path = op.source
+                    if path is not None and not x.visible(path):
+                        complain("%s '%s' fileop references non-existent '%s' after re-order" %
+                                 (x.id_me(), op.op, path))
+                        continue
+                    ops.append(op)
+                if ops != x.operations():
+                    x.set_operations(ops)
+                    x.invalidate_pathset_cache()
+                    if len(ops) == 0:
+                        complain("%s no fileops remain after re-order" % x.id_me())
+
         if len(v) <= 1:
             return
         events = [self.events[i] for i in v]
@@ -6927,6 +6950,7 @@ class Repository:
             x.replace_parent(sorted_events[-1], events[-1])
         for i,e in enumerate(events[:-1]):
             events[i+1].set_parents([e])
+        validate_operations(events)
         self.resort()
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
@@ -12048,7 +12072,11 @@ or 'squash' command.) The selected commits must represent a linear history,
 however, the lowest numbered commit being re-ordered may have multiple
 parents, and the highest numbered may have multiple children.
 
-Fileops inconsistencies may arise from re-ordering, both within the range of
+Re-ordered commits and their immediate descendants are inspected for
+rudimentary fileops inconsistencies. Warns if re-ordering results in a commit
+trying to delete, rename, or copy a file before it was ever created. Likewise,
+warns if all of a commit's fileops become no-ops after re-ordering. Other
+fileops inconsistencies may arise from re-ordering, both within the range of
 affected commits and beyond; for instance, moving a commit which renames a
 file ahead of a commit which references the original name. Such anomalies can
 be discovered via manual inspection and repaired with the 'add' and 'remove'
