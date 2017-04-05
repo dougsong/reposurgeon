@@ -1891,6 +1891,33 @@ result.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>reorder</command>
+        [--quiet]
+</term>
+<listitem>
+<para>Re-order a contiguous range of commits.</para>
+<para>Selected commits are re-arranged in the order specified; for instance:
+"<command>:7,:5,:9,:3 reorder</command>".  The specified commit range must be
+contiguous; each commit must be accounted for after re-ordering.  Thus, for
+example, '<command>:5</command>' can not be omitted from "<command>:7,:5,:9,:3
+reorder</command>".  (To drop a commit, use the <command>delete</command> or
+<command>squash</command> command.)  The selected commits must represent a
+linear history, however, the lowest numbered commit being re-ordered may have
+multiple parents, and the highest numbered may have multiple children.</para>
+<para>Fileops inconsistencies may arise from re-ordering, both within the range of
+affected commits and beyond; for instance, moving a commit which renames a
+file ahead of a commit which references the original name. Such anomalies can
+be discovered via manual inspection and repaired with the
+<command>add</command> and <command>remove</command> (and possibly
+<command>path</command>) commands.</para>
+<para>In addition to adjusting their parent/child relationships, re-ordering
+commits also re-orders the underlying events since ancestors must appear
+before descendants, and blobs must appear before commits which reference them.
+This means that events within the specified range will have different event
+numbers after the operation.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>branch</command>
         <emphasis>branchname</emphasis>...
         {<command>rename</command>|<command>delete</command>}

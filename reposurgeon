@@ -6903,6 +6903,31 @@ class Repository:
                 name:[old_index_to_new[i] for i in selection]
                 for name, selection in self.assignments.items()}
 
+    def reorder_commits(self, v):
+        "Re-order a contiguous range of commits."
+        if len(v) <= 1:
+            return
+        events = [self.events[i] for i in v]
+        sorted_events = [self.events[i] for i in sorted(v)]
+        for e in sorted_events[1:]:
+            if len(e.parents()) > 1:
+                raise Recoverable("non-linear history detected: %s" % e.id_me())
+        for e in sorted_events[:-1]:
+            if len(e.children()) > 1:
+                raise Recoverable("non-linear history detected: %s" % e.id_me())
+        if any(not sorted_events[i+1].has_parents() or
+               x not in sorted_events[i+1].parents()
+               for i,x in enumerate(sorted_events[:-1])):
+            raise Recoverable("selected commit range not contiguous")
+        if events == sorted_events:
+            complain("commits already in desired order")
+            return
+        events[0].set_parents(list(sorted_events[0].parents()))
+        for x in list(sorted_events[-1].children()):
+            x.replace_parent(sorted_events[-1], events[-1])
+        for i,e in enumerate(events[:-1]):
+            events[i+1].set_parents([e])
+        self.resort()
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
         markmap = {}
@@ -11993,6 +12018,47 @@ Policy:
             if do_resort:
                 repo.resort()
 
+    def help_reorder(self):
+        sys.stdout.write("""
+Re-order a contiguous range of commits.
+
+Selected commits are re-arranged in the order specified; for instance:
+":7,:5,:9,:3 reorder". The specified commit range must be contiguous; each
+commit must be accounted for after re-ordering. Thus, for example, ':5' can
+not be omitted from ":7,:5,:9,:3 reorder". (To drop a commit, use the 'delete'
+or 'squash' command.) The selected commits must represent a linear history,
+however, the lowest numbered commit being re-ordered may have multiple
+parents, and the highest numbered may have multiple children.
+
+Fileops inconsistencies may arise from re-ordering, both within the range of
+affected commits and beyond; for instance, moving a commit which renames a
+file ahead of a commit which references the original name. Such anomalies can
+be discovered via manual inspection and repaired with the 'add' and 'remove'
+(and possibly 'path') commands.
+
+In addition to adjusting their parent/child relationships, re-ordering commits
+also re-orders the underlying events since ancestors must appear before
+descendants, and blobs must appear before commits which reference them. This
+means that events within the specified range will have different event numbers
+after the operation.
+""")
+    def do_reorder(self, line):
+        "Re-order a contiguous range of commits."
+        repo = self.chosen()
+        if repo is None:
+            raise Recoverable("no repo has been chosen")
+        if self.selection is None:
+            raise Recoverable("no selection")
+        sel = [i for i in self.selection if isinstance(repo[i], Commit)]
+        if len(sel) == 0:
+            raise Recoverable("no commits in selection")
+        if len(sel) == 1:
+            complain("only 1 commit selected; nothing to re-order")
+            return
+        with RepoSurgeon.LineParse(self, line) as parse:
+            if parse.line:
+                raise Recoverable("'reorder' takes no arguments")
+            repo.reorder_commits(sel)
     def help_branch(self):
         sys.stdout.write("""
 Rename or delete a branch (and any associated resets).  First argument
