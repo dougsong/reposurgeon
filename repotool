@@ -315,7 +315,7 @@ tags)
 	| awk -F"[.:]" '/^\t/&&$(NF-1)!=0{print $1}' | awk '{print $1}' | sort -u
     elif [ -d locks ]
     then
-	    svn ls "^/tags"
+	    svn ls "file://$(pwd)/tags" | sed 's|/$||'
     elif [ -d .git ]
     then
 	    git tag -l
@@ -345,7 +345,7 @@ branches)
 	| awk -F"[.:]" '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u
     elif [ -d locks ]
     then
-	    svn ls "^/branches"
+	    svn ls "file://$(pwd)/branches" | sed 's|/$||'
     elif [ -d .git ]
     then
 	    git branch -l | cut -c 3- | grep -v '^master$'
