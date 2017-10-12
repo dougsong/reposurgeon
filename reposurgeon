@@ -7380,7 +7380,7 @@ class popen_or_die(object):
     # for the context manager protocol; for this use case, some other
     # context manager (e.g., LineParse) must explicitly close this
     # object to ensure that the subprocess shuts down cleanly
-    def __init__(self, command, legend="", mode="r", errhandler=None):
+    def __init__(self, command, legend="", mode="r", errhandler=None, stderrcapture=False):
         assert mode in ("r", "w")
         self.command = command
         self.legend = legend
@@ -7388,7 +7388,7 @@ class popen_or_die(object):
         self.errhandler = errhandler
         self.stdin = (subprocess.PIPE if mode == "w" else None)
         self.stdout = (subprocess.PIPE if mode == "r" else None)
-        self.stderr = (subprocess.STDOUT if mode == "r" else None)
+        self.stderr = (subprocess.STDOUT if (stderrcapture and mode == "r") else None)
         if self.legend:
             self.legend = " "  + self.legend
         self.fp = None
