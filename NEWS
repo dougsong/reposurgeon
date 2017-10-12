@@ -3,6 +3,8 @@
 Repository head:
      Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
      Rsychronize embedded help with XML docs.
+     Added 'dedup' command, to deduplicate blobs in the selection set.
+     Bug fix: exporter output now only captures stdout, not stderr.
 
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
