@@ -12256,6 +12256,66 @@ Note that '_selection' will be a list of integers, not objects.
                 raise Recoverable(str(e))
 
     #
+    # Changelog processing
+    #
+    def help_changelogs(self):
+        sys.stdout.write("""
+Mine the latest version of every ChangeLog file for authorship data.
+
+Note: This command is experimental and may be flaky:
+""")
+    def do_changelogs(self, _line):
+        "Mine repository changelogs for authorship data."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        changelogs = {}
+        for commit in reversed(list(repo.commits())):
+            for op in commit.operations():
+                if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
+                    if not op.path in changelogs:
+                        changelogs[op.path] = repo.objfind(op.ref).materialize()
+        #print("Changelog set: %s" % changelogs)
+        attributions = []
+        for (path, blobfile) in changelogs.items():
+            items = [path]
+            record = []
+            with open(blobfile) as fp:
+                while True:
+                    line = fp.readline()
+                    if not line:
+                        break
+                    # Entry start line - date/addr
+                    if line[0].isdigit():
+                        if record:
+                            items.append([record[0], record[1].strip().split()])
+                        record = [line.strip(), ""]
+                    elif line.strip().startswith("*"):
+                        line = line.strip()
+                        line = line[1:].lstrip()
+                        # This was needed to avoid misparses of the GNUPLOT
+                        # changelogs.  It's unlikely to hurt elsewhere.
+                        if line.startswith("Branchpoint"):
+                            continue
+                        if not ":" in line:
+                            while True:
+                                nextline = fp.readline()
+                                if not nextline:
+                                    break
+                                line += " " + nextline.strip()
+                                if ":" in line:
+                                    break
+                        line = line[:line.find(":")]
+                        line = re.sub(r' \(.*\)', "", line)
+                        if record:
+                            record[1] = record[1] + " " + line
+                if record and record[1]:
+                    items.append([record[0], record[1].strip().split()])
+            attributions.append(items)
+        print(attributions)
+
+    #
     # Version binding
     #
     def help_version(self):
