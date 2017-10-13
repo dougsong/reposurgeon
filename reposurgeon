@@ -12262,21 +12262,49 @@ Note that '_selection' will be a list of integers, not objects.
         sys.stdout.write("""
 Mine the latest version of every ChangeLog file for authorship data.
 
-Note: This command is experimental and may be flaky:
+Assume such files have basenames beginning with 'ChangeLog', and that
+they are in the format used by FSF projects: entry header lines begin
+with YYYY-MM-DD and are followed by a fullname/address, entry file
+path lists in the text are delimited by '*' and ':' and each list
+always begins first on a line after whitespace.
+
+The logic attempts to match commits by path manifest and date; the
+ChangeLog from which an entry derives is added to its manifest.
+Because of time zone issues, each entry date is allowed to match
+commit dates 12 hours earlier or later in UTC.
+
+To allow for lag in applying inbound patches, the forward window can be
+extended by a length of time given as a command-line argument in hours;
+the default is 0.  Note that setting this high is likely to cause false
+matches, especially on single-file commits.
+
+When an commit matches an entry, the attribution and the date from the
+entry are copied to the author list of the commit. This can happen
+more than once per entry. Author attributions generated this way will
+always have a timestamp of 00:00:00 with an offset of +0000.
+
+These attributions are marginally better than nothing but should not
+be greatly trusted.
 """)
-    def do_changelogs(self, _line):
+    def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
+        forward = 0
+        if line:
+            try:
+                forward = int(line)
+            except ValueError:
+                raise Recoverable("invalid value for commit window time")
         changelogs = {}
         for commit in reversed(list(repo.commits())):
             for op in commit.operations():
                 if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
                     if not op.path in changelogs:
                         changelogs[op.path] = repo.objfind(op.ref).materialize()
-        #print("Changelog set: %s" % changelogs)
+        # Parse all changelogs
         attributions = []
         for (path, blobfile) in changelogs.items():
             items = [path]
@@ -12288,7 +12316,7 @@ Note: This command is experimental and may be flaky:
                         break
                     # Entry start line - date/addr
                     if line[0].isdigit():
-                        if record:
+                        if record and record[1] and not record[1].endswith("."):
                             items.append([record[0], record[1].strip().split()])
                         record = [line.strip(), ""]
                     elif line.strip().startswith("*"):
@@ -12304,16 +12332,30 @@ Note: This command is experimental and may be flaky:
                                 if not nextline:
                                     break
                                 line += " " + nextline.strip()
-                                if ":" in line:
+                                if ":" in line or nextline == '\n':
                                     break
                         line = line[:line.find(":")]
-                        line = re.sub(r' \(.*\)', "", line)
+                        line = re.sub(r' *\(.*\)', "", line)
                         if record:
                             record[1] = record[1] + " " + line
-                if record and record[1]:
+                if record and record[1] and not record[1].endswith("."):
                     items.append([record[0], record[1].strip().split()])
             attributions.append(items)
-        print(attributions)
+        # Rearrange to be keyed by date
+        bydate = []
+        for attribmap in attributions:
+            path = attribmap.pop(0)
+            for (hd, flist) in attribmap:
+                sep = hd.find(" ")
+                ts = hd[:sep]
+                addr = hd[sep+1:]
+                dirname = os.path.dirname(path)
+                pathset = set([os.path.join(dirname, x) for x in flist])
+                pathset.add(path)
+                bydate.append([ts, addr.strip(), pathset])
+        bydate.sort(key=lambda x: x[0])
+        # TODO: Apply attributions
+        print(bydate)
 
     #
     # Version binding
