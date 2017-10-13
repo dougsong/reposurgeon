@@ -12355,7 +12355,24 @@ be greatly trusted.
                 bydate.append([ts, addr.strip(), pathset])
         bydate.sort(key=lambda x: x[0])
         # TODO: Apply attributions
-        print(bydate)
+        matches = []
+        for entry in bydate:
+            try:
+                stamp = entry[0]
+                a = time.strptime(stamp, "%Y-%m-%d")
+                entrytime = time.mktime(a)
+            except ValueError:
+                complain("ill-formed date %s in %s" % (stamp, path))
+                continue
+            # For each entry, try to decorate all matching commits
+            # Ugh...O(n**2) operation.
+            HALFDAY = 12 * 60 * 60
+            lo = entrytime - HALFDAY
+            hi = entrytime + HALFDAY + forward * (60 * 60)
+            for commit in repo.commits():
+                if lo < commit.when() < hi and (commit.paths("M") == bydate[2]):
+                    matches.append((commit.mark, addr))
+        print(matches)
 
     #
     # Version binding
