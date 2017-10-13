@@ -12354,7 +12354,7 @@ be greatly trusted.
                 pathset.add(path)
                 bydate.append([ts, addr.strip(), pathset])
         bydate.sort(key=lambda x: x[0])
-        # TODO: Apply attributions
+        # Apply attributions
         matches = []
         for entry in bydate:
             try:
@@ -12367,12 +12367,15 @@ be greatly trusted.
             # For each entry, try to decorate all matching commits
             # Ugh...O(n**2) operation.
             HALFDAY = 12 * 60 * 60
+            #print("Entry stamped %s (%s) has %s" % (stamp, entrytime, entry[2]))
             lo = entrytime - HALFDAY
             hi = entrytime + HALFDAY + forward * (60 * 60)
             for commit in repo.commits():
-                if lo < commit.when() < hi and (commit.paths("M") == bydate[2]):
-                    matches.append((commit.mark, addr))
-        print(matches)
+                #print("Commit stamped %s has %s" % (commit.when(), commit.paths("M")))
+                if lo < commit.when() < hi and (commit.paths("M") == entry[2]):
+                    matches.append((commit.mark, entry[1]))
+        announce("Fills %d of %d authorship slots from %d ChangeLog entries" \
+                 % (len(matches), len(repo), len(bydate)))
 
     #
     # Version binding
