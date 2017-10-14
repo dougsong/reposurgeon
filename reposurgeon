@@ -1872,6 +1872,8 @@ class Attribution(object):
         return self.email.split("@")[0]
     def who(self):
         return self.name + " <" + self.email + ">"
+    def __ne__(self, other):
+        return self.name != other.name or self.email != other.email
     def __str__(self):
         return self.name + " <" + self.email + "> " + str(self.date)
 
@@ -12254,6 +12256,71 @@ Note that '_selection' will be a list of integers, not objects.
                 eval(line)
             except (NameError, SyntaxError) as e:
                 raise Recoverable(str(e))
+
+    #
+    # Changelog processing
+    #
+    def help_changelogs(self):
+        sys.stdout.write("""
+Mine the ChangeLog files for authorship data.
+
+Assume such files have basenames beginning with 'ChangeLog', and that
+they are in the format used by FSF projects: entry header lines begin
+with YYYY-MM-DD and are followed by a fullname/address.
+
+When a ChangeLog file modification is found in a clique, the topmost
+entry header is parsed and the address is inserted as the commit author.
+This is useful in converting CVS and Subversion repositories that
+don't have any notion of author separate from committer but which
+use the FSF ChangeLog convention.
+
+Due to the limitations of the ChangeLog format, attribution dates on
+these author records will be set to UTC noon of the date in the Changelog
+record - which was probably in the author's local time.
+""")
+    def do_changelogs(self, line):
+        "Mine repository changelogs for authorship data."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        cc = cl = cm = cd = 0
+        with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
+            for commit in repo.commits():
+                cc += 1
+                for op in commit.operations():
+                    baton.twirl()
+                    if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
+                        cl += 1
+                        blobfile = repo.objfind(op.ref).materialize()
+                        for line in open(blobfile):
+                            line = line.strip()
+                            if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
+                                if ',' in line:
+                                    # Multiple attributions...ignore for now
+                                    continue
+                                # Deal with some address masking
+                                line = line.replace(" <at> ", "@")
+                                space = line.find(" ")
+                                if space < 0:
+                                    continue
+                                cm += 1
+                                date = line[:space]
+                                # Avoid fatal error in the attribution builder
+                                try:
+                                    time.strptime(date, "%Y-%m-%d")
+                                except ValueError:
+                                    continue
+                                if len(date) < 27:
+                                    date += "T12:00:00Z"
+                                addr = line[space+1:]
+                                newattr = Attribution(addr + " " + date)
+                                if commit.authors and commit.authors[0] != newattr:
+                                    commit.authors = [newattr]
+                                    cd += 1
+                                break
+        announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
+                 % (cm, cc, cd, cl))
 
     #
     # Version binding

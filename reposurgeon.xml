@@ -2111,6 +2111,35 @@ likely to be resolvable.</para>
 
 </refsect2>
 
+<refsect2 id="macros"><title>CHANGELOGS</title>
+<para>CVS and Subversion do not have separated notions of committer
+and author for changesets; when lifted to a VCS that does, like git,
+their one author field is used for both.</para>
+
+<para>However, if the project used the FSF ChangeLog convention,
+many changesets will include a ChangeLog modification  listing an
+author for the commit. In the common case that the changeset was
+derived from a patch and committed by a project maintainer,
+but the ChangeLog entry names the actual author, this information
+can be recovered.</para>
+
+<para>Use the "changelogs" command/  This takes neither arguments nor
+a selection set. It mines the ChangeLog files for authorship data.</para> 
+
+<para>It assumes such files have basenames beginning with 'ChangeLog',
+and that they are in the format used by FSF projects: entry header
+lines begin with YYYY-MM-DD and are followed by a fullname/address.
+When a ChangeLog file modification is found in a clique, the topmost
+entry header is parsed and the address is inserted as the commit
+author.</para>
+
+<para>Due to the limitations of the ChangeLog format, attribution dates on
+these author records will be set to UTC noon of the date in the Changelog
+record - which was probably in the author's local time.</para>
+
+<para>The command reports statistics on how many commits were altered.</para>
+</refsect2>
+
 <refsect2 id="macros"><title>VARIABLES, MACROS AND EXTENSIONS</title>
 
 <para>Occasionally you will need to issue a large number of complex surgical
