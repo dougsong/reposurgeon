@@ -12386,6 +12386,8 @@ not optimal, and may in particular contain duplicate blobs.
                 while loc > 0:
                     if isinstance(repo.events[loc-1], Blob):
                         loc -= 1
+                    else:
+                        break
                 repo.addEvent(blank, where=loc)
             else:
                 blank.set_parents([commit])
