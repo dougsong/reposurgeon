@@ -3787,6 +3787,7 @@ class StreamParser:
                             blob = Blob(self.repo)
                             line = self.fi_readline()
                             if line.startswith("mark"):
+                                self.repo.markseq += 1
                                 blob.set_mark(line[5:].strip())
                                 (blobcontent, blobstart) = self.fi_read_data()
                                 # Parse CVS and Subversion $-headers
@@ -3840,6 +3841,7 @@ class StreamParser:
                                     else:
                                         self.repo.legacy_map[commit.legacy_id] = commit
                                 elif line.startswith("mark"):
+                                    self.repo.markseq += 1
                                     commit.set_mark(line[5:].strip())
                                 elif line.startswith("author"):
                                     try:
@@ -6787,7 +6789,7 @@ class Repository:
         if baton:
             count = len(self.events)
             baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
-        newcount = 0
+        self.markseq = 0
         for event in self.events:
             if hasattr(event, "mark"):
                 if event.mark is None:
@@ -6795,8 +6797,8 @@ class Repository:
                 elif not event.mark.startswith(":"):
                     raise Fatal("field not in mark format")
                 else:
-                    markmap[event.mark] = origin + newcount
-                    newcount += 1
+                    markmap[event.mark] = origin + self.markseq
+                    self.markseq += 1
         for event in self.events:
             for fld in ("mark", "committish"):
                 try:
@@ -8806,7 +8808,7 @@ More ways to construct event sets:
 @min()     create singleton set of the least element in the argument
 @max()     create singleton set of the greatest element in the argument
 
-Other special functions are available: do 'help functions; for more.
+Other special functions are available: do 'help functions' for more.
 
 You can compose sets as follows:
 
@@ -9928,7 +9930,7 @@ that can be fed back in. Supports > redirection.
                     blank = Commit()
                     blank.committer = Attribution()
                     blank.email_in(message, fill=True)
-                    blank.mark = ":" + str(len(self.chosen().events) + 1)
+                    blank.mark = self.chosen().newmark()
                     blank.repo = self.chosen()
                     self.chosen().addEvent(blank)
             return
@@ -11131,7 +11133,7 @@ with no argument, strip the first directory component from every path.
 
     def help_manifest(self):
         sys.stdout.write("""
-Print commit trees contents. Takes an optional selection set argument
+Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional Python regular expression.
 For each commit in the selection set, print the mapping of all paths in
 that commit tree to the corresponding blob marks, mirroring what files

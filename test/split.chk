@@ -72,7 +72,7 @@ M 100644 :3 README
 Event 8 =================================================================
 commit refs/heads/master
 #legacy-id 2.split
-mark :45
+mark :43
 committer db48x <db48x> 1352206624 +0000
 data 27
 trunk development proceeds
@@ -100,7 +100,7 @@ mark :9
 committer db48x <db48x> 1352206626 +0000
 data 14
 release party
-from :45
+from :43
 M 100644 :7 VERSION
 M 100644 :8 src
 
