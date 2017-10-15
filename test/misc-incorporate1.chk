@@ -1,6 +1,3 @@
-read <min.fi
-@min(=C) incorporate tarball.tar
-write -
 blob
 mark :6
 data 24
@@ -13,7 +10,7 @@ second sample small file
 
 commit refs/heads/master
 mark :5
-committer Eric S. Raymond <esr@thyrsus.com> 0 +0000
+committer Fred J. Foonly <foonly@foo.com> 0 +0000
 data 25
 Content from tarball.tar
 M 100644 :6 snip

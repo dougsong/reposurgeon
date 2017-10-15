@@ -14,4 +14,4 @@ here=`pwd`
 mv /tmp/sub$$/tarball.tar .
 
 # Incorporate it
-reposurgeon "echo 1" "read <min.fi" "@min(=C) incorporate tarball.tar" "write -"
+reposurgeon "set testmode" "read <min.fi" "@min(=C) incorporate tarball.tar" "write -"
