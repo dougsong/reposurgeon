@@ -1,0 +1,47 @@
+read <min.fi
+@min(=C) incorporate --after tarball.tar
+write -
+blob
+mark :1
+data 20
+1234567890123456789
+
+commit refs/heads/master
+mark :2
+committer Ralf Schlatterbeck <rsc@runtux.com> 0 +0000
+data 14
+First commit.
+M 100644 :1 README
+
+blob
+mark :6
+data 24
+first sample small file
+
+blob
+mark :7
+data 25
+second sample small file
+
+commit refs/heads/master
+mark :5
+committer Eric S. Raymond <esr@thyrsus.com> 0 +0000
+data 25
+Content from tarball.tar
+from :2
+M 100644 :6 snip
+M 100755 :7 snap
+
+blob
+mark :3
+data 20
+0123456789012345678
+
+commit refs/heads/master
+mark :4
+committer Ralf Schlatterbeck <rsc@runtux.com> 10 +0000
+data 15
+Second commit.
+from :5
+M 100644 :3 README
+

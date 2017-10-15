@@ -28,7 +28,7 @@ all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
 		hg-extractor svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
-		repotool-regress repocutter-regress
+		repotool-regress repocutter-regress miscellaneous-regress
 	@echo "=== No diff output is good news."
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
@@ -45,7 +45,7 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
-	repocutter-buildregress hg-buildregress-branches hg-buildregress-patho
+	repocutter-buildregress miscellaneous-buildregress hg-buildregress-branches hg-buildregress-patho
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -466,6 +466,22 @@ repocutter-buildregress:
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
 	@for file in $(REPOCUTTER); do \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
+	done
+	@rm -f /tmp/regress$$$$
+
+# Miscellaneous test shellscripts; look at the *.sh and
+# corresponding *.chk files to see which tests this runs.
+MISCELLANEOUS := $(shell ls -1 misc*.sh | sed '/.sh/s///')
+miscellaneous-buildregress:
+	@for file in $(MISCELLANEOUS); do \
+	    echo "Remaking $${file}.chk"; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
+	done
+miscellaneous-regress:
+	@echo "=== Running miscellaneous tests:"
+	@for file in $(MISCELLANEOUS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
 	done
