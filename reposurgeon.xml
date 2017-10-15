@@ -1469,6 +1469,8 @@ for the attribute are internal Python field names; in particular, for
 commits, <quote>comment</quote> and <quote>branch</quote> are legal.
 Consult the source code for other interesting values.</para>
 
+<para>The special fieldnames 'commitdate' and 'authdate' apply only
+to commits in the range and set their attribution dates.</para> 
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -10244,6 +10244,9 @@ Attempts to set nonexistent attributes are ignored. Valid values for
 the attribute are internal Python field names; in particular, for
 commits, 'comment' and 'branch' are legal.  Consult the source code
 for other interesting values.
+
+The special fieldnames 'commitdate' and 'authdate' apply only
+to commits in the range and set their attribution dates. 
 """)
     def do_setfield(self, line):
         "Set an object field from a string."
@@ -10260,6 +10263,10 @@ for other interesting values.
         for _, event in self.selected():
             if hasattr(event, field):
                 setattr(event, field, value)
+            elif field == "commitdate" and isinstance(event, Commit):
+                event.committer.date = Date(value)
+            elif field == "authdate" and isinstance(event, Commit):
+                event.authors[0].date = Date(value)
 
     def help_append(self):
         sys.stdout.write("""
