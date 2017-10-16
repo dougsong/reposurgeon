@@ -12359,8 +12359,8 @@ given as an argument.  It may be a gzipped or bzipped tarball.  The initial
 segment of each path is assumed to be a version directory and stripped off.
 
 Takes a singleton selection set.  Normally inserts before that commit; with
-the option --after, insert after it.  The idiom @min(=C) may be useful for
-inserting before or after the first commit.
+the option --after, insert after it.  The default selection set is the very
+first commit of the repository.
 
 The option --date can be used to set the commit date. It takes an argument,
 which is expected to be an RFC3339 timestamp.
@@ -12380,7 +12380,7 @@ not optimal, and may in particular contain duplicate blobs.
             return
         repo = self.chosen()
         if self.selection is None:
-            self.selection = self.chosen().all()
+            self.selection = [repo.find(repo.earliest_commit().mark)]
         if len(self.selection) == 1:
             commit = repo.events[self.selection[0]]
             if not isinstance(commit, Commit):

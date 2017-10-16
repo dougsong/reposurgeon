@@ -2157,8 +2157,8 @@ initial segment of each path is assumed to be a version directory and
 stripped off.</para>
 
 <para>Takes a singleton selection set.  Normally inserts before that commit; with
-the option --after, insert after it.  The idiom @min(=C) may be useful for
-inserting before or after the first commit.</para>
+the option --after, insert after it. The default selection set is the very
+first commit of the repository.</para>
 
 <para>The option --date can be used to set the commit date. It takes an argument,
 which is expected to be an RFC3339 timestamp.</para>
