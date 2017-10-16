@@ -12309,6 +12309,12 @@ record - which was probably in the author's local time.
         with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
             for commit in repo.commits():
                 cc += 1
+                # If a changeset is *all* ChangeLog mods, it's probably either
+                # a log rotation or a maintainer fixing a typo. In either case,
+                # best not to re-attribute this.
+                if not [op.path for op in commit.operations() \
+                        if op.op=='M' and not op.path.startswith("Changelog.")]:
+                    continue
                 for op in commit.operations():
                     baton.twirl()
                     if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
@@ -12355,6 +12361,9 @@ segment of each path is assumed to be a version directory and stripped off.
 Takes a singleton selection set.  Normally inserts before that commit; with
 the option --after, insert after it.  The idiom @min(=C) may be useful for
 inserting before or after the first commit.
+
+The option --date can be used to set the commit date. It takes an argument,
+which is expected to be an RFC3339 timestamp.
 
 The generated commit has a committer field (the invoking user) and
 gets as its commit date the modification time of the newest file in
@@ -12441,6 +12450,10 @@ not optimal, and may in particular contain duplicate blobs.
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
                 raise Recoverable("open or read failed on %s" % parse.line)
+            # We get here if incorporation worked OK.
+            for opt in parse.options:
+                if opt.startswith("--date"):
+                    blank.committer.date = Date(opt.split("=")[1])
 
     #
     # Version binding
