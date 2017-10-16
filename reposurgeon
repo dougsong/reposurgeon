@@ -12362,6 +12362,10 @@ Takes a singleton selection set.  Normally inserts before that commit; with
 the option --after, insert after it.  The default selection set is the very
 first commit of the repository.
 
+Note: incorporating a tarball anywhere where the file manifest of the
+following commit is different may give you an unpleasant surprise,
+as files created in the new commit will persist forward in later revisions.
+
 The option --date can be used to set the commit date. It takes an argument,
 which is expected to be an RFC3339 timestamp.
 
