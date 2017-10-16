@@ -28,7 +28,7 @@ all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
 		hg-extractor svnload-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
-		repotool-regress repocutter-regress miscellaneous-regress
+		repotool-regress repocutter-regress
 	@echo "=== No diff output is good news."
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
@@ -45,7 +45,7 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
-	repocutter-buildregress miscellaneous-buildregress hg-buildregress-branches hg-buildregress-patho
+	repocutter-buildregress hg-buildregress-branches hg-buildregress-patho
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -471,23 +471,19 @@ repocutter-regress:
 	done
 	@rm -f /tmp/regress$$$$
 
-# Miscellaneous test shellscripts; look at the *.sh and
-# corresponding *.chk files to see which tests this runs.
-MISCELLANEOUS := $(shell ls -1 misc*.sh | sed '/.sh/s///')
-miscellaneous-buildregress:
-	@for file in $(MISCELLANEOUS); do \
-	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
-	done
-miscellaneous-regress:
-	@echo "=== Running miscellaneous tests:"
-	@for file in $(MISCELLANEOUS); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
-	done
-	@rm -f /tmp/regress$$$$
-
 # Test productions end here.
+
+# The result from this is checked in because, as it turns out, the order
+# in which the components are archived cab vary randomly based on the
+# state of the filesystem when it is built.
+make-tarball:
+	mkdir -p /tmp/tarball
+	echo "first sample small file" >/tmp/tarball/snip
+	echo "second sample small file" >/tmp/tarball/snap
+	chmod a+x /tmp/tarball/snap
+	here=`pwd`
+	(cd /tmp; tar cf sample.tar tarball)
+	mv /tmp/sample.tar .
 
 # Make a new repo and checkout directory to create a Subversion test load.
 # Reminder - a branch copy looks like this:

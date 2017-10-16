@@ -13,7 +13,6 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     python3 \
     python-pip \
     xmlto \
-    tar \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
