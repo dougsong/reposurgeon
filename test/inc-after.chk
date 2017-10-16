@@ -28,6 +28,7 @@ Content from sample.tar
 from :2
 M 100644 :6 snip
 M 100755 :7 snap
+D README
 
 blob
 mark :3
@@ -41,4 +42,6 @@ data 15
 Second commit.
 from :5
 M 100644 :3 README
+D snip
+D snap
 

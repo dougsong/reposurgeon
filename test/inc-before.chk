@@ -11,8 +11,8 @@ second sample small file
 commit refs/heads/master
 mark :5
 committer Fred J. Foonly <foonly@foo.com> 0 +0000
-data 25
-Content from tarball.tar
+data 24
+Content from sample.tar
 M 100644 :6 snip
 M 100755 :7 snap
 
@@ -28,6 +28,8 @@ data 14
 First commit.
 from :5
 M 100644 :1 README
+D snip
+D snap
 
 blob
 mark :3

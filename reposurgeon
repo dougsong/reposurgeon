@@ -12362,10 +12362,6 @@ Takes a singleton selection set.  Normally inserts before that commit; with
 the option --after, insert after it.  The default selection set is the very
 first commit of the repository.
 
-Note: incorporating a tarball anywhere where the file manifest of the
-following commit is different may give you an unpleasant surprise,
-as files created in the new commit will persist forward in later revisions.
-
 The option --date can be used to set the commit date. It takes an argument,
 which is expected to be an RFC3339 timestamp.
 
@@ -12457,6 +12453,21 @@ not optimal, and may in particular contain duplicate blobs.
             for opt in parse.options:
                 if opt.startswith("--date"):
                     blank.committer.date = Date(opt.split("=")[1])
+            # Generate deletes into the next commit(s) so files won't
+            # leak forward. Also prevent files leaking forward from any
+            # previous commit.
+            for path in blank.paths():
+                for child in blank.children():
+                    if path not in child.paths():
+                        op = FileOp(repo)
+                        op.construct("D", path)
+                        child.append_operation(op)
+            for parent in blank.parents():
+                for leaker in parent.paths():
+                    if leaker not in blank.paths():
+                        op = FileOp(repo)
+                        op.construct("D", leaker)
+                        blank.append_operation(op)
 
     #
     # Version binding
