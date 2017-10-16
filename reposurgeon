@@ -12388,7 +12388,6 @@ not optimal, and may in particular contain duplicate blobs.
         else:
             raise Recoverable("a singleton selection set is required.")
         with RepoSurgeon.LineParse(self, line) as parse:
-            before = "--after" not in parse.options
             if not parse.line:
                 raise Recoverable("no tarball specified.")
             # Create new commit to carry the new content
@@ -12401,7 +12400,7 @@ not optimal, and may in particular contain duplicate blobs.
             blank.comment = "Content from %s\n" % parse.line
             blank.committer.date = Date("1970-01-01T00:00:00Z")
             # Link it into the repository
-            if before:
+            if "--after" not in parse.options:
                 blank.set_parents(commit.parents())
                 commit.set_parents([blank])
                 loc = repo.find(commit.mark)
