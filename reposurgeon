@@ -12313,7 +12313,7 @@ record - which was probably in the author's local time.
                 # a log rotation or a maintainer fixing a typo. In either case,
                 # best not to re-attribute this.
                 if not [op.path for op in commit.operations() \
-                        if op.op=='M' and not op.path.startswith("Changelog.")]:
+                        if op.op=='M' and not os.path.basename(op.path).startswith("Changelog")]:
                     continue
                 for op in commit.operations():
                     baton.twirl()
