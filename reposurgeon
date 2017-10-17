@@ -12430,7 +12430,13 @@ not optimal, and may in particular contain duplicate blobs.
                     os.chdir(here)
                 IXANY = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
                 with tarfile.open(parse.line) as tarball:
+                    # Pre-sorting avoids an indeterminacy bug in tarfile
+                    # order traversal.
+                    info = []
                     for tarinfo in tarball:
+                        info.append(tarinfo)
+                    info.sort(key=lambda x: x.name)
+                    for tarinfo in info:
                         if tarinfo.type == tarfile.REGTYPE:
                             if newest < tarinfo.mtime:
                                 newest = tarinfo.mtime

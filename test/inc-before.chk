@@ -1,20 +1,20 @@
 blob
 mark :6
-data 24
-first sample small file
+data 25
+second sample small file
 
 blob
 mark :7
-data 25
-second sample small file
+data 24
+first sample small file
 
 commit refs/heads/master
 mark :5
 committer Fred J. Foonly <foonly@foo.com> 0 +0000
 data 24
 Content from sample.tar
-M 100644 :6 snip
-M 100755 :7 snap
+M 100755 :6 snap
+M 100644 :7 snip
 
 blob
 mark :1
@@ -28,8 +28,8 @@ data 14
 First commit.
 from :5
 M 100644 :1 README
-D snip
 D snap
+D snip
 
 blob
 mark :3

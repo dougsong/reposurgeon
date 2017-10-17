@@ -12,13 +12,13 @@ M 100644 :1 README
 
 blob
 mark :6
-data 24
-first sample small file
+data 25
+second sample small file
 
 blob
 mark :7
-data 25
-second sample small file
+data 24
+first sample small file
 
 commit refs/heads/master
 mark :5
@@ -26,8 +26,8 @@ committer Fred J. Foonly <foonly@foo.com> 0 +0000
 data 24
 Content from sample.tar
 from :2
-M 100644 :6 snip
-M 100755 :7 snap
+M 100755 :6 snap
+M 100644 :7 snip
 D README
 
 blob
@@ -42,6 +42,6 @@ data 15
 Second commit.
 from :5
 M 100644 :3 README
-D snip
 D snap
+D snip
 
