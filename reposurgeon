@@ -8101,6 +8101,9 @@ and the ID of the invoking user. Use in regression-test loads.
                         add_set.add(event.target.index())
             value |= add_set
             value -= remove_set
+            value = list(value)
+            value.sort()
+            value = OrderedSet(value)
         self.line = self.line.lstrip()
         return value
     @debug_lexer
@@ -8797,10 +8800,10 @@ More ways to construct event sets:
            A 'b' search also finds blobs and tags attached to commits on
            matching branches.
 [foo]      all commits and blobs touching the file named 'foo'.
-[/bar/]    all commits and blobs touching a file matching the regexp 'bar'. Suffix
-           flags: a=all fileops must match other selectors, not just any one;
-           c=match against checkout paths, DMRCN=match only against given
-           fileop types (no-op when used with 'c').
+[/bar/]    all commits and blobs touching a file matching the regexp 'bar'. 
+           Suffix flags: a=all fileops must match other selectors, not just
+           any one; c=match against checkout paths, DMRCN=match only against
+           given fileop types (no-op when used with 'c').
 =C         all commits
 =H         all head (branch tip) commits
 =T         all tags
@@ -8827,11 +8830,15 @@ You can compose sets as follows:
 :123,<foo>     the event marked 123 and the event referenced by 'foo'.
 :123..<foo>    the range of events from mark 123 to the reference 'foo'
 
+Selection sets are ordered: elements remain in the order they were added,
+unless sorted by the ? suffix.
+
 Sets can be composed with | (union) and & (intersection). | has lower
-precedence than &, but set expressions can be grouped with ( ). Postfixing
-a ? to a selection expression widens it to include all immediate neighbors
-of the selection; you can do this repeatedly for effect. Do set negation with
-prefix ~; it has higher precedence than & | but lower than ?.
+precedence than &, but set expressions can be grouped with (
+). Postfixing a ? to a selection expression widens it to include all
+immediate neighbors of the selection and sorts it; you can do this
+repeatedly for effect. Do set negation with prefix ~; it has higher
+precedence than & | but lower than ?.
 """)
 
     def help_syntax(self):

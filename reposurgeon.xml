@@ -210,6 +210,9 @@ edit                   ;; edit all editable objects
 
 <refsect2 id='selections'><title>SELECTION SYNTAX</title>
 
+<para>A selection set is ordered; that is, any given element may occur
+only one, and the set is ordered by when its members were first added.</para>
+
 <para>The selection-set specification syntax is an expression-oriented
 minilanguage.  The most basic term in this language is a
 <firstterm>location</firstterm>. The following sorts of primitive locations
@@ -660,7 +663,8 @@ members' neighbors and referents.  This extends the set to include the
 parents and children of all commits in the set, and the referents of
 any tags and resets in the set. Each blob reference in the set is
 replaced by all commit events that refer to it. The '?' can be repeated
-to extend the neighborhood depth.</para>
+to extend the neighborhood depth.  The result of a '?' extension is
+sorted so the result is in ascending order.</para>
 
 <para>Do set negation with prefix ~; it has higher precedence than
 &amp; and | but lower than ?</para>
