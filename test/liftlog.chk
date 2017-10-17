@@ -1,0 +1,44 @@
+reposurgeon: fills 1 of 2 authorships, changing 1, from 1 ChangeLogs.
+blob
+mark :1
+data 42
+This file is a placefolder for real data.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Eric S. Raymond <esr@thyrsus.com> 1508252184 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1508252184 -0400
+data 31
+Initial commit of sample file.
+M 100644 :1 sample.txt
+
+blob
+mark :3
+data 171
+	= = = Demonstrate that we can skip a header = = =
+
+2017-10-17 Fred J. Foonly <fred@foonly.org>
+
+	* sample.txt: Resembles an attribution for a patch contributed by
+	Fred.
+
+blob
+mark :4
+data 67
+This file is a placefolder for real data.
+Free added a line to it.
+
+commit refs/heads/master
+mark :5
+author Fred J. Foonly <fred@foonly.org> 1508241600 +0000
+committer Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
+data 50
+This changeset includes a changelog modification.
+from :2
+M 100644 :3 ChangeLog
+M 100644 :4 sample.txt
+
+reset refs/heads/master
+from :5
+
