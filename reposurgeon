@@ -12342,12 +12342,15 @@ record - which was probably in the author's local time.
                                     date += "T12:00:00Z"
                                 addr = line[space+1:]
                                 newattr = Attribution(addr + " " + date)
+                                if not commit.authors:
+                                    commit.authors = [newattr]
                                 # This might be buggy in the bzr case of multiple
                                 # authors.
-                                if not commit.authors or commit.authors[0] != newattr:
+                                elif commit.authors[0] != newattr:
                                     commit.authors = [newattr]
                                     cd += 1
                                 break
+
         announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
 
