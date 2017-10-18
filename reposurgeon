@@ -1544,6 +1544,10 @@ def memoized_iterator(mem_attr = None):
     # In other words, memoized_iterator is a function factory.
     return functools.partial(memoize_iterator, mem_attr = mem_attr)
 
+def empty_comment(c):
+    "Should this information be considered disposable?"
+    return not c or not c.strip() or c.strip() == "*** empty log message ***"
+
 class Baton:
     "Ship progress indications to stdout."
     def __init__(self, prompt, endmsg='done', enable=False):
@@ -6518,9 +6522,8 @@ class Repository:
                     "Concatenate comments, ignoring empty-log-message markers."
                     if a == b:
                         return a
-                    EMPTY = "*** empty log message ***"
-                    a_empty = not a or not a.strip() or a.strip() == EMPTY
-                    b_empty = not b or not b.strip() or b.strip() == EMPTY
+                    a_empty = empty_comment(a)
+                    b_empty = empty_comment(b)
                     if a_empty and b_empty:
                         return ""
                     elif a_empty and not b_empty:
