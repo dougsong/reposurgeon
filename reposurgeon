@@ -1643,6 +1643,9 @@ class RepoSurgeonEmail(email.message.Message, object):
                 break
             msg += line
         return msg
+    def payload(self):
+        "Return message body - works because not multipart."
+        return self.get_payload()
     def __str__(self):
         out = super(RepoSurgeonEmail, self).as_string(unixfrom=True)
         out = out.replace("\n" + RepoSurgeonEmail.Divider + "\n",
@@ -10058,6 +10061,9 @@ that can be fed back in. Supports > redirection.
         # Now apply the updates
         changers = []
         for (event, update) in zip(events, update_list):
+            if '--empty' in parse.options:
+                if event.comment != update.get_payload() and not empty_comment(event.comment):
+                    raise Recoverable("nonempty comment at %s, bailing out" % event.action_stamp())
             if event.email_in(update):
                 changers.append(update)
         if verbose:
