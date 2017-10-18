@@ -20,7 +20,9 @@ commit refs/heads/master
 mark :5
 author Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
 committer Julien _FrnchFrgg_ RIVAUD <frnchfrgg@free.fr> 1364253584 +0100
-data 16
+data 27
+Enlarge a
+
 Create a file b
 from :2
 M 100644 :3 a

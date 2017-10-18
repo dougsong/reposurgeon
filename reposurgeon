@@ -6514,6 +6514,21 @@ class Repository:
                     filter_only = False
                     new_target = event.parents()[0]
                 # Reparent each child
+                def compose_comment(a, b):
+                    "Concatenate comments, ignoring empty-log-message markers."
+                    if a == b:
+                        return a
+                    EMPTY = "*** empty log message ***"
+                    a_empty = not a or not a.strip() or a.strip() == EMPTY
+                    b_empty = not b or not b.strip() or b.strip() == EMPTY
+                    if a_empty and b_empty:
+                        return ""
+                    elif a_empty and not b_empty:
+                        return b
+                    elif not a_empty and b_empty:
+                        return a
+                    else:
+                        return a + '\n' + b
                 for child in list(event.children()):
                     # Insert event's parents in place of event in child's
                     # parent list. We keep existing duplicates in case they
@@ -6540,6 +6555,10 @@ class Repository:
                     if pushforward and child.parents()[0] == event:
                         child.set_operations(copy.copy(event.operations()) + child.operations())
                         child.invalidate_pathset_cache()
+                        # Also prepend event's comment, ignoring empty
+                        # log messages.
+                        child.comment = compose_comment(event.comment,
+                                                        child.comment)
                         altered.append(child)
                     # Really set the parents to the newly constructed list
                     child.set_parents(new_parents)
@@ -6563,6 +6582,9 @@ class Repository:
                     parent = event.parents()[0]
                     parent.set_operations(parent.operations() + copy.copy(event.operations()))
                     parent.invalidate_pathset_cache()
+                    # Also append child's comment to its parent's
+                    parent.comment = compose_comment(parent.comment,
+                                                     event.comment)
                     altered.append(parent)
                     # We need to ensure all fileop blobs are defined before the
                     # corresponding fileop, in other words ensure that the blobs
