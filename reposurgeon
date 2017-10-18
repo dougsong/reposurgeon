@@ -6455,6 +6455,7 @@ class Repository:
             if qualifier not in ["--complain",
                                  "--coalesce",
                                  "--delete",
+                                 "--empty-only",
                                  "--pushback",
                                  "--pushforward",
                                  "--tagify",
@@ -6563,6 +6564,8 @@ class Repository:
                         child.invalidate_pathset_cache()
                         # Also prepend event's comment, ignoring empty
                         # log messages.
+                        if "--empty-only" in policy and not empty_comment(child.comment):
+                            complain("--empty is on and %s comment is nonempty" % child.id_me())
                         child.comment = compose_comment(event.comment,
                                                         child.comment)
                         altered.append(child)
@@ -6589,6 +6592,8 @@ class Repository:
                     parent.set_operations(parent.operations() + copy.copy(event.operations()))
                     parent.invalidate_pathset_cache()
                     # Also append child's comment to its parent's
+                    if "--empty-only" in policy and not empty_comment(parent.comment):
+                        complain("--empty is on and %s comment is nonempty" % parent.id_me())
                     parent.comment = compose_comment(parent.comment,
                                                      event.comment)
                     altered.append(parent)

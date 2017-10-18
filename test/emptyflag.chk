@@ -1,1 +1,4 @@
 reposurgeon: nonempty comment at 1970-01-01T00:00:00Z!rsc@runtux.com, bailing out
+reposurgeon: --empty is on and commit@:4 comment is nonempty
+reposurgeon: commit :4 has multiple Ms for README
+reposurgeon: commit :4 has multiple Ms for README

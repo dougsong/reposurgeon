@@ -1156,6 +1156,12 @@ non-delete fileops.</para>
 <para>The opposite of quiet. Can be specified for explicitness.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term><option>--empty-only</option></term>
+<listitem>
+<para>Complain if a squash operation modifies a nonempty comment.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>Under any of these policies except <quote>--delete</quote>,

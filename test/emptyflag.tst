@@ -9,3 +9,5 @@ Author-Date: Thu 01 Jan 1970 00:00:00 +0000
 Wearing stompy boots.
 ------------------------------------------------------------------------------
 EOF
+# And a warning on this command
+:2 squash --empty-only
