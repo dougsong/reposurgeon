@@ -2519,7 +2519,7 @@ class Commit(object):
         # Prefer the author stamp because that doesn't change when patches
         # are replayed onto a repository, while the commit stamp will.
         if self.authors:
-            self.authors[0].action_stamp()
+            return self.authors[0].action_stamp()
         return self.committer.action_stamp()
     def email_in(self, msg, fill=False):
         "Update this commit from a parsed email message."
@@ -2589,7 +2589,7 @@ class Commit(object):
                     date = Date(msg[hdr + "-Date"])
                     if self.authors[i].date is None or date != self.authors[i].date:
                         # Yes, display this unconditionally
-                        if self.repo:
+                        if self.repo and msg["Event-Number"]:
                             announce("in event %s, %s-Date #%d is modified" \
                                      % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
@@ -9929,6 +9929,10 @@ then by a unique committer ID and timestamp pair.
 If output is redirected and the modifier '--changed' appears, a minimal
 set of modifications actually made is written to the output file in a form
 that can be fed back in. Supports > redirection.
+
+If the option --empty-only is given, this command will throw a recoverable error
+if it tries to alter a message body that is neither empty nor consists of the
+CVS empty-comment marker.
 """)
     def do_mailbox_in(self, line):
         "Accept a mailbox file representing object metadata and update from it."
@@ -10010,10 +10014,27 @@ that can be fed back in. Supports > redirection.
                     complain("no commit matches mark %s" \
                              % message["Event-Mark"])
                     errors += 1
+            elif "Author" in message and "Author-Date" in message:
+                blank = Commit()
+                blank.authors.append(Attribution())
+                blank.email_in(message)
+                stamp = blank.action_stamp()
+                try:
+                    event = attribution_map[stamp]
+                except KeyError:
+                    complain("no commit matches stamp %s" % stamp)
+                    errors += 1
+                if attribution_counts[stamp] > 1:
+                    complain("multiple events match %s" % stamp)
+                    errors += 1
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit()
                 blank.committer = Attribution()
                 blank.email_in(message)
+                # This isn't really right, since action stamps are made from
+                # author fields.  It will work if committer and first author
+                # are the same, which is often the case, so we put it after
+                # the author match as a fallback.
                 stamp = blank.action_stamp()
                 try:
                     event = attribution_map[stamp]
@@ -10046,7 +10067,7 @@ that can be fed back in. Supports > redirection.
                     complain("no tag matches name %s" % blank.name)
                     errors += 1
             else:
-                complain("no commit matches update %d:\n%s" % (i+1, message))
+                complain("no commit matches update %d:\n%s" % (i+1, message.as_string()))
                 errors += 1
             if event is not None and not hasattr(event, "email_in"):
                 try:
@@ -10061,7 +10082,7 @@ that can be fed back in. Supports > redirection.
         # Now apply the updates
         changers = []
         for (event, update) in zip(events, update_list):
-            if '--empty' in parse.options:
+            if '--empty-only' in parse.options:
                 if event.comment != update.get_payload() and not empty_comment(event.comment):
                     raise Recoverable("nonempty comment at %s, bailing out" % event.action_stamp())
             if event.email_in(update):

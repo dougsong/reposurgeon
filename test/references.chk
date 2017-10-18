@@ -14048,6 +14048,7 @@ Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 commit refs/heads/Testing
 #legacy-id 371
 mark :1969
+author Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 data 325
 backported 2006-02-12T21:46:27Z!selinger@users.sourceforge.net from trunk to Testing

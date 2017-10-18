@@ -1431,6 +1431,7 @@ includes its trailing colon.</para>
 <varlistentry>
 <term><command>mailbox_in</command>
         [<emphasis>--create</emphasis>]
+        [<emphasis>--empty-only</emphasis>]
         [&lt;<emphasis>infile</emphasis>]
         [<emphasis>--changed</emphasis> &gt;<emphasis>outfile</emphasis>]
 </term>
@@ -1460,6 +1461,10 @@ Legacy-ID, then by a unique committer ID and timestamp pair.</para>
 <para>If output is redirected and the modifier <quote>--changed</quote>
 appears, a minimal set of modifications actually made is written to the
 output file in a form that can be fed back in. Supports &gt; redirection.</para>
+
+<para>If the option --empty-only is given, this command will throw a
+recoverable error if it tries to alter a message body that is neither
+empty nor consists of the CVS empty-comment marker.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

@@ -23,8 +23,8 @@ jongough-guest = Jon Gough <jon.gough@eclipsesystems.com.au>
 EOF
 mailbox_in <<EOF
 ------------------------------------------------------------------------------
-Committer: Peter Selinger <selinger@users.sourceforge.net>
-Committer-Date: Sat 04 Mar 2006 17:44:41 +0000
+Author: Peter Selinger <selinger@users.sourceforge.net>
+Author-Date: Sat 04 Mar 2006 17:44:41 +0000
 
 backported [[SVN:352]] from trunk to Testing
 
