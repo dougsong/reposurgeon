@@ -9,6 +9,9 @@ Additionally, reposurgeon will run unit tests when given the
 "runtests" command. These tests are written in Python and built in to
 the script itself.
 
+The "singletest" script takes the stem of a .tst file name, captures stdout
+and stderr, and diffs the result against the corresponding check file.
+
 == Writing new unit tests ==
 
 New unit tests can be written by adding a new class derived from
