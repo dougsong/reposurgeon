@@ -12473,8 +12473,12 @@ not optimal, and may in particular contain duplicate blobs.
                     blank.committer.date = Date(opt.split("=")[1])
             # Generate deletes into the next commit(s) so files won't
             # leak forward. Also prevent files leaking forward from any
-            # previous commit.
-            for path in blank.paths():
+            # previous commit.  We gave to force determinstic path list
+            # order here, otherwise regressio tests will fail in flaky
+            # ways.
+            blank_path_list = list(blank.paths())
+            blank_path_list.sort()
+            for path in blank_path_list:
                 for child in blank.children():
                     if path not in child.paths():
                         op = FileOp(repo)
@@ -12482,7 +12486,7 @@ not optimal, and may in particular contain duplicate blobs.
                         child.append_operation(op)
             for parent in blank.parents():
                 for leaker in parent.paths():
-                    if leaker not in blank.paths():
+                    if leaker not in blank_path_list:
                         op = FileOp(repo)
                         op.construct("D", leaker)
                         blank.append_operation(op)
