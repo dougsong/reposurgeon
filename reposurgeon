@@ -12468,22 +12468,15 @@ not optimal, and may in particular contain duplicate blobs.
             blank.branch = commit.branch
             blank.comment = "Content from %s\n" % parse.line
             blank.committer.date = Date("1970-01-01T00:00:00Z")
-            # Link it into the repository
-            if "--after" not in parse.options:
-                blank.set_parents(commit.parents())
-                commit.set_parents([blank])
+            if "--after" in parse.options:
+                loc = repo.find(commit.mark)+1
+            else:
                 loc = repo.find(commit.mark)
                 while loc > 0:
                     if isinstance(repo.events[loc-1], Blob):
                         loc -= 1
                     else:
                         break
-                repo.addEvent(blank, where=loc)
-            else:
-                blank.set_parents([commit])
-                for offspring in commit.children():
-                    offspring.replace_parent(commit, blank)
-                repo.addEvent(blank, where=repo.find(commit.mark)+1)
             # Incorporate the tarball content
             try:
                 newest = 0
@@ -12505,7 +12498,8 @@ not optimal, and may in particular contain duplicate blobs.
                             if newest < tarinfo.mtime:
                                 newest = tarinfo.mtime
                             b = Blob(repo)
-                            repo.addEvent(b, where=repo.find(blank.mark))
+                            repo.addEvent(b, where=loc)
+                            loc += 1
                             repo.declare_sequence_mutation()
                             repo.invalidate_object_map()
                             b.set_mark(repo.newmark())
@@ -12524,6 +12518,16 @@ not optimal, and may in particular contain duplicate blobs.
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
                 raise Recoverable("open or read failed on %s" % parse.line)
+            # Link it into the repository
+            if "--after" not in parse.options:
+                repo.addEvent(blank, where=loc)
+                blank.set_parents(commit.parents())
+                commit.set_parents([blank])
+            else:
+                blank.set_parents([commit])
+                for offspring in commit.children():
+                    offspring.replace_parent(commit, blank)
+                repo.addEvent(blank, where=loc)
             # We get here if incorporation worked OK.
             for opt in parse.options:
                 if opt.startswith("--date"):
