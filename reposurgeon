@@ -9958,7 +9958,7 @@ that can be fed back in. Supports > redirection.
                 legacy_map[commit.legacy_id] = commit
         events = []
         errors = 0
-        # Special case - event creattion
+        # Special case - event creation
         if '--create' in parse.options:
             for (i, message) in enumerate(update_list):
                 if "Tag-Name" in message:

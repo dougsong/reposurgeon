@@ -562,7 +562,7 @@ use e.g. '[/regex/] &amp; [/regex/a]'.</para>
 
 <para>The flags 'D', "M', 'R', 'C', 'N' restrict match checking to the
 corresponding fileop types.  Note that this means an 'a' match is
-easier (not harder) to achieve.  These are no-iops when used with 'c'.</para>
+easier (not harder) to achieve.  These are no-ops when used with 'c'.</para>
 
 <para>A path or literal matches a blob if it matches any path that
 appeared in a modification fileop that referred to that blob. To
