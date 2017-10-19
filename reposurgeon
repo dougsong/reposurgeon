@@ -7115,6 +7115,27 @@ class Repository:
                                               [op for op in ops if (op.path or op.target) and
                                                                    (op.path or op.target).startswith(prefix)]))
 
+    def blob_ancestor(self, commit, path):
+        "Return blob for the nearest ancestor to COMMIT of the specified PATH."
+        ancestor = commit
+        while True:
+            back = ancestor.parents()
+            if not back:
+                break
+            ancestor = back[0]
+            for op in ancestor.operations():
+                if hasattr(op, "path") and op.path == path:
+                    if op.op == "D":
+                        # Path had no ancestor after last delete
+                        return None
+                    elif op.op in ("R", "C"):
+                        path = op.source
+                    elif op.op == "M":
+                        # Buglet: if this path has multiple ops,
+                        # we'd probably prefer the last to the first.
+                        return self.objfind(op.ref)
+        return None
+
     # Sequence emulation methods
     def __len__(self):
         return len(self.events)
@@ -12396,9 +12417,28 @@ record - which was probably in the author's local time.
                     if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
                         cl += 1
                         blobfile = repo.objfind(op.ref).materialize()
-                        for line in open(blobfile):
+                        # Figure out where we should look for changes in
+                        # this blob by comparing it to its nearest ancestor.
+                        changeline = 0
+                        ob = repo.blob_ancestor(commit, op.path)
+                        if ob:
+                            with open(ob.materialize()) as ofp:
+                                with open(blobfile) as nfp:
+                                    while True:
+                                        nl = nfp.readline()
+                                        ol = ofp.readline()
+                                        if nl == '' or ol == '':
+                                            break
+                                        if nl == ol:
+                                            changeline += 1
+                                        else:
+                                            break
+                        # End of ancestor comparison
+                        for (n, line) in enumerate(open(blobfile)):
                             line = line.strip()
                             if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
+                                if n < changeline:
+                                    continue
                                 if ',' in line:
                                     # Multiple attributions...ignore for now
                                     continue

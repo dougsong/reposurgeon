@@ -38,6 +38,40 @@ from :2
 M 100644 :3 ChangeLog
 M 100644 :4 sample.txt
 
-reset refs/heads/master
+blob
+mark :6
+data 399
+	= = = Demonstrate that we can skip a header = = =
+
+2017-10-17 Fred J. Foonly <fred@foonly.org>
+
+	* sample.txt: Resembles an attribution for a patch contributed by
+	Fred.
+
+
+2017-10-19 Hilda J. Foonly <hilda@foonly.org>
+
+	* sample.txt: This entry is deliberately out of order, e.g.
+	not at the top.  The code is supposed to be smart enough to
+	skip over the section common to the previous ChangeLog.
+
+blob
+mark :7
+data 92
+This file is a placefolder for real data.
+Fred added a line to it.
+Now his sister will too.
+
+commit refs/heads/master
+mark :8
+author Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
+data 47
+Test for parsing out-of-order Changelog entry.
 from :5
+M 100644 :6 ChangeLog
+M 100644 :7 sample.txt
+
+reset refs/heads/master
+from :8
 
