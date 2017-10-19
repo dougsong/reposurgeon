@@ -2156,9 +2156,12 @@ When a ChangeLog file modification is found in a clique, the topmost
 entry header is parsed and the address is inserted as the commit
 author.</para>
 
-<para>Due to the limitations of the ChangeLog format, attribution dates on
-these author records will be set to UTC noon of the date in the Changelog
-record - which was probably in the author's local time.</para>
+<para>Due to the limitations of the ChangeLog format, attribution
+dates on these author records will be set to a date near UTC noon of
+the date in the Changelog record - which was probably in the author's
+local time. These dates are generated with any seconds offset
+required to make them unique, so the entry will (if possible) have
+a uniqu action stamp.</para>
 
 <para>The command reports statistics on how many commits were altered.</para>
 </refsect2>

@@ -2408,6 +2408,11 @@ class Commit(object):
     def when(self):
         "Imputed timestamp for sorting after unites."
         return self.committer.date.timestamp
+    def date(self):
+        "Commit date, for purpose of display and reference"
+        if self.authors:
+            return self.authors[0].date
+        return self.committer.date
     def set_branch(self, branch):
         "Set the repo's branch field."
         self.branch = sys.intern(branch)
@@ -2456,7 +2461,7 @@ class Commit(object):
         "Enable do_list() to report commits."
         topline = self.comment.split("\n")[0]
         summary = "%6d %s %6s " % \
-                      (eventnum+1, self.committer.date.rfc3339(), self.mark)
+                      (eventnum+1, self.date().rfc3339(), self.mark)
         if self.legacy_id:
             legacy = "<%s>" % self.legacy_id
             summary += "%6s " % legacy
@@ -2467,7 +2472,7 @@ class Commit(object):
     def tip(self, _modifiers, eventnum, cols):
         "Enable do_tip() to report deduced branch tips."
         summary = "%6d %s %6s " % \
-                      (eventnum+1, self.committer.date.rfc3339(), self.mark)
+                      (eventnum+1, self.date().rfc3339(), self.mark)
         report = (summary + self.head())
         if cols:
             report = report[:cols]
@@ -5772,6 +5777,8 @@ class Repository:
                     self._namecache[key] = [i]
                 elif i not in self._namecache[key]:
                     self._namecache[key].append(i)
+    def invalidate_namecache(self):
+        self._namecache = None
     def named(self, ref):
         "Resolve named reference in the context of this repository."
         selection = OrderedSet()
@@ -5897,6 +5904,9 @@ class Repository:
                     author.remap(authormap)
             elif isinstance(event, Tag):
                 event.tagger.remap(authormap)
+        # Email addresses have changed.
+        # Force rebuild of action-stamp mapping on next lookup
+        self.invalidate_namecache()
     def write_authormap(self, selection, fp):
         "List the identifiers we need."
         contributors = {}
@@ -12372,6 +12382,7 @@ record - which was probably in the author's local time.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
+            generated = set([])
             for commit in repo.commits():
                 cc += 1
                 # If a changeset is *all* ChangeLog mods, it's probably either
@@ -12403,9 +12414,21 @@ record - which was probably in the author's local time.
                                     time.strptime(date, "%Y-%m-%d")
                                 except ValueError:
                                     continue
-                                if len(date) < 27:
-                                    date += "T12:00:00Z"
                                 addr = line[space+1:]
+                                if len(date) < 27:
+                                    # Try to never assign the same generated
+                                    # timestamp.  This may help later on when
+                                    # we need action stamps to be unique, e.g.
+                                    # for mailbox_in.
+                                    for offset in range(60):
+                                        fdate = date + "T12:00:%02dZ" % offset
+                                        if fdate in generated:
+                                            continue
+                                        generated.add(fdate)
+                                        date = fdate
+                                        break
+                                    else:
+                                        raise Recoverable("reposurgeon: can't uniquify ChangeLog date.")
                                 newattr = Attribution(addr + " " + date)
                                 if not commit.authors:
                                     commit.authors = [newattr]
@@ -12415,7 +12438,7 @@ record - which was probably in the author's local time.
                                     commit.authors = [newattr]
                                     cd += 1
                                 break
-
+        repo.invalidate_namecache()
         announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
 
