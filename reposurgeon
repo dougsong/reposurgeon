@@ -11622,6 +11622,8 @@ fields are changed and a warning is issued.
             if repo.named(tagname):
                 raise Recoverable("something is already named %s" % tagname)
             self.set_selection_set(line)
+            if self.selection is None:
+                raise Recoverable("usage: tag <name> create <singleton-selection>")
             try:
                 if len(self.selection) != 1: raise ValueError()
                 (_, target), = self.selected(Commit)
