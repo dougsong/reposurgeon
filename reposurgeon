@@ -10118,10 +10118,10 @@ CVS empty-comment marker.
             raise Recoverable("%d errors in metadata updates" % errors)
         # Now apply the updates
         changers = []
-        for (event, update) in zip(events, update_list):
+        for (i, (event, update)) in enumerate(zip(events, update_list)):
             if '--empty-only' in parse.options:
                 if event.comment != update.get_payload() and not empty_comment(event.comment):
-                    raise Recoverable("nonempty comment at %s, bailing out" % event.action_stamp())
+                    raise Recoverable("nonempty comment at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
             if event.email_in(update):
                 changers.append(update)
         if verbose:
