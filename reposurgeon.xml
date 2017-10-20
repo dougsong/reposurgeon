@@ -1452,6 +1452,11 @@ from standard input. Supports &lt; redirection.</para>
 Event-Mark field will change which event the update from that message
 is applied to.  This is unlikely to have good results.</para>
 
+<para>The header CheckText, if present, is examined to see if the comment text of
+the associated event begins with it. If not, the mailbox modification
+is aborted. This helps ensure that you are landing updates ob the
+events you intend.</para>
+
 <para>If the <quote>--create</quote> modifier is present, new tags and
 commits will be appended to the repository. In this case it is an error
 for a tag name to match any exting tag name. Commit objects are created

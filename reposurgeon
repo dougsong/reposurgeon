@@ -2066,6 +2066,7 @@ class Tag(object):
             self.tagger.email_out(modifiers, msg, "Tagger")
         if self.legacy_id:
             msg['Legacy-ID'] = self.legacy_id
+        msg["Check-Text"] = self.comment.split('\n')[0][:64]
         msg.set_payload(self.comment)
         if self.comment and not self.comment.endswith("\n"):
             complain("in tag %s, comment was not LF-terminated." % self.name)
@@ -2511,6 +2512,7 @@ class Commit(object):
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
+        msg["Check-Text"] = self.comment.split('\n')[0][:54]
         msg.set_payload(self.comment)
         if not self.comment.endswith("\n"):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
@@ -9951,6 +9953,11 @@ Users should be aware that modifying an Event-Number or Event-Mark field
 will change which event the update from that message is applied to.  This
 is unlikely to have good results.
 
+The header CheckText, if present, is examined to see if the comment
+text of the associated event begins with it. If not, the mailbox
+modification is aborted. This helps ensure that you are landing
+updates ob the events you intend.
+
 If the --create modifier is present, new tags and commits will be
 appended to the repository.  In this case it is an error for a tag name
 to match any exting tag name. Commit objects are created with no fileops.
@@ -10119,6 +10126,8 @@ CVS empty-comment marker.
         # Now apply the updates
         changers = []
         for (i, (event, update)) in enumerate(zip(events, update_list)):
+            if "Check-Text" in update and not event.comment.startswith(update["Check-Text"]):
+                raise Recoverable("check text mismatch at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
             if '--empty-only' in parse.options:
                 if event.comment != update.get_payload() and not empty_comment(event.comment):
                     raise Recoverable("nonempty comment at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
