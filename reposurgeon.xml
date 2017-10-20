@@ -2152,9 +2152,9 @@ a selection set. It mines the ChangeLog files for authorship data.</para>
 <para>It assumes such files have basenames beginning with 'ChangeLog',
 and that they are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.
-When a ChangeLog file modification is found in a clique, the topmost
-entry header is parsed and the address is inserted as the commit
-author.</para>
+When a ChangeLog file modification is found in a clique, the entry
+header at or before the section changed since its last revision is
+parsed and the address is inserted as the commit author.</para>
 
 <para>Due to the limitations of the ChangeLog format, attribution
 dates on these author records will be set to a date near UTC noon of

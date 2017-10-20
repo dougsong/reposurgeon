@@ -12385,11 +12385,12 @@ Assume such files have basenames beginning with 'ChangeLog', and that
 they are in the format used by FSF projects: entry header lines begin
 with YYYY-MM-DD and are followed by a fullname/address.
 
-When a ChangeLog file modification is found in a clique, the topmost
-entry header is parsed and the address is inserted as the commit author.
-This is useful in converting CVS and Subversion repositories that
-don't have any notion of author separate from committer but which
-use the FSF ChangeLog convention.
+When a ChangeLog file modification is found in a clique, the entry
+header at or before the section changed since its last revision is
+parsed and the address is inserted as the commit author.  This is
+useful in converting CVS and Subversion repositories that don't have
+any notion of author separate from committer but which use the FSF
+ChangeLog convention.
 
 Due to the limitations of the ChangeLog format, attribution dates on
 these author records will be set to UTC noon of the date in the Changelog
@@ -12437,8 +12438,6 @@ record - which was probably in the author's local time.
                         for (n, line) in enumerate(open(blobfile)):
                             line = line.strip()
                             if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
-                                if n < changeline:
-                                    continue
                                 if ',' in line:
                                     # Multiple attributions...ignore for now
                                     continue
@@ -12447,7 +12446,6 @@ record - which was probably in the author's local time.
                                 space = line.find(" ")
                                 if space < 0:
                                     continue
-                                cm += 1
                                 date = line[:space]
                                 # Avoid fatal error in the attribution builder
                                 try:
@@ -12469,6 +12467,18 @@ record - which was probably in the author's local time.
                                         break
                                     else:
                                         raise Recoverable("reposurgeon: can't uniquify ChangeLog date.")
+                                # Placement of this statement is very important.
+                                # The effect we want is for all lines before the
+                                # first changed one to be parsed for date and
+                                # addr, but for only the *last* date and addr
+                                # to be kept/  This handles the case where the
+                                # changes secrtion begins inside an entry (after
+                                # its header line) as well as the obviuos case
+                                # where the changed section *begins* with an
+                                # attribution line.
+                                if n < changeline:
+                                    continue
+                                cm += 1
                                 newattr = Attribution(addr + " " + date)
                                 if not commit.authors:
                                     commit.authors = [newattr]
