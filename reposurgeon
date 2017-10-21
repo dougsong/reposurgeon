@@ -3623,7 +3623,7 @@ class StreamParser:
     #
     # The main event
     #
-    def fast_import(self, fp, options, progress=False):
+    def fast_import(self, fp, options, progress=False, source=None):
         "Initialize the repo from a fast-import stream or Subversion dump."
         self.repo.makedir()
         self.repo.timings = [("start", time.time())]
@@ -3637,7 +3637,8 @@ class StreamParser:
                 # within a with clause.  Alas, this is a potential
                 # resource leak.
                 self.repo.seekstream = make_wrapper(open(self.fp.name, "rb"))
-            with Baton("reposurgeon: from %s" % os.path.relpath(fp.name), enable=progress) as baton:
+            source = source or os.path.relpath(fp.name)
+            with Baton("reposurgeon: from %s" % source, enable=progress) as baton:
                 self.import_line = self.repo.legacy_count = 0
                 self.linebuffers = []
                 # First, determine the input type
@@ -6076,9 +6077,9 @@ class Repository:
                     gripe(" ".join(msg))
                     deletia.append(index)
         self.delete(deletia, ["--tagback", "--tagify"])
-    def fast_import(self, fp, options, progress=False):
+    def fast_import(self, fp, options, progress=False, source=None):
         "Read a stream file and use it to populate the repo."
-        StreamParser(self).fast_import(fp, options, progress)
+        StreamParser(self).fast_import(fp, options, progress, source=source)
         self.readtime = time.time()
     def parse_dollar_cookies(self):
         "Extract info about legacy references from CVS/SVN header cookies."
@@ -7212,13 +7213,13 @@ def read_repo(source, options, preferred):
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname, "rb") as tp:
-                        repo.fast_import(tp, options, progress=showprogress)
+                        repo.fast_import(tp, options, progress=showprogress, source=source)
                 finally:
                     os.remove(tfname)
                     os.close(tfdesc)
             else:
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(make_wrapper(tp), options, progress=showprogress)
+                    repo.fast_import(make_wrapper(tp), options, progress=showprogress, source=source)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce("reading author map.")
                 with open(repo.vcs.authormap, "rb") as fp:
