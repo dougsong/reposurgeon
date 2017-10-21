@@ -12481,9 +12481,9 @@ record - which was probably in the author's local time.
                                 # The effect we want is for all lines before the
                                 # first changed one to be parsed for date and
                                 # addr, but for only the *last* date and addr
-                                # to be kept/  This handles the case where the
-                                # changes secrtion begins inside an entry (after
-                                # its header line) as well as the obviuos case
+                                # to be kept.  This handles the case where the
+                                # changes section begins inside an entry (after
+                                # its header line) as well as the obvious case
                                 # where the changed section *begins* with an
                                 # attribution line.
                                 if n < changeline:
