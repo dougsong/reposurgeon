@@ -11375,7 +11375,7 @@ from the highest member (child) to the lowest (parent).
         sys.stdout.write("""
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
-equivalent to reparent {first parent},{commit} rebase, where {commit} is the
+equivalent to reparent --rebase {first parent},{commit}, where {commit} is the
 selection set given to unmerge and {first parent} is a set resolving to that
 commit's first parent, but doesn't need you to find the first parent yourself.
 
@@ -11456,9 +11456,9 @@ Policy:
     before modifying it; a 'deleteall' and some fileops are prepended
     so that the manifest stays unchanged even when the first parent
     has been changed.  This behavior can be changed by specifying a
-    policy:
+    policy flag:
 
-    rebase
+    --rebase
 
         Inhibits the default behavior -- no 'deleteall' is issued and
         the tree contents of all descendents can be modified as a
@@ -11477,8 +11477,6 @@ Policy:
                 if len(self.selection) != len(selected): raise ValueError()
             except (TypeError, ValueError):
                 raise Recoverable("reparent requires one or more selected commits")
-            if parse.line and parse.line != "rebase":
-                raise Recoverable("unknown policy for reparent")
             if not use_order:
                 selected.sort()
             # determine whether an event resort might be needed.  it is
@@ -11495,7 +11493,7 @@ Policy:
             if do_resort and any(p.descended_from(child) for p in parents):
                 raise Recoverable('reparenting a commit to its own descendant' \
                                   + ' would introduce a cycle')
-            if parse.line != "rebase":
+            if "--rebase" not in parse.options:
                 # Recreate the state of the tree
                 f = FileOp(repo)
                 f.construct("deleteall")

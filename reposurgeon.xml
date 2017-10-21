@@ -1727,10 +1727,11 @@ from the highest member (child) to the lowest (parent).</para>
 <para>Linearize a commit. Takes a selection set argument, which must resolve
 to a single commit, and removes all its parents except for the first.</para>
 <para>It is equivalent to <command>reparent</command>
-<emphasis>first_parent</emphasis>,<emphasis>commit</emphasis>
-<option>rebase</option>, where <emphasis>commit</emphasis> is the same
-selection set as used with unmerge and <emphasis>first_parent</emphasis> is a
-set resolving <emphasis>commit</emphasis>'s first parent (see the
+<option>--rebase</option>
+<emphasis>first_parent</emphasis>,<emphasis>commit</emphasis>, where
+<emphasis>commit</emphasis> is the same selection set as used with
+unmerge and <emphasis>first_parent</emphasis> is a set resolving
+<emphasis>commit</emphasis>'s first parent (see the
 <command>reparent</command> command below</para>
 <para>The main interest of the <command>unmerge</command> is that you don't
 have to find and specify the first parent yourself, saving time and avoiding
@@ -1811,10 +1812,10 @@ descendant commit first.</para>
 before modifying it; a <literal>deleteall</literal> and some fileops
 are prepended so that the manifest stays unchanged even when the first
 parent has been changed.  This behavior can be changed by specifying a
-policy:</para>
+policy flag:</para>
 
 <variablelist>
-<varlistentry><term><command>rebase</command></term><listitem>
+<varlistentry><term><command>--rebase</command></term><listitem>
 <para>Inhibits the default behavior—no <literal>deleteall</literal> is
 issued and the tree contents of all descendents can be modified as a
 result.</para>

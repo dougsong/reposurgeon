@@ -6,7 +6,7 @@ read <simple.fi
 127,29 reparent
 127 inspect
 127..$ manifest
-129,3 reparent rebase
+129,3 reparent --rebase
 129 inspect
 129 manifest
 

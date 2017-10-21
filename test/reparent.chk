@@ -89,7 +89,7 @@ reposurgeon.xml -> :125
 test/Makefile -> :68
 test/simple.dump -> :48
 theory.txt -> :50
-129,3 reparent rebase
+129,3 reparent --rebase
 129 inspect
 Event 129 ===============================================================
 commit refs/heads/master
