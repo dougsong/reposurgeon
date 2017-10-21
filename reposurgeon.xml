@@ -2154,7 +2154,7 @@ can be recovered.</para>
 <para>Use the "changelogs" command/  This takes neither arguments nor
 a selection set. It mines the ChangeLog files for authorship data.</para> 
 
-<para>It assumes such files have basenames beginning with 'ChangeLog',
+<para>It assumes such files have the basename 'ChangeLog',
 and that they are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.
 When a ChangeLog file modification is found in a clique, the entry

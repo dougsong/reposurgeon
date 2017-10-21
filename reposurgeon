@@ -10126,8 +10126,8 @@ CVS empty-comment marker.
         # Now apply the updates
         changers = []
         for (i, (event, update)) in enumerate(zip(events, update_list)):
-            if "Check-Text" in update and not event.comment.startswith(update["Check-Text"]):
-                raise Recoverable("check text mismatch at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
+            if "Check-Text" in update and not event.comment.strip().startswith(update["Check-Text"].strip()):
+                raise Recoverable("check text mismatch at %s (input %s of %s), expected %s saw %s, bailing out" % (event.action_stamp(), i+1, len(update_list), repr(update["Check-Text"]), repr(event.comment[:64])))
             if '--empty-only' in parse.options:
                 if event.comment != update.get_payload() and not empty_comment(event.comment):
                     raise Recoverable("nonempty comment at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
@@ -12392,9 +12392,9 @@ Note that '_selection' will be a list of integers, not objects.
         sys.stdout.write("""
 Mine the ChangeLog files for authorship data.
 
-Assume such files have basenames beginning with 'ChangeLog', and that
-they are in the format used by FSF projects: entry header lines begin
-with YYYY-MM-DD and are followed by a fullname/address.
+Assume such files have basenam 'ChangeLog', and that they are in the
+format used by FSF projects: entry header lines begin with YYYY-MM-DD
+and are followed by a fullname/address.
 
 When a ChangeLog file modification is found in a clique, the entry
 header at or before the section changed since its last revision is
@@ -12422,11 +12422,11 @@ record - which was probably in the author's local time.
                 # a log rotation or a maintainer fixing a typo. In either case,
                 # best not to re-attribute this.
                 if not [op.path for op in commit.operations() \
-                        if op.op=='M' and not os.path.basename(op.path).startswith("Changelog")]:
+                        if op.op=='M' and not os.path.basename(op.path).startswith("ChangeLog")]:
                     continue
                 for op in commit.operations():
                     baton.twirl()
-                    if op.op == "M" and os.path.basename(op.path).startswith("ChangeLog"):
+                    if op.op == "M" and os.path.basename(op.path) == "ChangeLog":
                         cl += 1
                         blobfile = repo.objfind(op.ref).materialize()
                         # Figure out where we should look for changes in
@@ -12434,6 +12434,7 @@ record - which was probably in the author's local time.
                         changeline = 0
                         ob = repo.blob_ancestor(commit, op.path)
                         if ob:
+                            changeline = 0
                             with open(ob.materialize()) as ofp:
                                 with open(blobfile) as nfp:
                                     while True:

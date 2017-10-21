@@ -1,4 +1,4 @@
-reposurgeon: check text mismatch at 1970-01-01T00:00:00Z!rsc@runtux.com (input 1 of 1), bailing out
+reposurgeon: check text mismatch at 1970-01-01T00:00:00Z!rsc@runtux.com (input 1 of 1), expected 'Second commit.' saw 'Alter first commit, check text is correct.\n', bailing out
 blob
 mark :1
 data 20
