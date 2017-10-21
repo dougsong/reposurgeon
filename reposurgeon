@@ -12445,6 +12445,7 @@ record - which was probably in the author's local time.
                                         else:
                                             break
                         # End of ancestor comparison
+                        date = addr = None
                         for (n, line) in enumerate(open(blobfile)):
                             line = line.strip()
                             if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
@@ -12486,18 +12487,18 @@ record - which was probably in the author's local time.
                                 # its header line) as well as the obvious case
                                 # where the changed section *begins* with an
                                 # attribution line.
-                                if n < changeline:
-                                    continue
-                                cm += 1
-                                newattr = Attribution(addr + " " + date)
-                                if not commit.authors:
-                                    commit.authors = [newattr]
-                                # This might be buggy in the bzr case of multiple
-                                # authors.
-                                elif commit.authors[0] != newattr:
-                                    commit.authors = [newattr]
-                                    cd += 1
-                                break
+                                if n >= changeline:
+                                    break
+                        if date and addr:
+                            cm += 1
+                            newattr = Attribution(addr + " " + date)
+                            if not commit.authors:
+                                commit.authors = [newattr]
+                            # This might be buggy in the bzr case of multiple
+                            # authors.
+                            elif commit.authors[0] != newattr:
+                                commit.authors = [newattr]
+                                cd += 1
         repo.invalidate_namecache()
         announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
