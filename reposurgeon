@@ -11471,47 +11471,46 @@ Policy:
             return
         with RepoSurgeon.LineParse(self, line) as parse:
             use_order = '--use-order' in parse.options
-            line = parse.line
-        try:
-            selected = list(self.selected(Commit))
-            if not len(selected): raise ValueError()
-            if len(self.selection) != len(selected): raise ValueError()
-        except (TypeError, ValueError):
-            raise Recoverable("reparent requires one or more selected commits")
-        if line and line != "rebase":
-            raise Recoverable("unknown policy for reparent")
-        if not use_order:
-            selected.sort()
-        # determine whether an event resort might be needed.  it is
-        # assumed that ancestor commits already have a lower event
-        # index before this function is called, which should be true
-        # as long as every function that modifies the DAG calls
-        # Repository.resort() when needed.  thus, a call to resort()
-        # should only be necessary if --use-order is passed and a
-        # parent will have an index higher than the modified commit.
-        do_resort = use_order and not all(selected[-1][0] > x[0]
-                                          for x in selected[0:-1])
-        parents = [x[1] for x in selected[0:-1]]
-        child = selected[-1][1]
-        if do_resort and any(p.descended_from(child) for p in parents):
-            raise Recoverable('reparenting a commit to its own descendant' \
-                              + ' would introduce a cycle')
-        if line != "rebase":
-            # Recreate the state of the tree
-            f = FileOp(repo)
-            f.construct("deleteall")
-            newops = [f]
-            for (path, (mode, mark, inline)) in child.manifest().items():
+            try:
+                selected = list(self.selected(Commit))
+                if not len(selected): raise ValueError()
+                if len(self.selection) != len(selected): raise ValueError()
+            except (TypeError, ValueError):
+                raise Recoverable("reparent requires one or more selected commits")
+            if parse.line and parse.line != "rebase":
+                raise Recoverable("unknown policy for reparent")
+            if not use_order:
+                selected.sort()
+            # determine whether an event resort might be needed.  it is
+            # assumed that ancestor commits already have a lower event
+            # index before this function is called, which should be true
+            # as long as every function that modifies the DAG calls
+            # Repository.resort() when needed.  thus, a call to resort()
+            # should only be necessary if --use-order is passed and a
+            # parent will have an index higher than the modified commit.
+            do_resort = use_order and not all(selected[-1][0] > x[0]
+                                              for x in selected[0:-1])
+            parents = [x[1] for x in selected[0:-1]]
+            child = selected[-1][1]
+            if do_resort and any(p.descended_from(child) for p in parents):
+                raise Recoverable('reparenting a commit to its own descendant' \
+                                  + ' would introduce a cycle')
+            if parse.line != "rebase":
+                # Recreate the state of the tree
                 f = FileOp(repo)
-                f.construct("M", mode, mark, path)
-                if mark == "inline":
-                    f.inline = inline
-                newops.append(f)
-            newops.extend(child.operations())
-            child.set_operations(newops)
-        child.set_parents(parents)
-        if do_resort:
-            repo.resort()
+                f.construct("deleteall")
+                newops = [f]
+                for (path, (mode, mark, inline)) in child.manifest().items():
+                    f = FileOp(repo)
+                    f.construct("M", mode, mark, path)
+                    if mark == "inline":
+                        f.inline = inline
+                    newops.append(f)
+                newops.extend(child.operations())
+                child.set_operations(newops)
+            child.set_parents(parents)
+            if do_resort:
+                repo.resort()
 
     def help_branch(self):
         sys.stdout.write("""
