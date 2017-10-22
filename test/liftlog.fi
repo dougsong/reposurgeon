@@ -111,6 +111,51 @@ from :8
 M 100644 :9 ChangeLog
 M 100644 :10 sample.txt
 
-reset refs/heads/master
+blob
+mark :12
+data 751
+	= = = Demonstrate that we can skip a header = = =
+
+2017-10-22 Hamlet the Prince <hamlet@helsingfors.dk>
+
+	* sample.txt: This header line is to verify that we can get a time
+	zone from an email address ending with a single-zone ISO country code.
+
+2017-10-17 Fred J. Foonly <fred@foonly.org>
+
+	* sample.txt: Resembles an attribution for a patch contributed by
+	Fred.
+
+
+2017-10-19 Hilda J. Foonly <hilda@foonly.org>
+
+	* sample.txt: This entry is deliberately out of order, e.g.
+	not at the top.  The code is supposed to be smart enough to
+	skip over the section common to the previous ChangeLog.
+
+	Even a partial entry out of order, like this one, should
+	result in the attribution line above it (Hilda's) being
+	picked up for the corresponding commit.
+
+blob
+mark :13
+data 143
+This file is a placefolder for real data.
+Fred added a line to it.
+Now his sister will too.
+Hilda adds a fourth line.
+Input from a pseudo-Dane
+
+commit refs/heads/master
+mark :14
+author Eric S. Raymond <esr@thyrsus.com> 1508692602 -0400
+committer Eric S. Raymond <esr@thyrsus.com> 1508692932 -0400
+data 82
+Check that we can get a TZ from an email address ending with an ISO country code.
 from :11
+M 100644 :12 ChangeLog
+M 100644 :13 sample.txt
+
+reset refs/heads/master
+from :14
 

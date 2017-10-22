@@ -2164,7 +2164,9 @@ parsed and the address is inserted as the commit author.</para>
 
 <para>Due to the limitations of the ChangeLog format, attribution
 time-of-day and timezone on these author records have to made up out
-of thin air.  We copy the committer's.</para>
+of thin air.  We copy the committer's, then try various tricks to
+correct the timezone, including looking in the author map if there is
+one</para>
 
 <para>Rationale: If the author is the committer and the attribution
 date is the same day as the commit, this is probably wthin seconds or

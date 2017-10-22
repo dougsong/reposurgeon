@@ -1461,6 +1461,29 @@ def screenwidth():
         # Return default width if no terminal is present
         return 80
 
+isocode_to_zone = {}
+
+def zone_from_email(addr):
+    "Attempt to deduce an IANA time zone from and email address."
+    if not isocode_to_zone:
+        try:
+            firstpass = {}
+            for line in open("/usr/share/zoneinfo/zone.tab"):
+                if line.startswith("#"):
+                    continue
+                fields = line.split()
+                code = fields[0].lower()
+                zone = fields[2]
+                if code not in firstpass:
+                    firstpass[code] = []
+                firstpass[code].append(zone)
+            for (k, v) in firstpass.items():
+                if len(v) == 1:
+                    isocode_to_zone[k] = v[0]
+        except IOError:
+            complain("no country-code to timezone mapping")
+    return isocode_to_zone.get(addr.split(".")[-1])
+
 def debug_enable(level):
     "Hook for debug filtering."
     return verbose >= level
@@ -1725,10 +1748,6 @@ class Date(object):
             return 0
     def rfc3339(self):
         return rfc3339(self.timestamp)
-    def ymd(self):
-        return time.strftime("%Y-%m-%d", time.gmtime(t))
-    def hms(self):
-        return time.strftime("%H:%M:%S", time.gmtime(t))
     def rfc822(self):
         "Format as an RFC822 timestamp."
         return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
@@ -1755,6 +1774,11 @@ class Date(object):
             sgn = "+"
             seconds = (localdate - gmdate).seconds
         return sgn + ("%02d" % (seconds / 3600)) + str("%02d" % abs(seconds % 3600))
+    def set_tz(self, zone):
+        if zone is None:
+            return
+        self.orig_tz_string = Date.tzresolve(zone, self.timestamp)
+        self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
     def __str__(self):
         "Format as a git timestamp."
         return str(self.timestamp) + " " + self.orig_tz_string
@@ -1842,6 +1866,8 @@ class Attribution(object):
             return (polystr(m.group(1).strip()), polystr(m.group(2)), polystr(m.group(3).strip()))
         else:
             raise Fatal("malformed attribution '%s'" % line)
+    def address(self):
+        return (self.name, self.email)
     def __init__(self, operson=None):
         self.name = self.email = self.date = None
         if operson:
@@ -5669,6 +5695,7 @@ class Repository:
         self.inlines = 0
         self.uniqueness = None
         self.markseq = 0
+        self.tzmap = {}
     def newmark(self):
         self.markseq += 1
         mark = ":" + str(self.markseq)
@@ -5894,6 +5921,8 @@ class Repository:
                 (local, netwide) = line.strip().split('=')
                 try:
                     (name, mail, timezone) = Attribution.parseaddr(netwide.strip())
+                    if timezone:
+                        self.tzmap[mail] = timezone
                 except ValueError:
                     raise Fatal("malformed author-map line")
                 if not mail:
@@ -12406,10 +12435,13 @@ any notion of author separate from committer but which use the FSF
 ChangeLog convention.
 
 Due to the limitations of the ChangeLog format, attribution dates on
-these author records will be set to have the hh:mm:ss part of the committer
-date and the committer's timezone. This choice is often close to right
-(e.g if the committer is the author) and no worse than any other arbitrary
+these author records will be set to have the hh:mm:ss part of the
+committer date and the committer's timezone; then various tricks are
+tried to correct the timezone, including looking in the author map if
+there is one. This choice is often close to right (e.g if the
+committer is the author) and no worse than any other arbitrary
 assignment would be.
+
 """)
     def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
@@ -12419,7 +12451,6 @@ assignment would be.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
-            generated = set([])
             for commit in repo.commits():
                 cc += 1
                 # If a changeset is *all* ChangeLog mods, it's probably either
@@ -12498,14 +12529,23 @@ assignment would be.
                             newattr = commit.committer.clone()
                             newattr.date.timestamp = ymd + newattr.date.timestamp % 86400
                             (newattr.name, newattr.email) = addr.split("<")
-                            newattr.email = "<" + newattr.email
+                            print((newattr.email, repo.tzmap))
+                            newattr.email = newattr.email[:-1]
                             newattr.name = newattr.name.strip()
-                            # Someday. try to correct TZ from address
+                            if newattr.email in repo.tzmap:
+                                newattr.date.set_tz(repo.tzmap[newattr.email])
+                            else:
+                                newattr.date.set_tz(zone_from_email(newattr.email))
                             if not commit.authors:
                                 commit.authors = [newattr]
-                            elif newattr not in commit.authors:
-                                commit.authors.append(newattr)
-                                cd += 1
+                            else:
+                                # Required because git sometimed fills in the
+                                # author field from the committer.
+                                if commit.authors[-1].address() == commit.committer.address():
+                                    commit.authors.pop()
+                                if newattr.address() not in [x.address for x in commit.authors]:
+                                    commit.authors.append(newattr)
+                                    cd += 1
         repo.invalidate_namecache()
         announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
