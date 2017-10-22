@@ -1,7 +1,3 @@
-('fred@foonly.org>', {'hilda@foonly.org': 'America/Los_Angeles'})
-('hilda@foonly.org>', {'hilda@foonly.org': 'America/Los_Angeles'})
-('hilda@foonly.org>', {'hilda@foonly.org': 'America/Los_Angeles'})
-('hamlet@helsingfors.dk>', {'hilda@foonly.org': 'America/Los_Angeles'})
 reposurgeon: fills 4 of 5 authorships, changing 4, from 4 ChangeLogs.
 blob
 mark :1

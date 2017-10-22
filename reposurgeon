@@ -12529,7 +12529,6 @@ assignment would be.
                             newattr = commit.committer.clone()
                             newattr.date.timestamp = ymd + newattr.date.timestamp % 86400
                             (newattr.name, newattr.email) = addr.split("<")
-                            print((newattr.email, repo.tzmap))
                             newattr.email = newattr.email[:-1]
                             newattr.name = newattr.name.strip()
                             if newattr.email in repo.tzmap:
