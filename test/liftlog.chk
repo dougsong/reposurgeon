@@ -1,4 +1,4 @@
-reposurgeon: fills 4 of 5 authorships, changing 4, from 4 ChangeLogs.
+reposurgeon: fills 5 of 6 authorships, changing 5, from 5 ChangeLogs.
 blob
 mark :1
 data 42
@@ -8,7 +8,7 @@ reset refs/heads/master
 commit refs/heads/master
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1508252184 -0400
-committer Eric S. Raymond <esr@thyrsus.com> 1508252184 -0400
+committer Nikolai Fedorov <cosmist@russian-empire.gov> 1508252184 +0400
 data 31
 Initial commit of sample file.
 M 100644 :1 sample.txt
@@ -157,6 +157,55 @@ from :11
 M 100644 :12 ChangeLog
 M 100644 :13 sample.txt
 
-reset refs/heads/master
+blob
+mark :15
+data 878
+= = = Demonstrate that we can skip a header = = =
+
+2017-10-22 Nikolai Fedorov <cosmist@russian-empire.gov>
+
+	* sample.txt: Demonstrate the ability to pick up committer timezones.
+
+2017-10-22 Hamlet the Prince <hamlet@helsingfors.dk>
+
+	* sample.txt: This header line is to verify that we can get a time
+	zone from an email address ending with a single-zone ISO country code.
+
+2017-10-17 Fred J. Foonly <fred@foonly.org>
+
+	* sample.txt: Resembles an attribution for a patch contributed by
+	Fred.
+
+2017-10-19 Hilda J. Foonly <hilda@foonly.org>
+
+	* sample.txt: This entry is deliberately out of order, e.g.
+	not at the top.  The code is supposed to be smart enough to
+	skip over the section common to the previous ChangeLog.
+
+	Even a partial entry out of order, like this one, should
+	result in the attribution line above it (Hilda's) being
+	picked up for the corresponding commit.
+
+blob
+mark :16
+data 174
+This file is a placefolder for real data.
+Fred added a line to it.
+Now his sister will too.
+Hilda adds a fourth line.
+Input from a pseudo-Dane
+What is the Great Common Task?
+
+commit refs/heads/master
+mark :17
+author Nikolai Fedorov <cosmist@russian-empire.gov> 1508697652 +0400
+committer Eric S. Raymond <esr@thyrsus.com> 1508697652 -0400
+data 56
+Demonstrate the ability to pick up committer timezones.
 from :14
+M 100644 :15 ChangeLog
+M 100644 :16 sample.txt
+
+reset refs/heads/master
+from :17
 

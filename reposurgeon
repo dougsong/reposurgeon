@@ -3898,12 +3898,15 @@ class StreamParser:
                                     commit.set_mark(line[5:].strip())
                                 elif line.startswith("author"):
                                     try:
-                                        commit.authors.append(Attribution(line[7:]))
+                                        attrib = Attribution(line[7:])
+                                        commit.authors.append(attrib)
+                                        self.repo.tzmap[attrib.email] = attrib.date.orig_tz_string
                                     except ValueError:
                                         self.error("malformed author line")
                                 elif line.startswith("committer"):
                                     try:
                                         commit.committer = Attribution(line[10:])
+                                        self.repo.tzmap[commit.committer.email] = commit.committer.date.orig_tz_string
                                     except ValueError:
                                         self.error("malformed committer line")
                                 elif line.startswith("property"):
