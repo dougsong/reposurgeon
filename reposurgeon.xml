@@ -1547,7 +1547,7 @@ globally, and a numeric literal gives the maximum number
 of substitutions to perform. Other flags available restrict substitution
 scope - 'c' for comment text only, 'C' for committer name only, 'a'
 for author names only.  Note that parsing of a --regex argument will
-be confused by ant substring consisting of whitespace followed by #;
+be confused by any substring consisting of whitespace followed by #;
 use "\s" rather than whitespace to avoid this.</para>
 
 <para>With --replace, the behavior is like --regexp but the expressions are
