@@ -2163,11 +2163,18 @@ header at or before the section changed since its last revision is
 parsed and the address is inserted as the commit author.</para>
 
 <para>Due to the limitations of the ChangeLog format, attribution
-dates on these author records will be set to a date near UTC noon of
-the date in the Changelog record - which was probably in the author's
-local time. These dates are generated with any seconds offset
-required to make them unique, so the entry will (if possible) have
-a uniqu action stamp.</para>
+time-of-day and timezone on these author records have to made up out
+of thin air.  We copy the committer's.</para>
+
+<para>Rationale: If the author is the committer and the attribution
+date is the same day as the commit, this is probably wthin seconds or
+minutes of right.  On a different day with the same committer this
+gets the timezone right. If committer is different and day is
+different we're making up data out of thin air, but it at least is no
+worse than any other random choice and has the following good
+properties: (1) no later than the committer date, and (2) has same
+mm:ss, making it possible to match the committer date in a display
+even if we don't know whether it's local or UTC.</para>
 
 <para>The command reports statistics on how many commits were altered.</para>
 </refsect2>

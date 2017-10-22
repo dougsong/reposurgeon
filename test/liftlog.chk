@@ -31,7 +31,8 @@ Free added a line to it.
 
 commit refs/heads/master
 mark :5
-author Fred J. Foonly <fred@foonly.org> 1508241600 +0000
+author Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
+author Fred J. Foonly <<fred@foonly.org>> 1508252466 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
 data 50
 This changeset includes a changelog modification.
@@ -65,7 +66,8 @@ Now his sister will too.
 
 commit refs/heads/master
 mark :8
-author Hilda J. Foonly <hilda@foonly.org> 1508414400 +0000
+author Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
+author Hilda J. Foonly <<hilda@foonly.org>> 1508448494 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
 data 47
 Test for parsing out-of-order Changelog entry.
@@ -104,7 +106,8 @@ Hilda adds a fourth line.
 
 commit refs/heads/master
 mark :11
-author Hilda J. Foonly <hilda@foonly.org> 1508414401 +0000
+author Eric S. Raymond <esr@thyrsus.com> 1508616116 -0400
+author Hilda J. Foonly <<hilda@foonly.org>> 1508443316 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508616116 -0400
 data 47
 Test for parsing out-of-order partial entries.

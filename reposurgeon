@@ -1709,7 +1709,7 @@ class Date(object):
         # Date format not recognized
         raise error("'%s' is not a valid timestamp" % text)
     def clone(self):
-        return Date(self.rfc3339())
+        return copy.copy(self)
     @staticmethod
     def secondsFromOffsetString(text):
         m = re.match(Date.offset_re, polybytes(text))
@@ -1725,6 +1725,10 @@ class Date(object):
             return 0
     def rfc3339(self):
         return rfc3339(self.timestamp)
+    def ymd(self):
+        return time.strftime("%Y-%m-%d", time.gmtime(t))
+    def hms(self):
+        return time.strftime("%H:%M:%S", time.gmtime(t))
     def rfc822(self):
         "Format as an RFC822 timestamp."
         return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
@@ -12402,8 +12406,10 @@ any notion of author separate from committer but which use the FSF
 ChangeLog convention.
 
 Due to the limitations of the ChangeLog format, attribution dates on
-these author records will be set to UTC noon of the date in the Changelog
-record - which was probably in the author's local time.
+these author records will be set to have the hh:mm:ss part of the committer
+date and the committer's timezone. This choice is often close to right
+(e.g if the committer is the author) and no worse than any other arbitrary
+assignment would be.
 """)
     def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
@@ -12445,7 +12451,7 @@ record - which was probably in the author's local time.
                                         else:
                                             break
                         # End of ancestor comparison
-                        date = addr = None
+                        ymd = addr = None
                         for (n, line) in enumerate(open(blobfile)):
                             line = line.strip()
                             if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
@@ -12458,26 +12464,11 @@ record - which was probably in the author's local time.
                                 if space < 0:
                                     continue
                                 date = line[:space]
-                                # Avoid fatal error in the attribution builder
                                 try:
-                                    time.strptime(date, "%Y-%m-%d")
+                                    ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
                                 except ValueError:
                                     continue
-                                addr = line[space+1:]
-                                if len(date) < 27:
-                                    # Try to never assign the same generated
-                                    # timestamp.  This may help later on when
-                                    # we need action stamps to be unique, e.g.
-                                    # for mailbox_in.
-                                    for offset in range(60):
-                                        fdate = date + "T12:00:%02dZ" % offset
-                                        if fdate in generated:
-                                            continue
-                                        generated.add(fdate)
-                                        date = fdate
-                                        break
-                                    else:
-                                        raise Recoverable("reposurgeon: can't uniquify ChangeLog date.")
+                                addr = line[space+1:].strip()
                                 # Placement of this statement is very important.
                                 # The effect we want is for all lines before the
                                 # first changed one to be parsed for date and
@@ -12489,15 +12480,31 @@ record - which was probably in the author's local time.
                                 # attribution line.
                                 if n >= changeline:
                                     break
-                        if date and addr:
+                        if ymd is not None and addr is not None:
                             cm += 1
-                            newattr = Attribution(addr + " " + date)
+                            # Rationale: If the author is the committer and
+                            # the attribution date is the same day as the
+                            # commit, this is probably wthin seconds or minutes
+                            # of right.  On a different day with the same
+                            # committer this gets the timezone right. If
+                            # committer is different and day is different we're
+                            # making up data out of thin air, but it at least
+                            # is no worse than any other random choice and
+                            # has the following good properties: (1) no
+                            # later than the committer date, and (2) has same
+                            # mm:ss, making it possible to match the
+                            # committer date in a display even if we don't
+                            # know whether it's local or UTC.
+                            newattr = commit.committer.clone()
+                            newattr.date.timestamp = ymd + newattr.date.timestamp % 86400
+                            (newattr.name, newattr.email) = addr.split("<")
+                            newattr.email = "<" + newattr.email
+                            newattr.name = newattr.name.strip()
+                            # Someday. try to correct TZ from address
                             if not commit.authors:
                                 commit.authors = [newattr]
-                            # This might be buggy in the bzr case of multiple
-                            # authors.
-                            elif commit.authors[0] != newattr:
-                                commit.authors = [newattr]
+                            elif newattr not in commit.authors:
+                                commit.authors.append(newattr)
                                 cd += 1
         repo.invalidate_namecache()
         announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
