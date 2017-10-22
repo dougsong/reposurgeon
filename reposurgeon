@@ -2096,7 +2096,7 @@ class Tag(object):
             self.tagger.email_out(modifiers, msg, "Tagger")
         if self.legacy_id:
             msg['Legacy-ID'] = self.legacy_id
-        msg["Check-Text"] = self.comment.split('\n')[0][:64]
+        msg["Check-Text"] = self.comment.strip().split('\n')[0][:64]
         msg.set_payload(self.comment)
         if self.comment and not self.comment.endswith("\n"):
             complain("in tag %s, comment was not LF-terminated." % self.name)
@@ -2542,7 +2542,7 @@ class Commit(object):
             value = value.replace("\n", r"\n")
             value = value.replace("\t", r"\t")
             msg["Property-" + hdr] = value
-        msg["Check-Text"] = self.comment.split('\n')[0][:54]
+        msg["Check-Text"] = self.comment.strip().split('\n')[0][:54]
         msg.set_payload(self.comment)
         if not self.comment.endswith("\n"):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
@@ -6708,7 +6708,7 @@ class Repository:
                 if ("--coalesce" not in policy and not delete) \
                         or debug_enable(DEBUG_DELETE):
                     for (path, oplist) in cliques.items():
-                        if len(oplist) > 1:
+                        if len(oplist) > 1 and not dquiet:
                             complain("commit %s has multiple Ms for %s"
                                     % (event.mark, path))
                 if "--coalesce" in policy:
