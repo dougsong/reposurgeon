@@ -910,27 +910,31 @@ commands.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>timebump</command></term>
+<term><command>timebump</command>
+[<emphasis>seconds</emphasis>]
+</term>
 <listitem>
 <para>Bump the committer and author timestamps of commits in the selection
-set (defaulting to empty) by one second.</para>
+set (defaulting to empty) by one second.   With following integer argument,
+that many seconds. Argument may be negative.</para>
 </listitem>
 </varlistentry>
 </variablelist>
 
 <para>Those of you twitchy about "rewriting history" should bear in
 mind that the commit stamps in many older repositories were never very
-reliable to begin with. CVS in particular is notorious for shipping
-client-side timestamps with timezone and DST issues (as opposed to
-UTC) that don't necessary compare well with stamps from different
-clients of the same CVS server. Subversion was somewhat better about
-this, as commits were stamped at the server, but older Subversion
-repositories often have sections that predate the era of ubiquitous
-NTP time.</para>
+reliable to begin with.</para>
 
-<para>Thus, inducing a timequake seldom produces effects much larger
-than the measurement noise of the repository's own timestamps.</para>
+<para>CVS in particular is notorious for shipping client-side
+timestamps with timezone and DST issues (as opposed to UTC) that don't
+necessary compare well with stamps from different clients of the same
+CVS server. Thus, inducing a timequake in a CVS repo seldom produces
+effects anywhere near as large than the measurement noise of the
+repository's own timestamps.</para>
 
+<para>Subversion was somewhat better about this, as commits were
+stamped at the server, but older Subversion repositories often have
+sections that predate the era of ubiquitous NTP time.</para>
 </refsect2>
 
 <refsect2 id='information'><title>INFORMATION AND REPORTS</title>
@@ -2210,6 +2214,10 @@ lines begin with YYYY-MM-DD and are followed by a fullname/address.
 When a ChangeLog file modification is found in a clique, the entry
 header at or before the section changed since its last revision is
 parsed and the address is inserted as the commit author.</para>
+
+<para>If the entry header contains an email address but no name, a name
+will be filled in if possible by looking for the address in author
+map entries.</para>
 
 <para>Due to the limitations of the ChangeLog format, attribution
 time-of-day and timezone on these author records have to made up out

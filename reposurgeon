@@ -2462,11 +2462,11 @@ class Commit(object):
     def sort_operations(self):
         "Sort fileops the same way git-fast-export does."
         self.fileops.sort(key=FileOp.sortkey)
-    def bump(self):
+    def bump(self, i=1):
         "Bump the timestamps on this commit."
-        self.committer.date.timestamp += 1
+        self.committer.date.timestamp += i
         for author in self.authors:
-            author.date.timestamp += 1
+            author.date.timestamp += i
     def clone(self, repo=None):
         "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
@@ -5703,6 +5703,7 @@ class Repository:
         self.inlines = 0
         self.uniqueness = None
         self.markseq = 0
+        self.authormap = {}
         self.tzmap = {}
     def newmark(self):
         self.markseq += 1
@@ -5918,7 +5919,6 @@ class Repository:
             self._has_manifests = False
     def read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
-        authormap = {}
         try:
             for line in fp:
                 line = line.strip()
@@ -5935,7 +5935,7 @@ class Repository:
                     raise Fatal("malformed author-map line")
                 if not mail:
                     raise Fatal("can't recognize address in '%s'" % netwide)
-                authormap[local.strip().lower()] = (name, mail, timezone)
+                self.authormap[local.strip().lower()] = (name, mail, timezone)
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
@@ -5943,11 +5943,11 @@ class Repository:
         for ei in selection:
             event = self.events[ei]
             if isinstance(event, Commit):
-                event.committer.remap(authormap)
+                event.committer.remap(self.authormap)
                 for author in event.authors:
-                    author.remap(authormap)
+                    author.remap(self.authormap)
             elif isinstance(event, Tag):
-                event.tagger.remap(authormap)
+                event.tagger.remap(self.authormap)
         # Email addresses have changed.
         # Force rebuild of action-stamp mapping on next lookup
         self.invalidate_namecache()
@@ -12468,8 +12468,9 @@ action-stamp ID for each commit.
         repo.invalidate_namecache()
     def help_timebump(self):
         sys.stdout.write("""
-Bump the committer and author timestamps of commits in the selection set by
-one second.
+Bump the committer and author timestamps of commits in the selection
+set (defaulting to empty) by one second.  With following integer agument,
+that many seconds.  Argument may be negative.
 
 The normal use case for this command is early in converting CVS or Subversion
 repositories, cleaning up after 'timequake', to ensure that the surgical
@@ -12482,9 +12483,9 @@ language can count on having a unique action-stamp ID for each commit.
         repo = self.chosen()
         if self.selection is None:
             raise Recoverable("reposurgeon: no default select set for bump.")
-        print("selection %s" % self.selection)
+        offset = int(line) if line else 1
         for (_, event) in self.selected(Commit):
-            event.bump()
+            event.bump(offset)
 
     #
     # Changelog processing
@@ -12503,6 +12504,10 @@ parsed and the address is inserted as the commit author.  This is
 useful in converting CVS and Subversion repositories that don't have
 any notion of author separate from committer but which use the FSF
 ChangeLog convention.
+
+If the entry header contains an email address but no name, a name
+will be filled in if possible by looking for the address in author
+map entries.
 
 Due to the limitations of the ChangeLog format, attribution dates on
 these author records will be set to have the hh:mm:ss part of the
@@ -12598,8 +12603,13 @@ assignment would be.
                             newattr = commit.committer.clone()
                             newattr.date.timestamp = ymd + newattr.date.timestamp % 86400
                             (newattr.name, newattr.email) = addr.split("<")
-                            newattr.email = newattr.email[:-1]
+                            newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()
+                            if not newattr.name:
+                                for (name, email, tz) in repo.authormap.values():
+                                    if newattr.email == email:
+                                        newattr.name = name
+                                        break
                             if newattr.email in repo.tzmap:
                                 newattr.date.set_tz(repo.tzmap[newattr.email])
                             else:
