@@ -8,6 +8,7 @@ Repository head:
      New 'changelogs' command for extracting author info from ChangeLog files.
      New 'incorporate' command digests tarballs into commits.
      Squashes now preserve comment content of squashed commits.
+     New 'timequake' and 'timebump' commands for uniquifying timestamps.
 
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).

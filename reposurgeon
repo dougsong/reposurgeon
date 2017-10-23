@@ -2462,6 +2462,11 @@ class Commit(object):
     def sort_operations(self):
         "Sort fileops the same way git-fast-export does."
         self.fileops.sort(key=FileOp.sortkey)
+    def bump(self):
+        "Bump the timestamps on this commit."
+        self.committer.date.timestamp += 1
+        for author in self.authors:
+            author.date.timestamp += 1
     def clone(self, repo=None):
         "Clone this commit, without its fileops, color and children."
         c = copy.copy(self)
@@ -12422,6 +12427,66 @@ Note that '_selection' will be a list of integers, not objects.
                 raise Recoverable(str(e))
 
     #
+    # Timequakes and bumping
+    #
+    def help_timequake(self):
+        sys.stdout.write("""
+Attempt to hack committer and author time stamps to make all action
+stamps in the selection set (defaulting to all commits in the
+repository) to be unique.  Works by identifying collisions between parent
+and child, than incrementing child timestamps so they no longer
+coincide. Won't touch commits with multiple parents.
+
+Because commits are checked in ascending order, this logic will
+normally do the right thing on chains of three or more commits with
+identical timestamps.
+ 
+Any collisions left after this operation are probably cross-branch and have
+to be individually dealt with using 'timebump' commands.
+
+The normal use case for this command is early in converting CVS or Subversion
+repositories, to ensure that the surgical language can count on having a unique
+action-stamp ID for each commit.
+""")
+    def do_timequake(self, line):
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        if self.selection is None:
+            self.selection = self.chosen().all()
+        with Baton(prompt="reposurgeon: disambiguating", enable=(verbose == 1)) as baton:
+            modified = 0
+            for (_, event) in self.selected(Commit):
+                parents = event.parents()
+                if len(parents) == 1:
+                    if event.committer.date.timestamp == parents[0].committer.date.timestamp:
+                        event.bump()
+                        modified += 1
+                baton.twirl()
+            announce("reposurgeon: %d events modified" % modified)
+        repo.invalidate_namecache()
+    def help_timebump(self):
+        sys.stdout.write("""
+Bump the committer and author timestamps of commits in the selection set by
+one second.
+
+The normal use case for this command is early in converting CVS or Subversion
+repositories, cleaning up after 'timequake', to ensure that the surgical
+language can count on having a unique action-stamp ID for each commit.
+""")
+    def do_timebump(self, line):
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        if self.selection is None:
+            raise Recoverable("reposurgeon: no default select set for bump.")
+        print("selection %s" % self.selection)
+        for (_, event) in self.selected(Commit):
+            event.bump()
+
+    #
     # Changelog processing
     #
     def help_changelogs(self):
@@ -12446,7 +12511,6 @@ tried to correct the timezone, including looking in the author map if
 there is one. This choice is often close to right (e.g if the
 committer is the author) and no worse than any other arbitrary
 assignment would be.
-
 """)
     def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
