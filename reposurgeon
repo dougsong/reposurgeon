@@ -8462,7 +8462,8 @@ and the ID of the invoking user. Use in regression-test loads.
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
             matchers = OrderedSet()
-            searchable_attrs = {"b":"branch",          # commit
+            searchable_attrs = {"a":"author",          # commit
+                                "b":"branch",          # commit
                                 "c":"comment",         # commit or tag
                                 "C":"committer",       # commit
                                 "r":"committish",      # tag or reset
@@ -8472,6 +8473,7 @@ and the ID of the invoking user. Use in regression-test loads.
                                 }
             search_in = searchable_attrs.values()
             extractor_lambdas = {
+                "author": lambda x: x.authors[0].who(),
                 "branch": lambda x: x.branch,
                 "comment": lambda x: x.comment,
                 "committer": lambda x: x.committer.who(),
@@ -9466,9 +9468,9 @@ Supports > redirection.
                 for item in sorted(shortset):
                     parse.stdout.write("unknown shortname: %s\n" % item)
                 for item in sorted(emptyaddr):
-                    parse.stdout.write("empty address: %s\n" % item)
+                    parse.stdout.write("empty committer address: %s\n" % item)
                 for item in sorted(emptyname):
-                    parse.stdout.write("empty name: %s\n" % item)
+                    parse.stdout.write("empty committer name: %s\n" % item)
                 for item in sorted(badaddress):
                     parse.stdout.write("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
