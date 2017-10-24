@@ -2292,6 +2292,9 @@ when this occurs.</para>
 
 <para>With no selection set and no name, list all assignments.></para>
 
+<para>If the option --singleton is given, the assignment will throw an error
+if the selection set is not a singleton.</para>
+
 <para>Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.</para>
 </listitem>

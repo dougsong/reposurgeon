@@ -9075,6 +9075,9 @@ ordinary deletion); you will see a warning when this occurs.
 
 With no selection set and no argument, list all assignments.
 
+If the option --singleton is given, the assignment will throw an error
+if the selection set is not a singleton.
+
 Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.
 """)
@@ -9090,13 +9093,16 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
                 for n, v in repo.assignments.items():
                     announce("%s = %s" % (n, v))
                 return
-        name = line.strip()
-        if name in repo.assignments:
-            raise Recoverable("%s has already been set" % name)
-        elif repo.named(name):
-            raise Recoverable("%s conflicts with a branch, tag, legacy-ID, or date" % name)
-        else:
-            repo.assignments[name] = self.selection
+        with RepoSurgeon.LineParse(repo, line) as parse:
+            name = parse.line.strip()
+            if name in repo.assignments:
+                raise Recoverable("%s has already been set" % name)
+            elif repo.named(name):
+                raise Recoverable("%s conflicts with a branch, tag, legacy-ID, or date" % name)
+            elif "--singleton" in parse.options and len(self.selection) != 1:
+                raise Recoverable("")
+            else:
+                repo.assignments[name] = self.selection
 
     def help_unassign(self):
         sys.stdout.write("""
@@ -12453,7 +12459,7 @@ The normal use case for this command is early in converting CVS or Subversion
 repositories, to ensure that the surgical language can count on having a unique
 action-stamp ID for each commit.
 """)
-    def do_timequake(self, line):
+    def do_timequake(self, _line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -12485,7 +12491,6 @@ language can count on having a unique action-stamp ID for each commit.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        repo = self.chosen()
         if self.selection is None:
             raise Recoverable("reposurgeon: no default select set for bump.")
         offset = int(line) if line else 1
@@ -12611,8 +12616,8 @@ assignment would be.
                             newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()
                             if not newattr.name:
-                                for (name, email, tz) in repo.authormap.values():
-                                    if newattr.email == email:
+                                for (name, nemail, _tz) in repo.authormap.values():
+                                    if newattr.email == nemail:
                                         newattr.name = name
                                         break
                             if newattr.email in repo.tzmap:
