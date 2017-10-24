@@ -8049,6 +8049,11 @@ and the ID of the invoking user. Use in regression-test loads.
         def tokens(self):
             "Return the argument token list after the parse for redirects."
             return self.line.split()
+        def optval(self, optname):
+            for option in self.options:
+                if option.startswith(optname + "="):
+                    return int(option.split("=")[0])
+            return None
     def write_notify(self, filename):
         "Unstreamify any repo about to be written."
         for repo in self.repolist:
@@ -12636,6 +12641,8 @@ assignment would be.
 Insert the contents of a specified tarball as a commit.  The tarball name is
 given as an argument.  It may be a gzipped or bzipped tarball.  The initial
 segment of each path is assumed to be a version directory and stripped off.
+The number of segments stripped off can be set with the option --strip=<n>,
+n defaulting to 1.
 
 Takes a singleton selection set.  Normally inserts before that commit; with
 the option --after, insert after it.  The default selection set is the very
@@ -12678,6 +12685,7 @@ not optimal, and may in particular contain duplicate blobs.
             blank.branch = commit.branch
             blank.comment = "Content from %s\n" % parse.line
             blank.committer.date = Date("1970-01-01T00:00:00Z")
+            strip = int(parse.optval("strip") or 1)
             if "--after" in parse.options:
                 loc = repo.find(commit.mark)+1
             else:
@@ -12716,7 +12724,7 @@ not optimal, and may in particular contain duplicate blobs.
                             #b.size = tarinfo.size
                             b.set_blobfile(os.path.join(self.repo.subdir(), tarinfo.name))
                             op = FileOp(repo)
-                            fn = os.path.join(*os.path.split(tarinfo.name)[1:])
+                            fn = os.path.join(*os.path.split(tarinfo.name)[strip:])
                             mode = 0o100644
                             if tarinfo.mode & IXANY:
                                 mode = 0o100755

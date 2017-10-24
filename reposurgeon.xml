@@ -2249,7 +2249,8 @@ insert those releases at the front of the repository history.</para>
 as its single argument naming a tarball, the content of which is to be
 inserted as a commit. It may be a gzipped or bzipped tarball. The
 initial segment of each path is assumed to be a version directory and
-stripped off.</para>
+stripped off. The number of segments stripped off can be set with the
+option --strip=n, n defaulting to 1.</para>
 
 <para>Takes a singleton selection set.  Normally inserts before that commit; with
 the option --after, insert after it. The default selection set is the very
