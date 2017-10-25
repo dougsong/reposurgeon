@@ -10411,8 +10411,9 @@ the attribute are internal Python field names; in particular, for
 commits, 'comment' and 'branch' are legal.  Consult the source code
 for other interesting values.
 
-The special fieldnames 'commitdate' and 'authdate' apply only
-to commits in the range and set their attribution dates. 
+The special fieldnames 'author', 'commitdate' and 'authdate' apply only
+to commits in the range.  The latter two sets attribution dates. The
+former set the author's name, copying the committer timestamp.
 """)
     def do_setfield(self, line):
         "Set an object field from a string."
@@ -10429,6 +10430,11 @@ to commits in the range and set their attribution dates.
         for _, event in self.selected():
             if hasattr(event, field):
                 setattr(event, field, value)
+            elif field == "author" and isinstance(event, Commit):
+                attr = value
+                attr += " " + str(event.committer.date.timestamp)
+                attr += " " + event.committer.date.orig_tz_string
+                event.authors[0] = Attribution(attr)
             elif field == "commitdate" and isinstance(event, Commit):
                 event.committer.date = Date(value)
             elif field == "authdate" and isinstance(event, Commit):
