@@ -9100,7 +9100,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
             elif repo.named(name):
                 raise Recoverable("%s conflicts with a branch, tag, legacy-ID, or date" % name)
             elif "--singleton" in parse.options and len(self.selection) != 1:
-                raise Recoverable("")
+                raise Recoverable("a singleton selection was required here")
             else:
                 repo.assignments[name] = self.selection
 
