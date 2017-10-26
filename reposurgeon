@@ -10014,12 +10014,14 @@ modification is aborted. This helps ensure that you are landing
 updates ob the events you intend.
 
 If the --create modifier is present, new tags and commits will be
-appended to the repository.  In this case it is an error for a tag name
-to match any exting tag name. Commit objects are created with no fileops.
-If Committer-Date or Tagger-Date fields are not present they are filled
-in with the time at which this command is executed. If Committer or Tagger
-fields are not present, reposurgeon will attempt to deduce the user's
-git-style identity and fill it in.
+appended to the repository.  In this case it is an error for a tag
+name to match any exting tag name. Commit objects are created with no
+fileops.  If Committer-Date or Tagger-Date fields are not present they
+are filled in with the time at which this command is executed. If
+Committer or Tagger fields are not present, reposurgeon will attempt
+to deduce the user's git-style identity and fill it in. If a singleton
+commit set was specified for commit creations, the new commits are
+made children of that commit.
 
 Otherwise, if the Event-Number and Event-Mark fields are absent, the
 mailbox_in logic will attempt to match the commit or tag first by Legacy-ID,
@@ -10082,7 +10084,14 @@ CVS empty-comment marker.
                     blank.email_in(message, fill=True)
                     blank.mark = self.chosen().newmark()
                     blank.repo = self.chosen()
+                    if not blank.branch:
+                        # Avoids crapping out on name lookup.
+                        blank.branch = "generated-" + blank.mark[1:]
                     self.chosen().addEvent(blank)
+                    if self.selection and len(self.selection) == 1:
+                        event = self.chosen().events[self.selection[0]]
+                        blank.set_parents([event])
+            self.chosen().declare_sequence_mutation("event creation")
             return
         # Normal case - no --create
         for (i, message) in enumerate(update_list):
