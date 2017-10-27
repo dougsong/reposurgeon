@@ -1717,13 +1717,22 @@ class Date(object):
             # TypeError: argument must be 9-item sequence, not None
             pass
         # Also accept RFC3339 dates in Zulu time, just because I like them.
+        # May optionally be followed by a timezome spec.
         try:
+            fields = text.split()
+            if len(fields) not in (1, 2):
+                raise ValueError
+            elif len(fields) == 2:
+                text = fields[0]
+                tz = fields[1]
+            else:
+                text = fields[0]
+                tz = Date.fast0000
             # Discard subsecond precision, import-stream format can't use it.
             text = polystr(re.sub(Date.subsecond_re, b"Z", polybytes(text)))
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
             self.timestamp = calendar.timegm(rfc3339date)
-            self.orig_tz_string = Date.fast0000
-            self.tz_offset = 0
+            self.set_tz(tz)
             return
         except ValueError:
             # time.strptime() throws this
