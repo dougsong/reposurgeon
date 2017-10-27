@@ -1947,6 +1947,9 @@ class Blob(object):
     def paths(self, _pathtype=None):
         "For uniformity with commits and fileops."
         return self.pathlist
+    def addalias(self, path):
+        if path not in self.pathlist:
+            self.pathlist.append(path)
     def set_blobfile(self, path):
         self.abspath = path
     def blobfile(self, create=False):
@@ -3363,7 +3366,7 @@ class RepoStreamer:
                             blob = Blob(repo)
                             blob.set_mark(blobmark)
                             shutil.copyfile(path, blob.blobfile(create=True))
-                            blob.pathlist.append(path)
+                            blob.addalias(path)
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
                             op = FileOp(repo)
@@ -3970,7 +3973,7 @@ class StreamParser:
                                     fileop = FileOp(self.repo).parse(line)
                                     if fileop.ref != 'inline':
                                         try:
-                                            self.repo.objfind(fileop.ref).pathlist.append(fileop.path)
+                                            self.repo.objfind(fileop.ref).addalias(fileop.path)
                                         except AttributeError:
                                             # Crap out on anything but a
                                             # submodule link.
@@ -4647,7 +4650,7 @@ class StreamParser:
                                              node.blobmark,
                                              node.path)
                             actions.append((node, fileop))
-                            self.repo.objfind(fileop.ref).pathlist.append(node.path)
+                            self.repo.objfind(fileop.ref).addalias(node.path)
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
                         self.permissions[node.path] = perms
@@ -11941,7 +11944,7 @@ default patterns.
                     earliest = repo.earliest_commit()
                     if not [fileop for fileop in earliest.operations() if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
                         blob = Blob(repo)
-                        blob.pathlist.append(self.ignorename)
+                        blob.addalias(self.ignorename)
                         blob.set_content(self.preferred.dfltignores)
                         blob.mark = ":insert"
                         repo.events.insert(repo.index(earliest), blob)
