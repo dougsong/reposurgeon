@@ -10087,10 +10087,12 @@ CVS empty-comment marker.
                     if not blank.branch:
                         # Avoids crapping out on name lookup.
                         blank.branch = "generated-" + blank.mark[1:]
-                    self.chosen().addEvent(blank)
-                    if self.selection and len(self.selection) == 1:
+                    if not self.selection or len(self.selection) != 1:
+                        self.chosen().addEvent(blank)
+                    else:
                         event = self.chosen().events[self.selection[0]]
                         blank.set_parents([event])
+                        self.chosen().addEvent(blank, where=self.selection[0]+1)
             self.chosen().declare_sequence_mutation("event creation")
             return
         # Normal case - no --create
@@ -10706,12 +10708,15 @@ used with the add command to patch data into a repository.
         if not self.chosen():
             complain("no repo is loaded")
             return
-        self.chosen().renumber(2)
-        blob = Blob(self.chosen())
+        repo = self.chosen()
+        repo.renumber(2)
+        blob = Blob(repo)
         blob.set_mark(":1")
-        self.chosen().addEvent(blob, where=0)
+        repo.addEvent(blob, where=0)
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             blob.set_content(parse.stdin.read())
+        repo.declare_sequence_mutation("adding blob")
+        repo.invalidate_namecache()
 
     def help_remove(self):
         sys.stdout.write("""
