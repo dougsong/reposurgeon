@@ -10063,23 +10063,29 @@ CVS empty-comment marker.
                     break
                 update_list.append(email.message_from_string(msg))
         # First, a validation pass
-        attribution_map = {}
+        attribution_by_author = {}
+        attribution_by_committer = {}
         name_map = {}
-        attribution_counts = collections.Counter()
+        author_counts = collections.Counter()
+        committer_counts = collections.Counter()
         for commit in self.chosen().commits():
             stamp = commit.action_stamp()
-            if stamp in attribution_map and attribution_map[stamp] != commit:
-                attribution_counts[stamp] += 1
-            attribution_map[stamp] = commit
+            if stamp in attribution_by_author and attribution_by_author[stamp] != commit:
+                author_counts[stamp] += 1
+            attribution_by_author[stamp] = commit
+            stamp = commit.committer.action_stamp()
+            if stamp in attribution_by_committer and attribution_by_committer[stamp] != commit:
+                committer_counts[stamp] += 1
+            attribution_by_committer[stamp] = commit
         for event in self.chosen().events:
             if isinstance(event, Tag):
                 if event.name:
                     name_map[event.name] = event
                 if event.tagger:
                     stamp = event.tagger.action_stamp()
-                    if stamp in attribution_map and attribution_map[stamp] != event:
-                        attribution_counts[stamp] += 1
-                    attribution_map[stamp] = event
+                    if stamp in attribution_by_author and attribution_by_author[stamp] != event:
+                        author_counts[stamp] += 1
+                    attribution_by_author[stamp] = event
         legacy_map = {}
         for commit in self.chosen().commits():
             if commit.legacy_id:
@@ -10147,29 +10153,25 @@ CVS empty-comment marker.
                 blank.email_in(message)
                 stamp = blank.action_stamp()
                 try:
-                    event = attribution_map[stamp]
+                    event = attribution_by_author[stamp]
                 except KeyError:
                     complain("no commit matches stamp %s" % stamp)
                     errors += 1
-                if attribution_counts[stamp] > 1:
-                    complain("multiple events (%d) match %s" % (attribution_counts[stamp], stamp))
+                if author_counts[stamp] > 1:
+                    complain("multiple events (%d) match %s" % (author_counts[stamp], stamp))
                     errors += 1
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit()
                 blank.committer = Attribution()
                 blank.email_in(message)
-                # This isn't really right, since action stamps are made from
-                # author fields.  It will work if committer and first author
-                # are the same, which is often the case, so we put it after
-                # the author match as a fallback.
-                stamp = blank.action_stamp()
+                stamp = blank.committer.action_stamp()
                 try:
-                    event = attribution_map[stamp]
+                    event = attribution_by_committer[stamp]
                 except KeyError:
                     complain("no commit matches stamp %s" % stamp)
                     errors += 1
-                if attribution_counts[stamp] > 1:
-                    complain("multiple events (%d) match %s" % (attribution_counts[stamp], stamp))
+                if committer_counts[stamp] > 1:
+                    complain("multiple events (%d) match %s" % (committer_counts[stamp], stamp))
                     errors += 1
             elif "Tagger" in message and "Tagger-Date" in message:
                 blank = Tag()
@@ -10177,11 +10179,11 @@ CVS empty-comment marker.
                 blank.email_in(message)
                 stamp = blank.tagger.action_stamp()
                 try:
-                    event = attribution_map[stamp]
+                    event = attribution_by_author[stamp]
                 except KeyError:
                     complain("no tag matches stamp %s" % stamp)
                     errors += 1
-                if attribution_counts[stamp] > 1:
+                if author_counts[stamp] > 1:
                     complain("multiple events match %s" % stamp)
                     errors += 1
             elif "Tag-Name" in message:
