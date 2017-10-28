@@ -303,7 +303,7 @@ This is an example annotated tag.
 
 tag newtag
 from :15
-tagger Eric S. Raymond <esr@thyrsus.com> 1354427312 -0500
+tagger Eric S. Raymond <esr@thyrsus.com> 1354427313 -0500
 data 29
 Turn off the executable bit.
 
