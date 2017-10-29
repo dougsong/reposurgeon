@@ -1,4 +1,4 @@
 ## Test coalesce --changelog
-read <changelog,fi
+read <changelog.fi
 coalesce --changelog
 write -
