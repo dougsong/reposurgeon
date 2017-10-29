@@ -10630,6 +10630,8 @@ With  the --debug option, show messages about mismatches.
                 # Prevent lossage when last is a ChangeLog commit
                 repo.objfind(span[-1]).comment = repo.objfind(span[0]).comment
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
+            if verbose > 0:
+                announce("%d spans coalesced." % len(squashes))
     def help_add(self):
         sys.stdout.write("""
 From a specified commit, add a specified fileop. The syntax is
