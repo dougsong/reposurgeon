@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# fi-to-fi - build repo from fast-import stream on stdin, or stream a repo to stdout
+# fi-to-fi - build repo from fast-import stream on stdin, or stream repo to stdout
 #
 # Intended for reposurgeon roundtripping tests.
 #
 # With the -n option, create a repo corresponding to the input file
 # and check out a working copy for editing, but do not stream the
 # result to stdout and do not delete the repo.  A following argument,
-# if present, becomes the name of the reppo; otherwise, it is created 
+# if present, becomes the name of the repo; otherwise, it is created 
 # under /tmp.
 #
 # With the -r option, expect the repo to exist, and throw a
