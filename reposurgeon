@@ -12585,6 +12585,7 @@ assignment would be.
             return
         repo = self.chosen()
         cc = cl = cm = cd = 0
+        differ = difflib.Differ()
         with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
             for commit in repo.commits():
                 cc += 1
@@ -12601,25 +12602,22 @@ assignment would be.
                         blobfile = repo.objfind(op.ref).materialize()
                         # Figure out where we should look for changes in
                         # this blob by comparing it to its nearest ancestor.
-                        changeline = 0
                         ob = repo.blob_ancestor(commit, op.path)
                         if ob:
-                            changeline = 0
-                            with open(ob.materialize()) as ofp:
-                                with open(blobfile) as nfp:
-                                    while True:
-                                        nl = nfp.readline()
-                                        ol = ofp.readline()
-                                        if nl == '' or ol == '':
-                                            break
-                                        if nl == ol:
-                                            changeline += 1
-                                        else:
-                                            break
-                        # End of ancestor comparison
-                        ymd = addr = None
-                        for (n, line) in enumerate(open(blobfile)):
-                            line = line.strip()
+                            then = open(ob.materialize()).read().splitlines()
+                        else:
+                            then = ""
+                        now = open(blobfile).read().splitlines()
+                        before = True
+                        inherited = new = None
+                        #print("Analyzing Changelog at %s." % commit.mark)
+                        for diffline in differ.compare(then, now):
+                            if diffline[0] != ' ':
+                                #print("Change encountered")
+                                before = False
+                            #print("I see: %s" % repr(diffline))
+                            line = diffline[2:]
+                            attribution = None
                             if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
                                 if ',' in line:
                                     # Multiple attributions...ignore for now
@@ -12635,18 +12633,27 @@ assignment would be.
                                 except ValueError:
                                     continue
                                 addr = line[space+1:].strip()
-                                # Placement of this statement is very important.
-                                # The effect we want is for all lines before the
-                                # first changed one to be parsed for date and
-                                # addr, but for only the *last* date and addr
-                                # to be kept.  This handles the case where the
-                                # changes section begins inside an entry (after
-                                # its header line) as well as the obvious case
-                                # where the changed section *begins* with an
-                                # attribution line.
-                                if n >= changeline:
-                                    break
-                        if ymd is not None and addr is not None:
+                                attribution = (ymd, addr)
+                                #print("I notice: %s %s %s" % (diffline[0], attribution, before))
+                                # This is the tricky part.  We want the
+                                # last attribution from before the change
+                                # band to stick unless there's one *in*
+                                # the change band. If there's more than one,
+                                # assume the most recent is the latest and
+                                # correct.
+                                if attribution:
+                                    if before:
+                                        inherited = attribution
+                                        #print("Inherited: %s" % repr(inherited))
+                                    if diffline[0] in ('+', '?'):
+                                        if attribution and not new:
+                                            new = attribution
+                                            #print("New: %s" % repr(new))
+                                            break
+                        #print("Attributions: %s %s" % (inherited, new))
+                        attribution = new or inherited
+                        if attribution is not None:
+                            (ymd, addr) = attribution
                             cm += 1
                             # Rationale: If the author is the committer and
                             # the attribution date is the same day as the
