@@ -8721,6 +8721,9 @@ and the ID of the invoking user. Use in regression-test loads.
     def srt_handler(self, subarg):
         "Sort the argument set."
         return OrderedSet(sorted(subarg))
+    def rev_handler(self, subarg):
+        "Reverse the argument set."
+        return list(reversed(subarg))
     def _accumulate_commits(self, subarg, operation, recurse=True):
         repo = self.chosen()
         result = OrderedSet()
