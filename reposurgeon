@@ -12589,7 +12589,7 @@ assignment would be.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
-        with Baton("reposurgeon: parsing changelogs", enable=False) as baton:
+        with Baton("reposurgeon: parsing changelogs", enable=(verbose == 1)) as baton:
             for commit in repo.commits():
                 cc += 1
                 # If a changeset is *all* ChangeLog mods, it's probably either
