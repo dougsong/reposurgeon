@@ -12621,7 +12621,7 @@ assignment would be.
                             #print("I see: %s" % repr(diffline))
                             line = diffline[2:]
                             attribution = None
-                            if len(line) > 10 and line[0].isdigit() and line[1].isdigit() and line.endswith(">"):
+                            if len(line) > 10 and line[0].isdigit() and '<' in line and line[1].isdigit() and line.endswith(">"):
                                 if ',' in line:
                                     # Multiple attributions...ignore for now
                                     continue
