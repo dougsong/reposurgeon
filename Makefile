@@ -34,7 +34,12 @@ SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
+BINARIES = reposurgeon repotool repodiffer repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
+HTMLFILES = $(MANPAGES:.1=.html) \
+            dvcs-migration-guide.html features.html reporting-bugs.html
+SHARED    = README.md NEWS TODO reposurgeon-git-aliases $(HTMLFILES)
+
 all:  $(MANPAGES) $(MANPAGES:.1=.html) \
      dvcs-migration-guide.html features.html reporting-bugs.html
 
