@@ -12654,7 +12654,7 @@ assignment would be.
                                             #print("New: %s" % repr(new))
                                             break
                         #print("Attributions: %s %s" % (inherited, new))
-                        attribution = new or inherited
+                        attribution = new if new else inherited
                         if attribution is not None:
                             (ymd, addr) = attribution
                             cm += 1
