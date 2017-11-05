@@ -9,6 +9,7 @@ Repository head:
      New 'incorporate' command digests tarballs into commits.
      Squashes now preserve comment content of squashed commits.
      New 'timequake' and 'timebump' commands for uniquifying timestamps.
+     There is now a 'reset create' command.
 
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).

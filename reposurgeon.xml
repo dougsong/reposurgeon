@@ -1964,11 +1964,16 @@ error.</para>
 <varlistentry>
 <term><command>reset</command>
         <emphasis>resetname</emphasis>...
-        <command>{move|rename|delete}</command>
+        <command>{create|move|rename|delete}</command>
         <command>[arg]</command>.
 </term>
 <listitem>
-<para>Move, rename, or delete a reset.  First argument must match an
+<para>Create, move, rename, or delete a reset. Create is a special case; it
+requires a singleton selection which is the associate commit for the
+reset, takes as a first argument the name of the reset (which must not
+exist), and ends with the keyword create.</para>
+
+<para>In the other modes, the first argument must match an
 existing reset name; second argument must be one of the verbs
 <quote>move</quote>, <quote>rename</quote>, or
 <quote>delete</quote>.</para>

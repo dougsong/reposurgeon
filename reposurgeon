@@ -8663,7 +8663,7 @@ and the ID of the invoking user. Use in regression-test loads.
         self.pop()
         subarg = self.eval_expression(preselection)
         if self.peek() != ')':
-            raise Recoverable("missing close parethesis for function call")
+            raise Recoverable("missing close parenthesis for function call")
         self.pop()
         try:
             func = getattr(self, funname + "_handler")
@@ -11818,9 +11818,14 @@ fields are changed and a warning is issued.
 
     def help_reset(self):
         sys.stdout.write("""
-Move, rename, or delete a reset.  First argument must match an
-existing reset name; second argument must be one of the verbs 'move',
-'rename', or 'delete'.
+Create, move, rename, or delete a reset. Create is a special case; it
+requires a singleton selection which is the associate commit for the
+reset, takes as a first argument the name of the reset (which must not
+exist), and ends with the keyword create.
+
+In the other modes, the first argument must match an existing reset
+name; second argument must be one of the verbs 'move', 'rename', or
+'delete'.
 
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that can be interpreted
@@ -11851,10 +11856,22 @@ moved, no branch fields are changed.
             resetname = "refs/" + resetname
         resets = [e for _,e in repo.iterevents(types=Reset)
                       if e.ref == resetname]
-        if not resets:
-            raise Recoverable("no such reset as %s" % resetname)
         (verb, line) = RepoSurgeon.pop_token(line)
-        if verb == "move":
+        if verb == "create":
+            if resets:
+                raise Recoverable("one or more resets match %s" % resetname)
+            try:
+                if len(self.selection) != 1: raise ValueError()
+                target, = self.selected(Commit)
+            except (TypeError, ValueError):
+                raise Recoverable("reset create requires a singleton commit set.")
+            reset = Reset(repo, ref=resetname)
+            repo.addEvent(reset)
+            reset.remember(repo, target=target[1])
+            repo.declare_sequence_mutation("reset create")
+        elif verb == "move":
+            if not resets:
+                raise Recoverable("no such reset as %s" % resetname)
             if len(resets) == 1:
                 reset = resets[0]
             else:
@@ -11868,7 +11885,10 @@ moved, no branch fields are changed.
                 raise Recoverable("reset move requires a singleton commit set.")
             reset.forget()
             reset.remember(repo, target=target)
+            repo.declare_sequence_mutation("reset move")
         elif verb == "rename":
+            if not resets:
+                raise Recoverable("no such reset as %s" % resetname)
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new reset name must be nonempty.")
@@ -11886,6 +11906,8 @@ moved, no branch fields are changed.
                 if event.branch == resetname:
                     event.branch = newname
         elif verb == "delete":
+            if not resets:
+                raise Recoverable("no such reset as %s" % resetname)
             tip = next((c for _,c in repo.iterevents(types=Commit)
                           if c.branch == resetname),
                        None)
