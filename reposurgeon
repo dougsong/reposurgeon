@@ -12653,8 +12653,8 @@ assignment would be.
                                             new = attribution
                                             #print("New: %s" % repr(new))
                                             break
-                        #print("Attributions: %s %s" % (inherited, new))
-                        attribution = new if new else inherited
+                            #print("Attributions: %s %s" % (inherited, new))
+                            attribution = new if new else inherited
                         if attribution is not None:
                             (ymd, addr) = attribution
                             cm += 1
