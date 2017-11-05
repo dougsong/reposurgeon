@@ -40,8 +40,7 @@ HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = README.md NEWS TODO reposurgeon-git-aliases $(HTMLFILES)
 
-all:  $(MANPAGES) $(MANPAGES:.1=.html) \
-     dvcs-migration-guide.html features.html reporting-bugs.html
+all:  $(MANPAGES) $(HTMLFILES)
 
 %.1: %.xml
 	$(XMLTO) man $<
@@ -70,10 +69,9 @@ install: all
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
-	$(INSTALL) -m 755 reposurgeon repomapper repotool repodiffer repocutter "$(target)/bin"
-	$(INSTALL) -m 644 README.md NEWS TODO reposurgeon-git-aliases *.html \
-		"$(target)/share/doc/reposurgeon"
-	$(INSTALL) -m 644 *.1 "$(target)/$(mandir)/man1"
+	$(INSTALL) -m 755 $(BINARIES) "$(target)/bin"
+	$(INSTALL) -m 644 $(SHARED) "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
 
 install-cyreposurgeon: cyreposurgeon
 	$(INSTALL) -d "$(target)/bin"
