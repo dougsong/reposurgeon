@@ -274,6 +274,32 @@ EOF
     elif [ -f $operand/.cvssync ]
     then
 	cvssync -c -o $operand `cat $operand/.cvssync`
+    elif [ `expr "$operand" : "git://"` = 6 ]
+    then
+	if [ "$mirrordir" ]
+	then
+	   local=$mirrordir
+	else
+	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
+        fi
+	git clone $operand $local
+    elif [ -f $operand/.hg ]
+    then
+	cd $operate
+	git pull
+    elif [ `expr "$operand" : "hg://"` = 5 ]
+    then
+	if [ "$mirrordir" ]
+	then
+	   local=$mirrordir
+	else
+	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
+        fi
+	bzr clone $operand $local
+    elif [ -f $operand/.hg ]
+    then
+	cd $operate
+	hg update
     else
 	echo "repotool: $operand does not look like a repository mirror."
 	exit 1
@@ -543,6 +569,20 @@ compare-all)
 	echo "${tag}:"
 	repotool compare $diffopts $exclude $repo1 $repo2 $tag
     done
+    ;;
+'') cat <<EOF
+repotool commands:
+
+initialize  - create Makefile and stub files for standard convrsion workflow.
+export - export a stream dump of te source repository
+mirror - create or update a mirror of the source repository
+branches - list repository branch names
+checkout - check out a working copy of the repo
+compare - compare head content of two repositories at a specified revision or tag
+compare-tags - compare source and target repo conyent at all tags
+compare-branches - compare source and target repo conyent at all branches
+compare-all - compare repositories at head, all tags, and all branches
+EOF
     ;;
 *)
     echo "repotool: unknown action '$operation'."

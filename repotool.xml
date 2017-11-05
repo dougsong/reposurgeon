@@ -97,20 +97,21 @@ are not applied to every file in the repository may get converted to
 branches.  The options are the same as 'compare-tags'.</para>
 
 <para>The 'mirror' action makes or updates a local mirror of a
-Subversion or CVS repo. It requires a single argument,
-either a Subversion URL or a CVS URL, or the name
-of a local mirror directory created by a previous run. The first form
-creates a local mirror of the repository in a directory named after
-the last segment of the URL, with the suffix
-<quote>-mirror</quote> (the local mirror name can be overridden by an
-optional) second argument. The second form updates the local mirror,
-doing an incremental fetch; just give the mirror directory
-name.</para>
+Subversion, CVS, git, or hg repo. It requires a single argument,
+either a repository URL or the name of a local mirror directory
+created by a previous run. The first form creates a local mirror of
+the repository in a directory named after the last segment of the URL,
+with the suffix <quote>-mirror</quote> (the local mirror name can be
+overridden by an optional second argument). The second form updates
+the local mirror, doing an incremental fetch; just give the mirror
+directory name.</para>
 
-<para>Subversion URLs are as specified in the public
-documentation for Subversion.  CVS URLs must specify a host and
-repository path, followed by a '#', followed by a module name.</para>
+<para>Subversion URLs are as specified in the public documentation for
+Subversion.  CVS URLs must specify a host and repository path,
+followed by a '#', followed by a module name.  URLs for git and hg
+should be in the form normally used for clone commands</para>
 </refsect1>
+
 <refsect1 id='environment'><title>ENVIRONMENT VARIABLES</title>
 
 <para>This program uses the $TMPDIR environment variable, defaulting
