@@ -11882,7 +11882,7 @@ moved, no branch fields are changed.
                 raise Recoverable("reset reference collision, not renaming.")
             for reset in resets:
                 reset.ref = newname
-            for event in repo.iterevents(types=Commit):
+            for (_, event) in repo.iterevents(types=Commit):
                 if event.branch == resetname:
                     event.branch = newname
         elif verb == "delete":
@@ -11891,7 +11891,7 @@ moved, no branch fields are changed.
                        None)
             if tip and len(tip.children()) == 1:
                 successor = tip.children()[0].branch
-                for event in repo.iterevents(types=Commit):
+                for (_, event) in repo.iterevents(types=Commit):
                     if event.branch == resetname:
                         event.branch = successor
             for reset in resets:
