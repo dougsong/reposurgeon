@@ -29,7 +29,7 @@ SOURCES += \
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 
-.PHONY: all install install-cyreposurgeon clean version pylint check zip release refresh \
+.PHONY: all install install-cyreposurgeon clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
 .INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
 .PRECIOUS: cyreposurgeon.o cyrepodiffer.o
@@ -82,6 +82,18 @@ clean:
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
 	rm -f cyreposurgeon.c cyreposurgeon.o cyreposurgeon
+
+# Uninstallation
+INSTALLED_BINARIES := $(BINARIES:%="$(target)/bin/%")
+INSTALLED_SHARED   := $(SHARED:%="$(target)/share/doc/reposurgeon/%")
+INSTALLED_MANPAGES := $(MANPAGES:%="$(target)/$(mandir)/man1/%")
+
+uninstall:
+	rm -f $(INSTALLED_BINARIES)
+	rm -f "$(target)/bin/cyreposurgeon"
+	rm -f $(INSTALLED_MANPAGES)
+	rm -f $(INSTALLED_SHARED)
+	rmdir "$(target)/share/doc/reposurgeon"
 
 version:
 	@echo $(VERS)
