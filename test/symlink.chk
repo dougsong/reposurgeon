@@ -1,18 +1,26 @@
 #reposurgeon sourcetype svn
 blob
 mark :1
-data 0
-
-blob
-mark :2
-data 4
-file
+data 3
+foo
 commit refs/heads/master
 #legacy-id 1
+mark :2
+committer esr <esr> 1509974638 +0000
+data 17
+Create a symlink
+M 120000 :1 symlink
+
+blob
 mark :3
-committer esr <esr> 1383839390 +0000
-data 28
-bad local repo symlink test
-M 100644 :1 file
-M 120000 :2 symlink
+data 3
+bar
+commit refs/heads/master
+#legacy-id 2
+mark :4
+committer esr <esr> 1509974638 +0000
+data 17
+Modify a symlink
+from :2
+M 120000 :3 symlink
 

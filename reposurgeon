@@ -3677,6 +3677,7 @@ class StreamParser:
         "Initialize the repo from a fast-import stream or Subversion dump."
         self.repo.makedir()
         self.repo.timings = [("start", time.time())]
+        track_symlinks = set([])
         try:
             self.fp = fp
             # Optimization: if we're reading from a plain file,
@@ -3750,23 +3751,27 @@ class StreamParser:
                                             if start is None: start = 0
                                             text = self.sd_read_blob(tlen)
                                             node.blob = Blob(self.repo)
+                                            node.blob.set_content(text, start)
                                             # Ugh - cope with strange
                                             # undocumented Subversion format
                                             # for storing links.  Apparently the
                                             # dumper puts 'link ' in front of
                                             # the path and the loader (or at
-                                            # least git-svn) removes it.
-                                            if node.props and "svn:special" in node.props:
-                                                if text.startswith("link "):
+                                            # least git-svn) removes it.  But
+                                            # the link op is on;y marked with
+                                            # property svn:special on creation,
+                                            # not on modification.  So we have
+                                            # to track which paths are currently
+                                            # symlinks, and take off that mark
+                                            # when a path is deleted in case it
+                                            # later gets recreated as a non-sym
+                                            # link.
+                                            if text.startswith("link "):
+                                                if node.props and "svn:special" in node.props:
+                                                    track_symlinks.add(node.path)
+                                                if node.path in track_symlinks:
                                                     node.blob.set_content(
                                                         text[5:], start+5)
-                                                else:
-                                                    # Don't know if this will
-                                                    # ever happen.  Best to fail
-                                                    # loudly...
-                                                    self.error("unexpected link prefix in %s" % repr(text))
-                                            else:
-                                                node.blob.set_content(text, start)
                                         node.revision = revision
                                         # This guard filters out the empty
                                         # notes produced by format 7 dumps.
@@ -3804,6 +3809,9 @@ class StreamParser:
                                     if node.action is None:
                                         self.error("unknown action %s" \
                                                    % node.action)
+                                    if node.action == SD_DELETE:
+                                        if node.path in track_symlinks:
+                                            track_symlinks.remove(node.path)
                                 elif line.startswith("Node-copyfrom-rev: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()

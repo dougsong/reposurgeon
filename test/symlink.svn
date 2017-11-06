@@ -1,7 +1,7 @@
 SVN-fs-dump-format-version: 2
- ## Simplest possible Subversion symlink test
+ ## Test prefix stripping for both creation and modification of symlinks
 
-UUID: a145c973-c3bf-4294-8174-408185cd7ebd
+UUID: 358f30bb-a703-4d28-a611-601bfa3999e8
 
 Revision-number: 0
 Prop-content-length: 56
@@ -10,12 +10,12 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2013-11-07T15:49:49.964559Z
+2017-11-06T13:23:58.484208Z
 PROPS-END
 
 Revision-number: 1
-Prop-content-length: 125
-Content-length: 125
+Prop-content-length: 114
+Content-length: 114
 
 K 10
 svn:author
@@ -24,38 +24,54 @@ esr
 K 8
 svn:date
 V 27
-2013-11-07T15:49:50.256630Z
+2017-11-06T13:23:58.585362Z
 K 7
 svn:log
-V 27
-bad local repo symlink test
+V 16
+Create a symlink
 PROPS-END
-
-Node-path: file
-Node-kind: file
-Node-action: add
-Prop-content-length: 10
-Text-content-length: 0
-Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
-Text-content-sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709
-Content-length: 10
-
-PROPS-END
-
 
 Node-path: symlink
 Node-kind: file
 Node-action: add
+Text-content-md5: 1043146e49ef02cab12eef865cb34ff3
+Text-content-sha1: a38ef243b9b0aefb5462453b6c5d13b35f31c2f5
 Prop-content-length: 33
-Text-content-length: 9
-Text-content-md5: 73f9c467f93002e83dc229a229bbc4cb
-Text-content-sha1: 2454def790b1c6655a886d220c4d0655e58bd822
-Content-length: 42
+Text-content-length: 8
+Content-length: 41
 
 K 11
 svn:special
 V 1
 *
 PROPS-END
-link file
+link foo
+
+Revision-number: 2
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-11-06T13:23:58.650927Z
+K 7
+svn:log
+V 16
+Modify a symlink
+PROPS-END
+
+Node-path: symlink
+Node-kind: file
+Node-action: change
+Text-content-md5: e308fdc36286591d5679ee49dd03e826
+Text-content-sha1: 33701aac8ebfd8f2e84133144000a6bb9bff0040
+Text-content-length: 8
+Content-length: 8
+
+link bar
 
