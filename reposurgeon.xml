@@ -1893,7 +1893,8 @@ result.</para>
 <listitem>
 <para>Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
-'rename' or 'delete'.</para>
+'rename' or 'delete'. The branchname may use backslash escapes
+interpreted by the Python string-escape codec, such as \s.</para>
 
 <para>For a 'rename', the third argument may be any token that is a
 syntactically valid branch name (but not the name of an existing
@@ -1929,6 +1930,9 @@ selection set. For a <quote>rename</quote>, the third argument may be
 any token that is a syntactically valid tag name (but not the name of
 an existing tag). For a <quote>delete</quote>, no third argument is
 required.</para>
+
+<para>The tagname may use backslash escapes interpreted by the Python
+string-escape codec, such as \s.</para>
 
 <para>The behavior of this command is complex because features which
 present as tags may be any of three things: (1) True tag objects, (2)
@@ -1977,6 +1981,9 @@ exist), and ends with the keyword create.</para>
 existing reset name; second argument must be one of the verbs
 <quote>move</quote>, <quote>rename</quote>, or
 <quote>delete</quote>.</para>
+
+<para>The reset name may use backslash escapes interpreted by the Python
+string-escape codec, such as \s.</para>
 
 <para>For a <quote>move</quote>, a third argument must be a singleton
 selection set. For a <quote>rename</quote>, the third argument may be

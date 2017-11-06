@@ -10450,7 +10450,7 @@ repository objects in a damaged state.
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
 whitespace, and use backslash escapes interpreted by the Python
-string-escape codec, such as \\n and \\t.
+string-escape codec, such as \\s.
 
 Attempts to set nonexistent attributes are ignored. Valid values for
 the attribute are internal Python field names; in particular, for
@@ -11635,7 +11635,8 @@ Policy:
         sys.stdout.write("""
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
-'rename' or 'delete'.
+'rename' or 'delete'. The branchname may use backslash escapes
+interpreted by the Python string-escape codec, such as \\s.
 
 For a 'rename', the third argument may be any token that is a syntactically
 valid branch name (but not the name of an existing branch). For a 'delete',
@@ -11651,6 +11652,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             return
         repo = self.chosen()
         (branchname, line) = RepoSurgeon.pop_token(line)
+        branchname = string_escape(branchname)
         if "/" not in branchname:
             branchname = 'refs/heads/' + branchname
         if branchname not in repo.branchset():
@@ -11701,6 +11703,9 @@ a 'rename', the third argument may be any token that is a
 syntactically valid tag name (but not the name of an existing
 tag). For a 'delete', no third argument is required.
 
+Tag names may use backslash escapes interpreted by the Python
+string-escape codec, such as \\s.
+
 The behavior of this command is complex because features which present
 as tags may be any of three things: (1) True tag objects, (2)
 lightweight tags, actually sequences of commits with a common
@@ -11735,6 +11740,7 @@ fields are changed and a warning is issued.
         # generates for each tag object corresponding branch labels on
         # some ancestor commmits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
+        tagname = string_escape(tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == 'create':
             if repo.named(tagname):
@@ -11845,6 +11851,9 @@ a 'rename', the third argument may be any token that can be interpreted
 as a valid reset name (but not the name of an existing
 reset). For a 'delete', no third argument is required.
 
+Reset names may use backslash escapes interpreted by the Python
+string-escape codec, such as \\s.
+
 An argument matches a reset's name if it is either the entire
 reference (refs/heads/FOO or refs/tags/FOO for some some value of FOO)
 or the basename (e.g. FOO), or a suffix of the form heads/FOO or tags/FOO.
@@ -11863,6 +11872,7 @@ moved, no branch fields are changed.
             return
         repo = self.chosen()
         (resetname, line) = RepoSurgeon.pop_token(line)
+        resetname = string_escape(resetname)
         if "/" not in resetname:
             resetname = "heads/" + resetname
         if not resetname.startswith("refs/"):
