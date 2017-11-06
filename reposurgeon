@@ -4833,6 +4833,11 @@ class StreamParser:
             previous = revision
         # Filemaps are no longer needed
         del filemaps
+        # Bail out if we have read no commits
+        try:
+            self.repo.earliest_commit()
+        except StopIteration:
+            raise Recoverable("empty stream or repository.")
         # Warn about dubious branch links
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
