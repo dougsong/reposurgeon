@@ -257,6 +257,12 @@ preceded by # is interpreted as a 1-origin
 commit-sequence number.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term><firstterm>reset@ names</firstterm></term>
+<listitem><para>A name with the prefix 'reset@' refers to the latest
+reset with a basename matching the part after the @. Usually there
+is only one such reset.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><firstterm>$</firstterm></term>
 <listitem><para>Refers to the last event.</para></listitem>
 </varlistentry>
