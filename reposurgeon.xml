@@ -1943,7 +1943,7 @@ numbers after the operation.</para>
 </varlistentry>
 <varlistentry>
 <term><command>branch</command>
-        <emphasis>branchname</emphasis>...
+        <emphasis>branchname</emphasis>
         {<command>rename</command>|<command>delete</command>}
         [<emphasis>arg</emphasis>]
 </term>
@@ -1963,9 +1963,9 @@ is prepended.</para>
 </varlistentry>
 <varlistentry>
 <term><command>tag</command>
-        <emphasis>tagname</emphasis>...
+        <emphasis>tagname</emphasis>
         <command>{move|rename|delete}</command>
-        <command>[arg]</command>.
+        <emphasis>[arg]</emphasis>
 </term>
 <listitem>
 <para>Create, move, rename, or delete a tag.</para>
@@ -2024,9 +2024,9 @@ error.</para>
 </varlistentry>
 <varlistentry>
 <term><command>reset</command>
-        <emphasis>resetname</emphasis>...
+        <emphasis>resetname</emphasis>
         <command>{create|move|rename|delete}</command>
-        <command>[arg]</command>.
+        <emphasis>[arg]</emphasis>
 </term>
 <listitem>
 <para>Create, move, rename, or delete a reset. Create is a special case; it
