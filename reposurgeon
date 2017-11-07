@@ -7987,7 +7987,7 @@ class SelectionParser(object):
     """Selection set parser."""
     def __init__(self):
         self.line = None
-        self.allitems = None
+        self.allitems = []
     def peek(self):
         return self.line and self.line[0]
     def pop(self):
