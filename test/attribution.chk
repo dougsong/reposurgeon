@@ -1,0 +1,22 @@
+
+# error: no repo
+attribution
+reposurgeon: no repo has been chosen
+
+read <multitag.fi
+
+# error: shlex.parse failure
+attribution missing "quotation mark
+reposurgeon: attribution parse failed: No closing quotation
+
+# error: no event selection
+attribution delete
+reposurgeon: no selection
+
+# error: no commits or tags selected
+=R | =B attribution
+reposurgeon: no commits or tags in selection
+
+# error: unrecognized action
+1..$ attribution bogus
+reposurgeon: unrecognized action: bogus
