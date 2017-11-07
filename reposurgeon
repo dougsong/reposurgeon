@@ -10762,7 +10762,7 @@ From a specified commit, remove a specified fileop. The syntax is:
      remove [DMRCN] OP [to COMMIT]
 
 The OP must be one of (a) the keyword 'deletes', (b) a file path, (c)
-a file patch preceded by an op type set (some subset of the letters
+a file path preceded by an op type set (some subset of the letters
 DMRCN), or (c) a 1-origin numeric index.  The 'deletes' keyword
 selects all D fileops in the commit; the others select one each.
 
@@ -10776,7 +10776,8 @@ change in a future release.
 """)
     def do_remove(self, line):
         "Delete a fileop from a specified commit."
-        if not self.chosen():
+        repo =  self.chosen()
+        if not repo:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -10788,7 +10789,7 @@ change in a future release.
         if re.match(r"[DMRCN]+$".encode('ascii'), polybytes(opindex)):
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
-        for _, event in self.selected(Commit):
+        for ie, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             if opindex == "deletes":
                 event.set_operations([e for e in event.operations() if e.op != "D"])
@@ -10819,8 +10820,15 @@ change in a future release.
             try:
                 removed = event.operations().pop(ind)
                 if target:
-                    self.chosen().events[target].append_operation(removed)
-                # FIXME: Scavenge blobs left with no references
+                    repo.events[target].append_operation(removed)
+                    # Blob might have to move, too - we need to keep the
+                    # relocated op from having an unresolvable forward
+                    # mark reference.
+                    if removed.ref is not None and target < ie:
+                        blob = repo.events.pop(repo.find(removed.ref))
+                        repo.addEvent(blob, target)
+                        repo.declare_sequence_mutation("blob move")
+                    # FIXME: Scavenge blobs left with no references
             except IndexError:
                 complain("out-of-range fileop index %s" % ind)
                 return
