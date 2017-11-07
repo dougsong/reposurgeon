@@ -33,3 +33,4 @@ Eric Sunshine <sunshine@sunshineco.com>
    to a compile/evaluate paradigm in which a selection expression can be
    compiled once and evaluated many times.
    Added 'attribution' command.
+   Added 'reorder' command.

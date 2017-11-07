@@ -18,7 +18,7 @@ Repository head:
      Fix mailbox not roundtripping correctly (added newline and munged date).
      Fix "squash" not always garbage-collecting unreferenced blobs.
      Fix "write" crashing with "prefer svn" when parent not in selection.
-     Add "attribution" command.
+     Add "attribution" and "reorder" commands.
 
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
