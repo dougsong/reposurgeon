@@ -10,6 +10,15 @@ Repository head:
      Squashes now preserve comment content of squashed commits.
      New 'timequake' and 'timebump' commands for uniquifying timestamps.
      There is now a 'reset create' command.
+     Fix "drop" crash.
+     Fix "filter --shell" never invoking shell command.
+     Fix "mailbox_in" crash when mailbox adds an author.
+     Fix event selection expression parser hanging forever on mistyped "..".
+     Fix "squash --pushback" utter brokeness when handed multiple events.
+     Fix mailbox not roundtripping correctly (added newline and munged date).
+     Fix "squash" not always garbage-collecting unreferenced blobs.
+     Fix "write" crashing with "prefer svn" when parent not in selection.
+     Add "attribution" command.
 
 3.42: 2017-03-06:
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
