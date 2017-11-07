@@ -17,7 +17,7 @@ ECHO := /bin/echo
 TERM := dumb
 
 default:
-	#@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
+	@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
 	@echo "=== Running built-in tests"
 	@$(REPOSURGEON) "runtests"
 	@if ./setpython python2; then make -e --quiet all; else echo "python2 missing; skipping tests"; fi
