@@ -49,7 +49,7 @@ all:  $(MANPAGES) $(HTMLFILES)
 %.html: %.xml
 	$(XMLTO) $(XMLTOOPTS) html-nochunks $<
 
-dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc
+dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 %.html: %.asc
 	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
 
