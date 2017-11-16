@@ -64,8 +64,10 @@ initialize)
 # Steps to using this:
 # 1. Make sure reposurgeon and repotool are on your \$PATH.
 # 2. For svn, set REMOTE_URL to point at the remote repository
-#    you want to convert.  If the repository is already in a DVCS such as
-#    hg or git, this is just the normal cloning URL.
+#    you want to convert.
+#    If the repository is already in a DVCS such as hg or git,
+#    set REMOTE_URL to either the normal cloning URL (starting with hg://,
+#    git://, etc.) or to the path of a local clone.
 # 3. For cvs, set CVS_HOST to the repo hostname and CVS_MODULE to the module,
 #    then uncomment the line that builds REMOTE_URL 
 #    Note: for CVS hosts other than Sourceforge or Savannah you will need to 
