@@ -296,7 +296,7 @@ EOF
 	else
 	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
         fi
-	bzr clone $operand $local
+	hg clone $operand $local
     elif [ -d $operand/.hg ]
     then
 	(cd $operand ; hg update)
