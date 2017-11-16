@@ -1249,15 +1249,13 @@ class HgExtractor(Extractor):
                     n, h = tuple(map(polystr, m.groups()))
                     self.refs['refs/%s%s' % (bookmark_ref, n)] = h
                     self.bookmarks_found = True
-        with self.hg_or_die("tags") as fp:
+        with self.hg_or_die("log", "--rev=tag()",
+                            "--template={tags}\t{node}\n") as fp:
             for line in fp:
-                m = ref_re.match(line)
-                if m is None:
-                    raise Recoverable("Unreadable 'hg tags' line: %r" % line)
-                n, h = tuple(map(polystr, m.groups()))
+                n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1)))
                 if n == 'tip': # pseudo-tag for most recent commit
                     continue # We don't want it
-                self.refs['refs/tags/%s'%n] = h
+                self.refs['refs/tags/%s'%n] = h[:12]
                 self.tags_found = True
         # We have no annotated tags, so self.tags = []
         # Conceivably it might be better to treat the commit message that
