@@ -284,10 +284,10 @@ EOF
 	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
         fi
 	git clone $operand $local
-    elif [ -f $operand/.hg ]
+    elif [ -d $operand/.git ]
     then
-	cd $operate
-	git pull
+	(cd $operand ; git pull)
+	git clone $operand $mirrordir
     elif [ `expr "$operand" : "hg://"` = 5 ]
     then
 	if [ "$mirrordir" ]
@@ -297,10 +297,10 @@ EOF
 	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
         fi
 	bzr clone $operand $local
-    elif [ -f $operand/.hg ]
+    elif [ -d $operand/.hg ]
     then
-	cd $operate
-	hg update
+	(cd $operand ; hg update)
+	hg clone $operand $mirrordir
     else
 	echo "repotool: $operand does not look like a repository mirror."
 	exit 1
