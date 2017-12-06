@@ -1209,7 +1209,7 @@ class HgExtractor(Extractor):
     def find_commit_data(self, baton):
         "Get all other per-commit data except branch IDs"
         assert baton is not None # pacify pylint
-        with self.hg_or_die("log", "--template", "{node|short}|{author|person} <{author|email}> {date|rfc822date}\\n") as fp:
+        with self.hg_or_die("log", "--template", '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\\n') as fp:
             for line in fp:
                 (h, ci) = polystr(line).strip().split('|')
                 # Because hg doesn't store separate author and committer info,
