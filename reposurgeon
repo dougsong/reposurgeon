@@ -4162,7 +4162,7 @@ class StreamParser:
                     filemap[node.path] = node
                     if debug_enable(DEBUG_FILEMAP):
                         announce("r%s~%s added" % (node.revision, node.path))
-                elif node.action == SD_DELETE:
+                elif node.action == SD_DELETE or (node.action == SD_REPLACE and node.kind == SD_DIR):
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
                     # Snapshot the deleted paths before removing them.

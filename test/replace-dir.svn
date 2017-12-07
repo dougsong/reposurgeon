@@ -1,0 +1,125 @@
+SVN-fs-dump-format-version: 2
+ ## Test directory replace operations
+
+UUID: db3a0fd8-e16b-4064-95fb-cae81d689d4f
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2017-06-12T22:53:11.501353Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-06-12T22:53:32.035262Z
+K 7
+svn:log
+V 14
+Create trunk.
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 110
+Content-length: 110
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-06-12T22:53:48.065332Z
+K 7
+svn:log
+V 10
+Add file.
+
+PROPS-END
+
+Node-path: trunk/d1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/d1/f1
+Node-kind: file
+Node-action: add
+Text-content-md5: 544806937aa340a41b1b59707da2e944
+Text-content-sha1: 7a7d29de2535cc09888580812b1802d94e2dcee8
+Prop-content-length: 10
+Text-content-length: 11
+Content-length: 21
+
+PROPS-END
+file d1/f1
+
+
+Revision-number: 3
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-06-12T22:54:06.212900Z
+K 7
+svn:log
+V 19
+Replace directory.
+
+PROPS-END
+
+Node-path: trunk/d1
+Node-kind: dir
+Node-action: replace
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/d1/f2
+Node-kind: file
+Node-action: add
+Text-content-md5: fb30e208f6b0b0e6ae95f8a1fc28ed08
+Text-content-sha1: 2f434c67a79b1b1ba7e6db0d27a7657c4b1ad77a
+Prop-content-length: 10
+Text-content-length: 11
+Content-length: 21
+
+PROPS-END
+file d1/f2
+
+
