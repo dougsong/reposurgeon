@@ -366,5 +366,13 @@ sample4.fi::
    Identical to sample1.fi, except :29 (the second commit on the alternate 
    branch) has been removed.
 
+== Sporadic tests ==
+
+We have one script intended to check reposurgeon's behavior. Running this
+is not part of the normal regression-test sequence.
+
+svncheck1.sh:
+   Very 
+
 // end
 
