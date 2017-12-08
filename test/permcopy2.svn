@@ -1,0 +1,142 @@
+SVN-fs-dump-format-version: 2
+ ## Test for execute-bit propagation during directory copies.
+
+UUID: a5a7972f-c2a6-4516-85c4-204863e50fd8
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2017-12-08T15:29:49.157312Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-12-08T15:30:14.980707Z
+K 7
+svn:log
+V 14
+Create trunk.
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-12-08T15:30:51.522217Z
+K 7
+svn:log
+V 18
+Create dir1/file.
+
+PROPS-END
+
+Node-path: trunk/dir1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/dir1/file
+Node-kind: file
+Node-action: add
+Text-content-md5: bbe02f946d5455d74616fc9777557c22
+Text-content-sha1: 046c168df2244d3a13985f042a50e479fe56455e
+Prop-content-length: 10
+Text-content-length: 5
+Content-length: 15
+
+PROPS-END
+file
+
+
+Revision-number: 3
+Prop-content-length: 127
+Content-length: 127
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-12-08T15:31:47.755618Z
+K 7
+svn:log
+V 27
+Make dir1/file executable.
+
+PROPS-END
+
+Node-path: trunk/dir1/file
+Node-kind: file
+Node-action: change
+Prop-content-length: 36
+Content-length: 36
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2017-12-08T15:32:19.325583Z
+K 7
+svn:log
+V 19
+Copy dir1 to dir2.
+
+PROPS-END
+
+Node-path: trunk/dir2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk/dir1
+
+

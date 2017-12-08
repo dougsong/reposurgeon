@@ -368,11 +368,17 @@ sample4.fi::
 
 == Sporadic tests ==
 
-We have one script intended to check reposurgeon's behavior. Running this
+We have two scripts intended to check Subversion's behavior. Running these
 is not part of the normal regression-test sequence.
 
 svncheck1.sh:
-   Very 
+   Simple check that a file copy propagates the executable bit.
+
+svncheck2.sh:
+   A directory copy propagates it too.
+
+svncheck3.sh
+   Simpler directory-copy propagation example.
 
 // end
 
