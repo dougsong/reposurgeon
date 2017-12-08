@@ -4613,8 +4613,9 @@ class StreamParser:
                             continue
                         ancestor_nodes[node.path] = node
                         assert node.blobmark
-                        # Time for fileop generation
-                        if ancestor:
+                        # Time for fileop generation.  Do not look for
+                        # permissions through Copy-From links.
+                        if ancestor and node.from_path == None:
                             perms = oldperms = self.permissions.get(ancestor.path,
                                                                     0o100644)
                         else:
