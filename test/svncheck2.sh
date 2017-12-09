@@ -1,4 +1,5 @@
 ## Test propagation of executable bit by directory copy
+# This was made from gen-dump.h. attached to issue #103.
 
 dump=no
 verbose=null

@@ -1,5 +1,5 @@
-## Test propagation of executable bit by directory copy
-# This was made from gen-dump.h. attached to issue #103.
+## Test propagation of executable bit by directory copy, second variant
+# This was made from gen-dump2.h. attached to issue #103.
 
 dump=no
 verbose=null
@@ -12,6 +12,10 @@ do
 done
 shift $(($OPTIND - 1))
 {
+#! /bin/sh
+
+set -e
+
 dir=$(pwd)
 svnadmin create $dir/test-repo
 svn co file://$dir/test-repo test-checkout
@@ -26,9 +30,9 @@ svn add dir1
 svn commit -m "Create dir1/file."
 svn propset svn:executable '*' dir1/file
 svn commit -m "Make dir1/file executable."
+svn up
 svn cp dir1 dir2
 svn commit -m "Copy dir1 to dir2."
-ls -l dir1/file dir2/file
 cd ../..
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]

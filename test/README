@@ -378,7 +378,7 @@ svncheck2.sh:
    A directory copy propagates it too.
 
 svncheck3.sh
-   Simpler directory-copy propagation example.
+   Variant of previous test with different op order.
 
 // end
 
