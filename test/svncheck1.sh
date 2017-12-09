@@ -31,7 +31,7 @@ cd ../..
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]
 then
-    svnadmin dump test-repo
+    svnadmin dump -q test-repo
 elif ls -l test-checkout/trunk/targetdir/sourcefile.txt | grep x >/dev/null
 then
     :

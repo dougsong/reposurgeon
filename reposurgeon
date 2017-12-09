@@ -4267,6 +4267,11 @@ class StreamParser:
             else:
                 attribution = "%s <%s> %s" % (au, au, ad)
             commit.committer = Attribution(attribution)
+            # Use this with just-generated input streams
+            # that have wall times in them.
+            if global_options["testmode"]:
+                commit.committer.date.timestamp = int(revision) * 360
+                commit.committer.date.set_tz("GMT")
             commit.properties.update(record.props)
             # Zero revision is never interesting - no operations, no
             # comment, no author, it's just a start marker for a

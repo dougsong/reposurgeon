@@ -477,13 +477,13 @@ SVNCHECK := $(shell ls -1 svncheck*.sh | sed '/.sh/s///')
 svncheck-buildregress:
 	@for file in $(SVNCHECK); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) 'read -' 'prefer git' 'write -' >$${file}.chk || exit 1; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' >$${file}.chk || exit 1; \
 	done
 svncheck-regress:
 	@echo "=== Running svncheck tests:"
 	@for file in $(SVNCHECK); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || exit 1; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || exit 1; \
 	done
 	@rm -f /tmp/regress$$$$
 
