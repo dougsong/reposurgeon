@@ -471,6 +471,22 @@ repocutter-regress:
 	done
 	@rm -f /tmp/regress$$$$
 
+# Regression-testing of Subversion permission-bit cases; look at the *.sh and
+# corresponding *.chk files to see which tests this runs.
+SVNCHECK := $(shell ls -1 svncheck*.sh | sed '/.sh/s///')
+svncheck-buildregress:
+	@for file in $(SVNCHECK); do \
+	    echo "Remaking $${file}.chk"; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) 'read -' 'prefer git' 'write -' >$${file}.chk || exit 1; \
+	done
+svncheck-regress:
+	@echo "=== Running svncheck tests:"
+	@for file in $(SVNCHECK); do \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || exit 1; \
+	done
+	@rm -f /tmp/regress$$$$
+
 # Test productions end here.
 
 # The result from this is checked in because, as it turns out, the order
