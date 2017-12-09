@@ -76,7 +76,7 @@ committer frank <frank> 1439420741 +0000
 data 3
 r7
 from :2
-M 100644 :7 sim/regress_rdb.pl
+M 100755 :7 sim/regress_rdb.pl
 M 100644 :5 sim/test_lib/temp/.keepme
 
 blob
@@ -132,7 +132,7 @@ committer frank <frank> 1443478431 +0000
 data 4
 r47
 from :13
-M 100644 :14 sim/regress_rdb.pl
+M 100755 :14 sim/regress_rdb.pl
 
 tag emptycommit-2
 #legacy-id 2

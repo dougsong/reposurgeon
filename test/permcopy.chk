@@ -60,12 +60,14 @@ Make dir1/file executable.
 from :5
 M 100755 :3 dir1/file
 
-commit refs/heads/master
+tag emptycommit-5
 #legacy-id 5
-mark :7
-committer jsm28 <jsm28> 1505494276 +0000
-data 27
-Make dir2/file executable.
 from :6
-M 100755 :3 dir2/file
+tagger jsm28 <jsm28> 1505494276 +0000
+data 161
+Make dir2/file executable.
+
+[[Tag from zero-fileop commit at Subversion r5:
+<NodeAction: r5 change file 'trunk/dir2/file' properties={'svn:executable': '*'}>
+]]
 

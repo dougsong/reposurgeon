@@ -130,7 +130,7 @@ committer esr <esr> 1324608187 +0000
 data 32
 Perform 'svn cp hello goodbye'.
 from :13
-M 100644 :8 goodbye
+M 100755 :8 goodbye
 
 blob
 mark :15
@@ -154,5 +154,5 @@ data 78
 The translated 'goodbye' fileop for this revision should have executable set.
 from :14
 M 100644 :15 README
-M 100644 :16 goodbye
+M 100755 :16 goodbye
 

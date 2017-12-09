@@ -63,5 +63,5 @@ committer esr <esr> 1440 +0000
 data 47
 Copy of sourcedir/sourcefile.txt to targetdir.
 from :6
-M 100644 :5 targetdir/sourcefile.txt
+M 100755 :5 targetdir/sourcefile.txt
 

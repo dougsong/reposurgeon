@@ -5572,7 +5572,7 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :624 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :626 debian/rules
+M 100755 :626 debian/rules
 M 100644 :627 debian/watch
 D drivers/dummycons.c
 D drivers/mgehid.h
@@ -6470,7 +6470,7 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :624 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :626 debian/rules
+M 100755 :626 debian/rules
 M 100644 :627 debian/watch
 M 100644 :850 drivers/Makefile.drvbuild
 M 100644 :943 drivers/Makefile.in
@@ -6511,7 +6511,7 @@ M 100644 :550 drivers/fentonups.c
 M 100644 :691 drivers/fentonups.h
 M 100644 :814 drivers/gamatronic.c
 M 100644 :815 drivers/gamatronic.h
-M 100644 :962 drivers/gendb
+M 100755 :962 drivers/gendb
 M 100644 :665 drivers/genericups.c
 M 100644 :806 drivers/genericups.h
 M 100644 :913 drivers/hidparser.c
@@ -6796,7 +6796,7 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :624 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :626 debian/rules
+M 100755 :626 debian/rules
 M 100644 :627 debian/watch
 M 100644 :850 drivers/Makefile.drvbuild
 M 100644 :943 drivers/Makefile.in
@@ -6838,7 +6838,7 @@ M 100644 :550 drivers/fentonups.c
 M 100644 :691 drivers/fentonups.h
 M 100644 :814 drivers/gamatronic.c
 M 100644 :815 drivers/gamatronic.h
-M 100644 :962 drivers/gendb
+M 100755 :962 drivers/gendb
 M 100644 :665 drivers/genericups.c
 M 100644 :806 drivers/genericups.h
 M 100644 :913 drivers/hidparser.c
@@ -8100,7 +8100,7 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :624 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :626 debian/rules
+M 100755 :626 debian/rules
 M 100644 :627 debian/watch
 D drivers/dummycons.c
 D drivers/mgehid.h
@@ -10001,8 +10001,8 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :1375 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :1379 debian/po/vi.po
-M 100644 :1275 debian/rules
+M 100755 :1379 debian/po/vi.po
+M 100755 :1275 debian/rules
 M 100644 :627 debian/watch
 M 100644 :1348 drivers/Doxyfile
 M 100644 :1460 drivers/Makefile.drvbuild
@@ -10050,7 +10050,7 @@ M 100644 :550 drivers/fentonups.c
 M 100644 :691 drivers/fentonups.h
 M 100644 :814 drivers/gamatronic.c
 M 100644 :815 drivers/gamatronic.h
-M 100644 :1098 drivers/gendb
+M 100755 :1098 drivers/gendb
 M 100644 :1395 drivers/generic-hid.c
 M 100644 :1396 drivers/generic-hid.h
 M 100644 :665 drivers/genericups.c
@@ -10178,8 +10178,8 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :1375 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :1379 debian/po/vi.po
-M 100644 :1275 debian/rules
+M 100755 :1379 debian/po/vi.po
+M 100755 :1275 debian/rules
 M 100644 :627 debian/watch
 M 100644 :1348 drivers/Doxyfile
 M 100644 :1460 drivers/Makefile.drvbuild
@@ -10227,7 +10227,7 @@ M 100644 :550 drivers/fentonups.c
 M 100644 :691 drivers/fentonups.h
 M 100644 :814 drivers/gamatronic.c
 M 100644 :815 drivers/gamatronic.h
-M 100644 :1098 drivers/gendb
+M 100755 :1098 drivers/gendb
 M 100644 :1395 drivers/generic-hid.c
 M 100644 :1396 drivers/generic-hid.h
 M 100644 :665 drivers/genericups.c
@@ -11653,7 +11653,6 @@ This commit was manufactured by cvs2svn to create tag
 'reportbuf_base0'.
 from :1674
 M 100644 :1 .gitignore
-M 100644 :30 clients/upssched-cmd
 M 100644 :34 clients/upsstats.c
 M 100644 :54 conf/upsstats-single.html
 M 100644 :55 conf/upsstats.html
@@ -11674,10 +11673,6 @@ M 100644 :206 man/mge-utalk.8
 M 100644 :208 man/newhidups.8
 M 100644 :215 man/snmp-ups.8
 M 100644 :237 man/upsdrvctl.8
-M 100644 :254 scripts/HP-UX/nut-drvctl.sh
-M 100644 :256 scripts/HP-UX/nut-upsd.sh
-M 100644 :258 scripts/HP-UX/nut-upsmon.sh
-M 100644 :267 scripts/Solaris8/S99upsmon
 D scripts/hotplug-ng/README
 D scripts/hotplug-ng/nut-usbups.hotplug.in
 D scripts/hotplug-ng/nut-usbups.rules.in
@@ -13337,10 +13332,10 @@ M 100644 :52 conf/upssched.conf
 M 100644 :53 conf/upsset.conf
 M 100644 :1852 conf/upsstats-single.html
 M 100644 :1853 conf/upsstats.html
-M 100644 :592 config.guess
+M 100755 :592 config.guess
 M 100644 :593 config.sub
 M 100644 :1235 configure.in
-M 100644 :1347 configure
+M 100755 :1347 configure
 M 100644 :60 data/Makefile.in
 M 100644 :1905 data/cmdvartab
 M 100644 :1895 data/driver.list
@@ -13384,8 +13379,8 @@ M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
 M 100644 :1375 debian/po/fr.po
 M 100644 :625 debian/po/templates.pot
-M 100644 :1379 debian/po/vi.po
-M 100644 :1275 debian/rules
+M 100755 :1379 debian/po/vi.po
+M 100755 :1275 debian/rules
 M 100644 :627 debian/watch
 M 100644 :1892 docs/FAQ
 M 100644 :64 docs/README
@@ -13469,7 +13464,7 @@ M 100644 :550 drivers/fentonups.c
 M 100644 :1500 drivers/fentonups.h
 M 100644 :814 drivers/gamatronic.c
 M 100644 :815 drivers/gamatronic.h
-M 100644 :1876 drivers/gendb
+M 100755 :1876 drivers/gendb
 M 100644 :1395 drivers/generic-hid.c
 M 100644 :1396 drivers/generic-hid.h
 M 100644 :1670 drivers/genericups.c
@@ -13877,8 +13872,8 @@ M 100644 :622 packaging/debian/po/ca.po
 M 100644 :623 packaging/debian/po/cs.po
 M 100644 :1375 packaging/debian/po/fr.po
 M 100644 :625 packaging/debian/po/templates.pot
-M 100644 :1379 packaging/debian/po/vi.po
-M 100644 :1275 packaging/debian/rules
+M 100755 :1379 packaging/debian/po/vi.po
+M 100755 :1275 packaging/debian/rules
 M 100644 :627 packaging/debian/watch
 
 blob
