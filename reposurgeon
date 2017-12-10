@@ -31,6 +31,13 @@ try:
 except ImportError:
     hglib = None
 
+# This import will only work if python-psutil is installed.
+# It is used to guard against OOMing on reads of huge repositories
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 version="3.42"
 
 #
@@ -769,6 +776,13 @@ core
 file_filters = {
     "fossil" : ("fossil export --git %s", "fossil import --git %s"),
     }
+
+def memcheck():
+    "Check to see if we're vulnerable to OOM"
+    if psutil is None:
+        mem = psutil.virtual_memory()
+        if mem.percent > 90:
+            raise Fatal("Low-memory condition, bailing out before OOM or crash.")
 
 # How to write extractor classes:
 #
@@ -3845,6 +3859,7 @@ class StreamParser:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
+                            memcheck()
                     # End of Subversion dump parsing
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(options, baton)
@@ -4072,6 +4087,7 @@ class StreamParser:
                             tag.legacy_id = legacy_id
                             self.repo.addEvent(tag)
                             baton.twirl()
+                            memcheck()
                         else:
                             # Simply pass through any line we don't understand.
                             self.repo.addEvent(Passthrough(line))
@@ -4249,6 +4265,7 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
+            memcheck()
             commit = Commit(self.repo)
             try:
                 ad = record.props.pop("svn:date")
@@ -13027,6 +13044,22 @@ following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
+
+    #
+    # Resource-exhaustion checks
+    #
+    def help_memcheck(self):
+        sys.stdout.write("""
+Report available and used memory.
+
+Requires the Python psutil module to be installed.
+""")
+    def do_memcheck(self, _line):
+        if psutil is None:
+            complain("The psutil module required for memcheck is not installed.")
+        else:
+            mem = psutil.virtual_memory()
+            announce(repr(mem))
 
     #
     # Macros and custom extensions
