@@ -12,6 +12,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     python2.7 \
     python3 \
     python-pip \
+    subversion \
     xmlto \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
