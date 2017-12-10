@@ -23,7 +23,7 @@ data 210
 commit refs/heads/master
 #legacy-id 1
 mark :2
-committer esr <esr> 360 +0000
+committer Fred J. Foonly <foonly@foo.com> 360 +0000
 data 14
 Create trunk.
 M 100644 :1 .gitignore
@@ -36,7 +36,7 @@ file
 commit refs/heads/master
 #legacy-id 2
 mark :4
-committer esr <esr> 720 +0000
+committer Fred J. Foonly <foonly@foo.com> 720 +0000
 data 18
 Create dir1/file.
 from :2
@@ -45,7 +45,7 @@ M 100644 :3 dir1/file
 commit refs/heads/master
 #legacy-id 3
 mark :5
-committer esr <esr> 1080 +0000
+committer Fred J. Foonly <foonly@foo.com> 1080 +0000
 data 27
 Make dir1/file executable.
 from :4
@@ -54,7 +54,7 @@ M 100755 :3 dir1/file
 commit refs/heads/master
 #legacy-id 4
 mark :6
-committer esr <esr> 1440 +0000
+committer Fred J. Foonly <foonly@foo.com> 1440 +0000
 data 19
 Copy dir1 to dir2.
 from :5

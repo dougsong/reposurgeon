@@ -4270,6 +4270,8 @@ class StreamParser:
             # Use this with just-generated input streams
             # that have wall times in them.
             if global_options["testmode"]:
+                commit.committer.name = "Fred J. Foonly"
+                commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = int(revision) * 360
                 commit.committer.date.set_tz("GMT")
             commit.properties.update(record.props)
