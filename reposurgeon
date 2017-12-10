@@ -4621,7 +4621,7 @@ class StreamParser:
                         # ancestor always has the permission computed from *its*
                         # ancestor.
                         if ancestor:
-                            perms = oldperms = self.permissions.get(ancestor.path,
+                            perms = oldperms = self.permissions.get((ancestor.revision, ancestor.path),
                                                                     0o100644)
                         else:
                             perms = oldperms = 0o100644
@@ -4670,7 +4670,7 @@ class StreamParser:
                             self.repo.objfind(fileop.ref).addalias(node.path)
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
-                        self.permissions[node.path] = perms
+                        self.permissions[(node.revision, node.path)] = perms
                 # These are directory actions.
                 elif node.action in (SD_DELETE, SD_REPLACE):
                     if debug_enable(DEBUG_EXTRACT):
