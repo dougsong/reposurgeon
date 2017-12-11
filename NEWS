@@ -20,7 +20,7 @@ Repository head:
      Fix "write" crashing with "prefer svn" when parent not in selection.
      Add "attribution" and "reorder" commands.
      Fix "reset" crashes and make "reset" respect selection.
-     New "memcheck" command reports free memory.
+     The "timing" command reports free memory if the psutil module is installed.
      Repository reading now has an OOM guard - will bail out on low memory.
 
 3.42: 2017-03-06:

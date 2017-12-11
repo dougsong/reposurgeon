@@ -779,16 +779,18 @@ file_filters = {
 
 # Sanity checking and progress metering
 
-def memcheck():
+def memcheck(repo):
     "Check to see if we're vulnerable to OOM"
     if psutil is None:
         mem = psutil.virtual_memory()
         if mem.percent > 90:
+            if repo:
+                repo.dumptimes()
             raise Fatal("Low-memory condition, bailing out before OOM or crash.")
 
 lastseek = 0
 
-def readprogress(baton, tell, filesize):
+def readprogress(baton, fp, filesize):
     # The GB grain means this will never emit percentages on small repositories.
     # That is entirely intentional.  Stream prsing is fast enough that we don't
     # care about having to project a completion time below one grain.  Might
@@ -796,10 +798,10 @@ def readprogress(baton, tell, filesize):
     grain = 1000 * 1000 * 1024	# 1GB
     if filesize is not None:
         global lastseek
-        frac = (tell / (filesize * 1.0))
-        if tell > lastseek + grain:
+        frac = (fp.tell() / (filesize * 1.0))
+        if fp.tell() > lastseek + grain:
             baton.twirl("%d%%..." % (frac * 100))
-            lastseek = tell
+            lastseek = fp.tell()
     baton.twirl()
 
 # How to write extractor classes:
@@ -3878,8 +3880,8 @@ class StreamParser:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
-                            memcheck()
-                            readprogress(baton, self.fp.tell(), filesize)
+                            memcheck(None)
+                            readprogress(baton, self.fp, filesize)
                     # End of Subversion dump parsing
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(options, baton)
@@ -4106,8 +4108,8 @@ class StreamParser:
                                       comment = self.fi_read_data()[0])
                             tag.legacy_id = legacy_id
                             self.repo.addEvent(tag)
-                            memcheck()
-                            readprogress(baton, self.fp.tell(), filesize)
+                            memcheck(None)
+                            readprogress(baton, self.fp, filesize)
                         else:
                             # Simply pass through any line we don't understand.
                             self.repo.addEvent(Passthrough(line))
@@ -4148,6 +4150,9 @@ class StreamParser:
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
+        # We need a more detailed progress meter on large repos
+        repolen = len(self.revisions.items())
+        large = repolen > 50000
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
@@ -4174,8 +4179,14 @@ class StreamParser:
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         copynodes.sort(key=operator.attrgetter("from_rev"))
-        self.repo.timings.append(["copynodes", time.time()])
-        baton.twirl()
+        def timeit(tag):
+            self.repo.timings.append([tag, time.time()])
+            if large:
+                baton.twirl("%s:%.3fs..." % (tag, self.repo.timings[-1][1] - self.repo.timings[-2][1]))
+            else:
+                baton.twirl()
+            memcheck(self.repo)
+        timeit("copynodes")
         # Build filemaps.
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 2")
@@ -4213,8 +4224,7 @@ class StreamParser:
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
         del filemap
-        self.repo.timings.append(["filemaps", time.time()])
-        baton.twirl()
+        timeit("filemaps")
         # Blows up huge on large repos...
         #if debug_enable(DEBUG_FILEMAP):
         #    announce("filemaps %s" % filemaps)
@@ -4230,8 +4240,7 @@ class StreamParser:
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
             baton.twirl()
-        self.repo.timings.append(["copysets", time.time()])
-        baton.twirl()
+        timeit("copysets")
         # Build commits
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
@@ -4285,7 +4294,7 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
-            memcheck()
+            memcheck(self.repo)
             commit = Commit(self.repo)
             try:
                 ad = record.props.pop("svn:date")
@@ -4895,7 +4904,7 @@ class StreamParser:
         self.fileop_branchlinks.discard("trunk" + os.sep)
         if self.fileop_branchlinks - self.directory_branchlinks:
             self.gripe("branch links detected by file ops only: %s" % " ".join(sorted(self.fileop_branchlinks - self.directory_branchlinks)))
-        self.repo.timings.append(["commits", time.time()])
+        timeit("commits")
         if debug_enable(DEBUG_EXTRACT):
             announce("at post-parsing time:")
             for commit in self.repo.commits():
@@ -4907,7 +4916,6 @@ class StreamParser:
                           len(commit.operations()),
                           len(commit.properties),
                           msg.strip()[:20]))
-        baton.twirl()
         # First, turn the root commit into a tag
         if self.repo.events and not self.repo.earliest_commit().operations():
             try:
@@ -4918,6 +4926,7 @@ class StreamParser:
                                  "[[Tag from root commit at Subversion r%s]]\n" % initial.legacy_id)
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
+        timeit("rootcommit")
         # Now, branch analysis.
         branchroots = []
         if not self.branches or nobranch:
@@ -4954,8 +4963,7 @@ class StreamParser:
                     self.branches["root"] = None
                 lastbranch = branch
                 baton.twirl()
-            self.repo.timings.append(["branches", time.time()])
-            baton.twirl()
+            timeit("branches")
             # ...then rebuild parent links so they follow the branches
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
@@ -4980,8 +4988,7 @@ class StreamParser:
                 earliest = self.repo.earliest_commit()
                 if commit != earliest:
                     self.branchlink[commit.mark] = (commit, earliest)
-            self.repo.timings.append(["root", time.time()])
-            baton.twirl()
+            timeit("root")
             # Add links due to Subversion copy operations
             if debug_enable(DEBUG_EXTRACT):
                 announce("branch roots: [{roots}], links {{{links}}}".format(
@@ -5016,8 +5023,7 @@ class StreamParser:
                         and root.branch != ("trunk" + os.sep):
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (root.legacy_id, root.branch))
-            self.repo.timings.append(["branchlinks", time.time()])
-            baton.twirl()
+            timeit("branchlinks")
             # Add links due to svn:mergeinfo properties
             mergeinfo = PathMap()
             mergeinfos = {}
@@ -5113,8 +5119,7 @@ class StreamParser:
                 mergeinfos[revision] = mergeinfo.snapshot()
                 baton.twirl()
             del mergeinfo, mergeinfos
-            self.repo.timings.append(["mergeinfo", time.time()])
-            baton.twirl()
+            timeit("mergeinfo")
             if debug_enable(DEBUG_EXTRACT):
                 announce("after branch analysis")
                 for commit in self.repo.commits():
@@ -5134,8 +5139,7 @@ class StreamParser:
         for commit in self.repo.commits():
             commit.canonicalize()
             baton.twirl()
-        self.repo.timings.append(["canonicalize", time.time()])
-        baton.twirl()
+        timeit("canonicalize")
         if debug_enable(DEBUG_EXTRACT):
             announce("after canonicalization")
         # Now clean up junk commits generated by cvs2svn.
@@ -5161,8 +5165,7 @@ class StreamParser:
             if m and not commit.has_children():
                 commit.delete(["--tagback"])
             baton.twirl()
-        self.repo.timings.append(["junk", time.time()])
-        baton.twirl()
+        timeit("junk")
         if debug_enable(DEBUG_EXTRACT):
             announce("after cvs2svn artifact removal")
         # Now we need to tagify all other commits without fileops, because git
@@ -5238,8 +5241,7 @@ class StreamParser:
                 commit.set_branch(os.path.join("refs", "heads",
                                               os.path.basename(commit.branch[:-1])))
             baton.twirl()
-        ##self.repo.timings.append(["polishing", time.time()])
-        baton.twirl()
+        timeit("polishing")
         if debug_enable(DEBUG_EXTRACT):
             announce("after branch name mapping")
         self.repo.tagify_empty(tipdeletes = True,
@@ -5264,8 +5266,7 @@ class StreamParser:
                         commit.operations()[i].op = None
             commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
             baton.twirl()
-        self.repo.timings.append(["canonicalizing", time.time()])
-        baton.twirl()
+        timeit("canonicalizing")
         if debug_enable(DEBUG_EXTRACT):
             announce("after delete/copy canonicalization")
         # Remove spurious parent links caused by random cvs2svn file copies.
@@ -5285,12 +5286,9 @@ class StreamParser:
                         commit.remove_parent(a)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
-        self.repo.timings.append(["debubbling", time.time()])
-        baton.twirl()
+        timeit("debubbling")
         self.repo.renumber(baton=baton)
-        baton.twirl()
-        self.repo.timings.append(["renumbering", time.time()])
-        self.repo.write_legacy = True
+        timeit("renumbering")
         # Look for tag and branch merges that mean we may want to undo a
         # tag or branch creation
         ignore_deleteall = set(commit.mark
@@ -5301,7 +5299,7 @@ class StreamParser:
                     and commit.mark not in ignore_deleteall:
                 self.gripe("mid-branch deleteall on %s at <%s>." % \
                         (commit.branch, commit.legacy_id))
-        self.repo.timings.append(["linting", time.time()])
+        timeit("linting")
         # Treat this in-core state as though it was read from an SVN repo
         self.repo.hint("svn", strong=True)
 
@@ -7304,6 +7302,21 @@ class Repository:
                         # we'd probably prefer the last to the first.
                         return self.objfind(op.ref)
         return None
+
+    def dumptimes(self):
+        total = self.timings[-1][1] - self.timings[0][-1]
+        commit_count = sum(1 for _ in self.commits())
+        if self.legacy_count is None:
+            sys.stdout.write("        commits: %d\n" % commit_count)
+        else:
+            sys.stdout.write("        commits: %d (from %d)\n" % (commit_count, self.legacy_count))
+        for (i, (phase, _interval)) in enumerate(self.timings):
+            if i > 0:
+                interval = self.timings[i][1] - self.timings[i-1][1]
+                sys.stdout.write("%15s: %.3f (%2.2f%%)\n" % (phase,
+                                              interval,
+                                              (interval * 100)/total))
+        sys.stdout.write("          total: %.3f (%d/sec)\n" % (total, int((self.legacy_count or commit_count))/total))
 
     # Sequence emulation methods
     def __len__(self):
@@ -9732,26 +9745,19 @@ on code executed via '-'.
 
     def help_timing(self):
         sys.stdout.write("""
-Report phase-timing results from repository analysis.
+Report phase-timing results and memory usage from repository analysis.
 """)
     def do_timing(self, _line):
-        "Report repo-analysis times."
+        "Report repo-analysis times and memory usage."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        total = self.repo.timings[-1][1] - self.repo.timings[0][-1]
-        commit_count = sum(1 for _ in self.repo.commits())
-        if self.repo.legacy_count is None:
-            sys.stdout.write("        commits: %d\n" % commit_count)
+        self.repo.dumptimes()
+        if psutil is None:
+            complain("The psutil module required for memory statistics is not installed.")
         else:
-            sys.stdout.write("        commits: %d (from %d)\n" % (commit_count, self.repo.legacy_count))
-        for (i, (phase, _interval)) in enumerate(self.repo.timings):
-            if i > 0:
-                interval = self.repo.timings[i][1] - self.repo.timings[i-1][1]
-                sys.stdout.write("%15s: %.3f (%2.2f%%)\n" % (phase,
-                                              interval,
-                                              (interval * 100)/total))
-        sys.stdout.write("          total: %.3f (%d/sec)\n" % (total, int((self.repo.legacy_count or commit_count))/total))
+            mem = psutil.virtual_memory()
+            announce(repr(mem))
 
     #
     # Information-gathering
@@ -13064,22 +13070,6 @@ following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     global_options[option] = False
-
-    #
-    # Resource-exhaustion checks
-    #
-    def help_memcheck(self):
-        sys.stdout.write("""
-Report available and used memory.
-
-Requires the Python psutil module to be installed.
-""")
-    def do_memcheck(self, _line):
-        if psutil is None:
-            complain("The psutil module required for memcheck is not installed.")
-        else:
-            mem = psutil.virtual_memory()
-            announce(repr(mem))
 
     #
     # Macros and custom extensions

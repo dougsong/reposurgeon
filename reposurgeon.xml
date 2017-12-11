@@ -3150,7 +3150,7 @@ gathers statistics only on code executed via '-'.</para>
 <term><command>timing</command>
 </term>
 <listitem>
-<para>Display statistics on phase timing in repository analysis.
+<para>Display statistics on phase timing and memory usage in repository analysis.
 Mainly of interest to developers trying to speed up the program.</para>
 </listitem>
 </varlistentry>
