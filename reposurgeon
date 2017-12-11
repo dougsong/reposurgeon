@@ -781,7 +781,7 @@ file_filters = {
 
 def memcheck(repo):
     "Check to see if we're vulnerable to OOM"
-    if psutil is None:
+    if psutil is not None:
         mem = psutil.virtual_memory()
         if mem.percent > 90:
             if repo:
