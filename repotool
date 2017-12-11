@@ -257,12 +257,18 @@ mirror)
 #!/bin/sh
 exit 0;
 EOF
+	# Note: The --allow-non-empty and --steal-lock options permit
+	# this to operate on a Subversion repository you have pulled
+	# in with rsync (which is very much faster than mirrorng via
+	# SVN protocol), but they disable some safety checking.  Be
+	# very sure you have not made any local changes to the repo
+	# since rsyncing, or havoc will ensue.
 	chmod a+x $local/hooks/pre-revprop-change
-	svnsync init file://${PWD}/$local $operand
-	svnsync synchronize file://${PWD}/$local
+	svnsync init --allow-non-empty file://${PWD}/$local $operand
+	svnsync synchronize --steal-lock file://${PWD}/$local
     elif [ -d "$operand/locks" ]
     then
-	svnsync synchronize file://${PWD}/$operand
+	svnsync --steal-lock synchronize file://${PWD}/$operand
     elif [ `expr "$operand" : "cvs://"` = 6 ]
     then
 	if [ "$mirrordir" ]
