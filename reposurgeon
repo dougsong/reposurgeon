@@ -777,12 +777,30 @@ file_filters = {
     "fossil" : ("fossil export --git %s", "fossil import --git %s"),
     }
 
+# Sanity checking and progress metering
+
 def memcheck():
     "Check to see if we're vulnerable to OOM"
     if psutil is None:
         mem = psutil.virtual_memory()
         if mem.percent > 90:
             raise Fatal("Low-memory condition, bailing out before OOM or crash.")
+
+lastseek = 0
+
+def readprogress(baton, tell, filesize):
+    # The GB grain means this will never emit percentages on small repositories.
+    # That is entirely intentional.  Stream prsing is fast enough that we don't
+    # care about having to project a completion time below one grain.  Might
+    # be this could go larger.
+    grain = 1000 * 1000 * 1024	# 1GB
+    if filesize is not None:
+        global lastseek
+        frac = (tell / (filesize * 1.0))
+        if tell > lastseek + grain:
+            baton.twirl("%d%%..." % (frac * 100))
+            lastseek = tell
+    baton.twirl()
 
 # How to write extractor classes:
 #
@@ -3691,6 +3709,7 @@ class StreamParser:
         self.repo.timings = [("start", time.time())]
         track_symlinks = set([])
         try:
+            filesize = None
             self.fp = fp
             # Optimization: if we're reading from a plain file,
             # no need to clone all the blobs.
@@ -3700,6 +3719,7 @@ class StreamParser:
                 # within a with clause.  Alas, this is a potential
                 # resource leak.
                 self.repo.seekstream = make_wrapper(open(self.fp.name, "rb"))
+                filesize = os.path.getsize(self.fp.name)
             source = source or os.path.relpath(fp.name)
             with Baton("reposurgeon: from %s" % source, enable=progress) as baton:
                 self.import_line = self.repo.legacy_count = 0
@@ -3721,7 +3741,6 @@ class StreamParser:
                             self.repo.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
-                            baton.twirl()
                             if debug_enable(DEBUG_SVNPARSE):
                                 announce("revision parsing, line %d: begins" % \
                                      (self.import_line))
@@ -3860,6 +3879,7 @@ class StreamParser:
                                          (self.import_line))
                             # End Revision processing
                             memcheck()
+                            readprogress(baton, self.fp.tell(), filesize)
                     # End of Subversion dump parsing
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(options, baton)
@@ -4086,8 +4106,8 @@ class StreamParser:
                                       comment = self.fi_read_data()[0])
                             tag.legacy_id = legacy_id
                             self.repo.addEvent(tag)
-                            baton.twirl()
                             memcheck()
+                            readprogress(baton, self.fp.tell(), filesize)
                         else:
                             # Simply pass through any line we don't understand.
                             self.repo.addEvent(Passthrough(line))
