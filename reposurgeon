@@ -4281,17 +4281,13 @@ class StreamParser:
                 obj = self.repo.legacy_map["SVN:%s" % max_rev]
             except KeyError:
                 return None
-            # ...then iterate backwards from there...
-            past_events = (self.repo.events[i] for i in
-                    range(self.repo.index(obj), -1, -1))
-            # ... finding branches of commits...
-            commit_branch = ((e, getbranch(e))
-                             for e in past_events
-                             if isinstance(e, Commit))
-            # ...to find one on the right branch.
-            return next((e for (e, branch) in commit_branch
-                         if branch and path.startswith(branch)),
-                        None)
+            for ind in range(self.repo.index(obj), -1, -1):
+                event = self.repo.events[ind]
+                if isinstance(event, Commit):
+                    b = getbranch(event)
+                    if b and path.startswith(b):
+                        return event
+            return
         previous = None
         for (revision, record) in self.revisions.items():
             global lastcrumb, lastwhere
