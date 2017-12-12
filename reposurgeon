@@ -2318,6 +2318,14 @@ class FileOp(object):
     __hash__ = None
     modify_re = re.compile(r"(M) ([0-9]+) (\S+) (.*)".encode('ascii'))
     sortkey_sentinel = chr(ord("/") + 1)
+    # Reduce working set by not having a jlllion separate instances of
+    # these, earch with its own object overhead.
+    M = sys.intern("M")
+    D = sys.intern("D")
+    R = sys.intern("R")
+    C = sys.intern("C")
+    N = sys.intern("N")
+    deleteall = sys.intern("deleteall")
     def __init__(self, repo):
         self.repo = repo
         self.op = None
@@ -2337,7 +2345,7 @@ class FileOp(object):
         # all deleted and the directory changes to a file or symlink.'
         # First sort the renames last, then sort lexicographically
         # We append a sentinel to make sure "a/b/c" < "a/b" < "a".
-        return (fileop.op == "R",
+        return (fileop.op == sys.intern("R"),
                 (fileop.path or fileop.source or "") + \
                         fileop.sortkey_sentinel)
     def construct(self, *opargs):
@@ -2355,6 +2363,8 @@ class FileOp(object):
             self.setOp("deleteall")
         else:
             raise Fatal("unexpected fileop %s" % opargs[0])
+        if self.op:
+            self.op = sys.intern(self.op)
         return self
     def parse(self, opline):
         if opline.startswith("M"):
@@ -2384,22 +2394,24 @@ class FileOp(object):
             self.op = "deleteall"
         else:
             raise Fatal("unexpected fileop %s while parsing" % opline)
+        if self.op:
+            self.op = sys.intern(self.op)
         return self
     def paths(self, pathtype=None):
         "Return the set of all paths touched by this file op."
         if not pathtype:
-            pathtype = set(('M', 'D', 'R', 'C', 'N'))
+            pathtype = set((FileOp.M, FileOp.D, FileOp.R, FileOp.C, FileOp.N))
         if self.op not in pathtype:
             return set()
-        if self.op in ("M", "D"): return {self.path}
-        if self.op in ("R", "C"): return {self.source, self.target}
+        if self.op in (FileOp.M, FileOp.D): return {self.path}
+        if self.op in (FileOp.R, FileOp.C): return {self.source, self.target}
         # Ugh...this isn't right for deleteall, but since we don't expect
         # to see that except at branch tips we'll ignore it for now.
-        if self.op in ("N", "deleteall"): return set()
+        if self.op in (FileOp.N, FileOp.deleteall): return set()
         raise Fatal("unknown fileop type")
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
-        if self.op == "deleteall" or other.op == "deleteall":
+        if self.op == FileOp.deleteall or other.op == FileOp.deleteall:
             return True
         else:
             return self.paths() & other.paths()
@@ -2407,7 +2419,7 @@ class FileOp(object):
         "Dump this fileop in import-stream format."
         pacify_pylint(vcs)
         pacify_pylint(options)
-        if self.op == "M":
+        if self.op == FileOp.M:
             showmode = self.mode
             if isinstance(self.mode, int):
                 showmode = "%06o" % self.mode
@@ -2418,19 +2430,19 @@ class FileOp(object):
                 parts.append(self.path)
             if self.ref == 'inline':
                 parts.append("\ndata %d\n%s" % (len(self.inline), self.inline))
-        elif self.op == "N":
+        elif self.op == FileOp.N:
             parts = [" ".join((self.op, self.ref, self.committish)), "\n"]
             if self.ref == 'inline':
                 parts.append("data %d\n%s" % (len(self.inline), self.inline))
-        elif self.op == "D":
+        elif self.op == FileOp.D:
             parts = ["D "]
             if len(self.path.split()) > 1:
                 parts.extend(('"', self.path, '"'))
             else:
                 parts.append(self.path)
-        elif self.op in ("R", "C"):
+        elif self.op in (FileOp.R, FileOp.C):
             parts = ['%s "%s" "%s"' %  (self.op, self.source, self.target)]
-        elif self.op == "deleteall":
+        elif self.op == FileOp.deleteall:
             parts = [self.op]
         else:
             raise Fatal("unexpected fileop %s while writing" % self.op)
@@ -2727,14 +2739,14 @@ class Commit(object):
         "De-link this commit from its parents."
         self.set_parents([])
         for fileop in self.operations():
-            if fileop.op == 'N':
+            if fileop.op == FileOp.N:
                 self.repo.inlines -=1
         self.repo = None
     def moveto(self, repo):
         "Change the repo this commit is associated with."
         for fileop in self.operations():
             fileop.repo = repo
-            if fileop.op == 'N':
+            if fileop.op == FileOp.N:
                 self.repo.inlines -=1
                 repo.inlines += 1
         self.repo = repo
@@ -2821,7 +2833,7 @@ class Commit(object):
         "Return a dictionary mapping filenames to associated M cliques."
         cliques = collections.OrderedDict()
         for (i, fileop) in enumerate(self.operations()):
-            if fileop.op == "M": cliques.setdefault(fileop.path, []).append(i)
+            if fileop.op == FileOp.M: cliques.setdefault(fileop.path, []).append(i)
         return cliques
     def fileop_dump(self):
         "Dump file ops without data or inlines; used for debugging only."
@@ -2849,11 +2861,11 @@ class Commit(object):
             else:
                 ancestor = parents[0]
                 for fileop in ancestor.operations():
-                    if fileop.op == "D" and fileop.path == path:
+                    if fileop.op == FileOp.D and fileop.path == path:
                         break
-                    elif fileop.op == "M" and fileop.path == path:
+                    elif fileop.op == FileOp.M and fileop.path == path:
                         return ancestor
-                    elif fileop.op in ("R", "C") and fileop.target == path:
+                    elif fileop.op in (FileOp.R, FileOp.C) and fileop.target == path:
                         return ancestor
         return None
     def manifest(self):
@@ -2873,14 +2885,14 @@ class Commit(object):
             ancestors = PathMap()
         # Take own fileops into account.
         for fileop in self.operations():
-            if fileop.op == 'M':
+            if fileop.op == FileOp.M:
                 ancestors[fileop.path] = (fileop.mode, fileop.ref, fileop.inline)
-            elif fileop.op == 'D':
+            elif fileop.op == FileOp.D:
                 if fileop.path in ancestors:
                     del ancestors[fileop.path]
-            elif fileop.op == 'C':
+            elif fileop.op == FileOp.C:
                 ancestors[fileop.target] = ancestors[fileop.source]
-            elif fileop.op == 'R':
+            elif fileop.op == FileOp.R:
                 ancestors[fileop.target] = ancestors[fileop.source]
                 if fileop.source in ancestors:
                     del ancestors[fileop.source]
@@ -2896,7 +2908,7 @@ class Commit(object):
         except IndexError:
             return
         else:
-            if lastop.op == "deleteall":
+            if lastop.op == FileOp.deleteall:
                 self.set_operations([lastop])
                 return
         # Fetch the tree state before us...
@@ -2911,7 +2923,7 @@ class Commit(object):
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
         # Generate needed D fileops.
-        if any(op.op == "deleteall" for op in self.operations()):
+        if any(op.op == FileOp.deleteall for op in self.operations()):
             # Any file in the parent tree might disappear.
             check_delete = parent
         else:
@@ -2943,7 +2955,7 @@ class Commit(object):
     def alldeletes(self, killset=None):
         "Is this an all-deletes commit?"
         if killset is None:
-            killset = {"D", "deleteall"}
+            killset = {FileOp.D, FileOp.deleteall}
         return all(fileop.op in killset for fileop in self.operations())
     def checkout(self, directory=None):
         "Make a directory with links to files in a specified checkout."
@@ -2985,7 +2997,7 @@ class Commit(object):
     def references(self, mark):
         "Does this commit reference a specified blob mark?"
         for fileop in self.operations():
-            if fileop.op == 'M' and fileop.ref == mark:
+            if fileop.op == FileOp.M and fileop.ref == mark:
                 return True
         return False
     def blob_by_name(self, name):
@@ -4772,7 +4784,7 @@ class StreamParser:
             deleteall_ops = []
             other_ops = []
             for (branch, ops) in cliques.items():
-                if len(ops) == 1 and ops[0].op == "deleteall":
+                if len(ops) == 1 and ops[0].op == FileOp.deleteall:
                     deleteall_ops.append((branch, ops))
                 else:
                     other_ops.append((branch, ops))
@@ -4976,9 +4988,9 @@ class StreamParser:
                 if branch is not None:
                     commit.set_branch(branch)
                     for fileop in commit.operations():
-                        if fileop.op in ("M", "D"):
+                        if fileop.op in (FileOp.M, FileOp.D):
                             fileop.path = fileop.path[len(branch):]
-                        elif fileop.op in ("R", "C"):
+                        elif fileop.op in (FileOp.R, FileOp.C):
                             fileop.source = fileop.source[len(branch):]
                             fileop.target = fileop.target[len(branch):]
                     commit.invalidate_pathset_cache()
@@ -5285,7 +5297,7 @@ class StreamParser:
             if any(fileop is None for fileop in commit.operations()):
                 raise Fatal("Null fileop at r%s" % commit.legacy_id)
             for i in range(len(commit.operations())-1):
-                if commit.operations()[i].op == 'D' and commit.operations()[i+1].op == 'M':
+                if commit.operations()[i].op == FileOp.D and commit.operations()[i+1].op == FileOp.M:
                     if commit.operations()[i].path == commit.operations()[i+1].path:
                         commit.operations()[i].op = None
             commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
@@ -5653,7 +5665,7 @@ class SubversionDumper:
                                                    date=event.committer.date,
                                                    parents=backlinks)
                     for fileop in event.operations():
-                        if fileop.op == "D":
+                        if fileop.op == FileOp.D:
                             if fileop.path.endswith(".gitignore"):
                                 self.directory_create(fp, revision,
                                                       branch=event.color,
@@ -5668,7 +5680,7 @@ class SubversionDumper:
                                           props = self.pathmap[revision][svnpath].props)
                             else:
                                 self.filedelete(fp, revision, event.color, fileop.path, parents)
-                        elif fileop.op == "M":
+                        elif fileop.op == FileOp.M:
                             if fileop.path.endswith(".gitignore"):
                                 svnpath = self.svnize(event.color,
                                                       os.path.dirname(fileop.path))
@@ -5701,7 +5713,7 @@ class SubversionDumper:
                                                 fileop.path,
                                                 fileop.inline,
                                                 parents)
-                        elif fileop.op == "R":
+                        elif fileop.op == FileOp.R:
                             self.filecopy(fp,
                                           revision,
                                           event.color,
@@ -5709,14 +5721,14 @@ class SubversionDumper:
                                           fileop.target,
                                           parents)
                             self.filedelete(fp, revision, event.branch, fileop.source, event.parents())
-                        elif fileop.op == "C":
+                        elif fileop.op == FileOp.C:
                             self.filecopy(fp,
                                           revision,
                                           event.color,
                                           fileop.source,
                                           fileop.target,
                                           parents)
-                        elif fileop.op == "deleteall":
+                        elif fileop.op == FileOp.deleteall:
                             self.filedeleteall(fp,
                                                revision,
                                                event.color)
@@ -6174,7 +6186,7 @@ class Repository:
         # Tagify commits without fileops
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
-            is_tipdelete = lambda c: c.alldeletes(killset={"deleteall"}) \
+            is_tipdelete = lambda c: c.alldeletes(killset={FileOp.deleteall}) \
                                      and not c.has_children()
         else:
             is_tipdelete = lambda _: False
@@ -6252,7 +6264,7 @@ class Repository:
                     else:
                         (basename, cvsref) = event.cookie
                         for fileop in commit.operations():
-                            if fileop.op == 'M' and fileop.ref == event.mark:
+                            if fileop.op == FileOp.M and fileop.ref == event.mark:
                                 if not os.path.basename(fileop.path).endswith(basename):
                                     # Usually the harmless result of a
                                     # file move or copy that cvs2svn or
@@ -6312,7 +6324,7 @@ class Repository:
                 event = self.events[ei]
                 if isinstance(event, Commit):
                     for fileop in event.operations():
-                        if fileop.op == 'M':
+                        if fileop.op == FileOp.M:
                             if fileop.ref != "inline":
                                 implied.add(self.find(fileop.ref))
                     for tag in event.attachments:
@@ -6425,7 +6437,7 @@ class Repository:
         count = 0
         while True:
             for fileop in event.operations():
-                if fileop and fileop.op == "M" and fileop.path == path:
+                if fileop and fileop.op == FileOp.M and fileop.path == path:
                     count += 1
                     break
             # 0, 1, and >1 are the interesting cases
@@ -6448,17 +6460,17 @@ class Repository:
         #
         # First op M
         #
-        if pair == ("M", "M"):
+        if pair == (FileOp.M, FileOp.M):
             # Leave these in place, they get handled later.
             return (False, left, right, None, 0)
         # M a + D a -> D a
         # Or, could reduce to nothing if M a was the only modify..
-        elif left.op == "M" and right.op in "D":
+        elif left.op == FileOp.M and right.op in FileOp.D:
             if self.ancestor_count(event, left.path) == 1:
                 return (True, None, None, None, 1)
             else:
                 return (True, right, None, None, 2)
-        elif left.op == "M" and right.op == "R":
+        elif left.op == FileOp.M and right.op == FileOp.R:
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
                 if self.ancestor_count(event, left.path) == 1:
@@ -6476,25 +6488,25 @@ class Repository:
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
-        elif left.op == "M" and right.op == "C":
+        elif left.op == FileOp.M and right.op == FileOp.C:
             return (False, left, right, None, 5)
         #
         # First op D or deleteall
         #
         # Delete followed by modify undoes delete, since M carries whole files.
-        elif pair == ("D", "M"):
+        elif pair == (FileOp.D, FileOp.M):
             return (True, None, right, None, 6)
         # But we have to leave deletealls in place, since they affect right ops
-        elif pair == ("deleteall", "M"):
+        elif pair == (FileOp.deleteall, FileOp.M):
             return (False, left, right, None, 7)
         # These cases should be impossible.  But cvs2svn actually generates
         # adjacent deletes into Subversion dumpfiles which turn into (D, D).
-        elif left.op == "deleteall" and right.op != "M":
+        elif left.op == FileOp.deleteall and right.op != FileOp.M:
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
-        elif left.op == "D" and right.op == "D":
+        elif left.op == FileOp.D and right.op == FileOp.D:
             return (True, left, None, None, -2)
-        elif left.op == "D" and right.op in ("R", "C"):
+        elif left.op == FileOp.D and right.op in (FileOp.R, FileOp.C):
             if left.path == right.source:
                 return (False, left, right,
                         "R or C of %s after deletion?" % left.path, -3)
@@ -6503,7 +6515,7 @@ class Repository:
         #
         # First op R
         #
-        elif pair == ("R", "D"):
+        elif pair == (FileOp.R, FileOp.D):
             if left.target == right.path:
                 # Rename followed by delete of target composes to source delete
                 right.path = left.source
@@ -6514,14 +6526,14 @@ class Repository:
                 return (False, left, None,
                         "delete of %s after renaming to %s?" % (right.path, left.source), -4)
         # Rename followed by deleteall shouldn't be possible
-        elif pair == ("R", "deleteall") and left.target == right.path:
+        elif pair == (FileOp.R, FileOp.deleteall) and left.target == right.path:
             return (False, None, right,
                     "rename before deleteall not removed?", -5)
         # Leave rename or copy followed by modify alone
-        elif pair == ("R", "M") or pair == ("C", "M"):
+        elif pair == (FileOp.R, FileOp.M) or pair == (FileOp.C, FileOp.M):
             return (False, left, right, None, 10)
         # Compose renames where possible
-        elif left.op == "R" and right.op == "R":
+        elif left.op == FileOp.R and right.op == FileOp.R:
             if left.target == right.source:
                 left.target = right.target
                 return (True, left, None, None, 11)
@@ -6530,20 +6542,20 @@ class Repository:
                         "R %s %s is inconsistent with following operation" \
                         % (left.source, left.target), -6)
         # We could do R a b + C b c -> C a c + R a b, but why?
-        if left.op == "R" and right.op == "C":
+        if left.op == FileOp.R and right.op == FileOp.C:
             return (False, left, right, None, 12)
         #
         # First op C
         #
-        elif pair == ("C", "D"):
+        elif pair == (FileOp.C, FileOp.D):
             if left.source == right.path:
                 # Copy followed by delete of the source is a rename.
-                left.setOp("R")
+                left.setOp(FileOp.R)
                 return (True, left, None, None, 13)
             elif left.target == right.path:
                 # This delete undoes the copy
                 return (True, None, None, None, 14)
-        elif pair == ("C", "R"):
+        elif pair == (FileOp.C, FileOp.R):
             if left.source == right.source:
                 # No reduction
                 return (False, left, right, None, 15)
@@ -6552,7 +6564,7 @@ class Repository:
                 if left.target == right.source:
                     left.target = right.target
                     return (True, left, None, None, 16)
-        elif pair == ("C", "C"):
+        elif pair == (FileOp.C, FileOp.C):
             # No reduction
             return (False, left, right, None, 17)
         #
@@ -6565,7 +6577,7 @@ class Repository:
         # Handling deleteall operations is simple
         lastdeleteall = None
         for (i, a) in enumerate(commit.operations()):
-            if a.op == "deleteall":
+            if a.op == FileOp.deleteall:
                 lastdeleteall = i
         if lastdeleteall is not None:
             if debug_enable(DEBUG_DELETE):
@@ -6755,7 +6767,7 @@ class Repository:
                     earliest = parent.index()
                     swap_indices = set()
                     for fileop in event.operations():
-                        if fileop.op == 'M':
+                        if fileop.op == FileOp.M:
                             blob_index = self.find(fileop.ref)
                             if blob_index > earliest: swap_indices.add(blob_index)
                     if swap_indices:
@@ -6817,7 +6829,7 @@ class Repository:
                     # Only keep last M of each clique, leaving other ops alone
                     event.set_operations( \
                            [op for (i, op) in enumerate(event.operations())
-                            if (op.op != "M") or (i == cliques[op.path][-1])])
+                            if (op.op != FileOp.M) or (i == cliques[op.path][-1])])
                     event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
                     announce("Commit %d, after applying policy:" % (ei + 1,))
@@ -6836,7 +6848,7 @@ class Repository:
         for event in self.events:
             if isinstance(event, Commit):
                 for fileop in event.operations():
-                    if fileop.op == 'M' and fileop.ref in dup_map:
+                    if fileop.op == FileOp.M and fileop.ref in dup_map:
                         fileop.ref = dup_map[fileop.ref]
         self.gc_blobs()
     def gc_blobs(self):
@@ -6845,7 +6857,7 @@ class Repository:
         for event in self.events:
             if isinstance(event, Commit):
                 for fileop in event.operations():
-                    if fileop.op == 'M':
+                    if fileop.op == FileOp.M:
                         backreferences[fileop.ref] += 1
         def eligible(e):
             return isinstance(e, Blob) and not backreferences[e.mark]
@@ -6906,9 +6918,9 @@ class Repository:
                     edges.eout.add(p)
                     dag.setdefault(p, dag_edges()).ein.add(n)
                 for o in node.operations():
-                    if o.op == 'M':
+                    if o.op == FileOp.M:
                         handle(n, o.ref)
-                    elif o.op == 'N':
+                    elif o.op == FileOp.N:
                         handle(n, o.ref)
                         handle(n, o.committish)
             elif isinstance(node, Blob):
@@ -6980,9 +6992,9 @@ class Repository:
                 ops = []
                 for op in x.operations():
                     path = None
-                    if op.op == 'D':
+                    if op.op == FileOp.D:
                         path = op.path
-                    elif op.op in ('R', 'C'):
+                    elif op.op in (FileOp.R, FileOp.C):
                         path = op.source
                     if path is not None and not x.visible(path):
                         if not bequiet:
@@ -7057,7 +7069,7 @@ class Repository:
                     pass
         for commit in self.commits():
             for fileop in commit.operations():
-                if fileop.op == "M" and fileop.ref.startswith(":"):
+                if fileop.op == FileOp.M and fileop.ref.startswith(":"):
                     new = remark(fileop.ref, fileop)
                     if debug_enable(DEBUG_UNITE):
                         announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
@@ -7132,7 +7144,7 @@ class Repository:
             # Now marks in fileops
             if isinstance(event, Commit):
                 for fileop in event.operations():
-                    if fileop.op == "M" and fileop.ref.startswith(":"):
+                    if fileop.op == FileOp.M and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
                         if debug_enable(DEBUG_UNITE):
                             announce("moving %s -> %s in fileop"
@@ -7210,9 +7222,9 @@ class Repository:
                 # Might cause an internal-error message, but no real
                 # harm will be done.
                 for (i, fileop) in enumerate(ancestor.operations()):
-                    if fileop.op == 'R' and fileop.target == path:
+                    if fileop.op == FileOp.R and fileop.target == path:
                         path = fileop.source
-                    elif fileop.op == 'M' and fileop.path == path:
+                    elif fileop.op == FileOp.M and fileop.path == path:
                         return (ancestor, i)
                 else:
                     backto += ancestor.parents()
@@ -7226,14 +7238,14 @@ class Repository:
         for commit in self.commits():
             renames = []
             for (d, op) in enumerate(commit.operations()):
-                if op.op == 'D':
+                if op.op == FileOp.D:
                     previous = self.__last_modification(commit, op.path)
                     if not previous:
                         raise Recoverable("internal error looking for renames of %s" % op.path)
                     else:
                         (ancestor, i) = previous
                         for (m, op2) in enumerate(commit.operations()):
-                            if op2.op == 'M' and \
+                            if op2.op == FileOp.M and \
                                ancestor.operations()[i].mode == op2.mode and \
                                ancestor.operations()[i].ref == op2.ref:
                                 renames.append((d, m))
@@ -7243,7 +7255,7 @@ class Repository:
                 commit.operations()[d].source = commit.operations()[d].path
                 commit.operations()[d].target = commit.operations()[m].path
                 del commit.operations()[d].path
-                commit.operations()[d].op = 'R'
+                commit.operations()[d].op = FileOp.R
                 commit.operations().pop(m)
                 commit.invalidate_pathset_cache()
         return rename_count
@@ -7254,12 +7266,12 @@ class Repository:
             event = self.events[ei]
             if isinstance(event, Commit):
                 for fileop in event.operations():
-                    if fileop.op in ("M", "D"):
+                    if fileop.op in (FileOp.M, FileOp.D):
                         newpath = hook(fileop.path)
                         if newpath != fileop.path:
                             modified.add(newpath)
                         fileop.path = newpath
-                    elif fileop.op in ("R", "C"):
+                    elif fileop.op in (FileOp.R, FileOp.C):
                         newpath = hook(fileop.source)
                         if newpath != fileop.source:
                             modified.add(newpath)
@@ -7316,12 +7328,12 @@ class Repository:
             ancestor = back[0]
             for op in ancestor.operations():
                 if hasattr(op, "path") and op.path == path:
-                    if op.op == "D":
+                    if op.op == FileOp.D:
                         # Path had no ancestor after last delete
                         return None
-                    elif op.op in ("R", "C"):
+                    elif op.op in (FileOp.R, FileOp.C):
                         path = op.source
-                    elif op.op == "M":
+                    elif op.op == FileOp.M:
                         # Buglet: if this path has multiple ops,
                         # we'd probably prefer the last to the first.
                         return self.objfind(op.ref)
@@ -7774,7 +7786,7 @@ class RepositoryList:
         def do_color(commit, color):
             commit.color = color
             for fileop in commit.operations():
-                if fileop.op == "M" and fileop.ref != "inline":
+                if fileop.op == FileOp.M and fileop.ref != "inline":
                     blob = self.repo.find(fileop.ref)
                     assert isinstance(self.repo[blob], Blob)
                     self.repo[blob].colors.append(color)
@@ -7965,7 +7977,7 @@ class RepositoryList:
                                          (fileop.op,
                                           fileop.source,
                                           fileop.target))
-                                if fileop.op == "R":
+                                if fileop.op == FileOp.R:
                                     try:
                                         matchers.remove("^" + fileop.source + "$")
                                     except ValueError:
@@ -7973,9 +7985,9 @@ class RepositoryList:
                                 matchers.append("^" + fileop.target + "$")
                                 expunge, notagify = digest(matchers)
                             elif fileop.targetdelete:
-                                if fileop.op == "R":
-                                    fileop.op = "D"
-                                elif fileop.op == "C":
+                                if fileop.op == FileOp.R:
+                                    fileop.op = FileOp.D
+                                elif fileop.op == FileOp.C:
                                     deletia.append(i)
                                 matchers.append("^" + fileop.target + "$")
                                 expunge, notagify = digest(matchers)
@@ -7995,12 +8007,12 @@ class RepositoryList:
             blobs = []
             for i in deletia:
                 fileop = event.operations()[i]
-                if fileop.op == 'D':
+                if fileop.op == FileOp.D:
                     keepers.append(fileop)
                     if verbose:
                         announce("at %d, expunging D %s" \
                                  % (ei+1, fileop.path))
-                elif fileop.op == 'M':
+                elif fileop.op == FileOp.M:
                     keepers.append(fileop)
                     if fileop.ref != 'inline':
                         bi = self.repo.find(fileop.ref)
@@ -8010,7 +8022,7 @@ class RepositoryList:
                     if verbose:
                         announce("at %d, expunging M %s" \
                                  % (ei+1, fileop.path))
-                elif fileop.op in ("R", "C"):
+                elif fileop.op in (FileOp.R, FileOp.C):
                     assert(fileop.sourcedelete or fileop.targetdelete)
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
@@ -8065,7 +8077,7 @@ class RepositoryList:
         for event in self.repo.events:
             if isinstance(event, Commit):
                 for fileop in event.operations():
-                    if fileop.op == 'M':
+                    if fileop.op == FileOp.M:
                         backreferences[fileop.ref] += 1
         # Now remove commits that no longer have fileops, and released blobs.
         # Announce events that will be deleted.
@@ -8927,7 +8939,7 @@ and the ID of the invoking user. Use in regression-test loads.
                     event2 = self.chosen().events[i]
                     if isinstance(event2, Commit):
                         for fileop in event2.operations():
-                            if fileop.op == 'M' and fileop.ref==event.mark:
+                            if fileop.op == FileOp.M and fileop.ref==event.mark:
                                 add_set.add(i)
             elif isinstance(event, (Tag, Reset)):
                 if event.target:
@@ -9187,13 +9199,13 @@ and the ID of the invoking user. Use in regression-test loads.
             else:
                 tree = match_trees[parent.mark].snapshot()
             for fileop in event.operations():
-                if fileop.op == 'M' and match(polybytes(fileop.path)):
+                if fileop.op == FileOp.M and match(polybytes(fileop.path)):
                     tree[fileop.path] = True
-                elif fileop.op in ('C', 'R') and match(polybytes(fileop.target)):
+                elif fileop.op in (FileOp.C, FileOp.R) and match(polybytes(fileop.target)):
                     tree[fileop.target] = True
-                elif fileop.op == 'D' and match(polybytes(fileop.path)):
+                elif fileop.op == FileOp.D and match(polybytes(fileop.path)):
                     del tree[fileop.path]
-                elif fileop.op == 'R' and match(polybytes(fileop.source)):
+                elif fileop.op == FileOp.R and match(polybytes(fileop.source)):
                     del tree[fileop.source]
                 elif fileop.op == 'deleteall':
                     tree = PathMap()
@@ -9295,13 +9307,13 @@ and the ID of the invoking user. Use in regression-test loads.
                         here = []
                         for child in event.children():
                             for fileop in child.operations():
-                                if fileop.op == "M" and fileop.path == path:
+                                if fileop.op == FileOp.M and fileop.path == path:
                                     here.append(child.mark)
                             here += find_successor(child, path)
                         return here
                     for event in self.chosen().commits():
                         for fileop in event.operations():
-                            if fileop.op == 'M' and fileop.ref == singleton.mark:
+                            if fileop.op == FileOp.M and fileop.ref == singleton.mark:
                                 if len(find_successor(event, fileop.path)) > 0:
                                     complain("beware: not the last 'M %s' on its branch" % fileop.path)
                                 break
@@ -9908,7 +9920,7 @@ unwieldy. Supports > redirection.
                         sizes[event.branch] += len(str(author))
                     sizes[event.branch] += len(event.comment)
                     for fileop in event.operations():
-                        if fileop.op == "M":
+                        if fileop.op == FileOp.M:
                             sizes[event.branch] += self.repo.objfind(fileop.ref).size
                 elif isinstance(event, Tag):
                     commit = event.target
@@ -10400,7 +10412,7 @@ This is intended for producing reduced test cases from large repositories.
                         interesting.add(event.mark)
                     else:
                         for op in event.operations():
-                            if op.op != 'M' or repo.ancestor_count(event.parents()[0], op.path) == 0:
+                            if op.op != FileOp.M or repo.ancestor_count(event.parents()[0], op.path) == 0:
                                 interesting.add(event.mark)
                                 break
             neighbors = set()
@@ -11081,7 +11093,7 @@ With  the --debug option, show messages about mismatches.
             def is_clog(commit):
                 return "empty log message" in commit.comment \
                            and len(commit.operations()) == 1 \
-                           and commit.operations()[0].op == "M" \
+                           and commit.operations()[0].op == FileOp.M \
                            and commit.operations()[0].path.endswith("ChangeLog")
             def coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
@@ -11271,7 +11283,7 @@ change in a future release.
         for ie, event in self.selected(Commit):
             event.invalidate_pathset_cache()
             if opindex == "deletes":
-                event.set_operations([e for e in event.operations() if e.op != "D"])
+                event.set_operations([e for e in event.operations() if e.op != FileOp.D])
                 return
             for (ind, op) in enumerate(event.operations()):
                 if hasattr(op, "op") and getattr(op, "op") not in optypes:
@@ -11739,10 +11751,10 @@ source branch are removed.
             for ci in scommits:
                 found = False
                 for fileop in repo.events[ci].operations():
-                    if fileop.op in ("D", "M"):
+                    if fileop.op in (FileOp.D, FileOp.M):
                         fileop.path = os.path.join(pref, fileop.path)
                         found = True
-                    elif fileop.op in ("R", "C"):
+                    elif fileop.op in (FileOp.R, FileOp.C):
                         fileop.source = os.path.join(pref, fileop.source)
                         fileop.target = os.path.join(pref, fileop.target)
                         found = True
@@ -12553,7 +12565,7 @@ default patterns.
                     # Create an early ignore file if required.
                     # Don't move this before the modification pass!
                     earliest = repo.earliest_commit()
-                    if not [fileop for fileop in earliest.operations() if fileop.op == "M" and fileop.path.endswith(self.ignorename)]:
+                    if not [fileop for fileop in earliest.operations() if fileop.op == FileOp.M and fileop.path.endswith(self.ignorename)]:
                         blob = Blob(repo)
                         blob.addalias(self.ignorename)
                         blob.set_content(self.preferred.dfltignores)
@@ -12578,7 +12590,7 @@ default patterns.
                                                        self.preferred.ignorename)
                                     setattr(fileop, attr, newpath)
                                     changecount += 1
-                                    if fileop.op == "M":
+                                    if fileop.op == FileOp.M:
                                         blob = repo.objfind(fileop.ref)
                                         if blob.pathlist[0] == oldpath:
                                             blob.pathlist[0] = newpath
@@ -13330,11 +13342,11 @@ assignment would be.
                 # a log rotation or a maintainer fixing a typo. In either case,
                 # best not to re-attribute this.
                 if not [op.path for op in commit.operations() \
-                        if op.op=='M' and not os.path.basename(op.path).startswith("ChangeLog")]:
+                        if op.op==FileOp.M and not os.path.basename(op.path).startswith("ChangeLog")]:
                     continue
                 for op in commit.operations():
                     baton.twirl()
-                    if op.op == "M" and os.path.basename(op.path) == "ChangeLog":
+                    if op.op == FileOp.M and os.path.basename(op.path) == "ChangeLog":
                         cl += 1
                         blobfile = repo.objfind(op.ref).materialize()
                         # Figure out where we should look for changes in
