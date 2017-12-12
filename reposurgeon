@@ -4301,7 +4301,7 @@ class StreamParser:
                         trailer = " (node %d)" % n
                     else:
                         trailer = ""
-                    baton.twirl(("%s: slow %.3f between %s and %s..." % (rev, now-lastcrumb, lastwhere, where)) + trailer)
+                    baton.twirl(("%s: slow %.3f between %s and %s" % (rev, now-lastcrumb, lastwhere, where)) + trailer + "...")
                 lastcrumb = now
                 lastwhere = where
             if debug_enable(DEBUG_EXTRACT):
@@ -4324,7 +4324,7 @@ class StreamParser:
                                 % (revision, node))
             memcheck(self.repo)
             commit = Commit(self.repo)
-            breadcrumb("commitmake", revision)
+            breadcrumb("commitbuild", revision)
             try:
                 ad = record.props.pop("svn:date")
             except KeyError as key:
@@ -11634,6 +11634,10 @@ type.
 With the option --prune, at each join generate D ops for every
 file that doesn't have a modify operation in the root commit of the
 branch being grafted on.
+
+WARNING: This command has a known bug when uniting three or more repositories
+that may produce incorrect results. Uniting only two repositories is reliable;
+as a workaround, do a seqience of pairwise unites.
 """)
     def do_unite(self, line):
         "Unite repos together."

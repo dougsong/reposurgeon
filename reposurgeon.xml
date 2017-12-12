@@ -1713,6 +1713,11 @@ ancestral file existing will be prepended to the root commit, then it
 will be canonicalized using the rules for squashing the effect will be
 that only files with properly matching M, R, and C operations in the
 root survive.</para>
+
+<para>WARNING: This command has a known bug when uniting three or more
+repositories that may produce incorrect results. Uniting only two
+repositories is reliable; as a workaround, do a seqience of pairwise
+unites.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
