@@ -20,6 +20,7 @@ Repository head:
      Fix "write" crashing with "prefer svn" when parent not in selection.
      Add "attribution" and "reorder" commands.
      Fix "reset" crashes and make "reset" respect selection.
+     Fix buggy behavior on 'unite' on 3 or more repositories.
      The "timing" command reports free memory if the psutil module is installed.
      Repository reading now has an OOM guard - will bail out on low memory.
 
