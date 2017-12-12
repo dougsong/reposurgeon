@@ -5306,7 +5306,7 @@ class StreamParser:
                         commit.operations()[i].op = None
             commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
             baton.twirl()
-        timeit("canonicalizing")
+        timeit("tagcleaning")
         if debug_enable(DEBUG_EXTRACT):
             announce("after delete/copy canonicalization")
         # Remove spurious parent links caused by random cvs2svn file copies.
