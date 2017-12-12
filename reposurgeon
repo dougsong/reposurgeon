@@ -2374,6 +2374,7 @@ class FileOp(object):
             (self.op, self.mode, self.ref, self.path) = map(polystr, m.groups())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path = sys.intern(self.path)
         elif opline[0] == "N":
             try:
                 opline = opline.replace("'", r"\'")
@@ -2384,12 +2385,15 @@ class FileOp(object):
             (self.op, self.path) = ("D", opline[2:].strip())
             if self.path[0] == '"' and self.path[-1] == '"':
                 self.path = self.path[1:-1]
+            self.path = sys.intern(self.path)
         elif opline[0] in ("R", "C"):
             try:
                 opline = opline.replace("'", r"\'")
                 (self.op, self.source, self.target) = shlex.split(opline)
             except ValueError:
                 raise Fatal("ill-formed fileop %s" % repr(opline))
+            self.source = sys.intern(self.source)
+            self.target = sys.intern(self.target)
         elif opline == "deleteall":
             self.op = "deleteall"
         else:
@@ -3836,7 +3840,7 @@ class StreamParser:
                                     # Normal case
                                     if node is None:
                                         node = StreamParser.NodeAction()
-                                    node.path = StreamParser.sd_body(line)
+                                    node.path = sys.intern(StreamParser.sd_body(line))
                                     plen = tlen = -1
                                 elif line.startswith("Node-kind: "):
                                     # svndumpfilter sometimes emits output
@@ -3866,7 +3870,7 @@ class StreamParser:
                                 elif line.startswith("Node-copyfrom-path: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()
-                                    node.from_path = StreamParser.sd_body(line)
+                                    node.from_path = sys.intern(StreamParser.sd_body(line))
                                 elif line.startswith("Text-copy-source-md5: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()
