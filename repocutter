@@ -473,7 +473,7 @@ class DumpfileSource(LineBufferedSource):
             return
         while True:
             nodecount = 0
-            (stash, properties) = self.read_revision_header(prophook)
+            (stash, _) = self.read_revision_header(prophook)
             if self.revision in selection:
                 pass
             elif self.revision == selection.upperbound()+1:
@@ -500,12 +500,13 @@ class DumpfileSource(LineBufferedSource):
                     nodecount += 1
                     self.push(line)
                     (header, properties, content) = self.read_node(prophook)
-                    emit = nodehook(header, properties, content)
+                    nodetxt = nodehook(header, properties, content)
+                    emit = nodetxt is not None and len(nodetxt) > 0
                     if emit and stash:
-                        emit = stash + emit
+                        nodetxt = stash + nodetxt
                         stash = ""
-                    if passthrough and isinstance(emit, str):
-                        self.__say(emit)
+                    if passthrough and nodetxt is not None:
+                        self.__say(nodetxt)
                     continue
                 else:
                     sys.stderr.write("repocutter: parse at %s doesn't look right (%s), aborting!\n" % (self.revision, repr(line)))
