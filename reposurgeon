@@ -792,7 +792,7 @@ lastseek = 0
 
 def readprogress(baton, fp, filesize):
     # The GB grain means this will never emit percentages on small repositories.
-    # That is entirely intentional.  Stream prsing is fast enough that we don't
+    # That is entirely intentional.  Stream parsing is fast enough that we don't
     # care about having to project a completion time below one grain.  Might
     # be this could go larger.
     grain = 1000 * 1000 * 1024	# 1GB
@@ -3599,6 +3599,7 @@ class StreamParser:
         self.fileop_branchlinks  = set()
         self.directory_branchlinks  = set()
         self.active_gitignores = {}
+        self.large = False
     def error(self, msg):
         "Throw fatal error during parsing."
         raise Fatal(msg + " at line " + repr(self.import_line))
@@ -4315,6 +4316,10 @@ class StreamParser:
                         return event
             return
         previous = None
+        # If the repo is large, we'll give up on some diagnostic info in order
+        # to reduce the working set size.
+        if len(self.revisions.keys()) > 50000:
+            self.large = True
         for (revision, record) in self.revisions.items():
             global lastcrumb, lastwhere
             lastcrumb = time.time()
@@ -4953,7 +4958,15 @@ class StreamParser:
             baton.twirl()
             time.sleep(0)
             previous = revision
-            # End of processing for this Subversion revision
+            # End of processing for this Subversion revision.  If the
+            # repo is large, we throw out file records for this node in
+            # order to reduce the maximum working set from proportional
+            # to two times the number of Subversion commits to one time.
+            # What we give up is some detail in the diagnostic messages
+            # on zero-fileop commits.
+            if self.large:
+                record.nodes = [n for n in record.nodes if n.kind == SD_DIR]
+                self.revisions[revision] = record
             breadcrumb("wrap", revision)
         # Filemaps are no longer needed
         del filemaps
