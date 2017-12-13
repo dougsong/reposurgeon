@@ -973,7 +973,7 @@ class Extractor(object):
         "Hook for any cleanup actions required after streaming."
         if not self.properties:
             for event in repo.commits():
-                event.properties = collections.OrderedDict()
+                event.properties = None
     def isclean(self):
         "Return True if repo has no unsaved changes."
         return True
@@ -2480,7 +2480,7 @@ class Commit(object):
         self.comment = None          # Commit comment
         self.branch = None           # branch name
         self.fileops = []            # blob and file operation list
-        self.properties = collections.OrderedDict()         # commit properties (extension)
+        self.properties = None	     # commit properties (extension)
         self.filemap = None
         self.color = None
         self.legacy_id = None        # Commit's ID in an alien system
@@ -2605,11 +2605,12 @@ class Commit(object):
         self.committer.email_out(modifiers, msg, "Committer")
         if self.legacy_id:
             msg["Legacy-ID"] = self.legacy_id
-        for (name, value) in self.properties.items():
-            hdr = "-".join(s.capitalize() for s in name.split("-"))
-            value = value.replace("\n", r"\n")
-            value = value.replace("\t", r"\t")
-            msg["Property-" + hdr] = value
+        if self.properties:
+            for (name, value) in self.properties.items():
+                hdr = "-".join(s.capitalize() for s in name.split("-"))
+                value = value.replace("\n", r"\n")
+                value = value.replace("\t", r"\t")
+                msg["Property-" + hdr] = value
         msg["Check-Text"] = self.comment.strip().split('\n')[0][:54]
         msg.set_payload(self.comment)
         if not self.comment.endswith("\n"):
@@ -3070,12 +3071,13 @@ class Commit(object):
                 nugget = ancestor.callout()
             parts.append("merge %s\n" % nugget)
         if vcs and "commit-properties" in vcs.extensions:
-            for (name, value) in self.properties.items():
-                if value in (True, False):
-                    if value:
-                        parts.append("property %s\n" % name)
-                else:
-                    parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
+            if self.properties:
+                for (name, value) in self.properties.items():
+                    if value in (True, False):
+                        if value:
+                            parts.append("property %s\n" % name)
+                    else:
+                        parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
         parts.extend(op.dump(vcs) + "\n" for op in self.operations())
         if "no-nl-after-commit" not in self.repo.export_style():
             parts.append("\n")
@@ -3436,6 +3438,8 @@ class RepoStreamer:
                     repo.addEvent(reset)
                 commit.sort_operations()
                 commit.legacy_id = revision
+                if commit.properties is None:
+                    commit.properties = collections.OrderedDict()
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(repo.newmark())
                 self.commit_map[revision] = commit
@@ -3530,10 +3534,27 @@ class StreamParser:
                                     if self.props else "")
         __repr__ = __str__
     class RevisionRecord(object):
-        __slots__ = ("nodes", "props")
+        __slots__ = ("nodes", "log", "author", "date", "props")
         def __init__(self, nodes, props):
             self.nodes = nodes
-            self.props = props
+            # Following four members are so we can avoid having a hash
+            # object in every single node instance...those are expensive.
+            try:
+                self.log = props.pop("svn:log")
+            except KeyError:
+                self.log = None
+            try:
+                self.author = props.pop("svn:author")
+            except KeyError:
+                self.author = None
+            try:
+                self.date = props.pop("svn:date")
+            except KeyError:
+                self.date = None
+            if len(props) > 0:
+                self.props = props
+            else:
+                self.props = None
     # Native Subversion properties that we don't suppress: svn:externals
     # The reason for these suppressions is to avoid a huge volume of
     # junk file properties - cvs2svn in particular generates them like
@@ -3991,6 +4012,7 @@ class StreamParser:
                                     except ValueError:
                                         self.error("malformed committer line")
                                 elif line.startswith("property"):
+                                    commit.properties = collections.OrderedDict()
                                     fields = line.split(" ")
                                     if len(fields) < 3:
                                         self.error("malformed property line")
@@ -4073,7 +4095,7 @@ class StreamParser:
                                 else:
                                     # Dodgy bzr autodetection hook...
                                     if not self.repo.vcs:
-                                        if "branch-nick" in commit.properties:
+                                        if commit.properties and "branch-nick" in commit.properties:
                                             self.repo.hint("bzr", strong=True)
                                     self.pushback(line)
                                     break
@@ -4325,16 +4347,15 @@ class StreamParser:
             memcheck(self.repo)
             commit = Commit(self.repo)
             breadcrumb("commitbuild", revision)
-            try:
-                ad = record.props.pop("svn:date")
-            except KeyError as key:
-                self.error("missing required %s" % key)
-            if "svn:author" in record.props:
-                au = record.props.pop("svn:author")
+            ad = record.date
+            if ad is None:
+                self.error("missing required date field")
+            if record.author:
+                au = record.author
             else:
                 au = "no-author"
-            if "svn:log" in record.props:
-                commit.comment = record.props.pop("svn:log")
+            if record.log:
+                commit.comment = record.log
                 if not commit.comment.endswith("\n"):
                     commit.comment += "\n"
             if '--use-uuid' in options:
@@ -4349,7 +4370,7 @@ class StreamParser:
                 commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = int(revision) * 360
                 commit.committer.date.set_tz("GMT")
-            commit.properties.update(record.props)
+            commit.properties = record.props
             # Zero revision is never interesting - no operations, no
             # comment, no author, it's just a start marker for a
             # non-incremental dump.
@@ -4950,7 +4971,7 @@ class StreamParser:
                 announce("r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
                           len(commit.operations()),
-                          len(commit.properties),
+                          len(commit.properties or ""),
                           msg.strip()[:20]))
         # First, turn the root commit into a tag
         if self.repo.events and not self.repo.earliest_commit().operations():
@@ -5167,7 +5188,7 @@ class StreamParser:
                              (commit.legacy_id,
                               commit.mark, ancestor,
                               len(commit.operations()),
-                              len(commit.properties),
+                              len(commit.properties or ""),
                               commit.branch))
         baton.twirl()
         # Code controlled by --nobranch option ends.
@@ -6261,7 +6282,7 @@ class Repository:
                             commit = self.events[ei]
                             break
                     seen.add(event.cookie)
-                    if "legacy" in commit.properties:
+                    if commit.properties and "legacy" in commit.properties:
                         complain("legacy property of %s overwritten" \
                                  % commit.mark)
                     if isinstance(event.cookie, str):
