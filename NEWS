@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head:
+3.43: 2017-12-12::
      Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
      Resychronize embedded help with XML docs.
      Added 'dedup' command, to deduplicate blobs in the selection set.
