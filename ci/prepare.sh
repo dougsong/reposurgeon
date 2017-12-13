@@ -9,6 +9,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     bison \
     cvs \
     flex \
+    pypy \
     python2.7 \
     python3 \
     python-pip \
