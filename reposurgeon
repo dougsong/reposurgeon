@@ -13094,7 +13094,7 @@ to re-set it.
         elif line:
             def split_regex(regex):
                 separator = regex[0]
-                if separator is not regex[-1]:
+                if separator != regex[-1]:
                     raise Recoverable("Regex '%s' did not end with separator character" % regex)
                 match, _, replace = regex[1:-1].partition(separator)
                 if not replace or not match:
