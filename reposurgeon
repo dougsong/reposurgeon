@@ -1655,8 +1655,15 @@ class Baton:
                 self.stream.flush()
                 return
             else:
-                update = "-/|\\"[self.count % 4]
-                self.stream.write(update + ("\b" * len(update)))
+                if self.counter % (100 * 1000):
+                    self.stream.write("!")
+                elif self.counter % (10 * 1000):
+                    self.stream.write("*")
+                elif self.counter % (1 * 1000):
+                    self.stream.write("+")
+                else:
+                    update = "-/|\\"[self.count % 4]
+                    self.stream.write(update + ("\b" * len(update)))
                 self.stream.flush()
         self.count = self.count + 1
     def __exit__(self, extype, value_unused, traceback_unused):
@@ -4190,9 +4197,6 @@ class StreamParser:
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
-        # We need a more detailed progress meter on large repos
-        repolen = len(self.revisions.items())
-        large = repolen > 50000
         # Find all copy sources and compute the set of branches
         if debug_enable(DEBUG_EXTRACT):
             announce("Pass 1")
@@ -4221,7 +4225,7 @@ class StreamParser:
         copynodes.sort(key=operator.attrgetter("from_rev"))
         def timeit(tag):
             self.repo.timings.append([tag, time.time()])
-            if large:
+            if global_options["bigprofile"]:
                 baton.twirl("%s:%.3fs..." % (tag, self.repo.timings[-1][1] - self.repo.timings[-2][1]))
             else:
                 baton.twirl()
@@ -4859,7 +4863,7 @@ class StreamParser:
             # corresponding to the CVS revision where the file was last
             # changed before the copy, which may be substantially earlier
             # than the CVS revision corresponding to the
-            # copy). Fortunately, we can resolve such sets by the simple
+            # copy. Fortunately, we can resolve such sets by the simple
             # expedient of picking the *latest* revision in them!
             # No code uses the result if branch analysis is turned off.
             if not nobranch:
@@ -4949,7 +4953,8 @@ class StreamParser:
             baton.twirl()
             time.sleep(0)
             previous = revision
-            breadcrumb("branchfinder", revision)
+            # End of processing for this Subversion revision
+            breadcrumb("wrap", revision)
         # Filemaps are no longer needed
         del filemaps
         # Bail out if we have read no commits
@@ -8742,6 +8747,10 @@ into sections of the input stream instead).
         ("testmode", """\
 Disable some features that cause output to be vary depending on wall time
 and the ID of the invoking user. Use in regression-test loads.
+"""),
+        ("bigprofile", """\
+Extra profiling for large repositories.  Mainly of interest to reposurgeon
+developers.
 """),
         )
     unclean = re.compile(r"[^\n]*\n[^\n]".encode('ascii'))
