@@ -18,7 +18,7 @@
 # shape you think it should.
 #
 # To add complexity to a test load, do -n, then edit the test repo with
-# git, then use -d.
+# git, then use -r.
 #
 BIN=${PWD}/..
 

@@ -1,3 +1,4 @@
+#reposurgeon sourcetype git
 blob
 mark :1
 data 42
@@ -5,6 +6,7 @@ This file is a placefolder for real data.
 
 reset refs/heads/master
 commit refs/heads/master
+#legacy-id dcba336c5cf687a8777f9b578c12dcc84e4d2e2e
 mark :2
 author Eric S. Raymond <esr@thyrsus.com> 1508252184 -0400
 committer Nikolai Fedorov <cosmist@russian-empire.gov> 1508252184 +0400
@@ -29,6 +31,7 @@ This file is a placefolder for real data.
 Free added a line to it.
 
 commit refs/heads/master
+#legacy-id fbde1a9ec368613095e5e30301a045766a9492ed
 mark :5
 author Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
@@ -63,6 +66,7 @@ Fred added a line to it.
 Now his sister will too.
 
 commit refs/heads/master
+#legacy-id eff1e1dfc88ceac5d287174b10758b04a084a0a8
 mark :8
 author Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508448494 -0400
@@ -102,6 +106,7 @@ Now his sister will too.
 Hilda adds a fourth line.
 
 commit refs/heads/master
+#legacy-id d90ecf70ea5c3935bdda60d1bd2f3f8cacdfe020
 mark :11
 author Eric S. Raymond <esr@thyrsus.com> 1508616116 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508616116 -0400
@@ -147,6 +152,7 @@ Hilda adds a fourth line.
 Input from a pseudo-Dane
 
 commit refs/heads/master
+#legacy-id c6c08c0ff13815716bd50de3a52fe76df73bdaa0
 mark :14
 author Eric S. Raymond <esr@thyrsus.com> 1508692602 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508692932 -0400
@@ -196,6 +202,7 @@ Input from a pseudo-Dane
 What is the Great Common Task?
 
 commit refs/heads/master
+#legacy-id c32fe02c596d10d96937c3acf2e16251fae8e48d
 mark :17
 author Eric S. Raymond <esr@thyrsus.com> 1508697652 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1508697652 -0400
@@ -247,6 +254,7 @@ What is the Great Common Task?
 Fred rides again.
 
 commit refs/heads/master
+#legacy-id 354af884562f96c4289062a28f0b380d03e09db8
 mark :20
 author Eric S. Raymond <esr@thyrsus.com> 1509512082 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1509512082 -0400
@@ -256,6 +264,67 @@ from :17
 M 100644 :18 ChangeLog
 M 100644 :19 sample.txt
 
-reset refs/heads/master
+blob
+mark :21
+data 1321
+= = = Demonstrate that we can skip a header = = =
+
+2017-10-22 Nikolai Fedorov <cosmist@russian-empire.gov>
+
+	* sample.txt: Demonstrate the ability to pick up committer timezones.
+
+2017-10-22 Hamlet the Prince <hamlet@helsingfors.dk>
+
+	* sample.txt: This header line is to verify that we can get a time
+	zone from an email address ending with a single-zone ISO country code.
+
+2017-10-17 Fred J. Foonly <fred@foonly.org>
+
+	* sample.txt: Resembles an attribution for a patch contributed by
+	Fred. And now we test that this incremental entry gets the right
+	attribution - Fred, not Hilda.
+
+2017-10-19 Hilda J. Foonly <hilda@foonly.org>
+
+	* sample.txt: This entry is deliberately out of order, e.g.
+	not at the top.  The code is supposed to be smart enough to
+	skip over the section common to the previous ChangeLog.
+
+	Even a partial entry out of order, like this one, should
+	result in the attribution line above it (Hilda's) being
+	picked up for the corresponding commit.
+
+Tue Dec  9 01:16:06 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* An entry in an old-fashioned format found early in the GCC
+	history.  This format sometimes has the email address surrounded
+	by (), sometimes by <>.  There are a few log entries with a hybrid
+	of old and new forms, where there is a yyyy-mm-dd date but an
+	email address surrounded by ().
+
+blob
+mark :22
+data 215
+This file is a placefolder for real data.
+Fred added a line to it.
+Now his sister will too.
+Hilda adds a fourth line.
+Input from a pseudo-Dane
+What is the Great Common Task?
+Fred rides again.
+Jeff Law was not here.
+
+commit refs/heads/master
+#legacy-id 56d711ba9bb81d1de5cfe77d79375ed3ba7a43df
+mark :23
+author Eric S. Raymond <esr@thyrsus.com> 1513280877 -0500
+committer Eric S. Raymond <esr@thyrsus.com> 1513280877 -0500
+data 38
+Add a test from the GCC back history.
 from :20
+M 100644 :21 ChangeLog
+M 100644 :22 sample.txt
+
+reset refs/heads/master
+from :23
 
