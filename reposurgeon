@@ -783,7 +783,7 @@ def memcheck(repo):
     "Check to see if we're vulnerable to OOM"
     if psutil is not None:
         mem = psutil.virtual_memory()
-        if mem.percent > 90:
+        if mem.percent > 97:
             if repo:
                 repo.dumptimes()
             raise Fatal("Low-memory condition, bailing out before OOM or crash.")
@@ -7391,13 +7391,23 @@ class Repository:
             sys.stdout.write("        commits: %d\n" % commit_count)
         else:
             sys.stdout.write("        commits: %d (from %d)\n" % (commit_count, self.legacy_count))
+        def humanize(d):
+            human = ""
+            if d >= 3600:
+                human += "%dh" % (int(d) // 3600)
+                d %= 3600
+            if d >= 60:
+                human += "%dm" % (int(d) // 60)
+                d %= 60
+            human += ("%.3fs" % d)
+            return human
         for (i, (phase, _interval)) in enumerate(self.timings):
             if i > 0:
                 interval = self.timings[i][1] - self.timings[i-1][1]
-                sys.stdout.write("%15s: %.3f (%2.2f%%)\n" % (phase,
-                                              interval,
+                sys.stdout.write("%15s: %s (%2.2f%%)\n" % (phase,
+                                              humanize(interval),
                                               (interval * 100)/total))
-        sys.stdout.write("          total: %.3f (%d/sec)\n" % (total, int((self.legacy_count or commit_count))/total))
+        sys.stdout.write("          total: %s (%d/sec)\n" % (humanize(total), int((self.legacy_count or commit_count))/total))
 
     # Sequence emulation methods
     def __len__(self):
