@@ -1,5 +1,9 @@
 = reposurgeon project news =
 
+Repository head:
+     Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
+     Maximum working-set size has been reduced.
+
 3.43: 2017-12-12::
      Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
      Resychronize embedded help with XML docs.

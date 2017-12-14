@@ -30,10 +30,8 @@ SOURCES += \
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 
-.PHONY: all install install-cyreposurgeon clean uninstall version pylint check zip release refresh \
+.PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
-.INTERMEDIATE: cyreposurgeon.c cyrepodiffer.c
-.PRECIOUS: cyreposurgeon.o cyrepodiffer.o
 
 BINARIES = reposurgeon repotool repodiffer repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
@@ -74,15 +72,10 @@ install: all
 	$(INSTALL) -m 644 $(SHARED) "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
 
-install-cyreposurgeon: cyreposurgeon
-	$(INSTALL) -d "$(target)/bin"
-	$(INSTALL) -m 755 cyreposurgeon "$(target)/bin"
-
 clean:
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
-	rm -f cyreposurgeon.c cyreposurgeon.o cyreposurgeon
 
 # Uninstallation
 INSTALLED_BINARIES := $(BINARIES:%="$(target)/bin/%")
@@ -91,7 +84,6 @@ INSTALLED_MANPAGES := $(MANPAGES:%="$(target)/$(mandir)/man1/%")
 
 uninstall:
 	rm -f $(INSTALLED_BINARIES)
-	rm -f "$(target)/bin/cyreposurgeon"
 	rm -f $(INSTALLED_MANPAGES)
 	rm -f $(INSTALLED_SHARED)
 	rmdir "$(target)/share/doc/reposurgeon"
