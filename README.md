@@ -6,13 +6,15 @@ don't want to let you do, such as (a) editing past comments and metadata,
 subtrees from repo history. The original motivation for `reposurgeon`
 was to clean up artifacts created by repository conversions.
 
-`reposurgeon` is also useful for scripting very high-quality conversions
-from Subversion.  It is better than `git-svn` at tag lifting,
-automatically cleaning up `cvs2svn` conversion artifacts, dealing with
-nonstandard repository layouts, recognizing branch merges, handling
-mixed-branch commits, and generally at coping with Subversion's many
-odd corner cases.  Normally Subversion repos should be analyzed at a
-rate of upwards of ten thousand commits per minute.
+`reposurgeon` is also useful for scripting very high-quality
+conversions from Subversion.  It is better than `git-svn` at tag
+lifting, automatically cleaning up `cvs2svn` conversion artifacts,
+dealing with nonstandard repository layouts, recognizing branch
+merges, handling mixed-branch commits, and generally at coping with
+Subversion's many odd corner cases.  Normally Subversion repos should
+be analyzed at a rate of upwards of ten thousand commits per minute,
+though that rate can fall significantly on extremely large
+repositories.
 
 `repodiffer` is a program that reports differences between repository
 histories. It uses a `diff(1)`-like algorithm to identify spans of
