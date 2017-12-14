@@ -3509,8 +3509,6 @@ SD_DELETE = 1
 SD_CHANGE = 2
 SD_REPLACE = 3
 
-lastcrumb = lastwhere = None	# Ugh...needed for profiling
-
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class NodeAction(object):
@@ -4335,20 +4333,6 @@ class StreamParser:
         if len(self.revisions.keys()) > 50000:
             self.large = True
         for (revision, record) in self.revisions.items():
-            global lastcrumb, lastwhere
-            lastcrumb = time.time()
-            lastwhere = "start"
-            def breadcrumb(where, rev, n=None):
-                global lastcrumb, lastwhere
-                now = time.time()
-                if now - lastcrumb > 0.1:
-                    if n is not None:
-                        trailer = " (node %d)" % n
-                    else:
-                        trailer = ""
-                    baton.twirl(("%s: slow %.3f between %s and %s" % (rev, now-lastcrumb, lastwhere, where)) + trailer + "...")
-                lastcrumb = now
-                lastwhere = where
             if debug_enable(DEBUG_EXTRACT):
                 announce("Revision %s:" % revision)
             for node in record.nodes:
@@ -4369,7 +4353,6 @@ class StreamParser:
                                 % (revision, node))
             memcheck(self.repo)
             commit = Commit(self.repo)
-            breadcrumb("commitbuild", revision)
             ad = record.date
             if ad is None:
                 self.error("missing required date field")
@@ -4401,7 +4384,6 @@ class StreamParser:
                 continue
             expanded_nodes = []
             has_properties = set()
-            breadcrumb("attribution", revision)
             for (n, node) in enumerate(record.nodes):
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s:%d: %s" % (revision, n+1, node))
@@ -4442,7 +4424,6 @@ class StreamParser:
                             for prop, val in itertools.chain((first,), prop_items):
                                 self.gripe("\t%s = '%s'" % (prop, val))
                             has_properties.add(node.path)
-                breadcrumb("pathprop", revision, n)
                 if node.kind == SD_FILE:
                     expanded_nodes.append(node)
                 elif node.kind == SD_DIR:
@@ -4641,7 +4622,6 @@ class StreamParser:
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
-                breadcrumb("nodemaker", revision, n)
             # Lift .cvsignore files, which we can assume are legacies
             # from a bygone era and happen to have syntax upward-compatible
             # with that of .gitignore
@@ -4658,7 +4638,6 @@ class StreamParser:
                 if node.action == SD_DELETE and node.path in seen:
                     node.action = None
                 seen.add(node.path)
-            breadcrumb("expander", revision)
             # Create actions corresponding to both
             # parsed and generated nodes.
             actions = []
@@ -4803,7 +4782,6 @@ class StreamParser:
                     fileop = FileOp(self.repo)
                     fileop.construct("deleteall", node.path[:-1])
                     actions.append((node, fileop))
-            breadcrumb("opmaker", revision)
             # Time to generate commits from actions and fileops.
             if debug_enable(DEBUG_EXTRACT):
                 announce("r%s: %d actions" % (revision, len(actions)))
@@ -4850,7 +4828,6 @@ class StreamParser:
                 if debug_enable(DEBUG_EXTRACT):
                     announce("r%s gets mark %s" % (revision, commit.mark))
                 newcommits.append(commit)
-            breadcrumb("commitmaker", revision)
             # If the commit is mixed, or there are deletealls left over,
             # handle that.
             oplist = sorted(oplist, key=operator.itemgetter(0))
@@ -4981,7 +4958,6 @@ class StreamParser:
             if self.large:
                 record.nodes = [n for n in record.nodes if n.kind == SD_DIR]
                 self.revisions[revision] = record
-            breadcrumb("wrap", revision)
         # Filemaps are no longer needed
         del filemaps
         # Bail out if we have read no commits
