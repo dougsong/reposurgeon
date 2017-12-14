@@ -13404,6 +13404,25 @@ assignment would be.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
+        def parse_attribution_line(line):
+            if len(line) > 10 and line[0].isdigit() and '<' in line and line[1].isdigit() and line.endswith(">"):
+                if ',' in line:
+                    # Multiple attributions...ignore for now
+                    return None
+                # Deal with some address masking
+                line = line.replace(" <at> ", "@")
+                space = line.find(" ")
+                if space < 0:
+                    return
+                date = line[:space]
+                try:
+                    ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+                except ValueError:
+                    return
+                addr = line[space+1:].strip()
+                return (ymd, addr)
+            else:
+                return None
         with Baton("reposurgeon: parsing changelogs", enable=(verbose == 1)) as baton:
             for commit in repo.commits():
                 cc += 1
@@ -13435,23 +13454,9 @@ assignment would be.
                                 before = False
                             #print("I see: %s" % repr(diffline))
                             line = diffline[2:]
-                            attribution = None
-                            if len(line) > 10 and line[0].isdigit() and '<' in line and line[1].isdigit() and line.endswith(">"):
-                                if ',' in line:
-                                    # Multiple attributions...ignore for now
-                                    continue
-                                # Deal with some address masking
-                                line = line.replace(" <at> ", "@")
-                                space = line.find(" ")
-                                if space < 0:
-                                    continue
-                                date = line[:space]
-                                try:
-                                    ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                                except ValueError:
-                                    continue
-                                addr = line[space+1:].strip()
-                                attribution = (ymd, addr)
+                            attribution = parse_attribution_line(line)
+                            if attribution is not None:
+                                (ymd, addr) = attribution
                                 #print("I notice: %s %s %s" % (diffline[0], attribution, before))
                                 # This is the tricky part.  We want the
                                 # last attribution from before the change
