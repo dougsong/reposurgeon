@@ -785,6 +785,8 @@ def memcheck(repo):
         mem = psutil.virtual_memory()
         if mem.percent > 97:
             if repo:
+                # Because we're probably interrupting a baton.
+                sys.stdout.write("\n")
                 repo.dumptimes()
             raise Fatal("Low-memory condition, bailing out before OOM or crash.")
 
