@@ -1488,12 +1488,24 @@ def whoami():
 
 def screenwidth():
     "Return the current width of the terminal window."
-    if sys.stdin.isatty():
-        with popen_or_die('stty size', "r") as tp:
-            return int(tp.read().split()[1])
-    else:
-        # Return default width if no terminal is present
-        return 80
+    # Alternatives at http://stackoverflow.com/questions/566746
+    width = 80
+    if os.isatty(1):
+        if str is not bytes:
+            (width, _) = shutil.get_terminal_size((80, 24))
+        else:
+            import fcntl
+            import termios
+            import struct
+            try:
+                # OK, Python version < 3.3, cope
+                _h, width, _hp, _wp = struct.unpack(
+                    'HHHH',
+                    fcntl.ioctl(2, termios.TIOCGWINSZ,
+                                struct.pack('HHHH', 0, 0, 0, 0)))
+            except IOError:
+                pass
+    return width
 
 isocode_to_zone = {}
 
