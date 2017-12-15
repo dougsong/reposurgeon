@@ -4238,6 +4238,12 @@ class StreamParser:
         copynodes = []
         for (revision, record) in self.revisions.items():
             for node in record.nodes:
+                # In Subversion, we can assume .cvsignores are
+                # legacies from a bygone era that have been long since
+                # replaced by svn:ignore properties.  Therefore we can
+                # just drop them.
+                record.nodes = [n for n in record.nodes \
+                                      if not node.path.endswith(".cvsignore")]
                 if node.from_path is not None:
                     copynodes.append(node)
                     if debug_enable(DEBUG_EXTRACT):
@@ -4643,12 +4649,6 @@ class StreamParser:
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
-            # Lift .cvsignore files, which we can assume are legacies
-            # from a bygone era and happen to have syntax upward-compatible
-            # with that of .gitignore
-            for node in expanded_nodes:
-                if node.path.endswith(".cvsignore"):
-                    node.path = node.path[:-len(".cvsignore")] + ".gitignore"
             # Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
             # for identical paths in generated commits, we have to remove those
             # D ops here.  Otherwise later on when we're generating ops, if
@@ -4740,6 +4740,8 @@ class StreamParser:
                                            % (node.revision, node.path))
                             continue
                         ancestor_nodes[node.path] = node
+                        if not node.blobmark:
+                            print("Foo", node)
                         assert node.blobmark
                         # Time for fileop generation.  The assumption behind the
                         # permission-fetch logic is that a node's immediate
