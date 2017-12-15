@@ -1553,6 +1553,18 @@ def rfc3339(t):
     "RFC3339 string from Unix time."
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
 
+def humanize(d):
+    "Return a human-friendly description of elapsed time"
+    human = ""
+    if d >= 3600:
+        human += "%dh" % (int(d) // 3600)
+        d %= 3600
+    if d >= 60:
+        human += "%dm" % (int(d) // 60)
+        d %= 60
+    human += ("%.3fs" % d)
+    return human
+
 def complain(msg):
     sys.stdout.flush()
     sys.stderr.write("reposurgeon: %s\n" % msg)
@@ -7390,16 +7402,6 @@ class Repository:
             sys.stdout.write("        commits: %d\n" % commit_count)
         else:
             sys.stdout.write("        commits: %d (from %d)\n" % (commit_count, self.legacy_count))
-        def humanize(d):
-            human = ""
-            if d >= 3600:
-                human += "%dh" % (int(d) // 3600)
-                d %= 3600
-            if d >= 60:
-                human += "%dm" % (int(d) // 60)
-                d %= 60
-            human += ("%.3fs" % d)
-            return human
         for (i, (phase, _interval)) in enumerate(self.timings):
             if i > 0:
                 interval = self.timings[i][1] - self.timings[i-1][1]
@@ -8934,9 +8936,8 @@ developers.
         sys.stderr.flush()
         if os.system(line):
             raise Recoverable("'shell %s' returned error." % line)
-    def do_EOF(self, unused):
+    def do_EOF(self, _unused):
         "Terminate reposurgeon."
-        assert unused is not None   # pacify pylint
         sys.stdout.write("\n")
         return True
     def cleanup(self):
@@ -9837,11 +9838,13 @@ on code executed via '-'.
         sys.stdout.write("""
 Report phase-timing results and memory usage from repository analysis.
 """)
-    def do_timing(self, _line):
+    def do_timing(self, line):
         "Report repo-analysis times and memory usage."
         if not self.chosen():
             complain("no repo has been chosen.")
             return
+        if line:
+            self.chosen().timings.append((line, time.now()))
         self.repo.dumptimes()
         if psutil is None:
             complain("The psutil module required for memory statistics is not installed.")
@@ -12968,12 +12971,11 @@ won't be touched.
 
 Takes a selection set, defaulting to all commits and tags.
 """)
-    def do_gitify(self, line):
+    def do_gitify(self, _line):
         "Gitify comments."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
         line_enders = ('.', ',', ';', ':', '?', '!')
@@ -13726,6 +13728,13 @@ means the surgical language is not backwards compatible).
     #
     # Exiting (in case EOT has been rebound)
     #
+    def help_elapsed(self):
+        sys.stdout.write("""
+Desplay elapsed time since start.
+""")
+    def do_elapsed(self, _line):
+        announce("elapsed time %s." % humanize(time.time() - self.start_time))
+
     def help_exit(self):
         sys.stdout.write("""
 Exit the program cleanly, emitting a goodbye message.
@@ -13733,7 +13742,7 @@ Exit the program cleanly, emitting a goodbye message.
 Typing EOT (usually Ctrl-D) will exit quietly.
 """)
     def do_exit(self, _line):
-        announce("exiting, elapsed time %d sec." % (time.time() - self.start_time))
+        announce("exiting, elapsed time %s." % humanize(time.time() - self.start_time))
         sys.exit(0)
 
     #
