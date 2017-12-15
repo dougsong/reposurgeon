@@ -2937,6 +2937,17 @@ class Commit(object):
             if lastop.op == FileOp.deleteall:
                 self.set_operations([lastop])
                 return
+        # Get paths touched by non-deleteall operations.
+        paths = self.paths()
+        # Full canonicalization is very expensive on large
+        # repositories. Try an inexpensive check for cases it needn't
+        # be done. If all ops are Ms and Ds, and every path in an op
+        # is unique, don't do it.  The .gitignores guard is required
+        # because these are sometimes generated.
+        md = [op for op in self.operations() if op.op in (FileOp.M, FileOp.D)]
+        gitignores = [path for path in paths if os.path.basename(path) == ".gitignore"]
+        if len(md) > 1 and len(self.paths()) == len(md) and not gitignores:
+            return
         # Fetch the tree state before us...
         try:
             parent = self.parents()[0]
@@ -2946,8 +2957,6 @@ class Commit(object):
             parent = parent.manifest()
         # ... and after our file operations have been applied.
         current = self.manifest()
-        # Get paths touched by non-deleteall operations.
-        paths = self.paths()
         # Generate needed D fileops.
         if any(op.op == FileOp.deleteall for op in self.operations()):
             # Any file in the parent tree might disappear.
