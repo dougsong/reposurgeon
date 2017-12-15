@@ -1,0 +1,195 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 6a789911-f309-43ab-8947-b28cbab7c120
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2017-12-15T11:10:28.000000Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 215
+Content-length: 215
+
+K 7
+svn:log
+V 116
+This is a boringly typical example of a run-on content which should
+*not* be broken after the first line by gitify.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-12-15T10:46:37.000000Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/READ.ME
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 13
+Text-content-sha1: 5240833b89e775eef6430b9390c7add45188b3ff
+Content-length: 23
+
+PROPS-END
+Lorem ipsum.
+
+
+Revision-number: 2
+Prop-content-length: 230
+Content-length: 230
+
+K 7
+svn:log
+V 131
+This is a Subversion comment that *should* be broken after the first line.
+
+It ends with a period, which is one of gitify's clues.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-12-15T10:49:08.000000Z
+PROPS-END
+
+Node-path: trunk/READ.ME
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-sha1: f47cbe7f69c46852706066ffc559b3eba570f963
+Content-length: 39
+
+PROPS-END
+Lorem ipsum.
+dolor sit amet.
+
+
+Revision-number: 3
+Prop-content-length: 156
+Content-length: 156
+
+K 7
+svn:log
+V 58
+Check that gitify doesn't futz with single-line comments.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-12-15T10:50:53.000000Z
+PROPS-END
+
+Node-path: trunk/READ.ME
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 58
+Text-content-sha1: ccf2ebbd8018dd8a16e2d0ff900067f115af04ce
+Content-length: 68
+
+PROPS-END
+Lorem ipsum.
+dolor sit amet,
+consectetur adipiscing elit,
+
+
+Revision-number: 4
+Prop-content-length: 205
+Content-length: 205
+
+K 7
+svn:log
+V 106
+Verify that we also break run-on comments on a comma,
+
+which is considered a line-ender for this purpose.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-12-15T10:53:57.000000Z
+PROPS-END
+
+Node-path: trunk/READ.ME
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 126
+Text-content-sha1: 3917e576f93e6d4317b0fc4e58aaab9c2a93c212
+Content-length: 136
+
+PROPS-END
+Lorem ipsum.
+dolor sit amet,
+consectetur adipiscing elit,
+sed do eiusmod tempor incididunt ut labore et dolore magna alicqua.
+
+
+Revision-number: 5
+Prop-content-length: 236
+Content-length: 236
+
+K 7
+svn:log
+V 137
+Check that we do not mess with a comment that alreeady has a separator line.
+
+Even if it had a period which would normally trigger that.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2017-12-15T10:55:49.000000Z
+PROPS-END
+
+Node-path: trunk/READ.ME
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 151
+Text-content-sha1: 0dc6c2ae22b50f57b2787e4fb14120c626f60085
+Content-length: 161
+
+PROPS-END
+Lorem ipsum.
+dolor sit amet,
+consectetur adipiscing elit,
+sed do eiusmod tempor incididunt ut labore et dolore magna alicqua.
+Ut enem ad minim veniam,
+
+

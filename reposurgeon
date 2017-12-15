@@ -12958,6 +12958,40 @@ map when the repo is written or rebuilt.
                                 if summary:
                                     parse.stdout.write(summary + "\n")
 
+    def help_gitify(self):
+        sys.stdout.write("""
+Attempt to massage comments into a git-friendly form with a blank
+separator line after a summary line.  This code assumes it can insert
+a blank line if the first line of the comment ends with '.', ',', ':',
+';', '?', or '!'.  If the separator line is already present, the comment
+won't be touched.
+
+Takes a selection set, defaulting to all commits and tags.
+""")
+    def do_gitify(self, line):
+        "Gitify comments."
+        if self.chosen() is None:
+            complain("no repo has been chosen.")
+            return
+        repo = self.chosen()
+        if self.selection is None:
+            self.selection = self.chosen().all()
+        line_enders = ('.', ',', ';', ':', '?', '!')
+        with Baton(prompt="gitifying comments", enable=(verbose == 1)) as baton:
+            for ei in range(self.selection[0], self.selection[-1]):
+                event = self.chosen().events[ei]
+                if isinstance(event, (Commit, Tag)):
+                    event.comment = event.comment.strip() + "\n"
+                    if event.comment.count('\n') < 2:
+                        continue
+                    firsteol = event.comment.index('\n')
+                    if event.comment[firsteol+1] == '\n':
+                        continue
+                    if event.comment[firsteol-1] in line_enders:
+                        event.comment = event.comment[:firsteol] + \
+                                        '\n' + \
+                                        event.comment[firsteol:]
+                baton.twirl()
     #
     # Examining tree states
     #
