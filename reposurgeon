@@ -4238,12 +4238,6 @@ class StreamParser:
         copynodes = []
         for (revision, record) in self.revisions.items():
             for node in record.nodes:
-                # In Subversion, we can assume .cvsignores are
-                # legacies from a bygone era that have been long since
-                # replaced by svn:ignore properties.  Therefore we can
-                # just drop them.
-                record.nodes = [n for n in record.nodes \
-                                      if not node.path.endswith(".cvsignore")]
                 if node.from_path is not None:
                     copynodes.append(node)
                     if debug_enable(DEBUG_EXTRACT):
@@ -4363,6 +4357,12 @@ class StreamParser:
             if debug_enable(DEBUG_EXTRACT):
                 announce("Revision %s:" % revision)
             for node in record.nodes:
+                # In Subversion, we can assume .cvsignores are
+                # legacies from a bygone era that have been long since
+                # replaced by svn:ignore properties.  Therefore we can
+                # just drop them.
+                if node.path.endswith(".cvsignore"):
+                    continue
                 # if node.props is None, no property section.
                 # if node.blob is None, no text section.
                 try:
