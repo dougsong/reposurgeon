@@ -1678,8 +1678,8 @@ class Baton:
         if os.isatty(self.stream.fileno()):
             if ch:
                 self.stream.write(ch)
-                self.stream.flush()
-                return
+                if len(ch) == 1 or ch[-1] == "%":
+                    self.stream.write("\b" * len(ch))
             else:
                 if self.counter % (100 * 1000):
                     self.stream.write("!")
@@ -1690,8 +1690,8 @@ class Baton:
                 else:
                     update = "-/|\\"[self.count % 4]
                     self.stream.write(update + ("\b" * len(update)))
-                self.stream.flush()
-        self.count = self.count + 1
+                self.count = self.count + 1
+            self.stream.flush()
     def __exit__(self, extype, value_unused, traceback_unused):
         if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
