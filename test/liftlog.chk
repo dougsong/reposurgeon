@@ -318,7 +318,7 @@ Jeff Law was not here.
 commit refs/heads/master
 #legacy-id 56d711ba9bb81d1de5cfe77d79375ed3ba7a43df
 mark :23
-author Jeffrey A Law <law@cygnus.com> 881701443 -0500
+author Jeffrey A Law <law@cygnus.com> 881630166 -0500
 committer Eric S. Raymond <esr@thyrsus.com> 1513280877 -0500
 data 38
 Add a test from the GCC back history.

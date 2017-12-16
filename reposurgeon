@@ -1510,7 +1510,7 @@ def screenwidth():
 isocode_to_zone = {}
 
 def zone_from_email(addr):
-    "Attempt to deduce an IANA time zone from and email address."
+    "Attempt to deduce an IANA time zone from an email address."
     if not isocode_to_zone:
         try:
             firstpass = {}
@@ -13427,7 +13427,7 @@ assignment would be.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
-        def parse_attribution_line(line):
+        def parse_attribution_line(line, commit):
             if len(line) <= 10 or line[0].isspace():
                 return None
             # Line must contain an email address
@@ -13450,6 +13450,9 @@ assignment would be.
                     ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
                 except ValueError:
                     return None
+                # Assign same time of day as the committer timestamp.
+                # See below for the rationalization.
+                ymd += commit.committer.date.timestamp % 86400
                 addr = line[space+1:].strip()
                 return (ymd, addr)
             # Scan for old-style date like "Tue Dec  9 01:16:06 1997"
@@ -13496,7 +13499,7 @@ assignment would be.
                                 before = False
                             #print("I see: %s" % repr(diffline))
                             line = diffline[2:]
-                            attribution = parse_attribution_line(line)
+                            attribution = parse_attribution_line(line, commit)
                             if attribution is not None:
                                 (ymd, addr) = attribution
                                 #print("I notice: %s %s %s" % (diffline[0], attribution, before))
@@ -13534,7 +13537,7 @@ assignment would be.
                             # committer date in a display even if we don't
                             # know whether it's local or UTC.
                             newattr = commit.committer.clone()
-                            newattr.date.timestamp = ymd + newattr.date.timestamp % 86400
+                            newattr.date.timestamp = ymd
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()
