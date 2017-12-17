@@ -10,6 +10,53 @@ TMPDIR=${TMPDIR:=/tmp}
 command -v realpath >/dev/null 2>&1 ||
     realpath() { test -z "${1%%/*}" && echo "$1" || echo "$PWD/${1#./}"; }
 
+vcstype()
+{
+    cvs=no	
+    if [ -d CVSROOT ]
+    then
+    	cvs=yes
+    else
+	for file in *,v; do
+	    if [ -f "$file" ]; then
+		cvs=yes
+		break
+	    fi
+	done
+    fi
+    if [ "$cvs" = 'yes' ]
+    then
+	vcs=cvs
+    elif [ -d CVS ]
+    then
+	vcs=cvs-checkout
+    elif [ -d locks ]
+    then
+	vcs=svn
+    elif [ -d .svn ]
+    then
+	vcs=svn-checkout
+    elif [ -d .git ]
+    then
+	vcs=git
+    elif [ -d .bzr ]
+    then
+	vcs=bzr
+    elif [ -d .hg ]
+    then
+    	vcs=hg
+    elif [ -d _darcs ]
+    then
+	vcs=darcs
+    elif [ -d .bk ]
+    then
+	vcs=bk
+    else
+	echo "repotool: `pwd` does not look like a repository directory of known type."
+	exit 1
+    fi
+}
+
 case $operation in
 initialize)
     project=$1
@@ -595,6 +642,10 @@ compare-tags - compare source and target repo conyent at all tags
 compare-branches - compare source and target repo conyent at all branches
 compare-all - compare repositories at head, all tags, and all branches
 EOF
+    ;;
+id)	# Undocumented
+    vcstype
+    echo "repotool: `pwd` looks like $vcs" 
     ;;
 *)
     echo "repotool: unknown action '$operation'."
