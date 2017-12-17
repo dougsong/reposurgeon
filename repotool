@@ -362,58 +362,70 @@ EOF
     fi
     ;;
 tags)
-    if [ -d CVSROOT ]
-    then
+    vcstype
+    case $vcs in
+	cvs)
         # Will screw up if any tag is not common to all files
 	module=`ls -1 | grep -v CVSROOT`
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	| awk -F"[.:]" '/^\t/&&$(NF-1)!=0{print $1}' | awk '{print $1}' | sort -u
-    elif [ -d locks ]
-    then
+	    | awk -F"[.:]" '/^\t/&&$(NF-1)!=0{print $1}' | awk '{print $1}' | sort -u
+	;;
+	svn)
 	    svn ls "file://$(pwd)/tags" | sed 's|/$||'
-    elif [ -d .git ]
-    then
+	    ;;
+	svn-checkout)
+	    ls tags
+	    ;;
+	git)
 	    git tag -l
-    elif [ -d .bzr ]
-    then
+	    ;;
+	bzr)
 	    bzr tags
-    elif [ -d .hg ]
-    then
+	    ;;
+	hg)
 	    hg tags --quiet
-    elif [ -d _darcs ]
-    then
+	    ;;
+	darcs)
 	    darcs show tags
-    elif [ -d .bk ]
-    then
+	    ;;
+	bk)
 	    bk tags | sed -n 's/ *TAG: *//p'
-    else
-        echo "repotool: tags listing not supported for this repository type."
-        exit 1
-    fi
+	    ;;
+	*)
+            echo "repotool: tags listing not supported for this repository type."
+            exit 1
+	    ;;
+    esac
     ;;
 branches)
-    if [ -d CVSROOT ]
-    then
+    vcstype
+    case $vcs in
+	cvs)
         # Will screw up if any tag is not common to all files
 	module=`ls -1 | grep -v CVSROOT`
 	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	| awk -F"[.:]" '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u
-    elif [ -d locks ]
-    then
+	    | awk -F"[.:]" '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u
+	;;
+	svn)
 	    svn ls "file://$(pwd)/branches" | sed 's|/$||'
-    elif [ -d .git ]
-    then
+	    ;;
+	svn-checkout)
+	    ls branches
+	    ;;
+	git)
 	    git branch -l | cut -c 3- | grep -v '^master$'
-    elif [ -d .bzr ]
-    then
+	    ;;
+	bzr)
 	    bzr branches | cut -c 3-
-    elif [ -d .hg ]
-    then
+	    ;;
+	hg)
 	    hg branches --template '{branch}\n' | grep -v '^default$'
-    else
-        echo "repotool: branch listing not supported for this repository type."
-        exit 1
-    fi
+	    ;;
+	*)
+            echo "repotool: branch listing not supported for this repository type."
+            exit 1
+	    ;;
+    esac
     ;;
 checkout)
     outdir=$1
