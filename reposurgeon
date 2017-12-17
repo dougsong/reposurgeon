@@ -790,20 +790,15 @@ def memcheck(repo):
                 repo.dumptimes()
             raise Fatal("Low-memory condition, bailing out before OOM or crash.")
 
-lastseek = 0
+lastfrac = 0
 
 def readprogress(baton, fp, filesize):
-    # The GB grain means this will never emit percentages on small repositories.
-    # That is entirely intentional.  Stream parsing is fast enough that we don't
-    # care about having to project a completion time below one grain.  Might
-    # be this could go larger.
-    grain = 1000 * 1000 * 1024	# 1GB
     if filesize is not None:
-        global lastseek
+        global lastfrac
         frac = (fp.tell() / (filesize * 1.0))
-        if fp.tell() > lastseek + grain:
-            baton.twirl("%d%%..." % (frac * 100))
-            lastseek = fp.tell()
+        if frac > lastfrac + 0.01:
+            baton.twirl("%d%%" % (frac * 100))
+            lastfrac = frac
     baton.twirl()
 
 # How to write extractor classes:
@@ -1634,6 +1629,8 @@ class Baton:
     def __init__(self, prompt, endmsg='done', enable=False):
         self.prompt = prompt
         self.endmsg = endmsg
+        self.lastlen = 0
+        self.erase = False
         self.countfmt = None
         self.counter = 0
         if enable:
@@ -1675,23 +1672,33 @@ class Baton:
         "One twirl of the baton."
         if self.stream is None:
             return
+        if self.erase:
+            self.stream.write("\b" * self.lastlen)
+            self.stream.write(" " * self.lastlen)
+            self.stream.write("\b" * self.lastlen)
+            self.erase = True
         if os.isatty(self.stream.fileno()):
             if ch:
+                self.lastlen = len(ch)
                 self.stream.write(ch)
-                if len(ch) == 1 or ch[-1] == "%":
-                    self.stream.write("\b" * len(ch))
+                self.stream.flush()
+                self.erase = "%" in ch
+                if self.erase:
+                    time.sleep(0.1)
             else:
-                if self.counter % (100 * 1000):
+                self.lastlen = 1
+                self.erase = False
+                if self.counter > 0 and (self.counter % (100 * 1000)) == 0:
                     self.stream.write("!")
-                elif self.counter % (10 * 1000):
+                elif self.counter > 0 and (self.counter % (10 * 1000)) == 0:
                     self.stream.write("*")
-                elif self.counter % (1 * 1000):
+                elif self.counter > 0 and (self.counter % (1 * 1000)) == 0:
                     self.stream.write("+")
                 else:
-                    update = "-/|\\"[self.count % 4]
-                    self.stream.write(update + ("\b" * len(update)))
-                self.count = self.count + 1
-            self.stream.flush()
+                    self.stream.write("-/|\\"[self.count % 4])
+                    self.erase = True
+                self.stream.flush()
+                self.counter += 1
     def __exit__(self, extype, value_unused, traceback_unused):
         if extype == KeyboardInterrupt:
             self.endmsg = "interrupted"
@@ -3966,7 +3973,7 @@ class StreamParser:
                     self.repo.timings.append(("parsing", time.time()))
                     self.svn_process(options, baton)
                     elapsed = time.time() - baton.time
-                    baton.twirl("%d svn revisions (%d/s)" %
+                    baton.twirl("...%d svn revisions (%d/s)" %
                                  (self.repo.legacy_count,
                                   int(self.repo.legacy_count/elapsed)))
                 else:
