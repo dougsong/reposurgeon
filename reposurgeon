@@ -13418,6 +13418,12 @@ If the entry header contains an email address but no name, a name
 will be filled in if possible by looking for the address in author
 map entries.
 
+The year, month and date of authorship are taken from the date part
+of the entry header. Because human beings sometimes fat-finger these,
+some sanity checks are done, notably checking that this date is not
+after the commit date or before the repostory's first commit. If the
+check fails, the commit darte is copied into the author date.
+
 Due to the limitations of the ChangeLog format, attribution dates on
 these author records will be set to have the hh:mm:ss part of the
 committer date and the committer's timezone; then various tricks are
@@ -13544,7 +13550,9 @@ assignment would be.
                             # committer date in a display even if we don't
                             # know whether it's local or UTC.
                             newattr = commit.committer.clone()
-                            newattr.date.timestamp = ymd
+                            # This guard catches some garbled dates.
+                            if ymd < self.repo.earliest() or ymd > newattr.date.timestamp:
+                                newattr.date.timestamp = ymd
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()

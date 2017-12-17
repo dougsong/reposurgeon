@@ -1915,6 +1915,7 @@ pertaining to each particular topic are clumped together, and then possibly
 squashed into one or more changesets pertaining to each topic.  This command,
 <command>reorder</command>, can help with the first task; the
 <command>squash</command> command with the second.</para>
+
 <para>Selected commits are re-arranged in the order specified; for instance:
 "<command>:7,:5,:9,:3 reorder</command>".  The specified commit range must be
 contiguous; each commit must be accounted for after re-ordering.  Thus, for
@@ -1934,6 +1935,7 @@ be discovered via manual inspection and repaired with the
 <command>add</command> and <command>remove</command> (and possibly
 <command>path</command>) commands. Warnings can be suppressed with
 <command>--quiet</command>.</para>
+
 <para>In addition to adjusting their parent/child relationships, re-ordering
 commits also re-orders the underlying events since ancestors must appear
 before descendants, and blobs must appear before commits which reference them.
@@ -2469,6 +2471,12 @@ parsed and the address is inserted as the commit author.</para>
 <para>If the entry header contains an email address but no name, a name
 will be filled in if possible by looking for the address in author
 map entries.</para>
+
+<para>The year, month and date of authorship are taken from the date part
+of the entry header. Because human beings sometimes fat-finger these,
+some sanity checks are done, notably checking that this date is not
+after the commit date or before the repostory's first commit. If the
+check fails, the commit darte is copied into the author date.</para>
 
 <para>Due to the limitations of the ChangeLog format, attribution
 time-of-day and timezone on these author records have to made up out
