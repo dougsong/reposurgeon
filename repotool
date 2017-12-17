@@ -244,46 +244,43 @@ EOF
     echo "# Lift commands for ${project}" >${project}.lift
     ;;
 export)
-    cvs=no	
-    if [ -d CVSROOT ]
-    then
-    	    cvs=yes
-    else
-	    for file in *,v; do
-		    if [ -f "$file" ]; then
-			    cvs=yes
-			    break
-		    fi
-	    done
-    fi
-    if [ "$cvs" = 'yes' ]
-    then
-       find . -name \*,v | cvs-fast-export -q --reposurgeon
-    elif [ -d locks ]
-    then
-	# Subversion dump rather than the git conversion because the
-	# git conversion is lossy.
-	svnadmin -q dump .
-    elif [ -d .git ]
-    then
+    vcstype
+    case $vcs in
+	cvs)
+	    find . -name \*,v | cvs-fast-export -q --reposurgeon
+	    ;;
+	cvs-checkout)
+	    echo "reposurgeon: cannot export from a CVS checkout."
+	    ;;
+	svn)
+	    # Subversion dump rather than the git conversion because the
+	    # git conversion is lossy.
+	    svnadmin -q dump .
+	    ;;
+	svn-checkout)
+	    echo "reposurgeon: cannot export from a Subversion checkout."
+	    ;;
+	git)
 	    git fast-export --all
-    elif [ -d .bzr ]
-    then
+	    ;;
+	bzr)
 	    bzr fast-export --no-plain .
-    elif [ -d .hg ]
-    then
+	    ;;
+	hg)
     	    # Use the extractor in reposurgeon itself.
 	    reposurgeon "read ." "prefer git" "write -"
-    elif [ -d _darcs ]
-    then
+	    ;;
+	darcs)
 	    darcs fastconvert export
-    elif [ -d .bk ]
-    then
+	    ;;
+	bk)
 	    bk fast-export -q
-    else
-	echo "repotool: does not look like a repository directory of known type."
-	exit 1
-    fi
+	    ;;
+	*)
+	    echo "repotool: does not look like a repository directory of known type."
+	    exit 1
+	    ;;
+    esac
     ;;
 mirror)
     operand=$1
@@ -633,7 +630,7 @@ compare-all)
 repotool commands:
 
 initialize  - create Makefile and stub files for standard convrsion workflow.
-export - export a stream dump of te source repository
+export - export a stream dump of the source repository
 mirror - create or update a mirror of the source repository
 branches - list repository branch names
 checkout - check out a working copy of the repo
