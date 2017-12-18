@@ -13551,7 +13551,7 @@ assignment would be.
                             # know whether it's local or UTC.
                             newattr = commit.committer.clone()
                             # This guard catches some garbled dates.
-                            if ymd < self.repo.earliest() or ymd > newattr.date.timestamp:
+                            if ymd < self.repo.earliest().timestamp or ymd > newattr.date.timestamp:
                                 newattr.date.timestamp = ymd
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]

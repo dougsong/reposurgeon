@@ -109,7 +109,7 @@ Hilda adds a fourth line.
 commit refs/heads/master
 #legacy-id d90ecf70ea5c3935bdda60d1bd2f3f8cacdfe020
 mark :11
-author Hilda J. Foonly <hilda@foonly.org> 1508443316 -0700
+author Hilda J. Foonly <hilda@foonly.org> 1508616116 -0700
 committer Eric S. Raymond <esr@thyrsus.com> 1508616116 -0400
 data 47
 Test for parsing out-of-order partial entries.
