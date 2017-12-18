@@ -438,51 +438,54 @@ checkout)
     fi
     shift
     rev=$1
-    if [ -d CVSROOT ]
-    then
-	module=`ls -1 | grep -v CVSROOT`
-	if [ "$rev" ]
-	then
-	    rev="-r $rev"
-	fi
-	# By choosing -kb we get binary files right, but won't
-	# suppress any expanded keywords that might be lurking
-	# in masters.   
-	cvs -Q -d:local:${PWD} co -P $rev -d $outdirpath -kb $module
-    elif [ -d locks ]
-    then
-	if [ "$rev" ]
-	then
-	    rev="-d $rev"
-	fi
-	svn co -q $rev file://${PWD} $outdir
-    elif [ -d .git ]
-    then
-	git clone --quiet --shared --no-checkout . $outdir
-	if [ -z "$rev" ]
-	then
-	    rev="master"
-	fi
-	cd $outdir >/dev/null; git checkout --quiet $rev
-    elif [ -d .bzr ]
-    then
-	echo "Not yet supported."
-	exit 1
-    elif [ -d .hg ]
-    then
-	if [ "$rev" ]
-	then
-	    rev="-u $rev"
-	fi
-	hg clone -q $rev . $outdir
-    elif [ -d _darcs ]
-    then
-	echo "Not yet supported."
-	exit 1
-    else
-        echo "repotool: checkout not supported for this repository type."
-        exit 1
-    fi
+    vcstype
+    case $vcs in
+	cvs)
+	    module=`ls -1 | grep -v CVSROOT`
+	    if [ "$rev" ]
+	    then
+		rev="-r $rev"
+	    fi
+	    # By choosing -kb we get binary files right, but won't
+	    # suppress any expanded keywords that might be lurking
+	    # in masters.   
+	    cvs -Q -d:local:${PWD} co -P $rev -d $outdirpath -kb $module
+	    ;;
+	svn)
+	    if [ "$rev" ]
+	    then
+		rev="-d $rev"
+	    fi
+	    svn co -q $rev file://${PWD} $outdir
+	;;
+	git)
+	    git clone --quiet --shared --no-checkout . $outdir
+	    if [ -z "$rev" ]
+	    then
+		rev="master"
+	    fi
+	    cd $outdir >/dev/null; git checkout --quiet $rev
+	    ;;
+	bzr)
+	    echo "Checkout is not yet supported in bzr."
+	    exit 1
+	    ;;
+	hg)
+	    if [ "$rev" ]
+	    then
+		rev="-u $rev"
+	    fi
+	    hg clone -q $rev . $outdir
+	    ;;
+	darcs)
+	    echo "Checkout is not yet supported for darcs."
+	    exit 1;
+	    ;;
+	*)
+            echo "repotool: checkout not supported for this repository type."
+            exit 1
+	    ;;
+    esac
     ;;
 compare)
     exclude=
