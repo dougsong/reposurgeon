@@ -452,9 +452,6 @@ checkout)
 	    # in masters.   
 	    cvs -Q -d:local:${PWD} co -P $rev -d $outdirpath -kb $module
 	    ;;
-	cvs-checkout)
-	    cvs -Q -d:local:${PWD} co -P $rev -kb
-	    ;;
 	svn)
 	    if [ "$rev" ]
 	    then
@@ -470,17 +467,12 @@ checkout)
 	    svn up -q $rev
 	;;
 	git)
+	    git clone --quiet --shared --no-checkout . $outdir
 	    if [ -z "$rev" ]
 	    then
 		rev="master"
 	    fi
-	    if [ -d $outdir/.git ]
-	    then
-		git checkout --quiet $rev
-	    else
-		git clone --quiet --shared --no-checkout . $outdir
-		cd $outdir >/dev/null; git checkout --quiet $rev
-	    fi
+	    cd $outdir >/dev/null; git checkout --quiet $rev
 	    ;;
 	bzr)
 	    echo "Checkout is not yet supported in bzr."
@@ -526,40 +518,10 @@ compare)
     fi
     here=$PWD
     rm -fr ${TMPDIR}/source $TMPDIR/target
-    cd $repo1;
-    vcstype
-    case $vcs in
-	cvs-checkout|svn-checkout|git|hg) 
-	    #repotool checkout . $rev
-	    SOURCE=$repo1
-	    ;;
-	cvs|svn)
-	    #repotool checkout $TMPDIR/source $rev
-	    SOURCE=$TMPDIR/source
-	    ;;
-	*)
-	    echo "Comparison with a $vcs source is not yet supported"
-	    exit 1
-	    ;;
-    esac
-    cd $repo2;
-    vcstype
-    case $vcs in
-	cvs-checkout|svn-checkout|git|hg) 
-	    repotool checkout . $rev
-	    TARGET=$repo2
-	    ;;
-	cvs|svn)
-	    repotool checkout $TMPDIR/target $rev
-	    TARGET=$TMPDIR/target
-	    ;;
-	*)
-	    echo "Comparison with a $vcs source is not yet supported"
-	    exit 1
-	    ;;
-    esac
+    cd $repo1; repotool checkout $TMPDIR/source $rev
+    cd $repo2; repotool checkout $TMPDIR/target $rev
     cd $here
-    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' $diffopts -r $SOURCE $TARGET | sed \
+    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' $diffopts -r $TMPDIR/source $TMPDIR/target| sed \
 			-e '/Only in .tmp./s//Only in /' \
 			-e '/: /s::/:' \
 			-e '/source./s//source: /' \
