@@ -2749,8 +2749,22 @@ surrounded by whitespace) followed by a full name and email address,
 optionally followed by a timezone offset field.  Thus:</para>
 
 <literallayout>
-ferd = Ferd J. Foonly &lt;foonly@foo.com&gt; -0500
+ferd = Ferd J. Foonly &lt;foonly@foo.com&gt; America/New_York
 </literallayout>
+
+<para>An authors file may also contain lines of this form</para>
+
+<literallayout>
++ Ferd J. Foonly &lt;foonly@foobar.com&gt; America/Los_Angeles
+</literallayout>
+
+<para>These are interpreted as aliases for the last preceding '='
+entry that may appear in ChangeLog files. When such an alias is
+matched on a ChangeLog attribution line, the author attribution
+for the commit is mapped to the basename, but the timezone is used
+as is.  This accommodates people with past addresses (possibly at)
+different locations) unifying such aliases in metadata so searches
+and statistical aggregation will work better.</para>
 
 <para>An authors file may have comment lines beginning with '#'; these
 are ignored.</para>

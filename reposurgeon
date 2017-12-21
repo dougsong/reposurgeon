@@ -1705,8 +1705,8 @@ class Baton:
         if extype == Fatal:
             self.endmsg = "aborted by error"
         if self.stream:
-            self.stream.write("...(%2.2f sec) %s.\n" \
-                              % (time.time() - self.time, self.endmsg))
+            self.stream.write("...(%s sec) %s.\n" \
+                              % (humanize(time.time() - self.time), self.endmsg))
         return False
 
 class RepoSurgeonEmail(email.message.Message, object):
@@ -5877,6 +5877,7 @@ class Repository:
         self.markseq = 0
         self.authormap = {}
         self.tzmap = {}
+        self.aliases = {}
     def newmark(self):
         self.markseq += 1
         mark = ":" + str(self.markseq)
@@ -6100,16 +6101,27 @@ class Repository:
                     continue
                 if line.startswith('#'):
                     continue
-                (local, netwide) = line.strip().split('=')
-                try:
-                    (name, mail, timezone) = Attribution.parseaddr(netwide.strip())
-                    if timezone:
-                        self.tzmap[mail] = timezone
-                except ValueError:
-                    raise Fatal("malformed author-map line")
-                if not mail:
-                    raise Fatal("can't recognize address in '%s'" % netwide)
-                self.authormap[local.strip().lower()] = (name, mail, timezone)
+                if '=' in line:
+                    (local, netwide) = line.strip().split('=')
+                    try:
+                        mail = None
+                        (name, mail, timezone) = Attribution.parseaddr(netwide.strip())
+                        if not mail:
+                            raise Fatal("can't recognize address in '%s'" % netwide)
+                        if timezone:
+                            self.tzmap[mail] = timezone
+                        self.authormap[local.strip().lower()] = (name,mail,timezone)
+                    except ValueError:
+                        raise Fatal("malformed author-map line")
+                # Process aliases that may show up in Changelog entries
+                if line[0] == '+':
+                    try:
+                        (aname, amail, atimezone) = Attribution.parseaddr(line[1:].strip())
+                        self.aliases[(aname, amail)] = (name, mail)
+                        if timezone:
+                            self.tzmap[amail] = atimezone
+                    except ValueError:
+                        raise Fatal("malformed author-map line")
         except IOError:
             raise Recoverable("couldn't open author-map file")
         except ValueError:
@@ -13565,6 +13577,8 @@ assignment would be.
                                 newattr.date.set_tz(repo.tzmap[newattr.email])
                             else:
                                 newattr.date.set_tz(zone_from_email(newattr.email))
+                            if (newattr.name, newattr.email) in repo.aliases:
+                                (newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
                             if not commit.authors:
                                 commit.authors = [newattr]
                             else:
