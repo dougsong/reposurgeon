@@ -1772,7 +1772,11 @@ class Date(object):
         if Date.date_re.match(polybytes(text)):
             (self.timestamp, self.orig_tz_string) = text.split()
             self.orig_tz_string = sys.intern(self.orig_tz_string)
-            self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
+            try:
+                self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
+            except Recoverable as e:
+                complain("when parsing '%s': %s, assuming +0000" % (text, e.msg))
+                self.tz_offset = 0
             self.timestamp = int(self.timestamp)
             return
         # If that didn't work, look for an RFC822 date, which git also
@@ -1822,11 +1826,10 @@ class Date(object):
             hours = int(m.group(2))
             mins = int(m.group(3))
             if hours < -14 or hours > 13 or mins > 59:
-                complain("dubious UTC offset '%s'." % text)
+                raise Recoverable("dubious UTC offset '%s'." % text)
             return (hours * 60 + mins) * 60 * sign
         else:
-            complain("invalid UTC offset '%s', assuming +0000 instead." % text)
-            return 0
+            raise Recoverable("invalid UTC offset '%s'" % text)
     def rfc3339(self):
         return rfc3339(self.timestamp)
     def rfc822(self):
@@ -1859,7 +1862,11 @@ class Date(object):
         if zone is None:
             return
         self.orig_tz_string = Date.tzresolve(zone, self.timestamp)
-        self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
+        try:
+            self.tz_offset = Date.secondsFromOffsetString(self.orig_tz_string)
+        except Recoverable as e:
+            complain("%s: %s, assuming +0000" % (zone, e.msg))
+            self.tz_offset = 0
     def __str__(self):
         "Format as a git timestamp."
         return str(self.timestamp) + " " + self.orig_tz_string
@@ -1980,7 +1987,11 @@ class Attribution(object):
                 self.email = sys.intern(mail)
                 if timezone:
                     self.date.orig_tz_string = Date.tzresolve(timezone, self.date.timestamp)
-                    self.date.tz_offset = Date.secondsFromOffsetString(self.date.orig_tz_string)
+                    try:
+                        self.date.tz_offset = Date.secondsFromOffsetString(self.date.orig_tz_string)
+                    except Recoverable as e:
+                        complain("for author %s zone %s, %s:, assuming +0000" % (name, timezone, e.msg))
+                        self.date.tz_offset = 0
                 break
     def action_stamp(self):
         return self.date.rfc3339() + "!" + self.email
