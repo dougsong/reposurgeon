@@ -2494,6 +2494,9 @@ properties: (1) no later than the committer date, and (2) has same
 mm:ss, making it possible to match the committer date in a display
 even if we don't know whether it's local or UTC.</para>
 
+<para>With the --use-committer-date policy switch, ChangeLog attribution dates
+will be ignored and the commit date used for all author entries.</para>
+
 <para>The command reports statistics on how many commits were altered.</para>
 </refsect2>
 

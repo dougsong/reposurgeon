@@ -13443,12 +13443,16 @@ tried to correct the timezone, including looking in the author map if
 there is one. This choice is often close to right (e.g if the
 committer is the author) and no worse than any other arbitrary
 assignment would be.
+
+With the --use-committer-date policy switch, ChangeLog attribution dates
+will be ignored and the commit date used for all author entries.
 """)
     def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
+        ignore_dates = "--use-committer-date" in line
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
@@ -13466,15 +13470,17 @@ assignment would be.
             # Deal with some address masking
             line = line.replace(" <at> ", "@")
             # Look for YY-MM-DD date
+            ymd = commit.committer.date.timestamp
             if line[0].isdigit() and line[1].isdigit():
                 space = line.find(" ")
                 if space < 0:
                     return None
                 date = line[:space]
-                try:
-                    ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                except ValueError:
-                    return None
+                if not ignore_dates:
+                    try:
+                        ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+                    except ValueError:
+                        return None
                 # Assign same time of day as the committer timestamp.
                 # See below for the rationalization.
                 ymd += commit.committer.date.timestamp % 86400
@@ -13485,7 +13491,8 @@ assignment would be.
                 possible_date = " ".join(line.split()[:5])
                 # Doesn't matter that TZ is wrong here, we're only going
                 # to use the day part at most.
-                ymd = calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
+                if not ignore_dates:
+                    ymd = calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
                 skipre = re.compile(r'\s+'.join(line.split()[:5]))
                 m = skipre.match(line)
                 addr = line[len(m.group(0)):].strip()
@@ -13563,7 +13570,7 @@ assignment would be.
                             # know whether it's local or UTC.
                             newattr = commit.committer.clone()
                             # This guard catches some garbled dates.
-                            if ymd < self.repo.earliest().timestamp or ymd > newattr.date.timestamp:
+                            if not ignore_dates and ymd < self.repo.earliest().timestamp or ymd > newattr.date.timestamp:
                                 newattr.date.timestamp = ymd
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]
