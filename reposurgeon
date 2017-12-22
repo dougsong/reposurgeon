@@ -13458,7 +13458,7 @@ that zone is used.
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
-        def parse_attribution_line(line, commit):
+        def parse_attribution_line(line):
             if len(line) <= 10 or line[0].isspace():
                 return None
             # Line must contain an email address
@@ -13471,8 +13471,6 @@ that zone is used.
                 return None
             # Deal with some address masking
             line = line.replace(" <at> ", "@")
-            # Look for YY-MM-DD date
-            ymd = commit.committer.date.timestamp
             if line[0].isdigit() and line[1].isdigit():
                 space = line.find(" ")
                 if space < 0:
@@ -13482,9 +13480,6 @@ that zone is used.
                     calendar.timegm(time.strptime(date, "%Y-%m-%d"))
                 except ValueError:
                     return None
-                # Assign same time of day as the committer timestamp.
-                # See below for the rationalization.
-                ymd += commit.committer.date.timestamp % 86400
                 addr = line[space+1:].strip()
                 return addr
             # Scan for old-style date like "Tue Dec  9 01:16:06 1997"
@@ -13533,7 +13528,7 @@ that zone is used.
                                 before = False
                             #print("I see: %s" % repr(diffline))
                             line = diffline[2:]
-                            attribution = parse_attribution_line(line, commit)
+                            attribution = parse_attribution_line(line)
                             if attribution is not None:
                                 addr = attribution
                                 #print("I notice: %s %s %s" % (diffline[0], attribution, before))
