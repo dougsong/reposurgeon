@@ -13518,10 +13518,12 @@ will be ignored and the commit date used for all author entries.
                         # this blob by comparing it to its nearest ancestor.
                         ob = repo.blob_ancestor(commit, op.path)
                         if ob:
-                            then = open(ob.materialize()).read().splitlines()
+                            with open(ob.materialize()) as oldblob:
+                                then = oldblob.read().splitlines()
                         else:
                             then = ""
-                        now = open(blobfile).read().splitlines()
+                        with open(blobfile) as newblob:
+                            now = newblob.read().splitlines()
                         before = True
                         inherited = new = None
                         #print("Analyzing Changelog at %s." % commit.mark)
