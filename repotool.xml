@@ -61,19 +61,22 @@ returns a list of the repository's branch names.</para>
 
 <para>The 'checkout' option checks out a working copy of the
 repository. It must be called from within the repository. It takes one
-required argument - the checkout directory location. It may take a
-following optional argument which is a tag or revision specification;
-if this argument is not given, the tip (most recent) mainline revision
-is assumed.</para>
+required argument - the checkout directory location.</para>
 
-<para>The 'compare' action takes two repository directories and a
-revision spec (typically a tag name). If the revision spec is omitted,
-the tip of the main line of both repositories will be used.  The
-selected revisions are cpmpared with diff -q -r, with noise due to
-SCCS/RCS/CVS keyword expansion ignored.  You can follow the command
-verb with one or more -x options followed by basenames of paths to
-exclude from comparison. You can get a context-diff report on file
-differences with the -u option.</para>
+<para>The checkout option may take a revision, tag, or branch
+specifaction, given with the -r, -t, or -b options. If the spec is
+omitted, the tip of the main line of the repository will be used; this
+is equivalent to specifying branch 'master' (git terminology, which is
+translated by reposurgeon to 'trunk' or whatever the underlying VCS
+uses).</para>
+
+<para>The 'compare' action takes two repository directories. It may
+optionally take a tag-branch-revision spec as for the checkout
+option. The selected versions are compared with diff -q -r, with noise
+due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
+command verb with one or more -x options followed by basenames of
+paths to exclude from comparison. You can get a context-diff report on
+file differences with the -u option.</para>
 
 <para>The 'compare-tags' action takes two repository directories,
 extracts a list of tags from the first, then compares the repository

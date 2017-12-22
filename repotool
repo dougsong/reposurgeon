@@ -1,116 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env python
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
 #
-set -e
-operation=$1
-shift;
+# Rather non-idiomatic Python because it was translated from shell.
+#
+# This code runs under both Python 2 and Python 3: preserve this property!
+from __future__ import print_function
 
-TMPDIR=${TMPDIR:=/tmp}
+import sys, os, getopt, subprocess, re, shutil
 
-command -v realpath >/dev/null 2>&1 ||
-    realpath() { test -z "${1%%/*}" && echo "$1" || echo "$PWD/${1#./}"; }
+try:
+    input = raw_input
+except NameError:
+    pass
 
-vcstype()
-{
-    cvs=no	
-    if [ -d CVSROOT ]
-    then
-    	cvs=yes
-    else
-	for file in *,v; do
-	    if [ -f "$file" ]; then
-		cvs=yes
-		break
-	    fi
-	done
-    fi
-    if [ "$cvs" = 'yes' ]
-    then
-	vcs=cvs
-    elif [ -d CVS ]
-    then
-	vcs=cvs-checkout
-    elif [ -d locks ]
-    then
-	vcs=svn
-    elif [ -d .svn ]
-    then
-	vcs=svn-checkout
-    elif [ -d .git ]
-    then
-	vcs=git
-    elif [ -d .bzr ]
-    then
-	vcs=bzr
-    elif [ -d .hg ]
-    then
-    	vcs=hg
-    elif [ -d _darcs ]
-    then
-	vcs=darcs
-    elif [ -d .bk ]
-    then
-	vcs=bk
-    else
-	echo "repotool: `pwd` does not look like a repository directory of known type."
-	exit 1
-    fi
-}
-
-case $operation in
-initialize)
-    project=$1
-    if [ -z "$1" ]
-    then
-	echo "repotool: initialize requires a project name."
-	exit 1
-    fi
-    if [ -f Makefile ]
-    then
-	echo "repotool: a Makefile already exists here."
-	exit 1
-    fi
-    if [ -f "${project}.opts" ]
-    then
-	echo "repotool: a project options file already exists here."
-	exit 1
-    fi
-    if [ -f "${project}.lift" ]
-    then
-	echo "repotool: a project lift file already exists here."
-	exit 1
-    fi
-    shift
-    if [ -z "$1" ]
-    then
-	/bin/echo -n "repotool: what VCS do you want to convert from? "
-	read source_vcs
-    else
-	source_vcs=$1
-    fi
-    case $source_vcs in
-	cvs|svn|git|bzr|hg|darcs|bk) ;;
-	*) echo "repotool: unknown source VCS type ${source_vcs}"; exit 1 ;;
-    esac
-    shift
-    if [ -z "$1" ]
-    then
-	/bin/echo -n "repotool: what VCS do you want to convert to? "
-	read target_vcs
-    else
-	target_vcs=$1
-    fi
-    case $target_vcs in
-	cvs|svn|git|bzr|hg|darcs|bk) ;;
-	*) echo "repotool: unknown target VCS type ${target_vcs}"; exit 1 ;;
-    esac 
-    echo "repotool: generating Makefile, some variables in it need to be set."
-    cat >Makefile <<EOF
-# Makefile for $project conversion using reposurgeon
+template = """\
+# Makefile for %(project)s conversion using reposurgeon
 #
 # Steps to using this:
-# 1. Make sure reposurgeon and repotool are on your \$PATH.
+# 1. Make sure reposurgeon and repotool are on your $PATH.
 #    For large repositories It is usually best to run reposurgeon using
 #    PyPy: set REPOSURGEON to "pypy" followed by an absolute pathname
 #    to reposurgeon.
@@ -143,12 +51,12 @@ initialize)
 #
 
 EXTRAS = 
-REMOTE_URL = svn://svn.debian.org/${project}
-#REMOTE_URL = https://${project}.googlecode.com/svn/
-CVS_HOST = ${project}.cvs.sourceforge.net
+REMOTE_URL = svn://svn.debian.org/%(project)s
+#REMOTE_URL = https://%(project)s.googlecode.com/svn/
+CVS_HOST = %(project)s.cvs.sourceforge.net
 #CVS_HOST = cvs.savannah.gnu.org
-CVS_MODULE = ${project}
-#REMOTE_URL = cvs://\$(CVS_HOST)/${project}\\#\$(CVS_MODULE)
+CVS_MODULE = %(project)s
+#REMOTE_URL = cvs://$(CVS_HOST)/%(project)s\\#$(CVS_MODULE)
 READ_OPTIONS =
 VERBOSITY = "verbose 1"
 REPOSURGEON = reposurgeon
@@ -158,71 +66,71 @@ REPOSURGEON = reposurgeon
 .PHONY: local-clobber remote-clobber gitk gc compare clean dist stubmap
 # Tell make not to auto-remove tag directories, because it only tries rm 
 # and hence fails
-.PRECIOUS: ${project}-%-checkout ${project}-%-${target_vcs}
+.PRECIOUS: %(project)s-%%-checkout %(project)s-%%-%(target_vcs)s
 
-default: ${project}-${target_vcs}
+default: %(project)s-%(target_vcs)s
 
 # Build the converted repo from the second-stage fast-import stream
-${project}-${target_vcs}: ${project}.fi
-	rm -fr ${project}-${target_vcs}; \$(REPOSURGEON) "read <${project}.fi" "prefer ${target_vcs}" "rebuild ${project}-${target_vcs}"
+%(project)s-%(target_vcs)s: %(project)s.fi
+	rm -fr %(project)s-%(target_vcs)s; $(REPOSURGEON) 'read <%(project)s.fi' 'prefer %(target_vcs)s' 'rebuild %(project)s-%(target_vcs)s'
 
 # Build the second-stage fast-import stream from the first-stage stream dump
-${project}.fi: ${project}.${source_vcs} ${project}.opts ${project}.lift ${project}.map \$(EXTRAS)
-	\$(REPOSURGEON) \$(VERBOSITY) "script ${project}.opts" "read \$(READ_OPTIONS) <${project}.${source_vcs}" "authors read <${project}.map" "sourcetype ${source_vcs}" "prefer git" "script ${project}.lift" "legacy write >${project}.fo" "write >${project}.fi"
+%(project)s.fi: %(project)s.%(source_vcs)s %(project)s.opts %(project)s.lift %(project)s.map $(EXTRAS)
+	$(REPOSURGEON) $(VERBOSITY) 'script %(project)s.opts' "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors read <%(project)s.map' 'sourcetype %(source_vcs)s' 'prefer git' 'script %(project)s.lift' 'legacy write >%(project)s.fo' 'write >%(project)s.fi'
 
 # Build the first-stage stream dump from the local mirror
-${project}.${source_vcs}: ${project}-mirror
-	(cd ${project}-mirror/ >/dev/null; repotool export) >${project}.${source_vcs}
+%(project)s.%(source_vcs)s: %(project)s-mirror
+	(cd %(project)s-mirror/ >/dev/null; repotool export) >%(project)s.%(source_vcs)s
 
 # Build a local mirror of the remote repository
-${project}-mirror:
-	repotool mirror \$(REMOTE_URL) ${project}-mirror
+%(project)s-mirror:
+	repotool mirror $(REMOTE_URL) %(project)s-mirror
 
 # Make a local checkout of the source mirror for inspection
-${project}-checkout: ${project}-mirror
-	cd ${project}-mirror >/dev/null; repotool checkout ../${project}-checkout
+%(project)s-checkout: %(project)s-mirror
+	cd %(project)s-mirror >/dev/null; repotool checkout ../%(project)s-checkout
 
 # Make a local checkout of the source mirror for inspection at a specific tag
-${project}-%-checkout: ${project}-mirror
-	cd ${project}-mirror >/dev/null; repotool checkout ../${project}-\$*-checkout \$*
+%(project)s-%%-checkout: %(project)s-mirror
+	cd %(project)s-mirror >/dev/null; repotool checkout ../%(project)s-$*-checkout $*
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean
-	rm -fr ${project}.fi ${project}-${target_vcs} *~ .rs* ${project}-conversion.tar.gz ${project}-*-${target_vcs}
+	rm -fr %(project)s.fi %(project)s-%(target_vcs)s *~ .rs* %(project)s-conversion.tar.gz %(project)s-*-%(target_vcs)s
 
 # Force full rebuild from the remote repo on the next make.
 remote-clobber: local-clobber
-	rm -fr ${project}.${source_vcs} ${project}-mirror ${project}-checkout ${project}-*-checkout
+	rm -fr %(project)s.%(source_vcs)s %(project)s-mirror %(project)s-checkout %(project)s-*-checkout
 
 # Get the (empty) state of the author mapping from the first-stage stream
-stubmap: ${project}.${source_vcs}
-	\$(REPOSURGEON) "read \$(READ_OPTIONS) <${project}.${source_vcs}" "authors write >${project}.map"
+stubmap: %(project)s.%(source_vcs)s
+	$(REPOSURGEON) "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors write >%(project)s.map'
 
 # Compare the histories of the unconverted and converted repositories at head
 # and all tags.
-EXCLUDE = -x CVS -x .${source_vcs} -x .${target_vcs}
-EXCLUDE += -x .${source_vcs}ignore -x .${target_vcs}ignore
-headcompare: ${project}-mirror ${project}-${target_vcs}
-	repotool compare \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
-tagscompare: ${project}-mirror ${project}-${target_vcs}
-	repotool compare-tags \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
-branchescompare: ${project}-mirror ${project}-${target_vcs}
-	repotool compare-branches \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
-allcompare: ${project}-mirror ${project}-${target_vcs}
-	repotool compare-all \$(EXCLUDE) ${project}-mirror ${project}-${target_vcs}
+EXCLUDE = -x CVS -x .%(source_vcs)s -x .%(target_vcs)s
+EXCLUDE += -x .%(source_vcs)signore -x .%(target_vcs)signore
+headcompare: %(project)s-mirror %(project)s-%(target_vcs)s
+	repotool compare $(EXCLUDE) %(project)s-mirror %(project)s-%(target_vcs)s
+tagscompare: %(project)s-mirror %(project)s-%(target_vcs)s
+	repotool compare-tags $(EXCLUDE) %(project)s-mirror %(project)s-%(target_vcs)s
+branchescompare: %(project)s-mirror %(project)s-%(target_vcs)s
+	repotool compare-branches $(EXCLUDE) %(project)s-mirror %(project)s-%(target_vcs)s
+allcompare: %(project)s-mirror %(project)s-%(target_vcs)s
+	repotool compare-all $(EXCLUDE) %(project)s-mirror %(project)s-%(target_vcs)s
 
 # General cleanup and utility
 clean:
-	rm -fr *~ .rs* ${project}-conversion.tar.gz *.${source_vcs} *.fi *.fo
+	rm -fr *~ .rs* %(project)s-conversion.tar.gz *.%(source_vcs)s *.fi *.fo
 
 # Bundle up the conversion metadata for shipping
-SOURCES = Makefile ${project}.lift ${project}.map \$(EXTRAS)
-${project}-conversion.tar.gz: \$(SOURCES)
-	tar --dereference --transform 's:^:${project}-conversion/:' -czvf ${project}-conversion.tar.gz \$(SOURCES)
+SOURCES = Makefile %(project)s.lift %(project)s.map $(EXTRAS)
+%(project)s-conversion.tar.gz: $(SOURCES)
+	tar --dereference --transform 's:^:%(project)s-conversion/:' -czvf %(project)s-conversion.tar.gz $(SOURCES)
 
-dist: ${project}-conversion.tar.gz
+dist: %(project)s-conversion.tar.gz
 EOF
-    if [ $target_vcs = git ]
+    if [ %(target_vcs)s = git ]
     then
 	cat >>Makefile <<EOF
 
@@ -231,446 +139,481 @@ EOF
 #
 
 # Browse the generated git repository
-gitk: ${project}-git
-	cd ${project}-git; gitk --all
+gitk: %(project)s-git
+	cd %(project)s-git; gitk --all
 
 # Run a garbage-collect on the generated git repository.  Import doesn't.
 # This repack call is the active part of gc --aggressive.  This call is
 # tuned for very large repositories.
-gc: ${project}-git
-	cd ${project}-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
-EOF
-    fi
-    echo "# Pre-read options for reposurgeon go here." >${project}.opts
-    echo "# Lift commands for ${project}" >${project}.lift
-    ;;
-export)
-    vcstype
-    case $vcs in
-	cvs)
-	    find . -name \*,v | cvs-fast-export -q --reposurgeon
-	    ;;
-	cvs-checkout)
-	    echo "reposurgeon: cannot export from a CVS checkout."
-	    ;;
-	svn)
-	    # Subversion dump rather than the git conversion because the
-	    # git conversion is lossy.
-	    svnadmin -q dump .
-	    ;;
-	svn-checkout)
-	    echo "reposurgeon: cannot export from a Subversion checkout."
-	    ;;
-	git)
-	    git fast-export --all
-	    ;;
-	bzr)
-	    bzr fast-export --no-plain .
-	    ;;
-	hg)
-    	    # Use the extractor in reposurgeon itself.
-	    reposurgeon "read ." "prefer git" "write -"
-	    ;;
-	darcs)
-	    darcs fastconvert export
-	    ;;
-	bk)
-	    bk fast-export -q
-	    ;;
-	*)
-	    echo "repotool: does not look like a repository directory of known type."
-	    exit 1
-	    ;;
-    esac
-    ;;
-mirror)
-    operand=$1
-    shift
-    mirrordir=$1
+gc: %(project)s-git
+	cd %(project)s-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
+"""
 
-    if case ${operand} in
-	   svn://*|svn+ssh://*|https://*|http://*) true;;
-	   file://*) [ -d "${operand#file://}"/locks ];;
-	   *) false;;
-       esac
-    then
-	if [ "$mirrordir" ]
-	then
-	   local=$mirrordir
-	else
-	    local=`basename $operand`-mirror
-	fi
-	svnadmin create $local
-	cat >$local/hooks/pre-revprop-change <<EOF
-#!/bin/sh
-exit 0;
-EOF
+DEBUG_GENERAL  = 1
+DEBUG_COMMANDS = 2
+DEBUG_LOWLEVEL = 3
+verbose = 0
+
+class Fatal(Exception):
+    "Unrecoverable error."
+    def __init__(self, msg):
+        Exception.__init__(self)
+        self.msg = msg
+
+def do_or_die(dcmd, legend=""):
+    "Either execute a command or raise a fatal exception."
+    if legend:
+        legend = " "  + legend
+    if verbose >= DEBUG_COMMANDS:
+        sys.stdout.write("repotool: executing '%s'%s\n" % (dcmd, legend))
+    try:
+        retcode = subprocess.call(dcmd, shell=True)
+        if retcode < 0:
+            raise Fatal("repotool: child was terminated by signal %d.\n" % -retcode)
+        elif retcode != 0:
+            raise Fatal("repotool: child returned %d.\n" % retcode)
+    except (OSError, IOError) as e:
+        raise Fatal("repotool: execution of %s%s failed: %s\n" % (dcmd, legend, e))
+
+def capture_or_die(dcmd, legend=""):
+    "Either execute a command and capture its output or die."
+    if legend:
+        legend = " "  + legend
+    if verbose >= DEBUG_COMMANDS:
+        sys.stdout.write("repodiffer: executing '%s'%s\n" % (dcmd, legend))
+    try:
+        return subprocess.check_output(dcmd, shell=True).decode('ascii')
+    except subprocess.CalledProcessError as e:
+        if e.returncode < 0:
+            raise Fatal("repodiffer: child was terminated by signal %d." % -e.returncode)
+        elif e.returncode != 0:
+            sys.stderr.write("repodiffer: child returned %d." % e.returncode)
+        sys.exit(1)
+
+class directory_context:
+    def __init__(self, target):
+        self.target = target
+        self.source = None
+    def __enter__(self):
+        if verbose >= DEBUG_COMMANDS:
+            sys.stdout.write("repotool: in %s...\n" % self.target)
+        self.source = os.getcwd()
+        if os.path.isdir(self.target):
+            os.chdir(self.target)
+        else:
+            enclosing = os.path.dirname(self.target)
+            if enclosing:
+                os.chdir()
+    def __exit__(self, extype, value_unused, traceback_unused):
+        os.chdir(self.source)
+
+def vcstype(d):
+    "What repository type in this directory?"
+    if os.path.isdir(os.path.join(d, "CVSROOT")):
+        return "cvs"
+    elif [p for p in os.listdir(d) if p.endswith(",v")]:
+        return "cvs"
+    elif os.path.isdir(os.path.join(d, "CVS")):
+        return "cvs-checkout"
+    elif os.path.isdir(os.path.join(d, "locks")):
+        return "svn"
+    elif os.path.isdir(os.path.join(d, ".svn")):
+        return "svn-checkout"
+    elif os.path.isdir(os.path.join(d, ".git")):
+	return "git"
+    elif os.path.isdir(os.path.join(d, ".bzr")):
+        return "bzr"
+    elif os.path.isdir(os.path.join(d, ".hg")):
+    	return "hg"
+    elif os.path.isdir(os.path.join(d, "_darcs")):
+	return "darcs"
+    elif os.path.isdir(os.path.join(d, ".bk")):
+	return "bk"
+    else:
+	print("repotool: %s does not look like a repository of known type." % d)
+	sys.exit(1)
+
+def is_dvcs_or_checkout(d="."):
+    "Is this a DVCS or checkout where we can compare files?"
+    return vcstype(d) not in ("cvs", "svn")
+
+def vcsignores():
+    "Return ignorable directories."
+    return [d for d in (".svn",
+                        "CVS", ".cvsignore",
+                        ".git", ".gitignore",
+                        ".hg", ".hgignore",
+                        ".bzr", ".bzrignore",
+                        ".bk", ".bkignore",
+                        "_darcs") if os.path.isdir(d) or os.path.isfile(d)]
+
+def initialize(args):
+    "Initialize project-conversion machinery."
+    if len(args) < 1:
+	print("repotool: initialize requires a project name.")
+	sys.exit(1)
+    project = args.pop(0) 
+    if os.path.exists("Makefile"):
+	print("repotool: a Makefile already exists here.")
+	sys.exit(1)
+    elif os.path.exists(project + ".opts"):
+	print("repotool: a project options file already exists here.")
+	sys.exit(1)
+    elif os.path.exists(project + ".lift"):
+	print("repotool: a project lift file already exists here.")
+	sys.exit(1)
+    if not args:
+	source_vcs = input("repotool: what VCS do you want to convert from? ")
+    else:
+	source_vcs = args.pop(0)
+    if source_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
+        print("repotool: unknown source VCS type %s" % source_vcs)
+	sys.exit(1)
+    if not args:
+	target_vcs = input("repotool: what VCS do you want to convert to? ")
+    else:
+	target_vcs = args.pop(0)
+    if target_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
+        print("repotool: unknown target VCS type %s" % target_vcs)
+	sys.exit(1)
+    print("repotool: generating Makefile, some variables in it need to be set.")
+    print(locals())
+    with open("Makefile", "w") as wp:
+        wp.write(template % locals())
+    with open(project + ".opts", "w") as wp:
+        wp.write("# Pre-read options for reposurgeon go here.\n")
+    with open(project + ".lift", "w") as wp:
+        wp.write("# Lift commands for %s\n" % project)
+
+def export():
+    "Export from the current working diretory to standard output."
+    m = {
+	"cvs": r"find . -name \*,v | cvs-fast-export -q --reposurgeon",
+	"svn": "svnadmin -q dump .",
+        "git": "git fast-export --all",
+        "bzr": "bzr fast-export --no-plain .",
+        "hg": "reposurgeon 'read .' 'prefer git' 'write -'",
+        "darcs": "darcs fastconvert export",
+        "bk": "bk fast-export -q",
+        }
+    vcs = vcstype(".")
+    e = m.get(vcs)
+    if e is None:
+        print("repotool: can't export from directory of type %s." % vcs)
+        sys.exit(1)
+    else:
+        do_or_die(e, " export command")
+
+def mirror(operand, mirrordir):
+    "Refresh a local mirror directory from its remote repository"
+    pwd = os.getcwd()
+    if re.match("svn://|svn+ssh://|https://|http://", operand) \
+       or (operand.startswith("file://") and os.isdir(os.path.join(operand+"locks"))):
+	if mirrordir:
+            locald = mirrordir
+	else:
+	    locald = os.path.basename(operand) + "-mirror"
+	do_or_die("svnadmin create " + locald)
+        with open(locald + "/hooks/pre-revprop-change", "w"):
+            write("#!/bin/sh\nexit 0;\n")
 	# Note: The --allow-non-empty and --steal-lock options permit
 	# this to operate on a Subversion repository you have pulled
 	# in with rsync (which is very much faster than mirrorng via
 	# SVN protocol), but they disable some safety checking.  Be
 	# very sure you have not made any local changes to the repo
 	# since rsyncing, or havoc will ensue.
-	chmod a+x $local/hooks/pre-revprop-change
-	svnsync init --allow-non-empty file://${PWD}/$local $operand
-	svnsync synchronize --steal-lock file://${PWD}/$local
-    elif [ -d "$operand/locks" ]
-    then
-	svnsync --steal-lock synchronize file://${PWD}/$operand
-    elif [ `expr "$operand" : "cvs://"` = 6 ]
-    then
-	if [ "$mirrordir" ]
-	then
-	   local=$mirrordir
-	else
-	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
-        fi
-	mkdir $local
-	cvssync -c -o $local "$operand"
-	echo "$operand" >$local/.cvssync
-    elif [ -f $operand/.cvssync ]
-    then
-	cvssync -c -o $operand `cat $operand/.cvssync`
-    elif [ `expr "$operand" : "git://"` = 6 ]
-    then
-	if [ "$mirrordir" ]
-	then
-	   local=$mirrordir
-	else
-	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
-        fi
-	git clone $operand $local
-    elif [ -d $operand/.git ]
-    then
-	(cd $operand ; git pull)
-	git clone $operand $mirrordir
-    elif [ `expr "$operand" : "hg://"` = 5 ]
-    then
-	if [ "$mirrordir" ]
-	then
-	   local=$mirrordir
-	else
-	    local=`echo basename $operand | sed -e /.*#/s///`-mirror
-        fi
-	hg clone $operand $local
-    elif [ -d $operand/.hg ]
-    then
-	(cd $operand ; hg update)
-	hg clone $operand $mirrordir
-    else
-	echo "repotool: $operand does not look like a repository mirror."
-	exit 1
-    fi
-    ;;
-tags)
-    vcstype
-    case $vcs in
-	cvs)
-        # Will screw up if any tag is not common to all files
-	module=`ls -1 | grep -v CVSROOT`
-	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	    | awk -F"[.:]" '/^\t/&&$(NF-1)!=0{print $1}' | awk '{print $1}' | sort -u
-	;;
-	svn)
-	    svn ls "file://$(pwd)/tags" | sed 's|/$||'
-	    ;;
-	svn-checkout)
-	    ls tags
-	    ;;
-	git)
-	    git tag -l
-	    ;;
-	bzr)
-	    bzr tags
-	    ;;
-	hg)
-	    hg tags --quiet
-	    ;;
-	darcs)
-	    darcs show tags
-	    ;;
-	bk)
-	    bk tags | sed -n 's/ *TAG: *//p'
-	    ;;
-	*)
-            echo "repotool: tags listing not supported for this repository type."
-            exit 1
-	    ;;
-    esac
-    ;;
-branches)
-    vcstype
-    case $vcs in
-	cvs)
-        # Will screw up if any tag is not common to all files
-	module=`ls -1 | grep -v CVSROOT`
-	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	    | awk -F"[.:]" '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u
-	;;
-	svn)
-	    svn ls "file://$(pwd)/branches" | sed 's|/$||'
-	    ;;
-	svn-checkout)
-	    ls branches
-	    ;;
-	git)
-	    git branch -l | cut -c 3- | grep -v '^master$'
-	    ;;
-	bzr)
-	    bzr branches | cut -c 3-
-	    ;;
-	hg)
-	    hg branches --template '{branch}\n' | grep -v '^default$'
-	    ;;
-	*)
-            echo "repotool: branch listing not supported for this repository type."
-            exit 1
-	    ;;
-    esac
-    ;;
-checkout)
-    outdir=$1
-    if [ -z "$outdir" ]
-    then
-	echo "repotool: target directory is required for checkout."
-	exit 1
-    else
-	outdirpath=`realpath $1`
-    fi
-    shift
-    rev=$1
-    vcstype
-    case $vcs in
-	cvs)
-	    module=`ls -1 | grep -v CVSROOT`
-	    if [ "$rev" ]
-	    then
-		rev="-r $rev"
-	    fi
-	    # By choosing -kb we get binary files right, but won't
-	    # suppress any expanded keywords that might be lurking
-	    # in masters.   
-	    cvs -Q -d:local:${PWD} co -P $rev -d $outdirpath -kb $module
-	    ;;
-	svn)
-	    if [ "$rev" ]
-	    then
-		rev="-d $rev"
-	    fi
-	    svn co -q $rev file://${PWD} $outdir
-	;;
-	svn-checkout)
-	    if [ "$rev" ]
-	    then
-		rev="-r $rev"
-	    fi
-	    svn up -q $rev
-	;;
-	git)
-	    git clone --quiet --shared --no-checkout . $outdir
-	    if [ -z "$rev" ]
-	    then
-		rev="master"
-	    fi
-	    cd $outdir >/dev/null; git checkout --quiet $rev
-	    ;;
-	bzr)
-	    echo "Checkout is not yet supported in bzr."
-	    exit 1
-	    ;;
-	hg)
-	    if [ "$rev" ]
-	    then
-		rev="-u $rev"
-	    fi
-	    hg clone -q $rev . $outdir
-	    ;;
-	darcs)
-	    echo "Checkout is not yet supported for darcs."
-	    exit 1;
-	    ;;
-	*)
-            echo "repotool: checkout not supported for this repository type."
-            exit 1
-	    ;;
-    esac
-    ;;
-compare)
-    exclude=
-    while getopts qux: opt
-    do
-	case $opt in
-	    x) exclude="$exclude --exclude=$OPTARG" ;;
-	    u) diffopts=-u;;
-	    q) diffopts=-q;;
-	esac
-    done
-    shift $(($OPTIND - 1))
-    repo1=`realpath $1`
-    shift
-    repo2=`realpath $1`
-    shift
-    rev=$1
-    if [ -z "$repo1" -o -z "$repo2" ]
-    then
-	echo "repotool: two repositories are required for comparison."
-	exit 1
-    fi
-    here=$PWD
-    rm -fr ${TMPDIR}/source $TMPDIR/target
-    cd $repo1; repotool checkout $TMPDIR/source $rev
-    cd $repo2; repotool checkout $TMPDIR/target $rev
-    cd $here
-    diff $exclude --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' $diffopts -r $TMPDIR/source $TMPDIR/target| sed \
-			-e '/Only in .tmp./s//Only in /' \
-			-e '/: /s::/:' \
-			-e '/source./s//source: /' \
-		        -e '/target./s//target: /'
-    ;;
-compare-tags)
-    exclude=
-    diffopts=-q
-    while getopts qux: opt
-    do
-	case $opt in
-	    x) exclude="$exclude -x $OPTARG" ;;
-	    u) diffopts=-u;;
-	    q) diffopts=-q;;
-	esac
-    done
-    shift $(($OPTIND - 1))
-    repo1=$1
-    repopath1=`realpath $1`
-    shift
-    repo2=$1
-    repopath2=`realpath $1`
-    shift
-    if [ -z "$repo1" -o -z "$repo2" ]
-    then
-	echo "repotool: two repositories are required for comparison."
-	exit 1
-    fi
-    #echo "----------------------------------------------------------------"
-    #echo "HEAD:"
-    #repotool compare $exclude $repo1 $repo2
-    here=$PWD
-    cd $repopath1; repotool tags | sort >$TMPDIR/tags1
-    cd $repopath2; repotool tags | sort >$TMPDIR/tags2
-    echo "----------------------------------------------------------------"
-    echo "Tags only in $repo1:"; comm -23 $TMPDIR/tags1 $TMPDIR/tags2
-    echo "----------------------------------------------------------------"
-    echo "Tags only in $repo2:"; comm -13 $TMPDIR/tags1 $TMPDIR/tags2
-    cd $here
-    for tag in `comm -12 $TMPDIR/tags1 $TMPDIR/tags2`
-    do
-	echo "----------------------------------------------------------------"
-	echo "${tag}:"
-	repotool compare $diffopts $exclude $repo1 $repo2 $tag
-    done
-    ;;
-compare-branches)
-    exclude=
-    diffopts=-q
-    while getopts qux: opt
-    do
-	case $opt in
-	    x) exclude="$exclude -x $OPTARG" ;;
-	    u) diffopts=-u;;
-	    q) diffopts=-q;;
-	esac
-    done
-    shift $(($OPTIND - 1))
-    repo1=$1
-    repopath1=`realpath $1`
-    shift
-    repo2=$1
-    repopath2=`realpath $1`
-    shift
-    if [ -z "$repo1" -o -z "$repo2" ]
-    then
-	echo "repotool: two repositories are required for comparison."
-	exit 1
-    fi
-    here=$PWD
-    cd $repopath1; repotool branches | sort >$TMPDIR/branches1
-    cd $repopath2; repotool branches | sort >$TMPDIR/branches2
-    echo "----------------------------------------------------------------"
-    echo "Branches only in $repo1:"; comm -23 $TMPDIR/branches1 $TMPDIR/branches2
-    echo "----------------------------------------------------------------"
-    echo "Branches only in $repo2:"; comm -13 $TMPDIR/branches1 $TMPDIR/branches2
-    cd $here
-    for branch in `comm -12 $TMPDIR/branches1 $TMPDIR/branches2`
-    do
-	echo "----------------------------------------------------------------"
-	echo "${branch}:"
-	repotool compare $diffopts $exclude $repo1 $repo2 $branch
-    done
-    ;;
-compare-all)
-    exclude=
-    diffopts=-q
-    while getopts qux: opt
-    do
-	case $opt in
-	    x) exclude="$exclude -x $OPTARG" ;;
-	    u) diffopts=-u;;
-	    q) diffopts=-q;;
-	esac
-    done
-    shift $(($OPTIND - 1))
-    repo1=$1
-    repopath1=`realpath $1`
-    shift
-    repo2=$1
-    repopath2=`realpath $1`
-    shift
-    if [ -z "$repo1" -o -z "$repo2" ]
-    then
-	echo "repotool: two repositories are required for comparison."
-	exit 1
-    fi
-    echo "----------------------------------------------------------------"
-    echo "HEAD:"
-    repotool compare $diffopts $exclude $repo1 $repo2
-    here=$PWD
-    # Does not distinguish branches from tags, as that is more useful for
-    # testing converted CVS repositories.
-    (cd $repopath1; repotool tags; repotool branches) | sort >$TMPDIR/tags1
-    (cd $repopath2; repotool tags; repotool branches) | sort >$TMPDIR/tags2
-    echo "----------------------------------------------------------------"
-    echo "Tags/branches only in $repo1:"; comm -23 $TMPDIR/tags1 $TMPDIR/tags2
-    echo "----------------------------------------------------------------"
-    echo "Tags/branches only in $repo2:"; comm -13 $TMPDIR/tags1 $TMPDIR/tags2
-    cd $here
-    for tag in `comm -12 $TMPDIR/tags1 $TMPDIR/tags2`
-    do
-	echo "----------------------------------------------------------------"
-	echo "${tag}:"
-	repotool compare $diffopts $exclude $repo1 $repo2 $tag
-    done
-    ;;
-'') cat <<EOF
+	do_or_die("chmod a+x %s/hooks/pre-revprop-change" % locald)
+	do_or_die("svnsync init --allow-non-empty file://%(pwd)s/%(locald)s %(operand)s" % locals())
+	do_or_die("svnsync synchronize --steal-lock file://%(pwd)s/%(locald)s" % locals())
+    elif os.path.isdir(operand + "/locks"):
+	do_or_die("svnsync --steal-lock synchronize file://%(pwd)s/%(operand)s" % locals())
+    elif operand.startswith("cvs://"):
+	if mirrordir:
+	    locald = mirrordir
+	else:
+	    locald = re.sub("^.*#", os.path.basename(operand))
+	os.mkdir(locald)
+	do_or_die("cvssync -c -o %(locald)s %(operand)s" % locals())
+        with open(locald + "/.cvssync", "w") as wp:
+            wp.write(operand)
+    elif os.path.exists(operand + "/.cvssync"):
+        with open(operand + "/.cvssync") as rp:
+	    do_or_die("cvssync -c -o " + operand + " " + rp.read())
+    elif operand.startswith("git://"):
+        if mirrord:
+            locald = mirrordir
+	else:
+	    locald = re.sub("^.*#", os.path.basename(operand))
+	do_or_die("git clone %s %s" % (operand, locald))
+    elif os.path.isdir(operand + "/.git"):
+        with directory_context(operand):
+            do_or_die("git pull")
+	do_or_die("git clone %(operand)s %(mirrordir)s" % locals())
+    elif operand.startswith("hg://"):
+        if mirrord:
+	   locald = mirrordir
+	else:
+	    locald = re.sub("^.*#", os.path.basename(operand))
+	do_or_die("hg clone %(operand)s %(locald)s" % locals()) 
+    elif os.path.isdir(operand + "/.hg"):
+        with directory_context(operand):
+	    do_or_die("hg update")
+	do_or_die("hg clone $operand $mirrordir" % locals())
+    else:
+	print("repotool: %s does not look like a repository mirror." % operand)
+	sys.exit(1)
+
+def tags():
+    "List tags from the current working diretory to standard output."
+    m = {
+        # CVS code will screw up if any tag is not common to all files
+	"cvs": "module=`ls -1 | grep -v CVSROOT`; \
+        	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
+		| awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
+	"svn": "svn ls 'file://%s/tags' | sed 's|/$||'" % os.getcwd(),
+        "svn-checkout": "ls tags",
+        "git": "git tag -l",
+        "bzr": "bzr tags",
+        "hg": "hg tags --quiet",
+        "darcs": "darcs show tags",
+        "bk": "bk tags | sed -n 's/ *TAG: *//p'",
+        }
+    vcs = vcstype(".")
+    e = m.get(vcs)
+    if e is None:
+        print("repotool: can't list tags from directory of type %s." % vcs)
+        sys.exit(1)
+    else:
+        do_or_die(e, " tag-list command")
+
+def branches():
+    "List branches from the current working directory to standard output."
+    m = {
+	"cvs": "module=`ls -1 | grep -v CVSROOT`; \
+        	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
+	 	| awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
+	"svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
+        "svn-checkout": "ls branches",
+        "git": "git branch -l | cut -c 3- | grep -v '^master$'",
+        "bzr": "bzr branches | cut -c 3-",
+        "hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
+        }
+    vcs = vcstype(".")
+    e = m.get(vcs)
+    if e is None:
+        print("repotool: can't list branches from directory of type %s." % vcs)
+        sys.exit(1)
+    else:
+        do_or_die(e, " tag-list command")
+
+def checkout(args):
+    "Check out a specified revision, branch, or tag (defaulting to tip of trunk)."
+    # This code is complicated because it deals with distinct cases:
+    # 1. Remote directory not specified or ., and a DVCS - simply point at the
+    # DVCS directory in order avoid an expensive copy operation.
+    # 2. Remote directory specfied, DVCS: Shallow clone to remote.
+    # 3. Remote directory specified, non-DVCS: True checkout to remote directory.
+    # This can be very slow under Subversion, we want to avoid it if at all possible.
+    # Other cases should error out.
+    (options, arguments) = getopt.getopt(args, "b:r:t:")
+    outdir = "."
+    branch = ""
+    tag = ""
+    revision = ""
+    for (opt, val) in options:
+        if opt == '-b':
+            branch = val    
+        elif opt == '-r':
+            revision = val
+        elif opt == '-t':
+            tag = val
+    outdir = arguments[0]
+    outdirpath = os.path.realpath(outdir)
+    pwd = os.getcwd()
+    vcs = vcstype(".")
+    if vcs == "cvs":
+        if outdir == ".":
+            print("repotool: can't check out a CVS repo to its own directory.")
+            sys.exit(1)
+        module = capture_or_die("ls -1 | grep -v CVSROOT", " listing modules")
+        if revision:
+            revision = "-r " + revision
+        # By choosing -kb we get binary files right, but won't
+        # suppress any expanded keywords that might be lurking
+        # in masters.   
+        do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -d %(outdirpath)s -kb %(module)s" % locals())
+    elif vcs == "cvs-checkout":
+        do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -kb" % locals())
+        return outdirpath
+    elif vcs == "svn":
+        if outdir == ".":
+            print("repotool: can't check out an SVN repo to its own directory.")
+            sys.exit(1)
+        if revision:
+            revision = "-d " + revision
+        do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdirpath)s" % locals())
+        # FIXME: Figure out what to do with branch 'master" here.  The
+        # problem is that how we want to treat it depends on whether
+        # the repo has a branchy or flat layout, and we don't know
+        # that yet. If branchy, map it to "trunk"; if flat, ignore.
+        if branch or tag:
+            outdir += "/" + branch + tag
+        return outdir
+    elif vcs == "svn-checkout":
+        if revision:
+            revision = "-r " + revision
+        do_or_die("svn up -q " + revision)
+        if branch in ("", "trunk", "master") and os.path.isdir("trunk"):
+            outdir = os.path.join(outdir, "trunk")
+        elif branch == "":	# Desperate hack to accommodate flat repos.
+            pass
+        elif branch and os.path.isdir("branches"):
+            outdir += os.path.join(outdir, "branches", branch)
+        elif tag and os.path.isdir("tags"):
+            outdir += os.path.join(outdir, "tags", tag)
+        else:
+            print("repotool: invalid branch or tag")
+            sys.exit(1)
+        return os.path.abspath(outdir)
+    elif vcs == "git":
+        if outdir == ".":
+            do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
+        else:
+            do_or_die("git clone --quiet --shared --no-checkout . " + outdir)
+            with directory_context(outdir):
+		do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
+        return os.path.abspath(outdir)
+    elif vcs == "bzr":
+        print("repotool: checkout is not yet supported in bzr.")
+        sys.exit(1)
+    elif vcs == "hg":
+        spec = ""
+        if revision:
+            spec = "-u " + revision
+        if tag:
+            spec = "-u " + tag
+        if branch:
+            spec = "-u " + branch
+        if outdir == ".":
+            do_or_die("hg update -q %(spec)s" % locals())
+        else:
+            do_or_die("hg clone -q %(spec)s . %(outdir)s" % locals())
+        return os.path.abspath(outdir)
+    elif vcs == "darcs":
+        print("repotool: checkout is not yet supported for darcs.")
+        sys.exit(1);
+    else:
+        print("repotool: checkout not supported for this repository type.")
+        sys.exit(1)
+
+def compare(args):
+    "Compare two repositories at a specified revision, defaulting to mainline tip."
+    (options, arguments) = getopt.getopt(args, "b:r:t:ux:")
+    outdir = "."
+    branch = ""
+    tag = ""
+    revision = ""
+    checkout_args = []
+    diff_args = []
+    for (opt, val) in options:
+        if opt in ('-b', '-t', '-r'):
+            checkout_args.append(opt)
+            checkout_args.append(val)
+        elif opt == '-u':
+            diff_args.append(opt)
+        elif opt == '-x':
+            diff_args.append(opt)
+            diff_args.append(val)
+    if len(arguments) != 2:
+        print("repotool: compare requires exactly two repository-name arguments.")
+        sys.exit(1);
+    target = args.pop()
+    source = args.pop()
+    if not os.path.isdir(source) or not os.path.isdir(target):
+        print("repotool: both repository directories must exist.")
+        sys.exit(1);
+    rsource = os.path.join(TMPDIR, "source")
+    try:
+        shutil.rmtree(rsource)
+    except OSError:
+        pass
+    rtarget = os.path.join(TMPDIR, "target")
+    try:
+        shutil.rmtree(rtarget)
+    except OSError:
+        pass
+    # Here is where the difference between DVCS and non-DVCS becomes important.
+    # If we can set rsource and rtarget to '.' we can avoid expensive checkout
+    # operations. These are particularly slow under svn.
+    diffopts = []
+    with directory_context(source):
+        if is_dvcs_or_checkout():
+            rsource = '.'
+            for f in vcsignores():
+                diffopts += ["-x", f]
+        sourcedir = checkout(checkout_args + [rsource])
+    with directory_context(target):
+        if is_dvcs_or_checkout():
+            rtarget = '.'
+            for f in vcsignores():
+                diffopts += ["-x", f]
+        targetdir = checkout(checkout_args + [rtarget])
+    diffopts += diff_args
+    diffopts = " ".join(diffopts)
+    # FIXME: use difflib here?
+    do_or_die("diff %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+
+if __name__ == "__main__":
+    (options, arguments) = getopt.getopt(sys.argv[1:], "v:")
+    verbose = 0
+    for (opt, val) in options:
+        if opt == '-v':
+            verbose = int(val)
+
+    if len(arguments) < 1:
+        print("repotool: requires an operation as first argument.")
+        sys.exit(1)
+    operation = arguments.pop(0)
+
+    TMPDIR = os.getenv("TMPDIR") or "/tmp"
+
+    if operation == "initialize":
+        initialize(arguments)
+    elif operation == "export":
+        export()
+    elif operation == "mirror":
+        if len(arguments) == 0:
+            print("repotool: mirror [url] mirrordir")
+            sys.exit(1)
+        else:
+            mirror(arguments[0], arguments[1] if len(arguments) > 1 else None)
+    elif operation == "tags":
+        tags()
+    elif operation == "branches":
+        branches()
+    elif operation == "checkout":
+        checkout(arguments)
+    elif operation == "compare":
+        compare(arguments)
+    elif operation == "compare-tags":
+        sys.exit(1)
+    elif operation == "compare-branches":
+        sys.exit(1)
+    elif operation == "compare-all":
+        sys.exit(1)
+    else:
+        print("""
 repotool commands:
 
-initialize  - create Makefile and stub files for standard convrsion workflow.
+initialize  - create Makefile and stub files for standard conversion workflow.
 export - export a stream dump of the source repository
-mirror - create or update a mirror of the source repository
+mirror [URL] localdir - create or update a mirror of the source repository
 branches - list repository branch names
-checkout - check out a working copy of the repo
-compare - compare head content of two repositories at a specified revision or tag
-compare-tags - compare source and target repo conyent at all tags
+checkout [-r rev] [-t tag] [-b branch] - check out a working copy of the repo
+compare [-r rev] [-t tag] [-b branch] - compare head content of two repositories
+compare-tags - compare source and target repo content at all tags
 compare-branches - compare source and target repo conyent at all branches
 compare-all - compare repositories at head, all tags, and all branches
-EOF
-    ;;
-id)	# Undocumented
-    vcstype
-    echo "repotool: `pwd` looks like $vcs" 
-    ;;
-*)
-    echo "repotool: unknown action '$operation'."
-esac
-
-exit 0
+""")
 
 # end
