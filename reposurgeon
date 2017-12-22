@@ -1820,6 +1820,10 @@ class Date(object):
         return copy.copy(self)
     @staticmethod
     def secondsFromOffsetString(text):
+        "Get offset in seconds from a zone offset string."
+        # Patch around a point bug in the IANA db for Asia/Kolkata
+        if text == "+051800":
+            text = "+0530"
         m = re.match(Date.offset_re, polybytes(text))
         if m is not None:
             sign = -1 if m.group(1) == b"-" else 1
@@ -13397,7 +13401,7 @@ action-stamp ID for each commit.
                         event.bump()
                         modified += 1
                 baton.twirl()
-            announce("reposurgeon: %d events modified" % modified)
+            announce("%d events modified" % modified)
         repo.invalidate_namecache()
     def help_timebump(self):
         sys.stdout.write("""
