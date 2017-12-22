@@ -13445,29 +13445,16 @@ If the entry header contains an email address but no name, a name
 will be filled in if possible by looking for the address in author
 map entries.
 
-The year, month and date of authorship are taken from the date part
-of the entry header. Because human beings sometimes fat-finger these,
-some sanity checks are done, notably checking that this date is not
-after the commit date or before the repostory's first commit. If the
-check fails, the commit darte is copied into the author date.
-
-Due to the limitations of the ChangeLog format, attribution dates on
-these author records will be set to have the hh:mm:ss part of the
-committer date and the committer's timezone; then various tricks are
-tried to correct the timezone, including looking in the author map if
-there is one. This choice is often close to right (e.g if the
-committer is the author) and no worse than any other arbitrary
-assignment would be.
-
-With the --use-committer-date policy switch, ChangeLog attribution dates
-will be ignored and the commit date used for all author entries.
+In accordance with FSF policy for ChangeLogs, any date in an
+attribution header is discarded and the committer date is used.
+However, if the nam is an author-map alias with an associated timezone,
+that zone is used.
 """)
     def do_changelogs(self, line):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        ignore_dates = "--use-committer-date" in line
         repo = self.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
@@ -13491,27 +13478,25 @@ will be ignored and the commit date used for all author entries.
                 if space < 0:
                     return None
                 date = line[:space]
-                if not ignore_dates:
-                    try:
-                        ymd = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                    except ValueError:
-                        return None
+                try:
+                    calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+                except ValueError:
+                    return None
                 # Assign same time of day as the committer timestamp.
                 # See below for the rationalization.
                 ymd += commit.committer.date.timestamp % 86400
                 addr = line[space+1:].strip()
-                return (ymd, addr)
+                return addr
             # Scan for old-style date like "Tue Dec  9 01:16:06 1997"
             try:
                 possible_date = " ".join(line.split()[:5])
                 # Doesn't matter that TZ is wrong here, we're only going
                 # to use the day part at most.
-                if not ignore_dates:
-                    ymd = calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
+                calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
                 skipre = re.compile(r'\s+'.join(line.split()[:5]))
                 m = skipre.match(line)
                 addr = line[len(m.group(0)):].strip()
-                return (ymd, addr)
+                return addr
             except ValueError:
                 pass
             return None
@@ -13550,7 +13535,7 @@ will be ignored and the commit date used for all author entries.
                             line = diffline[2:]
                             attribution = parse_attribution_line(line, commit)
                             if attribution is not None:
-                                (ymd, addr) = attribution
+                                addr = attribution
                                 #print("I notice: %s %s %s" % (diffline[0], attribution, before))
                                 # This is the tricky part.  We want the
                                 # last attribution from before the change
@@ -13570,7 +13555,7 @@ will be ignored and the commit date used for all author entries.
                             #print("Attributions: %s %s" % (inherited, new))
                             attribution = new if new else inherited
                         if attribution is not None:
-                            (ymd, addr) = attribution
+                            addr = attribution
                             cm += 1
                             # Rationale: If the author is the committer and
                             # the attribution date is the same day as the
@@ -13586,9 +13571,6 @@ will be ignored and the commit date used for all author entries.
                             # committer date in a display even if we don't
                             # know whether it's local or UTC.
                             newattr = commit.committer.clone()
-                            # This guard catches some garbled dates.
-                            if not ignore_dates and ymd < self.repo.earliest().timestamp or ymd > newattr.date.timestamp:
-                                newattr.date.timestamp = ymd
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()

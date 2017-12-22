@@ -2472,30 +2472,10 @@ parsed and the address is inserted as the commit author.</para>
 will be filled in if possible by looking for the address in author
 map entries.</para>
 
-<para>The year, month and date of authorship are taken from the date part
-of the entry header. Because human beings sometimes fat-finger these,
-some sanity checks are done, notably checking that this date is not
-after the commit date or before the repostory's first commit. If the
-check fails, the commit darte is copied into the author date.</para>
-
-<para>Due to the limitations of the ChangeLog format, attribution
-time-of-day and timezone on these author records have to made up out
-of thin air.  We copy the committer's, then try various tricks to
-correct the timezone, including looking in the author map if there is
-one</para>
-
-<para>Rationale: If the author is the committer and the attribution
-date is the same day as the commit, this is probably wthin seconds or
-minutes of right.  On a different day with the same committer this
-gets the timezone right. If committer is different and day is
-different we're making up data out of thin air, but it at least is no
-worse than any other random choice and has the following good
-properties: (1) no later than the committer date, and (2) has same
-mm:ss, making it possible to match the committer date in a display
-even if we don't know whether it's local or UTC.</para>
-
-<para>With the --use-committer-date policy switch, ChangeLog attribution dates
-will be ignored and the commit date used for all author entries.</para>
+<para>In accordance with FSF policy for ChangeLogs, any date in an
+attribution header is discarded and the committer date is used.
+However, if the nam is an author-map alias with an associated timezone,
+that zone is used.</para>
 
 <para>The command reports statistics on how many commits were altered.</para>
 </refsect2>
