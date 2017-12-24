@@ -316,6 +316,10 @@ def mirror(operand, mirrordir):
 	do_or_die("svnadmin create " + locald)
         with open(locald + "/hooks/pre-revprop-change", "w"):
             write("#!/bin/sh\nexit 0;\n")
+        try:
+            os.remove(locald + "/hooks/post-revprop-change")
+        except OSError:
+            pass
 	# Note: The --allow-non-empty and --steal-lock options permit
 	# this to operate on a Subversion repository you have pulled
 	# in with rsync (which is very much faster than mirrorng via
