@@ -149,16 +149,12 @@ gc: %(project)s-git
 	cd %(project)s-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
 """
 
-DEBUG_GENERAL  = 1
-DEBUG_COMMANDS = 2
-DEBUG_LOWLEVEL = 3
+DEBUG_COMMANDS = 1
 verbose = 0
 
-class Fatal(Exception):
-    "Unrecoverable error."
-    def __init__(self, msg):
-        Exception.__init__(self)
-        self.msg = msg
+def croak(msg):
+    sys.stderr.write("repotool: " + msg)
+    sys.exit(1)
 
 def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
@@ -169,26 +165,25 @@ def do_or_die(dcmd, legend=""):
     try:
         retcode = subprocess.call(dcmd, shell=True)
         if retcode < 0:
-            raise Fatal("repotool: child was terminated by signal %d.\n" % -retcode)
+            croak("child was terminated by signal %d.\n" % -retcode)
         elif retcode != 0:
-            raise Fatal("repotool: child returned %d.\n" % retcode)
+            croak("repotool: child returned %d.\n" % retcode)
     except (OSError, IOError) as e:
-        raise Fatal("repotool: execution of %s%s failed: %s\n" % (dcmd, legend, e))
+        croak("execution of %s%s failed: %s\n" % (dcmd, legend, e))
 
 def capture_or_die(dcmd, legend=""):
     "Either execute a command and capture its output or die."
     if legend:
         legend = " "  + legend
     if verbose >= DEBUG_COMMANDS:
-        sys.stdout.write("repodiffer: executing '%s'%s\n" % (dcmd, legend))
+        sys.stdout.write("repotool: executing '%s'%s\n" % (dcmd, legend))
     try:
         return subprocess.check_output(dcmd, shell=True).decode('ascii')
     except subprocess.CalledProcessError as e:
         if e.returncode < 0:
-            raise Fatal("repodiffer: child was terminated by signal %d." % -e.returncode)
+            croak("child was terminated by signal %d." % -e.returncode)
         elif e.returncode != 0:
-            sys.stderr.write("repodiffer: child returned %d." % e.returncode)
-        sys.exit(1)
+            croak("child returned %d." % e.returncode)
 
 class directory_context:
     def __init__(self, target):
@@ -220,18 +215,17 @@ def vcstype(d):
     elif os.path.isdir(os.path.join(d, ".svn")):
         return "svn-checkout"
     elif os.path.isdir(os.path.join(d, ".git")):
-	return "git"
+        return "git"
     elif os.path.isdir(os.path.join(d, ".bzr")):
         return "bzr"
     elif os.path.isdir(os.path.join(d, ".hg")):
-    	return "hg"
+        return "hg"
     elif os.path.isdir(os.path.join(d, "_darcs")):
-	return "darcs"
+        return "darcs"
     elif os.path.isdir(os.path.join(d, ".bk")):
-	return "bk"
+        return "bk"
     else:
-	print("repotool: %s does not look like a repository of known type." % d)
-	sys.exit(1)
+        croak("%s does not look like a repository of known type." % d)
 
 def is_dvcs_or_checkout(d="."):
     "Is this a DVCS or checkout where we can compare files?"
@@ -250,34 +244,27 @@ def vcsignores():
 def initialize(args):
     "Initialize project-conversion machinery."
     if len(args) < 1:
-	print("repotool: initialize requires a project name.")
-	sys.exit(1)
+        croak("initialize requires a project name.")
     project = args.pop(0) 
     if os.path.exists("Makefile"):
-	print("repotool: a Makefile already exists here.")
-	sys.exit(1)
+        croak("a Makefile already exists here.")
     elif os.path.exists(project + ".opts"):
-	print("repotool: a project options file already exists here.")
-	sys.exit(1)
+        croak("a project options file already exists here.")
     elif os.path.exists(project + ".lift"):
-	print("repotool: a project lift file already exists here.")
-	sys.exit(1)
+        croak("a project lift file already exists here.")
     if not args:
-	source_vcs = input("repotool: what VCS do you want to convert from? ")
+        source_vcs = input("repotool: what VCS do you want to convert from? ")
     else:
-	source_vcs = args.pop(0)
+        source_vcs = args.pop(0)
     if source_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
-        print("repotool: unknown source VCS type %s" % source_vcs)
-	sys.exit(1)
+        croak("unknown source VCS type %s" % source_vcs)
     if not args:
-	target_vcs = input("repotool: what VCS do you want to convert to? ")
+        target_vcs = input("repotool: what VCS do you want to convert to? ")
     else:
-	target_vcs = args.pop(0)
+        target_vcs = args.pop(0)
     if target_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
-        print("repotool: unknown target VCS type %s" % target_vcs)
-	sys.exit(1)
+        croak("unknown target VCS type %s" % target_vcs)
     print("repotool: generating Makefile, some variables in it need to be set.")
-    print(locals())
     with open("Makefile", "w") as wp:
         wp.write(template % locals())
     with open(project + ".opts", "w") as wp:
@@ -288,8 +275,8 @@ def initialize(args):
 def export():
     "Export from the current working diretory to standard output."
     m = {
-	"cvs": r"find . -name \*,v | cvs-fast-export -q --reposurgeon",
-	"svn": "svnadmin -q dump .",
+        "cvs": r"find . -name \*,v | cvs-fast-export -q --reposurgeon",
+        "svn": "svnadmin -q dump .",
         "git": "git fast-export --all",
         "bzr": "bzr fast-export --no-plain .",
         "hg": "reposurgeon 'read .' 'prefer git' 'write -'",
@@ -299,8 +286,7 @@ def export():
     vcs = vcstype(".")
     e = m.get(vcs)
     if e is None:
-        print("repotool: can't export from directory of type %s." % vcs)
-        sys.exit(1)
+        croak("can't export from directory of type %s." % vcs)
     else:
         do_or_die(e, " export command")
 
@@ -309,72 +295,71 @@ def mirror(operand, mirrordir):
     pwd = os.getcwd()
     if re.match("svn://|svn+ssh://|https://|http://", operand) \
        or (operand.startswith("file://") and os.isdir(os.path.join(operand+"locks"))):
-	if mirrordir:
+        if mirrordir:
             locald = mirrordir
-	else:
-	    locald = os.path.basename(operand) + "-mirror"
-	do_or_die("svnadmin create " + locald)
+        else:
+            locald = os.path.basename(operand) + "-mirror"
+        do_or_die("svnadmin create " + locald)
         with open(locald + "/hooks/pre-revprop-change", "w"):
             write("#!/bin/sh\nexit 0;\n")
         try:
             os.remove(locald + "/hooks/post-revprop-change")
         except OSError:
             pass
-	# Note: The --allow-non-empty and --steal-lock options permit
-	# this to operate on a Subversion repository you have pulled
-	# in with rsync (which is very much faster than mirrorng via
-	# SVN protocol), but they disable some safety checking.  Be
-	# very sure you have not made any local changes to the repo
-	# since rsyncing, or havoc will ensue.
-	do_or_die("chmod a+x %s/hooks/pre-revprop-change" % locald)
-	do_or_die("svnsync init --allow-non-empty file://%(pwd)s/%(locald)s %(operand)s" % locals())
-	do_or_die("svnsync synchronize --steal-lock file://%(pwd)s/%(locald)s" % locals())
+        # Note: The --allow-non-empty and --steal-lock options permit
+        # this to operate on a Subversion repository you have pulled
+        # in with rsync (which is very much faster than mirrorng via
+        # SVN protocol), but they disable some safety checking.  Be
+        # very sure you have not made any local changes to the repo
+        # since rsyncing, or havoc will ensue.
+        do_or_die("chmod a+x %s/hooks/pre-revprop-change" % locald)
+        do_or_die("svnsync init --allow-non-empty file://%(pwd)s/%(locald)s %(operand)s" % locals())
+        do_or_die("svnsync synchronize --steal-lock file://%(pwd)s/%(locald)s" % locals())
     elif os.path.isdir(operand + "/locks"):
-	do_or_die("svnsync --steal-lock synchronize file://%(pwd)s/%(operand)s" % locals())
+        do_or_die("svnsync --steal-lock synchronize file://%(pwd)s/%(operand)s" % locals())
     elif operand.startswith("cvs://"):
-	if mirrordir:
-	    locald = mirrordir
-	else:
-	    locald = re.sub("^.*#", os.path.basename(operand))
-	os.mkdir(locald)
-	do_or_die("cvssync -c -o %(locald)s %(operand)s" % locals())
+        if mirrordir:
+            locald = mirrordir
+        else:
+            locald = re.sub("^.*#", os.path.basename(operand))
+        os.mkdir(locald)
+        do_or_die("cvssync -c -o %(locald)s %(operand)s" % locals())
         with open(locald + "/.cvssync", "w") as wp:
             wp.write(operand)
     elif os.path.exists(operand + "/.cvssync"):
         with open(operand + "/.cvssync") as rp:
-	    do_or_die("cvssync -c -o " + operand + " " + rp.read())
+            do_or_die("cvssync -c -o " + operand + " " + rp.read())
     elif operand.startswith("git://"):
         if mirrord:
             locald = mirrordir
-	else:
-	    locald = re.sub("^.*#", os.path.basename(operand))
-	do_or_die("git clone %s %s" % (operand, locald))
+        else:
+            locald = re.sub("^.*#", os.path.basename(operand))
+        do_or_die("git clone %s %s" % (operand, locald))
     elif os.path.isdir(operand + "/.git"):
         with directory_context(operand):
             do_or_die("git pull")
-	do_or_die("git clone %(operand)s %(mirrordir)s" % locals())
+        do_or_die("git clone %(operand)s %(mirrordir)s" % locals())
     elif operand.startswith("hg://"):
         if mirrord:
-	   locald = mirrordir
-	else:
-	    locald = re.sub("^.*#", os.path.basename(operand))
-	do_or_die("hg clone %(operand)s %(locald)s" % locals()) 
+           locald = mirrordir
+        else:
+            locald = re.sub("^.*#", os.path.basename(operand))
+        do_or_die("hg clone %(operand)s %(locald)s" % locals()) 
     elif os.path.isdir(operand + "/.hg"):
         with directory_context(operand):
-	    do_or_die("hg update")
-	do_or_die("hg clone $operand $mirrordir" % locals())
+            do_or_die("hg update")
+        do_or_die("hg clone $operand $mirrordir" % locals())
     else:
-	print("repotool: %s does not look like a repository mirror." % operand)
-	sys.exit(1)
+        croak("%s does not look like a repository mirror." % operand)
 
 def tags():
     "List tags from the current working diretory to standard output."
     m = {
         # CVS code will screw up if any tag is not common to all files
-	"cvs": "module=`ls -1 | grep -v CVSROOT`; \
-        	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-		| awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
-	"svn": "svn ls 'file://%s/tags' | sed 's|/$||'" % os.getcwd(),
+        "cvs": "module=`ls -1 | grep -v CVSROOT`; \
+                cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
+                | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
+        "svn": "svn ls 'file://%s/tags' | sed 's|/$||'" % os.getcwd(),
         "svn-checkout": "ls tags",
         "git": "git tag -l",
         "bzr": "bzr tags",
@@ -385,18 +370,17 @@ def tags():
     vcs = vcstype(".")
     e = m.get(vcs)
     if e is None:
-        print("repotool: can't list tags from directory of type %s." % vcs)
-        sys.exit(1)
+        croak("can't list tags from directory of type %s." % vcs)
     else:
         do_or_die(e, " tag-list command")
 
 def branches():
     "List branches from the current working directory to standard output."
     m = {
-	"cvs": "module=`ls -1 | grep -v CVSROOT`; \
-        	cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
-	 	| awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
-	"svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
+        "cvs": "module=`ls -1 | grep -v CVSROOT`; \
+                cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
+                 | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
+        "svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
         "svn-checkout": "ls branches",
         "git": "git branch -l | cut -c 3- | grep -v '^master$'",
         "bzr": "bzr branches | cut -c 3-",
@@ -405,8 +389,7 @@ def branches():
     vcs = vcstype(".")
     e = m.get(vcs)
     if e is None:
-        print("repotool: can't list branches from directory of type %s." % vcs)
-        sys.exit(1)
+        croak("can't list branches from directory of type %s." % vcs)
     else:
         do_or_die(e, " tag-list command")
 
@@ -437,8 +420,7 @@ def checkout(args):
     vcs = vcstype(".")
     if vcs == "cvs":
         if outdir == ".":
-            print("repotool: can't check out a CVS repo to its own directory.")
-            sys.exit(1)
+            croak("can't check out a CVS repo to its own directory.")
         module = capture_or_die("ls -1 | grep -v CVSROOT", " listing modules")
         if revision:
             revision = "-r " + revision
@@ -451,8 +433,7 @@ def checkout(args):
         return outdirpath
     elif vcs == "svn":
         if outdir == ".":
-            print("repotool: can't check out an SVN repo to its own directory.")
-            sys.exit(1)
+            croak("can't check out an SVN repo to its own directory.")
         if revision:
             revision = "-d " + revision
         do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdirpath)s" % locals())
@@ -469,15 +450,14 @@ def checkout(args):
         do_or_die("svn up -q " + revision)
         if branch in ("", "trunk", "master") and os.path.isdir("trunk"):
             outdir = os.path.join(outdir, "trunk")
-        elif branch == "":	# Desperate hack to accommodate flat repos.
+        elif branch == "":        # Desperate hack to accommodate flat repos.
             pass
         elif branch and os.path.isdir("branches"):
             outdir += os.path.join(outdir, "branches", branch)
         elif tag and os.path.isdir("tags"):
             outdir += os.path.join(outdir, "tags", tag)
         else:
-            print("repotool: invalid branch or tag")
-            sys.exit(1)
+            croak("invalid branch or tag")
         return os.path.abspath(outdir)
     elif vcs == "git":
         if outdir == ".":
@@ -485,30 +465,27 @@ def checkout(args):
         else:
             do_or_die("git clone --quiet --shared --no-checkout . " + outdir)
             with directory_context(outdir):
-		do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
+                do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
         return os.path.abspath(outdir)
     elif vcs == "bzr":
-        print("repotool: checkout is not yet supported in bzr.")
-        sys.exit(1)
+        croak("checkout is not yet supported in bzr.")
     elif vcs == "hg":
         spec = ""
         if revision:
-            spec = "-u " + revision
+            spec = "-r " + revision
         if tag:
-            spec = "-u " + tag
+            spec = "-r " + tag
         if branch:
-            spec = "-u " + branch
+            spec = "-r " + branch
         if outdir == ".":
             do_or_die("hg update -q %(spec)s" % locals())
         else:
             do_or_die("hg clone -q %(spec)s . %(outdir)s" % locals())
         return os.path.abspath(outdir)
     elif vcs == "darcs":
-        print("repotool: checkout is not yet supported for darcs.")
-        sys.exit(1);
+        croak("checkout is not yet supported for darcs.")
     else:
-        print("repotool: checkout not supported for this repository type.")
-        sys.exit(1)
+        croak("checkout not supported for this repository type.")
 
 def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
@@ -523,19 +500,17 @@ def compare(args):
         if opt in ('-b', '-t', '-r'):
             checkout_args.append(opt)
             checkout_args.append(val)
-        elif opt == '-u':
+        elif opt in ('-q', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
             diff_args.append(opt)
             diff_args.append(val)
     if len(arguments) != 2:
-        print("repotool: compare requires exactly two repository-name arguments.")
-        sys.exit(1);
+        croak("compare requires exactly two repository-name arguments.")
     target = args.pop()
     source = args.pop()
     if not os.path.isdir(source) or not os.path.isdir(target):
-        print("repotool: both repository directories must exist.")
-        sys.exit(1);
+        croak("both repository directories must exist.")
     rsource = os.path.join(TMPDIR, "source")
     try:
         shutil.rmtree(rsource)
@@ -567,6 +542,61 @@ def compare(args):
     # FIXME: use difflib here?
     do_or_die("diff %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
 
+def compare_engine(label, lister, comparer, args):
+    "Compare two repositories at all revisions implied by a specified command."
+    (options, arguments) = getopt.getopt(args, "ux:")
+    diff_args = []
+    for (opt, val) in options:
+        if opt in ('-q', '-u'):
+            diff_args.append(opt)
+        elif opt == '-x':
+            diff_args.append(opt)
+            diff_args.append(val)
+    if len(arguments) != 2:
+        croak("compare requires exactly two repository-name arguments.")
+    target = args.pop()
+    source = args.pop()
+    if not os.path.isdir(source) or not os.path.isdir(target):
+        croak("both repository directories must exist.")
+    with directory_context(source):
+        sourcetags = capture_or_die(lister).strip().split()
+    with directory_context(target):
+        targettags = capture_or_die(lister).strip().split()
+    common = set(sourcetags) & set(targettags)
+    sourceonly = list(set(sourcetags) - common)
+    sourceonly.sort()
+    targetonly = list(set(targettags) - common)
+    targetonly.sort()
+    common = list(common)
+    common.sort()
+    print("----------------------------------------------------------------")
+    print("%s only in %s:" % (label, source))
+    for item in sourceonly:
+          print(item)
+    print("----------------------------------------------------------------")
+    print("%s only in %s:" % (label, target))
+    for item in targetonly:
+          print(item)
+    for item in common:
+        print("----------------------------------------------------------------")
+        print("%s:" % item)
+        cmd = " ".join([comparer, item] + diff_args + [source, target])
+        do_or_die(cmd)
+
+def compare_tags(args):
+    "Compare two repos at all tags."
+    compare_engine("Tags", "repotool tags","repotool compare -t", args)
+
+def compare_branches(args):
+    "Compare two repos at all branches."
+    compare_engine("Branches","repotool branches","repotool compare -b", args)
+
+def compare_all(args):
+    "Compare two repos on mainline and at all tags and branches."
+    compare(args)
+    compare_tags(args)
+    compare_branches(args)
+
 if __name__ == "__main__":
     (options, arguments) = getopt.getopt(sys.argv[1:], "v:")
     verbose = 0
@@ -575,8 +605,7 @@ if __name__ == "__main__":
             verbose = int(val)
 
     if len(arguments) < 1:
-        print("repotool: requires an operation as first argument.")
-        sys.exit(1)
+        croak("requires an operation as first argument.")
     operation = arguments.pop(0)
 
     TMPDIR = os.getenv("TMPDIR") or "/tmp"
@@ -587,8 +616,7 @@ if __name__ == "__main__":
         export()
     elif operation == "mirror":
         if len(arguments) == 0:
-            print("repotool: mirror [url] mirrordir")
-            sys.exit(1)
+            croak("mirror [url] mirrordir")
         else:
             mirror(arguments[0], arguments[1] if len(arguments) > 1 else None)
     elif operation == "tags":
@@ -600,11 +628,11 @@ if __name__ == "__main__":
     elif operation == "compare":
         compare(arguments)
     elif operation == "compare-tags":
-        sys.exit(1)
+        compare_tags(arguments)
     elif operation == "compare-branches":
-        sys.exit(1)
+        compare_branches(arguments)
     elif operation == "compare-all":
-        sys.exit(1)
+        compare_all(arguments)
     else:
         print("""
 repotool commands:
