@@ -76,7 +76,8 @@ option. The selected versions are compared with diff -q -r, with noise
 due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
 command verb with one or more -x options followed by basenames of
 paths to exclude from comparison. You can get a context-diff report on
-file differences with the -u option.</para>
+file differences with the -u option. File permissions well as content
+are checked, any mismatches will be shown after the diff listing.</para>
 
 <para>The 'compare-tags' action takes two repository directories,
 extracts a list of tags from the first, then compares the repository

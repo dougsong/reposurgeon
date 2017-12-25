@@ -7,7 +7,7 @@
 # This code runs under both Python 2 and Python 3: preserve this property!
 from __future__ import print_function
 
-import sys, os, getopt, subprocess, re, shutil
+import sys, os, stat, getopt, subprocess, re, shutil
 
 try:
     input = raw_input
@@ -507,10 +507,12 @@ def compare(args):
             diff_args.append(val)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
+
     target = args.pop()
     source = args.pop()
     if not os.path.isdir(source) or not os.path.isdir(target):
         croak("both repository directories must exist.")
+
     rsource = os.path.join(TMPDIR, "source")
     try:
         shutil.rmtree(rsource)
@@ -528,19 +530,39 @@ def compare(args):
     with directory_context(source):
         if is_dvcs_or_checkout():
             rsource = '.'
-            for f in vcsignores():
+            sourceignores = vcsignores()
+            for f in sourceignores:
                 diffopts += ["-x", f]
         sourcedir = checkout(checkout_args + [rsource])
     with directory_context(target):
         if is_dvcs_or_checkout():
             rtarget = '.'
-            for f in vcsignores():
+            targetignores = vcsignores()
+            for f in targetignores:
                 diffopts += ["-x", f]
         targetdir = checkout(checkout_args + [rtarget])
     diffopts += diff_args
     diffopts = " ".join(diffopts)
     # FIXME: use difflib here?
     do_or_die("diff %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+    def dirlist(top, excl=None):
+        "Get list of all paths under specied top node, with optional excusion."
+        m = []
+        trunc = len(top) + 1
+        for (dirpath, dirnames, filenames) in os.walk(top):
+            for f in filenames:
+                fullpath = os.path.join(dirpath, f)
+                if not excl or not any(x for x in excl if x in fullpath):
+                    m.append(fullpath[trunc:])
+        return set(m)
+    common = dirlist(sourcedir,sourceignores) & dirlist(targetdir, targetignores)
+    common = list(common)
+    common.sort()
+    for path in common:
+        sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
+        tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
+        if sstat != tstat:
+            print("{}: 0{0:o} -> 0{0:o}".format(path, sstat, tstat))
 
 def compare_engine(label, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
