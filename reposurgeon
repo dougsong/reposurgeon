@@ -1859,11 +1859,7 @@ class Date(object):
             sgn = "+"
             seconds = (localdate - gmdate).seconds
         text = sgn + ("%02d" % (seconds / 3600)) + str("%02d" % abs(seconds % 3600))
-        # Patch around an occasional bug in the IANA db; Asia/Kolkata
-        # and Australia/Adelaide both exhibit this with returns like
-        # '+051800' and '+101800'.
-        if len(text) > 5 and text.endswith("1800"):
-            text = text[:3] + "30"
+        text = sgn + ("%02d" % (seconds / 3600)) + str("%02d" % (abs(seconds % 3600)/60))
         return text
     def set_tz(self, zone):
         if zone is None:
