@@ -1,4 +1,4 @@
-## Test listing tags in a Mercurial repository
+## Test listing tags in hg repository
 
 command -v hg >/dev/null 2>&1 || { echo "    Skipped, hg missing."; exit 0; }
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }

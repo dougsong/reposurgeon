@@ -1,4 +1,4 @@
-## Test comparing tags between git and Mercurial repository
+## Test comparing tags between git and hg repository
 # Reproduces https://gitlab.com/esr/reposurgeon/issues/39
 
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }

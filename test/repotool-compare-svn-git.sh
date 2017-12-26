@@ -1,4 +1,4 @@
-## Test comparing tags between svn and git repository
+## Test comparing master between svn and git repository
 
 command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
