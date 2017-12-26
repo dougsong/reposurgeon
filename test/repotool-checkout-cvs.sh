@@ -1,9 +1,10 @@
-## Test repotool checkout of git repo
+## Test repotool checkout of CVS repo
 
 command -v cvs >/dev/null 2>&1 || { echo "    Skipped, cvs missing."; exit 0; }
 
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$" 0 12 2 15
 
+set -e	# So we'll crap out if hack-repo does not exist
 cp -r hack1.repo/ /tmp/test-repo$$
 cd /tmp/test-repo$$
 repotool checkout /tmp/target$$; echo Return code: $? >/tmp/out$$

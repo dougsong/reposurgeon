@@ -1,10 +1,10 @@
-## Test listing tags in git repository
+## Test listing tags in svn repository
 
-command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
+command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
-./fi-to-fi -n /tmp/test-repo$$ < lighttag.fi
+./svn-to-svn -q -n /tmp/test-repo$$ <simpletag.svn
 (cd /tmp/test-repo$$; repotool tags /tmp/target$$) >/tmp/out$$
 echo Return code: $? >>/tmp/out$$
 
