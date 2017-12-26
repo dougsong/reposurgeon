@@ -1,0 +1,4 @@
+Only in /tmp/test-repo$$-svn-checkout/trunk: creation-example
+diff -x .svn -x .git -x .gitignore '--ignore-matching-lines= @(#) ' '--ignore-matching-lines=$Id.*$' '--ignore-matching-lines=$Header.*$' '--ignore-matching-lines=$Log.*$' /tmp/test-repo$$-svn-checkout/trunk/README /tmp/test-repo$$-git/README
+3d2
+< And another content modification.
