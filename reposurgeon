@@ -13577,7 +13577,10 @@ that zone is used.
                                 # author field from the committer.
                                 if commit.authors[-1].address() == commit.committer.address():
                                     commit.authors.pop()
-                                if newattr.address() not in [x.address for x in commit.authors]:
+                                # Someday, detect whether target VCS allows
+                                # multiple authors and append unconditonally
+                                # if so.
+                                if not commit.authors and newattr.address() not in [x.address for x in commit.authors]:
                                     commit.authors.append(newattr)
                                     cd += 1
         repo.invalidate_namecache()
