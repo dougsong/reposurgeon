@@ -5897,7 +5897,7 @@ class Repository:
         mark = ":" + str(self.markseq)
         return mark
     def cleanup(self):
-        "Release blob files associated with this repo."
+        "Release storage associated with this repo."
         nuke(self.subdir(), "reposurgeon: cleaning up %s" % self.subdir())
     def subdir(self, name=None):
         if name is None:
@@ -13460,16 +13460,16 @@ that zone is used.
         def parse_attribution_line(line):
             if len(line) <= 10 or line[0].isspace():
                 return None
-            # Line must contain an email address
-            if not (('<' in line and line.endswith(">")) or ('(' in line and line.endswith(")"))):
-                return None
             # Massage old-style addresses into newstyle
             line = line.replace("(", "<").replace(")", ">")
-            if ',' in line:
-                # Multiple attributions...ignore for now
-                return None
             # Deal with some address masking
             line = line.replace(" <at> ", "@")
+            # Malformation in a GCC Changelog that might be replicated elsewhere.
+            if line.endswith(">>"):
+                line = line[:-1]
+            # Line must contain an email address
+            if not (line.count('<') == 1 and line.endswith(">")):
+                return None
             if line[0].isdigit() and line[1].isdigit():
                 space = line.find(" ")
                 if space < 0:
@@ -13551,25 +13551,16 @@ that zone is used.
                         if attribution is not None:
                             addr = attribution
                             cm += 1
-                            # Rationale: If the author is the committer and
-                            # the attribution date is the same day as the
-                            # commit, this is probably wthin seconds or minutes
-                            # of right.  On a different day with the same
-                            # committer this gets the timezone right. If
-                            # committer is different and day is different we're
-                            # making up data out of thin air, but it at least
-                            # is no worse than any other random choice and
-                            # has the following good properties: (1) no
-                            # later than the committer date, and (2) has same
-                            # mm:ss, making it possible to match the
-                            # committer date in a display even if we don't
-                            # know whether it's local or UTC.
                             newattr = commit.committer.clone()
                             (newattr.name, newattr.email) = addr.split("<")
                             newattr.email = newattr.email.strip()[:-1]
                             newattr.name = newattr.name.strip()
                             if not newattr.name:
-                                for (name, nemail, _tz) in repo.authormap.values():
+                                for mapentry in repo.authormap.values():
+                                    if len(mapentry) != 3:
+                                        complain("malformed author map entry %s" % (mapentry,))
+                                        continue
+                                    (name, nemail, _tz) = mapentry
                                     if newattr.email == nemail:
                                         newattr.name = name
                                         break
