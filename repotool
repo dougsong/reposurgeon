@@ -437,12 +437,13 @@ def checkout(args):
         if revision:
             revision = "-d " + revision
         do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdirpath)s" % locals())
-        # FIXME: Figure out what to do with branch 'master" here.  The
-        # problem is that how we want to treat it depends on whether
-        # the repo has a branchy or flat layout, and we don't know
-        # that yet. If branchy, map it to "trunk"; if flat, ignore.
-        if branch or tag:
-            outdir += "/" + branch + tag
+        # This logic will foo up on flat repositories
+        if branch == "master":
+            outdir = os.path.join(outdir, "trunk")
+        if branch:
+            outdir = os.path.join(outdir, "branches", branch)
+        if tag:
+            outdir = os.path.join(outdir, "tags", tag)
         return outdir
     elif vcs == "svn-checkout":
         if revision:
@@ -453,9 +454,9 @@ def checkout(args):
         elif branch == "":        # Desperate hack to accommodate flat repos.
             pass
         elif branch and os.path.isdir("branches"):
-            outdir += os.path.join(outdir, "branches", branch)
+            outdir = os.path.join(outdir, "branches", branch)
         elif tag and os.path.isdir("tags"):
-            outdir += os.path.join(outdir, "tags", tag)
+            outdir = os.path.join(outdir, "tags", tag)
         else:
             croak("invalid branch or tag")
         return os.path.abspath(outdir)
@@ -527,6 +528,7 @@ def compare(args):
     # If we can set rsource and rtarget to '.' we can avoid expensive checkout
     # operations. These are particularly slow under svn.
     diffopts = []
+    sourceignores = []
     with directory_context(source):
         if is_dvcs_or_checkout():
             rsource = '.'
@@ -534,6 +536,7 @@ def compare(args):
             for f in sourceignores:
                 diffopts += ["-x", f]
         sourcedir = checkout(checkout_args + [rsource])
+    targetignores = []
     with directory_context(target):
         if is_dvcs_or_checkout():
             rtarget = '.'
