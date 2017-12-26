@@ -779,16 +779,16 @@ file_filters = {
 
 # Sanity checking and progress metering
 
-def memcheck(repo):
-    "Check to see if we're vulnerable to OOM"
-    if psutil is not None:
-        mem = psutil.virtual_memory()
-        if mem.percent > 97:
-            if repo:
-                # Because we're probably interrupting a baton.
-                sys.stdout.write("\n")
-                repo.dumptimes()
-            raise Fatal("Low-memory condition, bailing out before OOM or crash.")
+#def memcheck(repo):
+#    "Check to see if we're vulnerable to OOM"
+#    if psutil is not None:
+#        mem = psutil.virtual_memory()
+#        if mem.percent > 97:
+#            if repo:
+#                # Because we're probably interrupting a baton.
+#                sys.stdout.write("\n")
+#                repo.dumptimes()
+#            raise Fatal("Low-memory, bailing out before OOM or crash.")
 
 lastfrac = 0
 
@@ -3981,7 +3981,7 @@ class StreamParser:
                                 announce("revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
-                            memcheck(None)
+                            #memcheck(None)
                             readprogress(baton, self.fp, filesize)
                     # End of Subversion dump parsing
                     self.repo.timings.append(("parsing", time.time()))
@@ -4210,7 +4210,7 @@ class StreamParser:
                                       comment = self.fi_read_data()[0])
                             tag.legacy_id = legacy_id
                             self.repo.addEvent(tag)
-                            memcheck(None)
+                            #memcheck(None)
                             readprogress(baton, self.fp, filesize)
                         else:
                             # Simply pass through any line we don't understand.
@@ -4284,7 +4284,7 @@ class StreamParser:
                 baton.twirl("%s:%.3fs..." % (tag, self.repo.timings[-1][1] - self.repo.timings[-2][1]))
             else:
                 baton.twirl()
-            memcheck(self.repo)
+            #memcheck(self.repo)
         timeit("copynodes")
         # Build filemaps.
         if debug_enable(DEBUG_EXTRACT):
@@ -4399,7 +4399,7 @@ class StreamParser:
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
-            memcheck(self.repo)
+            #memcheck(self.repo)
             commit = Commit(self.repo)
             ad = record.date
             if ad is None:
