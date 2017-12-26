@@ -595,11 +595,11 @@ def compare_engine(label, lister, comparer, args):
     common = list(common)
     common.sort()
     print("----------------------------------------------------------------")
-    print("%s only in %s:" % (label, source))
+    print("%s only in source:" % label)
     for item in sourceonly:
           print(item)
     print("----------------------------------------------------------------")
-    print("%s only in %s:" % (label, target))
+    print("%s only in target:" % label)
     for item in targetonly:
           print(item)
     for item in common:
