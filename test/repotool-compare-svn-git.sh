@@ -1,11 +1,13 @@
-## Test comparing master between svn and git repository
-
-command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
-command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
+## Test comparing master between svn and git repo
 
 # Results should be independent of what file stem this is, as
 # long as it's an svn dump.
 stem=vanilla
+
+# No user-serviceable parts below this line
+
+command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
+command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
 trap "rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/out$$" 0 12 2 15
 
