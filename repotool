@@ -580,6 +580,7 @@ def compare_engine(label, lister, comparer, args):
             diff_args.append(val)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
+    args = args[:]
     target = args.pop()
     source = args.pop()
     if not os.path.isdir(source) or not os.path.isdir(target):
