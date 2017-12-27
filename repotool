@@ -507,7 +507,7 @@ def compare(args):
             diff_args.append(val)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
-
+    args = args[:]
     target = args.pop()
     source = args.pop()
     if not os.path.isdir(source) or not os.path.isdir(target):
@@ -619,9 +619,18 @@ def compare_branches(args):
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
+    if verbose:
+        print("Comparing master...")
     compare(args)
-    compare_tags(args)
+    if verbose:
+        print("Comparing tags")
+    if verbose:
+        compare_tags(args)
+    if verbose:
+        print("Comparing branches")
     compare_branches(args)
+    if verbose:
+        print("Done")
 
 if __name__ == "__main__":
     (options, arguments) = getopt.getopt(sys.argv[1:], "v")
