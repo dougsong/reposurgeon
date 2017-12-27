@@ -11,7 +11,7 @@ command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
 trap "rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/out$$" 0 12 2 15
 
-./svn-to-svn -q -c /tmp/test-repo$$-svn <${stem}.svn
+./svn-to-svn -q -c /tmp/test-repo$$-svn /tmp/test-repo$$-svn-checkout <${stem}.svn
 reposurgeon "read <${stem}.svn" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1
 repotool compare /tmp/test-repo$$-svn-checkout /tmp/test-repo$$-git | sed -e "s/$$/\$\$/"g >>/tmp/out$$
 

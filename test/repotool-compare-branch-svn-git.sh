@@ -11,7 +11,7 @@ cmpmode=-b
 command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
-trap "rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/out$$" 0 12 2 15
+trap "rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-svn-checkout /tmp/test-repo$$-git /tmp/out$$" 0 12 2 15
 
 ./svn-to-svn -q -c /tmp/test-repo$$-svn <${stem}.svn
 reposurgeon "read <${stem}.svn" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1

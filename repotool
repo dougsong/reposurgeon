@@ -153,7 +153,7 @@ DEBUG_COMMANDS = 1
 verbose = 0
 
 def croak(msg):
-    sys.stderr.write("repotool: " + msg)
+    sys.stderr.write("repotool: " + msg + "\n")
     sys.exit(1)
 
 def do_or_die(dcmd, legend=""):
@@ -165,11 +165,11 @@ def do_or_die(dcmd, legend=""):
     try:
         retcode = subprocess.call(dcmd, shell=True)
         if retcode < 0:
-            croak("child was terminated by signal %d.\n" % -retcode)
+            croak("child was terminated by signal %d." % -retcode)
         elif retcode != 0:
-            croak("repotool: child returned %d.\n" % retcode)
+            croak("repotool: child returned %d." % retcode)
     except (OSError, IOError) as e:
-        croak("execution of %s%s failed: %s\n" % (dcmd, legend, e))
+        croak("execution of %s%s failed: %s" % (dcmd, legend, e))
 
 def capture_or_die(dcmd, legend=""):
     "Either execute a command and capture its output or die."
@@ -547,7 +547,7 @@ def compare(args):
     diffopts += diff_args
     diffopts = " ".join(diffopts)
     # FIXME: use difflib here?
-    do_or_die("diff %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+    do_or_die("diff %(diffopts)s --label=source --label=target --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
     def dirlist(top, excl=None):
         "Get list of all paths under specied top node, with optional excusion."
         m = []
