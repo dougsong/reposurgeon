@@ -437,25 +437,25 @@ def checkout(args):
             revision = "-d " + revision
         do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdirpath)s" % locals())
         # This logic will foo up on flat repositories
-        if branch == "master":
-            outdir = os.path.join(outdir, "trunk")
-        if branch:
-            outdir = os.path.join(outdir, "branches", branch)
         if tag:
             outdir = os.path.join(outdir, "tags", tag)
+        elif branch in ("master", "trunk"):
+            outdir = os.path.join(outdir, "trunk")
+        elif branch:
+            outdir = os.path.join(outdir, "branches", branch)
         return outdir
     elif vcs == "svn-checkout":
         if revision:
             revision = "-r " + revision
         do_or_die("svn up -q " + revision)
-        if branch in ("", "trunk", "master") and os.path.isdir("trunk"):
+        if tag and os.path.isdir("tags"):
+            outdir = os.path.join(outdir, "tags", tag)
+        elif branch in ("", "trunk", "master") and os.path.isdir("trunk"):
             outdir = os.path.join(outdir, "trunk")
         elif branch == "":        # Desperate hack to accommodate flat repos.
             pass
         elif branch and os.path.isdir("branches"):
             outdir = os.path.join(outdir, "branches", branch)
-        elif tag and os.path.isdir("tags"):
-            outdir = os.path.join(outdir, "tags", tag)
         else:
             croak("invalid branch or tag")
         return os.path.abspath(outdir)
@@ -546,6 +546,8 @@ def compare(args):
     diffopts += diff_args
     diffopts = " ".join(diffopts)
     # FIXME: use difflib here?
+    if verbose:
+        print("Comparing %s to %s" % (sourcedir, targetdir))
     do_or_die("diff %(diffopts)s --label=source --label=target --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
     def dirlist(top, excl=None):
         "Get list of all paths under specied top node, with optional excusion."
