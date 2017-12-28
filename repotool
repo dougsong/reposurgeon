@@ -612,11 +612,15 @@ def compare_engine(label, lister, comparer, args):
 
 def compare_tags(args):
     "Compare two repos at all tags."
-    compare_engine("Tags", "repotool tags","repotool compare -t", args)
+    vtoken = "-v" if verbose else ""
+    compare_engine("Tags", "repotool %s tags" % vtoken,
+                   "repotool %s compare -t" % vtoken, args)
 
 def compare_branches(args):
     "Compare two repos at all branches."
-    compare_engine("Branches","repotool branches","repotool compare -b", args)
+    vtoken = "-v" if verbose else ""
+    compare_engine("Branches","repotool %s branches" % vtoken,
+                   "repotool %s compare -b" % vtoken, args)
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
