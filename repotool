@@ -5,6 +5,8 @@
 # Rather non-idiomatic Python because it was translated from shell.
 #
 # This code runs under both Python 2 and Python 3: preserve this property!
+#
+# SPDX-License-Identifier: BSD-2-Clause
 from __future__ import print_function
 
 import sys, os, stat, getopt, subprocess, re, shutil
@@ -177,7 +179,10 @@ def capture_or_die(dcmd, legend=""):
     if verbose:
         sys.stdout.write("repotool: executing '%s'%s\n" % (dcmd, legend))
     try:
-        return subprocess.check_output(dcmd, shell=True).decode('ascii')
+        out = subprocess.check_output(dcmd, shell=True).decode('ascii')
+        if verbose:
+            sys.stdout.write("repotool: returning %s\n" % repr(out))
+        return out
     except subprocess.CalledProcessError as e:
         if e.returncode < 0:
             croak("child was terminated by signal %d." % -e.returncode)
@@ -381,7 +386,7 @@ def branches():
                  | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
         "svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
         "svn-checkout": "ls branches",
-        "git": "git branch -l | cut -c 3- | grep -v '^master$'",
+        "git": "git branch -q -l 2>&1 | cut -c 3- | egrep -v 'HEAD|^master$'",
         "bzr": "bzr branches | cut -c 3-",
         "hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
         }
@@ -460,6 +465,8 @@ def checkout(args):
             croak("invalid branch or tag")
         return os.path.abspath(outdir)
     elif vcs == "git":
+        if not (branch or tag or revision):
+            branch = "master"
         if outdir == ".":
             do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
         else:
@@ -613,13 +620,13 @@ def compare_engine(label, lister, comparer, args):
 def compare_tags(args):
     "Compare two repos at all tags."
     vtoken = "-v" if verbose else ""
-    compare_engine("Tags", "repotool %s tags" % vtoken,
+    compare_engine("Tags", "repotool tags",
                    "repotool %s compare -t" % vtoken, args)
 
 def compare_branches(args):
     "Compare two repos at all branches."
     vtoken = "-v" if verbose else ""
-    compare_engine("Branches","repotool %s branches" % vtoken,
+    compare_engine("Branches","repotool branches",
                    "repotool %s compare -b" % vtoken, args)
 
 def compare_all(args):
@@ -628,11 +635,10 @@ def compare_all(args):
         print("Comparing master...")
     compare(args)
     if verbose:
-        print("Comparing tags")
+        print("Comparing tags...")
+    compare_tags(args)
     if verbose:
-        compare_tags(args)
-    if verbose:
-        print("Comparing branches")
+        print("Comparing branches...")
     compare_branches(args)
     if verbose:
         print("Done")
