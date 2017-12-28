@@ -439,7 +439,7 @@ def checkout(args):
         # This logic will foo up on flat repositories
         if tag:
             outdir = os.path.join(outdir, "tags", tag)
-        elif branch in ("master", "trunk"):
+        elif branch in ("", "master", "trunk"):
             outdir = os.path.join(outdir, "trunk")
         elif branch:
             outdir = os.path.join(outdir, "branches", branch)
@@ -450,7 +450,7 @@ def checkout(args):
         do_or_die("svn up -q " + revision)
         if tag and os.path.isdir("tags"):
             outdir = os.path.join(outdir, "tags", tag)
-        elif branch in ("", "trunk", "master") and os.path.isdir("trunk"):
+        elif branch in ("", "master", "trunk") and os.path.isdir("trunk"):
             outdir = os.path.join(outdir, "trunk")
         elif branch == "":        # Desperate hack to accommodate flat repos.
             pass
