@@ -386,7 +386,7 @@ def branches():
                  | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
         "svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
         "svn-checkout": "ls branches",
-        "git": "git branch -q -l 2>&1 | cut -c 3- | egrep -v 'HEAD|^master$'",
+        "git": "git branch -q -l 2>&1 | cut -c 3- | egrep -v 'detached|^master$'",
         "bzr": "bzr branches | cut -c 3-",
         "hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
         }
@@ -555,7 +555,7 @@ def compare(args):
     # FIXME: use difflib here?
     if verbose:
         print("Comparing %s to %s" % (sourcedir, targetdir))
-    do_or_die("diff %(diffopts)s --label=source --label=target --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+    do_or_die("diff -r %(diffopts)s --label=source --label=target --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
     def dirlist(top, excl=None):
         "Get list of all paths under specied top node, with optional excusion."
         m = []
@@ -573,7 +573,7 @@ def compare(args):
         sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
         tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
         if sstat != tstat:
-            print("{}: 0{0:o} -> 0{0:o}".format(path, sstat, tstat))
+            print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
 
 def compare_engine(label, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."

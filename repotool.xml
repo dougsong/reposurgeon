@@ -126,6 +126,12 @@ should be in the form normally used for clone commands</para>
 to <filename>/tmp</filename> if it is not set.</para>
 </refsect1>
 
+<refsect1 id='bugs'><title>BUGS</title>
+
+<para>Tag comparisons with git will not cope well with a branch
+name containing the string "detached".</para>
+
+</refsect1>
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
 
 <para>
