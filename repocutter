@@ -447,7 +447,7 @@ class DumpfileSource(LineBufferedSource):
                     return
                 elif line == '\n':
                     if passthrough and emit:
-                        self.__say(line)
+                        sys.stdout.write(line)
                     continue
                 elif line.startswith("Revision-number:"):
                     self.push(line)
