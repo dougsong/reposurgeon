@@ -3,16 +3,6 @@ SVN-fs-dump-format-version: 2
 
 UUID: c8181032-df8d-45ee-b41b-a8969c8cbe85
 
-Revision-number: 0
-Prop-content-length: 56
-Content-length: 56
-
-K 8
-svn:date
-V 27
-2011-12-01T21:57:21.091953Z
-PROPS-END
-
 Revision-number: 3
 Prop-content-length: 135
 Content-length: 135

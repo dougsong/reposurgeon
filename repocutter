@@ -423,7 +423,7 @@ class DumpfileSource(LineBufferedSource):
         if m:
             self.emitted_revisions.add(int(m.group(1)))
         sys.stdout.write(text)
-    def report(self, selection, nodehook, prophook=None, passthrough=True):
+    def report(self, selection, nodehook, prophook=None, passthrough=True, passempty=True):
         "Report a filtered portion of content."
         emit = passthrough and 0 in selection
         stash = self.read_until_next("Revision-number:")
@@ -451,9 +451,10 @@ class DumpfileSource(LineBufferedSource):
                     continue
                 elif line.startswith("Revision-number:"):
                     self.push(line)
-                    if stash and nodecount == 0:
+                    if stash and nodecount == 0 and passempty:
                         if passthrough:
                             self.__say(stash)
+                    nodecount = 0
                     break
                 elif line.startswith("Node-"):
                     nodecount += 1
@@ -892,7 +893,7 @@ def expunge(source, selection, patterns):
                     break
         if not matched:
             return header + properties + content
-    source.report(selection, __expunge)
+    source.report(selection, __expunge, passempty=True)
 
 def sift(source, selection, patterns):
     "Sift for ops defined by a revision selection and a path regexp."
@@ -909,7 +910,7 @@ def sift(source, selection, patterns):
                     break
         if matched:
             return header + properties + content
-    source.report(selection, __sift)
+    source.report(selection, __sift, passempty=False)
 
 def pathrename(source, selection, patterns):
     "Hack paths by applying a regexp transformation."
