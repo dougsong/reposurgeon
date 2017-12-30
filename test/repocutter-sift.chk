@@ -1,0 +1,47 @@
+SVN-fs-dump-format-version: 2
+ ## Branchy layout with a file at the root level
+
+UUID: c8181032-df8d-45ee-b41b-a8969c8cbe85
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2011-12-01T21:57:21.091953Z
+PROPS-END
+
+Revision-number: 3
+Prop-content-length: 135
+Content-length: 135
+
+K 7
+svn:log
+V 37
+This is our root-level file content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-12-01T22:00:54.254310Z
+PROPS-END
+
+Node-path: EXIGUOUS
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 81
+Text-content-md5: 7fdf0726bdd9fa5a35478ac0d9f18b49
+Text-content-sha1: 3c98bc6469db7d837f0c5ddf0fe6054607521655
+Content-length: 91
+
+PROPS-END
+This is an exiguous file which should be stuffed in a root branch on conversion.
+
+
