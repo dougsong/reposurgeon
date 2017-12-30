@@ -4761,8 +4761,6 @@ class StreamParser:
                                            % (node.revision, node.path))
                             continue
                         ancestor_nodes[node.path] = node
-                        if not node.blobmark:
-                            print("Foo", node)
                         assert node.blobmark
                         # Time for fileop generation.  The assumption behind the
                         # permission-fetch logic is that a node's immediate
