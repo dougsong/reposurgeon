@@ -334,6 +334,7 @@ class Properties:
 class DumpfileSource(LineBufferedSource):
     "This class knows about dumpfile format."
     NodeLeader = re.compile("Node-")
+    RevisionLine = re.compile(r"Revision-number: \([0-9]\)")
     TextContentLength = re.compile("Text-content-length: ([0-9]*)")
     def __init__(self, infile, baton=None):
         LineBufferedSource.__init__(self, infile)
@@ -418,7 +419,7 @@ class DumpfileSource(LineBufferedSource):
                     line = line.replace(oldrev, repr(revmap[int(oldrev)]))
                 stash += line
     def __say(self, text):
-        m = re.search(r"Revision-number: \([0-9]\)", text)
+        m = DumpfileSource.RevisionLine.search(text)
         if m:
             self.emitted_revisions.add(int(m.group(1)))
         sys.stdout.write(text)
