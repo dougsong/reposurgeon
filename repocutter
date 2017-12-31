@@ -222,6 +222,18 @@ sys.stdin = make_std_wrapper(sys.stdin)
 sys.stdout = make_std_wrapper(sys.stdout)
 sys.stderr = make_std_wrapper(sys.stderr)
 
+def humanize(d):
+    "Return a human-friendly description of elapsed time"
+    human = ""
+    if d >= 3600:
+        human += "%dh" % (int(d) // 3600)
+        d %= 3600
+    if d >= 60:
+        human += "%dm" % (int(d) // 60)
+        d %= 60
+    human += ("%.3fs" % d)
+    return human
+
 class Baton:
     "Ship progress indications to stderr."
     def __init__(self, prompt, endmsg=None):
@@ -252,7 +264,7 @@ class Baton:
         if msg is None:
             msg = self.endmsg
         if self.stream:
-            self.stream.write(("...(%2.2f sec) %s." % (time.time() - self.time, msg)) + os.linesep)
+            self.stream.write(("...(%s) %s." % (humanize(time.time() - self.time), msg)) + os.linesep)
         return
 
 class LineBufferedSource:

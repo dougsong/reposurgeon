@@ -4762,6 +4762,8 @@ class StreamParser:
                             continue
                         ancestor_nodes[node.path] = node
                         assert node.blobmark
+                        # FIXME: remove
+                        reveal = node.path.endswith("contrib/filter_gcc_for_doxygen")
                         # Time for fileop generation.  The assumption behind the
                         # permission-fetch logic is that a node's immediate
                         # ancestor always has the permission computed from *its*
@@ -4773,6 +4775,13 @@ class StreamParser:
                             perms = oldperms = 0o100644
                         if node.props is not None:
                             perms = self.node_permissions(node)
+                        # FIXME: remove
+                        if reveal:
+                            sys.stderr.write("At %s, perms %o->%o\n" % (node.revision, oldperms, perms))
+                            if ancestor:
+                                sys.stderr.write("At %s, ancestor=%s:%s perms %o->%o\n" % (node.revision, ancestor.revision, ancestor.path))
+                            else:
+                                sys.stderr.write("At %s, no ancestor\n", node.revision)
                         new_content = (node.blob is not None)
                         # Ignore and complain about explicit .gitignores
                         # created, e.g, by git-svn.  In an ideal world we
