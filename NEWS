@@ -1,6 +1,7 @@
 = reposurgeon project news =
 
 Repository head:
+     New 'setperm' command for patching file path permissions.
      Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
      Maximum working-set size has been reduced.
      New 'gitify' command for massaging comments into git conventional form.

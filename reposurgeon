@@ -11076,6 +11076,33 @@ address.
             elif field == "authdate" and isinstance(event, Commit):
                 event.authors[0].date = Date(value)
 
+    def help_setperm(self):
+        sys.stdout.write("""
+For the selected objects (defaulting to none) take the first argument as an
+octal literal describing permissions.  All subsequent arguments are paths.
+For each M fileop in the selection set and exactly matching one of the
+paths, patch the permission field to the first argument value.
+""")
+    def do_setperm(self, line):
+        "Set permissions on M fileops matching a path list."
+        if not self.chosen():
+            complain("no repo is loaded")
+            return
+        repo = self.chosen()
+        if self.selection is None:
+            raise Recoverable("no selection")
+        fields = shlex.split(line)
+        if not fields or len(fields) != 2:
+            raise Recoverable("missing or malformed setperm line")
+        perm = fields.pop(0)
+        if perm not in ('100644', '100755', '120000'):
+            raise Recoverable("unexpected permission literal %s" % perm)
+        with Baton(prompt="patching modes", enable=(verbose == 1)) as baton:
+            for _, event in self.selected(Commit):
+                for op in event.operations():
+                    if op.op == FileOyyp.M and op.path in fields:
+                        op.mode = perm
+
     def help_append(self):
         sys.stdout.write("""
 Append text to the comments of commits and tags in the specified

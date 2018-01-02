@@ -1564,6 +1564,18 @@ address.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>setperm</command>
+        <emphasis>100644|100755|120000</emphasis>
+        <emphasis>path...</emphasis>
+</term>
+<listitem>
+<para>For the selected objects (defaulting to none) take the first argument as an
+octal literal describing permissions.  All subsequent arguments are paths.
+For each M fileop in the selection set and exactly matching one of the
+paths, patch the permission field to the first argument value.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>append</command>
         [<command>--rstrip</command>]
         [&gt;<emphasis>text</emphasis>]

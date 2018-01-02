@@ -192,6 +192,7 @@ foo/theory.txt
 paths sup
 theory.txt
 :28 setfield comment "The quick brown fox jumped over the lazy dog.\n"
+:51 setperm 100755 theory.txt
 # Stream the repo
 write -
 blob
@@ -444,6 +445,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 data 53
 git-fast-export captures lightweight tags after all.
-M 100644 :50 theory.txt
+M 100755 :50 theory.txt
 
 
