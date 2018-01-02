@@ -41,9 +41,16 @@ support working directly with action stamps in git.
 Finally, an Emacs Lisp mode with useful functions for editing large
 comment mailboxes is included.
 
+The hashbang lines in these tools invoke PyPy, an alternative Python
+implementation that performs much better than CPyton on this code. You
+can use python2 or python3 to run these scripts, but it is best to
+have pypy installed.  The performance difference is dramatic on large
+repositories.
+
 There is an extensive regression-test suite in the `test/` directory.
-To test the correctness of this software, ensure that `pylint`
-is installed and then type `make check`.
+To test the correctness of this software, ensure that `pypy` and `pylint`
+are installed and then type `make check`.  For a portability check that
+includes Python 2 and Python 3 as well, do "make portcheck". 
 
 See `reporting-bugs.asc` for advice on how to troubleshoot problems
 with `reposurgeon` and report bugs.

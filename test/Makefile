@@ -16,14 +16,20 @@ ECHO := /bin/echo
 # that confuse diff
 TERM := dumb
 
-default:
+default: check
+
+# Speed check - test under the default in the hashbang line
+check:
 	@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
 	@echo "=== Running built-in tests"
 	@$(REPOSURGEON) "runtests"
-	@if ./setpython pypy; then time make -e --quiet all; else echo "pypy missing; skipping tests"; fi
-	@if ./setpython python2; then time make -e --quiet all; else echo "python2 missing; skipping tests"; fi
-	@if ./setpython python3; then time make -e --quiet all; else echo "python3 missing; skipping tests"; fi
-	@./setpython python
+	@if ./setpypy pypy; then time make -e --quiet all; else echo "pypy missing; skipping tests"; fi
+
+# Portability check - tests all dialects
+portcheck: check
+	@if ./setpypy python2; then time make -e --quiet all; else echo "python2 missing; skipping tests"; fi
+	@if ./setpypy python3; then time make -e --quiet all; else echo "python3 missing; skipping tests"; fi
+	@./setpypy pypy
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \

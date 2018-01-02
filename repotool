@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pypy
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
 #

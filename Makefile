@@ -109,7 +109,10 @@ pylint:
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS4) repocutter
 
 check:
-	cd test; $(MAKE) --quiet
+	cd test; $(MAKE) --quiet check
+
+portcheck:
+	cd test; $(MAKE) --quiet portcheck
 
 #
 # Continuous integration.  More specifics are in the ci/ directory

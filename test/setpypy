@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# setpypy - create a local link from 'pypy' to a specified version
+#
+# This script is used to to redirect the 'pypy' in reposurgeon's
+# shebang line to a specified version when running regression tests.
+
+if [ -z "$1" ]
+then
+	if [ -e pypy ]
+	then
+		readlink pypy
+	else
+		command -v pypy
+	fi
+elif [ $1 = "pypy" ]
+then
+	rm -f ./pypy
+	echo "pypy -> `command -v pypy`"
+elif [ $1 = python -o $1 = python2 -o $1 = python3 ]
+then
+	p=`command -v $1`
+	case $p in
+		*/bin/*) ln -sf $p ./pypy; echo "pypy -> $p";;
+		*)
+			saved=`readlink ./pypy 2>/dev/null`
+			rm -f ./pypy
+			# Python2 prints version on stderr; Python3 on stdout.
+			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
+			if [ $1 = "$v" ]
+			then
+				echo "pypy -> `command -v python`"
+			else
+				[ -n "$saved" ] && ln -sf $saved ./pypy
+				echo "setpypy: no python binary" >&2; exit 1
+			fi
+			;;
+	esac
+else
+	echo "setpypy: unrecognized python version" >&2
+	exit 1
+fi
+
+exit 0
