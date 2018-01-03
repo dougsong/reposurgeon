@@ -11088,7 +11088,6 @@ paths, patch the permission field to the first argument value.
         if not self.chosen():
             complain("no repo is loaded")
             return
-        repo = self.chosen()
         if self.selection is None:
             raise Recoverable("no selection")
         fields = shlex.split(line)
@@ -11100,8 +11099,9 @@ paths, patch the permission field to the first argument value.
         with Baton(prompt="patching modes", enable=(verbose == 1)) as baton:
             for _, event in self.selected(Commit):
                 for op in event.operations():
-                    if op.op == FileOyyp.M and op.path in fields:
+                    if op.op == FileOp.M and op.path in fields:
                         op.mode = perm
+                baton.twirl()
 
     def help_append(self):
         sys.stdout.write("""

@@ -385,7 +385,7 @@ class DumpfileSource(LineBufferedSource):
                 sys.stderr.write('unexpected EOF in node header' + os.linesep)
                 sys.exit(1)
             m = re.search(r"Node-copyfrom-rev: ([1-9][0-9]*)", line)
-            if m and int(m.group(1)) not in self.emitted_revisions:
+            if m and m.group(1) not in self.emitted_revisions:
                 header += line
                 header += self.require("Node-copyfrom-path")
                 continue
@@ -433,7 +433,7 @@ class DumpfileSource(LineBufferedSource):
     def __say(self, text):
         m = DumpfileSource.RevisionLine.search(text)
         if m:
-            self.emitted_revisions.add(int(m.group(1)))
+            self.emitted_revisions.add(m.group(1))
         sys.stdout.write(text)
     def report(self, selection, nodehook, prophook=None, passthrough=True, passempty=True):
         "Report a filtered portion of content."
