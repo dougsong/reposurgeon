@@ -5,16 +5,19 @@
 # The -v option reveals executed subcommands.
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
+# The -d option disables removal of the generated repositories after the run
 #
 set -e
 
 repotoolopt=""
-while getopts iuv opt
+debug=no
+while getopts diuv opt
 do
     case $opt in
-	i|u) compareopt="$compareopt -v"
-	v) repotoolopt="$repotoolopt -v"
-	u) compareopt="$compareopt -v"
+	d) debug=yes;;
+	i|u) compareopt="$compareopt -v";;
+	v) repotoolopt="$repotoolopt -v";;
+	u) compareopt="$compareopt -v";;
     esac
 done
 shift $(($OPTIND - 1))
@@ -25,8 +28,16 @@ then
     exit 1
 fi
 
-stem=cc$$
-trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0
+stem=liftcheck$$
+
+rm -fr liftcheck[0-9]*
+
+if [ $debug = no ]
+then
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0 2 15
+else
+    ls -d liftcheck*
+fi
 
 # Make a Subversion repo from the dump
 svn-to-svn -q -c <$1.svn ${stem}
