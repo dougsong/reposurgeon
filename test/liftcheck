@@ -6,15 +6,18 @@
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
 # The -d option disables removal of the generated repositories after the run
+# The -s option enables progress messages from the Subversion loader.
 #
 set -e
 
 repotoolopt=""
 debug=no
-while getopts diuv opt
+svnquiet=-q
+while getopts disuv opt
 do
     case $opt in
 	d) debug=yes;;
+	s) svnquiet="";;
 	i|u) compareopt="$compareopt -v";;
 	v) repotoolopt="$repotoolopt -v";;
 	u) compareopt="$compareopt -v";;
@@ -30,22 +33,25 @@ fi
 
 stem=liftcheck$$
 
-rm -fr liftcheck[0-9]*
+rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
     trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0 2 15
-else
-    ls -d liftcheck*
 fi
 
 # Make a Subversion repo from the dump
-svn-to-svn -q -c <$1.svn ${stem}
+svn-to-svn ${svnquiet} -c <$1.svn ${stem}
 
 # Make a git repo from the dump using reposurgeon
 reposurgeon "read <$1.svn" "prefer git" "rebuild ${stem}-git"
 
 # Compare the original with the lift
 repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
+
+if [ $debug != no ]
+then
+    ls -d liftcheck[0123456789]*
+fi
 
 # end
