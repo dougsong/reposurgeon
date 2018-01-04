@@ -98,7 +98,7 @@ followed by basenames of paths to exclude from comparison. You can get
 a context-diff report on file differences with the -u option.</para>
 
 <para>The 'compare-all' action takes two repository directories, and
-runs all 3 above compare actions on them. Even if the same name is a
+runs all three above compare actions on them. Even if the same name is a
 tag in one repository and a branch in the other, it will compare them
 against each other. Not distinguishing them is useful as CVS tags that
 are not applied to every file in the repository may get converted to

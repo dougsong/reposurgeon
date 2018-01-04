@@ -14,7 +14,7 @@ set -e
 repotoolopt=""
 debug=no
 svnquiet=-q
-while getopts disuv opt
+while getopts adisuv opt
 do
     case $opt in
 	d) debug=yes;;

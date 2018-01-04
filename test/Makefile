@@ -52,8 +52,8 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
-	repocutter-buildregress hg-buildregress-branches hg-buildregress-patho \
-	svncheck-buildregress
+	repotool-buildregress repocutter-buildregress hg-buildregress-branches \
+	hg-buildregress-patho svncheck-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
