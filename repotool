@@ -3,6 +3,8 @@
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
 #
+# No output means the repositories compare equal.
+#
 # Rather non-idiomatic Python because it was translated from shell.
 #
 # This code runs under both Python 2 and Python 3: preserve this property!
@@ -365,7 +367,7 @@ def tags():
                 cvs -Q -d:local:${PWD} rlog -h $module 2>&1 \
                 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
         "svn": "svn ls 'file://%s/tags' | sed 's|/$||'" % os.getcwd(),
-        "svn-checkout": "ls tags",
+        "svn-checkout": "ls tags 2>/dev/null || exit 0",
         "git": "git tag -l",
         "bzr": "bzr tags",
         "hg": "hg tags --quiet",
@@ -407,6 +409,8 @@ def checkout(args):
     # 3. Remote directory specified, non-DVCS: True checkout to remote directory.
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
+    if verbose:
+        print("checkout: %s" % args)
     (options, arguments) = getopt.getopt(args, "b:r:t:")
     outdir = "."
     branch = ""
@@ -497,6 +501,8 @@ def checkout(args):
 
 def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
+    if verbose:
+        print("compare: %s" % args)
     (options, arguments) = getopt.getopt(args, "b:ir:t:ux:")
     outdir = "."
     branch = ""
@@ -505,8 +511,11 @@ def compare(args):
     checkout_args = []
     diff_args = []
     seeignores = False
+    if verbose:
+        print("Options: %s" % options)
     for (opt, val) in options:
         if opt in ('-b', '-t', '-r'):
+            checkout_args.append(opt)
             checkout_args.append(val)
         elif opt in ('-q', '-u'):
             diff_args.append(opt)
@@ -515,6 +524,8 @@ def compare(args):
             diff_args.append(val)
         elif op == '-i':
             seeignores = True
+    if verbose:
+        print("Checkout arguments: %s" % checkout_args)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]
@@ -578,7 +589,7 @@ def compare(args):
         if sstat != tstat:
             print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
 
-def compare_engine(label, lister, comparer, args):
+def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
     (options, arguments) = getopt.getopt(args, "iux:")
     diff_args = []
@@ -609,30 +620,33 @@ def compare_engine(label, lister, comparer, args):
     targetonly.sort()
     common = list(common)
     common.sort()
-    print("----------------------------------------------------------------")
-    print("%s only in source:" % label)
-    for item in sourceonly:
-          print(item)
-    print("----------------------------------------------------------------")
-    print("%s only in target:" % label)
-    for item in targetonly:
-          print(item)
-    for item in common:
+    if sourceonly:
         print("----------------------------------------------------------------")
-        print("%s:" % item)
-        cmd = " ".join([comparer, item] + diff_args + [source, target])
-        do_or_die(cmd)
+        print("%s only in source:" % plural)
+        for item in sourceonly:
+            print(item)
+    if targetonly:
+        print("----------------------------------------------------------------")
+        print("%s only in target:" % plural)
+        for item in targetonly:
+            print(item)
+    if common:
+        for item in common:
+            print("----------------------------------------------------------------")
+            print("%s %s:" % (singular, item))
+            cmd = " ".join([comparer, item] + diff_args + [source, target])
+            do_or_die(cmd)
 
 def compare_tags(args):
     "Compare two repos at all tags."
     vtoken = "-v" if verbose else ""
-    compare_engine("Tags", "repotool tags",
+    compare_engine("Tag", "Tags", "repotool tags",
                    "repotool %s compare -t" % vtoken, args)
 
 def compare_branches(args):
     "Compare two repos at all branches."
     vtoken = "-v" if verbose else ""
-    compare_engine("Branches","repotool branches",
+    compare_engine("Branch", "Branches","repotool branches",
                    "repotool %s compare -b" % vtoken, args)
 
 def compare_all(args):
