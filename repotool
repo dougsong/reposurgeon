@@ -3,8 +3,6 @@
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
 #
-# No output means the repositories compare equal.
-#
 # Rather non-idiomatic Python because it was translated from shell.
 #
 # This code runs under both Python 2 and Python 3: preserve this property!
@@ -503,7 +501,7 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:ir:t:ux:")
+    (options, arguments) = getopt.getopt(args, "b:ir:st:ux:")
     outdir = "."
     branch = ""
     tag = ""
@@ -517,7 +515,7 @@ def compare(args):
         if opt in ('-b', '-t', '-r'):
             checkout_args.append(opt)
             checkout_args.append(val)
-        elif opt in ('-q', '-u'):
+        elif opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
             diff_args.append(opt)
@@ -591,11 +589,11 @@ def compare(args):
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
-    (options, arguments) = getopt.getopt(args, "iux:")
+    (options, arguments) = getopt.getopt(args, "isux:")
     diff_args = []
     seeignores = False
     for (opt, val) in options:
-        if opt in ('-q', '-u'):
+        if opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
             diff_args.append(opt)
@@ -710,7 +708,7 @@ branches - list repository branch names
 checkout [-r rev] [-t tag] [-b branch] - check out a working copy of the repo
 compare [-r rev] [-t tag] [-b branch] - compare head content of two repositories
 compare-tags - compare source and target repo content at all tags
-compare-branches - compare source and target repo conyent at all branches
+compare-branches - compare source and target repo content at all branches
 compare-all - compare repositories at head, all tags, and all branches
 """)
 

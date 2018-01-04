@@ -6,7 +6,8 @@
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
 # The -d option disables removal of the generated repositories after the run
-# The -s option enables progress messages from the Subversion loader.
+# The -a option enables progress messages from the Subversion loader.
+# The -s option enables display of common files
 #
 set -e
 
@@ -17,10 +18,10 @@ while getopts disuv opt
 do
     case $opt in
 	d) debug=yes;;
-	s) svnquiet="";;
-	i|u) compareopt="$compareopt -v";;
-	v) repotoolopt="$repotoolopt -v";;
-	u) compareopt="$compareopt -v";;
+	a) svnquiet="";;
+	i|s|u) compareopt="$compareopt -$opt";;
+	v) repotoolopt="$repotoolopt -$opt";;
+	u) compareopt="$compareopt -$opt";;
     esac
 done
 shift $(($OPTIND - 1))

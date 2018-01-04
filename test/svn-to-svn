@@ -103,7 +103,12 @@ if [ $build = T ]
 then
     rm -fr $testrepo $testrepo-checkout
     svnadmin create $testrepo
-    svnadmin load ${quiet} $testrepo
+    if svnadmin load ${quiet} $testrepo
+    then
+	:
+    else
+	exit 1
+    fi
 fi
 
 if [ $co = T ]
