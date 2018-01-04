@@ -497,22 +497,24 @@ def checkout(args):
 
 def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
-    (options, arguments) = getopt.getopt(args, "b:r:t:ux:")
+    (options, arguments) = getopt.getopt(args, "b:ir:t:ux:")
     outdir = "."
     branch = ""
     tag = ""
     revision = ""
     checkout_args = []
     diff_args = []
+    seeignores = False
     for (opt, val) in options:
         if opt in ('-b', '-t', '-r'):
-            checkout_args.append(opt)
             checkout_args.append(val)
         elif opt in ('-q', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
             diff_args.append(opt)
             diff_args.append(val)
+        elif op == '-i':
+            seeignores = True
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]
@@ -578,14 +580,17 @@ def compare(args):
 
 def compare_engine(label, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
-    (options, arguments) = getopt.getopt(args, "ux:")
+    (options, arguments) = getopt.getopt(args, "iux:")
     diff_args = []
+    seeignores = False
     for (opt, val) in options:
         if opt in ('-q', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
             diff_args.append(opt)
             diff_args.append(val)
+        elif opt == '-i':
+            seeignores = True
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]

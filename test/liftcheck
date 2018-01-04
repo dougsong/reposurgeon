@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# liftcheck - compare reposurgeon lift of a Subversion repo with a checkout
+#
+# The -v option reveals executed subcommands.
+# The -u option enables context-diffing in the compare operation
+# The -i option disables the normal suppression of ignore comparisons
+#
+set -e
+
+repotoolopt=""
+while getopts iuv opt
+do
+    case $opt in
+	i|u) compareopt="$compareopt -v"
+	v) repotoolopt="$repotoolopt -v"
+	u) compareopt="$compareopt -v"
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ -z "$1" ]
+then
+    echo "liftcheck: an argument file (a Subversion dump) is required."
+    exit 1
+fi
+
+stem=cc$$
+trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0
+
+# Make a Subversion repo from the dump
+svn-to-svn -q -c <$1.svn ${stem}
+
+# Make a git repo from the dump using reposurgeon
+reposurgeon "read <$1.svn" "prefer git" "rebuild ${stem}-git"
+
+# Compare the original with the lift
+repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
+
+# end

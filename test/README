@@ -55,6 +55,11 @@ To add a new tool for comparison, do something like:
 
 from the repo root.
 
+== liftcheck ==
+
+Take a Subversion dump on stdin and compare a checkout of it with
+its git conversion at all tags and branches.
+
 == convert-check ==
 
 Take a Subversion dump on stdin and convert it two different ways,
