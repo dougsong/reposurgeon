@@ -114,7 +114,7 @@ Node-path: trunk/README
 Node-kind: file
 Node-action: change
 Text-content-length: 254
-Text-content-md5: 0ae8b7f9ecd74d785fc122a0a01bacc1
+Text-content-md5: bd904f4ab1fce8bcc12bd3560e133194
 Text-content-sha1: 27c0c4f4c1a47e85aae33653467473d7e2cebb13
 Content-length: 254
 
@@ -256,7 +256,7 @@ PROPS-END
 
 Node-path: trunk/foo
 Node-kind: dir
-Node-action: change
+Node-action: add
 Prop-content-length: 37
 Content-length: 37
 
