@@ -18293,63 +18293,6 @@ PROPS-END
 Revision is 88, file path is branches/Development/drivers/genericups.h.
 
 
-Revision-number: 89
-Prop-content-length: 134
-Content-length: 134
-
-K 7
-svn:log
-V 31
-bump newhidups release to v0.24
-
-K 10
-svn:author
-V 7
-aquette
-K 8
-svn:date
-V 27
-2005-07-22T14:53:07.000000Z
-PROPS-END
-
-Node-path: branches/Development/CHANGES
-Node-kind: file
-Node-action: change
-Prop-content-length: 96
-Text-content-length: 59
-Content-length: 157
-
-K 15
-cvs2svn:cvs-rev
-V 12
-1.2.8.7.2.12
-K 12
-svn:keywords
-V 23
-Author Date Id Revision
-PROPS-END
-Revision is 89, file path is branches/Development/CHANGES.
-
-
-Node-path: branches/Development/drivers/newhidups.h
-Node-kind: file
-Node-action: change
-Prop-content-length: 99
-Text-content-length: 71
-Content-length: 172
-
-K 15
-cvs2svn:cvs-rev
-V 15
-1.1.1.1.8.3.2.1
-K 12
-svn:keywords
-V 23
-Author Date Id Revision
-PROPS-END
-Revision is 89, file path is branches/Development/drivers/newhidups.h.
-
-
 Revision-number: 90
 Prop-content-length: 123
 Content-length: 123

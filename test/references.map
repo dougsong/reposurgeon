@@ -734,9 +734,6 @@ CVS:branches/Development/CHANGES:1.2.8.7.2.11	2005-07-22T12:28:43Z!aquette
 CVS:branches/Development/docs/cables/powerware.txt:1.1.1.1.10.1	2005-07-22T12:28:43Z!aquette
 CVS:branches/Development/drivers/genericups.h:1.1.1.1.8.1.2.1	2005-07-22T12:28:43Z!aquette
 SVN:88	2005-07-22T12:28:43Z!aquette
-CVS:branches/Development/CHANGES:1.2.8.7.2.12	2005-07-22T14:53:07Z!aquette
-CVS:branches/Development/drivers/newhidups.h:1.1.1.1.8.3.2.1	2005-07-22T14:53:07Z!aquette
-SVN:89	2005-07-22T14:53:07Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.18	2005-07-22T16:24:04Z!aquette
 CVS:branches/Testing/drivers/libusb.c:1.1.1.1.8.5	2005-07-22T16:24:04Z!aquette
 CVS:branches/Testing/drivers/newhidups.h:1.1.1.1.8.4	2005-07-22T16:24:04Z!aquette
