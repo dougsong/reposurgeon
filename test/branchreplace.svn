@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test handling of mid-branch delete and symlinks.
+ ## Test handling of mid-branch delete
 
 UUID: 4efa1f5a-b1e1-4f28-afaf-2edfe9881d84
 
@@ -23,11 +23,11 @@ V 27
 2005-01-27T14:33:14.000000Z
 K 7
 svn:log
-V 425
+V 413
 This is a severely hacked and stripped-down extraction from the NUT repository 
 intended to trap its major pathologies where they can be put under a 
-microscope and used as a regression test.  It includes a multibranch commit,
-a symlink, and a mid-branch delete followed by a branch rename to on top
+microscope and used as a regression test.  It includes a multibranch commit
+and a mid-branch delete followed by a branch rename to on top
 of the deleted branch.  The original file content has been replaced with small
 unique cookies, but the structure left intact.
 PROPS-END
@@ -647,19 +647,4 @@ Makefile.in
 PROPS-END
 
 
-Node-path: branches/automake/compile
-Node-kind: file
-Node-action: add
-Prop-content-length: 33
-Text-content-length: 94
-Content-length: 127
-
-K 11
-svn:special
-V 1
-*
-PROPS-END
-link /usr/share/automake-1.9/compile
-
-Revision is 17, file path is branches/automake/compile.
 

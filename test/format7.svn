@@ -25,6 +25,52 @@ V 5
 31723
 PROPS-END
 
+Revision-number: 1
+Prop-content-length: 177
+Content-length: 177
+
+K 7
+svn:log
+V 79
+A vanilla repository - standard layout, linear history, no tags, no branches. 
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:41:55.154754Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
 Revision-number: 13684
 Prop-content-length: 128
 Content-length: 128
@@ -63,16 +109,16 @@ Add icon to k=sport, v=curling
 
 PROPS-END
 
-Node-path: applications/rendering/osmarender/stylesheets/osm-map-features-z17.xml
+Node-path: trunk/osm-map-features-z17.xml
 Node-kind: file
-Node-action: change
+Node-action: add
 Text-content-length: 104
 Content-length: 104
 
 Revision is 13685, file path is applications/rendering/osmarender/stylesheets/osm-map-features-z17.xml.
 
 
-Node-path: applications/rendering/osmarender/stylesheets/symbols/curling.svg
+Node-path: trunk/curling.svg
 Node-kind: file
 Node-action: add
 Prop-content-length: 10

@@ -25,11 +25,11 @@ commit refs/heads/master
 #legacy-id 1
 mark :2
 committer no-author <no-author> 1106836394 +0000
-data 426
+data 414
 This is a severely hacked and stripped-down extraction from the NUT repository 
 intended to trap its major pathologies where they can be put under a 
-microscope and used as a regression test.  It includes a multibranch commit,
-a symlink, and a mid-branch delete followed by a branch rename to on top
+microscope and used as a regression test.  It includes a multibranch commit
+and a mid-branch delete followed by a branch rename to on top
 of the deleted branch.  The original file content has been replaced with small
 unique cookies, but the structure left intact.
 M 100644 :1 .gitignore
@@ -260,16 +260,9 @@ data 435
 /libtool
 /Makefile.in
 
-blob
-mark :30
-data 89
-/usr/share/automake-1.9/compile
-
-Revision is 17, file path is branches/automake/compile.
-
 commit refs/heads/automake
 #legacy-id 17
-mark :31
+mark :30
 committer selinger-guest <selinger-guest> 1160947197 +0000
 data 346
  - converted build system to automake
@@ -282,7 +275,6 @@ data 346
  - moved local autoconf macros to m4/
 from :28
 M 100644 :29 .gitignore
-M 120000 :30 compile
 
 tag INITIAL_IMPORT_AQ-root
 #legacy-id 3
