@@ -437,7 +437,7 @@ def checkout(args):
         do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -d %(outdirpath)s -kb %(module)s" % locals())
     elif vcs == "cvs-checkout":
         do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -kb" % locals())
-        return outdirpath
+        return os.path.relpath(outdirpath, os.path.dirname(pwd))
     elif vcs == "svn":
         if outdir == ".":
             croak("can't check out an SVN repo to its own directory.")
@@ -451,7 +451,7 @@ def checkout(args):
             outdir = os.path.join(outdir, "trunk")
         elif branch:
             outdir = os.path.join(outdir, "branches", branch)
-        return outdir
+        return os.path.relpath(outdir, os.path.dirname(pwd))
     elif vcs == "svn-checkout":
         if revision:
             revision = "-r " + revision
@@ -466,7 +466,7 @@ def checkout(args):
             outdir = os.path.join(outdir, "branches", branch)
         else:
             croak("invalid branch or tag")
-        return os.path.abspath(outdir)
+        return os.path.relpath(outdir, os.path.dirname(pwd))
     elif vcs == "git":
         if not (branch or tag or revision):
             branch = "master"
@@ -476,7 +476,7 @@ def checkout(args):
             do_or_die("git clone --quiet --shared --no-checkout . " + outdir)
             with directory_context(outdir):
                 do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
-        return os.path.abspath(outdir)
+        return os.path.relpath(outdir, os.path.dirname(pwd))
     elif vcs == "bzr":
         croak("checkout is not yet supported in bzr.")
     elif vcs == "hg":
@@ -491,7 +491,7 @@ def checkout(args):
             do_or_die("hg update -q %(spec)s" % locals())
         else:
             do_or_die("hg clone -q %(spec)s . %(outdir)s" % locals())
-        return os.path.abspath(outdir)
+        return os.path.relpath(outdir, os.path.dirname(pwd))
     elif vcs == "darcs":
         croak("checkout is not yet supported for darcs.")
     else:
@@ -567,7 +567,7 @@ def compare(args):
     # FIXME: use difflib here?
     if verbose:
         print("Comparing %s to %s" % (sourcedir, targetdir))
-    do_or_die("diff -r %(diffopts)s --label=source --label=target --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+    do_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
     def dirlist(top, excl=None):
         "Get list of all paths under specied top node, with optional excusion."
         m = []
