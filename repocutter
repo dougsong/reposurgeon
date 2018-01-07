@@ -1083,8 +1083,8 @@ if __name__ == '__main__':
         else:
             sys.stderr.write(('"%s": unknown subcommand\n' % arguments[0]))
             sys.exit(1)
-	if baton is not None:
-	   baton.end()
+        if baton is not None:
+            baton.end()
     except KeyboardInterrupt:
         pass
 
