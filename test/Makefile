@@ -367,6 +367,12 @@ liftcheck-regress:
 		echo "     Skipped, either git or svn is missing"; \
 	fi
 
+# List Subversion streams that don't convert clean 
+liftcheck-dirty:
+	@for x in $(SVNCLEAN); do echo $${x}.svn >>goodlist$$; done
+	@ls *.svn | comm -23 - goodlist$$
+	@rm goodlist$$
+
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
 	@for test in $(REFLOADS); \
