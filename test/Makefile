@@ -33,7 +33,7 @@ portcheck: check
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
-		hg-extractor svnload-regress legacy-regress svndump-regress \
+		hg-extractor svnload-regress liftcheck-regress legacy-regress svndump-regress \
 		repodiffer-regress repomapper-regress \
 		repotool-regress repocutter-regress svncheck-regress
 	@echo "=== No diff output is good news."
@@ -346,6 +346,26 @@ svnload-regress:
 	    fi \
 	done
 	@rm -f /tmp/regress$$$$
+
+# Perform full regression on SVN streams that have clean conversions -
+# that is, no messages due to branch surgery or whatever.
+SVNCLEAN := binary blob-id deletion delignore executable gitify mkignore \
+	pangram permcopy2 permcopy replace-dir squash-id svnignores
+liftcheck-regress:
+	@echo "== Testing conversion correctness of Subversion streams:"
+	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
+	then \
+		for test in $(SVNCLEAN); \
+		do \
+		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
+		if test ! -z `liftcheck $${test}` ; \
+		then \
+			echo echo "*** Nonzero return status on $${test}!"; exit 1; \
+		fi \
+		done \
+	else \
+		echo "     Skipped, either git or svn is missing"; \
+	fi
 
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
