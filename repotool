@@ -401,10 +401,12 @@ def branches():
 def checkout(args):
     "Check out a specified revision, branch, or tag (defaulting to tip of trunk)."
     # This code is complicated because it deals with distinct cases:
-    # 1. Remote directory not specified or ., and a DVCS - simply point at the
-    # DVCS directory in order avoid an expensive copy operation.
-    # 2. Remote directory specfied, DVCS: Shallow clone to remote.
-    # 3. Remote directory specified, non-DVCS: True checkout to remote directory.
+    # 1. DVCS - make outdir a symlink to the repo, then check out the
+    #    version we want.
+    # 2. Non-DVCS, master directory: True checkout to remote directory,
+    #    add path qualifier if needed.
+    # 3. Non-DVCS, checkout directory: make outdir a symlink to the cgcjout,
+    #    then upfate to revision needed and add a parg qualifier  
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
     if verbose:
@@ -416,34 +418,33 @@ def checkout(args):
     revision = ""
     for (opt, val) in options:
         if opt == '-b':
-            branch = val    
+            branch = val
         elif opt == '-r':
             revision = val
         elif opt == '-t':
             tag = val
     outdir = arguments[0]
-    outdirpath = os.path.realpath(outdir)
+    if outdir[0] != os.sep:
+        croak("checkout requires absolute target path")
+    outdir = os.path.realpath(outdir)
     pwd = os.getcwd()
     vcs = vcstype(".")
     if vcs == "cvs":
-        if outdir == ".":
-            croak("can't check out a CVS repo to its own directory.")
         module = capture_or_die("ls -1 | grep -v CVSROOT", " listing modules")
         if revision:
             revision = "-r " + revision
         # By choosing -kb we get binary files right, but won't
         # suppress any expanded keywords that might be lurking
-        # in masters.   
-        do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -d %(outdirpath)s -kb %(module)s" % locals())
+        # in masters.
+        do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -d %(outdir)s -kb %(module)s" % locals())
+        return outdir
     elif vcs == "cvs-checkout":
         do_or_die("cvs -Q -d:local:%(pwd)s co -P %(branch)s %(tag)s %(revision)s -kb" % locals())
-        return os.path.relpath(outdirpath, os.path.dirname(pwd))
+        return outdir
     elif vcs == "svn":
-        if outdir == ".":
-            croak("can't check out an SVN repo to its own directory.")
         if revision:
-            revision = "-d " + revision
-        do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdirpath)s" % locals())
+            revision = "-r " + revision
+        do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdir)s" % locals())
         # This logic will foo up on flat repositories
         if tag:
             outdir = os.path.join(outdir, "tags", tag)
@@ -451,32 +452,40 @@ def checkout(args):
             outdir = os.path.join(outdir, "trunk")
         elif branch:
             outdir = os.path.join(outdir, "branches", branch)
-        return os.path.relpath(outdir, os.path.dirname(pwd))
+        return outdir
     elif vcs == "svn-checkout":
         if revision:
             revision = "-r " + revision
         do_or_die("svn up -q " + revision)
+        relpath = ""
         if tag and os.path.isdir("tags"):
-            outdir = os.path.join(outdir, "tags", tag)
+            relpath = os.path.join("tags", tag)
         elif branch in ("", "master", "trunk") and os.path.isdir("trunk"):
-            outdir = os.path.join(outdir, "trunk")
+            relpath = "trunk"
         elif branch == "":        # Desperate hack to accommodate flat repos.
             pass
         elif branch and os.path.isdir("branches"):
-            outdir = os.path.join(outdir, "branches", branch)
+            relpath = os.path.join("branches", branch)
         else:
             croak("invalid branch or tag")
-        return os.path.relpath(outdir, os.path.dirname(pwd))
+        if os.path.exists(outdir):
+            if os.path.islink(outdir):
+                os.remove(outdir)
+            else:
+                croak("can't checkout to existing %s" % outdir)
+        os.symlink(os.path.join(pwd, relpath), outdir)
+        return outdir
     elif vcs == "git":
         if not (branch or tag or revision):
             branch = "master"
-        if outdir == ".":
-            do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
-        else:
-            do_or_die("git clone --quiet --shared --no-checkout . " + outdir)
-            with directory_context(outdir):
-                do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
-        return os.path.relpath(outdir, os.path.dirname(pwd))
+        do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
+        if outdir == '.':
+            return os.getcwd()
+        elif os.path.exists(outdir):
+            if os.path.islink(outdir):
+                os.remove(outdir)
+        os.symlink(pwd, outdir)
+        return outdir
     elif vcs == "bzr":
         croak("checkout is not yet supported in bzr.")
     elif vcs == "hg":
@@ -487,11 +496,14 @@ def checkout(args):
             spec = "-r " + tag
         if branch:
             spec = "-r " + branch
-        if outdir == ".":
-            do_or_die("hg update -q %(spec)s" % locals())
-        else:
-            do_or_die("hg clone -q %(spec)s . %(outdir)s" % locals())
-        return os.path.relpath(outdir, os.path.dirname(pwd))
+        do_or_die("hg update -q %(spec)s" % locals())
+        if outdir == '.':
+            return os.getcwd()
+        elif os.path.exists(outdir):
+            if os.path.islink(outdir):
+                os.remove(outdir)
+        os.symlink(pwd, outdir)
+        return outdir
     elif vcs == "darcs":
         croak("checkout is not yet supported for darcs.")
     else:
@@ -531,61 +543,65 @@ def compare(args):
     source = args.pop()
     if not os.path.isdir(source) or not os.path.isdir(target):
         croak("both repository directories must exist.")
-
     rsource = os.path.join(TMPDIR, "source")
-    try:
-        shutil.rmtree(rsource)
-    except OSError:
-        pass
+    if os.path.islink(rsource):
+        os.remove(rsource)
+    else:
+        try:
+            shutil.rmtree(rsource)
+        except OSError:
+            pass
     rtarget = os.path.join(TMPDIR, "target")
-    try:
-        shutil.rmtree(rtarget)
-    except OSError:
-        pass
-    # Here is where the difference between DVCS and non-DVCS becomes important.
-    # If we can set rsource and rtarget to '.' we can avoid expensive checkout
-    # operations. These are particularly slow under svn.
+    if os.path.islink(rtarget):
+        os.remove(rtarget)
+    else:
+        try:
+            shutil.rmtree(rtarget)
+        except OSError:
+            pass
     diffopts = []
     sourceignores = []
+    tmpdir = os.getenv("TMPDIR") or "/tmp" 
     with directory_context(source):
-        if is_dvcs_or_checkout():
-            rsource = '.'
+        if is_dvcs_or_checkout() and not seeignores:
             sourceignores = vcsignores()
             for f in sourceignores:
                 diffopts += ["-x", f]
         sourcedir = checkout(checkout_args + [rsource])
+        assert(sourcedir)
     targetignores = []
     with directory_context(target):
-        if is_dvcs_or_checkout():
-            rtarget = '.'
+        if is_dvcs_or_checkout() and not seeignores:
             targetignores = vcsignores()
             for f in targetignores:
                 diffopts += ["-x", f]
         targetdir = checkout(checkout_args + [rtarget])
+        assert(targetdir)
     diffopts += diff_args
     diffopts = " ".join(diffopts)
-    # FIXME: use difflib here?
-    if verbose:
-        print("Comparing %s to %s" % (sourcedir, targetdir))
-    do_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
-    def dirlist(top, excl=None):
-        "Get list of all paths under specied top node, with optional excusion."
-        m = []
-        trunc = len(top) + 1
-        for (dirpath, dirnames, filenames) in os.walk(top):
-            for f in filenames:
-                fullpath = os.path.join(dirpath, f)
-                if not excl or not any(x for x in excl if x in fullpath):
-                    m.append(fullpath[trunc:])
-        return set(m)
-    common = dirlist(sourcedir,sourceignores) & dirlist(targetdir, targetignores)
-    common = list(common)
-    common.sort()
-    for path in common:
-        sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
-        tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
-        if sstat != tstat:
-            print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
+    with directory_context(tmpdir):
+        # FIXME: use difflib here?
+        if verbose:
+            print("Comparing %s to %s" % (sourcedir, targetdir))
+        do_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+        def dirlist(top, excl=None):
+            "Get list of all paths under specied top node, with optional excusion."
+            m = []
+            trunc = len(top) + 1
+            for (dirpath, dirnames, filenames) in os.walk(top):
+                for f in filenames:
+                    fullpath = os.path.join(dirpath, f)
+                    if not excl or not any(x for x in excl if x in fullpath):
+                        m.append(fullpath[trunc:])
+            return set(m)
+        common = dirlist(sourcedir,sourceignores) & dirlist(targetdir, targetignores)
+        common = list(common)
+        common.sort()
+        for path in common:
+            sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
+            tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
+            if sstat != tstat:
+                print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
