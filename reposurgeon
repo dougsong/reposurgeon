@@ -3556,7 +3556,7 @@ class StreamParser:
     class NodeAction(object):
         __slots__ = ("revision", "path", "kind", "action",
                      "from_rev", "from_path", "content_hash",
-                     "from_hash", "blob", "props",
+                     "from_hash", "blob", "props", "propchange",
                      "from_set", "blobmark", "generated")
         # If these don't match the constants above, havoc will ensue
         ActionValues = ("add", "delete", "change", "replace")
@@ -3573,6 +3573,7 @@ class StreamParser:
             self.from_hash = None
             self.blob = None
             self.props = None
+            self.propchange = False
             # These are set during the analysis phase
             self.from_set = None
             self.blobmark = None
@@ -3649,7 +3650,7 @@ class StreamParser:
         self.revisions = collections.OrderedDict()
         self.copycounts = collections.OrderedDict()
         self.hashmap = {}
-        self.permissions = {}
+        self.property_stash = {}
         self.fileop_branchlinks  = set()
         self.directory_branchlinks  = set()
         self.active_gitignores = {}
@@ -3870,6 +3871,7 @@ class StreamParser:
                                     else:
                                         if plen > -1:
                                             node.props = self.sd_read_props(node.path, plen)
+                                            node.propchange = True
                                         if tlen > -1:
                                             start = self.tell()
                                             # This is a crock. It is
@@ -3907,8 +3909,26 @@ class StreamParser:
                                                     node.blob.set_content(
                                                         text[5:], start+5)
                                         node.revision = revision
+                                        # If there are property changes on
+                                        # this node, stash them so they will
+                                        # be propagated forward on later
+                                        # nodes matching this path but with no
+                                        # property fields of their own.
+                                        if node.propchange:
+                                            self.property_stash[node.path] = node.props
+                                        elif node.action == SD_ADD and node.from_path:
+                                            for oldnode in self.revisions[node.from_rev].nodes:
+                                                if oldnode.path == node.from_path:
+                                                    self.property_stash[node.path] = oldnode.props
+                                            #sys.stderr.write("Copy node %s:%s stashes %s\n" % (node.revision, node.path, self.property_stash[node.path]))
+                                        if node.action == SD_DELETE:
+                                            if node.path in self.property_stash:
+                                                del self.property_stash[node.path]
+                                        else:
+                                            # The forward propagation.
+                                            node.props = self.property_stash.get(node.path)
                                         # This guard filters out the empty
-                                        # notes produced by format 7 dumps.
+                                        # nodes produced by format 7 dumps.
                                         if not (node.action == SD_CHANGE
                                                 and node.props is None
                                                 and node.blob is None
@@ -4600,6 +4620,7 @@ class StreamParser:
                                 subnode.from_path = lookback.path
                                 subnode.from_rev = lookback.revision
                                 subnode.from_hash = lookback.content_hash
+                                subnode.props = lookback.props
                                 subnode.action = SD_ADD
                                 subnode.kind = SD_FILE
                                 if debug_enable(DEBUG_TOPOLOGY):
@@ -4612,7 +4633,7 @@ class StreamParser:
                                 expanded_nodes.append(subnode)
                     # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
-                    if node.props is not None:
+                    if node.propchange and node.props is not None:
                         if debug_enable(DEBUG_EXTRACT):
                             announce("r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
@@ -4762,17 +4783,8 @@ class StreamParser:
                             continue
                         ancestor_nodes[node.path] = node
                         assert node.blobmark
-                        # Time for fileop generation.  The assumption behind the
-                        # permission-fetch logic is that a node's immediate
-                        # ancestor always has the permission computed from *its*
-                        # ancestor.
-                        if ancestor:
-                            perms = oldperms = self.permissions.get((ancestor.revision, ancestor.path),
-                                                                    0o100644)
-                        else:
-                            perms = oldperms = 0o100644
-                        if node.props is not None:
-                            perms = self.node_permissions(node)
+                        # Time for fileop generation.
+                        perms = self.node_permissions(node)
                         new_content = (node.blob is not None)
                         # Ignore and complain about explicit .gitignores
                         # created, e.g, by git-svn.  In an ideal world we
@@ -4801,11 +4813,10 @@ class StreamParser:
                         # but new permissions.
                         generated_file_copy = node.generated
                         subversion_file_copy = (node.from_hash is not None)
-                        permissions_changed = (perms != oldperms)
                         if (new_content or
                             generated_file_copy or
                             subversion_file_copy or
-                            permissions_changed):
+                            node.propchange):
                             assert perms
                             fileop = FileOp(self.repo)
                             fileop.construct("M",
@@ -4816,7 +4827,6 @@ class StreamParser:
                             self.repo.objfind(fileop.ref).addalias(node.path)
                         elif debug_enable(DEBUG_EXTRACT):
                             announce("r%s~%s: unmodified" % (node.revision, node.path))
-                        self.permissions[(node.revision, node.path)] = perms
                 # These are directory actions.
                 elif node.action in (SD_DELETE, SD_REPLACE):
                     if debug_enable(DEBUG_EXTRACT):

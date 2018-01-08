@@ -93,13 +93,10 @@ The command that produced this was:
 
 svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
 from :10
-D README
+deleteall
 M 100644 :5 bar/child3
 M 100644 :6 child1
 M 100644 :7 child2
-D foo/bar/child3
-D foo/child1
-D foo/child2
 
 blob
 mark :12

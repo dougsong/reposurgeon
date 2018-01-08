@@ -188,7 +188,6 @@ data 40
 Moving branches/Development into trunk.
 from :23
 merge :22
-M 100644 :1 .gitignore
 M 100644 :3 data/cmdvartab
 M 100644 :4 data/driver.list
 M 100644 :14 drivers/Makefile.drvbuild

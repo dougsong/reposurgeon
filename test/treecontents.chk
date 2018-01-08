@@ -75,9 +75,7 @@ Create a branch by copying subdir from trunk
 This branch should only contain subfile1 and subfile2.
 
 from :6
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
 M 100644 :4 subfile1
 M 100644 :5 subfile2
 
@@ -266,7 +264,6 @@ Event 8 =================================================================
 commit refs/heads/branch1
 mark :7
 
-.gitignore -> :1
 subfile1 -> :4
 subfile2 -> :5
 Event 10 ================================================================
@@ -274,7 +271,6 @@ Event 10 ================================================================
 commit refs/heads/branch1
 mark :9
 
-.gitignore -> :1
 file -> :8
 subfile1 -> :4
 subfile2 -> :5

@@ -1,6 +1,6 @@
 reposurgeon: branchify_map, regex -> branch name:
 reposurgeon: 	tags/(.*)/ -> tags/\1
-reposurgeon: mid-branch deleteall on refs/tags/1.0 at <6.1>.
+reposurgeon: mid-branch deleteall on refs/tags/1.0 at <6>.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -46,13 +46,11 @@ from :2
 M 100644 :3 test.txt
 
 commit refs/tags/1.0
-#legacy-id 6.1
+#legacy-id 6
 mark :5
 committer mike <mike> 1437858613 +0000
-data 59
+data 21
 No release ready yet
-
-[[Split portion of a mixed commit.]]
 from :4
 deleteall
 
@@ -110,11 +108,4 @@ from :4
 tagger mike <mike> 1437858607 +0000
 data 12
 Release 1.0
-
-tag 1.0rc1
-#legacy-id 6
-from :4
-tagger mike <mike> 1437858613 +0000
-data 21
-No release ready yet
 

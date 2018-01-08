@@ -2018,6 +2018,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'Stable'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2028,6 +2029,7 @@ committer no-author <no-author> 1109582047 +0000
 data 68
 This commit was manufactured by cvs2svn to create branch 'Testing'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2038,6 +2040,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'r2.0.1'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2048,6 +2051,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'v2.1.0'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -4781,6 +4785,7 @@ data 78
 This commit was manufactured by cvs2svn to create tag
 'alioth_SVN_migration'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -9914,6 +9919,7 @@ committer no-author <no-author> 1132072688 +0000
 data 70
 This commit was manufactured by cvs2svn to create branch 'reportbuf'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1479 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -9977,6 +9983,8 @@ M 100644 :1204 drivers/bcmxcp_ser.c
 M 100644 :853 drivers/bcmxcp_usb.c
 M 100644 :1441 drivers/belkin-hid.c
 M 100644 :1151 drivers/belkin-hid.h
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :941 drivers/belkinunv.c
 M 100644 :942 drivers/belkinunv.h
 M 100644 :943 drivers/bestfcom.c
@@ -9992,6 +10000,7 @@ M 100644 :507 drivers/cpsups.h
 M 100644 :951 drivers/cyberpower.c
 M 100644 :952 drivers/cyberpower.h
 M 100644 :1430 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :761 drivers/dummy-ups.c
 M 100644 :762 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -10015,6 +10024,9 @@ D drivers/hid-usb.h
 M 100644 :1458 drivers/hidparser.c
 M 100644 :1459 drivers/hidparser.h
 M 100644 :1460 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :960 drivers/ippon.c
 M 100644 :961 drivers/ippon.h
 M 100644 :962 drivers/isbmex.c
@@ -10026,6 +10038,7 @@ M 100644 :1410 drivers/libusb.h
 M 100644 :964 drivers/liebert.c
 M 100644 :965 drivers/liebert.h
 M 100644 :1431 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :966 drivers/masterguard.c
 M 100644 :967 drivers/masterguard.h
 M 100644 :1422 drivers/megatec.c
@@ -10049,10 +10062,19 @@ M 100644 :1382 drivers/nitram.c
 M 100644 :1383 drivers/nitram.h
 M 100644 :1260 drivers/nut_usb.c
 M 100644 :856 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 D drivers/powermust.c
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
 M 100644 :1136 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -10082,6 +10104,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :815 scripts/hotplug/README
 M 100644 :1238 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 commit refs/tags/reportbuf_base
 #legacy-id 273
@@ -10091,6 +10114,7 @@ data 72
 This commit was manufactured by cvs2svn to create tag
 'reportbuf_base'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1479 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -10154,6 +10178,8 @@ M 100644 :1204 drivers/bcmxcp_ser.c
 M 100644 :853 drivers/bcmxcp_usb.c
 M 100644 :1441 drivers/belkin-hid.c
 M 100644 :1151 drivers/belkin-hid.h
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :941 drivers/belkinunv.c
 M 100644 :942 drivers/belkinunv.h
 M 100644 :943 drivers/bestfcom.c
@@ -10169,6 +10195,7 @@ M 100644 :507 drivers/cpsups.h
 M 100644 :951 drivers/cyberpower.c
 M 100644 :952 drivers/cyberpower.h
 M 100644 :1430 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :761 drivers/dummy-ups.c
 M 100644 :762 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -10192,6 +10219,9 @@ D drivers/hid-usb.h
 M 100644 :1458 drivers/hidparser.c
 M 100644 :1459 drivers/hidparser.h
 M 100644 :1460 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :960 drivers/ippon.c
 M 100644 :961 drivers/ippon.h
 M 100644 :962 drivers/isbmex.c
@@ -10203,6 +10233,7 @@ M 100644 :1410 drivers/libusb.h
 M 100644 :964 drivers/liebert.c
 M 100644 :965 drivers/liebert.h
 M 100644 :1431 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :966 drivers/masterguard.c
 M 100644 :967 drivers/masterguard.h
 M 100644 :1422 drivers/megatec.c
@@ -10226,10 +10257,19 @@ M 100644 :1382 drivers/nitram.c
 M 100644 :1383 drivers/nitram.h
 M 100644 :1260 drivers/nut_usb.c
 M 100644 :856 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 D drivers/powermust.c
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
 M 100644 :1136 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -10259,6 +10299,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :815 scripts/hotplug/README
 M 100644 :1238 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 blob
 mark :1483
@@ -11680,7 +11721,6 @@ data 73
 This commit was manufactured by cvs2svn to create tag
 'reportbuf_base0'.
 from :1683
-M 100644 :1 .gitignore
 D clients/.gitignore
 M 100644 :34 clients/upsstats.c
 D common/.gitignore
@@ -13387,7 +13427,6 @@ Moving branches/Development into trunk.
 from :1946
 merge :1945
 M 100644 :1646 .cvsignore
-M 100644 :1 .gitignore
 M 100644 :1925 CHANGES
 M 100644 :4 COPYING
 M 100644 :1907 CREDITS
