@@ -1,0 +1,12 @@
+repotool: generating Makefile, some variables in it need to be set.
+Return code: 0
+
+Directory contents:
+Makefile
+xyzzy.lift
+xyzzy.opts
+
+Checksums to make sure file contents correct:
+d1f1ef57b2b2a04130b40a0416bad51b  ./Makefile
+8f44c96b9942ad7655b17fec218e75f7  ./xyzzy.lift
+4b72635a7976f13fbd51a7c79a142733  ./xyzzy.opts
