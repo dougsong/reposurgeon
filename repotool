@@ -132,10 +132,9 @@ SOURCES = Makefile %(project)s.lift %(project)s.map $(EXTRAS)
 	tar --dereference --transform 's:^:%(project)s-conversion/:' -czvf %(project)s-conversion.tar.gz $(SOURCES)
 
 dist: %(project)s-conversion.tar.gz
-EOF
-    if [ %(target_vcs)s = git ]
-    then
-	cat >>Makefile <<EOF
+"""
+
+git_template_additions = """\
 
 #
 # The following productions are git-specific
@@ -272,6 +271,8 @@ def initialize(args):
     print("repotool: generating Makefile, some variables in it need to be set.")
     with open("Makefile", "w") as wp:
         wp.write(template % locals())
+        if target_vcs == "git":
+            wp.write(git_template_additions % locals())
     with open(project + ".opts", "w") as wp:
         wp.write("# Pre-read options for reposurgeon go here.\n")
     with open(project + ".lift", "w") as wp:
