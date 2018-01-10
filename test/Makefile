@@ -450,10 +450,12 @@ repodiffer-regress:
 	@echo "=== Running repodiffer tests:"
 	@if command -v git >/dev/null 2>&1 ; \
 	then \
+	    status=0; \
 	    for file in $(REPODIFFER); do \
 		$(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-		$(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
+		$(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	    done; \
+	    exit $${status}; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
 	@rm -f /tmp/regress$$$$
@@ -468,10 +470,12 @@ repomapper-buildregress:
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
-	@for file in $(REPOMAPPER); do \
+	@status=0; \
+	for file in $(REPOMAPPER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
-	done
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
+	done; \
+	exit $${status}
 	@rm -f /tmp/regress$$$$
 
 # Regression-testing of repotool; look at the *.sh and
@@ -484,10 +488,13 @@ repotool-buildregress:
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
-	@for file in $(REPOTOOL); do \
+	@status=0; \
+	for file in $(REPOTOOL); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh --regress $${file} || exit 1; \
-	done
+	    $(SHELL) $${file}.sh --regress $${file} || status=1; \
+	done; \
+	exit $${status}
+
 
 # Regression-testing of repocutter; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -499,10 +506,12 @@ repocutter-buildregress:
 	done
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
-	@for file in $(REPOCUTTER); do \
+	@status=0; \
+	for file in $(REPOCUTTER); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || exit 1; \
-	done
+	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
+	done; \
+	exit $${status}
 	@rm -f /tmp/regress$$$$
 
 # Regression-testing of Subversion permission-bit cases; look at the *.sh and
@@ -515,10 +524,12 @@ svncheck-buildregress:
 	done
 svncheck-regress:
 	@echo "=== Running svncheck tests:"
-	@for file in $(SVNCHECK); do \
+	@status=0; \
+	for file in $(SVNCHECK); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || exit 1; \
-	done
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
+	done; \
+	exit $${status}
 	@rm -f /tmp/regress$$$$
 
 # Test productions end here.
