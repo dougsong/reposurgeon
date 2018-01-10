@@ -5040,7 +5040,8 @@ class StreamParser:
                 self.repo.tagify(initial,
                                  "root",
                                  second,
-                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.legacy_id)
+                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.legacy_id,
+                                 delete=True)
             except ValueError: # self.repo has less than two commits
                 self.gripe("could not tagify root commit.")
         timeit("rootcommit")
@@ -6222,7 +6223,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    def tagify(self, commit, name, target, legend="", delete=True):
+    def tagify(self, commit, name, target, legend="", delete=False):
         "Turn a commit into a tag."
         if debug_enable(DEBUG_EXTRACT):
             commit_id = commit.mark
@@ -6310,7 +6311,7 @@ class Repository:
                                     name + suffix,
                                     commit.parents()[0],
                                     legend,
-                                    delete = False)
+                                    delete=False)
                     deletia.append(index)
                 else:
                     msg = []
