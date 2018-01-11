@@ -12347,7 +12347,7 @@ fields are changed and a warning is issued.
         # (3) The tip commit of a branch with branch fields
         # These things often occur in combination. Notably, git-fast-export
         # generates for each tag object corresponding branch labels on
-        # some ancestor commmits - the rule for where this stops is unclear.
+        # some ancestor commits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
         tagname = string_escape(tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
@@ -12380,19 +12380,19 @@ fields are changed and a warning is issued.
             repo.addEvent(tag, lasttag+1, "tag creation")
             return
         else:
-            tag = None
+            tags = []
             resets = []
             commits = []
             fulltagname = Tag.branchname(tagname)
             for event in repo.events:
                 if isinstance(event, Tag) and event.name == tagname:
-                    tag = event
+                    tags.append(event)
                 elif isinstance(event, Reset) and event.ref == fulltagname:
                     resets.append(event)
                 elif isinstance(event, Commit) and event.branch == fulltagname:
                     commits.append(event)
-            if not tag and not resets and not commits:
-                raise Recoverable("no such tag as %s" % tagname)
+            if not tags and not resets and not commits:
+                raise Recoverable("no tags matching %s" % tagname)
         if verb == "move":
             self.set_selection_set(line)
             try:
@@ -12400,9 +12400,10 @@ fields are changed and a warning is issued.
                 (_, target), = self.selected(Commit)
             except (TypeError, ValueError):
                 raise Recoverable("tag move requires a singleton commit set.")
-            if tag:
-                tag.forget()
-                tag.remember(repo, target=target)
+            if tags:
+                for tag in tags:
+                    tag.forget()
+                    tag.remember(repo, target=target)
             if resets:
                 if len(resets) == 1:
                     resets[0].committish = target.mark
@@ -12411,27 +12412,31 @@ fields are changed and a warning is issued.
             if commits:
                 complain("warning - tag move does not modify branch fields")
         elif verb == "rename":
+            if len(tags) > 1:
+                raise Recoverable("exactly one tag is required for rename")
             (newname, line) = RepoSurgeon.pop_token(line)
             if not newname:
                 raise Recoverable("new tag name must be nonempty.")
-            if tag:
+            if len(tags) == 1:
                 for event in repo.events:
-                    if isinstance(event, Tag) and event != tag and event.name == tag.name:
+                    if isinstance(event, Tag) and event != tags[0] and event.name == tags[0].name:
                         raise Recoverable("tag name collision, not renaming.")
-                tag.name = newname
+                tags[0].name = newname
             fullnewname = Tag.branchname(newname)
             for reset in resets:
                 reset.ref = fullnewname
             for event in commits:
                 event.branch = fullnewname
         elif verb == "delete":
-            if tag:
+            for tag in tags:
                 tag.forget()
                 repo.events.remove(tag)
+            if len(tags) > 0:
                 repo.declare_sequence_mutation("tag deletion")
             for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
+            if len(resets) > 0:
                 repo.declare_sequence_mutation("reset deletion")
             if commits:
                 successors = {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
