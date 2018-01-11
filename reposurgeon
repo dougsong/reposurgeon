@@ -12310,7 +12310,12 @@ the verbs 'move', 'rename', or 'delete'.
 For a 'move', a third argument must be a singleton selection set. For
 a 'rename', the third argument may be any token that is a
 syntactically valid tag name (but not the name of an existing
-tag). For a 'delete', no third argument is required.
+tag).
+
+For a 'delete', no third argument is required.  The name portion of a
+delete may be a regexp wrapped in //; if so, all objects of the
+specified type with names matching the regexp are deleted.  This is
+useful for mass deletion of junk tags such as CVS branch-root tags.
 
 Tag names may use backslash escapes interpreted by the Python
 string-escape codec, such as \\s.
@@ -12383,14 +12388,28 @@ fields are changed and a warning is issued.
             tags = []
             resets = []
             commits = []
-            fulltagname = Tag.branchname(tagname)
-            for event in repo.events:
-                if isinstance(event, Tag) and event.name == tagname:
-                    tags.append(event)
-                elif isinstance(event, Reset) and event.ref == fulltagname:
-                    resets.append(event)
-                elif isinstance(event, Commit) and event.branch == fulltagname:
-                    commits.append(event)
+            if tagname[0] == '/' and tagname[-1] == '/':
+                # Regexp - can refer to a list of tags matched
+                tagre = re.compile(tagname[1:-1])
+                for event in repo.events:
+                    if isinstance(event, Tag) and tagre.search(event.name):
+                        tags.append(event)
+                    # len("refs/heads/") = 11
+                    elif isinstance(event, Reset) and tagre.search(event.ref[11:]):
+                        resets.append(event)
+                    # len("refs/tags/") = 10
+                    elif isinstance(event, Commit) and tagre.search(event.branch[10:]):
+                        commits.append(event)
+            else:
+                # Non-regexp - can only refer to a single tag
+                fulltagname = Tag.branchname(tagname)
+                for event in repo.events:
+                    if isinstance(event, Tag) and event.name == tagname:
+                        tags.append(event)
+                    elif isinstance(event, Reset) and event.ref == fulltagname:
+                        resets.append(event)
+                    elif isinstance(event, Commit) and event.branch == fulltagname:
+                        commits.append(event)
             if not tags and not resets and not commits:
                 raise Recoverable("no tags matching %s" % tagname)
         if verb == "move":

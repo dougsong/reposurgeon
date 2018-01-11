@@ -1,0 +1,90 @@
+read <tagify.fi
+tagify
+<emptycommit-mark5> inspect
+Event 12 ================================================================
+tag emptycommit-mark5
+from :4
+tagger esr <esr> 1322671565 +0000
+data 33
+Third revision, without fileops.
+
+tag /emptycommit/ delete
+write -
+blob
+mark :1
+data 23
+This is a sample file.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+committer esr <esr> 1322671432 +0000
+data 16
+First revision.
+M 100644 :1 README
+
+blob
+mark :3
+data 68
+This is a sample file.
+
+This is our first line of modified content.
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1322671521 +0000
+data 17
+Second revision.
+from :2
+M 100644 :3 README
+
+commit refs/heads/master
+mark :6
+committer esr <esr> 1322671565 +0000
+data 46
+Fourth revision, with a fileop doing nothing.
+from :4
+M 100644 :3 README
+
+blob
+mark :7
+data 114
+This is a sample file.
+
+This is our first line of modified content.
+
+This is our second line of modified content.
+
+commit refs/heads/master
+mark :8
+committer esr <esr> 1322671521 +0000
+data 16
+Fifth revision.
+from :6
+M 100644 :7 README
+
+commit refs/heads/master
+mark :9
+committer esr <esr> 1322671521 +0000
+data 16
+Sixth revision.
+from :8
+deleteall
+
+commit refs/heads/mybranch
+mark :10
+committer esr <esr> 1322671521 +0000
+data 41
+A new branch to revert to initial state.
+from :4
+M 100644 :1 README
+
+commit refs/heads/mybranch
+mark :11
+committer esr <esr> 1322671521 +0000
+data 48
+A merge commit with no fileops (ours strategy).
+from :10
+merge :8
+
+

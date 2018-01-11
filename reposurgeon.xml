@@ -1969,7 +1969,12 @@ interpreted by the Python string-escape codec, such as \s.</para>
 
 <para>For a 'rename', the third argument may be any token that is a
 syntactically valid branch name (but not the name of an existing
-branch). For a 'delete', no third argument is required.</para>
+branch).</para>
+
+<para>For a 'delete', no third argument is required.  The name portion of a
+delete may be a regexp wrapped in //; if so, all objects of the
+specified type with names matching the regexp are deleted.  This is
+useful for mass deletion of junk tags such as CVS branch-root tags.</para>
 
 <para>For either name, if it does not contain a '/' the prefix 'refs/heads'
 is prepended.</para>

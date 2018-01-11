@@ -5,6 +5,7 @@ Repository head:
      Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
      Maximum working-set size has been reduced.
      New 'gitify' command for massaging comments into git conventional form.
+     The tag command now allows deleting all tags matching a regexp.
 
 3.43: 2017-12-12::
      Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
