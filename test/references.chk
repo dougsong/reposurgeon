@@ -20,7 +20,6 @@ M 100644 :1921 drivers/libhid.h
 M 100644 :1922 drivers/newhidups.c
 M 100644 :1923 drivers/newhidups.h
 
-reposurgeon: 1 references resolved.
 #reposurgeon sourcetype svn
 blob
 mark :1

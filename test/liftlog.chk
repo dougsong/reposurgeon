@@ -1,4 +1,3 @@
-reposurgeon: fills 8 of 9 authorships, changing 8, from 8 ChangeLogs.
 #reposurgeon sourcetype git
 blob
 mark :1
