@@ -1441,6 +1441,7 @@ class Fatal(Exception):
         self.msg = msg
 
 verbose         = 0
+DEBUG_SHOUT     = 0    # Unconditional messge display
 DEBUG_SVNDUMP   = 2    # Debug Subversion dumping
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic (fine-grained)
@@ -1565,8 +1566,9 @@ def complain(msg):
     sys.stderr.write("reposurgeon: %s\n" % msg)
     sys.stderr.flush()
 
-def announce(msg):
-    sys.stdout.write("reposurgeon: %s\n" % msg)
+def announce(debuglevel, msg):
+    if debug_enable(debuglevel):
+        sys.stdout.write("reposurgeon: %s\n" % msg)
 
 def pacify_pylint(_unused):
     "Head off spurious unused-variable warnings."
@@ -2097,8 +2099,7 @@ class Blob(object):
             oldloc = self.blobfile()
             self.repo = repo
             newloc = self.blobfile(create=True)
-            if debug_enable(DEBUG_SHUFFLE):
-                announce("blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
+            announce(DEBUG_SHUFFLE, "blob rename calls os.rename(%s, %s)" % (oldloc, newloc))
             os.rename(oldloc, newloc)
         return self
     def clone(self, repo):
@@ -2107,8 +2108,7 @@ class Blob(object):
         c.repo = repo
         c.colors = []
         if self.hasfile():
-            if debug_enable(DEBUG_SHUFFLE):
-                announce("blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.pathlist, self.blobfile(), c.blobfile()))
+            announce(DEBUG_SHUFFLE, "blob clone for %s (%s) calls os.link(): %s -> %s" % (self.mark, self.pathlist, self.blobfile(), c.blobfile()))
             os.link(self.blobfile(), c.blobfile(create=True))
         return c
     def dump(self, vcs=None, options=None, realized=None, internals=None):
@@ -2213,9 +2213,8 @@ class Tag(object):
         modified = False
         newname = msg["Tag-Name"]
         if self.name != newname:
-            if debug_enable(DEBUG_EMAILIN):
-                announce("in tag %s, Tag-Name is modified %s -> %s" \
-                      % (msg["Event-Number"], repr(self.name), repr(newname)))
+            announce(DEBUG_EMAILIN, "in tag %s, Tag-Name is modified %s -> %s" \
+                     % (msg["Event-Number"], repr(self.name), repr(newname)))
             self.name = newname
             modified = True
         if "Tagger" in msg:
@@ -2228,8 +2227,7 @@ class Tag(object):
             else:
                 if self.tagger.name != newname or self.tagger.email != newemail:
                     (self.tagger.name, self.tagger.email) = (newname, newemail)
-                    if debug_enable(DEBUG_EMAILIN):
-                        announce("in tag %s, Tagger is modified" \
+                    announce(DEBUG_EMAILIN, "in tag %s, Tagger is modified" \
                               % (msg["Event-Number"]))
                     modified = True
             if "Tagger-Date" in msg:
@@ -2237,7 +2235,8 @@ class Tag(object):
                 if self.tagger.date is None or date != self.tagger.date:
                     # Yes, display this unconditionally
                     if self.repo:
-                        announce("in %s, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
+                        announce(DEBUG_SHOUT,
+                                 "in %s, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
                              % (self.id_me(),
                                 self.tagger.date, date,
                                 self.tagger.date.delta(date)))
@@ -2251,9 +2250,8 @@ class Tag(object):
         if global_options["canonicalize"]:
             newcomment = newcomment.strip().replace("\r\n", "\n") + '\n'
         if newcomment != self.comment:
-            if debug_enable(DEBUG_EMAILIN):
-                announce("in tag %d, comment is modified %s -> %s" \
-                      % (int(msg["Event-Number"]), repr(self.comment), repr(newcomment)))
+            announce(DEBUG_EMAILIN, "in tag %s, comment is modified %s -> %s" \
+                     % (msg["Event-Number"], repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
         if fill:
@@ -2705,14 +2703,14 @@ class Commit(object):
                     (self.committer.name, self.committer.email) = (newname, newemail)
                     # Yes, display this unconditionally
                     if self.repo:
-                        announce("in %s, Committer is modified" % self.id_me())
+                        announce(DEBUG_SHOUT, "in %s, Committer is modified" % self.id_me())
                     modified = True
         if "Committer-Date" in msg:
             date = Date(msg["Committer-Date"])
             if self.committer.date is None or date != self.committer.date:
                 # Yes, display this unconditionally
                 if self.repo:
-                    announce("in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
+                    announce(DEBUG_SHOUT, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                           % (self.id_me(),
                              self.committer.date, date,
                              self.committer.date.delta(date)))
@@ -2741,8 +2739,7 @@ class Commit(object):
                 else:
                     if self.authors[i].name != newname or self.authors[i].email != newemail:
                         (self.authors[i].name, self.authors[i].email) = (newname, newemail)
-                        if debug_enable(DEBUG_EMAILIN):
-                            announce("in commit %s, Author #%d is modified" \
+                        announce(DEBUG_EMAILIN, "in commit %s, Author #%d is modified" \
                                   % (msg["Event-Number"], i+1))
                         modified = True
                 if hdr + "-Date" in msg:
@@ -2750,7 +2747,7 @@ class Commit(object):
                     if self.authors[i].date is None or date != self.authors[i].date:
                         # Yes, display this unconditionally
                         if self.repo and msg["Event-Number"]:
-                            announce("in event %s, %s-Date #%d is modified" \
+                            announce(DEBUG_SHOUT, "in event %s, %s-Date #%d is modified" \
                                      % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
@@ -2777,9 +2774,8 @@ class Commit(object):
         if global_options["canonicalize"]:
             newcomment = newcomment.strip() + '\n'
         if newcomment != self.comment:
-            if debug_enable(DEBUG_EMAILIN):
-                announce("in %s, comment is modified %s -> %s" \
-                      % (self.id_me(), repr(self.comment), repr(newcomment)))
+            announce(DEBUG_EMAILIN, "in %s, comment is modified %s -> %s" \
+                     % (self.id_me(), repr(self.comment), repr(newcomment)))
             modified = True
             self.comment = newcomment
         if fill:
@@ -3193,8 +3189,7 @@ class signature:
             elif self.perms & 0o100600 == 0o100600:
                 self.perms = 0o100644
     def __eq__(self, other):
-        #if debug_enable(DEBUG_EXTRACT):
-        #    announce("%s == %s -> %s" % (str(self),
+        # announce(DEBUG_EXTRACT, "%s == %s -> %s" % (str(self),
         #                                 str(other),
         #                                 self.__dict__ == other.__dict__))
         return self.__dict__ == other.__dict__
@@ -3205,8 +3200,7 @@ class signature:
 
 def capture(command):
     "Run a specified command, capturing the output."
-    if debug_enable(DEBUG_COMMANDS):
-        announce("%s: capturing %s" % (rfc3339(time.time()), command))
+    announce(DEBUG_COMMANDS, "%s: capturing %s" % (rfc3339(time.time()), command))
     try:
         content = subprocess.check_output(command, shell=True, stderr=sys.stderr)
     except (subprocess.CalledProcessError, OSError) as oe:
@@ -3416,7 +3410,7 @@ class RepoStreamer:
                     msg = commit.comment
                     if msg is None:
                         msg = ""
-                    announce("r%s: comment '%s'" % (revision, msg.strip()))
+                    announce(DEBUG_SHOUT, "r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
                 # Git fast-import constructs the tree from the first parent only
                 # for a merge commit; fileops from all other parents have to be
@@ -3429,21 +3423,19 @@ class RepoStreamer:
                         if os.path.isdir(path):
                             continue
                         if not os.path.exists(path):
-                            announce("r%s: expected path %s does not exist!" % \
+                            announce(DEBUG_SHOUT, "r%s: expected path %s does not exist!" % \
                                      (revision, path))
                             continue
                         newsig = signature(path)
                         if newsig.hashval in self.hash_to_mark:
-                            #if debug_enable(DEBUG_EXTRACT):
-                            #    announce("r%s: %s has old hash" \
+                            # announce(DEBUG_EXTRACT, "r%s: %s has old hash" \
                             #             % (revision, path))
                             # The file's hash corresponds to an existing
                             # blob; generate modify, copy, or rename as
                             # appropriate.
                             if path not in self.filemap[revision] \
                                    or self.filemap[revision][path]!=newsig:
-                                if debug_enable(DEBUG_EXTRACT):
-                                    announce("r%s: update for %s" % (revision, path))
+                                announce(DEBUG_EXTRACT, "r%s: update for %s" % (revision, path))
                                 # Iterating through dict items (with
                                 # items() or itemsview() for
                                 # instance) while mutating the
@@ -3473,8 +3465,7 @@ class RepoStreamer:
                                     commit.append_operation(op)
                         else:
                             # Content hash doesn't match any existing blobs
-                            if debug_enable(DEBUG_EXTRACT):
-                                announce("r%s: %s has new hash" \
+                            announce(DEBUG_EXTRACT, "r%s: %s has new hash" \
                                          % (revision, path))
                             blobmark = repo.newmark()
                             self.hash_to_mark[newsig.hashval] = blobmark
@@ -3506,8 +3497,7 @@ class RepoStreamer:
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(repo.newmark())
                 self.commit_map[revision] = commit
-                if debug_enable(DEBUG_EXTRACT):
-                    announce("r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
+                announce(DEBUG_EXTRACT, "r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
                 repo.addEvent(commit)
             # Now append reset objects
             # Note: we sort the resets by the mark number of their associated revisions; this
@@ -3778,8 +3768,7 @@ class StreamParser:
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
-            if debug_enable(DEBUG_SVNPARSE):
-                announce("readprops, line %d: %s" % \
+            announce(DEBUG_SVNPARSE, "readprops, line %d: %s" % \
                          (self.import_line, repr(line)))
             if line.startswith("PROPS-END"):
                 # This test should be !=, but I get random off-by-ones from
@@ -3797,8 +3786,7 @@ class StreamParser:
                     raise self.error("property value garbled")
                 value = self.sd_read_blob(int(line.split()[1]))
                 props[key] = value
-                if debug_enable(DEBUG_SVNPARSE):
-                    announce("readprops: on %s, setting %s = %s"\
+                announce(DEBUG_SVNPARSE, "readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
         return props
     def branchlist(self):
@@ -3845,8 +3833,7 @@ class StreamParser:
                             self.repo.uuid = StreamParser.sd_body(line)
                         elif line.startswith("Revision-number: "):
                             # Begin Revision processing
-                            if debug_enable(DEBUG_SVNPARSE):
-                                announce("revision parsing, line %d: begins" % \
+                            announce(DEBUG_SVNPARSE, "revision parsing, line %d: begins" % \
                                      (self.import_line))
                             revision = StreamParser.sd_body(line)
                             plen = int(self.sd_require_header("Prop-content-length"))
@@ -3860,8 +3847,7 @@ class StreamParser:
                             # Node list parsing begins
                             while True:
                                 line = self.readline()
-                                if debug_enable(DEBUG_SVNPARSE):
-                                    announce("node list parsing, line %d: %s" % \
+                                announce(DEBUG_SVNPARSE, "node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
                                 if not line:
                                     break
@@ -3989,16 +3975,14 @@ class StreamParser:
                                 elif line.startswith("Content-length: "):
                                     continue
                                 else:
-                                    if debug_enable(DEBUG_SVNPARSE):
-                                        announce("node list parsing, line %d: uninterpreted line %s" % \
+                                    announce(DEBUG_SVNPARSE, "node list parsing, line %d: uninterpreted line %s" % \
                                              (self.import_line, repr(line)))
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
                             self.repo.legacy_count += 1
-                            if debug_enable(DEBUG_SVNPARSE):
-                                announce("revision parsing, line %d: ends" % \
+                            announce(DEBUG_SVNPARSE, "revision parsing, line %d: ends" % \
                                          (self.import_line))
                             # End Revision processing
                             #memcheck(None)
@@ -4044,7 +4028,7 @@ class StreamParser:
                                             # Subversion revision
                                             blob.cookie = fields[1]
                                             if self.repo.hint(("$Id$", "svn")):
-                                                announce("$Id$ header hints at svn.")
+                                                announce(DEBUG_SHOUT, "$Id$ header hints at svn.")
                                 for m in re.finditer(r"\$Revision *: *([^$]*)\$".encode('ascii'),
                                                      polybytes(blobcontent)):
                                     rev = polystr(m.group(0).strip())
@@ -4052,7 +4036,7 @@ class StreamParser:
                                         # Subversion revision
                                         blob.cookie = rev
                                         if self.repo.hint(("$Revision$", "svn")):
-                                            announce("$Revision$ header hints at svn.")
+                                            announce(DEBUG_SHOUT, "$Revision$ header hints at svn.")
                                 blob.set_content(blobcontent, blobstart)
                             else:
                                 self.error("missing mark after blob")
@@ -4117,7 +4101,7 @@ class StreamParser:
                                         # Generated by cvs-fast-export
                                         if name == "cvs-revisions":
                                             if not self.repo.stronghint:
-                                                announce("cvs_revisions property hints at CVS.")
+                                                announce(DEBUG_SHOUT, "cvs_revisions property hints at CVS.")
                                             self.repo.hint("cvs",strong=True)
                                             for line in value.split('\n'):
                                                 if line:
@@ -4273,16 +4257,14 @@ class StreamParser:
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
         # Find all copy sources and compute the set of branches
-        if debug_enable(DEBUG_EXTRACT):
-            announce("Pass 1")
+        announce(DEBUG_EXTRACT, "Pass 1")
         nobranch = '--nobranch' in options
         copynodes = []
         for (revision, record) in self.revisions.items():
             for node in record.nodes:
                 if node.from_path is not None:
                     copynodes.append(node)
-                    if debug_enable(DEBUG_EXTRACT):
-                        announce("copynode at %s" % node)
+                    announce(DEBUG_EXTRACT, "copynode at %s" % node)
                 if node.action == SD_ADD and node.kind == SD_DIR and node.path+os.sep not in self.branches and not nobranch:
                     for trial in global_options['svn_branchify']:
                         if '*' not in trial and trial == node.path:
@@ -4293,8 +4275,8 @@ class StreamParser:
                             self.branches[node.path+os.sep] = None
                         elif trial == '*' and node.path + os.sep + '*' not in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
-                    if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
-                        announce("%s recognized as a branch" % node.path+os.sep)
+                    if node.path+os.sep in self.branches:
+                        announce(DEBUG_TOPOLOGY, "%s recognized as a branch" % node.path+os.sep)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         copynodes.sort(key=operator.attrgetter("from_rev"))
@@ -4307,8 +4289,7 @@ class StreamParser:
             #memcheck(self.repo)
         timeit("copynodes")
         # Build filemaps.
-        if debug_enable(DEBUG_EXTRACT):
-            announce("Pass 2")
+        announce(DEBUG_EXTRACT, "Pass 2")
         filemaps = {}
         filemap = PathMap()
         for (revision, record) in self.revisions.items():
@@ -4318,14 +4299,12 @@ class StreamParser:
                     assert int(node.from_rev) < int(revision)
                     filemap.copy_from(node.path, filemaps[node.from_rev],
                                       node.from_path)
-                    if debug_enable(DEBUG_FILEMAP):
-                        announce("r%s~%s copied to %s" \
-                                 % (node.from_rev, node.from_path, node.path))
+                    announce(DEBUG_FILEMAP, "r%s~%s copied to %s" \
+                             % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds/deletes/changes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    if debug_enable(DEBUG_FILEMAP):
-                        announce("r%s~%s added" % (node.revision, node.path))
+                    announce(DEBUG_FILEMAP, "r%s~%s added" % (node.revision, node.path))
                 elif node.action == SD_DELETE or (node.action == SD_REPLACE and node.kind == SD_DIR):
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
@@ -4333,26 +4312,21 @@ class StreamParser:
                     node.from_set = PathMap()
                     node.from_set.copy_from(node.path, filemap, node.path)
                     del filemap[node.path]
-                    if debug_enable(DEBUG_FILEMAP):
-                        announce("r%s~%s deleted" \
+                    announce(DEBUG_FILEMAP, "r%s~%s deleted" \
                                  % (node.revision, node.path))
                 elif node.action in (SD_CHANGE, SD_REPLACE) and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    if debug_enable(DEBUG_FILEMAP):
-                        announce("r%s~%s changed" % (node.revision, node.path))
+                    announce(DEBUG_FILEMAP, "r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
         del filemap
         timeit("filemaps")
         # Blows up huge on large repos...
-        #if debug_enable(DEBUG_FILEMAP):
-        #    announce("filemaps %s" % filemaps)
+        # announce(DEBUG_FILEMAP, "filemaps %s" % filemaps)
         # Build from sets in each directory copy record.
-        if debug_enable(DEBUG_EXTRACT):
-            announce("Pass 3")
+        announce(DEBUG_EXTRACT, "Pass 3")
         for copynode in copynodes:
-            if debug_enable(DEBUG_FILEMAP):
-                announce("r%s copynode filemap is %s" \
+            announce(DEBUG_FILEMAP, "r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
             copynode.from_set.copy_from(copynode.from_path,
@@ -4364,8 +4338,7 @@ class StreamParser:
         # This code can eat your processor, so we make it give up
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
-        if debug_enable(DEBUG_EXTRACT):
-            announce("Pass 4")
+        announce(DEBUG_EXTRACT, "Pass 4")
         split_commits = {}
         def last_relevant_commit(max_rev, path,
                                  getbranch = operator.attrgetter("branch")):
@@ -4395,8 +4368,7 @@ class StreamParser:
         if len(self.revisions.keys()) > 50000:
             self.large = True
         for (revision, record) in self.revisions.items():
-            if debug_enable(DEBUG_EXTRACT):
-                announce("Revision %s:" % revision)
+            announce(DEBUG_EXTRACT, "Revision %s:" % revision)
             for node in record.nodes:
                 # In Subversion, we can assume .cvsignores are
                 # legacies from a bygone era that have been long since
@@ -4453,12 +4425,9 @@ class StreamParser:
             expanded_nodes = []
             has_properties = set()
             for (n, node) in enumerate(record.nodes):
-                if debug_enable(DEBUG_EXTRACT):
-                    announce("r%s:%d: %s" % (revision, n+1, node))
-                elif node.kind == SD_DIR \
-                         and node.action != SD_CHANGE \
-                         and debug_enable(DEBUG_TOPOLOGY):
-                    announce(str(node))
+                announce(DEBUG_EXTRACT, "r%s:%d: %s" % (revision, n+1, node))
+                if node.kind == SD_DIR and node.action != SD_CHANGE:
+                    announce(DEBUG_TOPOLOGY, str(node))
                 # Handle per-path properties.
                 if node.props is not None:
                     if "cvs2svn:cvs-rev" in node.props:
@@ -4527,8 +4496,7 @@ class StreamParser:
                             # We can just ignore this case.
                             if node.from_set is not None:
                                 for child in node.from_set:
-                                    if debug_enable(DEBUG_EXTRACT):
-                                        announce("r%s: deleting %s" \
+                                    announce(DEBUG_EXTRACT, "r%s: deleting %s" \
                                                  % (revision, child))
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = child
@@ -4565,14 +4533,13 @@ class StreamParser:
                         branchcopy = node.from_path in self.branches \
                                          and node.path in self.branches \
                                          and node.path not in self.branchdeletes
-                        if debug_enable(DEBUG_TOPOLOGY):
-                            announce("r%s: directory copy to %s from " \
-                                     "r%s~%s (branchcopy %s)" \
-                                     % (revision,
-                                        node.path,
-                                        node.from_rev,
-                                        node.from_path,
-                                        branchcopy))
+                        announce(DEBUG_TOPOLOGY,
+                                 "r%s: directory copy to %s from r%s~%s (branchcopy %s)" \
+                                 % (revision,
+                                    node.path,
+                                    node.from_rev,
+                                    node.from_path,
+                                    branchcopy))
                         # Update our .gitignore list so that it includes those
                         # in the newly created copy, to ensure they correctly
                         # get deleted during a future directory deletion.
@@ -4623,20 +4590,18 @@ class StreamParser:
                                 subnode.props = lookback.props
                                 subnode.action = SD_ADD
                                 subnode.kind = SD_FILE
-                                if debug_enable(DEBUG_TOPOLOGY):
-                                    announce("r%s: generated copy r%s~%s -> %s" \
-                                             % (revision,
-                                                subnode.from_rev,
-                                                subnode.from_path,
-                                                subnode.path))
+                                announce(DEBUG_TOPOLOGY, "r%s: generated copy r%s~%s -> %s" \
+                                         % (revision,
+                                            subnode.from_rev,
+                                            subnode.from_path,
+                                            subnode.path))
                                 subnode.generated = True
                                 expanded_nodes.append(subnode)
                     # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
                     if node.propchange and node.props is not None:
-                        if debug_enable(DEBUG_EXTRACT):
-                            announce("r%s: setting properties %s on %s" \
-                                     % (revision, node.props, node.path))
+                        announce(DEBUG_EXTRACT, "r%s: setting properties %s on %s" \
+                                 % (revision, node.props, node.path))
                         # svn:ignore gets handled here,
                         if '--user-ignores' not in options:
                             if node.path == os.sep:
@@ -4672,8 +4637,7 @@ class StreamParser:
                                 newnode.blob = blob
                                 newnode.content_hash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
-                                if debug_enable(DEBUG_IGNORES):
-                                    announce("r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                                announce(DEBUG_IGNORES, "r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
@@ -4686,8 +4650,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                if debug_enable(DEBUG_IGNORES):
-                                    announce("r%s: queuing up %s deletion." % (revision, newnode.path))
+                                announce(DEBUG_IGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
@@ -4720,18 +4683,16 @@ class StreamParser:
                         if node.from_path or node.from_hash:
                             # Try first via from_path
                             ancestor = filemaps[node.from_rev][node.from_path]
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                if ancestor:
-                                    announce("r%s~%s -> %s (via filemap)" % \
-                                             (node.revision, node.path, ancestor))
-                                else:
-                                    announce("r%s~%s has no ancestor (via filemap)" % \
-                                             (node.revision, node.path))
+                            if ancestor:
+                                announce(DEBUG_TOPOLOGY, "r%s~%s -> %s (via filemap)" % \
+                                         (node.revision, node.path, ancestor))
+                            else:
+                                announce(DEBUG_TOPOLOGY, "r%s~%s has no ancestor (via filemap)" % \
+                                         (node.revision, node.path))
                             # Fallback on the first blob that had this hash
                             if node.from_hash and not ancestor:
                                 ancestor = self.hashmap[node.from_hash]
-                                if debug_enable(DEBUG_TOPOLOGY):
-                                    announce("r%s~%s -> %s (via hashmap)" % \
+                                announce(DEBUG_TOPOLOGY, "r%s~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
                             if not ancestor and not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
@@ -4825,18 +4786,16 @@ class StreamParser:
                                              node.path)
                             actions.append((node, fileop))
                             self.repo.objfind(fileop.ref).addalias(node.path)
-                        elif debug_enable(DEBUG_EXTRACT):
-                            announce("r%s~%s: unmodified" % (node.revision, node.path))
+                        else:
+                            announce(DEBUG_EXTRACT, "r%s~%s: unmodified" % (node.revision, node.path))
                 # These are directory actions.
                 elif node.action in (SD_DELETE, SD_REPLACE):
-                    if debug_enable(DEBUG_EXTRACT):
-                        announce("r%s: deleteall %s" % (revision,node.path))
+                    announce(DEBUG_EXTRACT, "r%s: deleteall %s" % (revision,node.path))
                     fileop = FileOp(self.repo)
                     fileop.construct("deleteall", node.path[:-1])
                     actions.append((node, fileop))
             # Time to generate commits from actions and fileops.
-            if debug_enable(DEBUG_EXTRACT):
-                announce("r%s: %d actions" % (revision, len(actions)))
+            announce(DEBUG_EXTRACT, "r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
             cliques = collections.OrderedDict()
             lastbranch = None
@@ -4877,8 +4836,7 @@ class StreamParser:
                 except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.set_mark(self.repo.newmark())
-                if debug_enable(DEBUG_EXTRACT):
-                    announce("r%s gets mark %s" % (revision, commit.mark))
+                announce(DEBUG_EXTRACT, "r%s gets mark %s" % (revision, commit.mark))
                 newcommits.append(commit)
             # If the commit is mixed, or there are deletealls left over,
             # handle that.
@@ -4920,8 +4878,8 @@ class StreamParser:
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
                               and node.path.startswith(newcommit.common)]
-                    if copies and debug_enable(DEBUG_TOPOLOGY):
-                        announce("r%s: copy operations %s" %
+                    if copies:
+                        announce(DEBUG_TOPOLOGY, "r%s: copy operations %s" %
                                      (newcommit.legacy_id, copies))
                     # If the copies include one for the directory, use that as
                     # the first parent: most of the files in the new branch
@@ -4936,8 +4894,7 @@ class StreamParser:
                                   None)
                     if latest is not None:
                         self.directory_branchlinks.add(newcommit.common)
-                        if debug_enable(DEBUG_TOPOLOGY):
-                            announce("r%s: directory copy with %s" \
+                        announce(DEBUG_TOPOLOGY, "r%s: directory copy with %s" \
                                      % (newcommit.legacy_id, copies))
                     # Use may have botched a branch creation by doing a
                     # non-Subversion directory copy followed by a bunch of
@@ -4980,19 +4937,19 @@ class StreamParser:
                                 complain("lookback for %s failed, not making branch link" % latest)
                         else:
                             self.fileop_branchlinks.add(newcommit.common)
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: making branch link %s" %
-                                         (newcommit.legacy_id, newcommit.common))
+                            announce(DEBUG_TOPOLOGY,
+                                     "r%s: making branch link %s" %
+                                     (newcommit.legacy_id, newcommit.common))
                             self.branchlink[newcommit.mark] = (newcommit, prev)
-                            if debug_enable(DEBUG_TOPOLOGY):
-                                announce("r%s: link %s (%s) back to %s (%s, %s)" % \
-                                         (newcommit.legacy_id,
-                                          newcommit.mark,
-                                          newcommit.common,
-                                          latest.from_rev,
-                                          prev.mark,
-                                          prev.common
-                                          ))
+                            announce(DEBUG_TOPOLOGY,
+                                     "r%s: link %s (%s) back to %s (%s, %s)" % \
+                                     (newcommit.legacy_id,
+                                      newcommit.mark,
+                                      newcommit.common,
+                                      latest.from_rev,
+                                      prev.mark,
+                                      prev.common
+                                      ))
             # We're done, add all the new commits
             self.repo.events += newcommits
             self.repo.declare_sequence_mutation()
@@ -5023,12 +4980,12 @@ class StreamParser:
             self.gripe("branch links detected by file ops only: %s" % " ".join(sorted(self.fileop_branchlinks - self.directory_branchlinks)))
         timeit("commits")
         if debug_enable(DEBUG_EXTRACT):
-            announce("at post-parsing time:")
+            announce(DEBUG_EXTRACT, "at post-parsing time:")
             for commit in self.repo.commits():
                 msg = commit.comment
                 if msg is None:
                     msg = ""
-                announce("r%-4s %4s %2d %2d '%s'" % \
+                announce(DEBUG_EXTRACT, "r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
                           len(commit.operations()),
                           len(commit.properties or ""),
@@ -5055,8 +5012,7 @@ class StreamParser:
                 last = commit
         else:
             # Instead, determine a branch for each commit...
-            if debug_enable(DEBUG_EXTRACT):
-                announce("Branches: %s" % (self.branches,))
+            announce(DEBUG_EXTRACT, "Branches: %s" % (self.branches,))
             lastbranch = None
             for commit in self.repo.commits():
                 if lastbranch is not None \
@@ -5108,8 +5064,7 @@ class StreamParser:
                     self.branchlink[commit.mark] = (commit, earliest)
             timeit("root")
             # Add links due to Subversion copy operations
-            if debug_enable(DEBUG_EXTRACT):
-                announce("branch roots: [{roots}], links {{{links}}}".format(
+            announce(DEBUG_EXTRACT, "branch roots: [{roots}], links {{{links}}}".format(
                     roots = ", ".join(c.mark for c in branchroots),
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.values())))
@@ -5155,8 +5110,7 @@ class StreamParser:
                                 node.path,
                                 mergeinfos.get(node.from_rev) or PathMap(),
                                 node.from_path)
-                        if debug_enable(DEBUG_EXTRACT):
-                            announce("r%s~%s mergeinfo copied to %s" \
+                        announce(DEBUG_EXTRACT, "r%s~%s mergeinfo copied to %s" \
                                 % (node.from_rev, node.from_path, node.path))
                     # Mutate the filemap according to current mergeinfo.
                     # The general case is multiline: each line may describe
@@ -5230,8 +5184,8 @@ class StreamParser:
                         parent = self.repo.objfind(mark)
                         if parent not in commit.parents():
                             commit.add_parent(parent)
-                        if debug_enable(DEBUG_TOPOLOGY):
-                            announce("processed new mergeinfo from r%s "
+                            announce(DEBUG_TOPOLOGY,
+                                     "processed new mergeinfo from r%s "
                                      "to r%s." % (parent.legacy_id,
                                                   commit.legacy_id))
                 mergeinfos[revision] = mergeinfo.snapshot()
@@ -5239,13 +5193,13 @@ class StreamParser:
             del mergeinfo, mergeinfos
             timeit("mergeinfo")
             if debug_enable(DEBUG_EXTRACT):
-                announce("after branch analysis")
+                announce(DEBUG_EXTRACT, "after branch analysis")
                 for commit in self.repo.commits():
                     try:
                         ancestor = commit.parents()[0]
                     except IndexError:
                         ancestor = '-'
-                    announce("r%-4s %4s %4s %2d %2d '%s'" % \
+                    announce(DEBUG_EXTRACT, "r%-4s %4s %4s %2d %2d '%s'" % \
                              (commit.legacy_id,
                               commit.mark, ancestor,
                               len(commit.operations()),
@@ -5258,8 +5212,7 @@ class StreamParser:
             commit.canonicalize()
             baton.twirl()
         timeit("canonicalize")
-        if debug_enable(DEBUG_EXTRACT):
-            announce("after canonicalization")
+        announce(DEBUG_EXTRACT, "after canonicalization")
         # Now clean up junk commits generated by cvs2svn.
         deleteables = []
         newtags = []
@@ -5290,8 +5243,7 @@ class StreamParser:
         self.repo.events += newtags
         baton.twirl()
         timeit("junk")
-        if debug_enable(DEBUG_EXTRACT):
-            announce("after cvs2svn artifact removal")
+        announce(DEBUG_EXTRACT, "after cvs2svn artifact removal")
         # Now we need to tagify all other commits without fileops, because git
         # is going to just discard them when we build a live repo and they
         # might possibly contain interesting metadata.
@@ -5366,8 +5318,7 @@ class StreamParser:
                                               os.path.basename(commit.branch[:-1])))
             baton.twirl()
         timeit("polishing")
-        if debug_enable(DEBUG_EXTRACT):
-            announce("after branch name mapping")
+        announce(DEBUG_EXTRACT, "after branch name mapping")
         self.repo.tagify_empty(tipdeletes = True,
                                canonicalize = False,
                                name_func = tagname,
@@ -5375,8 +5326,7 @@ class StreamParser:
                                gripe = self.gripe)
         self.repo.timings.append(["tagifying", time.time()])
         baton.twirl()
-        if debug_enable(DEBUG_EXTRACT):
-            announce("after tagification")
+        announce(DEBUG_EXTRACT, "after tagification")
         # cvs2svn likes to crap out sequences of deletes followed by
         # filecopies on the same node when it's generating tag commits.
         # These are lots of examples of this in the nut.svn test load.
@@ -5391,8 +5341,7 @@ class StreamParser:
             commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
             baton.twirl()
         timeit("tagcleaning")
-        if debug_enable(DEBUG_EXTRACT):
-            announce("after delete/copy canonicalization")
+        announce(DEBUG_EXTRACT, "after delete/copy canonicalization")
         # Remove spurious parent links caused by random cvs2svn file copies.
         #baton.twirl("debubbling")
         for commit in self.repo.commits():
@@ -5539,8 +5488,7 @@ class SubversionDumper:
         return os.path.join(SubversionDumper.svnbranch(branch), path)
     def filedelete(self, fp, revision, branch, path, parents):
         "Emit the dump-stream records required to delete a file."
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("filedelete%s" % repr((branch, path)))
+        announce(DEBUG_SVNDUMP, "filedelete%s" % repr((branch, path)))
         # Branch and directory creation may be required.
         # This has to be called early so copy can update the filemap.
         self.directory_create(fp, revision, branch, path, parents)
@@ -5577,8 +5525,7 @@ class SubversionDumper:
         fp.write("Node-path: %s\n" % branchdir)
         fp.write("Node-action: delete\n\n\n")
     def directory_create(self, fp, revision, branch, path, parents=None):
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("directory_create%s" % repr((revision, branch, path)))
+        announce(DEBUG_SVNDUMP, "directory_create%s" % repr((revision, branch, path)))
         creations = []
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
@@ -5631,8 +5578,7 @@ class SubversionDumper:
                 self.pathmap[revision][parentdir].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, inline, parents):
         "Emit the dump-stream records required to add or modify a file."
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("filemodify%s" % repr((revision, branch, mode, ref, path,
+        announce(DEBUG_SVNDUMP, "filemodify%s" % repr((revision, branch, mode, ref, path,
                                             [event.mark for event in parents])))
         # Branch and directory creation may be required.
         # This has to be called early so copy can update the filemap.
@@ -5645,8 +5591,7 @@ class SubversionDumper:
             svnop = "add"
             self.pathmap[revision][os.path.dirname(svnpath)].subfiles += 1
             self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("Generating %s %s" % (svnpath, svnop))
+        announce(DEBUG_SVNDUMP, "Generating %s %s" % (svnpath, svnop))
         if ref == "inline":
             content = inline
         else:
@@ -5672,8 +5617,7 @@ class SubversionDumper:
                   props=changeprops,
                   content=content)
     def filecopy(self, fp, revision, branch, source, target, parents):
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("filecopy%s" % repr((revision, branch, source, target)))
+        announce(DEBUG_SVNDUMP, "filecopy%s" % repr((revision, branch, source, target)))
         # Branch and directory creation may be required.
         # This has to be called early so copy can update the filemap.
         self.directory_create(fp, revision, branch, target, parents)
@@ -5692,8 +5636,7 @@ class SubversionDumper:
                                    from_path=svnsource,
                                    from_rev=flow.rev)
     def make_tag(self, fp, revision, name, log, author, parents):
-        if debug_enable(DEBUG_SVNDUMP):
-            announce("make_tag%s" % repr((revision, name, log, str(author))))
+        announce(DEBUG_SVNDUMP, "make_tag%s" % repr((revision, name, log, str(author))))
         tagrefpath = os.path.join("refs/tags", name)
         SubversionDumper.dump_revprops(fp, revision,
                                        log=log,
@@ -5917,8 +5860,7 @@ class Repository:
             return os.path.join(self.basedir, ".rs" + repr(os.getpid())+ "-" + name)
     def makedir(self):
         try:
-            if debug_enable(DEBUG_SHUFFLE):
-                announce("repository fast import creates " + self.subdir())
+            announce(DEBUG_SVNDUMP, "repository fast import creates " + self.subdir())
             target = self.subdir()
             if not os.path.exists(target):
                 os.mkdir(target)
@@ -5928,7 +5870,7 @@ class Repository:
         "Hint what the source of this repository might be."
         newhint = not self.hintlist or clue not in self.hintlist
         if newhint and self.stronghint and strong:
-            announce("new hint %s conficts with old %s" \
+            announce(DEBUG_SHOUT, "new hint %s conficts with old %s" \
                               % (clue, self.hintlist[-1]))
             return False
         if not self.stronghint:
@@ -6201,8 +6143,8 @@ class Repository:
                 else:
                     unmatched += 1
             if verbose >= 1:
-                announce("%d matched, %d unmatched, %d total"\
-                         % (matched, unmatched, matched+unmatched))
+                announce(DEBUG_SHOUT, "%d matched, %d unmatched, %d total"\
+                    % (matched, unmatched, matched+unmatched))
             del commit_map
         except ValueError:
             raise Recoverable("bad syntax in legacy map.")
@@ -6229,7 +6171,7 @@ class Repository:
             commit_id = commit.mark
             if commit.legacy_id:
                 commit_id += " <%s>" % commit.legacy_id
-            announce("tagifying: %s -> %s" % (commit_id, name))
+            announce(DEBUG_EXTRACT, "tagifying: %s -> %s" % (commit_id, name))
         if commit.operations():
             raise Fatal("Attempting to tagify a commit with fileops.")
         if not commit.comment:
@@ -6447,7 +6389,7 @@ class Repository:
                             continue
                     if debug_enable(DEBUG_UNITE):
                         if hasattr(event, "mark"):
-                            announce("writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
+                            announce(DEBUG_UNITE, "writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
                     fp.write(event.dump(target, options=options, realized=realized, internals=selection_marks))
             except IOError as e:
                 raise Fatal("export error: %s" % e)
@@ -6470,8 +6412,7 @@ class Repository:
         "Rename the repo."
         try:
             # Can fail if the target directory exists.
-            if debug_enable(DEBUG_SHUFFLE):
-                announce("repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
+            announce(DEBUG_SHUFFLE, "repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
             os.rename(self.subdir(), self.subdir(newname))
             self.name = newname
         except OSError as e:
@@ -6501,7 +6442,7 @@ class Repository:
                 elif i in values:
                     newassigns.append(i - dc)
             if values and not newassigns:
-                announce("sequence modification left %s empty" % name)
+                announce(DEBUG_SHOUT, "sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
     def declare_sequence_mutation(self, warning=None):
         "Mark the repo event sequence modified."
@@ -6510,7 +6451,7 @@ class Repository:
         self._namecache = {}
         if self.assignments and warning:
             self.assignments = {}
-            announce("assignments invalidated by " + warning)
+            announce(DEBUG_SHOUT, "assignments invalidated by " + warning)
     def earliest_commit(self):
         "Return the earliest commit."
         return next(self.commits())
@@ -6680,8 +6621,7 @@ class Repository:
             if a.op == FileOp.deleteall:
                 lastdeleteall = i
         if lastdeleteall is not None:
-            if debug_enable(DEBUG_DELETE):
-                announce("removing all before rightmost deleteall")
+            announce(DEBUG_DELETE, "removing all before rightmost deleteall")
             commit.set_operations(commit.operations()[lastdeleteall:])
             commit.invalidate_pathset_cache()
         # Composition in the general case is trickier.
@@ -6694,14 +6634,13 @@ class Repository:
                     b = commit.operations()[j]
                     if a is not None and b is not None and a.relevant(b):
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
-                        if debug_enable(DEBUG_DELETE):
-                            announce("Reduction case %d fired on %s" % (case, (i,j)))
+                        announce(DEBUG_DELETE, "Reduction case %d fired on %s" % (case, (i,j)))
                         if modified:
                             mutated = True
                             commit.operations()[i] = newa
                             commit.operations()[j] = newb
                             if debug_enable(DEBUG_DELETE):
-                                announce("During canonicalization:")
+                                announce(DEBUG_DELETE, "During canonicalization:")
                                 commit.fileop_dump()
                             if warn:
                                 complain(warn)
@@ -6713,8 +6652,7 @@ class Repository:
         return coverage
     def squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
-        if debug_enable(DEBUG_DELETE):
-            announce("Deletion list is %s" % [x+1 for x in selected])
+        announce(DEBUG_DELETE, "Deletion list is %s" % [x+1 for x in selected])
         for qualifier in policy:
             if qualifier not in ["--complain",
                                  "--coalesce",
@@ -6753,7 +6691,7 @@ class Repository:
                         if '/' in event.branch and '/heads/' not in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
-                            announce(speak + "non-delete fileops.")
+                            announce(DEBUG_SHOUT, speak + "non-delete fileops.")
                     if not delete:
                         if pushback and not event.has_parents():
                             complain("warning: "
@@ -6911,11 +6849,11 @@ class Repository:
             for event in altered:
                 if event.deletehook: continue
                 if debug_enable(DEBUG_DELETE):
-                    announce("Before canonicalization:")
+                    announce(DEBUG_DELETE, "Before canonicalization:")
                     event.fileop_dump()
                 self.case_coverage |= self.canonicalize(event)
                 if debug_enable(DEBUG_DELETE):
-                    announce("After canonicalization:")
+                    announce(DEBUG_DELETE, "After canonicalization:")
                     event.fileop_dump()
                 # Now apply policy in the mutiple-M case
                 cliques = event.cliques()
@@ -6932,7 +6870,7 @@ class Repository:
                             if (op.op != FileOp.M) or (i == cliques[op.path][-1])])
                     event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
-                    announce("Commit %d, after applying policy:" % (ei + 1,))
+                    announce(DEBUG_DELETE, "Commit %d, after applying policy:" % (ei + 1,))
                     event.fileop_dump()
         # Cleanup
         for e in self.events:
@@ -7073,7 +7011,7 @@ class Repository:
                 return
             self.events = [self.events[i] for i in tsorted]
             if verbose:
-                announce('re-sorted events')
+                announce(DEBUG_SHOUT, 're-sorted events')
             # assignments will be fixed so don't pass anything to
             # declare_sequence_mutation() to tell it to warn about
             # invalidated assignments
@@ -7160,8 +7098,7 @@ class Repository:
                     old = getattr(event, fld)
                     if old is not None:
                         new = remark(old, event)
-                        if debug_enable(DEBUG_UNITE):
-                            announce("renumbering %s -> %s in %s.%s" % (old, new,
+                        announce(DEBUG_UNITE, "renumbering %s -> %s in %s.%s" % (old, new,
                                                                         event.__class__.__name__,
                                                                         fld))
                         setattr(event, fld, new)
@@ -7171,8 +7108,7 @@ class Repository:
             for fileop in commit.operations():
                 if fileop.op == FileOp.M and fileop.ref.startswith(":"):
                     new = remark(fileop.ref, fileop)
-                    if debug_enable(DEBUG_UNITE):
-                        announce("renumbering %s -> %s in fileop" % (fileop.ref, new))
+                    announce(DEBUG_UNITE, "renumbering %s -> %s in fileop" % (fileop.ref, new))
                     fileop.ref = new
             if baton:
                 baton.bumpcounter()
@@ -7217,8 +7153,7 @@ class Repository:
                             newname = oldname + "-" + color
                     if newname:
                         setattr(event, attr, newname)
-                        if debug_enable(DEBUG_UNITE):
-                            announce("moving %s -> %s in %s.%s"
+                        announce(DEBUG_UNITE, "moving %s -> %s in %s.%s"
                                      % (oldname, newname,
                                         objtype.__name__,
                                         attr))
@@ -7234,8 +7169,7 @@ class Repository:
                         raise Fatal("field not in mark format")
                     else:
                         new = old + "-" + color
-                        if debug_enable(DEBUG_UNITE):
-                            announce("moving %s -> %s in %s.%s"
+                        announce(DEBUG_UNITE, "moving %s -> %s in %s.%s"
                                      % (old, new,
                                         event.__class__.__name__,
                                         fld))
@@ -7246,9 +7180,8 @@ class Repository:
                 for fileop in event.operations():
                     if fileop.op == FileOp.M and fileop.ref.startswith(":"):
                         new = fileop.ref + "-" + color
-                        if debug_enable(DEBUG_UNITE):
-                            announce("moving %s -> %s in fileop"
-                                     % (fileop.ref, new))
+                        announce(DEBUG_UNITE, "moving %s -> %s in fileop"
+                                 % (fileop.ref, new))
                         fileop.ref = new
         return persist
     def absorb(self, other):
@@ -7479,11 +7412,10 @@ class Repository:
 
 def read_repo(source, options, preferred):
     "Read a repository using fast-import."
-    if debug_enable(DEBUG_SHUFFLE):
-        if preferred:
-            announce("looking for a %s repo..." % preferred.name)
-        else:
-            announce("reposurgeon: looking for any repo at %s..." % \
+    if preferred:
+        announce(DEBUG_SHUFFLE, "looking for a %s repo..." % preferred.name)
+    else:
+        announce(DEBUG_SHUFFLE, "reposurgeon: looking for any repo at %s..." % \
                      os.path.abspath(source))
     hitcount = 0
     extractor = vcs = None
@@ -7507,8 +7439,8 @@ def read_repo(source, options, preferred):
         raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
     elif hitcount > 1:
         raise Recoverable("too many repos under %s" % os.path.relpath(source))
-    elif debug_enable(DEBUG_SHUFFLE):
-        announce("found %s repository" % getattr(vcs or extractor, "name"))
+    else:
+        announce(DEBUG_SHUFFLE, "found %s repository" % getattr(vcs or extractor, "name"))
     repo = Repository()
     repo.sourcedir = source
     if vcs:
@@ -7536,7 +7468,7 @@ def read_repo(source, options, preferred):
                 with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(make_wrapper(tp), options, progress=showprogress, source=source)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
-                announce("reading author map.")
+                announce(DEBUG_SHOUT, "reading author map.")
                 with open(repo.vcs.authormap, "rb") as fp:
                     repo.read_authormap(range(len(repo.events)), make_wrapper(fp))
             legacy_map = os.path.join(vcs.subdirectory, "legacy_map")
@@ -7559,7 +7491,7 @@ def read_repo(source, options, preferred):
             # kluge: git-specific hook
             if repo.vcs.name == "git":
                 if os.path.exists(".git/cvs-revisions"):
-                    announce("reading cvs-revisions map.")
+                    announce(DEBUG_SHOUT, "reading cvs-revisions map.")
                     pathrev_to_hash = {}
                     # Pass 1: Get git's path/revision to hash mapping
                     with open(".git/cvs-revisions", "r") as fp:
@@ -7699,7 +7631,7 @@ def rebuild_repo(repo, target, options, preferred):
             complain("checkout not supported for %s skipping" % vcs.name)
 
         if verbose:
-            announce("rebuild is complete.")
+            announce(DEBUG_SHOUT, "rebuild is complete.")
 
         os.chdir(here)
         if staging != target:
@@ -7724,12 +7656,12 @@ def rebuild_repo(repo, target, options, preferred):
                     os.rename(os.path.join(target, sub),
                               os.path.join(savedir, sub))
                 if verbose:
-                    announce("repo backed up to %s." % os.path.relpath(savedir))
+                    announce(DEBUG_SHOUT, "repo backed up to %s." % os.path.relpath(savedir))
                 for sub in os.listdir(staging):
                     os.rename(os.path.join(staging, sub),
                               os.path.join(target, sub))
                 if verbose:
-                    announce("modified repo moved to %s." % os.path.relpath(target))
+                    announce(DEBUG_SHOUT, "modified repo moved to %s." % os.path.relpath(target))
             if repo.preserve_set:
                 for sub in repo.preserve_set:
                     src = os.path.join(savedir, sub)
@@ -7745,9 +7677,9 @@ def rebuild_repo(repo, target, options, preferred):
                                 os.makedirs(dstdir)
                             shutil.copy2(src, dst)
                 if verbose:
-                    announce("preserved files restored.")
+                    announce(DEBUG_SHOUT, "preserved files restored.")
             elif verbose:
-                announce("no preservations.")
+                announce(DEBUG_SHOUT, "no preservations.")
     finally:
         os.chdir(here)
         if staging != target:
@@ -7757,8 +7689,7 @@ def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
         legend = " "  + legend
-    if debug_enable(DEBUG_COMMANDS):
-        announce("executing '%s'%s" % (dcmd, legend))
+    announce(DEBUG_COMMANDS, "executing '%s'%s" % (dcmd, legend))
     try:
         retcode = subprocess.call(dcmd, shell=True, stderr=sys.stderr)
         if retcode < 0:
@@ -8069,7 +8000,7 @@ class RepositoryList:
                             fileop.targetdelete = expunge.search(polybytes(fileop.target))
                             if fileop.sourcedelete:
                                 deletia.append(i)
-                                announce("following %s of %s to %s" %
+                                announce(DEBUG_SHOUT, "following %s of %s to %s" %
                                          (fileop.op,
                                           fileop.source,
                                           fileop.target))
@@ -8106,7 +8037,7 @@ class RepositoryList:
                 if fileop.op == FileOp.D:
                     keepers.append(fileop)
                     if verbose:
-                        announce("at %d, expunging D %s" \
+                        announce(DEBUG_SHOUT, "at %d, expunging D %s" \
                                  % (ei+1, fileop.path))
                 elif fileop.op == FileOp.M:
                     keepers.append(fileop)
@@ -8116,7 +8047,7 @@ class RepositoryList:
                         assert(isinstance(blob, Blob))
                         blobs.append(blob)
                     if verbose:
-                        announce("at %d, expunging M %s" \
+                        announce(DEBUG_SHOUT, "at %d, expunging M %s" \
                                  % (ei+1, fileop.path))
                 elif fileop.op in (FileOp.R, FileOp.C):
                     assert(fileop.sourcedelete or fileop.targetdelete)
@@ -8182,9 +8113,9 @@ class RepositoryList:
                     if (isinstance(e, Blob) and not backreferences[e.mark])
                     or (isinstance(e, Commit) and not e.operations())]
             if not to_delete:
-                announce("deletion set is empty.")
+                announce(DEBUG_DELETE, "deletion set is empty.")
             else:
-                announce("deleting blobs and empty commits %s" % to_delete)
+                announce(DEBUG_DELETE, "deleting blobs and empty commits %s" % to_delete)
             del to_delete
         # First delete the blobs.
         self.repo.events = [e for e in self.repo.events
@@ -8211,7 +8142,7 @@ def debug_lexer(f):
             setattr(self, '_debug_lexer_stack', stack)
         v = args[0] if self.line is None else ''
         s = ": {0}".format(repr(self.line)) if self.line is not None else ''
-        announce("{0}{1}({2}){3}".format(' ' * len(stack), f.__name__, v, s))
+        announce(DEBUG_SHOUT, "{0}{1}({2}){3}".format(' ' * len(stack), f.__name__, v, s))
         stack.append(f.__name__)
         try:
             ret = f(self, *args)
@@ -8221,7 +8152,7 @@ def debug_lexer(f):
         finally:
             x = "lambda" if callable(ret) else repr(ret)
             s = ", left = {0}".format(repr(self.line)) if self.line is not None else ''
-            announce("{0}{1} <- {2}(){3}".format(
+            announce(DEBUG_SHOUT, "{0}{1} <- {2}(){3}".format(
                 ' ' * len(stack), x, stack.pop(), s))
         return ret
     return wrapper
@@ -8268,7 +8199,7 @@ class SelectionParser(object):
         """log a debug message from a lexer function"""
         if debug_enable(DEBUG_LEXER):
             stack = getattr(self, '_debug_lexer_stack')
-            announce("{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+            announce(DEBUG_LEXER, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
     def parse_expression(self):
         self.line = self.line.lstrip()
@@ -8943,7 +8874,7 @@ developers.
         try:
             self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
         except ValueError:
-            announce("bad prompt format - remember, literal % must be doubled.")
+            announce(DEBUG_SHOUT, "bad prompt format - remember, literal % must be doubled.")
         if line == "EOF":
             return True
     def emptyline(self):
@@ -8986,8 +8917,7 @@ developers.
         return True
     def cleanup(self):
         "Tell all the repos we're holding to clean up."
-        if debug_enable(DEBUG_SHUFFLE):
-            announce("interpreter cleanup called.")
+        announce(DEBUG_SHUFFLE, "interpreter cleanup called.")
         for repo in self.repolist:
             repo.cleanup()
     def selected(self, types=None):
@@ -9514,7 +9444,7 @@ developers.
                         event.set_content(modified)
                     altered += (content != modified)
                 baton.twirl()
-        announce("%d items modified by %s." % (altered, prompt.lower()))
+        announce(DEBUG_SHOUT, "%d items modified by %s." % (altered, prompt.lower()))
 
     def help_selection(self):
         sys.stdout.write("""
@@ -9631,7 +9561,7 @@ developers only.
             except ValueError:
                 complain("verbosity value must be an integer")
         if not line or verbose:
-            announce("verbose %d" % verbose)
+            announce(DEBUG_SHOUT, "verbose %d" % verbose)
 
     def help_quiet(self):
         sys.stdout.write("""
@@ -9648,7 +9578,7 @@ failures in regression testing are suppressed.
             elif line == "off":
                 quiet = False
         if not line:
-            announce("quiet %s" % ("on" if quiet else "off"))
+            announce(DEBUG_SHOUT, "quiet %s" % ("on" if quiet else "off"))
 
     def help_echo(self):
         sys.stdout.write("""
@@ -9659,9 +9589,9 @@ Set or clear echoing of commands before processing.
         try:
             self.echo = int(line)
         except ValueError:
-            announce("echo value must be an integer")
+            announce(DEBUG_SHOUT, "echo value must be an integer")
         if verbose:
-            announce("echo %d" % self.echo)
+            announce(DEBUG_SHOUT, "echo %d" % self.echo)
 
     def help_print(self):
         sys.stdout.write("""
@@ -9719,7 +9649,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
                 raise Recoverable("No selection")
             else:
                 for n, v in repo.assignments.items():
-                    announce("%s = %s" % (n, v))
+                    announce(DEBUG_SHOUT, "%s = %s" % (n, v))
                 return
         with RepoSurgeon.LineParse(repo, line) as parse:
             name = parse.line.strip()
@@ -9876,7 +9806,7 @@ on code executed via '-'.
         "Enable profiling."
         assert line is not None # Pacify pylint
         self.profile_log = line
-        announce("profiling enabled.")
+        announce(DEBUG_SHOUT, "profiling enabled.")
 
     def help_timing(self):
         sys.stdout.write("""
@@ -9894,7 +9824,7 @@ Report phase-timing results and memory usage from repository analysis.
             complain("The psutil module required for memory statistics is not installed.")
         else:
             mem = psutil.virtual_memory()
-            announce(repr(mem))
+            announce(DEBUG_SHOUT, repr(mem))
 
     #
     # Information-gathering
@@ -10317,7 +10247,7 @@ list is displayed afterwards.
             return
         for filename in line.split():
             self.chosen().preserve(filename)
-        announce("preserving %s." % list(self.chosen().preservable()))
+        announce(DEBUG_SHOUT, "preserving %s." % list(self.chosen().preservable()))
 
     def help_unpreserve(self):
         sys.stdout.write("""
@@ -10335,7 +10265,7 @@ current preserve list is displayed afterwards.
             return
         for filename in line.split():
             self.chosen().unpreserve(filename)
-        announce("preserving %s." % list(self.chosen().preservable()))
+        announce(DEBUG_SHOUT, "preserving %s." % list(self.chosen().preservable()))
 
     #
     # Serialization and de-serialization.
@@ -10525,7 +10455,7 @@ This is intended for producing reduced test cases from large repositories.
             oldlen = len(repo.events)
             repo.delete([i for i in range(len(repo.events)) \
                          if isinstance(event, Commit) and event.mark not in interesting])
-            announce("From %d to %d events." % (oldlen, len(repo.events)))
+            announce(DEBUG_SHOUT, "From %d to %d events." % (oldlen, len(repo.events)))
     def help_graph(self):
         sys.stdout.write("""
 Dump a graph representing selected events to standard output in DOT markup
@@ -10828,9 +10758,9 @@ CVS empty-comment marker.
                 changers.append(update)
         if verbose:
             if not changers:
-                announce("no events modified by mailbox_in.")
+                announce(DEBUG_SHOUT, "no events modified by mailbox_in.")
             else:
-                announce("%d events modified by mailbox_in." % len(changers))
+                announce(DEBUG_SHOUT, "%d events modified by mailbox_in." % len(changers))
         if parse.stdout != sys.stdout:
             if "--changed" in parse.options:
                 for update in changers:
@@ -11226,17 +11156,17 @@ With  the --debug option, show messages about mismatches.
             def coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce("committer email mismatch at %s" % cnext.id_me())
+                        announce(DEBUG_SHOUT, "committer email mismatch at %s" % cnext.id_me())
                     return False
                 if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce("time fuzz exceeded at %s" % cnext.id_me())
+                        announce(DEBUG_SHOUT, "time fuzz exceeded at %s" % cnext.id_me())
                     return False
                 if changelog and not is_clog(cthis) and is_clog(cnext):
                     return True
                 if cthis.comment != cnext.comment:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce("comment mismatch at %s" % cnext.id_me())
+                        announce(DEBUG_SHOUT, "comment mismatch at %s" % cnext.id_me())
                     return False
                 return True
             eligible = {}
@@ -11266,7 +11196,7 @@ With  the --debug option, show messages about mismatches.
                 repo.objfind(span[-1]).comment = repo.objfind(span[0]).comment
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
             if verbose > 0:
-                announce("%d spans coalesced." % len(squashes))
+                announce(DEBUG_SHOUT, "%d spans coalesced." % len(squashes))
     def help_add(self):
         sys.stdout.write("""
 From a specified commit, add a specified fileop. The syntax is
@@ -11623,10 +11553,10 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             # If that failed, cut anyway and rename the branch segments
             late.remove_parent(early)
             if early.branch != late.branch:
-                announce("no branch renames were required")
+                announce(DEBUG_SHOUT, "no branch renames were required")
             else:
                 basename = early.branch
-                announce("%s has been split into %s-early and %s-late" \
+                announce(DEBUG_SHOUT, "%s has been split into %s-early and %s-late" \
                          % (basename, basename, basename))
                 for (i, event) in enumerate(self.chosen().events):
                     if hasattr(event, "branch") and event.branch == basename:
@@ -11733,7 +11663,7 @@ file operations in the original commit.
         else:
             raise Recoverable("don't know what to do for preposition %s" % prep)
         if verbose:
-            announce("new commits are events %s and %s." % (where+1, where+2))
+            announce(DEBUG_SHOUT, "new commits are events %s and %s." % (where+1, where+2))
 
     def help_unite(self):
         sys.stdout.write("""
@@ -12094,7 +12024,7 @@ merge link is moved to the tagified commit's parent.
                     tipdeletes = "--tipdeletes" in parse.options,
                     tagify_merges = "--tagify-merges" in parse.options)
             after = len([c for c in repo.commits()])
-            announce("%d commits tagified." % (before - after))
+            announce(DEBUG_SHOUT, "%d commits tagified." % (before - after))
 
     def help_merge(self):
         sys.stdout.write("""
@@ -12117,7 +12047,7 @@ from the highest member (child) to the lowest (parent).
         later.add_parent(earlier)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
-        #announce("%s added as a parent of %s" % (earlier_id, later_id))
+        #announce(DEBUG_SHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
 
     def help_unmerge(self):
         sys.stdout.write("""
@@ -12704,8 +12634,8 @@ default patterns.
                         newop.construct("M", 0o100644, ":insert", self.ignorename)
                         earliest.append_operation(newop)
                         repo.renumber()
-                        announce("initial %s created." % self.ignorename)
-                announce("%d %s blobs modified." % (changecount, self.ignorename))
+                        announce(DEBUG_SHOUT, "initial %s created." % self.ignorename)
+                announce(DEBUG_SHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
             elif verb == 'rename':
                 changecount = 0
                 for (_, event) in repo.iterevents(indices=None, types=(Commit,)):
@@ -12722,7 +12652,7 @@ default patterns.
                                         blob = repo.objfind(fileop.ref)
                                         if blob.pathlist[0] == oldpath:
                                             blob.pathlist[0] = newpath
-                announce("%d ignore files renamed (%s -> %s)."
+                announce(DEBUG_SHOUT, "%d ignore files renamed (%s -> %s)."
                          % (changecount,
                             self.ignorename,
                             self.preferred.ignorename))
@@ -12735,7 +12665,7 @@ default patterns.
                             if not blob.get_content().startswith("syntax: glob\n"):
                                 blob.set_content("syntax: glob\n" + blob.get_content())
                                 changecount += 1
-                announce("%d %s blobs modified." % (changecount, self.ignorename))
+                announce(DEBUG_SHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
             else:
                 raise Recoverable("unknown verb %s in ignores line" % verb)
 
@@ -13016,7 +12946,7 @@ map when the repo is written or rebuilt.
                             polybytes(event.comment))
                         event.comment = polystr(event.comment)
                         hits += new_hits
-            announce("%d references resolved." % hits)
+            announce(DEBUG_SHOUT, "%d references resolved." % hits)
             repo.write_legacy = True
         else:
             self.selection = [e for e in range(len(repo.events)) if self.has_reference(repo.events[e])]
@@ -13166,7 +13096,7 @@ to re-set it.
             raise Recoverable("branchify does not take a selection set")
         if line.strip():
             global_options['svn_branchify'] = line.strip().split()
-        announce("branchify " + " ".join(global_options['svn_branchify']))
+        announce(DEBUG_SHOUT, "branchify " + " ".join(global_options['svn_branchify']))
     #
     # Setting branch name rewriting
     #
@@ -13219,11 +13149,11 @@ to re-set it.
             global_options['svn_branchify_mapping'] = \
                     list(map(split_regex, line.split()))
         if global_options['svn_branchify_mapping']:
-            announce("branchify_map, regex -> branch name:")
+            announce(DEBUG_SHOUT, "branchify_map, regex -> branch name:")
             for match, replace in global_options['svn_branchify_mapping']:
-                announce( "\t" + match + " -> " + replace)
+                announce(DEBUG_SHOUT, "\t" + match + " -> " + replace)
         else:
-            announce("branchify_map is empty.")
+            announce(DEBUG_SHOUT, "branchify_map is empty.")
 
     #
     # Setting options
@@ -13436,7 +13366,7 @@ action-stamp ID for each commit.
                         event.bump()
                         modified += 1
                 baton.twirl()
-            announce("%d events modified" % modified)
+            announce(DEBUG_SHOUT, "%d events modified" % modified)
         repo.invalidate_namecache()
     def help_timebump(self):
         sys.stdout.write("""
@@ -13620,7 +13550,7 @@ that zone is used.
                                     commit.authors.append(newattr)
                                     cd += 1
         repo.invalidate_namecache()
-        announce("fills %d of %d authorships, changing %s, from %d ChangeLogs." \
+        announce(DEBUG_SHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
 
     #
@@ -13773,7 +13703,7 @@ means the surgical language is not backwards compatible).
 """)
     def do_version(self, line):
         if not line:
-            announce("reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
+            announce(DEBUG_SHOUT, "reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
         else:
             (vmajor, _) = version.split(".")
             if '.' in line:
@@ -13787,7 +13717,7 @@ means the surgical language is not backwards compatible).
             if major != vmajor:
                 raise Fatal("major version mismatch, aborting.")
             elif verbose > 0:
-                announce("version check passed.")
+                announce(DEBUG_SHOUT, "version check passed.")
 
     #
     # Exiting (in case EOT has been rebound)
@@ -13797,7 +13727,7 @@ means the surgical language is not backwards compatible).
 Desplay elapsed time since start.
 """)
     def do_elapsed(self, _line):
-        announce("elapsed time %s." % humanize(time.time() - self.start_time))
+        announce(DEBUG_SHOUT, "elapsed time %s." % humanize(time.time() - self.start_time))
 
     def help_exit(self):
         sys.stdout.write("""
@@ -13806,7 +13736,7 @@ Exit the program cleanly, emitting a goodbye message.
 Typing EOT (usually Ctrl-D) will exit quietly.
 """)
     def do_exit(self, _line):
-        announce("exiting, elapsed time %s." % humanize(time.time() - self.start_time))
+        announce(DEBUG_SHOUT, "exiting, elapsed time %s." % humanize(time.time() - self.start_time))
         sys.exit(0)
 
     #
