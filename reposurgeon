@@ -1442,6 +1442,7 @@ class Fatal(Exception):
 
 verbose         = 0
 DEBUG_SHOUT     = 0    # Unconditional messge display
+DEBUG_PROGRESS  = 1    # Progress messages
 DEBUG_SVNDUMP   = 2    # Debug Subversion dumping
 DEBUG_TOPOLOGY  = 2    # Debug repo-extractor logic (coarse-grained)
 DEBUG_EXTRACT   = 2    # Debug repo-extractor logic (fine-grained)
@@ -6138,9 +6139,8 @@ class Repository:
                     matched += 1
                 else:
                     unmatched += 1
-            if verbose >= 1:
-                announce(DEBUG_SHOUT, "%d matched, %d unmatched, %d total"\
-                    % (matched, unmatched, matched+unmatched))
+            announce(DEBUG_PROGRESS, "%d matched, %d unmatched, %d total"\
+                     % (matched, unmatched, matched+unmatched))
             del commit_map
         except ValueError:
             raise Recoverable("bad syntax in legacy map.")
@@ -7006,8 +7006,7 @@ class Repository:
                          + ', '.join(str(x+1) for x in sorted(leftout)))
                 return
             self.events = [self.events[i] for i in tsorted]
-            if verbose:
-                announce(DEBUG_SHOUT, 're-sorted events')
+            announce(DEBUG_PROGRESS, 're-sorted events')
             # assignments will be fixed so don't pass anything to
             # declare_sequence_mutation() to tell it to warn about
             # invalidated assignments
@@ -7651,13 +7650,11 @@ def rebuild_repo(repo, target, options, preferred):
                 for sub in os.listdir(target):
                     os.rename(os.path.join(target, sub),
                               os.path.join(savedir, sub))
-                if verbose:
-                    announce(DEBUG_SHOUT, "repo backed up to %s." % os.path.relpath(savedir))
+                announce(DEBUG_PROGRESS, "repo backed up to %s." % os.path.relpath(savedir))
                 for sub in os.listdir(staging):
                     os.rename(os.path.join(staging, sub),
                               os.path.join(target, sub))
-                if verbose:
-                    announce(DEBUG_SHOUT, "modified repo moved to %s." % os.path.relpath(target))
+                announce(DEBUG_PROGRESS, "modified repo moved to %s." % os.path.relpath(target))
             if repo.preserve_set:
                 for sub in repo.preserve_set:
                     src = os.path.join(savedir, sub)
@@ -7672,10 +7669,9 @@ def rebuild_repo(repo, target, options, preferred):
                             if not os.path.exists(dstdir):
                                 os.makedirs(dstdir)
                             shutil.copy2(src, dst)
-                if verbose:
-                    announce(DEBUG_SHOUT, "preserved files restored.")
-            elif verbose:
-                announce(DEBUG_SHOUT, "no preservations.")
+                announce(DEBUG_PROGRESS, "preserved files restored.")
+            else:
+                announce(DEBUG_PROGRESS, "no preservations.")
     finally:
         os.chdir(here)
         if staging != target:
@@ -8032,8 +8028,7 @@ class RepositoryList:
                 fileop = event.operations()[i]
                 if fileop.op == FileOp.D:
                     keepers.append(fileop)
-                    if verbose:
-                        announce(DEBUG_SHOUT, "at %d, expunging D %s" \
+                    announce(DEBUG_PROGRESS, "at %d, expunging D %s" \
                                  % (ei+1, fileop.path))
                 elif fileop.op == FileOp.M:
                     keepers.append(fileop)
@@ -8042,8 +8037,7 @@ class RepositoryList:
                         blob = self.repo[bi]
                         assert(isinstance(blob, Blob))
                         blobs.append(blob)
-                    if verbose:
-                        announce(DEBUG_SHOUT, "at %d, expunging M %s" \
+                    announce(DEBUG_PROGRESS, "at %d, expunging M %s" \
                                  % (ei+1, fileop.path))
                 elif fileop.op in (FileOp.R, FileOp.C):
                     assert(fileop.sourcedelete or fileop.targetdelete)
