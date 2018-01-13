@@ -1641,7 +1641,7 @@ class Baton:
         self.time = 0
     def __enter__(self):
         if self.stream:
-            self.stream.write(self.prompt + "...")
+            self.stream.write(self.prompt + "...[\b")
             if os.isatty(self.stream.fileno()):
                 self.stream.write(" \b")
             self.stream.flush()
@@ -1705,7 +1705,7 @@ class Baton:
         if extype == Fatal:
             self.endmsg = "aborted by error"
         if self.stream:
-            self.stream.write("...(%s sec) %s.\n" \
+            self.stream.write("]\b...(%s sec) %s.\n" \
                               % (humanize(time.time() - self.time), self.endmsg))
         return False
 
