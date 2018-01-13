@@ -1,5 +1,6 @@
 read <roundup.fi
 strip blobs reduce
+reposurgeon: From 46 to 46 events.
 write -
 blob
 mark :1
