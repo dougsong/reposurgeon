@@ -1,5 +1,4 @@
 SVN-fs-dump-format-version: 2
- ## Test handling of svn:executable
 
 UUID: aea7b2af-9eb3-4379-aa13-42c4997873f1
 
@@ -17,11 +16,6 @@ Revision-number: 1
 Prop-content-length: 116
 Content-length: 116
 
-K 7
-svn:log
-V 18
-Directory layout.
-
 K 10
 svn:author
 V 3
@@ -30,6 +24,11 @@ K 8
 svn:date
 V 27
 2011-12-13T00:58:41.582397Z
+K 7
+svn:log
+V 18
+Directory layout.
+
 PROPS-END
 
 Node-path: branches
@@ -63,11 +62,6 @@ Revision-number: 2
 Prop-content-length: 122
 Content-length: 122
 
-K 7
-svn:log
-V 24
-Initial README content.
-
 K 10
 svn:author
 V 3
@@ -76,15 +70,20 @@ K 8
 svn:date
 V 27
 2011-12-13T00:58:42.298511Z
+K 7
+svn:log
+V 24
+Initial README content.
+
 PROPS-END
 
 Node-path: trunk/README
 Node-kind: file
 Node-action: add
-Prop-content-length: 10
-Text-content-length: 37
 Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
 Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Prop-content-length: 10
+Text-content-length: 37
 Content-length: 47
 
 PROPS-END
@@ -95,11 +94,6 @@ Revision-number: 3
 Prop-content-length: 147
 Content-length: 147
 
-K 7
-svn:log
-V 49
-Create a hello-world script, not yet executable.
-
 K 10
 svn:author
 V 3
@@ -108,15 +102,20 @@ K 8
 svn:date
 V 27
 2011-12-13T01:02:19.704704Z
+K 7
+svn:log
+V 49
+Create a hello-world script, not yet executable.
+
 PROPS-END
 
 Node-path: trunk/hello
 Node-kind: file
 Node-action: add
-Prop-content-length: 10
-Text-content-length: 32
 Text-content-md5: 044da061ee8e419c43d6e377e969eece
 Text-content-sha1: b7bbda01475357c71f8de7278128e095634135d0
+Prop-content-length: 10
+Text-content-length: 32
 Content-length: 42
 
 PROPS-END
@@ -129,11 +128,6 @@ Revision-number: 4
 Prop-content-length: 169
 Content-length: 169
 
-K 7
-svn:log
-V 71
-This is a commit after doing 'svn propset svn:executable 'true' hello'
-
 K 10
 svn:author
 V 3
@@ -142,6 +136,11 @@ K 8
 svn:date
 V 27
 2011-12-13T01:06:47.369580Z
+K 7
+svn:log
+V 71
+This is a commit after doing 'svn propset svn:executable 'true' hello'
+
 PROPS-END
 
 Node-path: trunk/hello
@@ -161,13 +160,6 @@ Revision-number: 5
 Prop-content-length: 210
 Content-length: 210
 
-K 7
-svn:log
-V 111
-Modify the script in a trivial way.
-
-The actual purpose of this commit is to demonstrate property persistance.
-
 K 10
 svn:author
 V 3
@@ -176,14 +168,21 @@ K 8
 svn:date
 V 27
 2011-12-13T01:08:54.240871Z
+K 7
+svn:log
+V 111
+Modify the script in a trivial way.
+
+The actual purpose of this commit is to demonstrate property persistance.
+
 PROPS-END
 
 Node-path: trunk/hello
 Node-kind: file
 Node-action: change
-Text-content-length: 34
 Text-content-md5: d84bcf7a6a5ac2179fbbfa55646e9930
 Text-content-sha1: d1087104b3a7ec3555e40a7dfd3475149bf89f5f
+Text-content-length: 34
 Content-length: 34
 
 #!/bin/sh
@@ -195,13 +194,6 @@ Revision-number: 6
 Prop-content-length: 234
 Content-length: 234
 
-K 7
-svn:log
-V 135
-A commit after doing 'svn propdel svn:executable hello'.
-
-Should produce a fileop that changes the permissions back to non-executable.
-
 K 10
 svn:author
 V 3
@@ -210,6 +202,13 @@ K 8
 svn:date
 V 27
 2011-12-13T01:19:08.884497Z
+K 7
+svn:log
+V 135
+A commit after doing 'svn propdel svn:executable hello'.
+
+Should produce a fileop that changes the permissions back to non-executable.
+
 PROPS-END
 
 Node-path: trunk/hello
@@ -225,11 +224,6 @@ Revision-number: 7
 Prop-content-length: 121
 Content-length: 121
 
-K 7
-svn:log
-V 23
-Another spacer commit.
-
 K 10
 svn:author
 V 3
@@ -238,14 +232,19 @@ K 8
 svn:date
 V 27
 2011-12-23T02:41:07.814932Z
+K 7
+svn:log
+V 23
+Another spacer commit.
+
 PROPS-END
 
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 108
 Text-content-md5: 0855ca99e864029050a7e7a9450b9362
 Text-content-sha1: b45d981141dcd39a1790f3cb077da326493f21e6
+Text-content-length: 108
 Content-length: 108
 
 This is a test Subversion repository
@@ -257,13 +256,6 @@ Revision-number: 8
 Prop-content-length: 149
 Content-length: 149
 
-K 7
-svn:log
-V 51
-svn propset svn:executable 'true' hello
-
-...again.
-
 K 10
 svn:author
 V 3
@@ -272,6 +264,13 @@ K 8
 svn:date
 V 27
 2011-12-23T02:41:58.829646Z
+K 7
+svn:log
+V 51
+svn propset svn:executable 'true' hello
+
+...again.
+
 PROPS-END
 
 Node-path: trunk/hello
@@ -291,11 +290,6 @@ Revision-number: 9
 Prop-content-length: 130
 Content-length: 130
 
-K 7
-svn:log
-V 32
-Perform 'svn cp hello goodbye'.
-
 K 10
 svn:author
 V 3
@@ -304,6 +298,11 @@ K 8
 svn:date
 V 27
 2011-12-23T02:43:07.411655Z
+K 7
+svn:log
+V 32
+Perform 'svn cp hello goodbye'.
+
 PROPS-END
 
 Node-path: trunk/goodbye
@@ -319,11 +318,6 @@ Revision-number: 10
 Prop-content-length: 176
 Content-length: 176
 
-K 7
-svn:log
-V 78
-The translated 'goodbye' fileop for this revision should have executable set.
-
 K 10
 svn:author
 V 3
@@ -332,14 +326,19 @@ K 8
 svn:date
 V 27
 2011-12-23T02:46:59.669046Z
+K 7
+svn:log
+V 78
+The translated 'goodbye' fileop for this revision should have executable set.
+
 PROPS-END
 
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 95
 Text-content-md5: a17a484ca9bbcc5d846b32f46b9fc835
 Text-content-sha1: 3b554cc84432c096e0848c2402652a05ddac06f8
+Text-content-length: 95
 Content-length: 95
 
 This is a test Subversion repository
@@ -350,13 +349,71 @@ After the copy, goodbye has the svn:executable property.
 Node-path: trunk/goodbye
 Node-kind: file
 Node-action: change
-Text-content-length: 40
 Text-content-md5: d8372e0d96a378b5b4cba98f1ab4f25b
 Text-content-sha1: 8f331995996b8e1249ef8c5a6e30c83665b850db
+Text-content-length: 40
 Content-length: 40
 
 #!/bin/sh
 
 echo "Goodbye, cruel world!"
+
+
+Revision-number: 11
+Prop-content-length: 150
+Content-length: 150
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2018-01-16T14:19:52.412668Z
+K 7
+svn:log
+V 52
+Committing after "svn cp trunk branches/testbranch"
+
+PROPS-END
+
+Node-path: branches/testbranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 10
+Node-copyfrom-path: trunk
+
+
+Revision-number: 12
+Prop-content-length: 133
+Content-length: 133
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2018-01-16T14:23:01.028862Z
+K 7
+svn:log
+V 36
+Verify retention of executable bit.
+
+PROPS-END
+
+Node-path: branches/testbranch/goodbye
+Node-kind: file
+Node-action: change
+Text-content-md5: f9527925be8010c77016b62b44002309
+Text-content-sha1: a5f95254e5d17cf9338757233068cc620bbd3a3b
+Text-content-length: 50
+Content-length: 50
+
+#!/bin/sh
+
+echo "Not quite goodbye, cruel world!"
 
 
