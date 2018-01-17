@@ -299,15 +299,15 @@ def export():
 def mirror(operand, mirrordir):
     "Refresh a local mirror directory from its remote repository"
     pwd = os.getcwd()
-    if re.match("svn://|svn+ssh://|https://|http://", operand) \
+    if re.match("svn://|svn\+ssh://|https://|http://", operand) \
        or (operand.startswith("file://") and os.isdir(os.path.join(operand+"locks"))):
         if mirrordir:
             locald = mirrordir
         else:
             locald = os.path.basename(operand) + "-mirror"
         do_or_die("svnadmin create " + locald)
-        with open(locald + "/hooks/pre-revprop-change", "w"):
-            write("#!/bin/sh\nexit 0;\n")
+        with open(locald + "/hooks/pre-revprop-change", "w") as wp:
+            wp.write("#!/bin/sh\nexit 0;\n")
         try:
             os.remove(locald + "/hooks/post-revprop-change")
         except OSError:
