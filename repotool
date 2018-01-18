@@ -510,6 +510,16 @@ def checkout(args):
     else:
         croak("checkout not supported for this repository type.")
 
+def nuke(linkpath):
+    "Nuke  a comparison temporary directory."
+    if os.path.islink(linkpath):
+        os.remove(linkpath)
+    else:
+        try:
+            shutil.rmtree(linkpath)
+        except OSError:
+            pass
+
 def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
@@ -545,21 +555,9 @@ def compare(args):
     if not os.path.isdir(source) or not os.path.isdir(target):
         croak("both repository directories must exist.")
     rsource = os.path.join(TMPDIR, "source")
-    if os.path.islink(rsource):
-        os.remove(rsource)
-    else:
-        try:
-            shutil.rmtree(rsource)
-        except OSError:
-            pass
+    nuke(rsource)
     rtarget = os.path.join(TMPDIR, "target")
-    if os.path.islink(rtarget):
-        os.remove(rtarget)
-    else:
-        try:
-            shutil.rmtree(rtarget)
-        except OSError:
-            pass
+    nuke(rtarget)
     diffopts = []
     sourceignores = []
     tmpdir = os.getenv("TMPDIR") or "/tmp" 
@@ -603,6 +601,8 @@ def compare(args):
             tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
             if sstat != tstat:
                 print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
+    nuke(rsource)
+    nuke(rtarget)
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
