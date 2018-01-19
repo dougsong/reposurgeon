@@ -11101,7 +11101,7 @@ paths, patch the permission field to the first argument value.
         if self.selection is None:
             raise Recoverable("no selection")
         fields = shlex.split(line)
-        if not fields or len(fields) != 2:
+        if not fields or len(fields) < 2:
             raise Recoverable("missing or malformed setperm line")
         perm = fields.pop(0)
         if perm not in ('100644', '100755', '120000'):
