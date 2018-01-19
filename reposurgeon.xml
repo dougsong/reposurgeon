@@ -3967,6 +3967,11 @@ a line-ending comment and screw up parsing.</para>
 <para>Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 <command>reposurgeon</command>.</para>
+
+<para>Limitations edescribed above are unlikely to change.  Do "help
+bugs" at the reposurgeon prompt to see up-to-date information on
+reposurgeon bugs and internal problems that are expected to be fixed
+in some future release.</para>
 </refsect1>
 
 <refsect1 id='requirements'><title>REQUIREMENTS</title>

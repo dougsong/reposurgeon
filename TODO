@@ -7,7 +7,7 @@
   is a workaround for this bug, allowing these errors to be patched out.
 
 * Weird combinations of Subversion copy-delete operations can produce
-  content-mismatch failures detectable by listcheck. In the test
+  content-mismatch failures detectable by repotool compare. In the test
   suite, this problem is exhibited by agito.svn, fleetwood.svn, and
   references.svn.
 

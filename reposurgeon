@@ -13877,6 +13877,20 @@ Runs the unit tests and reports the results.
             for name in available:
                 runtest(name)
 
+    def help_bugs(self):
+        sys.stdout.write("""\
+* There is a known problem with preservation of Subversion node properties
+  through directory copies.  They aren't - this usually shows up as executables
+  losing their x bit due to a branch creation or merge (the last commit of the
+  executable.svn test load exhibits the problem).  The setperm command
+  is a workaround for this bug, allowing these errors to be patched out.
+
+* Weird combinations of Subversion copy-delete operations can produce
+  content-mismatch failures detectable by repotool compare. In the test
+  suite, this problem is exhibited by agito.svn, fleetwood.svn, and
+  references.svn.
+""")
+
 # this class copied from https://code.activestate.com/recipes/576694/
 # created by Raymond Hettinger
 # revision 9, dated 2009-03-19
