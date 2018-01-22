@@ -720,6 +720,11 @@ command.</para>
 <para>If the read location is a file and the <option>--format=fossil</option>
 is used, the file is interpreted as a Fossil repository.</para>
 
+<para>The <option>--preserve</option> is interpreted in a way
+dependent of the type of the incoming repository or stream. Presently
+it only affects the processing of Subversion repositories; see
+<xref linkend='subversion'/> for details.</para>
+
 <para>The just-read-in repo is added to the list of loaded
 repositories and becomes the current one, selected for surgery. If it
 was read from a plain file and the file name ends with one of the
@@ -3218,11 +3223,7 @@ disambiguate as necessary.</para>
 
 <para><application>reposurgeon</application> can read Subversion
 dumpfiles or edit a Subversion repository (and you must point it at a
-repository, not a checkout directory).  The
-<application>reposurgeon</application> distribution includes a script
-named <quote>repotool</quote> that you can use to make and then
-incrementally update a local mirror of a remote repository for
-editing or conversion purposes.</para>
+repository, not a checkout directory).</para>
 
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
@@ -3233,6 +3234,12 @@ its behavior when reading Subversion repositories:</para>
 <varlistentry>
 <term>--nobranch</term>
 <listitem><para>Suppress branch analysis.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>--preserve</term>
+<listitem><para>Never discard metadata.  In particular, preserve
+branch-ceation commits (and their metadata) in full rather than turning
+commits for empty branches into bare gitspace resets.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>--ignore-properties</term>
@@ -3250,7 +3257,7 @@ history.</para></listitem>
 <listitem><para>If the --use-uuid read option is set, the repository's
 UUID will be used as the hostname when faking up email addresses, a la
 git-svn.  Otherwise, addresses will be generated the way git cvs-import does
-it, simply ciopying the username into the address field.</para>
+it, simply copying the username into the address field.</para>
 </listitem>
 </varlistentry>
 </variablelist>
@@ -3292,26 +3299,29 @@ is in the branchify set (which is true by default) all top-level
 directories other than /trunk, /tags, and /branches are also
 considered potential branches.</para></listitem>
 
-<listitem><para>Each potential branch is checked to see if it has
-commits on it after the initial creation or copy.  If there are such
-commits, it becomes a branch.  If not, it becomes a tag in order to
-preserve the commit metadata.  (In all cases, the name of the tag or
-branch is the basename of the directory.)</para></listitem>
-
 <listitem><para>Files in the top-level directory are assigned to a
 synthetic branch named 'root'.</para></listitem>
+
+<listitem><para>Each potential branch is checked to see if it has
+commits on it after the initial creation or copy.  If there are such
+commits, it becomes a branch.  If not, it may become a tag in order to
+preserve the commit metadata (see the description of the --preserve
+option below).  In all cases, the name of any created tag or branch is
+the basename of the directory.</para></listitem>
 </orderedlist>
 
-<para>Each commit that only creates or deletes directories (in
-particular, copy commits for tags and branches, and commits that only
-change properties) will be transformed into a tag named after the
-branch, containing the date/author/comment metadata from the
-commit. While this produces a desirable result for tags, non-tag
-branches (including trunk) will also get root tags this way. This
-apparent misfeature has been accepted so that
-<application>reposurgeon</application> will never destroy
-human-generated metadata that might have value; it is left up to the
-user to manually remove unwanted tags.</para>
+<para>Branch-creation operations with no following commits are treated
+differently depending on whether or not the --preserve option is
+on. If it is off (the default) the branch creation becomes an empty
+gitspace branch represented by a reset operation; any comment on the
+commit is issued with a warning.  If --preserve is on, the comment
+metadata is preserved in an empty commit attached to the branchpoint.</para>
+
+<para>Otherwise, each commit that only creates or deletes directories
+(in particular, copy commits for tags and branches, and commits that
+only change properties) will be transformed into a tag named after the
+tag or branch, containing the date/author/comment metadata from the
+commit.</para>
 
 <para>Subversion branch deletions are turned into deletealls, clearing the
 fileset of the import-stream branch.  When a branch

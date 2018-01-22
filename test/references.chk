@@ -1,3 +1,5 @@
+reposurgeon: branch root commit of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n"' discarded
+reposurgeon: branch root commit of refs/heads/Development becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch 'Development'.\n"' discarded
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1925 ==============================================================
 commit refs/heads/Development
@@ -14262,28 +14264,8 @@ removed Makefile from Testing branch, because it does not belong in SVN.
 from :1991
 D Makefile
 
-reset refs/tags/v2.0.1
+reset refs/heads/INITIAL_IMPORT_AQ
 from :307
-
-reset refs/tags/v2.0.2_pre1
-from :307
-
-reset refs/tags/v2.0.2_pre2
-from :307
-
-reset refs/tags/v2.0.3_pre2
-from :307
-
-reset refs/tags/v2.0.3
-from :307
-
-tag INITIAL_IMPORT_AQ-root
-#legacy-id 3
-from :307
-tagger no-author <no-author> 1106836394 +0000
-data 78
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
 
 tag emptycommit-4
 #legacy-id 4
@@ -14409,13 +14391,6 @@ data 102
 file solis.8 was initially added on branch v2_1_0.
 
 [[Tag from zero-fileop commit at Subversion r53]]
-
-tag Development-root
-#legacy-id 65
-from :307
-tagger no-author <no-author> 1119553881 +0000
-data 72
-This commit was manufactured by cvs2svn to create branch 'Development'.
 
 tag emptycommit-108
 #legacy-id 108

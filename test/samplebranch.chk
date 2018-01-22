@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/samplebranch becomes a reset, comment 'A branch created for illustrative purposes.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -101,12 +102,8 @@ Create another node on the branch side.
 from :8
 M 100644 :11 README
 
-tag samplebranch-root
-#legacy-id 3
+reset refs/heads/samplebranch
 from :4
-tagger esr <esr> 1322682540 +0000
-data 44
-A branch created for illustrative purposes.
 
 tag tipdelete-samplebranch
 #legacy-id 8

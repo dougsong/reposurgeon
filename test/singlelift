@@ -1,7 +1,17 @@
 #!/bin/sh
-# singleload - run a single Suversion conversion test
+# singleload - run a single Subversion conversion test
+mode=check
+case $1 in
+    --view) mode=view; shift ;;
+esac
+
 for x in $*;
 do
     echo "Test $x"
-    reposurgeon "read <$1.svn" "prefer git" "write -" 2>&1 | diff -u $1.chk -
+    case $mode in
+	view)
+	    reposurgeon "read <$1.svn" "prefer git" "write -" 2>&1;;
+	*)
+	    reposurgeon "read <$1.svn" "prefer git" "write -" 2>&1 | diff -u $1.chk - ;;
+    esac
 done

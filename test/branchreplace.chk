@@ -1,3 +1,6 @@
+reposurgeon: branch root of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment "This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n" discarded
+reposurgeon: branch root of refs/heads/Development becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'Development'.\n" discarded
+reposurgeon: branch root of refs/heads/automake becomes a reset, comment '* creating a branch "automake" of trunk\n' discarded
 reposurgeon: mid-branch deleteall on refs/heads/master at <12>.
 #reposurgeon sourcetype svn
 blob
@@ -275,13 +278,11 @@ data 346
 from :28
 M 100644 :29 .gitignore
 
-tag INITIAL_IMPORT_AQ-root
-#legacy-id 3
+reset refs/heads/INITIAL_IMPORT_AQ
 from :8
-tagger no-author <no-author> 1106836394 +0000
-data 78
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
+
+reset refs/heads/automake
+from :28
 
 tag emptycommit-4
 #legacy-id 4
@@ -292,13 +293,6 @@ Initial CVS import from nut testing release 2.0.1-pre4
 
 [[Tag from zero-fileop commit at Subversion r4]]
 
-tag Development-root
-#legacy-id 10
-from :8
-tagger no-author <no-author> 1119553881 +0000
-data 72
-This commit was manufactured by cvs2svn to create branch 'Development'.
-
 tag tipdelete-Development
 #legacy-id 13.1
 from :22
@@ -307,11 +301,4 @@ data 78
 Moving branches/Development into trunk.
 
 [[Split portion of a mixed commit.]]
-
-tag automake-root
-#legacy-id 16
-from :28
-tagger selinger-guest <selinger-guest> 1160946576 +0000
-data 40
-* creating a branch "automake" of trunk
 

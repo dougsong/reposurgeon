@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/emptybranch becomes a reset, comment 'Create an empty top-level branch for test purposes.  Should be tagified.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -42,10 +43,6 @@ Initial README content.
 from :2
 M 100644 :3 README
 
-tag emptybranch-root
-#legacy-id 3
+reset refs/heads/emptybranch
 from :4
-tagger esr <esr> 1323167895 +0000
-data 73
-Create an empty top-level branch for test purposes.  Should be tagified.
 

@@ -3,7 +3,7 @@
 Repository head:
      New 'setperm' command for patching file path permissions.
      Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
-     Maximum working-set size has been reduced.
+     Max working-set size has been reduced, enabling handling of larger repos.
      New 'gitify' command for massaging comments into git conventional form.
      The tag command now allows deleting all tags matching a regexp.
 

@@ -1,3 +1,5 @@
+reposurgeon: branch root commit of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n"' discarded
+reposurgeon: branch root commit of refs/heads/Development becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch 'Development'.\n"' discarded
 CVS:trunk/CHANGES:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/COPYING:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/CREDITS:1.1	2005-01-27T14:33:14Z!aquette

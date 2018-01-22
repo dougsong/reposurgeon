@@ -1,3 +1,5 @@
+reposurgeon: branch root of refs/heads/v1.0 becomes a reset, comment 'create a release branch for 1.0\n' discarded
+reposurgeon: branch root of refs/heads/v2.0 becomes a reset, comment 'create a release branch for 2.0\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -348,17 +350,9 @@ from :36
 M 100644 :40 VERSION
 M 100644 :41 src
 
-tag v1.0-root
-#legacy-id 4
+reset refs/heads/v1.0
 from :9
-tagger db48x <db48x> 1352206628 +0000
-data 32
-create a release branch for 1.0
 
-tag v2.0-root
-#legacy-id 13
+reset refs/heads/v2.0
 from :33
-tagger db48x <db48x> 1352206645 +0000
-data 32
-create a release branch for 2.0
 

@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/realbranch becomes a reset, comment "We're going to put some real content on this branch.\n" discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -58,10 +59,6 @@ Modification on the branch so it doesn't get tagified.
 from :4
 M 100644 :5 README
 
-tag realbranch-root
-#legacy-id 3
+reset refs/heads/realbranch
 from :4
-tagger esr <esr> 1323170783 +0000
-data 53
-We're going to put some real content on this branch.
 

@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/c becomes a reset, comment 'Directory A copied to C. So, directory C is a copy of A at revision 2.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -36,10 +37,6 @@ data 21
 Created directory B.
 M 100644 :1 .gitignore
 
-tag c-root
-#legacy-id 3
+reset refs/heads/c
 from :2
-tagger sivachenko <sivachenko> 1454366588 +0000
-data 71
-Directory A copied to C. So, directory C is a copy of A at revision 2.
 

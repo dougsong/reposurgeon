@@ -2319,6 +2319,9 @@ class Reset(object):
         self.remember(repo, committish=committish, target=target)
         self.deletehook = None
         self.color = None
+    def id_me(self):
+        "ID this reset for humans."
+        return "reset-%s@%s" % (self.ref, self.repo.index(self))
     def remember(self, repo, committish=None, target=None):
         "Remember an attachment to a repo and commit."
         self.repo = repo
@@ -5340,7 +5343,10 @@ class StreamParser:
             return re.compile(regex.encode('ascii')), polybytes(replace)
         compiled_mapping = list(map(compile_regex, global_options["svn_branchify_mapping"]))
         # Now pretty up the branch names
-        for commit in self.repo.commits():
+        deletia = []
+        for (index, commit) in enumerate(self.repo.events):
+            if not isinstance(commit, Commit):
+                continue
             matched = False
             for regex, replace in compiled_mapping:
                 result, substitutions = regex.subn(replace,polybytes(commit.branch))
@@ -5361,9 +5367,20 @@ class StreamParser:
             elif commit.branch == "trunk" + os.sep:
                 commit.set_branch(os.path.join("refs", "heads", "master"))
             else:
-                commit.set_branch(os.path.join("refs", "heads",
-                                              os.path.basename(commit.branch[:-1])))
+                basename = os.path.basename(commit.branch[:-1])
+                commit.set_branch(os.path.join("refs", "heads", basename))
+                # Some of these should turn into resets.  Is this a branchroot
+                # commit with no fileops?
+                if '--preserve' not in options and len(commit.parents()) == 1:
+                    parent = commit.parents()[0]
+                    if parent.branch != commit.branch and not commit.operations():
+                        announce("branch root of %s becomes a reset, comment %s discarded"
+                                 % (commit.branch, repr(commit.comment)))
+                        self.repo.addEvent(Reset(self.repo, ref=commit.branch,
+                                                  target=parent))
+                        deletia.append(index)
             baton.twirl()
+        self.repo.delete(deletia)
         timeit("polishing")
         if debug_enable(DEBUG_EXTRACT):
             announce("after branch name mapping")
@@ -6713,7 +6730,7 @@ class Repository:
     def squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
         if debug_enable(DEBUG_DELETE):
-            announce("Deletion list is %s" % [x+1 for x in selected])
+            announce("Deletion list is %s" % [self.events[x].id_me() for x in selected])
         for qualifier in policy:
             if qualifier not in ["--complain",
                                  "--coalesce",

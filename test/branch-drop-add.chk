@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/v1.0 becomes a reset, comment 'create a release branch for 1.0\n' discarded
 reposurgeon: mid-branch deleteall on refs/heads/v1.0 at <7>.
 #reposurgeon sourcetype svn
 blob
@@ -233,10 +234,6 @@ trunk development proceeds; feature E
 from :26
 M 100644 :27 src
 
-tag v1.0-root
-#legacy-id 4
+reset refs/heads/v1.0
 from :9
-tagger db48x <db48x> 1352540139 +0000
-data 32
-create a release branch for 1.0
 

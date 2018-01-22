@@ -24,8 +24,4 @@
 
 * The Subversion dumper is pretty weak, more a proof of concept than
   anything useful for production. Improving it might be useful.
-
-* Keep Subversion branches with no commits after they were created,
-  rather than just creating -root tags for them.  These should turn
-  into gitspace resets.
   

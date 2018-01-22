@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/testbranch becomes a reset, comment 'Create testbranch. The command was:\n\nsvn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -96,12 +97,6 @@ Add some content after the file copy
 from :9
 M 100644 :10 README
 
-tag testbranch-root
-#legacy-id 3
+reset refs/heads/testbranch
 from :4
-tagger esr <esr> 1323742103 +0000
-data 116
-Create testbranch. The command was:
-
-svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch
 

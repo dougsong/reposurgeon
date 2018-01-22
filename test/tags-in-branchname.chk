@@ -1,3 +1,4 @@
+reposurgeon: branch root of refs/heads/stags becomes a reset, comment 'Create a test branch\n\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -54,11 +55,6 @@ from :2
 D .gitignore
 M 100644 :3 branches/test/b
 
-tag stags-root
-#legacy-id 3
+reset refs/heads/stags
 from :4
-tagger frnchfrgg <frnchfrgg> 1360515905 +0000
-data 22
-Create a test branch
-
 
