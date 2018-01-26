@@ -1,0 +1,76 @@
+SVN-fs-dump-format-version: 2
+ ## Full DVCS-style ID in a Subversion author property.
+
+UUID: 92dbfd97-016e-4a2b-8b16-b830d7230eb3
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2018-01-26T16:20:08.497774Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 8
+rcochran
+K 8
+svn:date
+V 27
+2018-01-26T16:24:20.235306Z
+K 7
+svn:log
+V 28
+Add a file with stuff in it
+
+PROPS-END
+
+Node-path: file.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 9ca5b5da2a7cb73eb04afc7ecfbd1912
+Text-content-sha1: 174d211a96d8af28e9f2ef79ffafd75abfbb6348
+Prop-content-length: 10
+Text-content-length: 5
+Content-length: 15
+
+PROPS-END
+foo!
+
+
+Revision-number: 2
+Prop-content-length: 159
+Content-length: 159
+
+K 10
+svn:author
+V 43
+Robert Cochran <robert-git@cochranmail.com>
+K 8
+svn:date
+V 27
+2018-01-26T16:29:26.460506Z
+K 7
+svn:log
+V 20
+Add more to file.txt
+PROPS-END
+
+Node-path: file.txt
+Node-kind: file
+Node-action: change
+Text-content-md5: 3484155d90e21aff2051c31ed064c17c
+Text-content-sha1: 0ce2a35a9797fcfeb5b99941fc1fc10800f412d3
+Text-content-length: 8
+Content-length: 8
+
+foobar!
+
+
