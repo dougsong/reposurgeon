@@ -300,7 +300,7 @@ def mirror(operand, mirrordir):
     "Refresh a local mirror directory from its remote repository"
     pwd = os.getcwd()
     if re.match("svn://|svn\+ssh://|https://|http://", operand) \
-       or (operand.startswith("file://") and os.isdir(os.path.join(operand+"locks"))):
+       or (operand.startswith("file://") and os.path.isdir(os.path.join(operand+"locks"))):
         if mirrordir:
             locald = mirrordir
         else:
