@@ -95,7 +95,7 @@ default: %(project)s-%(target_vcs)s
 
 # Make a local checkout of the source mirror for inspection at a specific tag
 %(project)s-%%-checkout: %(project)s-mirror
-	cd %(project)s-mirror >/dev/null; repotool checkout %(PWD)/%(project)s-$*-checkout $*
+	cd %(project)s-mirror >/dev/null; repotool checkout $(PWD)/%(project)s-$*-checkout $*
 
 # Force rebuild of first-stage stream from the local mirror on the next make
 local-clobber: clean

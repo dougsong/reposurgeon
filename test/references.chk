@@ -1,5 +1,5 @@
-reposurgeon: branch root commit of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n"' discarded
-reposurgeon: branch root commit of refs/heads/Development becomes a reset, comment '"This commit was manufactured by cvs2svn to create branch 'Development'.\n"' discarded
+reposurgeon: branch root of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment "This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n" discarded
+reposurgeon: branch root of refs/heads/Development becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'Development'.\n" discarded
 reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 Event 1925 ==============================================================
 commit refs/heads/Development

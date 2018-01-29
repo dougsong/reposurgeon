@@ -2,8 +2,8 @@ verbose 1
 reposurgeon: verbose 1
 quiet on
 read <mergeinfo.svn
-reposurgeon: branch root commit of refs/heads/v1.0 becomes a reset, comment ''create a release branch for 1.0\n'' discarded
-reposurgeon: branch root commit of refs/heads/v2.0 becomes a reset, comment ''create a release branch for 2.0\n'' discarded
+reposurgeon: branch root of refs/heads/v1.0 becomes a reset, comment 'create a release branch for 1.0\n' discarded
+reposurgeon: branch root of refs/heads/v2.0 becomes a reset, comment 'create a release branch for 2.0\n' discarded
 * mergeinfo
 :6 split at 2
 reposurgeon: new commits are events 7 and 8.

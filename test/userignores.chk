@@ -1,4 +1,4 @@
-reposurgeon: branch root commit of refs/heads/cool-feature becomes a reset, comment ''Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n'' discarded
+reposurgeon: branch root of refs/heads/cool-feature becomes a reset, comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
