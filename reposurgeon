@@ -4436,7 +4436,6 @@ class StreamParser:
                 if not commit.comment.endswith("\n"):
                     commit.comment += "\n"
             if '@' in au:
-                announce("I see %s" % au)
                 # This is a thing that happens occasionally.  A DVCS-style
                 # attribution (name + email) gets stuffed in a Subversion
                 # author field
