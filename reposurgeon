@@ -2703,16 +2703,14 @@ class Commit(object):
             else:
                 if self.committer.name != newname or self.committer.email != newemail:
                     (self.committer.name, self.committer.email) = (newname, newemail)
-                    # Yes, display this unconditionally
                     if self.repo:
-                        announce(DEBUG_SHOUT, "in %s, Committer is modified" % self.id_me())
+                        announce(DEBUG_EMAILIN, "in %s, Committer is modified" % self.id_me())
                     modified = True
         if "Committer-Date" in msg:
             date = Date(msg["Committer-Date"])
             if self.committer.date is None or date != self.committer.date:
-                # Yes, display this unconditionally
                 if self.repo:
-                    announce(DEBUG_SHOUT, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
+                    announce(DEBUG_EMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
                           % (self.id_me(),
                              self.committer.date, date,
                              self.committer.date.delta(date)))
@@ -2747,9 +2745,8 @@ class Commit(object):
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if self.authors[i].date is None or date != self.authors[i].date:
-                        # Yes, display this unconditionally
                         if self.repo and msg["Event-Number"]:
-                            announce(DEBUG_SHOUT, "in event %s, %s-Date #%d is modified" \
+                            announce(DEBUG_EMAILIN, "in event %s, %s-Date #%d is modified" \
                                      % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
                         modified = True
@@ -3426,7 +3423,7 @@ class RepoStreamer:
                         if os.path.isdir(path):
                             continue
                         if not os.path.exists(path):
-                            announce(DEBUG_SHOUT, "r%s: expected path %s does not exist!" % \
+                            complain("r%s: expected path %s does not exist!" % \
                                      (revision, path))
                             continue
                         newsig = signature(path)
@@ -4332,6 +4329,9 @@ class StreamParser:
         announce(DEBUG_EXTRACT, "Pass 3")
         for copynode in copynodes:
             if debug_enable(DEBUG_FILEMAP):
+                # Conditional retained because computing this filemap
+                # slice can be expensive enough to look like a hang forever
+                # on a sufficiently larhe repository - GCC was the type case.
                 announce(DEBUG_FILEMAP, "r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
@@ -6467,7 +6467,7 @@ class Repository:
                 elif i in values:
                     newassigns.append(i - dc)
             if values and not newassigns:
-                announce(DEBUG_SHOUT, "sequence modification left %s empty" % name)
+                complain("sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
     def declare_sequence_mutation(self, warning=None):
         "Mark the repo event sequence modified."
@@ -6476,7 +6476,7 @@ class Repository:
         self._namecache = {}
         if self.assignments and warning:
             self.assignments = {}
-            announce(DEBUG_SHOUT, "assignments invalidated by " + warning)
+            complain("assignments invalidated by " + warning)
     def earliest_commit(self):
         "Return the earliest commit."
         return next(self.commits())
@@ -6716,7 +6716,7 @@ class Repository:
                         if '/' in event.branch and '/heads/' not in event.branch:
                             complain(speak + "non-head branch attribute %s" % event.branch)
                         if not event.alldeletes():
-                            announce(DEBUG_SHOUT, speak + "non-delete fileops.")
+                            complain(speak + "non-delete fileops.")
                     if not delete:
                         if pushback and not event.has_parents():
                             complain("warning: "
@@ -9615,7 +9615,7 @@ Set or clear echoing of commands before processing.
         try:
             self.echo = int(line)
         except ValueError:
-            announce(DEBUG_SHOUT, "echo value must be an integer")
+            complain("echo value must be an integer")
         if verbose:
             announce(DEBUG_SHOUT, "echo %d" % self.echo)
 
@@ -10784,9 +10784,9 @@ CVS empty-comment marker.
                 changers.append(update)
         if verbose:
             if not changers:
-                announce(DEBUG_SHOUT, "no events modified by mailbox_in.")
+                complain("no events modified by mailbox_in.")
             else:
-                announce(DEBUG_SHOUT, "%d events modified by mailbox_in." % len(changers))
+                complain("%d events modified by mailbox_in." % len(changers))
         if parse.stdout != sys.stdout:
             if "--changed" in parse.options:
                 for update in changers:
@@ -11182,17 +11182,17 @@ With  the --debug option, show messages about mismatches.
             def coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce(DEBUG_SHOUT, "committer email mismatch at %s" % cnext.id_me())
+                        complain("committer email mismatch at %s" % cnext.id_me())
                     return False
                 if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce(DEBUG_SHOUT, "time fuzz exceeded at %s" % cnext.id_me())
+                        complain("time fuzz exceeded at %s" % cnext.id_me())
                     return False
                 if changelog and not is_clog(cthis) and is_clog(cnext):
                     return True
                 if cthis.comment != cnext.comment:
                     if verbose >= DEBUG_DELETE or '--debug' in parse.options:
-                        announce(DEBUG_SHOUT, "comment mismatch at %s" % cnext.id_me())
+                        complain("comment mismatch at %s" % cnext.id_me())
                     return False
                 return True
             eligible = {}
@@ -13203,7 +13203,7 @@ to re-set it.
             for match, replace in global_options['svn_branchify_mapping']:
                 announce(DEBUG_SHOUT,  "\t" + match + " -> " + replace)
         else:
-            announce(DEBUG_SHOUT, "branchify_map is empty.")
+            complain("branchify_map is empty.")
 
     #
     # Setting options
