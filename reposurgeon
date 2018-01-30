@@ -3108,11 +3108,13 @@ class Commit(object):
                 parts.append("author %s\n" % author)
         if self.committer:
             parts.append("committer %s\n" % self.committer)
-        if self.comment is not None:
-            comment = self.comment
-            if options and "--legacy" in options and self.legacy_id:
-                comment += "\nLegacy-ID: %s\n" % self.legacy_id
-            parts.append("data %d\n%s" % (len(comment), comment))
+        # As of git 2.13.6 (possibly earlier) the comment fields of
+        # commit is no longer optional - you have to emit data 0 if there
+        # is no comment, otherwise the importer gets confused.
+        comment = self.comment or ""
+        if options and "--legacy" in options and self.legacy_id:
+            comment += "\nLegacy-ID: %s\n" % self.legacy_id
+        parts.append("data %d\n%s" % (len(comment), comment))
         if "nl-after-comment" in self.repo.export_style():
             parts.append("\n")
         parents = self.parents()
