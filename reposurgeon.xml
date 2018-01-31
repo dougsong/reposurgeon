@@ -3238,8 +3238,10 @@ its behavior when reading Subversion repositories:</para>
 <varlistentry>
 <term>--preserve</term>
 <listitem><para>Never discard metadata.  In particular, preserve
-branch-ceation commits (and their metadata) in full rather than turning
-commits for empty branches into bare gitspace resets.</para></listitem>
+branch-creation commits (and their metadata) in full rather than turning
+commits for empty branches into bare gitspace resets.  Also, preserve
+branges and tags with following tip deletes rather than nuking them;
+the tip deletes become tags.</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>--ignore-properties</term>

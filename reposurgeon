@@ -3543,6 +3543,7 @@ SD_ADD = 0
 SD_DELETE = 1
 SD_CHANGE = 2
 SD_REPLACE = 3
+SD_NUKE = 4	# Not part of the Subversion data model
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
@@ -4259,6 +4260,32 @@ class StreamParser:
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n"))
+        announce(DEBUG_EXTRACT, "Pass 0")
+        if '--preserve' not in options:
+            # Identify Subversion tag/branch directories with
+            # tipdeletes and nuke them.  Happens well before tip
+            # deletes are tagified, the behavior if --preserve is on.
+            # This pass doesn't touch trunk - any tipdelete on trunk
+            # we preseume to be some kind of operator error that needs
+            # to show up under lint and be manually corrected
+            reverso = self.revisions.keys()
+            reverso.sort(reverse=True)
+            deadbranches = set([])
+            for revision in reverso:
+                for node in self.revisions[revision].nodes:
+                    if not node.path.startswith("tags") and not node.path.startswith("branches"):
+                        continue
+                    if node.action == SD_DELETE and node.kind == SD_DIR:
+                        deadbranches.add(node.path)
+                        announce(DEBUG_SHOUT, "r%s~%s nuked by tip delete" % (revision, node.path))
+                    if node.path in deadbranches:
+                        node.action = SD_NUKE
+                    for deadwood in deadbranches:
+                        if node.path.startswith(deadwood + os.sep):
+                            node.action = SD_NUKE
+                            break
+            for (revision, record) in self.revisions.items():
+                record.nodes = [node for node in record.nodes if node.action != SD_NUKE]
         # Find all copy sources and compute the set of branches
         announce(DEBUG_EXTRACT, "Pass 1")
         nobranch = '--nobranch' in options
