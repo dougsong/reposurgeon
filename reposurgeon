@@ -4268,7 +4268,7 @@ class StreamParser:
             # This pass doesn't touch trunk - any tipdelete on trunk
             # we preseume to be some kind of operator error that needs
             # to show up under lint and be manually corrected
-            reverso = self.revisions.keys()
+            reverso = list(self.revisions.keys())
             reverso.sort(reverse=True)
             deadbranches = set([])
             for revision in reverso:
