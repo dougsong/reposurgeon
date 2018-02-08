@@ -457,7 +457,11 @@ def checkout(args):
     elif vcs == "svn-checkout":
         if revision:
             revision = "-r " + revision
-        do_or_die("svn up -q " + revision)
+            # Potentially dangerous assumption: User made a full checkout
+            # of HEAD and the update operation (which is hideously slow on
+            # large repositories) only needs to be done if an explicit revision
+            # was supplied.
+            do_or_die("svn up -q " + revision)
         relpath = ""
         if tag and os.path.isdir("tags"):
             relpath = os.path.join("tags", tag)

@@ -131,6 +131,14 @@ to <filename>/tmp</filename> if it is not set.</para>
 <para>Tag comparisons with git will not cope well with a branch
 name containing the string "detached".</para>
 
+<para>Due to extreme slowness of the Subversion checkout operation,
+the compare head, tag, and branch modes assume that if one of the
+direcvtories is a Subversion checkout you have done a full checkout of
+HEAD before calling this tool; thus no svn update operation is
+required unless you give an -r option.  Spurious errors will be
+reported if the directory is not a full checkout of HEAD.  To avoid
+this optimization and gorce updating, do "-r HEAD".</para>
+
 </refsect1>
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
 
