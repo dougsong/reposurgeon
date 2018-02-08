@@ -137,7 +137,7 @@ direcvtories is a Subversion checkout you have done a full checkout of
 HEAD before calling this tool; thus no svn update operation is
 required unless you give an -r option.  Spurious errors will be
 reported if the directory is not a full checkout of HEAD.  To avoid
-this optimization and gorce updating, do "-r HEAD".</para>
+this optimization and force updating, do "-r HEAD".</para>
 
 </refsect1>
 <refsect1 id='requirements'><title>REQUIREMENTS</title>
