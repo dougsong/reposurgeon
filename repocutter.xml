@@ -153,6 +153,25 @@ arguments.</para></listitem>
 be relevant to a conversion problem. See the embedded help for syntax
 details and the relevance filter.</para></listitem>
 </varlistentry>
+<varlistentry>
+<term>see</term>
+<listitem><para>Render a very condensed report on the repository node
+structure, mainly useful for examining strange and pathological
+repositories, File content is ignored.  You get one line per
+repository operation, reporting the revision, operation type, file
+path, and the copy source (if any).  Directory paths are distinguished
+by a trailing slash.  The 'copy' operation is really an 'add' with a
+directory source and target; the display name is changed to make them
+easier to see.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term>swap</term>
+<listitem><para>Swap the top two components of every path.  This is
+sometimes useful when converting a multi-project Subversion repository
+that has normal trunk/branch/tag structure under each top-level
+directory (of course the alternative is to break it into componebts
+using mutiple strip operations).</para></listitem>
+</varlistentry>
 </variablelist>
 
 <para>
