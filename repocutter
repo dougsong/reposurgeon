@@ -36,6 +36,7 @@ Available subcommands:
    renumber
    reduce
    see
+   swap
 """
 
 # This code runs under both Python 2 and Python 3: preserve this property!
@@ -56,6 +57,7 @@ oneliners = {
     "renumber":   "Renumber revisions so they're contiguous",
     "reduce":     "Topologically reduce a dump.",
     "see":        "Report only essential topological information",
+    "swap":       "Swap the top two components of every path"
     }
 
 helpdict = {
@@ -200,6 +202,14 @@ revision, operation type, file path, and the copy source (if any).
 Directory paths are distinguished by a trailing slash.  The 'copy'
 operation is really an 'add' with a directory source and target;
 the display name is changed to make them easier to see.
+""",
+    "swap": """\
+see: usage: repocutter swap
+
+Swap the top two components of every path.  This is sometimes useful when
+converting a multi-project Subversion repository that has normal trunk/branch/tag
+structure under each top-level directory (of course the alternative is to
+break it into componebts using mutiple strip operations).
 """
     }
 
@@ -997,6 +1007,40 @@ def see(source, selection):
     source.report(selection,
                   nodehook=__seenode, passthrough=False)
 
+def swap(source, selection):
+    "Hack paths by swapping the top two components."
+    def mutator(path):
+        parts = path.split(os.sep)
+        if len(parts) < 2:
+            # Single-compnent directory creations should be skipped;
+            # each such operatyion for directory 'foo' is replace by the
+            # creation of the swapped directory trunk/foo.  Works because
+            # both reposurgeon and Subversion's stream dump reader don't mind
+            # if no explicit trunk/ directory creation is ever done as long
+            # as some trunk subdirectory *is* created.
+            return None
+        else:
+            return os.sep.join([parts[1], parts[0]] + parts[2:])
+    def __revhook(propkeys, propdict):
+        if "svn:mergeinfo" in propdict:
+            propdict["svn:mergeinfo"] = mutator(propdict["svn:mergeinfo"])
+        return (propkeys, propdict)
+    def __nodehook(header, properties, content):
+        for htype in ("Node-path: ", "Node-copyfrom-path: "):
+            offs = header.find(htype)
+            if offs > -1:
+                offs += len(htype)
+                endoffs = offs + header[offs:].index("\n")
+                before = header[:offs]
+                pathline = header[offs:endoffs]
+                after = header[endoffs:]
+                pathline = mutator(pathline)
+                if pathline is None:
+                    return None
+                header = before + pathline + after
+        return header + properties + content
+    source.report(selection, __nodehook, __revhook)
+
 def patterns_compile(patterns):
     return [re.compile(pattern) for pattern in patterns]
 
@@ -1075,6 +1119,8 @@ if __name__ == '__main__':
             doreduce(DumpfileSource(open(arguments[1]), baton))
         elif arguments[0] == "see":
             see(DumpfileSource(sys.stdin, baton), selection)
+        elif arguments[0] == "swap":
+            swap(DumpfileSource(sys.stdin, baton), selection)
         elif arguments[0] == "help":
             if len(arguments) == 1:
                 sys.stdout.write(__doc__)

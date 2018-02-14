@@ -1,0 +1,3933 @@
+SVN-fs-dump-format-version: 2
+ ## Test load for repocutter swap operation
+
+UUID: 7cc6ed7d-4c48-4067-983f-98396a31804d
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2009-08-12T00:37:40.475100Z
+PROPS-END
+
+Revision-number: 2
+Prop-content-length: 166
+Content-length: 166
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-12T18:48:49.807356Z
+K 7
+svn:log
+V 58
+Criando estrutura de repositorio (trunk, branches, tags)
+
+
+PROPS-END
+
+Node-path: branches/activeedi
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags/activeedi
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-12T18:55:38.272736Z
+K 7
+svn:log
+V 17
+Initial import.
+
+
+PROPS-END
+
+Node-path: trunk/activeedi/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/README.
+
+
+
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 54
+Content-length: 64
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/lib
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi/lib/active_edi
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi/lib/active_edi/attributes.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 74
+Content-length: 84
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/active_edi/attributes.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/base.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 68
+Content-length: 78
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/active_edi/base.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/active_edi.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/activeedi.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 62
+Content-length: 72
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/activeedi.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/icms.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 57
+Content-length: 67
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/icms.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/obrigatorio.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 64
+Content-length: 74
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/lib/obrigatorio.rb.
+
+
+
+
+Node-path: trunk/activeedi/test
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi/test/basic.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 59
+Content-length: 69
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/test/basic.rb.
+
+
+
+
+Node-path: trunk/activeedi/test/exemplo_importacao_novosistema.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 85
+Content-length: 95
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/test/exemplo_importacao_novosistema.txt.
+
+
+
+
+Node-path: trunk/activeedi/test/obrigatorio_test.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 70
+Content-length: 80
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/test/obrigatorio_test.rb.
+
+
+
+
+Node-path: trunk/activeedi/test/teste.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 59
+Content-length: 69
+
+PROPS-END
+Revision is 3, file path is activeedi/trunk/test/teste.rb.
+
+
+
+
+Revision-number: 4
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-12T19:49:27.810428Z
+K 7
+svn:log
+V 23
+reorganizando estrutura
+PROPS-END
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: change
+Text-content-length: 54
+Content-length: 54
+
+Revision is 4, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/base.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 68
+Content-length: 68
+
+Revision is 4, file path is activeedi/trunk/lib/active_edi/base.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 63
+Content-length: 63
+
+Revision is 4, file path is activeedi/trunk/lib/active_edi.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/icms.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 70
+Content-length: 80
+
+PROPS-END
+Revision is 4, file path is activeedi/trunk/lib/novo_sistema/icms.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/obrigatorio.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 77
+Content-length: 87
+
+PROPS-END
+Revision is 4, file path is activeedi/trunk/lib/novo_sistema/obrigatorio.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/icms.rb
+Node-action: delete
+
+
+Node-path: trunk/activeedi/lib/obrigatorio.rb
+Node-action: delete
+
+
+Node-path: trunk/activeedi/test/obrigatorio_test.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 4, file path is activeedi/trunk/test/obrigatorio_test.rb.
+
+
+
+
+Revision-number: 10
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-14T20:04:18.209293Z
+K 7
+svn:log
+V 23
+adicionado arquivo TODO
+PROPS-END
+
+Node-path: trunk/activeedi/TODO
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 51
+Content-length: 61
+
+PROPS-END
+Revision is 10, file path is activeedi/trunk/TODO.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/attributes.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 10, file path is activeedi/trunk/lib/active_edi/attributes.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/obrigatorio.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 78
+Content-length: 78
+
+Revision is 10, file path is activeedi/trunk/lib/novo_sistema/obrigatorio.rb.
+
+
+
+
+Revision-number: 13
+Prop-content-length: 167
+Content-length: 167
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-17T22:08:51.257782Z
+K 7
+svn:log
+V 59
+retorna float ou inteiro de acordo com o atributo 'decimal'
+PROPS-END
+
+Node-path: trunk/activeedi/lib/active_edi/attributes.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 13, file path is activeedi/trunk/lib/active_edi/attributes.rb.
+
+
+
+
+Revision-number: 14
+Prop-content-length: 170
+Content-length: 170
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-18T13:17:45.146145Z
+K 7
+svn:log
+V 62
+adicionando registros tipo 54 e 51 e renomeando o tipo 10 e 50
+PROPS-END
+
+Node-path: trunk/activeedi/lib/novo_sistema/icms_50.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 13
+Node-copyfrom-path: trunk/activeedi/lib/novo_sistema/icms.rb
+Text-content-length: 74
+Content-length: 74
+
+Revision is 14, file path is activeedi/trunk/lib/novo_sistema/icms_50.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/ipi_51.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 14, file path is activeedi/trunk/lib/novo_sistema/ipi_51.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/obrigatorio_10.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 13
+Node-copyfrom-path: trunk/activeedi/lib/novo_sistema/obrigatorio.rb
+Text-content-length: 81
+Content-length: 81
+
+Revision is 14, file path is activeedi/trunk/lib/novo_sistema/obrigatorio_10.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/produto_54.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 77
+Content-length: 87
+
+PROPS-END
+Revision is 14, file path is activeedi/trunk/lib/novo_sistema/produto_54.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/icms.rb
+Node-action: delete
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/obrigatorio.rb
+Node-action: delete
+
+
+Revision-number: 16
+Prop-content-length: 149
+Content-length: 149
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-18T13:25:49.238454Z
+K 7
+svn:log
+V 41
+finalizando tipo 54 e mudando a descricao
+PROPS-END
+
+Node-path: trunk/activeedi/lib/novo_sistema/produto_nota_fiscal_54.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 14
+Node-copyfrom-path: trunk/activeedi/lib/novo_sistema/produto_54.rb
+Text-content-length: 89
+Content-length: 89
+
+Revision is 16, file path is activeedi/trunk/lib/novo_sistema/produto_nota_fiscal_54.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/produto_54.rb
+Node-action: delete
+
+
+Revision-number: 17
+Prop-content-length: 133
+Content-length: 133
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2009-08-18T14:08:33.417632Z
+K 7
+svn:log
+V 26
+#2042 - Criacao de classes
+PROPS-END
+
+Node-path: trunk/activeedi/lib/novo_sistema/cadastro_cliente_77.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 86
+Content-length: 96
+
+PROPS-END
+Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_cliente_77.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/cadastro_fornecedor_76.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 89
+Content-length: 99
+
+PROPS-END
+Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_fornecedor_76.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/cadastro_produto_75.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 86
+Content-length: 96
+
+PROPS-END
+Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_produto_75.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/novo_sistema/conhecimento_transporte_70.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 93
+Content-length: 103
+
+PROPS-END
+Revision is 17, file path is activeedi/trunk/lib/novo_sistema/conhecimento_transporte_70.rb.
+
+
+
+
+Revision-number: 18
+Prop-content-length: 127
+Content-length: 127
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2009-08-18T14:22:26.997653Z
+K 7
+svn:log
+V 20
+#2042 - Classe issqn
+PROPS-END
+
+Node-path: trunk/activeedi/lib/novo_sistema/issqn_80.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 75
+Content-length: 85
+
+PROPS-END
+Revision is 18, file path is activeedi/trunk/lib/novo_sistema/issqn_80.rb.
+
+
+
+
+Revision-number: 19
+Prop-content-length: 182
+Content-length: 182
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-18T14:29:27.626362Z
+K 7
+svn:log
+V 74
+renomeado arquivo do teste basico e incluida rake task para geracao de gem
+PROPS-END
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: change
+Text-content-length: 55
+Content-length: 55
+
+Revision is 19, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/test/basic_test.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 65
+Content-length: 75
+
+PROPS-END
+Revision is 19, file path is activeedi/trunk/test/basic_test.rb.
+
+
+
+
+Node-path: trunk/activeedi/test/obrigatorio_test.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 71
+Content-length: 71
+
+Revision is 19, file path is activeedi/trunk/test/obrigatorio_test.rb.
+
+
+
+
+Node-path: trunk/activeedi/test/basic.rb
+Node-action: delete
+
+
+Node-path: trunk/activeedi/test/teste.rb
+Node-action: delete
+
+
+Revision-number: 25
+Prop-content-length: 129
+Content-length: 129
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-20T17:31:37.538182Z
+K 7
+svn:log
+V 21
+adicionando CHANGELOG
+PROPS-END
+
+Node-path: trunk/activeedi/CHANGELOG
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 56
+Content-length: 66
+
+PROPS-END
+Revision is 25, file path is activeedi/trunk/CHANGELOG.
+
+
+
+
+Revision-number: 32
+Prop-content-length: 137
+Content-length: 137
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-28T15:37:10.705250Z
+K 7
+svn:log
+V 29
+adicionando gem da biblioteca
+PROPS-END
+
+Node-path: trunk/activeedi/pkg
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/activeedi/pkg/activeedi-1.0.0.gem
+Node-kind: file
+Node-action: add
+Prop-content-length: 59
+Text-content-length: 70
+Content-length: 129
+
+K 13
+svn:mime-type
+V 24
+application/octet-stream
+PROPS-END
+Revision is 32, file path is activeedi/trunk/pkg/activeedi-1.0.0.gem.
+
+
+
+
+Revision-number: 34
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-28T18:46:41.907594Z
+K 7
+svn:log
+V 11
+release 1.1
+PROPS-END
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: change
+Text-content-length: 55
+Content-length: 55
+
+Revision is 34, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/pkg/activeedi-1.1.gem
+Node-kind: file
+Node-action: add
+Prop-content-length: 59
+Text-content-length: 68
+Content-length: 127
+
+K 13
+svn:mime-type
+V 24
+application/octet-stream
+PROPS-END
+Revision is 34, file path is activeedi/trunk/pkg/activeedi-1.1.gem.
+
+
+
+
+Revision-number: 35
+Prop-content-length: 212
+Content-length: 212
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-09-01T14:03:36.331694Z
+K 7
+svn:log
+V 103
+#2117 - inclusao do metodo de classe property e correcoes para continuar usando schema, bem como testes
+PROPS-END
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: change
+Text-content-length: 55
+Content-length: 55
+
+Revision is 35, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/attributes.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 35, file path is activeedi/trunk/lib/active_edi/attributes.rb.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/base.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 69
+Content-length: 69
+
+Revision is 35, file path is activeedi/trunk/lib/active_edi/base.rb.
+
+
+
+
+Node-path: trunk/activeedi/test/property_test.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 68
+Content-length: 78
+
+PROPS-END
+Revision is 35, file path is activeedi/trunk/test/property_test.rb.
+
+
+
+
+Revision-number: 38
+Prop-content-length: 190
+Content-length: 190
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-09-01T17:57:21.270909Z
+K 7
+svn:log
+V 82
+removendo include do ruby-debug da classe base e atualizando a gem para versao 1.2
+PROPS-END
+
+Node-path: trunk/activeedi/Rakefile
+Node-kind: file
+Node-action: change
+Text-content-length: 55
+Content-length: 55
+
+Revision is 38, file path is activeedi/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/activeedi/lib/active_edi/base.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 69
+Content-length: 69
+
+Revision is 38, file path is activeedi/trunk/lib/active_edi/base.rb.
+
+
+
+
+Node-path: trunk/activeedi/pkg/activeedi-1.2.gem
+Node-kind: file
+Node-action: add
+Prop-content-length: 59
+Text-content-length: 68
+Content-length: 127
+
+K 13
+svn:mime-type
+V 24
+application/octet-stream
+PROPS-END
+Revision is 38, file path is activeedi/trunk/pkg/activeedi-1.2.gem.
+
+
+
+
+Revision-number: 40
+Prop-content-length: 211
+Content-length: 211
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-12T01:28:22.450837Z
+K 7
+svn:log
+V 103
+refs #9863 - Adicionado schema de pastas e arquivo com esboço inicial do parser e das classes da NFs-e
+PROPS-END
+
+Node-path: branches/brazilian-nfse
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags/brazilian-nfse
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/brazilian-nfse
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/brazilian-nfse/nfse.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 59
+Content-length: 69
+
+PROPS-END
+Revision is 40, file path is brazilian-nfse/trunk/nfse.rb.
+
+
+
+
+Revision-number: 41
+Prop-content-length: 194
+Content-length: 194
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-12T20:44:55.354778Z
+K 7
+svn:log
+V 87
+refs #9863 - Reformatado e terminadas as tags para montar o xml de envio de lote de rps
+PROPS-END
+
+Node-path: trunk/brazilian-nfse/data.yml
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 60
+Content-length: 70
+
+PROPS-END
+Revision is 41, file path is brazilian-nfse/trunk/data.yml.
+
+
+
+
+Node-path: trunk/brazilian-nfse/lista.yml
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 61
+Content-length: 71
+
+PROPS-END
+Revision is 41, file path is brazilian-nfse/trunk/lista.yml.
+
+
+
+
+Node-path: trunk/brazilian-nfse/nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 59
+Content-length: 59
+
+Revision is 41, file path is brazilian-nfse/trunk/nfse.rb.
+
+
+
+
+Revision-number: 42
+Prop-content-length: 203
+Content-length: 203
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-15T19:19:49.378244Z
+K 7
+svn:log
+V 96
+fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para o namespace tc:
+PROPS-END
+
+Node-path: trunk/git_nfse
+Node-kind: dir
+Node-action: delete
+
+Node-path: trunk/git_nfse
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 41
+Node-copyfrom-path: trunk/brazilian-nfse
+
+
+
+
+Node-path: trunk/git_nfse/nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 53
+Content-length: 53
+
+Revision is 42, file path is git_nfse/trunk/nfse.rb.
+
+
+
+
+Revision-number: 43
+Prop-content-length: 155
+Content-length: 155
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-15T19:49:56.975481Z
+K 7
+svn:log
+V 48
+refs #9863 - Adicionada estrutura da gem GitNFSe
+PROPS-END
+
+Node-path: trunk/git_nfse/.rspec
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/.rspec.
+
+
+
+
+Node-path: trunk/git_nfse/Gemfile
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 53
+Content-length: 63
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/Gemfile.
+
+
+
+
+Node-path: trunk/git_nfse/MIT-LICENSE
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 57
+Content-length: 67
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/MIT-LICENSE.
+
+
+
+
+Node-path: trunk/git_nfse/README.rdoc
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 57
+Content-length: 67
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/README.rdoc.
+
+
+
+
+Node-path: trunk/git_nfse/Rakefile
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 54
+Content-length: 64
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/Rakefile.
+
+
+
+
+Node-path: trunk/git_nfse/git_nfse.gemspec
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 62
+Content-length: 72
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/git_nfse.gemspec.
+
+
+
+
+Node-path: trunk/git_nfse/lib
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/git_nfse
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 70
+Content-length: 80
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/exceptions.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 72
+Content-length: 82
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/exceptions.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/helpers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/helpers/string.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 76
+Content-length: 86
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/helpers/string.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/parsers.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/services.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 70
+Content-length: 80
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/services.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 75
+Content-length: 85
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/simple.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 74
+Content-length: 84
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/validations.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/version.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse/version.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 61
+Content-length: 71
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/tasks
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/tasks/git_nfse_tasks.rake
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 75
+Content-length: 85
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/lib/tasks/git_nfse_tasks.rake.
+
+
+
+
+Node-path: trunk/git_nfse/spec
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/README.rdoc
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 68
+Content-length: 78
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/README.rdoc.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/Rakefile
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 65
+Content-length: 75
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/Rakefile.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/app
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets/images
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets/javascripts
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets/javascripts/application.js
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 94
+Content-length: 104
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/app/assets/javascripts/application.js.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets/stylesheets
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/assets/stylesheets/application.css
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 95
+Content-length: 105
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/app/assets/stylesheets/application.css.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/app/controllers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/controllers/application_controller.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 98
+Content-length: 108
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/app/controllers/application_controller.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/app/helpers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/helpers/application_helper.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 90
+Content-length: 100
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/app/helpers/application_helper.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/app/mailers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/mailers/.gitkeep
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/models
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/models/.gitkeep
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/views
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/views/layouts
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/app/views/layouts/application.html.erb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 95
+Content-length: 105
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/app/views/layouts/application.html.erb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/config/application.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 78
+Content-length: 88
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/application.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/boot.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 71
+Content-length: 81
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/boot.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/database.yml
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 76
+Content-length: 86
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/database.yml.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/environment.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 78
+Content-length: 88
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/environment.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/environments
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/config/environments/development.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 91
+Content-length: 101
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/development.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/environments/production.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 90
+Content-length: 100
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/production.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/environments/test.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 84
+Content-length: 94
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/test.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/backtrace_silencers.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 99
+Content-length: 109
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/backtrace_silencers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/inflections.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 91
+Content-length: 101
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/inflections.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/mime_types.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 90
+Content-length: 100
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/mime_types.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/secret_token.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 92
+Content-length: 102
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/secret_token.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/session_store.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 93
+Content-length: 103
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/session_store.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/initializers/wrap_parameters.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 95
+Content-length: 105
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/wrap_parameters.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/locales
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/config/locales/en.yml
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 78
+Content-length: 88
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/locales/en.yml.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config/routes.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config/routes.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/config.ru
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 66
+Content-length: 76
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/config.ru.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/db
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/lib
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/lib/assets
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/lib/assets/.gitkeep
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/log
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/log/.gitkeep
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/public
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/public/404.html
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 72
+Content-length: 82
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/public/404.html.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/public/422.html
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 72
+Content-length: 82
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/public/422.html.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/public/500.html
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 72
+Content-length: 82
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/public/500.html.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/public/favicon.ico
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/script
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/script/rails
+Node-kind: file
+Node-action: add
+Prop-content-length: 36
+Text-content-length: 69
+Content-length: 105
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/dummy/script/rails.
+
+
+
+
+Node-path: trunk/git_nfse/test/dummy/tmp
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/tmp/cache
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/dummy/tmp/cache/assets
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/test/git_nfse_test.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 67
+Content-length: 77
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/git_nfse_test.rb.
+
+
+
+
+Node-path: trunk/git_nfse/test/test_helper.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 65
+Content-length: 75
+
+PROPS-END
+Revision is 43, file path is git_nfse/trunk/test/test_helper.rb.
+
+
+
+
+Node-path: trunk/git_nfse/nfse.rb
+Node-action: delete
+
+
+Revision-number: 44
+Prop-content-length: 169
+Content-length: 169
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-15T20:12:32.541696Z
+K 7
+svn:log
+V 62
+refs #9863 - Adicionada estrututura para testes na gem GitNFSe
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/helpers.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+Revision is 44, file path is git_nfse/trunk/lib/git_nfse/helpers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/services.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 44, file path is git_nfse/trunk/lib/git_nfse/services.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/simple.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 74
+Content-length: 74
+
+Revision is 44, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/helpers
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 44, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/spec_helper.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 65
+Content-length: 75
+
+PROPS-END
+Revision is 44, file path is git_nfse/trunk/spec/spec_helper.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/types
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/spec/types/simple_types_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 77
+Content-length: 87
+
+PROPS-END
+Revision is 44, file path is git_nfse/trunk/spec/types/simple_types_spec.rb.
+
+
+
+
+Revision-number: 45
+Prop-content-length: 190
+Content-length: 190
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-15T20:26:47.008830Z
+K 7
+svn:log
+V 83
+refs #9863 - Corrigidas dependencias e adicionados arquivos de teste na gem GitNFSe
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/parsers.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 69
+Content-length: 69
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/simple.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 74
+Content-length: 74
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/validations.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 73
+Content-length: 73
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 45, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/builders_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 67
+Content-length: 77
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/builders_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/exceptions_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/exceptions_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/helpers_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 66
+Content-length: 76
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/helpers_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/parsers_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 66
+Content-length: 76
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/parsers_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/services_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 67
+Content-length: 77
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/services_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/types/complex_types_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 78
+Content-length: 88
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/types/complex_types_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/types/simple_types_spec.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Content-length: 77
+
+Revision is 45, file path is git_nfse/trunk/spec/types/simple_types_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/validations_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 70
+Content-length: 80
+
+PROPS-END
+Revision is 45, file path is git_nfse/trunk/spec/validations_spec.rb.
+
+
+
+
+Revision-number: 46
+Prop-content-length: 183
+Content-length: 183
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-16T17:18:36.209777Z
+K 7
+svn:log
+V 76
+refs #9865 - Implementado o parser para recuperar a informação da resposta
+PROPS-END
+
+Node-path: trunk/git_nfse/Gemfile
+Node-kind: file
+Node-action: change
+Text-content-length: 53
+Content-length: 53
+
+Revision is 46, file path is git_nfse/trunk/Gemfile.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 46, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/parsers.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 69
+Content-length: 69
+
+Revision is 46, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/services.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 46, file path is git_nfse/trunk/lib/git_nfse/services.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 46, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 46, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/xml_schemas
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/git_nfse/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 98
+Content-length: 108
+
+PROPS-END
+Revision is 46, file path is git_nfse/trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd.
+
+
+
+
+Node-path: trunk/git_nfse/spec/parsers_spec.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 66
+Content-length: 66
+
+Revision is 46, file path is git_nfse/trunk/spec/parsers_spec.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/spec_helper.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 65
+Content-length: 65
+
+Revision is 46, file path is git_nfse/trunk/spec/spec_helper.rb.
+
+
+
+
+Revision-number: 47
+Prop-content-length: 200
+Content-length: 200
+
+K 10
+svn:author
+V 11
+pablo.targa
+K 8
+svn:date
+V 27
+2013-04-23T19:23:53.728257Z
+K 7
+svn:log
+V 93
+fixes #9865 - Adicionada funcionalidade para enviar e parsear a resposta do envio do lote rps
+PROPS-END
+
+Node-path: trunk/git_nfse/Gemfile
+Node-kind: file
+Node-action: change
+Text-content-length: 53
+Content-length: 53
+
+Revision is 47, file path is git_nfse/trunk/Gemfile.
+
+
+
+
+Node-path: trunk/git_nfse/data.yml
+Node-kind: file
+Node-action: change
+Text-content-length: 54
+Content-length: 54
+
+Revision is 47, file path is git_nfse/trunk/data.yml.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/parsers.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 69
+Content-length: 69
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/services.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse/services.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/simple.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 74
+Content-length: 74
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 47, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/spec/git_nfse_spec.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 36
+Text-content-length: 67
+Content-length: 103
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+Revision is 47, file path is git_nfse/trunk/spec/git_nfse_spec.rb.
+
+
+
+
+Revision-number: 64
+Prop-content-length: 202
+Content-length: 202
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2013-07-29T16:17:44.041048Z
+K 7
+svn:log
+V 101
+Adicionados arquivos de configuracoes automaticas do aplicativo cliente de email Mozilla Thunderbird.
+PROPS-END
+
+Node-path: thunderbird/mozilla
+Node-kind: dir
+Node-action: add
+Prop-content-length: 35
+Content-length: 35
+
+K 10
+svn:ignore
+V 4
+'*'
+
+PROPS-END
+
+
+Node-path: thunderbird/mozilla/a.cfg
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 56
+Content-length: 66
+
+PROPS-END
+Revision is 64, file path is mozilla/thunderbird/a.cfg.
+
+
+
+
+Node-path: thunderbird/mozilla/greprefs
+Node-kind: dir
+Node-action: add
+Prop-content-length: 35
+Content-length: 35
+
+K 10
+svn:ignore
+V 4
+'*'
+
+PROPS-END
+
+
+Node-path: thunderbird/mozilla/greprefs/a.js
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 64
+Content-length: 74
+
+PROPS-END
+Revision is 64, file path is mozilla/thunderbird/greprefs/a.js.
+
+
+
+
+Revision-number: 66
+Prop-content-length: 248
+Content-length: 248
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2013-08-14T03:37:39.033242Z
+K 7
+svn:log
+V 147
+Atualizada estrutura de diretorios das configuracoes automaticas do cliente de email Mozilla Thunderbird para ficar compativel com a versao 17.0.x.
+PROPS-END
+
+Node-path: thunderbird/mozilla/defaults
+Node-kind: dir
+Node-action: add
+Prop-content-length: 35
+Content-length: 35
+
+K 10
+svn:ignore
+V 4
+'*'
+
+PROPS-END
+
+
+Node-path: thunderbird/mozilla/defaults/pref
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 64
+Node-copyfrom-path: thunderbird/mozilla/greprefs
+
+
+Node-path: thunderbird/mozilla/greprefs
+Node-action: delete
+
+
+Revision-number: 71
+Prop-content-length: 213
+Content-length: 213
+
+K 10
+svn:author
+V 14
+edivan.camargo
+K 8
+svn:date
+V 27
+2013-09-25T14:13:10.551498Z
+K 7
+svn:log
+V 102
+fixes #9865 - Corrigido problema do warning que estava ocorrendo sempre na inicialização do sistema.
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 71, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/validations.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 73
+Content-length: 73
+
+Revision is 71, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/exceptions.rb
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 71, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Revision-number: 79
+Prop-content-length: 167
+Content-length: 167
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2013-09-30T16:58:51.026732Z
+K 7
+svn:log
+V 60
+fixes #9863 - Removidos arquivos referentes a gem do projeto
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/version.rb
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lib/tasks
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/.rspec
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/Gemfile
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/MIT-LICENSE
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/README.rdoc
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/Rakefile
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/data.yml
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/git_nfse.gemspec
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lista.yml
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/spec
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/test
+Node-action: delete
+
+
+Revision-number: 80
+Prop-content-length: 167
+Content-length: 167
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2013-09-30T17:52:16.958769Z
+K 7
+svn:log
+V 60
+fixes #9863 - Removido xsd de configuracao que nao era usado
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 80, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/xml_schemas
+Node-action: delete
+
+
+Revision-number: 83
+Prop-content-length: 400
+Content-length: 400
+
+K 10
+svn:author
+V 14
+edivan.camargo
+K 8
+svn:date
+V 27
+2013-10-03T16:50:57.767478Z
+K 7
+svn:log
+V 289
+fixes #9865 - Refatorado a parte de assinatura da NFS-e. Separado para um modulo diferente do GitNfse, adicionado no modulo Signers que será o responsavel pela asinatura de documentos XML visto que a forma como isso é feito é padrão tanto para NFS-e quando NF-e. Feito testes, tudo Ok.
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 70
+Content-length: 70
+
+Revision is 83, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 83, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 83, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/signers.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 60
+Content-length: 70
+
+PROPS-END
+Revision is 83, file path is git_nfse/trunk/lib/signers.rb.
+
+
+
+
+Revision-number: 86
+Prop-content-length: 478
+Content-length: 478
+
+K 10
+svn:author
+V 14
+edivan.camargo
+K 8
+svn:date
+V 27
+2013-10-15T12:21:06.561605Z
+K 7
+svn:log
+V 367
+fixes #9865 - Feito novas correções de acordo com o que conversei com *Ronie* no dia 08/10/2013. Separado os serviços que ficavam agrupados em *lib/git/git_nfse/git_nfse/services.rb* para ficar em uma classe que define cada um. Os serviços de consulta ficaram na classe *lib/git/git_nfse/git_nfse/consult_nfse.rb* proque me pareceu mais coerente. Feito teste, Ok.
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/base.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 66
+Content-length: 76
+
+PROPS-END
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse/base.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/cancel_nfse.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse/cancel_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/consult_nfse.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 74
+Content-length: 84
+
+PROPS-END
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse/consult_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/rps_lot_nfse.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 74
+Content-length: 84
+
+PROPS-END
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse/rps_lot_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 75
+Content-length: 75
+
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/builders.rb
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lib/git_nfse/services.rb
+Node-action: delete
+
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 86, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/signers.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 60
+Content-length: 60
+
+Revision is 86, file path is git_nfse/trunk/lib/signers.rb.
+
+
+
+
+Revision-number: 92
+Prop-content-length: 639
+Content-length: 639
+
+K 10
+svn:author
+V 14
+edivan.camargo
+K 8
+svn:date
+V 27
+2013-10-22T15:19:08.403353Z
+K 7
+svn:log
+V 528
+fixes #9865 - Criado custom validator para URL. Porem o que foi solicitado eu não consegui desenvolver visto que validates é um método de ActiveRecord::Base, e a NFS-e é uma caixa preta, eu não estou no contexto do rails, não tenho o active_record lá dentro, não tenho ideia de como utilizar esse validator que foi criado para coisas separadas. Para as classes que herdam de ActiveRecod::Base vai funcionar perfeitamente, mas acredito que não tenha muito o que fazer a respeito de outro pacote, como é o caso da NFS-e.
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 92, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/validates_uri_format.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 92, file path is git_nfse/trunk/lib/validates_uri_format.rb.
+
+
+
+
+Revision-number: 93
+Prop-content-length: 187
+Content-length: 187
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2013-10-23T00:21:54.000332Z
+K 7
+svn:log
+V 87
+refs #9865 - Movida classe validates_uri_format_of para dentro do modulo GitValidations
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 61
+Content-length: 61
+
+Revision is 93, file path is git_nfse/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/git_validations.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 92
+Node-copyfrom-path: trunk/git_nfse/lib/validates_uri_format.rb
+Text-content-length: 68
+Content-length: 68
+
+Revision is 93, file path is git_nfse/trunk/lib/git_validations.rb.
+
+
+
+
+Node-path: trunk/git_nfse/lib/validates_uri_format.rb
+Node-action: delete
+
+
+Revision-number: 99
+Prop-content-length: 423
+Content-length: 423
+
+K 10
+svn:author
+V 14
+edivan.camargo
+K 8
+svn:date
+V 27
+2013-10-28T18:59:45.983188Z
+K 7
+svn:log
+V 312
+fixes #9865 - Adicionado condição *:allow_blank => true* para a validação não devolver a mensagem de URI inválida quando a *validates_uri_format_of :web_service_uri* é chamada. Só devolve a mensagem de URI inválida caso tenha alguma coisa na URI do webservice, e este conteudo for inválido para um URI.
+PROPS-END
+
+Node-path: trunk/git_nfse/lib/git_nfse/base.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 66
+Content-length: 66
+
+Revision is 99, file path is git_nfse/trunk/lib/git_nfse/base.rb.
+
+
+
+
+Revision-number: 101
+Prop-content-length: 265
+Content-length: 265
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2013-10-31T18:54:43.255362Z
+K 7
+svn:log
+V 164
+refs #10402 - Desenvolvida lib GitEncoding contendo metodos para deteccao e conversao de character encoding do conteudo de objetos das classes File/String/StringIO.
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/git_encoding.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 67
+Content-length: 77
+
+PROPS-END
+Revision is 101, file path is rubyrails/trunk/lib/git_encoding.rb.
+
+
+
+
+Revision-number: 108
+Prop-content-length: 260
+Content-length: 260
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2015-07-17T21:07:44.332321Z
+K 7
+svn:log
+V 152
+refs #4797 - As of rails 2.3.15, default_scope does not accept lambda nor proc, so we need to use this proxy to add lambda/proc support to default_scope
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/proxies
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/rubyrails/lib/proxies/default_scope_hash.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 81
+Content-length: 91
+
+PROPS-END
+Revision is 108, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies/hash_proxy.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 108, file path is rubyrails/trunk/lib/proxies/hash_proxy.rb.
+
+
+
+
+Revision-number: 109
+Prop-content-length: 188
+Content-length: 188
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2015-07-17T21:14:39.904918Z
+K 7
+svn:log
+V 81
+refs #4797 - Revision r108 was missing the load of HashProxy and DefaultScopeHash
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/proxies.rb
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 62
+Content-length: 72
+
+PROPS-END
+Revision is 109, file path is rubyrails/trunk/lib/proxies.rb.
+
+
+
+
+Revision-number: 110
+Prop-content-length: 199
+Content-length: 199
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2015-07-17T22:20:20.282326Z
+K 7
+svn:log
+V 99
+refs #4797 - HashProxy is a generic proxy, so the class name Proxy makes more sense than HashProxy.
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/proxies/default_scope_hash.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 81
+Content-length: 81
+
+Revision is 110, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies/proxy.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 109
+Node-copyfrom-path: trunk/rubyrails/lib/proxies/hash_proxy.rb
+Text-content-length: 68
+Content-length: 68
+
+Revision is 110, file path is rubyrails/trunk/lib/proxies/proxy.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies/hash_proxy.rb
+Node-action: delete
+
+
+Node-path: trunk/rubyrails/lib/proxies.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 62
+Content-length: 62
+
+Revision is 110, file path is rubyrails/trunk/lib/proxies.rb.
+
+
+
+
+Revision-number: 111
+Prop-content-length: 221
+Content-length: 221
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2015-07-28T21:37:32.913238Z
+K 7
+svn:log
+V 113
+refs #4797 - DefaultScopeHash does not work with procs inside sub-hashes, so we had to refactor it into ProxyHash
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/proxies/proxy_hash.rb
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 110
+Node-copyfrom-path: trunk/rubyrails/lib/proxies/default_scope_hash.rb
+Text-content-length: 73
+Content-length: 73
+
+Revision is 111, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies/default_scope_hash.rb
+Node-action: delete
+
+
+Node-path: trunk/rubyrails/lib/proxies/proxy.rb
+Node-action: delete
+
+
+Node-path: trunk/rubyrails/lib/proxies.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 62
+Content-length: 62
+
+Revision is 111, file path is rubyrails/trunk/lib/proxies.rb.
+
+
+
+
+Revision-number: 113
+Prop-content-length: 158
+Content-length: 158
+
+K 10
+svn:author
+V 12
+lucas.correa
+K 8
+svn:date
+V 27
+2015-09-30T19:40:33.780262Z
+K 7
+svn:log
+V 50
+refs #9865 - NFSe was using unnecessary validation
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Content-length: 77
+
+Revision is 113, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/validations.rb
+Node-action: delete
+
+
+Node-path: trunk/rubyrails/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 63
+Content-length: 63
+
+Revision is 113, file path is rubyrails/trunk/lib/git_nfse.rb.
+
+
+
+
+Revision-number: 117
+Prop-content-length: 165
+Content-length: 165
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2016-02-26T04:30:20.114423Z
+K 7
+svn:log
+V 65
+Sublime Text 3 installations should always use the same settings.
+PROPS-END
+
+Node-path: packages/sublime_text
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: packages/sublime_text/user
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: packages/sublime_text/user/Preferences.sublime-settings
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 87
+Content-length: 97
+
+PROPS-END
+Revision is 117, file path is sublime_text/packages/user/Preferences.sublime-settings.
+
+
+
+
+Node-path: packages/sublime_text/user/README.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+Revision is 117, file path is sublime_text/packages/user/README.txt.
+
+
+
+
+Revision-number: 119
+Prop-content-length: 180
+Content-length: 180
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2016-02-26T04:56:17.435417Z
+K 7
+svn:log
+V 80
+Documentation regarding where to place Mozilla Thunderbird settings was missing.
+PROPS-END
+
+Node-path: thunderbird/mozilla
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+a.cfg
+
+PROPS-END
+
+
+Node-path: thunderbird/mozilla/README.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 62
+Content-length: 72
+
+PROPS-END
+Revision is 119, file path is mozilla/thunderbird/README.txt.
+
+
+
+
+Node-path: thunderbird/mozilla/defaults
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+a.cfg
+
+PROPS-END
+
+
+Node-path: thunderbird/mozilla/defaults/pref
+Node-kind: dir
+Node-action: change
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+a.cfg
+
+PROPS-END
+
+
+Revision-number: 122
+Prop-content-length: 212
+Content-length: 212
+
+K 10
+svn:author
+V 11
+renan.dhein
+K 8
+svn:date
+V 27
+2016-12-05T17:45:46.415296Z
+K 7
+svn:log
+V 104
+refs #11860 - The withheld issqn fields have been implemented and can now be corerctly sent when present
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 77
+Content-length: 117
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 122, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Revision-number: 124
+Prop-content-length: 196
+Content-length: 196
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2017-01-20T01:55:29.887948Z
+K 7
+svn:log
+V 96
+refs #11924 - We need Sublime Text to automatically convert tabs to spaces before saving a file.
+PROPS-END
+
+Node-path: packages/sublime_text/user/before_save.py
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 73
+Content-length: 83
+
+PROPS-END
+Revision is 124, file path is sublime_text/packages/user/before_save.py.
+
+
+
+
+Revision-number: 127
+Prop-content-length: 314
+Content-length: 314
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2017-10-19T17:52:01.981258Z
+K 7
+svn:log
+V 213
+refs #4797 - Proxies::ProxyHash#[] method was calling all subhashes' procs instead of calling just the current key's proc; Calling Hash#deep_merge method on a Proxies::ProxyHash object was returning a Hash object.
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/proxies/proxy_hash.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 73
+Content-length: 113
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 127, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
+
+
+
+
+Revision-number: 130
+Prop-content-length: 186
+Content-length: 186
+
+K 10
+svn:author
+V 5
+ronie
+K 8
+svn:date
+V 27
+2017-11-13T18:45:49.258541Z
+K 7
+svn:log
+V 86
+refs #12123 - Ruby version 1.9.3 requires source code encoding to be set on .rb files.
+PROPS-END
+
+Node-path: trunk/rubyrails/lib/git_encoding.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 67
+Content-length: 107
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_encoding.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/base.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 68
+Content-length: 108
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/base.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/cancel_nfse.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 75
+Content-length: 115
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/cancel_nfse.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/consult_nfse.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 76
+Content-length: 116
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/consult_nfse.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/helpers.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 71
+Content-length: 111
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/helpers.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/parsers.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 71
+Content-length: 111
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/parsers.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/rps_lot_nfse.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 76
+Content-length: 116
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/rps_lot_nfse.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/types/complex.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 77
+Content-length: 77
+
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse/types/simple.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 76
+Content-length: 116
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/simple.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_nfse.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 63
+Content-length: 103
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_nfse.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/git_validations.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 70
+Content-length: 110
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/git_validations.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies/proxy_hash.rb
+Node-kind: file
+Node-action: change
+Text-content-length: 73
+Content-length: 73
+
+Revision is 130, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/proxies.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 62
+Content-length: 102
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/proxies.rb.
+
+
+
+
+Node-path: trunk/rubyrails/lib/signers.rb
+Node-kind: file
+Node-action: change
+Prop-content-length: 40
+Text-content-length: 62
+Content-length: 102
+
+K 13
+svn:eol-style
+V 6
+native
+PROPS-END
+Revision is 130, file path is rubyrails/trunk/lib/signers.rb.
+
+
+
+
