@@ -371,6 +371,8 @@ class DumpfileSource(LineBufferedSource):
         "Read a revision header, parsing its properties."
         stash = self.require("Revision-number:")
         self.revision = int(stash.split()[1])
+        if debug:
+            sys.stderr.write("revision %s\n" % self.revision)
         stash += self.require("Prop-content-length:")
         stash += self.require("Content-length:")
         stash += self.require(os.linesep)
@@ -385,6 +387,13 @@ class DumpfileSource(LineBufferedSource):
         if self.baton:
             self.baton.twirl()
         return (stash, props.properties)
+    @staticmethod
+    def get_header(txt, hdr):
+        "Extract a given field from a header string"
+        for line in txt.split("\n"):
+            if line.startswith(hdr + ": "):
+                return line[len(hdr)+2:]
+        return None
     def read_node(self, property_hook=None):
         "Read a node header and body."
         #print("READ NODE BEGINS")
@@ -403,6 +412,8 @@ class DumpfileSource(LineBufferedSource):
             header += line
             if line == '\n':
                 break
+        if debug:
+            sys.stderr.write("node %s\n" % DumpfileSource.get_header(header, "Node-path"))
         properties = ""
         if "Prop-content-length" in header:
             props = Properties(self)
@@ -1046,13 +1057,14 @@ def patterns_compile(patterns):
 
 if __name__ == '__main__':
     try:
-        (options, arguments) = getopt.getopt(sys.argv[1:], "ce:fl:m:p:qr:s",
-                                             ["excise", "flagrefs", "revprop=",
-                                              "logentries=", "map=",
+        (options, arguments) = getopt.getopt(sys.argv[1:], "cde:fl:m:p:qr:s",
+                                             ["debug", "excise", "flagrefs",
+                                              "revprop=", "logentries=", "map=",
                                               "quiet", "range="])
         selection = SubversionRange("0:HEAD")
         timefuzz = 300	# 5 minute fuzz
         compressmap = False
+        debug = False
         excise = None
         revprops = []
         progress = True
@@ -1062,6 +1074,8 @@ if __name__ == '__main__':
         for (switch, val) in options:
             if switch in ('-c', '--compressmap'):
                 compressmap = True
+            elif switch in ('-d', '--debug'):
+                debug = True
             elif switch in ('-e', '--excise'):
                 excise = SubversionRange(val)
             elif switch in ('-f', '--flagrefs'):
