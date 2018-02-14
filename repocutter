@@ -340,12 +340,18 @@ class Properties:
             vlen = int(valhd.split()[1])
             value = source.read(vlen)
             source.require(os.linesep)
+            if debug:
+                sys.stderr.write("key %s gets value %s type %s\n" % (key, repr(value), type(value)))
             self.properties[key] = value
             self.propkeys.append(key)
         source.flush()
     def __str__(self):
+        if debug:
+            sys.stderr.write("properties: %s\n" % self.properties)
         st = ""
         for key in self.propkeys:
+            if debug:
+                sys.stderr.write("key %s has value %s\n" % (key, repr(self.properties[key])))
             if key in self.properties:
                 st += "K %d%s" % (len(key), os.linesep)
                 st += "%s%s" % (key, os.linesep)
@@ -1023,7 +1029,7 @@ def swap(source, selection):
     def mutator(path):
         parts = path.split(os.sep)
         if len(parts) < 2:
-            # Single-compnent directory creations should be skipped;
+            # Single-comopnent directory creations should be skipped;
             # each such operatyion for directory 'foo' is replace by the
             # creation of the swapped directory trunk/foo.  Works because
             # both reposurgeon and Subversion's stream dump reader don't mind
@@ -1034,7 +1040,9 @@ def swap(source, selection):
             return os.sep.join([parts[1], parts[0]] + parts[2:])
     def __revhook(propkeys, propdict):
         if "svn:mergeinfo" in propdict:
-            propdict["svn:mergeinfo"] = mutator(propdict["svn:mergeinfo"])
+             mergepath = mutator(propdict["svn:mergeinfo"])
+             if mergepath is not None:
+                 propdict["svn:mergeinfo"] = mergepath
         return (propkeys, propdict)
     def __nodehook(header, properties, content):
         for htype in ("Node-path: ", "Node-copyfrom-path: "):

@@ -22,6 +22,7 @@
       <arg choice="opt">-q</arg>
       <arg choice="opt">-r <replaceable>selection</replaceable></arg>
       <arg choice='plain'><replaceable>subcommand</replaceable></arg>
+      <arg choice="opt">-d</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -52,6 +53,9 @@ integer followed by a colon followed by HEAD.</para>
 <para>Normally, each subcommand produces a progress spinner on standard
 error; each turn means another revision has been filtered. The -q (or
 --quiet) option suppresses this.</para>
+
+<para> The -d command enabled debug messages on standard error. These
+are probably only of interest to repocutter developers.</para>
 
 <para>Generally, if you need to use this program at all, you will find
 that you need to pipe your dump file through multiple instances of it
