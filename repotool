@@ -25,8 +25,8 @@ template = """\
 #    For large repositories It is usually best to run reposurgeon using
 #    PyPy: set REPOSURGEON to "pypy" followed by an absolute pathname
 #    to reposurgeon.
-# 2. For svn, set REMOTE_URL to point at the remote repository
-#    you want to convert.
+# 2. (Skip this step if you're starting from a stream file.) For svn, set
+#    REMOTE_URL to point at the remote repository you want to convert.
 #    If the repository is already in a DVCS such as hg or git,
 #    set REMOTE_URL to either the normal cloning URL (starting with hg://,
 #    git://, etc.) or to the path of a local clone.

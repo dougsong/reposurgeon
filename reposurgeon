@@ -4891,6 +4891,8 @@ class StreamParser:
                 # Sequence numbers for split commits are 1-origin
                 split.legacy_id += StreamParser.SplitSep + str(i + 1)
                 self.repo.legacy_map["SVN:%s" % split.legacy_id] = split
+                if split.comment is None:
+                    split.comment = ""
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.repo.newmark())
                 split.set_operations(fileops)
