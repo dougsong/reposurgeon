@@ -600,11 +600,14 @@ def compare(args):
         common = dirlist(sourcedir,sourceignores) & dirlist(targetdir, targetignores)
         common = list(common)
         common.sort()
-        for path in common:
-            sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
-            tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
-            if sstat != tstat:
-                print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
+        try:
+            for path in common:
+                sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
+                tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
+                if sstat != tstat:
+                    print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
+        except OSError:
+            sys.stderr.write("repotool: can't find %s for permissions check.\n" % path)
     nuke(rsource)
     nuke(rtarget)
 
