@@ -1024,6 +1024,8 @@ def see(source, selection):
     source.report(selection,
                   nodehook=__seenode, passthrough=False)
 
+swaplatch = False	# Ugh...
+
 def swap(source, selection):
     "Hack paths by swapping the top two components."
     def mutator(path):
@@ -1043,8 +1045,49 @@ def swap(source, selection):
             mergepath = mutator(propdict["svn:mergeinfo"])
             if mergepath is not None:
                 propdict["svn:mergeinfo"] = mergepath
+        if source.revision == 1 and "svn:log" in propkeys:
+            propdict["svn:log"] = "Synthetic branch-structure creation.\n"
+        # We leave author and date alone.  This will get dropped in the git
+        # version; it's only being generated so reposurgeon doesn't get confused
+        # about the branch structure.
         return (propkeys, propdict)
     def __nodehook(header, properties, content):
+        # This is dodgy.  The assumption here is that the first node
+        # of r1 is the directory creation for the first project.
+        # Replace it with synthetic nodes that create normal directory
+        # structure.
+        swap_header = """\
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+"""
+        global swaplatch
+        if source.revision == 1 and not swaplatch:
+            swaplatch = True
+            return swap_header
         for htype in ("Node-path: ", "Node-copyfrom-path: "):
             offs = header.find(htype)
             if offs > -1:

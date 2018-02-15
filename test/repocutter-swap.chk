@@ -13,6 +13,53 @@ V 27
 2009-08-12T00:37:40.475100Z
 PROPS-END
 
+Revision-number: 1
+Prop-content-length: 145
+Content-length: 145
+
+K 10
+svn:author
+V 12
+pablo.lerina
+K 8
+svn:date
+V 27
+2009-08-12T18:47:40.282482Z
+K 7
+svn:log
+V 37
+Synthetic branch-structure creation.
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+
 Revision-number: 2
 Prop-content-length: 166
 Content-length: 166
