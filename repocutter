@@ -1040,9 +1040,9 @@ def swap(source, selection):
             return os.sep.join([parts[1], parts[0]] + parts[2:])
     def __revhook(propkeys, propdict):
         if "svn:mergeinfo" in propdict:
-             mergepath = mutator(propdict["svn:mergeinfo"])
-             if mergepath is not None:
-                 propdict["svn:mergeinfo"] = mergepath
+            mergepath = mutator(propdict["svn:mergeinfo"])
+            if mergepath is not None:
+                propdict["svn:mergeinfo"] = mergepath
         return (propkeys, propdict)
     def __nodehook(header, properties, content):
         for htype in ("Node-path: ", "Node-copyfrom-path: "):
