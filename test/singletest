@@ -1,5 +1,15 @@
 #!/bin/sh
 # singletest - run a single regression test
+
+# Use absolute path so tests that change working directory still use 
+# scripts from parent directory.  Note that using $PWD seems to fail
+# here under Gitlab's CI environment.
+PATH=$(realpath ..):$(realpath .):${PATH}
+
+# Without this, under CentOS Python may emit invisible ANSI strings
+# that confuse diff
+TERM=dumb
+
 for x in $*;
 do
     echo "Test $x"

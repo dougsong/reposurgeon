@@ -1,5 +1,15 @@
 #!/bin/sh
-# singleload - run a single Subversion conversion test
+# singlelift - run a single Subversion conversion test
+
+# Use absolute path so tests that change working directory still use 
+# scripts from parent directory.  Note that using $PWD seems to fail
+# here under Gitlab's CI environment.
+PATH=$(realpath ..):$(realpath .):${PATH}
+
+# Without this, under CentOS Python may emit invisible ANSI strings
+# that confuse diff
+TERM=dumb
+
 mode=check
 case $1 in
     --view) mode=view; shift ;;
