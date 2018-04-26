@@ -17,8 +17,7 @@ pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/inclu
 pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSION)")
 
 VERS=$(shell sed <reposurgeon -n -e '/version=\"\(.*\)\"/s//\1/p')
-
-SOURCES = README.md NEWS AUTHORS COPYING TODO
+SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
