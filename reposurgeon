@@ -1059,8 +1059,8 @@ class GitExtractor(Extractor):
                     self.refs[ref[5:]] = polystr(fp.read()).strip()
         baton.twirl()
         with popen_or_die("git tag -l") as fp:
-            for line in fp:
-                tag = polystr(line).strip()
+            for fline in fp:
+                tag = polystr(fline).strip()
                 with popen_or_die("git rev-parse %s" % tag) as fp:
                     taghash = polystr(fp.read()).strip()
                 # Annotated tags are first-class objects with their
@@ -2089,7 +2089,7 @@ class Blob(object):
         if self.hasfile():
             if global_options["compressblobs"]:
                 with bz2.BZ2File(self.blobfile(create=True), "wb") as wfp:
-                    return wfp.write(polybytes(text))
+                    wfp.write(polybytes(text))
             else:
                 with open(self.blobfile(create=True), "wb") as wfp:
                     wfp.write(polybytes(text))
@@ -2639,11 +2639,11 @@ class Commit(object):
     def tags(self, _modifiers, eventnum, _cols):
         "Enable do_tags() to report tag tip commits."
         if not self.branch or "/tags/" not in self.branch:
-            return
+            return None
         if self.has_children():
             successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
             if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
-                return
+                return None
         return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
     def email_out(self, modifiers, eventnum, filter_regexp=None):
         "Enable do_mailbox_out() to report commit metadate."
@@ -4400,7 +4400,7 @@ class StreamParser:
                     b = getbranch(event)
                     if b and path.startswith(b):
                         return event
-            return
+            return None
         previous = None
         # If the repo is large, we'll give up on some diagnostic info in order
         # to reduce the working set size.
@@ -5624,16 +5624,16 @@ class SubversionDumper:
                 fullpath = os.path.join(svnout, parentdir)
                 if fullpath not in self.pathmap[revision]:
                     creations.append((fullpath, None, None))
-        for (path, from_rev, from_path) in creations:
+        for (dpath, from_rev, from_path) in creations:
             SubversionDumper.dump_node(fp,
-                                       path=path,
+                                       path=dpath,
                                        kind="dir",
                                        action="add",
                                        from_rev=from_rev,
                                        from_path=from_path)
-            self.pathmap[revision][path] = SubversionDumper.FlowState(revision)
-            self.pathmap[revision][path].is_directory = True
-            parentdir = os.path.dirname(path)
+            self.pathmap[revision][dpath] = SubversionDumper.FlowState(revision)
+            self.pathmap[revision][dpath].is_directory = True
+            parentdir = os.path.dirname(dpath)
             if parentdir in self.pathmap[revision]:
                 self.pathmap[revision][parentdir].subfiles += 1
     def filemodify(self, fp, revision, branch, mode, ref, path, inline, parents):
@@ -7852,14 +7852,13 @@ class RepositoryList:
             name = name[:-3]
         elif name.endswith(".svn"):
             name = name[:-4]
-        if name not in self.reponames():
-            return name
-        else:
+        if name in self.reponames():
             # repo "foo" is #1
             seq = 2
             while name + str(seq) in self.reponames():
                 seq += 1
             return name + str(seq)
+        return name
     def repo_by_name(self, name):
         "Retrieve a repo by name."
         try:
@@ -8278,7 +8277,7 @@ class SelectionParser(object):
             op2 = self.parse_conjunct()
             if op2 is None:
                 break
-            op = lambda p, op1=op, op2=op2: self.eval_disjunct(p, op1, op2)
+            op = lambda p, lop=op, rop=op2: self.eval_disjunct(p, lop, rop)
         return op
     @debug_lexer
     def eval_disjunct(self, preselection, op1, op2):
@@ -8306,7 +8305,7 @@ class SelectionParser(object):
             op2 = self.parse_term()
             if op2 is None:
                 break
-            op = lambda p, op1=op, op2=op2: self.eval_conjunct(p, op1, op2)
+            op = lambda p, lop=op, rop=op2: self.eval_conjunct(p, lop, rop)
         return op
     @debug_lexer
     def eval_conjunct(self, preselection, op1, op2):
@@ -8499,6 +8498,7 @@ class SelectionParser(object):
                 modifiers.add(self.line[0])
                 self.line = self.line[1:]
             return lambda p: self.eval_textsearch(p, search, modifiers)
+        return None	# Deconfuse pylint
     @debug_lexer
     def parse_funcall(self):
         "Parse a function call."
@@ -8928,14 +8928,14 @@ developers.
             cmd.Cmd.onecmd(self, line)
         except Recoverable as e:
             complain(e.msg)
-    def postcmd(self, unused, line):
-        assert unused is not []   # pacify pylint
+    def postcmd(self, _unused, line):
         try:
             self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
         except ValueError:
             announce(DEBUG_SHOUT, "bad prompt format - remember, literal % must be doubled.")
         if line == "EOF":
             return True
+        return False
     def emptyline(self):
         pass
     def precmd(self, line):
@@ -9803,7 +9803,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
 
-    def do_history(self, line):
+    def do_history(self, _line):
         "Dump your command list from this session so far."
         for line in self.history:
             sys.stdout.write(line + "\n")
@@ -13138,11 +13138,11 @@ must resolve to exactly two commits. Supports > redirection.
                         lines1 = totext.split('\n')
                         file0 = path + " (" + bounds[0].mark + ")"
                         file1 = path + " (" + bounds[1].mark + ")"
-                        for line in difflib.unified_diff(lines0, lines1,
+                        for diffline in difflib.unified_diff(lines0, lines1,
                                                          fromfile=file0,
                                                          tofile=file1,
                                                          lineterm=""):
-                            parse.stdout.write(line + "\n")
+                            parse.stdout.write(diffline + "\n")
                 elif path in dir1:
                     parse.stdout.write("%s: removed\n" % path)
                 elif path in dir2:
@@ -13306,8 +13306,8 @@ A later 'do' call can invoke this macro.
                     sys.stdout.write("define %s %s\n" % (name, body[0]))
                 else:
                     sys.stdout.write("define %s {\n" % name)
-                    for line in body:
-                        sys.stdout.write(line)
+                    for bodyline in body:
+                        sys.stdout.write(bodyline)
                     sys.stdout.write("}\n")
         elif body[0] != '{':
             self.definitions[name] = [body]
@@ -13339,15 +13339,15 @@ the command generated by the expansion.
         except ValueError as e:
             raise Recoverable("macro parse failed, %s" % e)
         do_selection = self.selection
-        for line in self.definitions[name]:
+        for defline in self.definitions[name]:
             try:
-                line = line.format(*args)
+                defline = defline.format(*args)
             except IndexError:
                 raise Recoverable("macro argument error")
             # If a leading portion of the expansion body is a selection
             # expression, use it.  Otherwise we'll restore whatever
             # selection set came before the do keyword.
-            expansion = self.precmd(line)
+            expansion = self.precmd(defline)
             if self.selection is None:
                 self.selection = do_selection
             # Call the base method so RecoverableExceptions
@@ -13889,6 +13889,7 @@ Runs the unit tests and reports the results.
 class OrderedSet(collections.MutableSet):
 
     def __init__(self, iterable=None):
+        collections.MutableSet.__init__(self)
         self.end = end = []
         end += [None, end, end]         # sentinel node for doubly linked list
         self.map = {}                   # key --> [key, prev, next]
@@ -13979,8 +13980,8 @@ def main():
             sys.argv.append("-")
         try:
             for arg in sys.argv[1:]:
-                for arg in arg.split(";"):
-                    if arg == '-':
+                for acmd in arg.split(";"):
+                    if acmd == '-':
                         if interpreter.profile_log is None:
                             interactive()
                         elif interpreter.profile_log:
@@ -13992,11 +13993,11 @@ def main():
                         # A minor concession to people used to GNU conventions.
                         # Makes "reposurgeon --help" and "reposurgeon --version"
                         # work as expected.
-                        if arg.startswith("--"):
-                            arg = arg[2:]
+                        if acmd.startswith("--"):
+                            acmd = acmd[2:]
                         # Call the base method so RecoverableExceptions
                         # won't be caught; we want them to abort scripting.
-                        cmd.Cmd.onecmd(interpreter, interpreter.precmd(arg))
+                        cmd.Cmd.onecmd(interpreter, interpreter.precmd(acmd))
         finally:
             interpreter.cleanup()
     except (Recoverable, Fatal) as xe:

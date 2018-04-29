@@ -454,6 +454,12 @@ def read_legacymap(fn):
 
 diffdict = {}
 
+n_equal = 0
+n_insertions = 0
+n_deletions = 0
+n_changed = 0
+spancount = 0
+
 def report_pair(a, b, legacies):
     global n_equal, n_insertions, n_deletions, n_changed, spancount
     tell = ""

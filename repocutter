@@ -933,6 +933,8 @@ def expunge(source, selection, patterns):
                     break
         if not matched:
             return header + properties + content
+        else:
+            return ""
     source.report(selection, __expunge, passempty=True)
 
 def sift(source, selection, patterns):
@@ -950,6 +952,8 @@ def sift(source, selection, patterns):
                     break
         if matched:
             return header + properties + content
+        else:
+            return ""
     source.report(selection, __sift, passempty=False)
 
 def pathrename(source, selection, patterns):
