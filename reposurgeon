@@ -8278,8 +8278,7 @@ class SelectionParser(object):
             op2 = self.parse_conjunct()
             if op2 is None:
                 break
-            op1 = op
-            op = lambda p: self.eval_disjunct(p, op1, op2)
+            op = lambda p, op1=op, op2=op2: self.eval_disjunct(p, op1, op2)
         return op
     @debug_lexer
     def eval_disjunct(self, preselection, op1, op2):
@@ -8307,8 +8306,7 @@ class SelectionParser(object):
             op2 = self.parse_term()
             if op2 is None:
                 break
-            op1 = op
-            op = lambda p: self.eval_conjunct(p, op1, op2)
+            op = lambda p, op1=op, op2=op2: self.eval_conjunct(p, op1, op2)
         return op
     @debug_lexer
     def eval_conjunct(self, preselection, op1, op2):
@@ -9008,8 +9006,7 @@ developers.
             if c != '?':
                 break
             self.pop()
-            orig = value
-            value = lambda p: self.eval_neighborhood(p, orig)
+            value = lambda p, orig=value: self.eval_neighborhood(p, orig)
         return value
     @debug_lexer
     def eval_neighborhood(self, preselection, subject):

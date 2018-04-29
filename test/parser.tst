@@ -17,6 +17,12 @@ read <simple.fi
 (24..97 | 20..40) & =C resolve Commit selection
 24..97 & =C | 20..40 & =C resolve Disjunct and conjunct
 24..97 & (=C | 20..40) resolve Parenthesis grouping
+3|5 resolve Disjunct
+3|5|7 resolve Disjunct chain
+3..7&5 resolve Conjunct
+3..7&3..5&5 resolve Conjunct chain
+7? resolve Neighborhood
+7?? resolve Neighborhood chain
 3,:15 resolve Comma syntax selecting doubleton
 /master/b resolve Branch
 /operating theater/B resolve Blobs

@@ -6,10 +6,11 @@ Repository head:
      Max working-set size has been reduced, enabling handling of larger repos.
      New 'gitify' command for massaging comments into git conventional form.
      The tag command now allows deleting all tags matching a regexp.
+     Fix crash when chaining '|', '&', '?' selection operators.
 
 3.43: 2017-12-12::
      Fix bugs in squash --pushback, mailbox roundtripping, filter --shell.
-     Resychronize embedded help with XML docs.
+     Resynchronize embedded help with XML docs.
      Added 'dedup' command, to deduplicate blobs in the selection set.
      Bug fix: exporter output now only captures stdout, not stderr.
      New 'changelogs' command for extracting author info from ChangeLog files.

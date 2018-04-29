@@ -31,6 +31,18 @@ Commit selection: [24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 5
 Disjunct and conjunct: [24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96, 20, 22]
 24..97 & (=C | 20..40) resolve Parenthesis grouping
 Parenthesis grouping: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
+3|5 resolve Disjunct
+Disjunct: [3, 5]
+3|5|7 resolve Disjunct chain
+Disjunct chain: [3, 5, 7]
+3..7&5 resolve Conjunct
+Conjunct: [5]
+3..7&3..5&5 resolve Conjunct chain
+Conjunct chain: [5]
+7? resolve Neighborhood
+Neighborhood: [5, 7, 10]
+7?? resolve Neighborhood chain
+Neighborhood chain: [3, 5, 7, 10, 12]
 3,:15 resolve Comma syntax selecting doubleton
 Comma syntax selecting doubleton: [3, 16]
 /master/b resolve Branch
