@@ -388,7 +388,7 @@ def branches():
                  | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
         "svn": "svn ls 'file://%s/branches' | sed 's|/$||'" % os.getcwd(),
         "svn-checkout": "ls branches 2>/dev/null || exit 0",
-        "git": "git branch -q -l 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
+        "git": "git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
         "bzr": "bzr branches | cut -c 3-",
         "hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
         }
