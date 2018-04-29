@@ -1,0 +1,13 @@
+
+read <sample1.fi
+
+3 | 5 list
+     3 2012-12-02T05:37:55Z     :2 A start on a test repository for the Subversi
+     5 2012-12-02T05:39:18Z     :4 Create a .gitignore in order to test whether 
+
+# This triggers infinite recursion due to changes in version 3.43
+
+3 | 5 | 7 list
+     3 2012-12-02T05:37:55Z     :2 A start on a test repository for the Subversi
+     5 2012-12-02T05:39:18Z     :4 Create a .gitignore in order to test whether 
+     7 2012-12-02T05:40:58Z     :6 Test deep directory creation.
