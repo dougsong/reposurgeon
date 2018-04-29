@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head:
+3.44: 20-18-04-29::
      New 'setperm' command for patching file path permissions.
      Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
      Max working-set size has been reduced, enabling handling of larger repos.
