@@ -28,6 +28,7 @@ SOURCES += \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
+DOCS = README.md NEWS TODO
 
 .PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
@@ -36,7 +37,7 @@ BINARIES = reposurgeon repotool repodiffer repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
 HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
-SHARED    = README.md NEWS TODO reposurgeon-git-aliases $(HTMLFILES)
+SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 all:  $(MANPAGES) $(HTMLFILES)
 
@@ -141,16 +142,16 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 # Release shipping.
 #
 
-reposurgeon-$(VERS).tar.xz: $(SOURCES)
-	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) test
+reposurgeon-$(VERS).tar.xz: $(SOURCES) $(DOCS)
+	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(DOCS) test
 
 dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
 
-zip: $(SOURCES)
-	zip -r reposurgeon-$(VERS).zip $(SOURCES)
+zip: $(SOURCES) $(DOCS)
+	zip -r reposurgeon-$(VERS).zip $(SOURCES) $(DOCS)
 
 release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html repocutter.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
