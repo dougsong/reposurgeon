@@ -11,7 +11,6 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-CYTHON?=cython
 PYVERSION=2.7
 pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/include/python$(PYVERSION)")
 pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSION)")
@@ -50,15 +49,6 @@ all:  $(MANPAGES) $(HTMLFILES)
 dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 %.html: %.asc
 	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
-
-cy%.c: %
-	$(CYTHON) --embed $< -o $@
-
-cy%.o: cy%.c
-	${CC} ${CFLAGS} $(pyinclude) -c $< -o $@
-
-cy%: cy%.o
-	${CC} ${CFLAGS} ${LDFLAGS} $^ $(pylib) -o $@
 
 #
 # Installation
