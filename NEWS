@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head:
+     Repaired the distribution maker to once again include README.md, NEWS, TODO.
+
 3.44: 20-18-04-29::
      New 'setperm' command for patching file path permissions.
      Abandon cyreposurgeon in favor of PyPy, which gives a better speedup.
