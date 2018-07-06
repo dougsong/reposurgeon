@@ -18,14 +18,14 @@ First commit
 M 100644 :1 bar.c
 M 100644 :2 foo.c
 M 100644 inline .gitignore
-data 198
+data 199
 # CVS default ignores begin
 tags
 TAGS
 .make.state
 .nse_depinfo
 *~
-#*
+\#*
 .#*
 ,*
 _$*
@@ -91,4 +91,3 @@ foo.c 1.2
 reset refs/heads/master
 from :8
 
-done
