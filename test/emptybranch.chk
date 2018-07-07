@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/emptybranch becomes a reset, comment 'Create an empty top-level branch for test purposes.  Should be tagified.\n' discarded
+reposurgeon: branch root of refs/heads/emptybranch with comment 'Create an empty top-level branch for test purposes.  Should be tagified.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -42,7 +42,4 @@ data 24
 Initial README content.
 from :2
 M 100644 :3 README
-
-reset refs/heads/emptybranch
-from :4
 

@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/cool-feature becomes a reset, comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
+reposurgeon: branch root of refs/heads/cool-feature with comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
 reposurgeon: r4~trunk/.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 blob
@@ -141,9 +141,6 @@ data 35
 Explain the final expected result.
 from :9
 M 100644 :10 README
-
-reset refs/heads/cool-feature
-from :6
 
 tag emptycommit-4
 #legacy-id 4

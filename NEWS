@@ -2,6 +2,7 @@
 
 Repository head:
      Repaired the distribution maker to once again include README.md, NEWS, TODO.
+     Executable bits are now correctly propagated acoross SVN branch copies.
 
 3.44: 20-18-04-29::
      New 'setperm' command for patching file path permissions.

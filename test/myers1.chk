@@ -1,8 +1,8 @@
-reposurgeon: branch root of refs/heads/b2 becomes a reset, comment 'Commit message 2.\n' discarded
-reposurgeon: branch root of refs/heads/b3 becomes a reset, comment 'Commit message 4.\n' discarded
-reposurgeon: branch root of refs/heads/b4 becomes a reset, comment 'Commit message 5.\n' discarded
-reposurgeon: branch root of refs/heads/b5 becomes a reset, comment 'Commit message 7.\n' discarded
-reposurgeon: branch root of refs/heads/b6 becomes a reset, comment 'Commit message 12.\n' discarded
+reposurgeon: branch root of refs/heads/b2 with comment 'Commit message 2.\n' discarded
+reposurgeon: branch root of refs/heads/b3 with comment 'Commit message 4.\n' discarded
+reposurgeon: branch root of refs/heads/b4 with comment 'Commit message 5.\n' discarded
+reposurgeon: branch root of refs/heads/b5 with comment 'Commit message 7.\n' discarded
+reposurgeon: branch root of refs/heads/b6 with comment 'Commit message 12.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -118,12 +118,6 @@ Commit message 14.
 from :7
 M 100755 :10 d1/d2/d3/d4/d5/d6/f0
 D d1/d2/d3/d4/d5/d6/f9
-
-reset refs/heads/b2
-from :2
-
-reset refs/heads/b6
-from :7
 
 tag emptycommit-3
 #legacy-id 3

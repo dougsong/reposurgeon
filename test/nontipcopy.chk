@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/sample-branch becomes a reset, comment 'This is a sample branch.\n' discarded
+reposurgeon: branch root of refs/heads/sample-branch with comment 'This is a sample branch.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -153,9 +153,6 @@ data 43
 This should commit some property settings.
 from :12
 M 100644 :13 .gitignore
-
-reset refs/heads/sample-branch
-from :8
 
 tag sample-tag
 #legacy-id 5

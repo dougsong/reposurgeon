@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/c becomes a reset, comment 'Directory A copied to C. So, directory C is a copy of A at revision 2.\n' discarded
+reposurgeon: branch root of refs/heads/c with comment 'Directory A copied to C. So, directory C is a copy of A at revision 2.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -36,7 +36,4 @@ committer sivachenko <sivachenko> 1454366421 +0000
 data 21
 Created directory B.
 M 100644 :1 .gitignore
-
-reset refs/heads/c
-from :2
 

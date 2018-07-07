@@ -2,8 +2,8 @@ verbose 1
 reposurgeon: verbose 1
 quiet on
 read <mergeinfo.svn
-reposurgeon: branch root of refs/heads/v1.0 becomes a reset, comment 'create a release branch for 1.0\n' discarded
-reposurgeon: branch root of refs/heads/v2.0 becomes a reset, comment 'create a release branch for 2.0\n' discarded
+reposurgeon: branch root of refs/heads/v1.0 with comment 'create a release branch for 1.0\n' discarded
+reposurgeon: branch root of refs/heads/v2.0 with comment 'create a release branch for 2.0\n' discarded
 * mergeinfo
 :6 split at 2
 reposurgeon: new commits are events 7 and 8.
@@ -411,12 +411,4 @@ merge bugfixes from 2.0.1 into trunk, bumping version to 2.2
 from :36
 M 100644 :40 VERSION
 M 100644 :41 src
-
-Event 45 ================================================================
-reset refs/heads/v1.0
-from :9
-
-Event 46 ================================================================
-reset refs/heads/v2.0
-from :33
 

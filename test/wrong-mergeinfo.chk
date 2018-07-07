@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/test becomes a reset, comment 'Create branch "test"\n\n' discarded
+reposurgeon: branch root of refs/heads/test with comment 'Create branch "test"\n\n' discarded
 reposurgeon: cannot resolve mergeinfo source from revision 9 for path trunk/.
 #reposurgeon sourcetype svn
 blob
@@ -55,7 +55,4 @@ Merge
 
 from :3
 M 100644 :2 b
-
-reset refs/heads/test
-from :3
 

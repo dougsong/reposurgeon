@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/testbranch becomes a reset, comment 'Create testbranch. The command was:\n\nsvn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch\n' discarded
+reposurgeon: branch root of refs/heads/testbranch with comment 'Create testbranch. The command was:\n\nsvn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -96,7 +96,4 @@ data 37
 Add some content after the file copy
 from :9
 M 100644 :10 README
-
-reset refs/heads/testbranch
-from :4
 

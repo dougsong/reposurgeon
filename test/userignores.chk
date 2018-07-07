@@ -1,4 +1,4 @@
-reposurgeon: branch root of refs/heads/cool-feature becomes a reset, comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
+reposurgeon: branch root of refs/heads/cool-feature with comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -104,9 +104,6 @@ data 70
 Create standard SVN layout
 
 [[Tag from root commit at Subversion r1]]
-
-reset refs/heads/cool-feature
-from :4
 
 tag emptycommit-3
 #legacy-id 3

@@ -41,12 +41,12 @@ reposurgeon: r127~branches/Tripp_Lite_Omni/packaging nuked by tip delete
 reposurgeon: r127~branches/Tripp_Lite_Omni/scripts/hotplug nuked by tip delete
 reposurgeon: r11~branches/v2.1.0/data nuked by tip delete
 reposurgeon: r10~tags/v2.0.1/data nuked by tip delete
-reposurgeon: branch root of refs/heads/INITIAL_IMPORT_AQ becomes a reset, comment "This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n" discarded
-reposurgeon: branch root of refs/heads/Stable becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'Stable'.\n" discarded
-reposurgeon: branch root of refs/heads/Testing becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'Testing'.\n" discarded
-reposurgeon: branch root of refs/heads/r2.0.1 becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'r2.0.1'.\n" discarded
-reposurgeon: branch root of refs/heads/v2.1.0 becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'v2.1.0'.\n" discarded
-reposurgeon: branch root of refs/heads/Development becomes a reset, comment "This commit was manufactured by cvs2svn to create branch 'Development'.\n" discarded
+reposurgeon: branch root of refs/heads/INITIAL_IMPORT_AQ with comment "This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n" discarded
+reposurgeon: branch root of refs/heads/Stable with comment "This commit was manufactured by cvs2svn to create branch 'Stable'.\n" discarded
+reposurgeon: branch root of refs/heads/Testing with comment "This commit was manufactured by cvs2svn to create branch 'Testing'.\n" discarded
+reposurgeon: branch root of refs/heads/r2.0.1 with comment "This commit was manufactured by cvs2svn to create branch 'r2.0.1'.\n" discarded
+reposurgeon: branch root of refs/heads/v2.1.0 with comment "This commit was manufactured by cvs2svn to create branch 'v2.1.0'.\n" discarded
+reposurgeon: branch root of refs/heads/Development with comment "This commit was manufactured by cvs2svn to create branch 'Development'.\n" discarded
 CVS:trunk/CHANGES:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/COPYING:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/CREDITS:1.1	2005-01-27T14:33:14Z!aquette

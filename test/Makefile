@@ -358,10 +358,7 @@ liftcheck-regress:
 		for test in $(SVNCLEAN); \
 		do \
 		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
-		if test ! -z `liftcheck $${test}` ; \
-		then \
-			echo echo "*** Nonzero return status on $${test}!"; exit 1; \
-		fi \
+		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit 1; } \
 		done \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
