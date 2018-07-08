@@ -1,8 +1,3 @@
-reposurgeon: branch root of refs/heads/b2 with comment 'Commit message 2.\n' discarded
-reposurgeon: branch root of refs/heads/b3 with comment 'Commit message 4.\n' discarded
-reposurgeon: branch root of refs/heads/b4 with comment 'Commit message 5.\n' discarded
-reposurgeon: branch root of refs/heads/b5 with comment 'Commit message 7.\n' discarded
-reposurgeon: branch root of refs/heads/b6 with comment 'Commit message 12.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

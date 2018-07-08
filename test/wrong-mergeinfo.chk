@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/test with comment 'Create branch "test"\n\n' discarded
 reposurgeon: cannot resolve mergeinfo source from revision 9 for path trunk/.
 #reposurgeon sourcetype svn
 blob

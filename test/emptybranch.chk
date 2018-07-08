@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/emptybranch with comment 'Create an empty top-level branch for test purposes.  Should be tagified.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

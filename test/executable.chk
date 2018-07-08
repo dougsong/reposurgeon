@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/testbranch with comment 'Committing after "svn cp trunk branches/testbranch"\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

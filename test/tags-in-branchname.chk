@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/stags with comment 'Create a test branch\n\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

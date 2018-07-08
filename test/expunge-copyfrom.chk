@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/c with comment 'Directory A copied to C. So, directory C is a copy of A at revision 2.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

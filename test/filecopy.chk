@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/testbranch with comment 'Create testbranch. The command was:\n\nsvn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

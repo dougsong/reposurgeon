@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/cool-feature with comment 'Branch trunk to cool-feature\n\nThis causes reposurgeon to replace the custom .gitignore with only the\ncontents of svn:ignore.\n' discarded
 reposurgeon: r4~trunk/.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 blob

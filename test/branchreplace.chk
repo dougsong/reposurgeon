@@ -1,8 +1,4 @@
 reposurgeon: r6~branches/Testing/data nuked by tip delete
-reposurgeon: branch root of refs/heads/INITIAL_IMPORT_AQ with comment "This commit was manufactured by cvs2svn to create branch\n'INITIAL_IMPORT_AQ'.\n" discarded
-reposurgeon: branch root of refs/heads/Testing with comment "This commit was manufactured by cvs2svn to create branch 'Testing'.\n" discarded
-reposurgeon: branch root of refs/heads/Development with comment "This commit was manufactured by cvs2svn to create branch 'Development'.\n" discarded
-reposurgeon: branch root of refs/heads/automake with comment '* creating a branch "automake" of trunk\n' discarded
 reposurgeon: mid-branch deleteall on refs/heads/master at <12>.
 #reposurgeon sourcetype svn
 blob

@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/v1.0 with comment 'create a release branch for 1.0\n' discarded
 reposurgeon: mid-branch deleteall on refs/heads/v1.0 at <7>.
 #reposurgeon sourcetype svn
 blob

@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/samplebranch with comment 'A branch created for illustrative purposes.\n' discarded
 #reposurgeon sourcetype svn
 blob
 mark :1

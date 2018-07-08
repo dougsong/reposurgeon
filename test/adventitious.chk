@@ -1,4 +1,3 @@
-reposurgeon: branch root of refs/heads/realbranch with comment "We're going to put some real content on this branch.\n" discarded
 #reposurgeon sourcetype svn
 blob
 mark :1
