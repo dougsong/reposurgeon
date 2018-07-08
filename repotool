@@ -654,10 +654,12 @@ def compare_engine(singular, plural, lister, comparer, args):
             print(item)
     if common:
         for item in common:
-            print("----------------------------------------------------------------")
-            print("%s %s:" % (singular, item))
             cmd = " ".join([comparer, item] + diff_args + [source, target])
-            do_or_die(cmd)
+            comparison = capture_or_die(cmd)
+            if comparison:
+                print("----------------------------------------------------------------")
+                print("%s %s:" % (singular, item))
+                sys.stdout.write(comparison)
 
 def compare_tags(args):
     "Compare two repos at all tags."
