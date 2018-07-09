@@ -38,7 +38,9 @@ then
 			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
 			if [ $1 = "$v" ]
 			then
-				echo "pypy -> `command -v python`"
+				p=`command -v python`
+				ln -sf $p pypy
+				echo "pypy -> $p"
 			else
 				[ -n "$saved" ] && ln -sf $saved ./pypy
 				echo "setpypy: no python binary" >&2; exit 1
