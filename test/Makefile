@@ -21,9 +21,9 @@ default: check
 # Speed check - test under the default in the hashbang line
 check:
 	@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
-	@echo "=== Running built-in tests"
-	@$(REPOSURGEON) "runtests"
-	@if ./setpypy pypy 2>/dev/null; then time make -e --quiet all; else echo "pypy missing; skipping tests"; fi
+	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then echo "=== Running built-in tests" && $(REPOSURGEON) "runtests"; else echo "pypy/python missing; skipping built-in tests"; fi
+	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then time make -e --quiet all; else echo "pypy/python missing; skipping tests"; fi
+	@./setpypy pypy 2>/dev/null || :
 
 # Portability check - tests all dialects
 portcheck: check
