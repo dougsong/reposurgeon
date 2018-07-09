@@ -7,7 +7,7 @@
 
 if [ -z "$1" ]
 then
-	if [ -e pypy ]
+	if [ -L pypy ]
 	then
 		readlink pypy
 	else
