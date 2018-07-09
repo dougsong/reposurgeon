@@ -7,6 +7,14 @@
 
 pypybin=
 
+make_script() {
+	cat >pypy <<-EOF
+	#!/bin/sh
+	exec "$1" "\$@"
+	EOF
+	chmod +x pypy
+}
+
 find_pypy() {
 	pypybin=`command -v pypy`
 	test -n "$pypybin" || { echo "setpypy: no pypy binary" >&2 && exit 1; }
@@ -14,9 +22,9 @@ find_pypy() {
 
 if [ -z "$1" ]
 then
-	if [ -L pypy ]
+	if [ -e pypy ]
 	then
-		readlink pypy
+		sed '/^exec /!d; s/^exec "\([^"][^"]*\)" "$@"$/\1/; q' pypy
 	else
 		find_pypy
 		echo $pypybin
@@ -30,14 +38,14 @@ elif [ $1 = python -o $1 = python2 -o $1 = python3 ]
 then
 	p=`command -v $1`
 	case $p in
-		*/bin/*) ln -sf $p ./pypy; echo "pypy -> $p";;
+		*/bin/*) make_script $p; echo "pypy -> $p";;
 		*)
 			# Python2 prints version on stderr; Python3 on stdout.
 			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
 			if [ $1 = "$v" ]
 			then
 				p=`command -v python`
-				ln -sf $p pypy
+				make_script "$p"
 				echo "pypy -> $p"
 			else
 				echo "setpypy: no python binary" >&2; exit 1
