@@ -5,18 +5,27 @@
 # This script is used to to redirect the 'pypy' in reposurgeon's
 # shebang line to a specified version when running regression tests.
 
+pypybin=
+
+find_pypy() {
+	pypybin=`command -v pypy`
+	test -n "$pypybin" || { echo "setpypy: no pypy binary" >&2 && exit 1; }
+}
+
 if [ -z "$1" ]
 then
 	if [ -L pypy ]
 	then
 		readlink pypy
 	else
-		command -v pypy
+		find_pypy
+		echo $pypybin
 	fi
 elif [ $1 = "pypy" ]
 then
 	rm -f ./pypy
-	echo "pypy -> `command -v pypy`"
+	find_pypy
+	echo "pypy -> $pypybin"
 elif [ $1 = python -o $1 = python2 -o $1 = python3 ]
 then
 	p=`command -v $1`

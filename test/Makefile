@@ -23,13 +23,13 @@ check:
 	@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
 	@echo "=== Running built-in tests"
 	@$(REPOSURGEON) "runtests"
-	@if ./setpypy pypy; then time make -e --quiet all; else echo "pypy missing; skipping tests"; fi
+	@if ./setpypy pypy 2>/dev/null; then time make -e --quiet all; else echo "pypy missing; skipping tests"; fi
 
 # Portability check - tests all dialects
 portcheck: check
 	@if ./setpypy python2; then time make -e --quiet all; else echo "python2 missing; skipping tests"; fi
 	@if ./setpypy python3; then time make -e --quiet all; else echo "python3 missing; skipping tests"; fi
-	@./setpypy pypy
+	@./setpypy pypy 2>/dev/null || :
 
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
