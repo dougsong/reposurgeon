@@ -32,8 +32,6 @@ then
 	case $p in
 		*/bin/*) ln -sf $p ./pypy; echo "pypy -> $p";;
 		*)
-			saved=`readlink ./pypy 2>/dev/null`
-			rm -f ./pypy
 			# Python2 prints version on stderr; Python3 on stdout.
 			v=`{ python -V 2>&1; } | sed '/Python [23]\./{y/P/p/;s/ //;s/\..*$//;}'`
 			if [ $1 = "$v" ]
@@ -42,7 +40,6 @@ then
 				ln -sf $p pypy
 				echo "pypy -> $p"
 			else
-				[ -n "$saved" ] && ln -sf $saved ./pypy
 				echo "setpypy: no python binary" >&2; exit 1
 			fi
 			;;
