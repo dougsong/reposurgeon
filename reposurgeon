@@ -288,8 +288,12 @@ if hasattr(email, 'message_from_bytes'):
 else:
     rspolicy = None  # so RepoSurgeonEmail knows not to activate the Python 3 hack above
 
-class VCS:
+class VCS(object):
     "Class representing a version-control system."
+    __slots__ = ('name', 'subdirectory', 'exporter', 'styleflags', 'extensions',
+                 'initializer', 'lister', 'importer', 'checkout', 'preserve',
+                 'authormap', 'ignorename', 'dfltignores', 'cookies', 'project',
+                 'notes')
     def __init__(self, name,
                  subdirectory,
                  exporter,
