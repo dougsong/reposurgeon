@@ -3267,6 +3267,15 @@ it, simply copying the username into the address field.</para>
 <para>These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.</para>
 
+<para>It is also possible to embed a magic comment in a Subversion
+stream file to set these options. Prefix a space-separated list of
+them with the magic comment " # reposurgeon-read-options:"; the
+leading space is required. This may be useful when synthesizing test
+loads; in partticular, a stream file that does not set up a standard
+trunk/branches/tags directoryt layout can use this to perform a
+mapping of all commits onto the master branch that the git importer
+will accept.</para>
+
 <para>Here are the rules used for mapping subdirectories in a
 Subversion repository to branches:</para>
 

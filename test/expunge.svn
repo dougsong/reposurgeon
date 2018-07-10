@@ -1,5 +1,6 @@
 SVN-fs-dump-format-version: 2
  ## Test the expunge command on a nonstandard directory layout
+ # reposurgeon-read-options: --nobranch
 
 UUID: 40809dbb-8527-4ca2-bb65-644b1993ad2b
 
