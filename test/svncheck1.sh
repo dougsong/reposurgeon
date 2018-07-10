@@ -4,7 +4,7 @@
 # Perform file copy between directories.
 # Expect the resulting dump to have an add with copyfrom at
 # the last commit, as opposed to a replace.  Verify that
-# the file copy operation does not leave the executable bit set.
+# the file copy operation leaves the executable bit set.
 
 dump=no
 verbose=null
