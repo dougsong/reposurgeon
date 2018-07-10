@@ -13,7 +13,7 @@ The "singletest" script takes the stem of a .tst file name, captures stdout
 and stderr, and diffs the result against the corresponding check file.
 
 The "singlelift" script takes the stem of a .svn file name, captures stdout
-and stderr, and diffs the result against the corresponding check file.
+and stderr, and diffs the resultihg Subversion and git repos.
 
 == Writing new unit tests ==
 
@@ -372,7 +372,7 @@ sample4.fi::
 
 == Sporadic tests ==
 
-We have two scripts intended to check Subversion's behavior. Running these
+We have some scripts intended to check Subversion's behavior. Running these
 is not part of the normal regression-test sequence.
 
 svncheck1.sh:
