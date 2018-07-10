@@ -1,4 +1,4 @@
-'= Notes on the test machinery = 
+= Notes on the test machinery = 
 
 A .fi extension means it's a git fast-import stream.  
 An .svn extension means it's a Subversion repo dump.
