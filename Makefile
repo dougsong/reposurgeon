@@ -23,7 +23,7 @@ SOURCES += \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
 	repocutter repocutter.xml \
-	reporting-bugs.asc features.asc dvcs-migration-guide.asc \
+	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
@@ -47,7 +47,7 @@ all:  $(MANPAGES) $(HTMLFILES)
 	$(XMLTO) $(XMLTOOPTS) html-nochunks $<
 
 dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
-%.html: %.asc
+%.html: %.adoc
 	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
 
 #
