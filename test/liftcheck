@@ -42,10 +42,10 @@ then
 fi
 
 # Make a Subversion repo from the dump
-svn-to-svn ${svnquiet} -c <$1.svn ${stem}
+svn-to-svn ${svnquiet} -c <$1 ${stem}
 
 # Make a git repo from the dump using reposurgeon
-reposurgeon "read <$1.svn" "prefer git" "rebuild ${stem}-git"
+reposurgeon "read <$1" "prefer git" "rebuild ${stem}-git"
 
 # Compare the original with the lift
 repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git

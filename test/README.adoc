@@ -57,7 +57,7 @@ from the repo root.
 
 == liftcheck ==
 
-Take a Subversion dump on stdin and compare a checkout of it with
+Take a named Subversion dump and compare a checkout of it with
 its git conversion at all tags and branches.
 
 == convert-check ==
