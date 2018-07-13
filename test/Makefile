@@ -349,15 +349,16 @@ svnload-regress:
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
-SVNCLEAN := binary blob-id deletion delignore executable gitify mkignore \
-	pangram permcopy2 permcopy replace-dir squash-id svnignores
+SVNCLEAN := binary.svn blob-id.svn deletion.svn delignore.svn executable.svn \
+	expunge.svn gitify.svn mkignore.svn pangram.svn permcopy2.svn \
+	permcopy.svn replace-dir.svn squash-id.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
 		for test in $(SVNCLEAN); \
 		do \
-		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
+		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
 		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit 1; } \
 		done \
 	else \
