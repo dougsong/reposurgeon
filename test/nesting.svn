@@ -1,6 +1,5 @@
 SVN-fs-dump-format-version: 2
  ## Test subversion tags nested below the root
- # reposurgeon-read-options: --nobranch
 
 UUID: d78ab92e-2daf-406e-8f5d-6076d9ca5d9c
 

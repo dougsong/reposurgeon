@@ -1,11 +1,13 @@
 verbose 1
 reposurgeon: verbose 1
 quiet on
-# Expect the split on zed to fail
+# There's a --nobranch embedded in the test load so it can be checked standalone.
+# This invocation would make the load work even without that.
 read --nobranch <split-dir.svn
 * split-dir
 :2 split by bar
 reposurgeon: new commits are events 3 and 4.
+# Expect the split on zed to fail
 :5 split by zed
 reposurgeon: couldn't find 'zed' in a fileop path.
 :5 split by f

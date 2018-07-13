@@ -1,6 +1,5 @@
 SVN-fs-dump-format-version: 2
  ## Test for double-modify bug
- # reposurgeon-read-options: --nobranch
 
 UUID: 707a7da7-101b-4e20-9080-788da2f0f5f2
 
