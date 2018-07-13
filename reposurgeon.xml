@@ -2850,10 +2850,13 @@ choosing the right kind of branch type.</para>
 be used as a delimeter (and you will need to use a different one in the
 common case that the paths contain slashes).</para>
 
+<para>You must give this command <emphasis>before</emphasis> the
+Subversion repository read it is supposed to affect!</para>
+
 <para>Note that the branchify_map set is a property of the reposurgeon
 interpreter, not of any individual repository, and will persist across
-Subversion dumpfile reads. This may lead to unexpected results if you
-forget to re-set it.</para>
+Subversion dumpfiile or repository reads. This may lead to unexpected
+results if you forget to re-set it.</para>
 </listitem>
 </varlistentry>
 </variablelist>
