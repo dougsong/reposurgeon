@@ -9411,7 +9411,14 @@ developers.
             editor = parse.line or os.getenv("EDITOR")
             if not editor:
                 complain("you have not specified an editor and $EDITOR is not set")
-                return
+                # Fall back on /usr/bin/editor on Debian and derivatives.
+                # See https://www.debian.org/doc/debian-policy/#editors-and-pagers
+                editor = "/usr/bin/editor"
+                editor_real = os.path.realpath(editor)
+                if os.path.islink(editor) and os.path.exists(editor_real):
+                    complain("using %s -> %s instead" % (editor, editor_real))
+                else:
+                    return
             # Special case: user selected a single blob
             if len(selection) == 1:
                 singleton = self.chosen()[selection[0]]
