@@ -1677,7 +1677,10 @@ to fix them up.</para>
 <para>Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
-taken from the $EDITOR variable in your environment.</para>
+taken from the $EDITOR variable in your environment.
+If $EDITOR is not set, /usr/bin/editor will be used as a fallback
+if it exists as a symlink to your default editor, as is the case on
+Debian, Ubuntu and their derivatives.</para>
 
 <para>Normally this command ignores blobs because
 <command>mailbox_out</command> does.  However, if you specify a
