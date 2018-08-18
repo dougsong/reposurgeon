@@ -12,7 +12,7 @@ trap "rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/out$$" 0 12 2 15
 
 ./svn-to-svn -q -n /tmp/test-repo$$-svn <$stem.svn
 reposurgeon "read <${stem}.svn" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1
-repotool compare-all -x .svn -x .git /tmp/test-repo$$-svn /tmp/test-repo$$-git >/tmp/out$$
+${REPOTOOL:-repotool} compare-all -x .svn -x .git /tmp/test-repo$$-svn /tmp/test-repo$$-git >/tmp/out$$
 
 case $1 in
     --regress)

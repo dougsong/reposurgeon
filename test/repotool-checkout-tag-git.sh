@@ -6,7 +6,7 @@ trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 ./fi-to-fi -n /tmp/test-repo$$ < simple.fi
 cd /tmp/test-repo$$
-repotool checkout -t lightweight-sample /tmp/target$$
+${REPOTOOL:-repotool} checkout -t lightweight-sample /tmp/target$$
 echo Return code: $? >/tmp/out$$
 cd - >/dev/null
 ./dir-md5 /tmp/target$$ >>/tmp/out$$

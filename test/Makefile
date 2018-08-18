@@ -8,6 +8,10 @@
 # here under Gitlab's CI environment.
 PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON := reposurgeon 
+REPOCUTTER := repocutter 
+REPOTOOL := repotool 
+REPOMAPPER := repomapper
+REPODIFFER := repodiffer
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO := /bin/echo
@@ -461,16 +465,16 @@ repodiffer-regress:
 
 # Regression-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
-REPOMAPPER := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
+MAPPERTESTS := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
-	@for file in $(REPOMAPPER); do \
+	@for file in $(MAPPERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
 	@status=0; \
-	for file in $(REPOMAPPER); do \
+	for file in $(MAPPERTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
@@ -479,16 +483,16 @@ repomapper-regress:
 
 # Regression-testing of repotool; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
-REPOTOOL := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
+TOOLTESTS := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
 repotool-buildregress:
-	@for file in $(REPOTOOL); do \
+	@for file in $(TOOLTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh --rebuild $${file} || exit 1; \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
 	@status=0; \
-	for file in $(REPOTOOL); do \
+	for file in $(TOOLTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh --regress $${file} || status=1; \
 	done; \
@@ -497,16 +501,16 @@ repotool-regress:
 
 # Regression-testing of repocutter; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
-REPOCUTTER := $(shell ls -1 repocutter*.sh | sed '/.sh/s///')
+CUTTERTESTS := $(shell ls -1 repocutter*.sh | sed '/.sh/s///')
 repocutter-buildregress:
-	@for file in $(REPOCUTTER); do \
+	@for file in $(CUTTERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
 	done
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
 	@status=0; \
-	for file in $(REPOCUTTER); do \
+	for file in $(CUTTERTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
@@ -534,7 +538,7 @@ svncheck-regress:
 # Test productions end here.
 
 # The result from this is checked in because, as it turns out, the order
-# in which the components are archived cab vary randomly based on the
+# in which the components are archived can vary randomly based on the
 # state of the filesystem when it is built.
 make-tarball:
 	mkdir -p /tmp/tarball

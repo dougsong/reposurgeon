@@ -6,7 +6,7 @@ trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 ./svn-to-svn -q -n /tmp/test-repo$$ < vanilla.svn
 cd /tmp/test-repo$$
-repotool checkout /tmp/target$$
+${REPOTOOL:-repotool} checkout /tmp/target$$
 echo Return code: $? >/tmp/out$$
 cd - >/dev/null
 ./dir-md5 /tmp/target$$ >>/tmp/out$$

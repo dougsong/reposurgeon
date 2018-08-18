@@ -11,7 +11,7 @@ trap "rm -rf /tmp/test-repo$$ /tmp/out$$" 0 12 2 15
 # > 1.6.11 as the dump is sorted differently, moving svn:log before
 # > svn:author instead of after svn:date. It works fine on svnadmin,
 # > version 1.8.10.
-(cd /tmp/test-repo$$ >/dev/null; repotool export) >/tmp/out$$
+(cd /tmp/test-repo$$ >/dev/null; ${REPOTOOL:-repotool} export) >/tmp/out$$
 
 case $1 in
     --regress)

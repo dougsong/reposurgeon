@@ -13,7 +13,7 @@ command -v hg >/dev/null 2>&1 || { echo "    Skipped, hg missing."; exit 0; }
 
 ./fi-to-fi -n /tmp/test-repo$$-git <${stem}.fi
 ./hg-to-fi -n /tmp/test-repo$$-hg <${stem}.fi
-repotool compare-tags -x .git -x .hg -x .hgtags /tmp/test-repo$$-git /tmp/test-repo$$-hg | sed -e "s/$$/\$\$/"g >/tmp/out$$
+${REPOTOOL:-repotool} compare-tags -x .git -x .hg -x .hgtags /tmp/test-repo$$-git /tmp/test-repo$$-hg | sed -e "s/$$/\$\$/"g >/tmp/out$$
 
 case $1 in
     --regress)

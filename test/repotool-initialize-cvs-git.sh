@@ -2,7 +2,7 @@
 
 mkdir /tmp/test-workdir$$
 cd /tmp/test-workdir$$
-repotool initialize xyzzy cvs git >/tmp/out$$
+${REPOTOOL:-repotool} initialize xyzzy cvs git >/tmp/out$$
 echo Return code: $? >>/tmp/out$$
 cd - >/dev/null
 ./dir-md5 /tmp/test-workdir$$ >>/tmp/out$$
