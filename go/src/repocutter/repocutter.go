@@ -1317,8 +1317,12 @@ func main () {
         var quiet bool
         var logpatch string
 	var rangestr string
+	var infile string
+	input := os.Stdin
 	flag.BoolVar(&debug,      "d", false, "enable debug messages")
 	flag.BoolVar(&debug,      "debug", false, "enable debug messages")
+	flag.StringVar(&infile,   "i", "", "set input file")
+	flag.StringVar(&infile,   "infile", "", "set input file")
 	flag.StringVar(&logpatch, "l", "", "pass in log patch")
 	flag.StringVar(&logpatch, "logpatch", "", "pass in log patch")
 	flag.BoolVar(&quiet,      "q", false, "disable progress messages")
@@ -1328,6 +1332,15 @@ func main () {
 	flag.Parse()
 	if rangestr != "" {
 		selection = NewSubversionRange(rangestr)
+	}
+	if infile != "" {
+		var err error
+		input, err = os.Open(infile)
+		if err != nil {
+			fmt.Fprint(os.Stderr, "Input file open failed.\n")
+			os.Exit(1)
+		}
+		fmt.Fprint(os.Stderr, "Input from %s.\n", infile)
 	}
 	if debug {
 		fmt.Fprintf(os.Stderr, "<selection: %v>\n", selection)
@@ -1348,31 +1361,31 @@ func main () {
 		}
         }
 	if flag.Arg(0) == "propdel" {
-		propdel(NewDumpfileSource(os.Stdin, baton), flag.Args()[1:], selection)
+		propdel(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
         } else if flag.Arg(0) == "propset" {
-		propset(NewDumpfileSource(os.Stdin, baton), flag.Args()[1:], selection)
+		propset(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
         } else if flag.Arg(0) == "proprename" {
-		proprename(NewDumpfileSource(os.Stdin, baton), flag.Args()[1:], selection)
+		proprename(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
         } else if flag.Arg(0) == "select" {
-		sselect(NewDumpfileSource(os.Stdin, baton), selection)
+		sselect(NewDumpfileSource(input, baton), selection)
         } else if flag.Arg(0) == "log" {
-		log(NewDumpfileSource(os.Stdin, baton), selection)
+		log(NewDumpfileSource(input, baton), selection)
         } else if flag.Arg(0) == "setlog" {
 		if logpatch == "" {
 			fmt.Fprintf(os.Stderr, "repocutter: setlog requires a log entries file.\n")
 			os.Exit(1)
 		}
-		setlog(NewDumpfileSource(os.Stdin, baton), logpatch, selection)
+		setlog(NewDumpfileSource(input, baton), logpatch, selection)
         } else if flag.Arg(0) == "strip" {
-		strip(NewDumpfileSource(os.Stdin, baton), selection, flag.Args()[1:])
+		strip(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
         } else if flag.Arg(0) == "pathrename" {
-		pathrename(NewDumpfileSource(os.Stdin, baton), selection, flag.Args()[1:])
+		pathrename(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
         } else if flag.Arg(0) == "expunge" {
-		expunge(NewDumpfileSource(os.Stdin, baton), selection, flag.Args()[1:])
+		expunge(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
         } else if flag.Arg(0) == "sift" {
-		sift(NewDumpfileSource(os.Stdin, baton), selection, flag.Args()[1:])
+		sift(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
         } else if flag.Arg(0) == "renumber" {
-		renumber(NewDumpfileSource(os.Stdin, baton))
+		renumber(NewDumpfileSource(input, baton))
         } else if flag.Arg(0) == "reduce" {
 		f, err := os.Open(flag.Args()[1])
 		if err != nil {
@@ -1381,9 +1394,9 @@ func main () {
 		}
 		doreduce(NewDumpfileSource(f, baton))
         } else if flag.Arg(0) == "see" {
-		see(NewDumpfileSource(os.Stdin, baton), selection)
+		see(NewDumpfileSource(input, baton), selection)
         } else if flag.Arg(0) == "swap" {
-		swap(NewDumpfileSource(os.Stdin, baton), selection)
+		swap(NewDumpfileSource(input, baton), selection)
         } else if flag.Arg(0) == "help" {
 		if len(flag.Args()) == 1 {
 			os.Stdout.Write(doc)
