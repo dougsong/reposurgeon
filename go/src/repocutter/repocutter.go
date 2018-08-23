@@ -295,13 +295,20 @@ func (lbs *LineBufferedSource) Read(rlen int) []byte {
 	if len(lbs.Linebuffer) != 0 {
 		panic(fmt.Sprintf("repocutter: line buffer unexpectedly nonempty after line %d", lbs.linenumber))
 	}
-	text := make([]byte, rlen)
-	n, err := lbs.reader.Read(text)
-	if err != nil && err != io.EOF {
-		panic("repocutter: I/O error in Read of LineBufferedSource")
-	}
-	if n < rlen {
-		panic(fmt.Sprintf("repocutter: short %d of %d in Read of LineBufferedSource", n, rlen))
+	var text []byte
+	var chunk []byte
+	for {
+		chunk = make([]byte, rlen)
+		n, err := lbs.reader.Read(chunk)
+		if err != nil && err != io.EOF {
+			panic("repocutter: I/O error in Read of LineBufferedSource")
+		}
+		chunk = chunk[0:n]
+		text = append(text, chunk...)
+		if n == rlen {
+			break
+		}
+		rlen -= n
 	}
 	lbs.linenumber += strings.Count(string(text), "\n")
 	return text
@@ -316,7 +323,8 @@ func (lbs *LineBufferedSource) Peek() []byte {
 		panic(fmt.Sprintf("repocutter: I/O error in Peek of LineBufferedSource: %s", err))
 	}
 	if debug {
-		fmt.Fprintf(os.Stderr, "<Peek: buffer=%s + next=%s>\n", vis(lbs.Linebuffer), vis(nxtline))
+		fmt.Fprintf(os.Stderr, "<Peek %d: buffer=%s + next=%s>\n",
+			lbs.linenumber, vis(lbs.Linebuffer), vis(nxtline))
 	}
 	lbs.Linebuffer = nxtline
 	return lbs.Linebuffer
@@ -349,7 +357,7 @@ type Properties struct {
         propkeys []string
 }
 
-func NewProperties(source DumpfileSource) Properties {
+func NewProperties(source *DumpfileSource) Properties {
 	var props Properties
 	newprops := make(map[string]string)
 	props.properties = newprops
@@ -441,13 +449,16 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
         stash = append(stash, ds.Lbs.Require("Prop-content-length:")...)
         stash = append(stash, ds.Lbs.Require("Content-length:")...)
         stash = append(stash, ds.Lbs.Require(linesep)...)
-        props := NewProperties(*ds)
+        props := NewProperties(ds)
         if PropertyHook != nil {
 		PropertyHook(&props)
 		stash = SetLength("Prop-content", stash, len(props.Stringer()))
 		stash = SetLength("Content", stash, len(props.Stringer()))
 	}
         stash = append(stash, []byte(props.Stringer())...)
+	if debug {
+		fmt.Fprintf(os.Stderr, "<after append: %d>\n", ds.Lbs.linenumber)
+	}
 	for {
 		if string(ds.Lbs.Peek()) == linesep {
 			stash = append(stash, ds.Lbs.Readline()...)
@@ -459,14 +470,14 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 		ds.Baton.Twirl("")
 	}
 	if debug {
-		fmt.Fprintf(os.Stderr, "<ReadRevisionHeader: returns stash=%s>\n",
-			vis(stash))
+		fmt.Fprintf(os.Stderr, "<ReadRevisionHeader %d: returns stash=%s>\n",
+			ds.Lbs.linenumber, vis(stash))
 	}
         return stash, props.properties
 }
 
 // Read a node header and body.
-func (ds DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []byte, []byte) {
+func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []byte, []byte) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<READ NODE BEGINS>\n")
 	}
@@ -678,7 +689,10 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 					fmt.Fprintf(os.Stderr, "<properties: %s>\n", vis(properties))
 					fmt.Fprintf(os.Stderr, "<content: %s>\n", vis(content))
 				}
-				nodetxt := nodehook(header, properties, content)
+				var nodetxt []byte
+				if nodehook != nil {
+					nodetxt = nodehook(header, properties, content)
+				}
 				if debug {
 					fmt.Fprintf(os.Stderr, "<nodetxt: %s>\n", vis(nodetxt))
 				}
@@ -698,7 +712,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 				}
 				continue
 			} else {
-				fmt.Fprintf(os.Stderr, "repocutter: parse at %s doesn't look right (%s), aborting!\n", ds.Revision, line)
+				fmt.Fprintf(os.Stderr, "repocutter: parse at %d doesn't look right (%s), aborting!\n", ds.Revision, vis(line))
 				os.Exit(1)
 			}
 		}
@@ -923,28 +937,28 @@ func SVNTimeParse(rdate string) time.Time {
 }
 
 // Extract log entries
-func log(source DumpfileSource, _selection SubversionRange) {
-	for {
-		source.ReadUntilNext("Revision-number:", nil)
-		if !source.Lbs.HasLineBuffered() {
+func log(source DumpfileSource, selection SubversionRange) {
+	prophook := func (prop *Properties) {
+		props := prop.properties 
+		logentry := props["svn:log"]
+		// This test implicitly excludes r0 metadata from being dumped.
+		// It is not certain this is the right thing.  
+		if logentry == "" {
 			return
 		} else {
-			_, props := source.ReadRevisionHeader(nil)
-			logentry := props["svn:log"]
-			if logentry != ""{
-				os.Stdout.Write([]byte(delim + "\n"))
-			}
-			author := getAuthor(props)
-			date := SVNTimeParse(props["svn:date"])
-			drep := date.Format("2006-01-02 15:04:05 +0000 (Mon, 02 Jan 2006)")
-			fmt.Printf("r%d | %s | %s | %d lines\n",
-				source.Revision,
-				author,
-				drep,
-				strings.Count(logentry, "\n"))
-			os.Stdout.Write([]byte("\n" + logentry + "\n"))
+			os.Stdout.Write([]byte(delim + "\n"))
 		}
+		author := getAuthor(props)
+		date := SVNTimeParse(props["svn:date"])
+		drep := date.Format("2006-01-02 15:04:05 +0000 (Mon, 02 Jan 2006)")
+		fmt.Printf("r%d | %s | %s | %d lines\n",
+			source.Revision,
+			author,
+			drep,
+			strings.Count(logentry, "\n"))
+		os.Stdout.Write([]byte("\n" + logentry + "\n"))
 	}
+	source.Report(selection, nil, prophook, false, true)
 }
 
 // Mutate log entries.
@@ -986,13 +1000,11 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 
 		// first check against the patterns, if any are given
 		ok := true
-		offs := bytes.Index(header, []byte("Node-path: "))
-		if offs > -1 {
-			offs += 11
-			filepath := header[offs:bytes.Index(header[offs:], []byte("\n"))]
+		nodepath := payload("Node-path: ", header)
+		if nodepath != nil {
 			for _, pattern := range patterns {
 				re := regexp.MustCompile(pattern)
-				if re.Find(filepath) == nil {
+				if re.Find(nodepath) == nil {
 					//os.Stderr.Write("strip skipping: %s\n", filepath)
 					ok = false
 					break
@@ -1001,7 +1013,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 		}
 		if ok {
 			if content != nil && len(content) > 0  {
-				tell := fmt.Sprintf("Revision is %s, file path is %s.\n\n\n",
+				tell := fmt.Sprintf("Revision is %d, file path is %s.\n\n\n",
 					source.Revision, get_header(header, "Node-path"))
 				// Avoid replacing symlinks, a reposurgeon sanity check barfs.
 				if bytes.HasPrefix(content, []byte("link ")) {
@@ -1073,15 +1085,11 @@ func doreduce(source DumpfileSource) {
 func expunge(source DumpfileSource, selection SubversionRange, patterns []string) {
 	__expunge := func(header []byte, properties []byte, content []byte) []byte {
 		matched := false
-		offs := bytes.Index(header, []byte("Node-path: "))
-		var filepath []byte
-		if offs > -1 {
-			offs += 11
-			filepath = header[offs:offs+bytes.Index(header[offs:], []byte("\n"))]
+		nodepath := payload("Node-path", header)
+		if nodepath != nil {
 			for _, pattern := range patterns {
 				r := regexp.MustCompile(pattern)
-				if r.Find(filepath) != nil {
-					//log.Write("expunge skipping: " + filepath +"\n")
+				if r.Find(nodepath) != nil {
 					matched = true
 					break
 				}
@@ -1104,14 +1112,11 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 	__sift := func(header []byte, properties []byte, content []byte) []byte {
 		matched := false
-		offs := bytes.Index(header, []byte("Node-path: "))
-		if offs > -1 {
-			offs += 11
-			filepath := header[offs:offs+bytes.Index(header[offs:], []byte("\n"))]
+		nodepath := payload("Node-path", header)
+		if nodepath != nil {
 			for _, pattern := range patterns {
 				r := regexp.MustCompile(pattern)
-				if r.Find(filepath) != nil {
-					//log.Write("sift skipping: " + filepath +"\n")
+				if r.Find(nodepath) != nil {
 					matched = true
 					break
 				}
@@ -1127,7 +1132,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 			return []byte("")
 		}
 	}
-	source.Report(selection, __sift, nil, false, true)
+	source.Report(selection, __sift, nil, true, false)
 }
 	
 // Hack paths by applying a regexp transformation.
@@ -1340,7 +1345,6 @@ func main () {
 			fmt.Fprint(os.Stderr, "Input file open failed.\n")
 			os.Exit(1)
 		}
-		fmt.Fprint(os.Stderr, "Input from %s.\n", infile)
 	}
 	if debug {
 		fmt.Fprintf(os.Stderr, "<selection: %v>\n", selection)
