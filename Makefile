@@ -22,23 +22,24 @@ SOURCES += \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
 	repomapper repomapper.xml \
-	repocutter repocutter.xml \
+	go/src/repocutter/repocutter.go repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
-SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
+SOURCES += Makefile go/Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
-DOCS = README.md NEWS TODO
+DOCS = README.adoc NEWS TODO
 
 .PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
 
-BINARIES = reposurgeon repotool repodiffer repomapper repocutter
+BINARIES = reposurgeon repotool repodiffer repomapper go/repocutter
 MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
 HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 all:  $(MANPAGES) $(HTMLFILES)
+	cd go; make
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
@@ -96,7 +97,6 @@ pylint:
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS2) repodiffer
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS3) repomapper
-	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS4) repocutter
 
 check:
 	cd test; $(MAKE) --quiet check

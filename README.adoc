@@ -47,6 +47,11 @@ can use python2 or python3 to run these scripts, but it is best to
 have pypy installed.  The performance difference is dramatic on large
 repositories.
 
+We are in the process of moving this suite of tools from Python to Go
+for large performance increases.  The subdirectory 'go' contains the
+Go source.  Do your builds through go/Makefile, which sets the GOPATH
+variable to work aeound it not being embedded in a normal Go workspace.
+
 There is an extensive regression-test suite in the `test/` directory.
 To test the correctness of this software, ensure that `pypy` and `pylint`
 are installed and then type `make check`.  For a portability check that
